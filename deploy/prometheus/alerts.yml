@@ -1,0 +1,56 @@
+groups:
+  - name: nexus-oms-alerts
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP error rate ({{ $value }})"
+          description: "Error rate is above threshold for 5 minutes"
+
+      - alert: LowInventory
+        expr: nexus_inventory_stock{status="low"} > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low inventory detected"
+          description: "Some SKUs are below minimum stock threshold"
+
+      - alert: IntegrationFailed
+        expr: rate(nexus_integration_sync_failed_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Integration sync failures detected"
+          description: "One or more integrations are failing to sync"
+
+      - alert: HighLatency
+        expr: http_server_requests_seconds_max{uri!~".*actuator.*"} > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High request latency detected"
+          description: "Request latency exceeds 5 seconds"
+
+      - alert: KafkaLag
+        expr: kafka_consumer_lag > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag"
+          description: "Consumer group is falling behind"
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"

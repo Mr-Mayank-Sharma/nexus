@@ -1,0 +1,15 @@
+sku,name,description,price,cost,category,quantity,unit,status,weight,weightUnit,reorderPoint,reorderQuantity,location,warehouseId,tags,upc,manufacturer,supplier,vendorId,barcode
+WIDGET-001,Aluminum Widget,High-grade aluminum widget for industrial use,29.99,14.50,Widgets,150,pieces,ACTIVE,0.5,kg,25,50,A-12-B,1,industrial,846573829104,Acme Manufacturing,Global Supplies,VEND-001,ABC123DEF456
+WIDGET-002,Plastic Widget XL,Large plastic widget for consumer use,14.99,6.75,Widgets,200,pieces,ACTIVE,0.2,kg,40,80,B-07-C,1,consumer,759382910475,Premium Plastics Inc,Global Supplies,VEND-001,XYZ789GHI012
+GADGET-001,Smart Gadget Pro,Battery-powered smart gadget with sensors,89.99,42.00,Electronics,75,pieces,ACTIVE,0.35,kg,15,30,C-03-A,1,electronics,192837465098,TechGear Corp,TechDistributor,VEND-002,JKL345MNO678
+GADGET-002,Smart Gadget Lite,Economy smart gadget for basic needs,49.99,22.00,Electronics,100,pieces,ACTIVE,0.25,kg,20,40,C-04-B,1,electronics,564738291065,TechGear Corp,TechDistributor,VEND-002,PQR901STU234
+TOOL-001,Heavy Duty Wrench Set,6-piece steel wrench set with case,129.99,65.00,Tools,40,sets,ACTIVE,2.5,kg,10,20,D-01-A,1,professional,908172635412,HammerForge Tools,Industrial Supply Co,VEND-003,VWX567YZA890
+TOOL-002,Premium Screwdriver Kit,12-piece precision screwdriver kit,34.99,16.50,Tools,80,sets,ACTIVE,0.8,kg,20,40,D-02-B,1,professional,234567890123,HammerForge Tools,Industrial Supply Co,VEND-003,BCD345EFG678
+SUPPLY-001,Office Paper Box,5000-sheet A4 paper box,45.99,28.00,Supplies,60,boxes,ACTIVE,12.0,kg,15,30,E-05-C,2,office,345678901234,EcoPaper Ltd,Office Supply Hub,VEND-004,HIJ789KLM012
+SUPPLY-002,Shipping Tape Case,48-pack clear shipping tape,38.99,19.50,Supplies,30,cases,ACTIVE,9.0,kg,10,20,E-06-A,2,warehouse,456789012345,PackSafe Inc,Office Supply Hub,VEND-004,NOP345QRS678
+PART-001,Machine Bolt M10 Box,500-pack M10 stainless steel bolts,22.99,11.00,Parts,90,boxes,ACTIVE,15.0,kg,20,40,F-01-B,1,industrial,567890123456,BoltMaster Inc,Global Supplies,VEND-001,TUV901WXY234
+PART-002,Brass Connector Set,20-piece brass connector assortment,18.99,8.50,Parts,120,sets,ACTIVE,1.2,kg,30,60,F-02-C,1,plumbing,678901234567,ConnectPro Ltd,Global Supplies,VEND-001,ZAB567CDE890
+ACCESSORY-001,USB-C Hub 7-in-1,Multi-port USB-C hub with HDMI and PD,42.99,21.00,Accessories,85,pieces,ACTIVE,0.15,kg,20,40,G-01-A,1,electronics,789012345678,Accessorize Inc,TechDistributor,VEND-002,FGH123IJK456
+ACCESSORY-002,Wireless Charger Pad,15W fast wireless charging pad,24.99,12.00,Accessories,110,pieces,ACTIVE,0.1,kg,25,50,G-02-B,1,electronics,890123456789,Accessorize Inc,TechDistributor,VEND-002,LMN789OPQ012
+RAW-001,Steel Sheet 4x8,4ft x 8ft galvanized steel sheet,89.99,55.00,Raw Materials,25,sheets,ACTIVE,28.0,kg,5,10,H-03-A,3,industrial,901234567890,MetalWorks Corp,Industrial Supply Co,VEND-003,RST345UVW678
+RAW-002,Copper Wire Spool,100m 14-gauge copper wire,67.99,38.00,Raw Materials,15,spools,ACTIVE,3.5,kg,5,10,H-04-B,3,industrial,012345678901,WireTech Industries,Industrial Supply Co,VEND-003,XYZ901ABC234

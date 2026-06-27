@@ -1,0 +1,15 @@
+CustomerName,Email,Phone,Price,Quantity,SKU,Description,ShippingStreet,ShippingCity,ShippingState,ShippingZip,OrderNotes
+Acme Corp,orders@acme.com,555-0100,29.99,5,WIDGET-001,Aluminum Widget,123 Industrial Blvd,Detroit,MI,48201,Rush delivery needed
+Acme Corp,orders@acme.com,555-0100,14.99,10,WIDGET-002,Plastic Widget XL,123 Industrial Blvd,Detroit,MI,48201,Rush delivery needed
+Acme Corp,orders@acme.com,555-0100,89.99,2,GADGET-001,Smart Gadget Pro,123 Industrial Blvd,Detroit,MI,48201,Rush delivery needed
+TechStart Inc,orders@techstart.io,555-0200,49.99,25,GADGET-002,Smart Gadget Lite,456 Innovation Way,San Francisco,CA,94105,Standard shipping
+TechStart Inc,orders@techstart.io,555-0200,129.99,3,TOOL-001,Heavy Duty Wrench Set,456 Innovation Way,San Francisco,CA,94105,Standard shipping
+BuildRight Construction,builds@buildright.com,555-0300,22.99,50,PART-001,Machine Bolt M10 Box,789 Builder Ave,Dallas,TX,75201,Deliver to job site
+BuildRight Construction,builds@buildright.com,555-0300,18.99,30,PART-002,Brass Connector Set,789 Builder Ave,Dallas,TX,75201,Deliver to job site
+BuildRight Construction,builds@buildright.com,555-0300,89.99,10,RAW-001,Steel Sheet 4x8,789 Builder Ave,Dallas,TX,75201,Call before delivery
+Global Retail,orders@globalretail.com,555-0400,42.99,15,ACCESSORY-001,USB-C Hub 7-in-1,321 Commerce Dr,Chicago,IL,60601,Include gift wrapping
+Global Retail,orders@globalretail.com,555-0400,24.99,20,ACCESSORY-002,Wireless Charger Pad,321 Commerce Dr,Chicago,IL,60601,Include gift wrapping
+QuickShop,fulfillment@quickshop.co,555-0500,34.99,12,TOOL-002,Premium Screwdriver Kit,555 Market St,Seattle,WA,98101,Label boxes individually
+QuickShop,fulfillment@quickshop.co,555-0500,45.99,8,SUPPLY-001,Office Paper Box,555 Market St,Seattle,WA,98101,Label boxes individually
+QuickShop,fulfillment@quickshop.co,555-0500,38.99,6,SUPPLY-002,Shipping Tape Case,555 Market St,Seattle,WA,98101,Label boxes individually
+Metro Hospital,supplies@metrohospital.org,555-0600,67.99,20,RAW-002,Copper Wire Spool,888 Health Park Blvd,Boston,MA,02118,Urgent - hospital maintenance

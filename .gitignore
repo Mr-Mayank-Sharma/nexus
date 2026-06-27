@@ -1,0 +1,16 @@
+**/node_modules
+**/target
+**/dist
+**/*.log
+**/logs
+.env
+__pycache__
+*.pyc
+.vite
+*.pkl
+*.war
+*.zip
+*.sql
+sandbox/
+*.deb
+*.docx

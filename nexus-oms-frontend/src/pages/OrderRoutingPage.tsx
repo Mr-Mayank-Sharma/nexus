@@ -1,0 +1,385 @@
+import { useState, useEffect, useCallback } from 'react'
+import { clsx } from 'clsx'
+import {
+  Route, AlertTriangle, CheckCircle2, XCircle, Loader2, Search, RefreshCw,
+  TrendingUp, Clock, DollarSign, Zap, Shield, ChevronRight, ExternalLink,
+  ArrowUpRight, AlertCircle, Info, Flag,
+} from 'lucide-react'
+import * as orderRoutingApi from '../api/orderRouting'
+import type { OrderAllocation, FulfillmentException } from '../types'
+import { useToast } from '../hooks/useToast'
+
+const EXCEPTION_TYPE_ICONS: Record<string, typeof AlertTriangle> = {
+  INVENTORY_SHORTAGE: AlertTriangle,
+  CARRIER_FAILURE: XCircle,
+  CAPACITY_EXCEEDED: AlertCircle,
+  WORKER_ABSENT: AlertCircle,
+  WEATHER_DELAY: Info,
+  SHIPPING_ADDRESS_ISSUE: Flag,
+  PAYMENT_HOLD: AlertTriangle,
+  CREDIT_HOLD: AlertTriangle,
+  FRAUD_FLAG: AlertTriangle,
+  CUSTOMER_REQUEST: Info,
+  SYSTEM_ERROR: XCircle,
+  OTHER: AlertTriangle,
+}
+
+const EXCEPTION_SEVERITY_CLASSES: Record<string, string> = {
+  LOW: 'enterprise-badge-info',
+  MEDIUM: 'enterprise-badge-warning',
+  HIGH: 'enterprise-badge-error',
+  CRITICAL: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 ring-1 ring-red-200 dark:ring-red-800',
+}
+
+const EXCEPTION_STATUS_CLASSES: Record<string, string> = {
+  OPEN: 'enterprise-badge-error',
+  IN_PROGRESS: 'enterprise-badge-warning',
+  RESOLVED: 'enterprise-badge-success',
+  ESCALATED: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  CLOSED: 'enterprise-badge-neutral',
+}
+
+const STRATEGY_BADGES: Record<string, string> = {
+  RULE_BASED: 'enterprise-badge-info',
+  AI_OPTIMIZED: 'enterprise-badge-ai',
+  HYBRID: 'enterprise-badge-success',
+  MANUAL: 'enterprise-badge-neutral',
+}
+
+export default function OrderRoutingPage() {
+  const [kpis, setKpis] = useState<Record<string, number> | null>(null)
+  const [exceptions, setExceptions] = useState<FulfillmentException[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<'exceptions' | 'allocations'>('exceptions')
+  const [exceptionFilter, setExceptionFilter] = useState<string>('OPEN')
+  const [search, setSearch] = useState('')
+  const [selectedException, setSelectedException] = useState<FulfillmentException | null>(null)
+  const [resolveOpen, setResolveOpen] = useState(false)
+  const [resolveForm, setResolveForm] = useState({ resolution: '', strategy: 'REALLOCATE' })
+  const [processing, setProcessing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
+  const { addToast } = useToast()
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [kpiRes, excRes] = await Promise.all([
+        orderRoutingApi.getRoutingKPIs(),
+        orderRoutingApi.getExceptions({
+          status: exceptionFilter === 'ALL' ? undefined : exceptionFilter,
+          size: 50,
+        }),
+      ])
+      setKpis(kpiRes.data as Record<string, number>)
+      setExceptions(excRes.data?.content || [])
+    } catch {
+      if (!loading) addToast({ type: 'error', title: 'Failed to load routing data' })
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }, [exceptionFilter, loading, addToast])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
+  const handleRefresh = () => {
+    setRefreshing(true)
+    fetchData()
+  }
+
+  const handleResolve = async () => {
+    if (!selectedException || !resolveForm.resolution) return
+    setProcessing(true)
+    try {
+      await orderRoutingApi.resolveException(selectedException.id, {
+        resolution: resolveForm.resolution,
+        resolutionStrategy: resolveForm.strategy,
+      })
+      addToast({ type: 'success', title: 'Exception resolved' })
+      setResolveOpen(false)
+      setSelectedException(null)
+      setResolveForm({ resolution: '', strategy: 'REALLOCATE' })
+      fetchData()
+    } catch {
+      addToast({ type: 'error', title: 'Failed to resolve exception' })
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleEscalate = async (id: string) => {
+    try {
+      await orderRoutingApi.escalateException(id)
+      addToast({ type: 'success', title: 'Exception escalated' })
+      fetchData()
+    } catch {
+      addToast({ type: 'error', title: 'Failed to escalate exception' })
+    }
+  }
+
+  const totalExceptions = kpis ? (kpis.openExceptions || 0) + (kpis.criticalExceptions || 0) : 0
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="enterprise-page-header">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
+            <Route className="w-6 h-6 text-violet-600" />
+          </div>
+          <div>
+            <h1>AI Order Routing</h1>
+            <p>Intelligent order allocation with multi-node optimization and exception resolution</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm"
+          >
+            <RefreshCw className={clsx('w-4 h-4', refreshing && 'animate-spin')} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="enterprise-kpi-grid">
+        {[
+          { label: 'Allocations Today', value: kpis?.totalAllocationsToday ?? 0, icon: TrendingUp, color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400', trend: kpis?.totalAllocationsToday ? `${kpis.totalAllocationsToday} total` : 'No data' },
+          { label: 'Active Allocations', value: kpis?.activeAllocations ?? 0, icon: Zap, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400', trend: 'Currently allocated' },
+          { label: 'Open Exceptions', value: kpis?.openExceptions ?? 0, icon: AlertTriangle, color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400', trend: 'Requiring attention' },
+          { label: 'Critical Exceptions', value: kpis?.criticalExceptions ?? 0, icon: XCircle, color: kpis?.criticalExceptions ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400', trend: kpis?.criticalExceptions ? 'Requires immediate action' : 'All clear' },
+        ].map(kpi => (
+          <div key={kpi.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm text-gray-500 dark:text-gray-400">{kpi.label}</span>
+              <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', kpi.color)}>
+                <kpi.icon className="w-4.5 h-4.5" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {kpi.value}
+            </div>
+            <div className="mt-1.5 pt-2 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+              {kpi.trend}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div className="enterprise-tabs">
+        <button
+          onClick={() => setTab('exceptions')}
+          className={clsx('enterprise-tab', tab === 'exceptions' && 'enterprise-tab-active')}
+        >
+          <AlertTriangle className="w-4 h-4" /> Exceptions
+          {totalExceptions > 0 && (
+            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-full">
+              {totalExceptions}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setTab('allocations')}
+          className={clsx('enterprise-tab', tab === 'allocations' && 'enterprise-tab-active')}
+        >
+          <Route className="w-4 h-4" /> Allocation History
+        </button>
+      </div>
+
+      {/* Exceptions View */}
+      {tab === 'exceptions' && (
+        <div className="space-y-3">
+          <div className="enterprise-toolbar">
+            <div className="enterprise-toolbar-left">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search exceptions..."
+                  className="enterprise-input pl-9 w-64"
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+              <select
+                className="enterprise-select w-40"
+                value={exceptionFilter}
+                onChange={e => setExceptionFilter(e.target.value)}
+              >
+                <option value="ALL">All Status</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="ESCALATED">Escalated</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                  <div className="enterprise-skeleton h-5 w-48 mb-3" />
+                  <div className="enterprise-skeleton h-4 w-96 mb-2" />
+                  <div className="enterprise-skeleton h-4 w-64" />
+                </div>
+              ))}
+            </div>
+          ) : exceptions.length === 0 ? (
+            <div className="enterprise-empty-state py-16">
+              <CheckCircle2 className="w-12 h-12 text-emerald-400" />
+              <h3>No exceptions found</h3>
+              <p>All orders are routing smoothly</p>
+            </div>
+          ) : (
+            exceptions
+              .filter(e => !search || e.title.toLowerCase().includes(search.toLowerCase()) || e.type.toLowerCase().includes(search.toLowerCase()))
+              .map(exception => {
+                const Icon = EXCEPTION_TYPE_ICONS[exception.type] || AlertTriangle
+                return (
+                  <div key={exception.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 transition-shadow hover:shadow-sm">
+                    <div className="flex items-start gap-4">
+                      <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5',
+                        exception.severity === 'CRITICAL' && 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400',
+                        exception.severity === 'HIGH' && 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400',
+                        exception.severity === 'MEDIUM' && 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400',
+                        exception.severity === 'LOW' && 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
+                      )}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2.5">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100">{exception.title}</h4>
+                              <span className={clsx('enterprise-badge', EXCEPTION_SEVERITY_CLASSES[exception.severity])}>
+                                {exception.severity}
+                              </span>
+                              <span className={clsx('enterprise-badge', EXCEPTION_STATUS_CLASSES[exception.status])}>
+                                {exception.status.replace('_', ' ')}
+                              </span>
+                            </div>
+                            {exception.description && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{exception.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 ml-4 shrink-0">
+                            {exception.autoResolvable && (
+                              <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-2 py-0.5 rounded-md">
+                                Auto
+                              </span>
+                            )}
+                            <button
+                              onClick={() => { setSelectedException(exception); setResolveOpen(true) }}
+                              className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary"
+                              disabled={exception.status === 'RESOLVED' || exception.status === 'CLOSED'}
+                            >
+                              <CheckCircle2 className="w-3 h-3" /> Resolve
+                            </button>
+                            <button
+                              onClick={() => handleEscalate(exception.id)}
+                              className="enterprise-btn enterprise-btn-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                              disabled={exception.status === 'RESOLVED' || exception.status === 'CLOSED' || exception.status === 'ESCALATED'}
+                            >
+                              <ArrowUpRight className="w-3 h-3" /> Escalate
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
+                          <span className="font-mono">#{exception.orderId?.slice(0, 8)}</span>
+                          <span>{new Date(exception.detectedAt).toLocaleString()}</span>
+                          {exception.resolutionStrategy && (
+                            <span className="font-medium text-gray-600 dark:text-gray-300">
+                              Suggested: {exception.resolutionStrategy.replace('_', ' ')}
+                            </span>
+                          )}
+                          {exception.suggestedAction && (
+                            <span className="text-violet-600 dark:text-violet-400">{exception.suggestedAction}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+          )}
+        </div>
+      )}
+
+      {/* Allocations View */}
+      {tab === 'allocations' && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
+          <div className="enterprise-empty-state">
+            <Route className="w-12 h-12 text-primary-400" />
+            <h3>Allocation History</h3>
+            <p>Select an order to view its allocation details</p>
+          </div>
+        </div>
+      )}
+
+      {/* Resolve Modal */}
+      {resolveOpen && selectedException && (
+        <div className="enterprise-modal-overlay" onClick={() => setResolveOpen(false)}>
+          <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
+            <div className="enterprise-modal-header">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Resolve Exception</h2>
+              <button onClick={() => setResolveOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="enterprise-modal-body space-y-5">
+              <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-4 space-y-1.5">
+                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{selectedException.title}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {selectedException.severity} severity &middot; {selectedException.type.replace('_', ' ')}
+                </p>
+              </div>
+              <div className="enterprise-form-group">
+                <label>Resolution Strategy</label>
+                <select
+                  className="enterprise-select"
+                  value={resolveForm.strategy}
+                  onChange={e => setResolveForm(f => ({ ...f, strategy: e.target.value }))}
+                >
+                  <option value="REALLOCATE">Reallocate to another node</option>
+                  <option value="OVERRIDE">Override exception</option>
+                  <option value="CONTACT_CUSTOMER">Contact customer</option>
+                  <option value="ESCALATE_MANAGER">Escalate to manager</option>
+                  <option value="SPLIT_ORDER">Split order across nodes</option>
+                  <option value="BACKORDER">Place on backorder</option>
+                  <option value="SUBSTITUTE">Substitute product</option>
+                  <option value="CANCEL_ORDER">Cancel order</option>
+                </select>
+              </div>
+              <div className="enterprise-form-group">
+                <label>Resolution Notes</label>
+                <textarea
+                  className="enterprise-textarea"
+                  rows={3}
+                  placeholder="Describe how this exception is being resolved..."
+                  value={resolveForm.resolution}
+                  onChange={e => setResolveForm(f => ({ ...f, resolution: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="enterprise-modal-footer">
+              <button onClick={() => setResolveOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button
+                onClick={handleResolve}
+                disabled={processing || !resolveForm.resolution}
+                className="enterprise-btn enterprise-btn-primary disabled:opacity-50"
+              >
+                {processing && <Loader2 className="w-4 h-4 animate-spin" />}
+                Resolve Exception
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

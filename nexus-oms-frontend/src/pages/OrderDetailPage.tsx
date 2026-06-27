@@ -1,0 +1,592 @@
+import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  ArrowLeft, Clock, MapPin, Package, User, CreditCard, Truck, CheckCircle, XCircle,
+  AlertTriangle, FileText, MessageSquare, Printer, Loader2,
+  Edit3, Split, Merge, Brain, Download, ExternalLink, Shield,
+} from 'lucide-react'
+import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
+import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
+import EnterpriseTimeline from '../components/enterprise/EnterpriseTimeline'
+import { OrderTimelineEvent, Order } from '../types'
+import { useToast } from '../hooks/useToast'
+import * as ordersApi from '../api/orders'
+import * as aiPlatformApi from '../api/aiPlatform'
+
+interface Payment {
+  id: string
+  method: string
+  amount: number
+  status: string
+  date: string
+  reference: string
+}
+
+interface Document {
+  id: string
+  name: string
+  type: string
+  size: string
+  uploadedAt: string
+  url: string
+}
+
+export default function OrderDetailPage() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [order, setOrder] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [showModifyModal, setShowModifyModal] = useState(false)
+  const [showSplitModal, setShowSplitModal] = useState(false)
+  const [showMergeModal, setShowMergeModal] = useState(false)
+  const { addToast } = useToast()
+
+  const [aiPrediction, setAiPrediction] = useState<{ deliveryDate?: string; confidence?: number; anomaly?: boolean } | null>(null)
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [documents, setDocuments] = useState<Document[]>([])
+
+  useEffect(() => { if (id) fetchOrder() }, [id])
+
+  async function fetchOrder() {
+    try {
+      setLoading(true)
+      const res = await ordersApi.getOrderById(id!)
+      setOrder({
+        id: res.data.id || id!,
+        orderNumber: res.data.orderNumber || id!,
+        customerName: res.data.customerName || 'Customer',
+        customerEmail: res.data.customerEmail || '',
+        channel: res.data.channel || 'MANUAL',
+        status: res.data.status || 'PENDING',
+        items: (res.data.items || []).map((i: any) => ({
+          id: i.id, sku: i.sku || '', productName: i.productName || i.sku || '',
+          quantity: i.quantity || 0, unitPrice: i.unitPrice || 0, totalPrice: i.totalPrice || 0,
+        })),
+        total: res.data.total || 0, subtotal: res.data.subtotal || 0,
+        shippingCost: res.data.shippingCost || 0, tax: res.data.taxAmount || 0, currency: res.data.currency || 'USD',
+        shippingAddress: res.data.shipTo ? {
+          street: res.data.shipTo.street || res.data.shipTo.line1 || '', city: res.data.shipTo.city || '',
+          state: res.data.shipTo.state || '', zip: res.data.shipTo.zip || res.data.shipTo.pincode || '', country: res.data.shipTo.country || '',
+        } : { street: '', city: '', state: '', zip: '', country: '' },
+        billingAddress: { street: '', city: '', state: '', zip: '', country: '' },
+        fulfillmentType: res.data.fulfillmentType || 'STANDARD',
+        allocationNodeId: res.data.allocatedNode || '', carrier: res.data.carrierId || '',
+        trackingNumber: res.data.trackingNumber || '', promisedDeliveryDate: res.data.promisedDelivery || '',
+        estimatedShipDate: '', createdAt: res.data.createdAt || new Date().toISOString(),
+        updatedAt: res.data.updatedAt || new Date().toISOString(), priority: 'MEDIUM',
+        hasException: res.data.subStatus === 'EXCEPTION', tags: [], notes: '',
+      })
+
+      // Mock payments
+      setPayments([
+        { id: 'pmt1', method: 'Credit Card (****4242)', amount: res.data.total || 0, status: 'CAPTURED', date: res.data.createdAt || new Date().toISOString(), reference: 'TXN-' + Date.now() },
+      ])
+      setDocuments([
+        { id: 'doc1', name: 'Packing Slip', type: 'PDF', size: '245 KB', uploadedAt: new Date().toISOString(), url: '#' },
+        { id: 'doc2', name: 'Shipping Label', type: 'PDF', size: '180 KB', uploadedAt: new Date().toISOString(), url: '#' },
+      ])
+
+      // Try AI prediction
+      try {
+        const aiRes = await aiPlatformApi.predict('delivery_estimate', { orderId: id, items: res.data.items || [] })
+        if (aiRes.data) {
+          setAiPrediction({
+            deliveryDate: aiRes.data.predictedDate || aiRes.data.estimatedDelivery,
+            confidence: aiRes.data.confidence,
+            anomaly: aiRes.data.isAnomaly,
+          })
+        }
+      } catch {}
+    } catch {
+      setOrder(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleAction(action: string) {
+    if (!id) return
+    setActionLoading(action)
+    try {
+      if (action === 'confirm') await ordersApi.confirmOrder(id)
+      else if (action === 'allocate') await ordersApi.allocateOrder(id)
+      else if (action === 'ship') await ordersApi.shipOrder(id, 'auto', 'TN-' + Date.now())
+      else if (action === 'cancel') await ordersApi.cancelOrder(id)
+      addToast({ type: 'success', title: `Order ${action}ed successfully` })
+      await fetchOrder()
+    } catch {
+      addToast({ type: 'error', title: `Failed to ${action} order` })
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const [modifyForm, setModifyForm] = useState({ street: '', city: '', state: '', zip: '', country: '' })
+  const [modifyItems, setModifyItems] = useState<{ sku: string; productName: string; quantity: number; unitPrice: number }[]>([])
+
+  function openModify() {
+    if (!order) return
+    setModifyForm({ street: order.shippingAddress.street, city: order.shippingAddress.city, state: order.shippingAddress.state, zip: order.shippingAddress.zip, country: order.shippingAddress.country })
+    setModifyItems(order.items.map(i => ({ sku: i.sku, productName: i.productName, quantity: i.quantity, unitPrice: i.unitPrice })))
+    setShowModifyModal(true)
+  }
+
+  async function handleModify() {
+    if (!id) return; setActionLoading('modify')
+    try {
+      await ordersApi.modifyOrder(id, { shippingAddress: { line1: modifyForm.street, city: modifyForm.city, state: modifyForm.state, pincode: modifyForm.zip, country: modifyForm.country }, items: modifyItems })
+      addToast({ type: 'success', title: 'Order modified' }); setShowModifyModal(false); await fetchOrder()
+    } catch { addToast({ type: 'error', title: 'Failed to modify order' }) } finally { setActionLoading(null) }
+  }
+
+  function addModifyRow() { setModifyItems([...modifyItems, { sku: '', productName: '', quantity: 1, unitPrice: 0 }]) }
+  function updateModifyItem(index: number, field: string, value: any) { const items = [...modifyItems]; (items[index] as any)[field] = value; setModifyItems(items) }
+  function removeModifyItem(index: number) { setModifyItems(modifyItems.filter((_, i) => i !== index)) }
+
+  const [splitGroups, setSplitGroups] = useState<{ itemIds: string[]; priority: number }[]>([])
+
+  function openSplit() {
+    if (!order) return; setSplitGroups([{ itemIds: order.items.map(i => i.id || i.sku), priority: 1 }]); setShowSplitModal(true)
+  }
+
+  function toggleSplitItem(groupIdx: number, itemId: string) {
+    const groups = [...splitGroups]; const idx = groups[groupIdx].itemIds.indexOf(itemId)
+    idx >= 0 ? groups[groupIdx].itemIds.splice(idx, 1) : groups[groupIdx].itemIds.push(itemId); setSplitGroups(groups)
+  }
+
+  function addSplitGroup() { setSplitGroups([...splitGroups, { itemIds: [], priority: splitGroups.length + 1 }]) }
+  function removeSplitGroup(idx: number) { const movedItems = splitGroups[idx].itemIds; const groups = splitGroups.filter((_, i) => i !== idx); if (groups.length > 0) groups[0].itemIds.push(...movedItems); setSplitGroups(groups) }
+
+  async function handleSplit() {
+    if (!id) return; const nonEmpty = splitGroups.filter(g => g.itemIds.length > 0)
+    if (nonEmpty.length < 2) { addToast({ type: 'warning', title: 'Create at least 2 groups with items to split' }); return }
+    setActionLoading('split')
+    try {
+      if (new Set(nonEmpty.flatMap(g => g.itemIds)).size < (order?.items.length || 0)) { addToast({ type: 'warning', title: 'All items must be assigned' }); setActionLoading(null); return }
+      await ordersApi.splitOrder(id, { groups: nonEmpty }); addToast({ type: 'success', title: 'Order split' }); setShowSplitModal(false); await fetchOrder()
+    } catch { addToast({ type: 'error', title: 'Failed to split' }) } finally { setActionLoading(null) }
+  }
+
+  const [mergeOrderIds, setMergeOrderIds] = useState<string[]>([''])
+  const [mergeSearchTerm, setMergeSearchTerm] = useState('')
+  const [mergeResults, setMergeResults] = useState<any[]>([])
+  const [searchingMerge, setSearchingMerge] = useState(false)
+
+  function openMerge() { setMergeOrderIds(['']); setMergeSearchTerm(''); setMergeResults([]); setShowMergeModal(true) }
+
+  async function searchOrders() {
+    if (!mergeSearchTerm.trim()) return; setSearchingMerge(true)
+    try { const res = await ordersApi.getOrders({ search: mergeSearchTerm }); setMergeResults(res.data || []) } catch { addToast({ type: 'error', title: 'Search failed' }) } finally { setSearchingMerge(false) }
+  }
+
+  function addMergeId() { setMergeOrderIds([...mergeOrderIds, '']) }
+  function updateMergeId(idx: number, val: string) { const ids = [...mergeOrderIds]; ids[idx] = val; setMergeOrderIds(ids) }
+  function removeMergeId(idx: number) { setMergeOrderIds(mergeOrderIds.filter((_, i) => i !== idx)) }
+
+  async function handleMerge() {
+    if (!id) return; const validIds = mergeOrderIds.filter(Boolean)
+    if (validIds.length < 2) { addToast({ type: 'warning', title: 'Add at least 2 order IDs' }); return }
+    setActionLoading('merge')
+    try { await ordersApi.mergeOrders({ orderIds: [...validIds, id], targetOrderId: id }); addToast({ type: 'success', title: 'Orders merged' }); setShowMergeModal(false); await fetchOrder() }
+    catch { addToast({ type: 'error', title: 'Merge failed' }) } finally { setActionLoading(null) }
+  }
+
+  const timelineEvents: OrderTimelineEvent[] = useMemo(() => {
+    if (!order) return []
+    const events: OrderTimelineEvent[] = [
+      { id: 'e1', type: 'CREATED', title: 'Order Created', description: `Placed via ${order.channel}`, timestamp: order.createdAt, user: 'System' },
+    ]
+    if (order.status !== 'PENDING') events.push({ id: 'e2', type: 'CONFIRMED', title: 'Order Confirmed', description: 'Payment verified', timestamp: order.updatedAt, user: 'System' })
+    if (['ALLOCATED', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED'].includes(order.status)) events.push({ id: 'e3', type: 'ALLOCATED', title: 'Inventory Allocated', description: order.allocationNodeId ? `Allocated to ${order.allocationNodeId}` : 'Allocation complete', timestamp: order.updatedAt, user: 'Auto-Allocator' })
+    if (['SHIPPED', 'IN_TRANSIT', 'DELIVERED'].includes(order.status)) events.push({ id: 'e4', type: 'SHIPPED', title: 'Shipped', description: `Carrier: ${order.carrier} · ${order.trackingNumber}`, timestamp: order.updatedAt, user: 'System' })
+    if (order.status === 'DELIVERED') events.push({ id: 'e5', type: 'DELIVERED', title: 'Delivered', description: 'Package delivered', timestamp: order.updatedAt, user: 'System' })
+    if (order.status === 'CANCELLED') events.push({ id: 'e6', type: 'CANCELLED', title: 'Cancelled', description: 'Order was cancelled', timestamp: order.updatedAt, user: 'System' })
+    return events
+  }, [order])
+
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]" /></div>
+
+  if (!order) return (
+    <div className="space-y-6">
+      <button onClick={() => navigate('/orders')} className="enterprise-btn-ghost text-sm flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back to Orders</button>
+      <div className="text-center py-12 text-[var(--text-tertiary)]">Order not found</div>
+    </div>
+  )
+
+  const statusActions: { label: string; icon: React.ReactNode; onClick: () => void; variant: 'primary' | 'danger'; disabled: boolean }[] = []
+  if (order.status === 'PENDING') statusActions.push({ label: 'Confirm Order', icon: actionLoading === 'confirm' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />, onClick: () => handleAction('confirm'), variant: 'primary', disabled: actionLoading !== null })
+  if (order.status === 'CONFIRMED') statusActions.push({ label: 'Allocate Inventory', icon: actionLoading === 'allocate' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />, onClick: () => handleAction('allocate'), variant: 'primary', disabled: actionLoading !== null })
+  if (order.status === 'ALLOCATED') statusActions.push({ label: 'Ship Order', icon: actionLoading === 'ship' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />, onClick: () => handleAction('ship'), variant: 'primary', disabled: actionLoading !== null })
+  if (order.status !== 'DELIVERED' && order.status !== 'CANCELLED') statusActions.push({ label: 'Cancel Order', icon: actionLoading === 'cancel' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />, onClick: () => handleAction('cancel'), variant: 'danger', disabled: actionLoading !== null })
+
+  const isModifiable = !['SHIPPED', 'DELIVERED', 'CANCELLED', 'ALLOCATED'].includes(order.status)
+
+  return (
+    <div className="space-y-6">
+      <EnterpriseBreadcrumbs crumbs={[{ label: 'Orders', path: '/orders' }, { label: order.orderNumber }]} />
+
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{order.orderNumber}</h1>
+            <EnterpriseStatusBadge status={order.status} label={order.status} />
+            {order.hasException && <EnterpriseStatusBadge status="error" label="Exception" />}
+          </div>
+          <p className="text-sm text-[var(--text-tertiary)] mt-1">
+            Created {new Date(order.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            {' · '}{order.channel} · {order.fulfillmentType}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {isModifiable && (<button onClick={openModify} className="enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Edit3 className="w-4 h-4" /> Modify</button>)}
+          {isModifiable && (<button onClick={openSplit} className="enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button>)}
+          {order.status === 'PENDING' && (<button onClick={openMerge} className="enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button>)}
+          <button className="enterprise-btn-secondary text-sm"><Printer className="w-4 h-4" /> Print Label</button>
+          {statusActions.map(a => (
+            <button key={a.label} onClick={a.onClick} disabled={a.disabled}
+              className={a.variant === 'primary' ? 'enterprise-btn-primary text-sm' : 'enterprise-btn-danger text-sm'}>
+              {a.icon}{a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Order Items */}
+          <div className="enterprise-card">
+            <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Order Items ({order.items.length})</h3></div>
+            <div className="overflow-x-auto">
+              <table className="enterprise-table w-full">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Product</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">SKU</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Qty</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Price</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--border-subtle)]">
+                  {order.items.map((item) => (
+                    <tr key={item.sku} className="enterprise-table-row">
+                      <td className="px-6 py-3 text-sm text-[var(--text-primary)]">{item.productName}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] font-mono">{item.sku}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">${item.unitPrice.toFixed(2)}</td>
+                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">${item.totalPrice.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Subtotal</td><td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">${order.subtotal.toFixed(2)}</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Shipping</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">${order.shippingCost.toFixed(2)}</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Tax</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">${order.tax.toFixed(2)}</td></tr>
+                  <tr className="border-t-2 border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm font-semibold text-[var(--text-primary)] text-right">Total</td><td className="px-6 py-3 text-sm font-bold text-[var(--text-primary)] text-right">${order.total.toFixed(2)}</td></tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          {/* Timeline */}
+          <div className="enterprise-card">
+            <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Order Timeline</h3></div>
+            <div className="p-6">
+              <EnterpriseTimeline
+                items={timelineEvents.map(e => ({
+                  id: e.id, title: e.title,
+                  description: e.description,
+                  timestamp: e.timestamp,
+                  status: e.type === 'DELIVERED' || e.type === 'CONFIRMED' ? 'completed' : e.type === 'SHIPPED' ? 'current' : e.type === 'CANCELLED' || e.type === 'EXCEPTION' ? 'error' : 'pending',
+                }))}
+              />
+            </div>
+          </div>
+
+          {/* AI Insights */}
+          {aiPrediction && (
+            <div className="enterprise-card border border-[var(--color-primary)]/20">
+              <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Brain className="w-4 h-4 text-[var(--color-primary)]" />AI Insights</h3></div>
+              <div className="p-6">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Predicted Delivery</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)] mt-1">{aiPrediction.deliveryDate ? new Date(aiPrediction.deliveryDate).toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Confidence</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-16 h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-[var(--color-primary)]" style={{ width: `${(aiPrediction.confidence || 0) * 100}%` }} />
+                      </div>
+                      <span className="text-sm font-medium text-[var(--text-primary)]">{Math.round((aiPrediction.confidence || 0) * 100)}%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Anomaly Detection</p>
+                    <p className="mt-1">{aiPrediction.anomaly
+                      ? <EnterpriseStatusBadge status="error" label="Anomaly Detected" />
+                      : <EnterpriseStatusBadge status="success" label="Normal" />}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Documents */}
+          <div className="enterprise-card">
+            <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><FileText className="w-4 h-4" />Documents</h3></div>
+            <div className="p-6">
+              {documents.length === 0 ? (
+                <p className="text-sm text-[var(--text-tertiary)]">No documents attached</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {documents.map(doc => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-tertiary)]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-[var(--color-primary)]/10 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-[var(--color-primary)]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{doc.name}</p>
+                          <p className="text-xs text-[var(--text-tertiary)]">{doc.type} · {doc.size}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button className="enterprise-btn-ghost p-1.5" title="Download"><Download className="w-3.5 h-3.5" /></button>
+                        <button className="enterprise-btn-ghost p-1.5" title="View"><ExternalLink className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          {/* Customer */}
+          <div className="enterprise-card">
+            <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]"><User className="w-4 h-4 inline mr-1" />Customer</h3></div>
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center text-[var(--color-primary)] font-semibold">
+                  {order.customerName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[var(--text-primary)]">{order.customerName}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{order.customerEmail}</p>
+                </div>
+              </div>
+              <hr className="border-[var(--border-subtle)]" />
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-[var(--text-tertiary)] mt-0.5" />
+                <div>
+                  <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Shipping</p>
+                  <p className="text-sm text-[var(--text-primary)]">{order.shippingAddress.street}</p>
+                  <p className="text-sm text-[var(--text-primary)]">{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fulfillment */}
+          <div className="enterprise-card">
+            <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]"><Package className="w-4 h-4 inline mr-1" />Fulfillment</h3></div>
+            <div className="p-5 space-y-3">
+              <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Type</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.fulfillmentType}</span></div>
+              {order.allocationNodeId && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Allocated Node</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.allocationNodeId}</span></div>}
+              {order.carrier && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Carrier</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.carrier}</span></div>}
+              {order.trackingNumber && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Tracking</span><span className="text-sm font-mono text-[var(--color-primary)]">{order.trackingNumber}</span></div>}
+              {order.promisedDeliveryDate && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Promised Delivery</span><span className="text-sm font-medium text-[var(--text-primary)]">{new Date(order.promisedDeliveryDate).toLocaleDateString()}</span></div>}
+              {order.priority && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Priority</span><EnterpriseStatusBadge status={order.priority === 'URGENT' ? 'error' : order.priority === 'HIGH' ? 'warning' : 'info'} label={order.priority} size="sm" /></div>}
+            </div>
+          </div>
+
+          {/* Payments */}
+          <div className="enterprise-card">
+            <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]"><CreditCard className="w-4 h-4 inline mr-1" />Payments</h3></div>
+            <div className="p-5 space-y-3">
+              {payments.map(p => (
+                <div key={p.id} className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">${p.amount.toFixed(2)}</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">{p.method}</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Ref: {p.reference}</p>
+                  </div>
+                  <EnterpriseStatusBadge status={p.status === 'CAPTURED' ? 'success' : p.status === 'PENDING' ? 'pending' : 'error'} label={p.status} size="sm" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Audit Trail */}
+          <div className="enterprise-card">
+            <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]"><Shield className="w-4 h-4 inline mr-1" />Activity Log</h3></div>
+            <div className="p-5 space-y-2 max-h-48 overflow-y-auto">
+              {timelineEvents.map(e => (
+                <div key={e.id} className="flex items-start gap-2 text-xs">
+                  <Clock className="w-3 h-3 text-[var(--text-tertiary)] mt-0.5" />
+                  <div>
+                    <p className="text-[var(--text-secondary)]">{e.title} — {e.description}</p>
+                    <p className="text-[var(--text-tertiary)]">{new Date(e.timestamp).toLocaleString()} {e.user ? `by ${e.user}` : ''}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MODIFY MODAL */}
+      {showModifyModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Modify Order</h2>
+              <button onClick={() => setShowModifyModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Shipping Address</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2"><label className="enterprise-label">Street</label><input value={modifyForm.street} onChange={e => setModifyForm({ ...modifyForm, street: e.target.value })} className="enterprise-input w-full" /></div>
+                  <div><label className="enterprise-label">City</label><input value={modifyForm.city} onChange={e => setModifyForm({ ...modifyForm, city: e.target.value })} className="enterprise-input w-full" /></div>
+                  <div><label className="enterprise-label">State</label><input value={modifyForm.state} onChange={e => setModifyForm({ ...modifyForm, state: e.target.value })} className="enterprise-input w-full" /></div>
+                  <div><label className="enterprise-label">ZIP</label><input value={modifyForm.zip} onChange={e => setModifyForm({ ...modifyForm, zip: e.target.value })} className="enterprise-input w-full" /></div>
+                  <div><label className="enterprise-label">Country</label><input value={modifyForm.country} onChange={e => setModifyForm({ ...modifyForm, country: e.target.value })} className="enterprise-input w-full" /></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Items</h3><button onClick={addModifyRow} className="enterprise-btn-secondary text-xs">+ Add Item</button></div>
+                <div className="space-y-2">
+                  {modifyItems.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-[var(--bg-tertiary)] p-2 rounded-lg">
+                      <input value={item.sku} onChange={e => updateModifyItem(idx, 'sku', e.target.value)} className="enterprise-input flex-[2] text-xs" placeholder="SKU" />
+                      <input value={item.productName} onChange={e => updateModifyItem(idx, 'productName', e.target.value)} className="enterprise-input flex-[2] text-xs" placeholder="Product" />
+                      <input type="number" value={item.quantity} onChange={e => updateModifyItem(idx, 'quantity', parseInt(e.target.value) || 1)} className="enterprise-input w-16 text-xs" min={1} />
+                      <input type="number" value={item.unitPrice} onChange={e => updateModifyItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)} className="enterprise-input w-20 text-xs" min={0} step={0.01} />
+                      <button onClick={() => removeModifyItem(idx)} className="p-1 hover:bg-red-50 rounded text-[var(--text-tertiary)] hover:text-red-500"><XCircle className="w-4 h-4" /></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
+              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn-secondary">Cancel</button>
+              <button onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn-primary">
+                {actionLoading === 'modify' && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SPLIT MODAL */}
+      {showSplitModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Split Order</h2>
+              <button onClick={() => setShowSplitModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">Assign each item to a shipment group. Each group becomes a new order.</p>
+            {order && <div className="flex flex-wrap gap-2 mb-4">
+              {order.items.map(item => (
+                <span key={item.id || item.sku} className="px-2 py-1 rounded text-xs bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+                  {item.productName} ({item.sku}) x{item.quantity}
+                </span>
+              ))}
+            </div>}
+            <div className="space-y-4">
+              {splitGroups.map((group, gIdx) => (
+                <div key={gIdx} className="border border-[var(--border-subtle)] rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-[var(--text-primary)]">Group {gIdx + 1} ({group.itemIds.length} items)</h4>
+                    {splitGroups.length > 1 && <button onClick={() => removeSplitGroup(gIdx)} className="text-xs text-red-500">Remove</button>}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {order?.items.map(item => {
+                      const selected = group.itemIds.includes(item.id || item.sku)
+                      const inOtherGroup = splitGroups.some((g, i) => i !== gIdx && g.itemIds.includes(item.id || item.sku))
+                      return (
+                        <button key={item.id || item.sku} onClick={() => { if (!inOtherGroup) toggleSplitItem(gIdx, item.id || item.sku) }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                            selected ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]' :
+                            inOtherGroup ? 'border-[var(--border-subtle)] text-[var(--text-tertiary)] cursor-not-allowed' :
+                            'border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--text-tertiary)]'
+                          }`}>
+                          {item.productName}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={addSplitGroup} className="enterprise-btn-secondary text-sm mt-4">+ Add Group</button>
+            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
+              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn-secondary">Cancel</button>
+              <button onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn-primary">
+                {actionLoading === 'split' && <Loader2 className="w-4 h-4 animate-spin" />}
+                Split Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MERGE MODAL */}
+      {showMergeModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="enterprise-card p-6 w-full max-w-lg">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Merge Orders</h2>
+              <button onClick={() => setShowMergeModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded"><XCircle className="w-5 h-5" /></button>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)] mb-4">Current: <strong>{order?.orderNumber}</strong></p>
+            <div className="space-y-2">
+              {mergeOrderIds.map((oid, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <input value={oid} onChange={e => updateMergeId(idx, e.target.value)} className="enterprise-input flex-1 text-sm font-mono" placeholder="Order UUID" />
+                  {mergeOrderIds.length > 1 && <button onClick={() => removeMergeId(idx)} className="p-1 text-[var(--text-tertiary)] hover:text-red-500"><XCircle className="w-4 h-4" /></button>}
+                </div>
+              ))}
+            </div>
+            <button onClick={addMergeId} className="enterprise-btn-secondary text-xs mt-2">+ Add Another</button>
+            <hr className="border-[var(--border-subtle)] my-4" />
+            <div>
+              <label className="enterprise-label">Search Orders</label>
+              <div className="flex gap-2 mt-1">
+                <input value={mergeSearchTerm} onChange={e => setMergeSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchOrders()} className="enterprise-input flex-1 text-sm" placeholder="Search by order # or customer..." />
+                <button onClick={searchOrders} disabled={searchingMerge} className="enterprise-btn-secondary text-sm">{searchingMerge ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}</button>
+              </div>
+              {mergeResults.length > 0 && (
+                <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
+                  {mergeResults.filter((o: any) => o.id !== id).map((o: any) => (
+                    <button key={o.id} onClick={() => { const idx = mergeOrderIds.findIndex(v => !v); if (idx >= 0) updateMergeId(idx, o.id) }}
+                      className="w-full text-left p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-sm flex justify-between">
+                      <span className="font-medium">{o.orderNumber || o.id}</span>
+                      <span className="text-[var(--text-tertiary)]">{o.customerName} - {o.status}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
+              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn-secondary">Cancel</button>
+              <button onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn-primary">
+                {actionLoading === 'merge' && <Loader2 className="w-4 h-4 animate-spin" />}
+                Merge Orders
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
