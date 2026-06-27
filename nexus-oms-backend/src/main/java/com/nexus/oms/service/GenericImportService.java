@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.ImportResult;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.security.TenantContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -13,7 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -30,6 +34,9 @@ public class GenericImportService {
     private static final Set<String> VALID_FORMATS = Set.of("csv", "json", "xml", "edi", "xlsx");
 
     private static final UUID DEFAULT_TENANT_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public GenericImportService() {
     }
@@ -73,7 +80,11 @@ public class GenericImportService {
         result.setTotalRecords(records.size());
 
         try {
-            importGeneric(records, result, entityType, tenantId);
+            switch (entityType) {
+                case "orders" -> importOrders(records, result, tenantId);
+                case "customers" -> importCustomers(records, result, tenantId);
+                default -> importGeneric(records, result, entityType, tenantId);
+            }
 
             long elapsed = System.currentTimeMillis() - startTime;
             result.setProcessingTimeMs(elapsed);
@@ -242,11 +253,122 @@ public class GenericImportService {
         } catch (Exception e) { throw new BadRequestException("EDI parse error: " + e.getMessage()); }
     }
 
+    private void importOrders(List<Map<String, Object>> records, ImportResult result, UUID tenantId) {
+        int success = 0, errors = 0;
+        for (int i = 0; i < records.size(); i++) {
+            try {
+                Map<String, Object> row = records.get(i);
+                UUID orderId = UUID.randomUUID();
+                UUID customerId = UUID.randomUUID();
+                LocalDateTime now = LocalDateTime.now();
+
+                String customerName = strVal(row, "CustomerName", "customerName", "name");
+                String email = strVal(row, "Email", "email", "customerEmail");
+                String phone = strVal(row, "Phone", "phone");
+                String street = strVal(row, "ShippingStreet", "shippingStreet", "street");
+                String city = strVal(row, "ShippingCity", "shippingCity", "city");
+                String state = strVal(row, "ShippingState", "shippingState", "state");
+                String zip = strVal(row, "ShippingZip", "shippingZip", "zip", "postalCode");
+                String sku = strVal(row, "SKU", "sku", "productSku");
+                String productName = strVal(row, "Description", "description", "productName");
+                int quantity = Math.max(1, intVal(row, 1, "Quantity", "quantity", "qty"));
+                BigDecimal price = bdVal(row, "Price", "price", "unitPrice");
+
+                String addressJson = MAPPER.writeValueAsString(Map.of(
+                    "line1", street, "city", city, "state", state, "pincode", zip
+                ));
+
+                entityManager.createNativeQuery(
+                    "INSERT INTO nx_customers (id, tenant_id, name, email, phone, address, created_at) VALUES (?, ?, ?, ?, ?, CAST(? AS jsonb), ?)")
+                    .setParameter(1, customerId)
+                    .setParameter(2, tenantId)
+                    .setParameter(3, customerName)
+                    .setParameter(4, email)
+                    .setParameter(5, phone)
+                    .setParameter(6, addressJson)
+                    .setParameter(7, now)
+                    .executeUpdate();
+
+                entityManager.createNativeQuery(
+                    "INSERT INTO nx_orders (id, tenant_id, channel, customer_id, status, ship_to, currency, subtotal, shipping_cost, tax_amount, total, created_at) VALUES (?, ?, ?, ?, ?, CAST(? AS jsonb), ?, ?, ?, ?, ?, ?)")
+                    .setParameter(1, orderId)
+                    .setParameter(2, tenantId)
+                    .setParameter(3, strVal(row, "channel", "Channel", "source", "MANUAL"))
+                    .setParameter(4, customerId)
+                    .setParameter(5, "PENDING")
+                    .setParameter(6, addressJson)
+                    .setParameter(7, "INR")
+                    .setParameter(8, price.multiply(BigDecimal.valueOf(quantity)))
+                    .setParameter(9, BigDecimal.ZERO)
+                    .setParameter(10, BigDecimal.ZERO)
+                    .setParameter(11, price.multiply(BigDecimal.valueOf(quantity)))
+                    .setParameter(12, now)
+                    .executeUpdate();
+
+                UUID itemId = UUID.randomUUID();
+                entityManager.createNativeQuery(
+                    "INSERT INTO nx_order_items (id, order_id, sku, product_name, quantity, unit_price, total_price, allocated_qty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+                    .setParameter(1, itemId)
+                    .setParameter(2, orderId)
+                    .setParameter(3, sku)
+                    .setParameter(4, productName)
+                    .setParameter(5, quantity)
+                    .setParameter(6, price)
+                    .setParameter(7, price.multiply(BigDecimal.valueOf(quantity)))
+                    .setParameter(8, 0)
+                    .executeUpdate();
+
+                success++;
+            } catch (Exception e) {
+                log.warn("Order import row {} failed: {}", i, e.getMessage());
+                result.getErrors().add("Row " + (i + 1) + ": " + e.getMessage());
+                errors++;
+            }
+        }
+        result.setSuccessCount(success);
+        result.setErrorCount(errors);
+    }
+
+    private void importCustomers(List<Map<String, Object>> records, ImportResult result, UUID tenantId) {
+        int success = 0, errors = 0;
+        for (int i = 0; i < records.size(); i++) {
+            try {
+                Map<String, Object> row = records.get(i);
+                String addressJson = MAPPER.writeValueAsString(Map.of(
+                    "street", strVal(row, "street", "Street", "address"),
+                    "city", strVal(row, "city", "City"),
+                    "state", strVal(row, "state", "State", "province"),
+                    "zip", strVal(row, "zip", "Zip", "zipCode", "postalCode"),
+                    "country", strVal(row, "country", "Country", "US")
+                ));
+
+                entityManager.createNativeQuery(
+                    "INSERT INTO nx_customers (id, tenant_id, name, email, phone, address, created_at) VALUES (?, ?, ?, ?, ?, CAST(? AS jsonb), ?)")
+                    .setParameter(1, UUID.randomUUID())
+                    .setParameter(2, tenantId)
+                    .setParameter(3, strVal(row, "name", "Name", "customerName", "CustomerName"))
+                    .setParameter(4, strVal(row, "email", "Email", "customerEmail", "CustomerEmail"))
+                    .setParameter(5, strVal(row, "phone", "Phone"))
+                    .setParameter(6, addressJson)
+                    .setParameter(7, LocalDateTime.now())
+                    .executeUpdate();
+
+                success++;
+            } catch (Exception e) {
+                log.warn("Customer import row {} failed: {}", i, e.getMessage());
+                result.getErrors().add("Row " + (i + 1) + ": " + e.getMessage());
+                errors++;
+            }
+        }
+        result.setSuccessCount(success);
+        result.setErrorCount(errors);
+    }
+
     private void importGeneric(List<Map<String, Object>> records, ImportResult result, String entityType, UUID tenantId) {
         int success = 0, errors = 0;
         for (int i = 0; i < records.size(); i++) {
             try {
-                result.getWarnings().add("Row " + (i + 1) + " (" + entityType + "): Parsed " + records.get(i).size() + " fields");
+                result.getWarnings().add("Row " + (i + 1) + " (" + entityType + "): Parsed " + records.get(i).size() + " fields (persistence not yet implemented for this entity type)");
                 success++;
             } catch (Exception e) {
                 result.getErrors().add("Row " + (i + 1) + ": " + e.getMessage());
@@ -263,5 +385,27 @@ public class GenericImportService {
             if (val != null && !val.toString().isBlank()) return val.toString().trim();
         }
         return "";
+    }
+
+    private BigDecimal bdVal(Map<String, Object> map, String... keys) {
+        for (String key : keys) {
+            Object val = map.get(key);
+            if (val != null) {
+                try { return new BigDecimal(val.toString().replaceAll("[^\\d.]", "")); }
+                catch (Exception ignored) {}
+            }
+        }
+        return BigDecimal.ZERO;
+    }
+
+    private int intVal(Map<String, Object> map, int defaultVal, String... keys) {
+        for (String key : keys) {
+            Object val = map.get(key);
+            if (val != null) {
+                try { return Integer.parseInt(val.toString().replaceAll("[^\\d-]", "")); }
+                catch (Exception ignored) {}
+            }
+        }
+        return defaultVal;
     }
 }
