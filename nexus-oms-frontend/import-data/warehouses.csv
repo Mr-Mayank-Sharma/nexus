@@ -1,0 +1,101 @@
+code,name,address,city,state,zip,capacity_sqft,manager_name,manager_email,manager_phone
+WH-MUM-01,Mumbai Central Warehouse,"488, Station Road",Hyderabad,TS,500001,184700,Aarti Kumar,aarti.kumar@nexusmail.com,+91-9916391453
+WH-DEL-01,Delhi Logistics Hub,"473, Market Complex",Jaipur,RJ,302001,89871,Lata Mehta,lata.mehta@nexusmail.com,+91-7292149954
+WH-BLR-01,Bangalore Fulfillment Center,"791, Main St",Visakhapatnam,AP,530001,93449,Ananya Chopra,ananya.chopra@fastmail.com,+91-9652977797
+WH-HYD-01,Hyderabad Distribution Center,"272, MG Road",Nagpur,MH,440001,82325,Ishaan Das,ishaan.das@nexusmail.com,+91-9045463858
+WH-CHE-01,Chennai Port Warehouse,"998, Station Road",Coimbatore,TN,641001,184302,Kavita Menon,kavita.menon@zoho.com,+91-9221174307
+WH-KOL-01,Kolkata Storage Facility,"161, Business Center",Bhopal,MP,462001,58932,Aanya Pandey,aanya.pandey@icloud.com,+91-9337531585
+WH-PNE-01,Pune Industrial Depot,"237, Industrial Blvd",Surat,GJ,395001,190199,Sai Reddy,sai.reddy@company.in,+91-7017461567
+WH-JAI-01,Jaipur Regional Warehouse,"630, MG Road",Ahmedabad,GJ,380001,155533,Arnav Modi,arnav.modi@company.in,+91-8324412633
+WH-AHM-01,Ahmedabad Logistics Park,"934, Industrial Blvd",Amritsar,PB,143001,123852,Amit Ghosh,amit.ghosh@zoho.com,+91-7826758616
+WH-LKO-01,Lucknow Supply Hub,"417, Tower Road",Delhi,DL,110001,116051,Kavita Patil,kavita.patil@rediffmail.com,+91-9183278661
+WH-C58,Regional Warehouse 1,"990, Technology Park",Coimbatore,TN,641001,34842,Myra Nair,myra.nair@fastmail.com,+91-9212519255
+WH-C53,Area Warehouse 2,"174, Park Ave",Hyderabad,TS,500001,58602,Rohan Mehta,rohan.mehta@icloud.com,+91-8449845410
+WH-H65,Regional Warehouse 3,"151, Business Center",Rajkot,GJ,360001,87872,Vihaan Menon,vihaan.menon@yahoo.com,+91-7945729197
+WH-G50,Zone Warehouse 4,"57, Business Center",Lucknow,UP,226001,120730,Arjun Mehta,arjun.mehta@proton.me,+91-7972842279
+WH-A13,Zone Warehouse 5,"915, Sector",Surat,GJ,395001,90105,Neha Mehta,neha.mehta@gmail.com,+91-8169638560
+WH-B37,Area Warehouse 6,"291, Lake View Rd",Chandigarh,CH,160001,148654,Aadhya Mishra,aadhya.mishra@proton.me,+91-8244689071
+WH-D73,Zone Warehouse 7,"764, Industrial Blvd",Chandigarh,CH,160001,58611,Ishita Das,ishita.das@company.in,+91-7553373266
+WH-E98,Regional Warehouse 8,"789, Bazaar Street",Nagpur,MH,440001,138861,Sanjay Agarwal,sanjay.agarwal@yahoo.com,+91-7437876147
+WH-C64,Regional Warehouse 9,"598, Tower Road",Surat,GJ,395001,83292,Sarita Patil,sarita.patil@fastmail.com,+91-8512468758
+WH-E94,Area Warehouse 10,"417, Station Road",Ahmedabad,GJ,380001,91692,Suresh Verma,suresh.verma@fastmail.com,+91-7399033266
+WH-H54,Zone Warehouse 11,"573, Sector",Chennai,TN,600001,12801,Anaya Verma,anaya.verma@zoho.com,+91-9730434592
+WH-C51,Area Warehouse 12,"74, Main St",Tiruvananthapuram,KL,695001,141940,Aaradhya Saxena,aaradhya.saxena@proton.me,+91-9787830934
+WH-E68,Regional Warehouse 13,"199, MG Road",Visakhapatnam,AP,530001,101072,Arnav Desai,arnav.desai@fastmail.com,+91-9422064966
+WH-F18,Metro Warehouse 14,"364, Hospital Road",Delhi,DL,110001,98155,Saanvi Singh,saanvi.singh@outlook.com,+91-8646013451
+WH-H74,Zone Warehouse 15,"8, Park Ave",Rajkot,GJ,360001,131784,Rekha Pandey,rekha.pandey@proton.me,+91-8904659194
+WH-C12,Metro Warehouse 16,"504, Main St",Agra,UP,282001,60621,Dev Patel,dev.patel@proton.me,+91-8216241996
+WH-B36,Zone Warehouse 17,"141, Bazaar Street",Bhubaneswar,OD,751001,96783,Dev Patil,dev.patil@nexusmail.com,+91-8074048616
+WH-D56,Regional Warehouse 18,"559, Hospital Road",Surat,GJ,395001,15016,Ishita Malhotra,ishita.malhotra@icloud.com,+91-9661864472
+WH-D80,City Warehouse 19,"880, Main St",Allahabad,UP,211001,46162,Anaya Ghosh,anaya.ghosh@rediffmail.com,+91-9784415125
+WH-A45,City Warehouse 20,"659, Sector",Chennai,TN,600001,15747,Kavita Mehta,kavita.mehta@proton.me,+91-7041558942
+WH-A84,City Warehouse 21,"656, MG Road",Surat,GJ,395001,78428,Aadhya Bhatt,aadhya.bhatt@fastmail.com,+91-7279254155
+WH-D30,Metro Warehouse 22,"114, Park Ave",Allahabad,UP,211001,138218,Vihaan Kumar,vihaan.kumar@proton.me,+91-8778961181
+WH-G95,Regional Warehouse 23,"264, Tower Road",Surat,GJ,395001,57695,Riya Gupta,riya.gupta@fastmail.com,+91-8985661623
+WH-F65,Area Warehouse 24,"978, Hospital Road",Kolkata,WB,700001,136413,Nisha Singh,nisha.singh@rediffmail.com,+91-7845998571
+WH-D59,Regional Warehouse 25,"226, Technology Park",Ahmedabad,GJ,380001,92819,Aanya Choudhary,aanya.choudhary@proton.me,+91-8273493798
+WH-E46,Area Warehouse 26,"289, Technology Park",Indore,MP,452001,84118,Neha Patil,neha.patil@gmail.com,+91-7762748594
+WH-C65,Zone Warehouse 27,"445, Station Road",Faridabad,HR,121001,99435,Lata Mehta,lata.mehta@yahoo.com,+91-7356953134
+WH-F61,Area Warehouse 28,"393, Business Center",Ahmedabad,GJ,380001,117232,Aarav Desai,aarav.desai@gmail.com,+91-8212667505
+WH-H64,Zone Warehouse 29,"162, MG Road",Delhi,DL,110001,29959,Priya Choudhary,priya.choudhary@icloud.com,+91-8248022573
+WH-E90,Zone Warehouse 30,"944, Market Complex",Ludhiana,PB,141001,14469,Vikram Menon,vikram.menon@gmail.com,+91-7489669820
+WH-H99,Metro Warehouse 31,"844, Tower Road",Mysore,KA,570001,63035,Aarav Singh,aarav.singh@icloud.com,+91-8400391913
+WH-E60,City Warehouse 32,"896, Ring Road",Lucknow,UP,226001,37707,Priya Menon,priya.menon@proton.me,+91-8029982861
+WH-E35,Area Warehouse 33,"863, Technology Park",Coimbatore,TN,641001,87552,Anita Menon,anita.menon@fastmail.com,+91-7073897535
+WH-G76,City Warehouse 34,"913, Tower Road",Kolkata,WB,700001,89602,Shaurya Mishra,shaurya.mishra@rediffmail.com,+91-8137969570
+WH-D80,Regional Warehouse 35,"592, Tower Road",Srinagar,JK,190001,121185,Aarti Mishra,aarti.mishra@zoho.com,+91-9107527175
+WH-B54,Zone Warehouse 36,"129, Hospital Road",Chennai,TN,600001,59311,Manish Sharma,manish.sharma@nexusmail.com,+91-9807131120
+WH-H61,Metro Warehouse 37,"796, Tower Road",Chennai,TN,600001,113361,Aarti Shah,aarti.shah@company.in,+91-9551388928
+WH-H36,Area Warehouse 38,"697, Station Road",Vadodara,GJ,390001,113092,Riya Mishra,riya.mishra@proton.me,+91-8200886457
+WH-G47,Zone Warehouse 39,"83, MG Road",Kolkata,WB,700001,149779,Nita Ghosh,nita.ghosh@zoho.com,+91-8167839751
+WH-E14,Area Warehouse 40,"927, MG Road",Coimbatore,TN,641001,38237,Sanjay Bhatt,sanjay.bhatt@icloud.com,+91-8445692671
+WH-F24,Regional Warehouse 41,"842, Hospital Road",Mysore,KA,570001,92854,Yash Joshi,yash.joshi@company.in,+91-9690346613
+WH-A62,Regional Warehouse 42,"104, Bazaar Street",Lucknow,UP,226001,40907,Aditya Bhatt,aditya.bhatt@proton.me,+91-9665433933
+WH-G88,Zone Warehouse 43,"795, Lake View Rd",Kochi,KL,682001,135936,Ananya Das,ananya.das@fastmail.com,+91-9283041313
+WH-D32,Metro Warehouse 44,"67, Tower Road",Visakhapatnam,AP,530001,64519,Sneha Joshi,sneha.joshi@proton.me,+91-9610577712
+WH-C48,Metro Warehouse 45,"130, Bazaar Street",Kochi,KL,682001,141104,Arjun Das,arjun.das@gmail.com,+91-7146466430
+WH-H81,Area Warehouse 46,"124, Ring Road",Vadodara,GJ,390001,51406,Raj Mishra,raj.mishra@proton.me,+91-8916521309
+WH-E69,Regional Warehouse 47,"970, Market Complex",Ahmedabad,GJ,380001,51335,Vijay Ghosh,vijay.ghosh@nexusmail.com,+91-9213586942
+WH-E97,City Warehouse 48,"283, Sector",Meerut,UP,250001,30601,Nita Mehta,nita.mehta@gmail.com,+91-8597399893
+WH-B54,Regional Warehouse 49,"695, Sector",Mumbai,MH,400001,123121,Sanjay Patil,sanjay.patil@rediffmail.com,+91-9993331739
+WH-F35,Regional Warehouse 50,"481, Station Road",Bangalore,KA,560001,78249,Rohan Malhotra,rohan.malhotra@fastmail.com,+91-9896962438
+WH-F89,Metro Warehouse 51,"54, Main St",Lucknow,UP,226001,49718,Krishna Rao,krishna.rao@proton.me,+91-9603055411
+WH-H92,Zone Warehouse 52,"139, MG Road",Rajkot,GJ,360001,40236,Ishita Nair,ishita.nair@gmail.com,+91-7271876532
+WH-A36,City Warehouse 53,"752, Bazaar Street",Lucknow,UP,226001,10334,Aarti Mehta,aarti.mehta@fastmail.com,+91-8530932672
+WH-B73,Regional Warehouse 54,"484, MG Road",Faridabad,HR,121001,122474,Yash Saxena,yash.saxena@gmail.com,+91-9169097890
+WH-B72,Area Warehouse 55,"979, Sector",Visakhapatnam,AP,530001,47134,Ayaan Gupta,ayaan.gupta@zoho.com,+91-7356129246
+WH-D15,City Warehouse 56,"904, Sector",Visakhapatnam,AP,530001,99906,Pooja Reddy,pooja.reddy@rediffmail.com,+91-8978789850
+WH-A96,Regional Warehouse 57,"836, MG Road",Kochi,KL,682001,118823,Dhruv Choudhary,dhruv.choudhary@yahoo.com,+91-9725339445
+WH-G62,Metro Warehouse 58,"557, Sector",Surat,GJ,395001,50138,Sarita Verma,sarita.verma@yahoo.com,+91-9244113614
+WH-C22,Metro Warehouse 59,"949, Sector",Delhi,DL,110001,105291,Vivaan Bhatt,vivaan.bhatt@nexusmail.com,+91-8973585185
+WH-E72,Area Warehouse 60,"74, Station Road",Indore,MP,452001,87242,Riya Choudhary,riya.choudhary@company.in,+91-8299310826
+WH-C43,Zone Warehouse 61,"581, Station Road",Rajkot,GJ,360001,14063,Geeta Mishra,geeta.mishra@company.in,+91-7680350730
+WH-E46,Regional Warehouse 62,"869, Sector",Guwahati,AS,781001,106722,Dev Agarwal,dev.agarwal@yahoo.com,+91-9723488696
+WH-G33,Regional Warehouse 63,"959, Industrial Blvd",Ludhiana,PB,141001,54629,Aanya Bhatt,aanya.bhatt@icloud.com,+91-8223811296
+WH-B96,Area Warehouse 64,"783, Technology Park",Chandigarh,CH,160001,110813,Sai Verma,sai.verma@outlook.com,+91-9631023415
+WH-G53,Area Warehouse 65,"685, Lake View Rd",Mumbai,MH,400001,130465,Ishaan Mehta,ishaan.mehta@gmail.com,+91-9859553514
+WH-B24,Area Warehouse 66,"953, MG Road",Ludhiana,PB,141001,147406,Shreya Joshi,shreya.joshi@gmail.com,+91-8974912428
+WH-E53,Area Warehouse 67,"858, Industrial Blvd",Chennai,TN,600001,113456,Deepak Pandey,deepak.pandey@icloud.com,+91-9817620807
+WH-D11,City Warehouse 68,"375, Tower Road",Jaipur,RJ,302001,18678,Sai Choudhary,sai.choudhary@gmail.com,+91-9529155849
+WH-C71,Metro Warehouse 69,"450, Bazaar Street",Pune,MH,411001,30501,Usha Choudhary,usha.choudhary@proton.me,+91-8150463887
+WH-H33,Metro Warehouse 70,"399, Bazaar Street",Faridabad,HR,121001,38173,Ananya Saxena,ananya.saxena@rediffmail.com,+91-9384013101
+WH-D76,City Warehouse 71,"581, Ring Road",Pune,MH,411001,24315,Reyansh Modi,reyansh.modi@icloud.com,+91-8980692366
+WH-C30,Metro Warehouse 72,"261, Hospital Road",Nashik,MH,422001,56703,Suresh Nair,suresh.nair@company.in,+91-7089762424
+WH-G20,City Warehouse 73,"897, Tower Road",Nagpur,MH,440001,43543,Krishna Verma,krishna.verma@zoho.com,+91-9709760456
+WH-E79,Zone Warehouse 74,"173, Ring Road",Ahmedabad,GJ,380001,59314,Geeta Choudhary,geeta.choudhary@rediffmail.com,+91-9256587070
+WH-B47,Metro Warehouse 75,"726, Lake View Rd",Nagpur,MH,440001,29495,Nita Singh,nita.singh@outlook.com,+91-7915355881
+WH-G17,City Warehouse 76,"540, MG Road",Ahmedabad,GJ,380001,144151,Diya Verma,diya.verma@gmail.com,+91-8810164252
+WH-B67,Area Warehouse 77,"205, Ring Road",Mumbai,MH,400001,147961,Sneha Singh,sneha.singh@nexusmail.com,+91-8698250229
+WH-H35,Metro Warehouse 78,"367, Lake View Rd",Nashik,MH,422001,50626,Vihaan Patil,vihaan.patil@gmail.com,+91-9447139265
+WH-G56,Area Warehouse 79,"27, Lake View Rd",Allahabad,UP,211001,58968,Rohan Pandey,rohan.pandey@outlook.com,+91-9586972846
+WH-C86,Regional Warehouse 80,"976, Station Road",Nashik,MH,422001,122843,Geeta Bhatt,geeta.bhatt@icloud.com,+91-8763119431
+WH-B66,Metro Warehouse 81,"186, Station Road",Chennai,TN,600001,69744,Priya Verma,priya.verma@proton.me,+91-9372319349
+WH-G72,Regional Warehouse 82,"510, Main St",Visakhapatnam,AP,530001,134529,Diya Ghosh,diya.ghosh@outlook.com,+91-7474948334
+WH-B14,Metro Warehouse 83,"548, Technology Park",Kochi,KL,682001,52473,Reyansh Sharma,reyansh.sharma@gmail.com,+91-8800937066
+WH-C12,Area Warehouse 84,"653, Park Ave",Chennai,TN,600001,89649,Aarti Reddy,aarti.reddy@icloud.com,+91-7779180243
+WH-E18,City Warehouse 85,"724, Bazaar Street",Agra,UP,282001,33695,Anil Gupta,anil.gupta@fastmail.com,+91-8946731955
+WH-D16,Zone Warehouse 86,"474, Industrial Blvd",Ludhiana,PB,141001,30885,Sara Bhatt,sara.bhatt@icloud.com,+91-8772678089
+WH-H32,Area Warehouse 87,"937, Station Road",Vadodara,GJ,390001,130930,Arjun Joshi,arjun.joshi@gmail.com,+91-7991728442
+WH-D74,Zone Warehouse 88,"602, Main St",Tiruvananthapuram,KL,695001,142206,Vivaan Rao,vivaan.rao@gmail.com,+91-9428873456
+WH-H88,Zone Warehouse 89,"898, Lake View Rd",Meerut,UP,250001,51229,Aarti Mishra,aarti.mishra@gmail.com,+91-8986770623
+WH-F29,City Warehouse 90,"331, College Road",Agra,UP,282001,27206,Myra Saxena,myra.saxena@company.in,+91-7223139594

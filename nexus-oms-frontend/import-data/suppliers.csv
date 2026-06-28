@@ -1,0 +1,501 @@
+name,contact_person,email,phone,address,city,state,zip,country,category
+Theta Electronics,Rohan Mishra,rohan.mishra@icloud.com,+91-7631822717,"318, College Road",Rajkot,GJ,360001,India,Office Supplies
+Lambda Tools & Dies,Sunil Nair,sunil.nair@yahoo.com,+91-8945483988,"385, MG Road",Faridabad,HR,121001,India,Warehouse Equipment
+Lambda Tools & Dies,Rahul Das,rahul.das@proton.me,+91-7576092967,"270, MG Road",Indore,MP,452001,India,Lighting
+Epsilon Industrial,Aarav Bhatt,aarav.bhatt@outlook.com,+91-9513074639,"458, MG Road",Ahmedabad,GJ,380001,India,Warehouse Equipment
+Theta Electronics,Sara Modi,sara.modi@proton.me,+91-8729953438,"6, MG Road",Vadodara,GJ,390001,India,Electronics
+Zeta Fabrication,Anil Singh,anil.singh@fastmail.com,+91-7511355819,"91, MG Road",Pune,MH,411001,India,Electronics
+Delta Parts Supply,Sai Shah,sai.shah@fastmail.com,+91-8423969366,"134, Main St",Chandigarh,CH,160001,India,Warehouse Equipment
+Kappa Machinery Works,Reyansh Nair,reyansh.nair@company.in,+91-9715358927,"425, Sector",Ahmedabad,GJ,380001,India,Cleaning Supplies
+Eta Packaging Co,Lata Mehta,lata.mehta@zoho.com,+91-9248859340,"816, Main St",Chennai,TN,600001,India,Labels & Printing
+Zeta Fabrication,Vihaan Patil,vihaan.patil@company.in,+91-7768745666,"2, Hospital Road",Chennai,TN,600001,India,Electronics
+Gamma Raw Materials,Arnav Shah,arnav.shah@rediffmail.com,+91-8121269454,"388, Station Road",Rajkot,GJ,360001,India,Cables & Adapters
+Zeta Fabrication,Yash Shah,yash.shah@proton.me,+91-8188670028,"904, Technology Park",Jaipur,RJ,302001,India,Cleaning Supplies
+Lambda Tools & Dies,Priya Pandey,priya.pandey@company.in,+91-7273917688,"346, Main St",Coimbatore,TN,641001,India,Lighting
+Zeta Fabrication,Vijay Sharma,vijay.sharma@outlook.com,+91-7790741937,"56, Tower Road",Rajkot,GJ,360001,India,Batteries & Power
+Nu Systems Inc,Suresh Kumar,suresh.kumar@yahoo.com,+91-8017873600,"652, Main St",Kochi,KL,682001,India,Packaging
+Xi Industrial Supply,Dev Ghosh,dev.ghosh@rediffmail.com,+91-7721870667,"226, College Road",Mumbai,MH,400001,India,Warehouse Equipment
+Delta Parts Supply,Rekha Menon,rekha.menon@outlook.com,+91-8779888172,"1, Lake View Rd",Goa,GA,403001,India,Packaging
+Lambda Tools & Dies,Sarita Agarwal,sarita.agarwal@outlook.com,+91-8896536528,"64, Bazaar Street",Visakhapatnam,AP,530001,India,Packaging
+Zeta Fabrication,Vihaan Pandey,vihaan.pandey@yahoo.com,+91-9813516616,"443, Sector",Pune,MH,411001,India,Batteries & Power
+Kappa Machinery Works,Vihaan Reddy,vihaan.reddy@proton.me,+91-9776670245,"60, Ring Road",Hyderabad,TS,500001,India,Office Supplies
+Beta Manufacturing Inc,Ayaan Mishra,ayaan.mishra@icloud.com,+91-9096499266,"481, Lake View Rd",Coimbatore,TN,641001,India,Automation
+Delta Parts Supply,Reyansh Desai,reyansh.desai@icloud.com,+91-7934164055,"454, Main St",Visakhapatnam,AP,530001,India,Automation
+Alpha Components Ltd,Nisha Mishra,nisha.mishra@company.in,+91-9018165075,"848, Park Ave",Lucknow,UP,226001,India,Tools
+Kappa Machinery Works,Pooja Reddy,pooja.reddy@gmail.com,+91-8681397756,"769, Lake View Rd",Bhubaneswar,OD,751001,India,Lighting
+Epsilon Industrial,Aarti Pandey,aarti.pandey@zoho.com,+91-9783683817,"553, Market Complex",Udaipur,RJ,313001,India,Tools
+Epsilon Industrial,Rekha Joshi,rekha.joshi@zoho.com,+91-8141091490,"413, Market Complex",Tiruvananthapuram,KL,695001,India,Lighting
+Lambda Tools & Dies,Raj Kumar,raj.kumar@zoho.com,+91-7831175827,"192, Station Road",Ludhiana,PB,141001,India,Electronics
+Xi Industrial Supply,Rekha Verma,rekha.verma@icloud.com,+91-9336467707,"67, Bazaar Street",Varanasi,UP,221001,India,Office Supplies
+Theta Electronics,Anita Chopra,anita.chopra@icloud.com,+91-8163012091,"119, Hospital Road",Indore,MP,452001,India,Safety Equipment
+Eta Packaging Co,Vikram Patel,vikram.patel@yahoo.com,+91-7215052929,"392, Lake View Rd",Goa,GA,403001,India,Packaging
+Epsilon Industrial,Vivaan Choudhary,vivaan.choudhary@outlook.com,+91-9969780085,"187, Business Center",Tiruvananthapuram,KL,695001,India,Office Supplies
+Kappa Machinery Works,Manish Ghosh,manish.ghosh@yahoo.com,+91-9099441454,"461, Park Ave",Kochi,KL,682001,India,Warehouse Equipment
+Alpha Components Ltd,Rahul Nair,rahul.nair@outlook.com,+91-9175538392,"677, Park Ave",Allahabad,UP,211001,India,Cleaning Supplies
+Eta Packaging Co,Sanjay Reddy,sanjay.reddy@zoho.com,+91-8765121245,"816, Technology Park",Pune,MH,411001,India,Automation
+Xi Industrial Supply,Vijay Gupta,vijay.gupta@rediffmail.com,+91-7348077195,"745, Park Ave",Agra,UP,282001,India,Batteries & Power
+Nu Systems Inc,Amit Sen,amit.sen@gmail.com,+91-7086246145,"925, Lake View Rd",Hyderabad,TS,500001,India,Office Supplies
+Eta Packaging Co,Kavita Menon,kavita.menon@company.in,+91-8960944304,"62, Hospital Road",Amritsar,PB,143001,India,Automation
+Nu Systems Inc,Shreya Gupta,shreya.gupta@rediffmail.com,+91-7321989278,"779, Technology Park",Nashik,MH,422001,India,Tools
+Theta Electronics,Nisha Bhatt,nisha.bhatt@yahoo.com,+91-9835692047,"75, Tower Road",Surat,GJ,395001,India,Batteries & Power
+Nu Systems Inc,Sarita Choudhary,sarita.choudhary@icloud.com,+91-7178012766,"639, Market Complex",Coimbatore,TN,641001,India,Automation
+Alpha Components Ltd,Sanjay Agarwal,sanjay.agarwal@fastmail.com,+91-7237948207,"316, College Road",Chennai,TN,600001,India,Batteries & Power
+Omicron Materials Tech,Sanjay Agarwal,sanjay.agarwal@proton.me,+91-7314623477,"489, Hospital Road",Guwahati,AS,781001,India,Automation
+Gamma Raw Materials,Sarita Desai,sarita.desai@company.in,+91-7534710256,"420, Bazaar Street",Chandigarh,CH,160001,India,Electronics
+Iota Hardware Solutions,Vivaan Chopra,vivaan.chopra@fastmail.com,+91-9438055172,"568, Industrial Blvd",Faridabad,HR,121001,India,Automation
+Alpha Components Ltd,Saanvi Desai,saanvi.desai@zoho.com,+91-8587699674,"604, Station Road",Varanasi,UP,221001,India,Labels & Printing
+Theta Electronics,Diya Menon,diya.menon@gmail.com,+91-7109740208,"61, Technology Park",Chennai,TN,600001,India,Warehouse Equipment
+Beta Manufacturing Inc,Geeta Sen,geeta.sen@fastmail.com,+91-9833964214,"95, Lake View Rd",Amritsar,PB,143001,India,Cleaning Supplies
+Iota Hardware Solutions,Sunil Agarwal,sunil.agarwal@outlook.com,+91-9533529966,"703, Business Center",Rajkot,GJ,360001,India,Automation
+Omicron Materials Tech,Neha Agarwal,neha.agarwal@company.in,+91-9114423178,"625, Business Center",Amritsar,PB,143001,India,Lighting
+Omicron Materials Tech,Aadhya Kumar,aadhya.kumar@rediffmail.com,+91-7246688523,"587, Main St",Chennai,TN,600001,India,Electronics
+Gamma Raw Materials,Lata Mehta,lata.mehta@nexusmail.com,+91-7695544387,"955, Tower Road",Jaipur,RJ,302001,India,Tools
+Theta Electronics,Usha Pandey,usha.pandey@zoho.com,+91-7179779665,"336, Tower Road",Rajkot,GJ,360001,India,Automation
+Gamma Raw Materials,Raj Saxena,raj.saxena@outlook.com,+91-7769390871,"675, Station Road",Allahabad,UP,211001,India,Labels & Printing
+Zeta Fabrication,Saanvi Joshi,saanvi.joshi@company.in,+91-7839080544,"807, Industrial Blvd",Chennai,TN,600001,India,Safety Equipment
+Iota Hardware Solutions,Sanjay Sharma,sanjay.sharma@yahoo.com,+91-7395551071,"664, College Road",Srinagar,JK,190001,India,Cables & Adapters
+Eta Packaging Co,Sunil Nair,sunil.nair@yahoo.com,+91-9202658582,"891, Park Ave",Bhopal,MP,462001,India,Cleaning Supplies
+Iota Hardware Solutions,Usha Malhotra,usha.malhotra@rediffmail.com,+91-9641042560,"161, Bazaar Street",Bhopal,MP,462001,India,Cables & Adapters
+Zeta Fabrication,Aarav Saxena,aarav.saxena@nexusmail.com,+91-8998174876,"249, Park Ave",Guwahati,AS,781001,India,Warehouse Equipment
+Omicron Materials Tech,Ananya Ghosh,ananya.ghosh@rediffmail.com,+91-7490399316,"735, Technology Park",Lucknow,UP,226001,India,Office Supplies
+Delta Parts Supply,Saanvi Patil,saanvi.patil@outlook.com,+91-7314536806,"583, Ring Road",Chandigarh,CH,160001,India,Cleaning Supplies
+Omicron Materials Tech,Raj Chopra,raj.chopra@proton.me,+91-7543282313,"7, Lake View Rd",Indore,MP,452001,India,Safety Equipment
+Zeta Fabrication,Vivaan Sharma,vivaan.sharma@proton.me,+91-9324743951,"878, Station Road",Varanasi,UP,221001,India,Warehouse Equipment
+Mu Engineering Corp,Riya Verma,riya.verma@company.in,+91-9562277963,"175, Tower Road",Meerut,UP,250001,India,Electronics
+Theta Electronics,Anil Choudhary,anil.choudhary@outlook.com,+91-8701959681,"192, Ring Road",Amritsar,PB,143001,India,Lighting
+Theta Electronics,Geeta Kumar,geeta.kumar@icloud.com,+91-7620269219,"24, Hospital Road",Coimbatore,TN,641001,India,Tools
+Lambda Tools & Dies,Sanjay Malhotra,sanjay.malhotra@fastmail.com,+91-8517238519,"390, Main St",Goa,GA,403001,India,Electronics
+Zeta Fabrication,Dhruv Choudhary,dhruv.choudhary@outlook.com,+91-9708098662,"140, Sector",Lucknow,UP,226001,India,Safety Equipment
+Omicron Materials Tech,Aarti Modi,aarti.modi@yahoo.com,+91-8339470317,"383, College Road",Delhi,DL,110001,India,Packaging
+Beta Manufacturing Inc,Shaurya Joshi,shaurya.joshi@outlook.com,+91-9083768882,"766, Main St",Bhopal,MP,462001,India,Office Supplies
+Nu Systems Inc,Reyansh Ghosh,reyansh.ghosh@company.in,+91-8454372495,"948, Ring Road",Visakhapatnam,AP,530001,India,Labels & Printing
+Iota Hardware Solutions,Pooja Patil,pooja.patil@proton.me,+91-7693173904,"92, Technology Park",Vadodara,GJ,390001,India,Cleaning Supplies
+Kappa Machinery Works,Shreya Pandey,shreya.pandey@gmail.com,+91-8720314066,"883, Hospital Road",Srinagar,JK,190001,India,Safety Equipment
+Iota Hardware Solutions,Diya Choudhary,diya.choudhary@icloud.com,+91-8804719863,"818, Industrial Blvd",Lucknow,UP,226001,India,Automation
+Nu Systems Inc,Rekha Reddy,rekha.reddy@icloud.com,+91-8279053266,"464, Station Road",Allahabad,UP,211001,India,Safety Equipment
+Nu Systems Inc,Manish Pandey,manish.pandey@proton.me,+91-7884147768,"341, Park Ave",Surat,GJ,395001,India,Automation
+Zeta Fabrication,Dev Patel,dev.patel@outlook.com,+91-7501911576,"555, Bazaar Street",Bhopal,MP,462001,India,Office Supplies
+Nu Systems Inc,Yash Ghosh,yash.ghosh@company.in,+91-9217145235,"820, Industrial Blvd",Visakhapatnam,AP,530001,India,Packaging
+Delta Parts Supply,Riya Verma,riya.verma@zoho.com,+91-7246383269,"695, Bazaar Street",Visakhapatnam,AP,530001,India,Electronics
+Omicron Materials Tech,Kavita Agarwal,kavita.agarwal@icloud.com,+91-8941995484,"208, Tower Road",Nashik,MH,422001,India,Warehouse Equipment
+Beta Manufacturing Inc,Aditya Mehta,aditya.mehta@fastmail.com,+91-7654377986,"738, Industrial Blvd",Lucknow,UP,226001,India,Packaging
+Eta Packaging Co,Ishaan Bhatt,ishaan.bhatt@fastmail.com,+91-9394159507,"16, Business Center",Nagpur,MH,440001,India,Cables & Adapters
+Iota Hardware Solutions,Shaurya Patil,shaurya.patil@zoho.com,+91-9605023868,"769, Main St",Agra,UP,282001,India,Batteries & Power
+Lambda Tools & Dies,Myra Shah,myra.shah@gmail.com,+91-8180659362,"613, Ring Road",Kochi,KL,682001,India,Tools
+Zeta Fabrication,Sanjay Verma,sanjay.verma@icloud.com,+91-8256090412,"308, Park Ave",Jaipur,RJ,302001,India,Safety Equipment
+Zeta Fabrication,Ananya Choudhary,ananya.choudhary@fastmail.com,+91-8790190537,"597, MG Road",Mumbai,MH,400001,India,Automation
+Iota Hardware Solutions,Pooja Das,pooja.das@fastmail.com,+91-8256914070,"538, Park Ave",Chennai,TN,600001,India,Electronics
+Theta Electronics,Reyansh Menon,reyansh.menon@icloud.com,+91-9439732861,"937, Technology Park",Tiruvananthapuram,KL,695001,India,Electronics
+Delta Parts Supply,Rekha Agarwal,rekha.agarwal@fastmail.com,+91-7096176531,"666, Ring Road",Udaipur,RJ,313001,India,Office Supplies
+Epsilon Industrial,Nita Das,nita.das@company.in,+91-7686273959,"138, Hospital Road",Pune,MH,411001,India,Safety Equipment
+Gamma Raw Materials,Raj Sen,raj.sen@zoho.com,+91-8624564614,"218, College Road",Ludhiana,PB,141001,India,Packaging
+Mu Engineering Corp,Amit Gupta,amit.gupta@fastmail.com,+91-7179649902,"239, Market Complex",Rajkot,GJ,360001,India,Labels & Printing
+Delta Parts Supply,Aditya Das,aditya.das@icloud.com,+91-8536784710,"992, Lake View Rd",Srinagar,JK,190001,India,Batteries & Power
+Iota Hardware Solutions,Aarti Sen,aarti.sen@company.in,+91-7578625367,"569, Park Ave",Bangalore,KA,560001,India,Packaging
+Nu Systems Inc,Riya Rao,riya.rao@zoho.com,+91-7915170640,"171, Tower Road",Chennai,TN,600001,India,Labels & Printing
+Mu Engineering Corp,Sara Singh,sara.singh@yahoo.com,+91-7522660652,"366, Tower Road",Vadodara,GJ,390001,India,Office Supplies
+Eta Packaging Co,Aarav Joshi,aarav.joshi@gmail.com,+91-7429799920,"218, Park Ave",Jaipur,RJ,302001,India,Packaging
+Theta Electronics,Riya Singh,riya.singh@zoho.com,+91-9577312223,"316, Industrial Blvd",Agra,UP,282001,India,Tools
+Theta Electronics,Rohan Saxena,rohan.saxena@fastmail.com,+91-8806822044,"894, Park Ave",Bhubaneswar,OD,751001,India,Warehouse Equipment
+Kappa Machinery Works,Lata Kumar,lata.kumar@gmail.com,+91-8358238658,"25, College Road",Nashik,MH,422001,India,Packaging
+Eta Packaging Co,Dhruv Patel,dhruv.patel@zoho.com,+91-7548761936,"92, Market Complex",Kolkata,WB,700001,India,Electronics
+Kappa Machinery Works,Dhruv Reddy,dhruv.reddy@yahoo.com,+91-7139312438,"997, Bazaar Street",Ahmedabad,GJ,380001,India,Cables & Adapters
+Kappa Machinery Works,Deepak Ghosh,deepak.ghosh@outlook.com,+91-9482952448,"66, Technology Park",Tiruvananthapuram,KL,695001,India,Automation
+Gamma Raw Materials,Ishaan Joshi,ishaan.joshi@fastmail.com,+91-9137512359,"77, Technology Park",Vadodara,GJ,390001,India,Electronics
+Gamma Raw Materials,Vivaan Bhatt,vivaan.bhatt@fastmail.com,+91-9908621923,"853, Tower Road",Rajkot,GJ,360001,India,Electronics
+Beta Manufacturing Inc,Usha Nair,usha.nair@proton.me,+91-9018960792,"85, College Road",Agra,UP,282001,India,Batteries & Power
+Alpha Components Ltd,Neha Pandey,neha.pandey@outlook.com,+91-9931074346,"161, Main St",Meerut,UP,250001,India,Warehouse Equipment
+Alpha Components Ltd,Suresh Patil,suresh.patil@icloud.com,+91-8806810943,"445, Station Road",Bhopal,MP,462001,India,Labels & Printing
+Lambda Tools & Dies,Dhruv Reddy,dhruv.reddy@nexusmail.com,+91-7677657503,"28, Park Ave",Tiruvananthapuram,KL,695001,India,Labels & Printing
+Gamma Raw Materials,Yash Patel,yash.patel@rediffmail.com,+91-7223514674,"320, College Road",Faridabad,HR,121001,India,Batteries & Power
+Beta Manufacturing Inc,Sneha Reddy,sneha.reddy@gmail.com,+91-9878657603,"682, Park Ave",Srinagar,JK,190001,India,Packaging
+Delta Parts Supply,Sara Modi,sara.modi@outlook.com,+91-7096087552,"406, Lake View Rd",Indore,MP,452001,India,Electronics
+Xi Industrial Supply,Amit Ghosh,amit.ghosh@outlook.com,+91-7961410015,"490, Business Center",Chennai,TN,600001,India,Automation
+Xi Industrial Supply,Myra Chopra,myra.chopra@icloud.com,+91-9070199164,"430, Sector",Srinagar,JK,190001,India,Safety Equipment
+Delta Parts Supply,Rahul Verma,rahul.verma@nexusmail.com,+91-9606260317,"231, MG Road",Goa,GA,403001,India,Warehouse Equipment
+Theta Electronics,Aaradhya Joshi,aaradhya.joshi@nexusmail.com,+91-8982523261,"603, Ring Road",Udaipur,RJ,313001,India,Electronics
+Mu Engineering Corp,Aarav Sharma,aarav.sharma@fastmail.com,+91-7977923365,"402, Industrial Blvd",Visakhapatnam,AP,530001,India,Cables & Adapters
+Zeta Fabrication,Aditya Gupta,aditya.gupta@company.in,+91-8410778093,"247, MG Road",Pune,MH,411001,India,Office Supplies
+Eta Packaging Co,Shaurya Sharma,shaurya.sharma@gmail.com,+91-7737785700,"262, Hospital Road",Allahabad,UP,211001,India,Warehouse Equipment
+Iota Hardware Solutions,Aarti Modi,aarti.modi@company.in,+91-8273047692,"659, Industrial Blvd",Hyderabad,TS,500001,India,Packaging
+Iota Hardware Solutions,Reyansh Das,reyansh.das@icloud.com,+91-7069628408,"219, Industrial Blvd",Mumbai,MH,400001,India,Packaging
+Eta Packaging Co,Dhruv Singh,dhruv.singh@icloud.com,+91-8711481768,"954, Tower Road",Mumbai,MH,400001,India,Batteries & Power
+Mu Engineering Corp,Vivaan Ghosh,vivaan.ghosh@icloud.com,+91-7367373780,"785, Ring Road",Bangalore,KA,560001,India,Cables & Adapters
+Zeta Fabrication,Ayaan Rao,ayaan.rao@icloud.com,+91-7529261102,"835, Bazaar Street",Guwahati,AS,781001,India,Cables & Adapters
+Lambda Tools & Dies,Dhruv Sen,dhruv.sen@gmail.com,+91-7919362591,"97, Bazaar Street",Tiruvananthapuram,KL,695001,India,Automation
+Gamma Raw Materials,Deepak Patel,deepak.patel@fastmail.com,+91-9055547194,"201, Station Road",Coimbatore,TN,641001,India,Warehouse Equipment
+Eta Packaging Co,Shreya Rao,shreya.rao@fastmail.com,+91-9725093752,"512, Hospital Road",Surat,GJ,395001,India,Electronics
+Gamma Raw Materials,Aarav Nair,aarav.nair@fastmail.com,+91-8593020529,"912, Main St",Ludhiana,PB,141001,India,Batteries & Power
+Nu Systems Inc,Anil Chopra,anil.chopra@nexusmail.com,+91-7931673948,"386, Hospital Road",Meerut,UP,250001,India,Packaging
+Epsilon Industrial,Anaya Sen,anaya.sen@outlook.com,+91-9367771474,"118, MG Road",Vadodara,GJ,390001,India,Office Supplies
+Zeta Fabrication,Aadhya Gupta,aadhya.gupta@company.in,+91-8190586083,"378, Ring Road",Mumbai,MH,400001,India,Lighting
+Alpha Components Ltd,Vihaan Patel,vihaan.patel@icloud.com,+91-9941612420,"437, Station Road",Amritsar,PB,143001,India,Office Supplies
+Theta Electronics,Myra Chopra,myra.chopra@proton.me,+91-9986043328,"139, Hospital Road",Vadodara,GJ,390001,India,Labels & Printing
+Gamma Raw Materials,Amit Nair,amit.nair@nexusmail.com,+91-8352792468,"96, Main St",Delhi,DL,110001,India,Cleaning Supplies
+Iota Hardware Solutions,Ananya Nair,ananya.nair@rediffmail.com,+91-7185794538,"535, Park Ave",Nashik,MH,422001,India,Labels & Printing
+Eta Packaging Co,Deepak Menon,deepak.menon@zoho.com,+91-7135029774,"857, Technology Park",Kochi,KL,682001,India,Electronics
+Theta Electronics,Anaya Singh,anaya.singh@zoho.com,+91-7194166084,"14, Industrial Blvd",Nagpur,MH,440001,India,Warehouse Equipment
+Gamma Raw Materials,Kabir Chopra,kabir.chopra@nexusmail.com,+91-9165196300,"83, Technology Park",Nashik,MH,422001,India,Labels & Printing
+Beta Manufacturing Inc,Vikram Agarwal,vikram.agarwal@outlook.com,+91-7611881563,"29, Bazaar Street",Amritsar,PB,143001,India,Office Supplies
+Omicron Materials Tech,Arjun Pandey,arjun.pandey@rediffmail.com,+91-7871398993,"33, Park Ave",Visakhapatnam,AP,530001,India,Safety Equipment
+Theta Electronics,Vijay Verma,vijay.verma@rediffmail.com,+91-9527582006,"275, Market Complex",Surat,GJ,395001,India,Lighting
+Beta Manufacturing Inc,Vikram Joshi,vikram.joshi@icloud.com,+91-7669037693,"774, College Road",Tiruvananthapuram,KL,695001,India,Cleaning Supplies
+Lambda Tools & Dies,Reyansh Sharma,reyansh.sharma@fastmail.com,+91-7536186682,"434, MG Road",Amritsar,PB,143001,India,Batteries & Power
+Beta Manufacturing Inc,Krishna Sen,krishna.sen@gmail.com,+91-9560660170,"292, Sector",Faridabad,HR,121001,India,Labels & Printing
+Eta Packaging Co,Sarita Pandey,sarita.pandey@proton.me,+91-7851070756,"569, College Road",Amritsar,PB,143001,India,Batteries & Power
+Gamma Raw Materials,Kabir Verma,kabir.verma@fastmail.com,+91-7856856267,"60, Station Road",Ahmedabad,GJ,380001,India,Automation
+Xi Industrial Supply,Ishita Reddy,ishita.reddy@icloud.com,+91-8901684027,"159, Ring Road",Guwahati,AS,781001,India,Electronics
+Omicron Materials Tech,Amit Bhatt,amit.bhatt@outlook.com,+91-8686366613,"123, Main St",Lucknow,UP,226001,India,Lighting
+Zeta Fabrication,Sanjay Chopra,sanjay.chopra@yahoo.com,+91-7822041249,"542, MG Road",Lucknow,UP,226001,India,Warehouse Equipment
+Lambda Tools & Dies,Kabir Patel,kabir.patel@gmail.com,+91-7806434334,"962, Bazaar Street",Bhubaneswar,OD,751001,India,Batteries & Power
+Zeta Fabrication,Sarita Bhatt,sarita.bhatt@yahoo.com,+91-8758726015,"882, College Road",Goa,GA,403001,India,Electronics
+Nu Systems Inc,Dhruv Kumar,dhruv.kumar@fastmail.com,+91-9805736890,"829, Tower Road",Bangalore,KA,560001,India,Warehouse Equipment
+Delta Parts Supply,Aarav Agarwal,aarav.agarwal@zoho.com,+91-7718611962,"752, MG Road",Bhubaneswar,OD,751001,India,Safety Equipment
+Nu Systems Inc,Vihaan Reddy,vihaan.reddy@fastmail.com,+91-9953279113,"297, Main St",Kolkata,WB,700001,India,Labels & Printing
+Eta Packaging Co,Sanjay Pandey,sanjay.pandey@zoho.com,+91-9594362671,"607, Industrial Blvd",Ahmedabad,GJ,380001,India,Cleaning Supplies
+Xi Industrial Supply,Manish Singh,manish.singh@gmail.com,+91-8076011664,"865, Lake View Rd",Kolkata,WB,700001,India,Cleaning Supplies
+Theta Electronics,Aditya Desai,aditya.desai@rediffmail.com,+91-8589348435,"995, Bazaar Street",Rajkot,GJ,360001,India,Warehouse Equipment
+Omicron Materials Tech,Aarti Nair,aarti.nair@gmail.com,+91-9784167212,"606, Park Ave",Rajkot,GJ,360001,India,Safety Equipment
+Iota Hardware Solutions,Neha Sen,neha.sen@proton.me,+91-8542737165,"566, MG Road",Rajkot,GJ,360001,India,Safety Equipment
+Beta Manufacturing Inc,Rekha Patil,rekha.patil@rediffmail.com,+91-9441558845,"424, Lake View Rd",Coimbatore,TN,641001,India,Cleaning Supplies
+Zeta Fabrication,Sunil Mishra,sunil.mishra@icloud.com,+91-7535783819,"387, Industrial Blvd",Kochi,KL,682001,India,Safety Equipment
+Gamma Raw Materials,Aarti Pandey,aarti.pandey@nexusmail.com,+91-7548544664,"971, Technology Park",Mysore,KA,570001,India,Electronics
+Delta Parts Supply,Anil Shah,anil.shah@icloud.com,+91-7258384838,"683, Main St",Varanasi,UP,221001,India,Batteries & Power
+Eta Packaging Co,Usha Chopra,usha.chopra@yahoo.com,+91-7870118243,"702, Technology Park",Rajkot,GJ,360001,India,Safety Equipment
+Alpha Components Ltd,Vikram Mehta,vikram.mehta@fastmail.com,+91-9136040235,"154, Tower Road",Udaipur,RJ,313001,India,Cables & Adapters
+Eta Packaging Co,Lata Patil,lata.patil@fastmail.com,+91-7281394009,"649, Station Road",Coimbatore,TN,641001,India,Electronics
+Omicron Materials Tech,Dhruv Sen,dhruv.sen@yahoo.com,+91-8910423536,"483, Hospital Road",Mumbai,MH,400001,India,Tools
+Lambda Tools & Dies,Aaradhya Kumar,aaradhya.kumar@nexusmail.com,+91-8401641498,"453, Business Center",Bhopal,MP,462001,India,Cables & Adapters
+Delta Parts Supply,Shreya Verma,shreya.verma@yahoo.com,+91-7713819862,"539, Business Center",Indore,MP,452001,India,Office Supplies
+Beta Manufacturing Inc,Myra Malhotra,myra.malhotra@zoho.com,+91-9345325639,"825, Sector",Lucknow,UP,226001,India,Batteries & Power
+Beta Manufacturing Inc,Arjun Singh,arjun.singh@company.in,+91-8511460037,"948, Bazaar Street",Surat,GJ,395001,India,Electronics
+Theta Electronics,Aadhya Nair,aadhya.nair@zoho.com,+91-8765173108,"908, Hospital Road",Ludhiana,PB,141001,India,Labels & Printing
+Zeta Fabrication,Ishita Singh,ishita.singh@company.in,+91-9702752417,"955, Ring Road",Kochi,KL,682001,India,Office Supplies
+Theta Electronics,Myra Gupta,myra.gupta@yahoo.com,+91-9550761960,"525, Market Complex",Varanasi,UP,221001,India,Cleaning Supplies
+Gamma Raw Materials,Arnav Mehta,arnav.mehta@nexusmail.com,+91-8551293504,"744, Main St",Mumbai,MH,400001,India,Lighting
+Xi Industrial Supply,Manish Saxena,manish.saxena@icloud.com,+91-7879939306,"562, Technology Park",Bangalore,KA,560001,India,Packaging
+Epsilon Industrial,Nisha Modi,nisha.modi@rediffmail.com,+91-8552976466,"754, Bazaar Street",Kolkata,WB,700001,India,Batteries & Power
+Zeta Fabrication,Raj Sharma,raj.sharma@fastmail.com,+91-8735116191,"912, MG Road",Nashik,MH,422001,India,Packaging
+Iota Hardware Solutions,Anil Desai,anil.desai@gmail.com,+91-9461097948,"133, Business Center",Meerut,UP,250001,India,Batteries & Power
+Nu Systems Inc,Aarti Kumar,aarti.kumar@fastmail.com,+91-8726432344,"443, Park Ave",Guwahati,AS,781001,India,Safety Equipment
+Epsilon Industrial,Suresh Mehta,suresh.mehta@gmail.com,+91-9659281448,"469, Technology Park",Coimbatore,TN,641001,India,Safety Equipment
+Beta Manufacturing Inc,Saanvi Bhatt,saanvi.bhatt@nexusmail.com,+91-9259522279,"529, Park Ave",Indore,MP,452001,India,Cables & Adapters
+Omicron Materials Tech,Krishna Das,krishna.das@outlook.com,+91-8931536400,"533, Station Road",Mumbai,MH,400001,India,Office Supplies
+Zeta Fabrication,Aarav Shah,aarav.shah@nexusmail.com,+91-7010794172,"538, Hospital Road",Ludhiana,PB,141001,India,Office Supplies
+Kappa Machinery Works,Ayaan Shah,ayaan.shah@yahoo.com,+91-8316747516,"502, Sector",Nashik,MH,422001,India,Cleaning Supplies
+Gamma Raw Materials,Kavita Pandey,kavita.pandey@nexusmail.com,+91-8837863362,"569, Hospital Road",Kolkata,WB,700001,India,Safety Equipment
+Omicron Materials Tech,Sara Rao,sara.rao@zoho.com,+91-9126527235,"910, Station Road",Surat,GJ,395001,India,Automation
+Theta Electronics,Lata Patil,lata.patil@fastmail.com,+91-7338383173,"77, Ring Road",Amritsar,PB,143001,India,Safety Equipment
+Lambda Tools & Dies,Amit Kumar,amit.kumar@rediffmail.com,+91-9255676041,"548, Technology Park",Bangalore,KA,560001,India,Tools
+Beta Manufacturing Inc,Myra Mehta,myra.mehta@zoho.com,+91-7207963489,"53, MG Road",Agra,UP,282001,India,Safety Equipment
+Iota Hardware Solutions,Ishita Gupta,ishita.gupta@zoho.com,+91-9487878302,"466, Sector",Mumbai,MH,400001,India,Tools
+Iota Hardware Solutions,Sneha Menon,sneha.menon@icloud.com,+91-7047071876,"164, Sector",Nashik,MH,422001,India,Lighting
+Iota Hardware Solutions,Arjun Sharma,arjun.sharma@rediffmail.com,+91-9276813969,"255, Tower Road",Chennai,TN,600001,India,Batteries & Power
+Theta Electronics,Shreya Gupta,shreya.gupta@outlook.com,+91-8740276942,"686, Technology Park",Vadodara,GJ,390001,India,Cleaning Supplies
+Lambda Tools & Dies,Sara Desai,sara.desai@fastmail.com,+91-8077893126,"581, Technology Park",Hyderabad,TS,500001,India,Lighting
+Omicron Materials Tech,Ishaan Sen,ishaan.sen@outlook.com,+91-9579368725,"662, Market Complex",Kolkata,WB,700001,India,Office Supplies
+Eta Packaging Co,Rahul Malhotra,rahul.malhotra@nexusmail.com,+91-8944951510,"251, College Road",Kochi,KL,682001,India,Cleaning Supplies
+Iota Hardware Solutions,Kavita Patel,kavita.patel@nexusmail.com,+91-9543732850,"44, Lake View Rd",Surat,GJ,395001,India,Automation
+Epsilon Industrial,Anita Saxena,anita.saxena@proton.me,+91-7324899013,"88, Ring Road",Coimbatore,TN,641001,India,Automation
+Xi Industrial Supply,Nita Das,nita.das@outlook.com,+91-7757516813,"838, Station Road",Visakhapatnam,AP,530001,India,Cables & Adapters
+Iota Hardware Solutions,Vivaan Gupta,vivaan.gupta@icloud.com,+91-7915660556,"504, Main St",Chennai,TN,600001,India,Office Supplies
+Mu Engineering Corp,Arjun Patel,arjun.patel@fastmail.com,+91-9907710114,"262, Business Center",Vadodara,GJ,390001,India,Packaging
+Omicron Materials Tech,Ananya Verma,ananya.verma@fastmail.com,+91-7660465027,"132, Business Center",Vadodara,GJ,390001,India,Office Supplies
+Iota Hardware Solutions,Kabir Mehta,kabir.mehta@outlook.com,+91-7701468808,"558, MG Road",Coimbatore,TN,641001,India,Labels & Printing
+Beta Manufacturing Inc,Priya Reddy,priya.reddy@outlook.com,+91-9614169257,"471, Sector",Delhi,DL,110001,India,Labels & Printing
+Eta Packaging Co,Usha Joshi,usha.joshi@icloud.com,+91-9870495217,"704, Ring Road",Ahmedabad,GJ,380001,India,Labels & Printing
+Delta Parts Supply,Yash Choudhary,yash.choudhary@icloud.com,+91-9817486300,"51, Sector",Allahabad,UP,211001,India,Cables & Adapters
+Epsilon Industrial,Arjun Patil,arjun.patil@proton.me,+91-8945381929,"258, MG Road",Ludhiana,PB,141001,India,Batteries & Power
+Eta Packaging Co,Aarti Reddy,aarti.reddy@nexusmail.com,+91-8558558697,"427, Hospital Road",Chennai,TN,600001,India,Lighting
+Epsilon Industrial,Dhruv Reddy,dhruv.reddy@rediffmail.com,+91-8578969360,"494, Station Road",Mysore,KA,570001,India,Lighting
+Zeta Fabrication,Rahul Patel,rahul.patel@icloud.com,+91-7906254459,"518, Technology Park",Kochi,KL,682001,India,Packaging
+Iota Hardware Solutions,Anil Sen,anil.sen@fastmail.com,+91-9988435146,"451, Business Center",Rajkot,GJ,360001,India,Lighting
+Omicron Materials Tech,Rahul Kumar,rahul.kumar@nexusmail.com,+91-9485791194,"908, Sector",Bangalore,KA,560001,India,Office Supplies
+Gamma Raw Materials,Aaradhya Nair,aaradhya.nair@rediffmail.com,+91-7014233909,"360, College Road",Visakhapatnam,AP,530001,India,Cables & Adapters
+Lambda Tools & Dies,Vihaan Patel,vihaan.patel@yahoo.com,+91-8570877768,"178, Tower Road",Srinagar,JK,190001,India,Cleaning Supplies
+Iota Hardware Solutions,Shreya Gupta,shreya.gupta@proton.me,+91-9487124211,"741, Main St",Ludhiana,PB,141001,India,Cables & Adapters
+Mu Engineering Corp,Yash Joshi,yash.joshi@outlook.com,+91-8930348240,"3, Technology Park",Udaipur,RJ,313001,India,Labels & Printing
+Alpha Components Ltd,Ishita Joshi,ishita.joshi@zoho.com,+91-7837021800,"641, Industrial Blvd",Coimbatore,TN,641001,India,Cleaning Supplies
+Omicron Materials Tech,Anita Choudhary,anita.choudhary@gmail.com,+91-8679359194,"327, Ring Road",Pune,MH,411001,India,Electronics
+Iota Hardware Solutions,Yash Das,yash.das@yahoo.com,+91-9014387802,"474, Bazaar Street",Mumbai,MH,400001,India,Cables & Adapters
+Xi Industrial Supply,Kavita Rao,kavita.rao@fastmail.com,+91-7678291873,"810, Technology Park",Chennai,TN,600001,India,Safety Equipment
+Gamma Raw Materials,Vijay Menon,vijay.menon@gmail.com,+91-7545498637,"483, Hospital Road",Allahabad,UP,211001,India,Cleaning Supplies
+Epsilon Industrial,Diya Malhotra,diya.malhotra@gmail.com,+91-7216162892,"383, Lake View Rd",Allahabad,UP,211001,India,Warehouse Equipment
+Zeta Fabrication,Priya Menon,priya.menon@fastmail.com,+91-8238737811,"650, Industrial Blvd",Ahmedabad,GJ,380001,India,Electronics
+Lambda Tools & Dies,Deepak Pandey,deepak.pandey@gmail.com,+91-9569754679,"404, Main St",Srinagar,JK,190001,India,Warehouse Equipment
+Theta Electronics,Aadhya Saxena,aadhya.saxena@company.in,+91-7379416657,"586, Sector",Mumbai,MH,400001,India,Electronics
+Mu Engineering Corp,Raj Mehta,raj.mehta@yahoo.com,+91-8337098348,"883, Park Ave",Srinagar,JK,190001,India,Safety Equipment
+Beta Manufacturing Inc,Vikram Mehta,vikram.mehta@proton.me,+91-7068331564,"301, Business Center",Allahabad,UP,211001,India,Batteries & Power
+Kappa Machinery Works,Neha Patil,neha.patil@icloud.com,+91-7299576881,"87, Business Center",Bhopal,MP,462001,India,Safety Equipment
+Nu Systems Inc,Suresh Ghosh,suresh.ghosh@proton.me,+91-9840391238,"999, Lake View Rd",Srinagar,JK,190001,India,Cables & Adapters
+Zeta Fabrication,Nita Malhotra,nita.malhotra@company.in,+91-8288412189,"394, Market Complex",Indore,MP,452001,India,Office Supplies
+Nu Systems Inc,Diya Agarwal,diya.agarwal@gmail.com,+91-8221335474,"242, College Road",Goa,GA,403001,India,Lighting
+Gamma Raw Materials,Anita Shah,anita.shah@company.in,+91-8992287177,"976, Sector",Tiruvananthapuram,KL,695001,India,Batteries & Power
+Mu Engineering Corp,Vihaan Choudhary,vihaan.choudhary@yahoo.com,+91-8683971112,"776, Ring Road",Goa,GA,403001,India,Lighting
+Alpha Components Ltd,Anaya Singh,anaya.singh@company.in,+91-9095212575,"198, Sector",Ludhiana,PB,141001,India,Office Supplies
+Iota Hardware Solutions,Vikram Nair,vikram.nair@rediffmail.com,+91-7345028102,"822, Station Road",Visakhapatnam,AP,530001,India,Packaging
+Omicron Materials Tech,Rahul Reddy,rahul.reddy@zoho.com,+91-9006917408,"887, Industrial Blvd",Surat,GJ,395001,India,Automation
+Mu Engineering Corp,Sunil Joshi,sunil.joshi@gmail.com,+91-8968294746,"705, Business Center",Meerut,UP,250001,India,Safety Equipment
+Beta Manufacturing Inc,Anil Kumar,anil.kumar@yahoo.com,+91-9592235860,"282, College Road",Varanasi,UP,221001,India,Warehouse Equipment
+Xi Industrial Supply,Vikram Desai,vikram.desai@icloud.com,+91-8954814004,"942, Main St",Chandigarh,CH,160001,India,Tools
+Zeta Fabrication,Arnav Mehta,arnav.mehta@fastmail.com,+91-8589627186,"962, Technology Park",Hyderabad,TS,500001,India,Batteries & Power
+Lambda Tools & Dies,Aadhya Agarwal,aadhya.agarwal@rediffmail.com,+91-8463879059,"999, Technology Park",Vadodara,GJ,390001,India,Labels & Printing
+Beta Manufacturing Inc,Manish Modi,manish.modi@rediffmail.com,+91-7357616895,"292, Park Ave",Agra,UP,282001,India,Batteries & Power
+Theta Electronics,Neha Pandey,neha.pandey@proton.me,+91-8594589456,"370, Hospital Road",Indore,MP,452001,India,Labels & Printing
+Gamma Raw Materials,Kavita Patel,kavita.patel@company.in,+91-9851788836,"393, Lake View Rd",Bhopal,MP,462001,India,Cables & Adapters
+Beta Manufacturing Inc,Amit Agarwal,amit.agarwal@zoho.com,+91-8027653048,"799, Lake View Rd",Pune,MH,411001,India,Tools
+Alpha Components Ltd,Sarita Desai,sarita.desai@company.in,+91-8096044599,"687, Main St",Surat,GJ,395001,India,Lighting
+Mu Engineering Corp,Vijay Patil,vijay.patil@company.in,+91-9956149077,"209, Market Complex",Goa,GA,403001,India,Tools
+Eta Packaging Co,Sarita Bhatt,sarita.bhatt@zoho.com,+91-8322784897,"286, Park Ave",Agra,UP,282001,India,Automation
+Eta Packaging Co,Dev Pandey,dev.pandey@company.in,+91-9511781552,"534, Sector",Udaipur,RJ,313001,India,Cleaning Supplies
+Kappa Machinery Works,Arnav Desai,arnav.desai@gmail.com,+91-8701872774,"531, Sector",Ludhiana,PB,141001,India,Cleaning Supplies
+Omicron Materials Tech,Sai Menon,sai.menon@yahoo.com,+91-8766941372,"332, Tower Road",Bangalore,KA,560001,India,Labels & Printing
+Mu Engineering Corp,Vijay Menon,vijay.menon@icloud.com,+91-7173446890,"809, Business Center",Nashik,MH,422001,India,Cables & Adapters
+Epsilon Industrial,Diya Mishra,diya.mishra@gmail.com,+91-8483528049,"371, Business Center",Faridabad,HR,121001,India,Warehouse Equipment
+Mu Engineering Corp,Ishaan Pandey,ishaan.pandey@fastmail.com,+91-8349918355,"63, Tower Road",Srinagar,JK,190001,India,Office Supplies
+Theta Electronics,Anita Shah,anita.shah@outlook.com,+91-8800972292,"284, Bazaar Street",Hyderabad,TS,500001,India,Cables & Adapters
+Zeta Fabrication,Sai Desai,sai.desai@nexusmail.com,+91-9001926240,"954, Business Center",Visakhapatnam,AP,530001,India,Electronics
+Delta Parts Supply,Vikram Choudhary,vikram.choudhary@outlook.com,+91-8831214061,"234, Ring Road",Kochi,KL,682001,India,Lighting
+Kappa Machinery Works,Sunil Patil,sunil.patil@yahoo.com,+91-9215012438,"574, MG Road",Allahabad,UP,211001,India,Lighting
+Theta Electronics,Priya Mishra,priya.mishra@gmail.com,+91-9918471563,"367, Main St",Kolkata,WB,700001,India,Safety Equipment
+Kappa Machinery Works,Manish Modi,manish.modi@icloud.com,+91-7706188725,"643, Industrial Blvd",Varanasi,UP,221001,India,Batteries & Power
+Theta Electronics,Sarita Desai,sarita.desai@zoho.com,+91-9266249908,"792, MG Road",Tiruvananthapuram,KL,695001,India,Safety Equipment
+Beta Manufacturing Inc,Usha Pandey,usha.pandey@zoho.com,+91-7219777996,"413, Industrial Blvd",Kochi,KL,682001,India,Batteries & Power
+Mu Engineering Corp,Vikram Rao,vikram.rao@fastmail.com,+91-8347219175,"414, Bazaar Street",Ludhiana,PB,141001,India,Safety Equipment
+Nu Systems Inc,Nisha Mehta,nisha.mehta@nexusmail.com,+91-9592380010,"123, Technology Park",Mumbai,MH,400001,India,Safety Equipment
+Gamma Raw Materials,Geeta Sen,geeta.sen@proton.me,+91-7425449720,"702, College Road",Goa,GA,403001,India,Batteries & Power
+Epsilon Industrial,Vivaan Desai,vivaan.desai@company.in,+91-8318561970,"376, Hospital Road",Faridabad,HR,121001,India,Cleaning Supplies
+Theta Electronics,Vikram Sharma,vikram.sharma@rediffmail.com,+91-7737261661,"305, Business Center",Agra,UP,282001,India,Office Supplies
+Kappa Machinery Works,Manish Chopra,manish.chopra@company.in,+91-7338127295,"112, MG Road",Guwahati,AS,781001,India,Batteries & Power
+Gamma Raw Materials,Vihaan Choudhary,vihaan.choudhary@gmail.com,+91-9778219995,"718, Industrial Blvd",Goa,GA,403001,India,Cleaning Supplies
+Delta Parts Supply,Saanvi Saxena,saanvi.saxena@outlook.com,+91-8745311199,"940, Main St",Surat,GJ,395001,India,Electronics
+Zeta Fabrication,Aanya Mehta,aanya.mehta@rediffmail.com,+91-7084847858,"649, Ring Road",Tiruvananthapuram,KL,695001,India,Lighting
+Eta Packaging Co,Vijay Agarwal,vijay.agarwal@icloud.com,+91-7129215026,"950, Park Ave",Surat,GJ,395001,India,Safety Equipment
+Delta Parts Supply,Sai Sen,sai.sen@rediffmail.com,+91-7435949382,"15, Business Center",Pune,MH,411001,India,Warehouse Equipment
+Lambda Tools & Dies,Neha Chopra,neha.chopra@fastmail.com,+91-9259344981,"712, Hospital Road",Lucknow,UP,226001,India,Cables & Adapters
+Eta Packaging Co,Riya Agarwal,riya.agarwal@yahoo.com,+91-9135332879,"492, Lake View Rd",Indore,MP,452001,India,Safety Equipment
+Delta Parts Supply,Aanya Ghosh,aanya.ghosh@rediffmail.com,+91-8428390681,"319, Bazaar Street",Lucknow,UP,226001,India,Electronics
+Beta Manufacturing Inc,Nisha Nair,nisha.nair@company.in,+91-9610052006,"459, Sector",Visakhapatnam,AP,530001,India,Packaging
+Eta Packaging Co,Anita Patil,anita.patil@outlook.com,+91-9897485403,"862, College Road",Allahabad,UP,211001,India,Electronics
+Mu Engineering Corp,Yash Menon,yash.menon@yahoo.com,+91-7045538023,"80, Market Complex",Rajkot,GJ,360001,India,Packaging
+Lambda Tools & Dies,Manish Pandey,manish.pandey@nexusmail.com,+91-9190133671,"654, Sector",Allahabad,UP,211001,India,Tools
+Delta Parts Supply,Saanvi Shah,saanvi.shah@proton.me,+91-8210657448,"289, Sector",Ahmedabad,GJ,380001,India,Tools
+Xi Industrial Supply,Deepak Sen,deepak.sen@gmail.com,+91-7722180994,"288, Station Road",Kochi,KL,682001,India,Cables & Adapters
+Lambda Tools & Dies,Diya Agarwal,diya.agarwal@company.in,+91-7991998456,"54, Park Ave",Udaipur,RJ,313001,India,Cleaning Supplies
+Gamma Raw Materials,Aarti Saxena,aarti.saxena@icloud.com,+91-7375249331,"696, Technology Park",Srinagar,JK,190001,India,Safety Equipment
+Zeta Fabrication,Anita Shah,anita.shah@company.in,+91-9705133614,"352, MG Road",Coimbatore,TN,641001,India,Tools
+Xi Industrial Supply,Shreya Modi,shreya.modi@proton.me,+91-9641494740,"3, Lake View Rd",Udaipur,RJ,313001,India,Packaging
+Xi Industrial Supply,Usha Reddy,usha.reddy@fastmail.com,+91-7929769587,"815, Ring Road",Ahmedabad,GJ,380001,India,Safety Equipment
+Mu Engineering Corp,Usha Nair,usha.nair@gmail.com,+91-8517898166,"280, Tower Road",Chennai,TN,600001,India,Lighting
+Xi Industrial Supply,Geeta Chopra,geeta.chopra@gmail.com,+91-8226580212,"906, Industrial Blvd",Nashik,MH,422001,India,Electronics
+Nu Systems Inc,Dhruv Modi,dhruv.modi@rediffmail.com,+91-9519345315,"428, Station Road",Amritsar,PB,143001,India,Packaging
+Gamma Raw Materials,Vihaan Mehta,vihaan.mehta@icloud.com,+91-7075696752,"643, MG Road",Coimbatore,TN,641001,India,Packaging
+Beta Manufacturing Inc,Vijay Sen,vijay.sen@rediffmail.com,+91-9527387577,"466, Technology Park",Vadodara,GJ,390001,India,Tools
+Zeta Fabrication,Aanya Sen,aanya.sen@gmail.com,+91-7760325575,"324, Market Complex",Faridabad,HR,121001,India,Batteries & Power
+Epsilon Industrial,Sara Das,sara.das@icloud.com,+91-9564342802,"278, Bazaar Street",Jaipur,RJ,302001,India,Lighting
+Alpha Components Ltd,Suresh Chopra,suresh.chopra@company.in,+91-9204512210,"63, Tower Road",Surat,GJ,395001,India,Labels & Printing
+Nu Systems Inc,Aadhya Singh,aadhya.singh@icloud.com,+91-8163016269,"979, Lake View Rd",Mysore,KA,570001,India,Safety Equipment
+Alpha Components Ltd,Kabir Modi,kabir.modi@nexusmail.com,+91-8906513535,"870, Main St",Agra,UP,282001,India,Office Supplies
+Lambda Tools & Dies,Kavita Das,kavita.das@nexusmail.com,+91-7610091625,"163, Bazaar Street",Visakhapatnam,AP,530001,India,Tools
+Alpha Components Ltd,Kabir Modi,kabir.modi@rediffmail.com,+91-9519758193,"724, Ring Road",Visakhapatnam,AP,530001,India,Tools
+Omicron Materials Tech,Pooja Menon,pooja.menon@icloud.com,+91-8631258688,"394, Hospital Road",Amritsar,PB,143001,India,Labels & Printing
+Omicron Materials Tech,Vikram Choudhary,vikram.choudhary@nexusmail.com,+91-9733840072,"609, Technology Park",Meerut,UP,250001,India,Safety Equipment
+Beta Manufacturing Inc,Vivaan Bhatt,vivaan.bhatt@rediffmail.com,+91-7260380712,"517, Market Complex",Amritsar,PB,143001,India,Cables & Adapters
+Iota Hardware Solutions,Vikram Saxena,vikram.saxena@outlook.com,+91-9572979382,"963, College Road",Mumbai,MH,400001,India,Automation
+Xi Industrial Supply,Rahul Chopra,rahul.chopra@zoho.com,+91-7590176812,"249, Tower Road",Vadodara,GJ,390001,India,Lighting
+Delta Parts Supply,Aarav Modi,aarav.modi@yahoo.com,+91-8837888972,"576, Sector",Allahabad,UP,211001,India,Automation
+Lambda Tools & Dies,Amit Das,amit.das@fastmail.com,+91-7958162980,"775, Hospital Road",Delhi,DL,110001,India,Cables & Adapters
+Nu Systems Inc,Anaya Chopra,anaya.chopra@proton.me,+91-7515697728,"328, MG Road",Visakhapatnam,AP,530001,India,Automation
+Theta Electronics,Aarav Joshi,aarav.joshi@outlook.com,+91-8466323029,"962, Market Complex",Udaipur,RJ,313001,India,Cables & Adapters
+Zeta Fabrication,Riya Mishra,riya.mishra@rediffmail.com,+91-7175185991,"566, College Road",Bangalore,KA,560001,India,Automation
+Gamma Raw Materials,Aditya Pandey,aditya.pandey@rediffmail.com,+91-9903496902,"929, Industrial Blvd",Bangalore,KA,560001,India,Office Supplies
+Eta Packaging Co,Nita Bhatt,nita.bhatt@gmail.com,+91-9905470648,"295, Technology Park",Delhi,DL,110001,India,Automation
+Eta Packaging Co,Anita Nair,anita.nair@fastmail.com,+91-7823772915,"507, Technology Park",Surat,GJ,395001,India,Electronics
+Gamma Raw Materials,Ishita Shah,ishita.shah@company.in,+91-9702345247,"14, MG Road",Chandigarh,CH,160001,India,Safety Equipment
+Lambda Tools & Dies,Reyansh Bhatt,reyansh.bhatt@zoho.com,+91-7264480964,"669, Tower Road",Mumbai,MH,400001,India,Packaging
+Beta Manufacturing Inc,Diya Verma,diya.verma@nexusmail.com,+91-9481562109,"501, Bazaar Street",Nagpur,MH,440001,India,Cleaning Supplies
+Lambda Tools & Dies,Manish Gupta,manish.gupta@proton.me,+91-9026392601,"259, Bazaar Street",Jaipur,RJ,302001,India,Batteries & Power
+Beta Manufacturing Inc,Sanjay Das,sanjay.das@proton.me,+91-8360296807,"431, Business Center",Chandigarh,CH,160001,India,Packaging
+Alpha Components Ltd,Sneha Patil,sneha.patil@icloud.com,+91-7720455425,"188, Lake View Rd",Srinagar,JK,190001,India,Batteries & Power
+Zeta Fabrication,Krishna Patil,krishna.patil@gmail.com,+91-8781642501,"109, MG Road",Indore,MP,452001,India,Electronics
+Lambda Tools & Dies,Aarav Gupta,aarav.gupta@proton.me,+91-7262393301,"887, Market Complex",Ludhiana,PB,141001,India,Tools
+Beta Manufacturing Inc,Kabir Kumar,kabir.kumar@icloud.com,+91-7153117787,"860, Lake View Rd",Meerut,UP,250001,India,Packaging
+Nu Systems Inc,Geeta Mehta,geeta.mehta@proton.me,+91-9330945100,"216, Main St",Visakhapatnam,AP,530001,India,Electronics
+Nu Systems Inc,Anaya Patel,anaya.patel@fastmail.com,+91-9809296958,"241, Park Ave",Tiruvananthapuram,KL,695001,India,Cables & Adapters
+Gamma Raw Materials,Aadhya Patel,aadhya.patel@company.in,+91-8251643047,"288, Lake View Rd",Pune,MH,411001,India,Electronics
+Eta Packaging Co,Vihaan Sen,vihaan.sen@proton.me,+91-7200866368,"466, MG Road",Agra,UP,282001,India,Cables & Adapters
+Omicron Materials Tech,Neha Saxena,neha.saxena@fastmail.com,+91-9901791075,"169, Park Ave",Nashik,MH,422001,India,Packaging
+Iota Hardware Solutions,Ayaan Verma,ayaan.verma@gmail.com,+91-8504431094,"826, Tower Road",Delhi,DL,110001,India,Lighting
+Lambda Tools & Dies,Saanvi Pandey,saanvi.pandey@icloud.com,+91-9654079869,"738, Main St",Kolkata,WB,700001,India,Automation
+Beta Manufacturing Inc,Neha Verma,neha.verma@rediffmail.com,+91-9514661210,"278, Lake View Rd",Coimbatore,TN,641001,India,Labels & Printing
+Zeta Fabrication,Shreya Shah,shreya.shah@rediffmail.com,+91-8489457796,"461, Tower Road",Delhi,DL,110001,India,Safety Equipment
+Nu Systems Inc,Kavita Reddy,kavita.reddy@proton.me,+91-9059270446,"892, Station Road",Varanasi,UP,221001,India,Automation
+Kappa Machinery Works,Usha Rao,usha.rao@company.in,+91-9517274120,"955, Tower Road",Chennai,TN,600001,India,Electronics
+Xi Industrial Supply,Amit Das,amit.das@icloud.com,+91-9346691116,"598, College Road",Bhopal,MP,462001,India,Labels & Printing
+Xi Industrial Supply,Priya Saxena,priya.saxena@company.in,+91-8769262719,"323, Industrial Blvd",Bhopal,MP,462001,India,Electronics
+Iota Hardware Solutions,Aarav Menon,aarav.menon@rediffmail.com,+91-9750538050,"199, Business Center",Bhopal,MP,462001,India,Electronics
+Epsilon Industrial,Vijay Ghosh,vijay.ghosh@fastmail.com,+91-7570413413,"807, Lake View Rd",Bangalore,KA,560001,India,Electronics
+Alpha Components Ltd,Ishaan Mehta,ishaan.mehta@zoho.com,+91-8145254243,"269, Lake View Rd",Amritsar,PB,143001,India,Safety Equipment
+Nu Systems Inc,Aarti Das,aarti.das@icloud.com,+91-8422648091,"809, Station Road",Chennai,TN,600001,India,Batteries & Power
+Delta Parts Supply,Riya Patel,riya.patel@rediffmail.com,+91-7264323644,"483, College Road",Lucknow,UP,226001,India,Automation
+Delta Parts Supply,Vihaan Joshi,vihaan.joshi@rediffmail.com,+91-8661131476,"92, Lake View Rd",Nagpur,MH,440001,India,Batteries & Power
+Delta Parts Supply,Anil Reddy,anil.reddy@gmail.com,+91-8782816937,"802, Station Road",Nashik,MH,422001,India,Lighting
+Omicron Materials Tech,Sarita Ghosh,sarita.ghosh@gmail.com,+91-8753977570,"731, Sector",Chennai,TN,600001,India,Packaging
+Gamma Raw Materials,Rekha Malhotra,rekha.malhotra@fastmail.com,+91-7067849660,"312, Station Road",Ludhiana,PB,141001,India,Electronics
+Eta Packaging Co,Rohan Modi,rohan.modi@zoho.com,+91-8585026629,"95, Park Ave",Jaipur,RJ,302001,India,Cables & Adapters
+Beta Manufacturing Inc,Suresh Mehta,suresh.mehta@fastmail.com,+91-7346310103,"579, Market Complex",Kolkata,WB,700001,India,Automation
+Xi Industrial Supply,Neha Agarwal,neha.agarwal@proton.me,+91-7763458162,"132, Park Ave",Srinagar,JK,190001,India,Tools
+Omicron Materials Tech,Yash Pandey,yash.pandey@nexusmail.com,+91-9713595649,"463, Park Ave",Ahmedabad,GJ,380001,India,Electronics
+Theta Electronics,Usha Sharma,usha.sharma@proton.me,+91-8750263792,"539, MG Road",Coimbatore,TN,641001,India,Office Supplies
+Eta Packaging Co,Geeta Ghosh,geeta.ghosh@company.in,+91-7330448118,"485, Bazaar Street",Agra,UP,282001,India,Warehouse Equipment
+Xi Industrial Supply,Sunil Ghosh,sunil.ghosh@company.in,+91-8401581992,"583, Ring Road",Indore,MP,452001,India,Automation
+Theta Electronics,Anaya Kumar,anaya.kumar@rediffmail.com,+91-7564951616,"471, Lake View Rd",Visakhapatnam,AP,530001,India,Lighting
+Kappa Machinery Works,Sarita Bhatt,sarita.bhatt@zoho.com,+91-9350973227,"831, Hospital Road",Ludhiana,PB,141001,India,Automation
+Xi Industrial Supply,Rahul Malhotra,rahul.malhotra@yahoo.com,+91-8271492115,"923, Sector",Bangalore,KA,560001,India,Safety Equipment
+Mu Engineering Corp,Ananya Modi,ananya.modi@nexusmail.com,+91-9151572969,"758, College Road",Delhi,DL,110001,India,Packaging
+Epsilon Industrial,Anil Rao,anil.rao@gmail.com,+91-9889690613,"362, Station Road",Hyderabad,TS,500001,India,Automation
+Theta Electronics,Nita Shah,nita.shah@yahoo.com,+91-8150694427,"787, Park Ave",Visakhapatnam,AP,530001,India,Labels & Printing
+Lambda Tools & Dies,Sanjay Rao,sanjay.rao@nexusmail.com,+91-7461439307,"60, MG Road",Rajkot,GJ,360001,India,Cables & Adapters
+Omicron Materials Tech,Sneha Patel,sneha.patel@rediffmail.com,+91-9351887464,"429, Park Ave",Chennai,TN,600001,India,Warehouse Equipment
+Lambda Tools & Dies,Manish Desai,manish.desai@rediffmail.com,+91-9250199748,"645, College Road",Ludhiana,PB,141001,India,Safety Equipment
+Nu Systems Inc,Rekha Saxena,rekha.saxena@company.in,+91-7300261582,"129, Bazaar Street",Delhi,DL,110001,India,Batteries & Power
+Gamma Raw Materials,Nisha Rao,nisha.rao@fastmail.com,+91-7285352062,"737, Station Road",Kochi,KL,682001,India,Batteries & Power
+Alpha Components Ltd,Deepak Ghosh,deepak.ghosh@nexusmail.com,+91-7087585456,"548, Main St",Amritsar,PB,143001,India,Packaging
+Lambda Tools & Dies,Riya Joshi,riya.joshi@company.in,+91-7655445928,"836, Tower Road",Bhopal,MP,462001,India,Batteries & Power
+Delta Parts Supply,Rohan Agarwal,rohan.agarwal@fastmail.com,+91-7200678459,"511, Lake View Rd",Agra,UP,282001,India,Office Supplies
+Theta Electronics,Ishaan Menon,ishaan.menon@company.in,+91-7308365627,"475, Sector",Lucknow,UP,226001,India,Packaging
+Nu Systems Inc,Shreya Pandey,shreya.pandey@company.in,+91-7791012698,"633, Sector",Meerut,UP,250001,India,Cables & Adapters
+Epsilon Industrial,Krishna Desai,krishna.desai@nexusmail.com,+91-7458961228,"541, Technology Park",Rajkot,GJ,360001,India,Lighting
+Theta Electronics,Vivaan Desai,vivaan.desai@outlook.com,+91-8912653987,"107, Sector",Surat,GJ,395001,India,Lighting
+Mu Engineering Corp,Amit Verma,amit.verma@fastmail.com,+91-8022955671,"272, Market Complex",Lucknow,UP,226001,India,Batteries & Power
+Gamma Raw Materials,Vikram Pandey,vikram.pandey@nexusmail.com,+91-7731523379,"883, Bazaar Street",Nagpur,MH,440001,India,Warehouse Equipment
+Iota Hardware Solutions,Reyansh Patel,reyansh.patel@fastmail.com,+91-9986970943,"403, Sector",Ludhiana,PB,141001,India,Office Supplies
+Alpha Components Ltd,Saanvi Sen,saanvi.sen@yahoo.com,+91-9041067976,"999, College Road",Nashik,MH,422001,India,Office Supplies
+Omicron Materials Tech,Neha Agarwal,neha.agarwal@rediffmail.com,+91-9342933868,"871, Hospital Road",Jaipur,RJ,302001,India,Office Supplies
+Eta Packaging Co,Vijay Mehta,vijay.mehta@fastmail.com,+91-9615753394,"963, Hospital Road",Pune,MH,411001,India,Batteries & Power
+Kappa Machinery Works,Diya Gupta,diya.gupta@zoho.com,+91-8214719456,"473, Park Ave",Agra,UP,282001,India,Warehouse Equipment
+Mu Engineering Corp,Deepak Patel,deepak.patel@fastmail.com,+91-7973452952,"267, MG Road",Guwahati,AS,781001,India,Electronics
+Mu Engineering Corp,Sanjay Ghosh,sanjay.ghosh@rediffmail.com,+91-7023292000,"24, Ring Road",Vadodara,GJ,390001,India,Office Supplies
+Lambda Tools & Dies,Kabir Patil,kabir.patil@fastmail.com,+91-7142673530,"426, Sector",Rajkot,GJ,360001,India,Lighting
+Theta Electronics,Riya Menon,riya.menon@yahoo.com,+91-7740081516,"683, Technology Park",Pune,MH,411001,India,Tools
+Theta Electronics,Raj Verma,raj.verma@zoho.com,+91-8755640785,"202, Ring Road",Meerut,UP,250001,India,Lighting
+Gamma Raw Materials,Sanjay Sen,sanjay.sen@outlook.com,+91-7839257488,"130, Business Center",Bhubaneswar,OD,751001,India,Lighting
+Beta Manufacturing Inc,Dev Sharma,dev.sharma@nexusmail.com,+91-9883457787,"827, Technology Park",Rajkot,GJ,360001,India,Packaging
+Theta Electronics,Raj Patil,raj.patil@rediffmail.com,+91-8020463396,"110, Hospital Road",Nashik,MH,422001,India,Packaging
+Beta Manufacturing Inc,Manish Das,manish.das@icloud.com,+91-9148824314,"34, MG Road",Kolkata,WB,700001,India,Office Supplies
+Lambda Tools & Dies,Rekha Mishra,rekha.mishra@nexusmail.com,+91-8861794001,"677, MG Road",Chennai,TN,600001,India,Automation
+Gamma Raw Materials,Sarita Bhatt,sarita.bhatt@fastmail.com,+91-9684895494,"241, Hospital Road",Varanasi,UP,221001,India,Lighting
+Epsilon Industrial,Anaya Choudhary,anaya.choudhary@gmail.com,+91-9209222982,"138, Lake View Rd",Chandigarh,CH,160001,India,Packaging
+Gamma Raw Materials,Vikram Pandey,vikram.pandey@yahoo.com,+91-9996752164,"395, MG Road",Udaipur,RJ,313001,India,Warehouse Equipment
+Delta Parts Supply,Anita Ghosh,anita.ghosh@icloud.com,+91-7014787416,"99, MG Road",Vadodara,GJ,390001,India,Office Supplies
+Epsilon Industrial,Sneha Bhatt,sneha.bhatt@company.in,+91-7045978964,"3, MG Road",Indore,MP,452001,India,Electronics
+Nu Systems Inc,Lata Das,lata.das@fastmail.com,+91-8950030968,"171, Tower Road",Bangalore,KA,560001,India,Batteries & Power
+Epsilon Industrial,Anita Singh,anita.singh@icloud.com,+91-9024160995,"334, Market Complex",Meerut,UP,250001,India,Electronics
+Gamma Raw Materials,Suresh Bhatt,suresh.bhatt@nexusmail.com,+91-8522365152,"258, Ring Road",Jaipur,RJ,302001,India,Batteries & Power
+Lambda Tools & Dies,Rohan Choudhary,rohan.choudhary@zoho.com,+91-7424378770,"15, Bazaar Street",Surat,GJ,395001,India,Safety Equipment
+Iota Hardware Solutions,Dev Chopra,dev.chopra@proton.me,+91-7584664270,"45, Main St",Mumbai,MH,400001,India,Warehouse Equipment
+Kappa Machinery Works,Shreya Sharma,shreya.sharma@yahoo.com,+91-9827978902,"787, Market Complex",Udaipur,RJ,313001,India,Electronics
+Alpha Components Ltd,Suresh Reddy,suresh.reddy@gmail.com,+91-7001553539,"951, Technology Park",Guwahati,AS,781001,India,Lighting
+Gamma Raw Materials,Shreya Mehta,shreya.mehta@fastmail.com,+91-9412272791,"645, Industrial Blvd",Lucknow,UP,226001,India,Electronics
+Omicron Materials Tech,Usha Joshi,usha.joshi@gmail.com,+91-8488619243,"63, College Road",Bhubaneswar,OD,751001,India,Packaging
+Omicron Materials Tech,Usha Agarwal,usha.agarwal@icloud.com,+91-9418032289,"963, Industrial Blvd",Bhopal,MP,462001,India,Labels & Printing
+Kappa Machinery Works,Neha Mehta,neha.mehta@proton.me,+91-7548324791,"376, Business Center",Ahmedabad,GJ,380001,India,Warehouse Equipment
+Xi Industrial Supply,Suresh Gupta,suresh.gupta@icloud.com,+91-8839217799,"457, Main St",Jaipur,RJ,302001,India,Cables & Adapters
+Mu Engineering Corp,Krishna Desai,krishna.desai@outlook.com,+91-9725787902,"316, College Road",Lucknow,UP,226001,India,Automation
+Iota Hardware Solutions,Yash Joshi,yash.joshi@rediffmail.com,+91-8762741157,"314, Tower Road",Surat,GJ,395001,India,Labels & Printing
+Omicron Materials Tech,Dev Joshi,dev.joshi@fastmail.com,+91-8909193465,"840, Market Complex",Mysore,KA,570001,India,Automation
+Lambda Tools & Dies,Aaradhya Desai,aaradhya.desai@rediffmail.com,+91-8150689823,"91, Main St",Lucknow,UP,226001,India,Labels & Printing
+Delta Parts Supply,Aanya Malhotra,aanya.malhotra@rediffmail.com,+91-9782578743,"517, Ring Road",Guwahati,AS,781001,India,Tools
+Omicron Materials Tech,Pooja Shah,pooja.shah@nexusmail.com,+91-7860362429,"671, Technology Park",Goa,GA,403001,India,Cleaning Supplies
+Beta Manufacturing Inc,Raj Gupta,raj.gupta@icloud.com,+91-7087655894,"329, Bazaar Street",Mysore,KA,570001,India,Warehouse Equipment
+Delta Parts Supply,Vivaan Patil,vivaan.patil@outlook.com,+91-8923563658,"89, Business Center",Hyderabad,TS,500001,India,Automation
+Xi Industrial Supply,Anita Desai,anita.desai@company.in,+91-7211366176,"480, Tower Road",Varanasi,UP,221001,India,Automation
+Lambda Tools & Dies,Ananya Shah,ananya.shah@gmail.com,+91-7613070843,"611, Hospital Road",Udaipur,RJ,313001,India,Cleaning Supplies
+Lambda Tools & Dies,Kavita Patil,kavita.patil@yahoo.com,+91-7900553030,"872, Business Center",Bhubaneswar,OD,751001,India,Packaging
+Nu Systems Inc,Arjun Choudhary,arjun.choudhary@icloud.com,+91-7396472024,"642, Industrial Blvd",Udaipur,RJ,313001,India,Office Supplies
+Zeta Fabrication,Nita Saxena,nita.saxena@company.in,+91-8756473392,"277, Tower Road",Nashik,MH,422001,India,Electronics
+Xi Industrial Supply,Aditya Bhatt,aditya.bhatt@outlook.com,+91-8379134097,"566, Bazaar Street",Goa,GA,403001,India,Batteries & Power
+Zeta Fabrication,Geeta Choudhary,geeta.choudhary@gmail.com,+91-9900874651,"673, Industrial Blvd",Delhi,DL,110001,India,Electronics
+Iota Hardware Solutions,Sanjay Modi,sanjay.modi@gmail.com,+91-8164869877,"822, Main St",Chennai,TN,600001,India,Cleaning Supplies
+Omicron Materials Tech,Sneha Menon,sneha.menon@nexusmail.com,+91-9499196192,"681, Ring Road",Vadodara,GJ,390001,India,Warehouse Equipment
+Lambda Tools & Dies,Ishaan Modi,ishaan.modi@icloud.com,+91-7422253276,"353, College Road",Allahabad,UP,211001,India,Automation
+Eta Packaging Co,Pooja Sharma,pooja.sharma@fastmail.com,+91-7879965620,"838, Tower Road",Mumbai,MH,400001,India,Electronics
+Beta Manufacturing Inc,Kabir Patil,kabir.patil@fastmail.com,+91-7364426739,"800, Technology Park",Visakhapatnam,AP,530001,India,Tools
+Epsilon Industrial,Aarti Kumar,aarti.kumar@company.in,+91-9033894609,"700, Business Center",Chandigarh,CH,160001,India,Automation
+Alpha Components Ltd,Aarav Patel,aarav.patel@rediffmail.com,+91-7380484993,"710, Main St",Tiruvananthapuram,KL,695001,India,Automation
+Theta Electronics,Krishna Menon,krishna.menon@company.in,+91-9559565701,"52, Tower Road",Allahabad,UP,211001,India,Cables & Adapters
+Mu Engineering Corp,Sneha Kumar,sneha.kumar@company.in,+91-8745472810,"497, Business Center",Guwahati,AS,781001,India,Batteries & Power
+Delta Parts Supply,Vihaan Modi,vihaan.modi@fastmail.com,+91-7696753686,"451, Industrial Blvd",Bhubaneswar,OD,751001,India,Cleaning Supplies
+Alpha Components Ltd,Vijay Singh,vijay.singh@gmail.com,+91-7121064731,"256, Business Center",Guwahati,AS,781001,India,Office Supplies
+Lambda Tools & Dies,Rekha Modi,rekha.modi@yahoo.com,+91-8654411882,"840, Business Center",Jaipur,RJ,302001,India,Electronics
+Lambda Tools & Dies,Ishaan Kumar,ishaan.kumar@nexusmail.com,+91-7050451422,"800, College Road",Chandigarh,CH,160001,India,Warehouse Equipment
+Theta Electronics,Aanya Joshi,aanya.joshi@proton.me,+91-8819495521,"769, Industrial Blvd",Udaipur,RJ,313001,India,Cables & Adapters
+Eta Packaging Co,Dhruv Mishra,dhruv.mishra@rediffmail.com,+91-9384456822,"356, Industrial Blvd",Srinagar,JK,190001,India,Lighting
+Eta Packaging Co,Nisha Chopra,nisha.chopra@proton.me,+91-9873180858,"369, Main St",Coimbatore,TN,641001,India,Batteries & Power
+Epsilon Industrial,Pooja Pandey,pooja.pandey@fastmail.com,+91-7549896224,"411, Business Center",Udaipur,RJ,313001,India,Cables & Adapters
+Beta Manufacturing Inc,Sara Verma,sara.verma@gmail.com,+91-7176133036,"352, Ring Road",Nashik,MH,422001,India,Batteries & Power
+Lambda Tools & Dies,Saanvi Chopra,saanvi.chopra@nexusmail.com,+91-7782047449,"456, Tower Road",Udaipur,RJ,313001,India,Warehouse Equipment
+Gamma Raw Materials,Amit Nair,amit.nair@fastmail.com,+91-7937647726,"467, Main St",Meerut,UP,250001,India,Packaging
+Mu Engineering Corp,Suresh Menon,suresh.menon@rediffmail.com,+91-7115453114,"683, Station Road",Visakhapatnam,AP,530001,India,Safety Equipment
+Nu Systems Inc,Myra Pandey,myra.pandey@gmail.com,+91-8400589083,"932, Ring Road",Kolkata,WB,700001,India,Packaging
+Iota Hardware Solutions,Reyansh Bhatt,reyansh.bhatt@proton.me,+91-9124425810,"203, Market Complex",Vadodara,GJ,390001,India,Warehouse Equipment
+Lambda Tools & Dies,Vijay Malhotra,vijay.malhotra@rediffmail.com,+91-8847646622,"168, Industrial Blvd",Goa,GA,403001,India,Packaging
+Lambda Tools & Dies,Myra Reddy,myra.reddy@outlook.com,+91-7946320034,"631, MG Road",Guwahati,AS,781001,India,Cables & Adapters
+Mu Engineering Corp,Sai Gupta,sai.gupta@fastmail.com,+91-7019024148,"731, Station Road",Visakhapatnam,AP,530001,India,Cables & Adapters
+Mu Engineering Corp,Nita Mishra,nita.mishra@company.in,+91-9680135385,"389, Main St",Nashik,MH,422001,India,Lighting
+Kappa Machinery Works,Aarav Bhatt,aarav.bhatt@fastmail.com,+91-8087389116,"159, Lake View Rd",Kolkata,WB,700001,India,Office Supplies
+Delta Parts Supply,Anil Agarwal,anil.agarwal@icloud.com,+91-9522045560,"482, Business Center",Bhopal,MP,462001,India,Automation
+Epsilon Industrial,Rekha Pandey,rekha.pandey@proton.me,+91-9284777735,"547, Tower Road",Bhopal,MP,462001,India,Labels & Printing
+Iota Hardware Solutions,Yash Gupta,yash.gupta@proton.me,+91-9070421885,"718, Bazaar Street",Goa,GA,403001,India,Automation
+Theta Electronics,Lata Mishra,lata.mishra@proton.me,+91-8006351469,"537, MG Road",Hyderabad,TS,500001,India,Lighting
+Epsilon Industrial,Myra Gupta,myra.gupta@icloud.com,+91-8357493162,"326, Industrial Blvd",Ahmedabad,GJ,380001,India,Labels & Printing
+Theta Electronics,Sarita Bhatt,sarita.bhatt@gmail.com,+91-9097713630,"881, Ring Road",Indore,MP,452001,India,Automation
+Beta Manufacturing Inc,Krishna Agarwal,krishna.agarwal@gmail.com,+91-8214051753,"714, College Road",Mysore,KA,570001,India,Office Supplies
+Alpha Components Ltd,Krishna Shah,krishna.shah@fastmail.com,+91-9465749582,"949, Ring Road",Allahabad,UP,211001,India,Lighting
+Nu Systems Inc,Vikram Agarwal,vikram.agarwal@icloud.com,+91-8051859064,"579, College Road",Kolkata,WB,700001,India,Automation
+Gamma Raw Materials,Yash Saxena,yash.saxena@yahoo.com,+91-7744314553,"508, Market Complex",Agra,UP,282001,India,Cables & Adapters
+Xi Industrial Supply,Aadhya Singh,aadhya.singh@fastmail.com,+91-9277141689,"357, Tower Road",Rajkot,GJ,360001,India,Packaging
+Gamma Raw Materials,Geeta Reddy,geeta.reddy@company.in,+91-8074086415,"735, Industrial Blvd",Indore,MP,452001,India,Tools
+Nu Systems Inc,Shaurya Patil,shaurya.patil@fastmail.com,+91-7182833740,"296, Ring Road",Varanasi,UP,221001,India,Cables & Adapters
+Beta Manufacturing Inc,Reyansh Das,reyansh.das@proton.me,+91-7587070978,"277, Hospital Road",Bhopal,MP,462001,India,Warehouse Equipment
+Beta Manufacturing Inc,Nita Menon,nita.menon@icloud.com,+91-7411477413,"842, Sector",Indore,MP,452001,India,Tools
+Theta Electronics,Suresh Verma,suresh.verma@outlook.com,+91-7673423059,"476, Business Center",Bangalore,KA,560001,India,Tools
+Iota Hardware Solutions,Geeta Gupta,geeta.gupta@gmail.com,+91-8246210377,"800, MG Road",Mysore,KA,570001,India,Batteries & Power
+Delta Parts Supply,Sarita Menon,sarita.menon@company.in,+91-7681037214,"287, MG Road",Kochi,KL,682001,India,Electronics
+Gamma Raw Materials,Manish Rao,manish.rao@proton.me,+91-7681742196,"742, Ring Road",Tiruvananthapuram,KL,695001,India,Office Supplies
+Beta Manufacturing Inc,Aarti Mehta,aarti.mehta@outlook.com,+91-8941281733,"680, Lake View Rd",Bangalore,KA,560001,India,Tools
+Zeta Fabrication,Ishaan Singh,ishaan.singh@rediffmail.com,+91-9362821552,"276, MG Road",Ludhiana,PB,141001,India,Warehouse Equipment
+Xi Industrial Supply,Reyansh Pandey,reyansh.pandey@outlook.com,+91-9128635951,"685, Sector",Udaipur,RJ,313001,India,Warehouse Equipment
+Alpha Components Ltd,Saanvi Rao,saanvi.rao@company.in,+91-8756357666,"174, Sector",Hyderabad,TS,500001,India,Automation
+Omicron Materials Tech,Usha Patel,usha.patel@nexusmail.com,+91-8093847657,"671, Lake View Rd",Lucknow,UP,226001,India,Tools
+Epsilon Industrial,Aditya Chopra,aditya.chopra@rediffmail.com,+91-9630541084,"47, Hospital Road",Tiruvananthapuram,KL,695001,India,Packaging
+Beta Manufacturing Inc,Sara Desai,sara.desai@gmail.com,+91-7013944909,"375, MG Road",Goa,GA,403001,India,Cleaning Supplies
+Gamma Raw Materials,Priya Malhotra,priya.malhotra@outlook.com,+91-7643345121,"53, Market Complex",Mysore,KA,570001,India,Electronics
+Nu Systems Inc,Shaurya Agarwal,shaurya.agarwal@fastmail.com,+91-9604197114,"231, Technology Park",Srinagar,JK,190001,India,Warehouse Equipment
+Zeta Fabrication,Arnav Reddy,arnav.reddy@fastmail.com,+91-8214487341,"569, Park Ave",Goa,GA,403001,India,Tools
+Iota Hardware Solutions,Saanvi Joshi,saanvi.joshi@icloud.com,+91-8847567509,"305, Market Complex",Visakhapatnam,AP,530001,India,Cleaning Supplies
+Iota Hardware Solutions,Aditya Verma,aditya.verma@rediffmail.com,+91-9348057129,"501, Station Road",Bhopal,MP,462001,India,Safety Equipment
+Omicron Materials Tech,Riya Sharma,riya.sharma@zoho.com,+91-9043826485,"416, MG Road",Visakhapatnam,AP,530001,India,Electronics
+Kappa Machinery Works,Anil Menon,anil.menon@gmail.com,+91-7996043012,"467, Bazaar Street",Allahabad,UP,211001,India,Electronics
+Beta Manufacturing Inc,Neha Sen,neha.sen@rediffmail.com,+91-7050853666,"423, MG Road",Tiruvananthapuram,KL,695001,India,Warehouse Equipment
+Nu Systems Inc,Rohan Saxena,rohan.saxena@icloud.com,+91-9507890208,"650, Station Road",Bangalore,KA,560001,India,Automation
+Eta Packaging Co,Rohan Choudhary,rohan.choudhary@proton.me,+91-9842687430,"509, College Road",Jaipur,RJ,302001,India,Tools
+Delta Parts Supply,Ananya Menon,ananya.menon@outlook.com,+91-7138043037,"246, Main St",Hyderabad,TS,500001,India,Batteries & Power
+Delta Parts Supply,Suresh Gupta,suresh.gupta@icloud.com,+91-7344114873,"847, Sector",Chandigarh,CH,160001,India,Packaging
+Mu Engineering Corp,Aanya Mehta,aanya.mehta@nexusmail.com,+91-8113787559,"81, Hospital Road",Chennai,TN,600001,India,Office Supplies
+Mu Engineering Corp,Ishaan Ghosh,ishaan.ghosh@gmail.com,+91-9740530183,"561, Sector",Kolkata,WB,700001,India,Tools
+Xi Industrial Supply,Ishaan Joshi,ishaan.joshi@outlook.com,+91-8814663891,"696, College Road",Pune,MH,411001,India,Office Supplies
+Alpha Components Ltd,Aarti Das,aarti.das@outlook.com,+91-9084047691,"953, Ring Road",Rajkot,GJ,360001,India,Tools
+Gamma Raw Materials,Saanvi Rao,saanvi.rao@icloud.com,+91-7511832388,"295, Technology Park",Delhi,DL,110001,India,Tools
+Delta Parts Supply,Suresh Patel,suresh.patel@gmail.com,+91-7049413569,"99, Technology Park",Jaipur,RJ,302001,India,Cables & Adapters
+Iota Hardware Solutions,Sunil Kumar,sunil.kumar@fastmail.com,+91-9160398090,"165, Business Center",Agra,UP,282001,India,Warehouse Equipment
+Alpha Components Ltd,Manish Bhatt,manish.bhatt@zoho.com,+91-8858522567,"732, Bazaar Street",Ludhiana,PB,141001,India,Warehouse Equipment
+Delta Parts Supply,Usha Kumar,usha.kumar@icloud.com,+91-8057459890,"120, MG Road",Mysore,KA,570001,India,Batteries & Power
+Gamma Raw Materials,Amit Nair,amit.nair@fastmail.com,+91-7900463464,"753, Lake View Rd",Visakhapatnam,AP,530001,India,Office Supplies
+Alpha Components Ltd,Rekha Choudhary,rekha.choudhary@icloud.com,+91-9844969546,"470, Tower Road",Allahabad,UP,211001,India,Safety Equipment
+Eta Packaging Co,Arjun Nair,arjun.nair@gmail.com,+91-8808234801,"1, MG Road",Guwahati,AS,781001,India,Electronics
+Kappa Machinery Works,Vihaan Mehta,vihaan.mehta@nexusmail.com,+91-9936441127,"386, Main St",Jaipur,RJ,302001,India,Cables & Adapters
+Delta Parts Supply,Ayaan Rao,ayaan.rao@rediffmail.com,+91-8386371588,"860, Station Road",Surat,GJ,395001,India,Batteries & Power
+Beta Manufacturing Inc,Sneha Rao,sneha.rao@nexusmail.com,+91-8406834512,"602, Industrial Blvd",Meerut,UP,250001,India,Warehouse Equipment
+Nu Systems Inc,Sunil Modi,sunil.modi@fastmail.com,+91-8874971694,"725, Lake View Rd",Guwahati,AS,781001,India,Safety Equipment
+Iota Hardware Solutions,Kavita Rao,kavita.rao@outlook.com,+91-9264949416,"199, Market Complex",Lucknow,UP,226001,India,Packaging
