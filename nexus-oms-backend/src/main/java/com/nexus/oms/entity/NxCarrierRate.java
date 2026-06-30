@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -14,18 +15,23 @@ public class NxCarrierRate {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
+    @NotBlank
     @Column(name = "carrier_code", nullable = false)
     private String carrierCode;
 
+    @NotBlank
     @Column(name = "carrier_name", nullable = false)
     private String carrierName;
 
+    @NotBlank
     @Column(name = "service_level", nullable = false)
     private String serviceLevel;
 
+    @NotBlank
     @Column(name = "service_name", nullable = false)
     private String serviceName;
 
@@ -37,6 +43,8 @@ public class NxCarrierRate {
     @Column(name = "weight_max_kg")
     private BigDecimal weightMaxKg;
 
+    @NotNull
+    @Positive
     @Column(name = "base_rate", nullable = false)
     private BigDecimal baseRate;
 

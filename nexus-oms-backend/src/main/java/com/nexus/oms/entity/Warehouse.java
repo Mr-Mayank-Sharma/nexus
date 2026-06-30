@@ -1,6 +1,8 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,9 +23,11 @@ public class Warehouse {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(nullable = false)
     private String code;
 
+    @NotBlank
     @Column(nullable = false)
     private String name;
 
@@ -77,6 +81,7 @@ public class Warehouse {
     @Column(name = "contact_phone")
     private String contactPhone;
 
+    @Email
     @Column(name = "contact_email")
     private String contactEmail;
 

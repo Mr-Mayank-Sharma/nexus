@@ -1,6 +1,7 @@
 package com.nexus.oms.exception;
 
 import com.nexus.oms.dto.ApiResponse;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
         String errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("Validation failed: " + errors));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex) {
+        String errors = ex.getConstraintViolations().stream()
+                .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
                 .collect(Collectors.joining(", "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error("Validation failed: " + errors));

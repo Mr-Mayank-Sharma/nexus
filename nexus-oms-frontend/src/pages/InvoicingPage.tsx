@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Receipt, CreditCard, FileText, Plus, Search, X, Check, ArrowUpDown, DollarSign, AlertTriangle, Loader2 } from 'lucide-react'
+import { Receipt, CreditCard, FileText, Plus, Search, X, DollarSign, Loader2 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as invoicingApi from '../api/invoicing'
 import { Invoice, InvoiceItem, Payment, CreditMemo } from '../api/invoicing'
-import StatusBadge from '../components/common/StatusBadge'
 
 type Tab = 'invoices' | 'payments' | 'credit-memos'
 
@@ -189,6 +188,7 @@ export default function InvoicingPage() {
       const res = await invoicingApi.getPaymentsByInvoice(invoiceId)
       setInvoicePayments(res.data || [])
     } catch {
+      addToast({ type: 'error', title: 'Failed to load invoice payments' })
       setInvoicePayments([])
     }
   }

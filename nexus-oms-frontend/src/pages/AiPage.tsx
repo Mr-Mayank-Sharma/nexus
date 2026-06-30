@@ -9,6 +9,7 @@ import { EnterpriseKPICard, EnterpriseBreadcrumbs, EnterpriseStatusBadge } from 
 import { AiModel, TrainingRun } from '../types'
 import { useToast } from '../hooks/useToast'
 import * as aiApi from '../api/ai'
+import * as aiPlatformApi from '../api/aiPlatform'
 
 const FALLBACK_MODELS: AiModel[] = [
   {
@@ -117,7 +118,7 @@ const modelIcons: Record<string, React.ReactNode> = {
 export default function AiPage() {
   const [selectedModel, setSelectedModel] = useState<AiModel | null>(null)
   const [testInput, setTestInput] = useState('')
-  const [testResult, setTestResult] = useState<string | null>(null)
+  const [testResult, setTestResult] = useState<any>(null)
   const { addToast } = useToast()
 
   const {
@@ -157,11 +158,11 @@ export default function AiPage() {
       }
     },
     onSuccess: (res) => {
-      setTestResult(JSON.stringify(res.data, null, 2))
+      setTestResult(res.data)
       addToast({ type: 'success', title: 'Prediction completed' })
     },
     onError: () => {
-      setTestResult('Error: AI service unavailable')
+      setTestResult({ error: 'AI service unavailable' })
       addToast({ type: 'error', title: 'AI service unavailable' })
     },
   })
@@ -271,7 +272,18 @@ export default function AiPage() {
                 v{selectedModel.version} · Last trained {new Date(selectedModel.lastTrained).toLocaleDateString()}
               </p>
             </div>
-            <button className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+            <button
+              onClick={async () => {
+                addToast({ type: 'info', title: 'Initiating retrain...' });
+                try {
+                  await aiPlatformApi.createTrainingJob(selectedModel.id, {});
+                  addToast({ type: 'success', title: 'Retrain job created' });
+                } catch {
+                  addToast({ type: 'error', title: 'Failed to initiate retrain' });
+                }
+              }}
+              className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm"
+            >
               <RefreshCw className="w-3 h-3" /> Retrain
             </button>
           </div>
@@ -343,9 +355,30 @@ export default function AiPage() {
                 </button>
               </div>
               {testResult && (
-                <pre className="mt-3 p-3 bg-[var(--bg-tertiary)] rounded-lg text-xs font-mono overflow-auto max-h-48 border border-[var(--border-color)]">
-                  {testResult}
-                </pre>
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="font-semibold text-sm mb-2">Prediction Result</h4>
+                  {testResult.error ? (
+                    <p className="text-sm text-red-600">{testResult.error}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium">{testResult.prediction ?? 'N/A'}</span>
+                        <span className="text-gray-500">Confidence: {Math.round((testResult.confidence ?? 0) * 100)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div className="bg-purple-600 h-2.5 rounded-full transition-all duration-500"
+                             style={{ width: `${Math.round((testResult.confidence ?? 0) * 100)}%` }} />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{testResult.explanation}</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span className="text-xs text-gray-400">Model: {testResult.modelVersion ?? 'N/A'}</span>
+                        {testResult.featuresUsed && (
+                          <span className="text-xs text-gray-400">• Features: {testResult.featuresUsed.join(', ')}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 

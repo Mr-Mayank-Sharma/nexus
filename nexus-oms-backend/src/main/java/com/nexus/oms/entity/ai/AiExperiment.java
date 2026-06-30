@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -9,14 +10,14 @@ import java.util.UUID;
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class AiExperiment {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false) private UUID tenantId;
-    @Column(nullable = false) private UUID modelId;
-    @Column(nullable = false) private String name;
+    @NotNull @Column(nullable = false) private UUID tenantId;
+    @NotNull @Column(nullable = false) private UUID modelId;
+    @NotBlank @Column(nullable = false) private String name;
     @Column(columnDefinition = "TEXT") private String description;
     private String experimentType;
     private UUID championVersionId;
     private UUID challengerVersionId;
-    private java.math.BigDecimal trafficSplit;
+    @PositiveOrZero private java.math.BigDecimal trafficSplit;
     private String successMetric;
     private String status;
     private UUID winnerVersionId;

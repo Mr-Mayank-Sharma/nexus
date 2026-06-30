@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ public class InvoiceItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "invoice_id", nullable = false)
     private UUID invoiceId;
 

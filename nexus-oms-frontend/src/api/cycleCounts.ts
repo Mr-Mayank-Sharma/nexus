@@ -1,7 +1,7 @@
 import client from './client'
 import { ApiResponse, CycleCount, PaginationParams } from '../types'
 
-export async function getCycleCounts(params?: PaginationParams & { status?: string }): Promise<ApiResponse<CycleCount[]>> {
+export async function getCycleCounts(params?: PaginationParams & { status?: string }): Promise<ApiResponse<{ content: CycleCount[]; totalElements: number; totalPages: number; number: number }>> {
   const { data } = await client.get('/cycle-counts', { params })
   return data
 }

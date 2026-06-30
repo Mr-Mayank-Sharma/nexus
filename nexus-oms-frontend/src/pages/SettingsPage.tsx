@@ -152,10 +152,39 @@ export default function SettingsPage() {
       </div>
 
       {tab === 'general' && (
-        <div className="card p-12 text-center text-gray-500">
-          <Settings className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="font-medium">General settings panel coming soon</p>
-          <p className="text-sm mt-1">Tenant configuration, user management, and integrations</p>
+        <div className="card p-6 space-y-6">
+          <h2 className="text-lg font-semibold text-gray-900">General Settings</h2>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+              <p className="text-sm text-gray-900">{company.companyName || '—'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
+              <p className="text-sm text-gray-900">{company.taxId || '—'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
+              <p className="text-sm text-gray-900">{company.registrationNumber || '—'}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+              <p className="text-sm text-gray-900">{company.timezone}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+              <p className="text-sm text-gray-900">{company.defaultCurrency}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date Format</label>
+              <p className="text-sm text-gray-900">{company.dateFormat}</p>
+            </div>
+          </div>
+          <div className="pt-4 border-t border-gray-100">
+            <button onClick={() => setTab('company')} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+              Edit company settings →
+            </button>
+          </div>
         </div>
       )}
 

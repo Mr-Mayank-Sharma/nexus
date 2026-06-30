@@ -7,7 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Shipments", description = "Shipment management APIs")
 @RestController
 @RequestMapping("/shipments")
 public class ShipmentController {
@@ -18,16 +21,19 @@ public class ShipmentController {
         this.shipmentService = shipmentService;
     }
 
+    @Operation(summary = "Get shipment by ID")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<NxShipment>> getShipment(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(shipmentService.getShipment(id)));
     }
 
+    @Operation(summary = "Get shipment by tracking number")
     @GetMapping("/tracking/{number}")
     public ResponseEntity<ApiResponse<NxShipment>> getByTracking(@PathVariable String number) {
         return ResponseEntity.ok(ApiResponse.success(shipmentService.getByTracking(number)));
     }
 
+    @Operation(summary = "Void a shipment")
     @PostMapping("/void")
     public ResponseEntity<ApiResponse<NxShipment>> voidShipment(@RequestParam UUID id) {
         return ResponseEntity.ok(ApiResponse.success(shipmentService.voidShipment(id), "Shipment voided"));

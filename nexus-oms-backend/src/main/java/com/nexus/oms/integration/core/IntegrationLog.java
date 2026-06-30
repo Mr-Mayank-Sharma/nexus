@@ -35,7 +35,7 @@ public class IntegrationLog {
         syncLog.setStatus(status);
         syncLog.setItemsSucceeded(succeeded);
         syncLog.setItemsFailed(failed);
-        syncLog.setMessage(message);
+        syncLog.setErrorMessage(message);
         syncLogRepository.save(syncLog);
         log.info("Sync completed: status={} succeeded={} failed={}", status, succeeded, failed);
     }
@@ -46,7 +46,7 @@ public class IntegrationLog {
                 .integrationType(integrationType)
                 .syncType(syncType)
                 .status("FAILED")
-                .message(error)
+                .errorMessage(error)
                 .build();
         syncLogRepository.save(syncLog);
         log.error("Sync error: tenant={} type={} sync={} error={}", tenantId, integrationType, syncType, error);

@@ -21,7 +21,7 @@ export default function InventoryReceivingPage() {
     try {
       setLoading(true)
       const res = await receiptsApi.getReceipts({ status: statusFilter || undefined })
-      setReceipts(res.data)
+      setReceipts(Array.isArray(res.data) ? res.data : res.data?.content ?? [])
     } catch { addToast({ type: 'error', title: 'Failed to load receipts' })
     } finally { setLoading(false) }
   }

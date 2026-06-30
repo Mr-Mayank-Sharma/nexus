@@ -39,7 +39,7 @@ export default function PackingPage() {
     queryFn: async () => {
       const status = activeTab === 'all' ? undefined : activeTab.toUpperCase().replace(/-/g, '_')
       const res = await packingApi.getPackages(status)
-      return res.data as NxPackage[]
+      const d = res.data; return Array.isArray(d) ? d : (d?.content ?? []) as NxPackage[]
     },
   })
 

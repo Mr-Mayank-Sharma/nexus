@@ -11,6 +11,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public class InvoicingController {
     }
 
     @PostMapping("/invoices")
-    public ResponseEntity<ApiResponse<Invoice>> createInvoice(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<ApiResponse<Invoice>> createInvoice(@Valid @RequestBody Map<String, Object> request) {
         Invoice invoice = (Invoice) request.get("invoice");
         List<InvoiceItem> items = (List<InvoiceItem>) request.get("items");
         return ResponseEntity.ok(ApiResponse.success(
@@ -49,14 +50,15 @@ public class InvoicingController {
 
     @PutMapping("/invoices/{id}/status")
     public ResponseEntity<ApiResponse<Invoice>> updateInvoiceStatus(
-            @PathVariable UUID id, @RequestParam String status) {
+            @PathVariable UUID id, @Valid @RequestBody Map<String, String> body) {
+        String status = body.getOrDefault("status", "");
         return ResponseEntity.ok(ApiResponse.success(
                 invoicingService.updateInvoiceStatus(id, status), "Invoice status updated"));
     }
 
-    @PostMapping("/invoices/{id}/pay")
+    @PostMapping("/invoices/{id}/payments")
     public ResponseEntity<ApiResponse<Payment>> recordPayment(
-            @PathVariable UUID id, @RequestBody Payment payment) {
+            @PathVariable UUID id, @Valid @RequestBody Payment payment) {
         return ResponseEntity.ok(ApiResponse.success(
                 invoicingService.recordPayment(id, payment), "Payment recorded"));
     }
@@ -81,7 +83,7 @@ public class InvoicingController {
 
     @PostMapping("/payments/{id}/refund")
     public ResponseEntity<ApiResponse<Payment>> processRefund(
-            @PathVariable UUID id, @RequestBody Map<String, Object> request) {
+            @PathVariable UUID id, @Valid @RequestBody Map<String, Object> request) {
         BigDecimal amount = new BigDecimal(request.get("amount").toString());
         return ResponseEntity.ok(ApiResponse.success(
                 invoicingService.processRefund(id, amount), "Refund processed"));
@@ -101,7 +103,7 @@ public class InvoicingController {
     }
 
     @PostMapping("/credit-memos")
-    public ResponseEntity<ApiResponse<CreditMemo>> createCreditMemo(@RequestBody CreditMemo memo) {
+    public ResponseEntity<ApiResponse<CreditMemo>> createCreditMemo(@Valid @RequestBody CreditMemo memo) {
         return ResponseEntity.ok(ApiResponse.success(
                 invoicingService.createCreditMemo(memo), "Credit memo created"));
     }

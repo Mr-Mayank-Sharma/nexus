@@ -45,6 +45,7 @@ export default function EdiAutomationPage() {
   const [processing, setProcessing] = useState(false)
   const [selectedDoc, setSelectedDoc] = useState<EdiDocument | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const mountedRef = useRef(false)
   const { addToast } = useToast()
 
   const fetchData = useCallback(async () => {
@@ -61,13 +62,17 @@ export default function EdiAutomationPage() {
       setTotalPages(docRes.data?.totalPages || 0)
       setKpis(kpiRes.data as Record<string, number>)
     } catch {
-      if (!loading) addToast({ type: 'error', title: 'Failed to load EDI documents' })
+      if (mountedRef.current) addToast({ type: 'error', title: 'Failed to load EDI documents' })
     } finally {
       setLoading(false)
     }
-  }, [page, docTypeFilter, statusFilter, loading, addToast])
+  }, [page, docTypeFilter, statusFilter, addToast])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => {
+    mountedRef.current = true
+    fetchData()
+    return () => { mountedRef.current = false }
+  }, [fetchData])
 
   const handleUpload = async () => {
     if (!uploadContent && !uploadFile) return

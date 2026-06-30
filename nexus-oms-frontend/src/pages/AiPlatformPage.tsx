@@ -20,19 +20,21 @@ import {
   Loader2,
   Shield,
   Cpu,
+  FileWarning,
+  ThumbsDown,
 } from 'lucide-react'
 import {
-  AiModel, AiModelVersion, AiTrainingJob, AiFeatureDefinition,
+  AiModel, AiModelVersion, AiTrainingJob, AiFeatureDefinition, AiInferenceLog,
   getModels, getModelVersions, getModelSummary, getTrainingJobs,
   getMonitoringDashboard, getTenantDashboard, getFeatureGroups,
-  startTrainingJob, deployModel, getModel,
+  startTrainingJob, deployModel, getModel, getInferenceLogs,
 } from '../api/aiPlatform'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseDataGrid from '../components/enterprise/EnterpriseDataGrid'
-import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
+import { useToast } from '../hooks/useToast'
 
 type AiTab = 'overview' | 'models' | 'training' | 'features'
 
@@ -69,7 +71,7 @@ export default function AiPlatformPage() {
   return (
     <div className="p-6 space-y-6">
       <EnterpriseBreadcrumbs
-        items={[
+        crumbs={[
           { label: 'Home', href: '/' },
           { label: 'AI Platform' },
         ]}
@@ -95,7 +97,10 @@ export default function AiPlatformPage() {
 function AiOverview() {
   const [dashboard, setDashboard] = useState<Record<string, unknown> | null>(null)
   const [monitoring, setMonitoring] = useState<Record<string, unknown> | null>(null)
+  const [inferenceLogs, setInferenceLogs] = useState<AiInferenceLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [logsLoading, setLogsLoading] = useState(false)
+  const { addToast } = useToast()
 
   useEffect(() => {
     Promise.all([getTenantDashboard(), getMonitoringDashboard()])
@@ -103,9 +108,23 @@ function AiOverview() {
         setDashboard(dash.data)
         setMonitoring(mon.data)
       })
-      .catch(() => {})
+      .catch((e) => { addToast({ type: 'error', title: 'Failed to load dashboard' }) })
       .finally(() => setLoading(false))
   }, [])
+
+  const modelPerformance = (dashboard?.modelPerformance as Array<Record<string, unknown>>) || []
+  const healthModels = (monitoring?.models as Array<Record<string, unknown>>) || []
+
+  useEffect(() => {
+    if (modelPerformance.length > 0) {
+      setLogsLoading(true)
+      const firstModelId = modelPerformance[0].id as string
+      getInferenceLogs(firstModelId, 0, 20)
+        .then((res) => setInferenceLogs(res.data?.content ?? []))
+        .catch(() => {})
+        .finally(() => setLogsLoading(false))
+    }
+  }, [dashboard])
 
   if (loading) {
     return (
@@ -115,7 +134,6 @@ function AiOverview() {
     )
   }
 
-  const modelPerformance = (dashboard?.modelPerformance as Array<Record<string, unknown>>) || []
   const costBreakdown = (dashboard?.costsThisMonth as Record<string, number>) || {}
   const costTotal = Object.values(costBreakdown).reduce((a, b) => a + (b || 0), 0)
 
@@ -147,6 +165,71 @@ function AiOverview() {
           icon={<DollarSign className="w-5 h-5" />}
           variant="success"
         />
+      </div>
+
+      {/* Model Health */}
+      <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Model Health</h3>
+        {healthModels.length === 0 ? (
+          <p className="text-gray-400 text-sm">No model health data available</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {healthModels.map((m: Record<string, unknown>) => {
+              const perf = modelPerformance.find((p: Record<string, unknown>) => p.id === m.id)
+              return (
+                <div key={m.id as string} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-sm text-gray-900 dark:text-white">
+                      {(m.displayName as string) || (m.name as string) || (m.modelType as string)}
+                    </h4>
+                    <span className={`w-2.5 h-2.5 rounded-full ${
+                      (m.status as string) === 'ACTIVE' ? 'bg-green-500' :
+                      (m.status as string) === 'ERROR' ? 'bg-red-500' :
+                      (m.status as string) === 'TRAINING' ? 'bg-yellow-500' :
+                      'bg-yellow-500'
+                    }`} />
+                  </div>
+                  <div className="space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <div className="flex justify-between">
+                      <span>Accuracy</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {perf?.accuracy != null ? `${(Number(perf.accuracy) * 100).toFixed(1)}%` : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Latency</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {perf?.avgLatencyMs != null ? `${Number(perf.avgLatencyMs).toFixed(0)}ms` : 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Predictions Today</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {String(perf?.predictionsToday ?? 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Drift</span>
+                      <span className={`font-medium ${perf?.driftDetected ? 'text-red-500' : 'text-green-500'}`}>
+                        {perf?.driftDetected ? 'Detected' : 'Not Detected'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Last Training</span>
+                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                        {perf?.lastTrainingTime
+                          ? new Date(perf.lastTrainingTime as string).toLocaleDateString()
+                          : (m.lastTrainingTime as string)
+                            ? new Date(m.lastTrainingTime as string).toLocaleDateString()
+                            : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -230,11 +313,154 @@ function AiOverview() {
           </div>
         </div>
       </div>
+
+      {/* Inference Activity */}
+      <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Inference Activity</h3>
+        {logsLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+          </div>
+        ) : inferenceLogs.length === 0 ? (
+          <p className="text-gray-400 text-sm">No recent inference activity</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100 dark:border-gray-700">
+                  <th className="text-left py-2 px-3 text-gray-500 font-medium">Timestamp</th>
+                  <th className="text-left py-2 px-3 text-gray-500 font-medium">Model</th>
+                  <th className="text-right py-2 px-3 text-gray-500 font-medium">Confidence</th>
+                  <th className="text-center py-2 px-3 text-gray-500 font-medium">Status</th>
+                  <th className="text-right py-2 px-3 text-gray-500 font-medium">Latency</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inferenceLogs.slice(0, 10).map((log) => {
+                  const modelInfo = modelPerformance.find((p: Record<string, unknown>) => p.id === log.modelId)
+                  const logStatus = log.status || (log.fallbackUsed ? 'FALLBACK' : 'SUCCESS')
+                  return (
+                    <tr key={log.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                      <td className="py-2.5 px-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                        {new Date(log.createdAt).toLocaleString()}
+                      </td>
+                      <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">
+                        {(modelInfo?.name as string) || log.modelId}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-gray-700 dark:text-gray-300">
+                        {log.confidence != null ? `${(log.confidence * 100).toFixed(1)}%` : '-'}
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                          logStatus === 'SUCCESS' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                          logStatus === 'FALLBACK' ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }`}>
+                          {logStatus === 'SUCCESS' ? <CheckCircle2 className="w-3 h-3" /> :
+                           logStatus === 'FALLBACK' ? <AlertTriangle className="w-3 h-3" /> :
+                           <XCircle className="w-3 h-3" />}
+                          {logStatus}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-gray-600 dark:text-gray-400">
+                        {log.latencyMs != null ? `${log.latencyMs.toFixed(0)}ms` : '-'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Rule Fallback Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+              <ThumbsDown className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Fallbacks Today</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {String(dashboard?.fallbacksToday ?? 0)}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <FileWarning className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Rule Engine Usage</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {dashboard?.ruleEngineUsedToday != null
+                  ? `${(Number(dashboard.ruleEngineUsedToday) / Math.max(Number(dashboard?.predictionsToday ?? 1), 1) * 100).toFixed(1)}%`
+                  : 'N/A'}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Most Common Reason</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                {inferenceLogs
+                  .filter(l => l.fallbackReason)
+                  .reduce<[string, number][]>((acc, l) => {
+                    const existing = acc.find(([r]) => r === l.fallbackReason)
+                    if (existing) existing[1]++
+                    else acc.push([l.fallbackReason!, 1])
+                    return acc
+                  }, [])
+                  .sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
+              </p>
+            </div>
+          </div>
+          {inferenceLogs.filter(l => l.fallbackReason).length > 0 && (
+            <div className="space-y-1.5">
+              {inferenceLogs
+                .filter(l => l.fallbackReason)
+                .reduce<[string, number][]>((acc, l) => {
+                  const existing = acc.find(([r]) => r === l.fallbackReason)
+                  if (existing) existing[1]++
+                  else acc.push([l.fallbackReason!, 1])
+                  return acc
+                }, [])
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([reason, count]) => {
+                  const total = inferenceLogs.filter(l => l.fallbackReason).length
+                  const pct = (count / total) * 100
+                  return (
+                    <div key={reason}>
+                      <div className="flex justify-between text-xs text-gray-500 mb-0.5">
+                        <span className="truncate">{reason}</span>
+                        <span>{pct.toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+                        <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
 
 function AiModelRegistry() {
+  const { addToast } = useToast()
   const [models, setModels] = useState<AiModel[]>([])
   const [summary, setSummary] = useState<Record<string, number> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -249,7 +475,7 @@ function AiModelRegistry() {
         setModels(modelsRes.data?.content ?? [])
         setSummary(sumRes.data)
       })
-      .catch(() => {})
+      .catch((e) => { addToast({ type: 'error', title: 'Failed to load models' }) })
       .finally(() => setLoading(false))
   }, [categoryFilter])
 
@@ -267,7 +493,7 @@ function AiModelRegistry() {
     try {
       await deployModel(modelId, versionId)
       handleModelClick(modelId)
-    } catch {}
+    } catch { addToast({ type: 'error', title: 'Failed to deploy model' }) }
   }
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>
@@ -276,11 +502,11 @@ function AiModelRegistry() {
     <div className="space-y-6">
       {summary && (
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <EnterpriseKPICard title="Total Models" value={String(summary.totalModels ?? 0)} icon={<Brain className="w-4 h-4" />} variant="primary" />
-          <EnterpriseKPICard title="Active" value={String(summary.activeModels ?? 0)} icon={<CheckCircle2 className="w-4 h-4" />} variant="success" />
-          <EnterpriseKPICard title="Global" value={String(summary.globalModels ?? 0)} icon={<Layers className="w-4 h-4" />} variant="info" />
-          <EnterpriseKPICard title="Tenant-Specific" value={String(summary.tenantModels ?? 0)} icon={<Database className="w-4 h-4" />} variant="warning" />
-          <EnterpriseKPICard title="In Training" value={String(summary.modelsInTraining ?? 0)} icon={<RefreshCw className="w-4 h-4" />} variant="warning" />
+          <EnterpriseKPICard title="Total Models" value={String(summary.totalModels ?? 0)} icon={<Brain className="w-4 h-4" />} color="primary" />
+          <EnterpriseKPICard title="Active" value={String(summary.activeModels ?? 0)} icon={<CheckCircle2 className="w-4 h-4" />} color="success" />
+          <EnterpriseKPICard title="Global" value={String(summary.globalModels ?? 0)} icon={<Layers className="w-4 h-4" />} color="primary" />
+          <EnterpriseKPICard title="Tenant-Specific" value={String(summary.tenantModels ?? 0)} icon={<Database className="w-4 h-4" />} color="amber" />
+          <EnterpriseKPICard title="In Training" value={String(summary.modelsInTraining ?? 0)} icon={<RefreshCw className="w-4 h-4" />} color="amber" />
         </div>
       )}
 
@@ -386,14 +612,15 @@ function AiModelRegistry() {
 }
 
 function AiTrainingPipeline() {
-  const [jobs, setJobs] = useState<AiTrainingJob[]>([])
+  const { addToast } = useToast()
+  const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('')
 
   useEffect(() => {
     getTrainingJobs(undefined, statusFilter || undefined, 0)
       .then(res => setJobs(res.data?.content ?? []))
-      .catch(() => {})
+      .catch((e) => { addToast({ type: 'error', title: 'Failed to load training jobs' }) })
       .finally(() => setLoading(false))
   }, [statusFilter])
 
@@ -402,7 +629,7 @@ function AiTrainingPipeline() {
       await startTrainingJob(jobId)
       getTrainingJobs(undefined, statusFilter || undefined, 0)
         .then(res => setJobs(res.data?.content ?? []))
-    } catch {}
+    } catch { addToast({ type: 'error', title: 'Failed to start training job' }) }
   }
 
   const statusCounts: Record<string, number> = {}
@@ -476,6 +703,7 @@ function AiFeatureStore() {
   const [groups, setGroups] = useState<Array<{ group: string; count: number }>>([])
   const [features, setFeatures] = useState<AiFeatureDefinition[]>([])
   const [loading, setLoading] = useState(true)
+  const { addToast } = useToast()
 
   useEffect(() => {
     Promise.all([
@@ -483,7 +711,7 @@ function AiFeatureStore() {
       getModelSummary(),
     ])
       .then(([grp]) => setGroups(grp.data ?? []))
-      .catch(() => {})
+      .catch((e) => { addToast({ type: 'error', title: 'Failed to load features' }) })
       .finally(() => setLoading(false))
   }, [])
 

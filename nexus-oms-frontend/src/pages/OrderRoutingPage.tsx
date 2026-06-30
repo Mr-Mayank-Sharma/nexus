@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { clsx } from 'clsx'
 import {
   Route, AlertTriangle, CheckCircle2, XCircle, Loader2, Search, RefreshCw,
   TrendingUp, Clock, DollarSign, Zap, Shield, ChevronRight, ExternalLink,
-  ArrowUpRight, AlertCircle, Info, Flag,
+  ArrowUpRight, AlertCircle, Info, Flag, Brain,
 } from 'lucide-react'
 import * as orderRoutingApi from '../api/orderRouting'
-import type { OrderAllocation, FulfillmentException } from '../types'
+import type { FulfillmentException } from '../types'
 import { useToast } from '../hooks/useToast'
 
 const EXCEPTION_TYPE_ICONS: Record<string, typeof AlertTriangle> = {
@@ -56,30 +56,38 @@ export default function OrderRoutingPage() {
   const [selectedException, setSelectedException] = useState<FulfillmentException | null>(null)
   const [resolveOpen, setResolveOpen] = useState(false)
   const [resolveForm, setResolveForm] = useState({ resolution: '', strategy: 'REALLOCATE' })
+  const [allocations, setAllocations] = useState<any[]>([])
   const [processing, setProcessing] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const mountedRef = useRef(false)
   const { addToast } = useToast()
 
   const fetchData = useCallback(async () => {
     try {
-      const [kpiRes, excRes] = await Promise.all([
+      const [kpiRes, excRes, allocRes] = await Promise.all([
         orderRoutingApi.getRoutingKPIs(),
         orderRoutingApi.getExceptions({
           status: exceptionFilter === 'ALL' ? undefined : exceptionFilter,
           size: 50,
         }),
+        orderRoutingApi.getAllocations(''),
       ])
       setKpis(kpiRes.data as Record<string, number>)
       setExceptions(excRes.data?.content || [])
+      setAllocations(allocRes.data?.content || [])
     } catch {
-      if (!loading) addToast({ type: 'error', title: 'Failed to load routing data' })
+      if (mountedRef.current) addToast({ type: 'error', title: 'Failed to load routing data' })
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [exceptionFilter, loading, addToast])
+  }, [exceptionFilter, addToast])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => {
+    mountedRef.current = true
+    fetchData()
+    return () => { mountedRef.current = false }
+  }, [fetchData])
 
   const handleRefresh = () => {
     setRefreshing(true)
@@ -268,11 +276,15 @@ export default function OrderRoutingPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-1.5 ml-4 shrink-0">
-                            {exception.autoResolvable && (
-                              <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20 px-2 py-0.5 rounded-md">
-                                Auto
-                              </span>
-                            )}
+                            <span className={clsx(
+                              'inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md',
+                              exception.autoResolvable
+                                ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20'
+                                : 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800'
+                            )}>
+                              <Brain className="w-3 h-3" />
+                              {exception.autoResolvable ? 'Auto-resolve available' : 'Needs manual review'}
+                            </span>
                             <button
                               onClick={() => { setSelectedException(exception); setResolveOpen(true) }}
                               className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary"
@@ -312,12 +324,50 @@ export default function OrderRoutingPage() {
 
       {/* Allocations View */}
       {tab === 'allocations' && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
-          <div className="enterprise-empty-state">
-            <Route className="w-12 h-12 text-primary-400" />
-            <h3>Allocation History</h3>
-            <p>Select an order to view its allocation details</p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Allocation History</h3>
           </div>
+          {allocations.length === 0 ? (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
+              <div className="enterprise-empty-state">
+                <Route className="w-12 h-12 text-primary-400" />
+                <h3>No allocations yet</h3>
+                <p>Order allocations will appear here once orders are routed</p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3">Order</th>
+                    <th className="px-4 py-3">Source</th>
+                    <th className="px-4 py-3">Destination</th>
+                    <th className="px-4 py-3">Strategy</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {(allocations as any[]).map((a: any, i: number) => (
+                    <tr key={a.id || i} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{a.orderId || a.orderNumber || '-'}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{a.sourceNode || a.source || '-'}</td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{a.destinationNode || a.destination || '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={clsx('enterprise-badge', STRATEGY_BADGES[a.strategy] || 'enterprise-badge-neutral')}>{a.strategy || '-'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={clsx('enterprise-badge', a.status === 'ACTIVE' ? 'enterprise-badge-success' : 'enterprise-badge-neutral')}>{a.status || '-'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

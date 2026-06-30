@@ -97,8 +97,7 @@ public class ShopifyProductSyncService {
                                     List<NxInventory> invList = inventoryRepository
                                             .findByTenantIdAndSkuAndNodeId(store.getTenantId(), sku, node.getId())
                                             .stream().toList();
-                                    if (invList.isEmpty() && !inventoryRepository.findByTenantIdAndSku(store.getTenantId(), sku).isEmpty()) {
-                                    } else if (inventoryRepository.findByTenantIdAndSku(store.getTenantId(), sku).isEmpty()) {
+                                    if (inventoryRepository.findByTenantIdAndSku(store.getTenantId(), sku).isEmpty()) {
                                         inventoryRepository.save(NxInventory.builder()
                                                 .tenantId(store.getTenantId())
                                                 .sku(sku)

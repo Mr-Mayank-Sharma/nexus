@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
 import {
-  Store, Package, RotateCcw, User, Search, Loader2, ChevronRight, ExternalLink,
-  Truck, Clock, CheckCircle, XCircle, FileText, Download, Plus, Eye,
-  AlertTriangle, Building2, MapPin,
+  Store, Package, RotateCcw, User, Loader2, ExternalLink,
+  Truck, Clock, XCircle, Download, Plus, Eye,
+  MapPin,
 } from 'lucide-react'
 import * as customersApi from '../api/customers'
 import * as returnsApi from '../api/returns'
-import type { Customer, Return } from '../types'
+import * as ordersApi from '../api/orders'
+import type { Customer, Return, Order } from '../types'
 import { useToast } from '../hooks/useToast'
 
 const STATUS_BADGES: Record<string, string> = {
@@ -27,14 +28,6 @@ const RETURN_STATUS_BADGES: Record<string, string> = {
   REJECTED: 'enterprise-badge-error',
 }
 
-const MOCK_ORDERS = [
-  { id: 'ord-001', orderNumber: 'ORD-2026-0042', status: 'DELIVERED', items: 3, total: 249.99, date: '2026-06-15', tracking: '1Z999AA10123456784', carrier: 'UPS', eta: null },
-  { id: 'ord-002', orderNumber: 'ORD-2026-0038', status: 'SHIPPED', items: 1, total: 89.99, date: '2026-06-20', tracking: '94001118992234567890', carrier: 'USPS', eta: '2026-06-30' },
-  { id: 'ord-003', orderNumber: 'ORD-2026-0035', status: 'PROCESSING', items: 5, total: 529.95, date: '2026-06-22', tracking: null, carrier: null, eta: '2026-07-02' },
-  { id: 'ord-004', orderNumber: 'ORD-2026-0029', status: 'PENDING', items: 2, total: 149.98, date: '2026-06-24', tracking: null, carrier: null, eta: null },
-  { id: 'ord-005', orderNumber: 'ORD-2026-0025', status: 'DELIVERED', items: 1, total: 34.99, date: '2026-06-10', tracking: '1Z999AA10123456785', carrier: 'UPS', eta: null },
-]
-
 interface PortalOrder {
   id: string
   orderNumber: string
@@ -51,7 +44,9 @@ export default function B2BPortalPage() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   const [returns, setReturns] = useState<Return[]>([])
+  const [portalOrders, setPortalOrders] = useState<PortalOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const [ordersLoading, setOrdersLoading] = useState(false)
   const [tab, setTab] = useState<'orders' | 'returns' | 'account'>('orders')
   const [returnRequestOpen, setReturnRequestOpen] = useState(false)
   const [returnForm, setReturnForm] = useState({ orderId: '', reason: '', items: '' })
@@ -67,6 +62,7 @@ export default function B2BPortalPage() {
           setSelectedCustomerId(res.data[0].id)
         }
       } catch {
+        addToast({ type: 'error', title: 'Failed to load customers' })
         setCustomers([])
       } finally {
         setLoading(false)
@@ -84,14 +80,43 @@ export default function B2BPortalPage() {
         const customer = customers.find(c => c.id === selectedCustomerId)
         setReturns(allReturns.filter(r => r.customerId === selectedCustomerId || r.customerName === customer?.name))
       } catch {
+        addToast({ type: 'error', title: 'Failed to load returns' })
         setReturns([])
       }
     }
     fetchReturns()
   }, [selectedCustomerId, customers])
 
+  useEffect(() => {
+    if (!selectedCustomerId) return
+    const customer = customers.find(c => c.id === selectedCustomerId)
+    if (!customer) return
+    async function fetchOrders() {
+      setOrdersLoading(true)
+      try {
+        const res = await ordersApi.getOrders({ search: customer.name })
+        const orders: Order[] = Array.isArray(res.data) ? res.data : (res.data as any)?.content ?? []
+        setPortalOrders(orders.map(o => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
+          items: o.items?.length ?? 0,
+          total: o.total ?? 0,
+          date: o.createdAt,
+          tracking: o.trackingNumber ?? null,
+          carrier: o.carrier ?? null,
+          eta: o.promisedDeliveryDate ?? null,
+        })))
+      } catch {
+        setPortalOrders([])
+      } finally {
+        setOrdersLoading(false)
+      }
+    }
+    fetchOrders()
+  }, [selectedCustomerId, customers])
+
   const selectedCustomer = customers.find(c => c.id === selectedCustomerId)
-  const portalOrders: PortalOrder[] = MOCK_ORDERS
 
   const handleReturnRequest = async () => {
     if (!selectedCustomerId || !returnForm.orderId || !returnForm.reason) return
@@ -204,7 +229,17 @@ export default function B2BPortalPage() {
       {tab === 'orders' && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Orders</h3>
-          {portalOrders.map(order => (
+          {ordersLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+            </div>
+          ) : portalOrders.length === 0 ? (
+            <div className="enterprise-empty-state py-12">
+              <Package className="w-8 h-8 mx-auto text-gray-300" />
+              <h3>No orders found</h3>
+              <p>This customer has no orders yet</p>
+            </div>
+          ) : portalOrders.map(order => (
             <div key={order.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 transition-shadow hover:shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
@@ -231,11 +266,17 @@ export default function B2BPortalPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <button className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">
+                  <button
+                    onClick={() => window.open(`/orders/${order.id}`, '_blank')}
+                    className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary"
+                  >
                     <Eye className="w-3.5 h-3.5" /> View
                   </button>
                   {order.tracking && (
-                    <button className="enterprise-btn enterprise-btn-sm bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-800 hover:bg-primary-100">
+                    <button
+                      onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(order.tracking!)}`, '_blank')}
+                      className="enterprise-btn enterprise-btn-sm bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-800 hover:bg-primary-100"
+                    >
                       <ExternalLink className="w-3.5 h-3.5" /> Track
                     </button>
                   )}
@@ -289,7 +330,10 @@ export default function B2BPortalPage() {
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {ret.returnLabelUrl && (
-                      <button className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-primary-600">
+                      <button
+                        onClick={() => window.open(ret.returnLabelUrl!, '_blank')}
+                        className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-primary-600"
+                      >
                         <Download className="w-3.5 h-3.5" /> Label
                       </button>
                     )}

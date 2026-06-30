@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,18 +25,22 @@ public class NxInventoryReceipt {
     @Column(name = "node_id")
     private UUID nodeId;
 
+    @NotBlank
     @Column(name = "receipt_type", nullable = false)
     private String receiptType;
 
     @Column(name = "reference_number")
     private String referenceNumber;
 
+    @NotBlank
     @Column(nullable = false)
     private String sku;
 
     @Column(name = "product_name")
     private String productName;
 
+    @NotNull
+    @Positive
     @Column(nullable = false)
     private Integer quantity;
 

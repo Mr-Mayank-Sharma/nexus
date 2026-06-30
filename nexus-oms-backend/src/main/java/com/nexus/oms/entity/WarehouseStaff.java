@@ -1,6 +1,9 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,18 +24,22 @@ public class WarehouseStaff {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotNull
     @Column(name = "warehouse_id", nullable = false)
     private UUID warehouseId;
 
     @Column(name = "user_id")
     private UUID userId;
 
+    @NotBlank
     @Column(name = "employee_code", nullable = false)
     private String employeeCode;
 
+    @NotBlank
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
+    @NotBlank
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
@@ -43,6 +50,7 @@ public class WarehouseStaff {
     @Column(columnDefinition = "jsonb")
     private String skills;
 
+    @PositiveOrZero
     @Column(name = "productivity_score")
     private BigDecimal productivityScore;
 

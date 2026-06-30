@@ -16,4 +16,15 @@ public final class TenantContext {
         }
         throw new IllegalStateException("No tenant context found in security context");
     }
+
+    public static String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof TenantAwarePrincipal principal) {
+            return principal.username();
+        }
+        if (auth != null && auth.getName() != null) {
+            return auth.getName();
+        }
+        return "system";
+    }
 }

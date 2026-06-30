@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { clsx } from 'clsx'
 import {
-  Search, Truck, Zap, DollarSign, Clock, TrendingDown, Star, Loader2,
-  Package, MapPin, Scale, RefreshCw, Shield, ArrowRight,
+  Search, Truck, Zap, DollarSign, Clock, Star, Loader2,
+  Package, MapPin, Scale, ArrowRight,
 } from 'lucide-react'
 import * as rateShoppingApi from '../api/rateShopping'
 import type { RateQuote, RateShoppingResult } from '../types'
@@ -324,7 +324,10 @@ export default function CarrierRateShoppingPage() {
                         <span>Est. {rate.estimatedDelivery}</span>
                       </div>
                     </div>
-                    <button className="enterprise-btn enterprise-btn-primary enterprise-btn-sm shrink-0 ml-4">
+                    <button
+                      onClick={() => addToast({ type: 'success', title: `Selected ${rate.carrierName} ${rate.serviceName} — $${rate.totalCost.toFixed(2)}` })}
+                      className="enterprise-btn enterprise-btn-primary enterprise-btn-sm shrink-0 ml-4"
+                    >
                       Select
                     </button>
                   </div>

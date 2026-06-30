@@ -24,6 +24,7 @@ public class ShopifyOrderImportService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CustomerRepository customerRepository;
+    private final AddressRepository addressRepository;
     private final ObjectMapper objectMapper;
 
     public ShopifyOrderImportService(ShopifyClient shopifyClient,
@@ -34,6 +35,7 @@ public class ShopifyOrderImportService {
                                       OrderRepository orderRepository,
                                       OrderItemRepository orderItemRepository,
                                       CustomerRepository customerRepository,
+                                      AddressRepository addressRepository,
                                       ObjectMapper objectMapper) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
@@ -43,6 +45,7 @@ public class ShopifyOrderImportService {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
+        this.addressRepository = addressRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -144,18 +147,29 @@ public class ShopifyOrderImportService {
         BigDecimal totalTax = new BigDecimal(shopifyOrder.has("total_tax") ? shopifyOrder.get("total_tax").decimalValue().toPlainString() : "0");
         BigDecimal totalPrice = new BigDecimal(shopifyOrder.has("total_price") ? shopifyOrder.get("total_price").decimalValue().toPlainString() : "0");
 
-        Map<String, Object> shipTo = new HashMap<>();
         JsonNode shipping = shopifyOrder.get("shipping_address");
+        String street = "";
+        String street2 = null;
         if (shipping != null) {
-            shipTo.put("first_name", shipping.has("first_name") ? shipping.get("first_name").asText() : "");
-            shipTo.put("last_name", shipping.has("last_name") ? shipping.get("last_name").asText() : "");
-            shipTo.put("street", (shipping.has("address1") ? shipping.get("address1").asText() : "") + " " + (shipping.has("address2") ? shipping.get("address2").asText() : ""));
-            shipTo.put("city", shipping.has("city") ? shipping.get("city").asText() : "");
-            shipTo.put("state", shipping.has("province") ? shipping.get("province").asText() : "");
-            shipTo.put("zip", shipping.has("zip") ? shipping.get("zip").asText() : "");
-            shipTo.put("country", shipping.has("country") ? shipping.get("country").asText() : "");
-            shipTo.put("phone", shipping.has("phone") ? shipping.get("phone").asText() : "");
+            street = shipping.has("address1") ? shipping.get("address1").asText() : "";
+            street2 = shipping.has("address2") ? shipping.get("address2").asText() : null;
+            if (street2 != null && !street2.isBlank()) {
+                street = street + " " + street2;
+                street2 = null;
+            }
         }
+        Address shipToAddress = addressRepository.save(Address.builder()
+                .tenantId(tenantId)
+                .addressLine1(street.isBlank() ? null : street)
+                .addressLine2(street2)
+                .city(shipping != null && shipping.has("city") ? shipping.get("city").asText() : null)
+                .state(shipping != null && shipping.has("province") ? shipping.get("province").asText() : null)
+                .postalCode(shipping != null && shipping.has("zip") ? shipping.get("zip").asText() : null)
+                .country(shipping != null && shipping.has("country") ? shipping.get("country").asText() : "US")
+                .fullName(shipping != null ? (shipping.has("first_name") ? shipping.get("first_name").asText() : "") + " " + (shipping.has("last_name") ? shipping.get("last_name").asText() : "") : null)
+                .phone(shipping != null && shipping.has("phone") ? shipping.get("phone").asText() : null)
+                .addressType("SHIPPING")
+                .build());
 
         NxOrder order = NxOrder.builder()
                 .tenantId(tenantId)
@@ -164,7 +178,7 @@ public class ShopifyOrderImportService {
                 .channelOrderId(orderNumber)
                 .customerId(customer.getId())
                 .status(status)
-                .shipTo(toJson(shipTo))
+                .shipToAddress(shipToAddress)
                 .currency(shopifyOrder.has("currency") ? shopifyOrder.get("currency").asText() : "USD")
                 .subtotal(subtotal)
                 .shippingCost(shippingCost)
@@ -232,8 +246,4 @@ public class ShopifyOrderImportService {
         }
     }
 
-    private String toJson(Object obj) {
-        try { return objectMapper.writeValueAsString(obj); }
-        catch (Exception e) { return "{}"; }
-    }
 }

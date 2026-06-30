@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +34,10 @@ public class NxOrder {
     @Column(name = "customer_id")
     private UUID customerId;
 
+    @Email
+    @Column(name = "customer_email")
+    private String customerEmail;
+
     @Column(nullable = false)
     private String status;
 
@@ -45,11 +50,13 @@ public class NxOrder {
     @Column(name = "ship_from")
     private String shipFrom;
 
-    @Column(name = "ship_to", columnDefinition = "jsonb")
-    private String shipTo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ship_to_address_id")
+    private Address shipToAddress;
 
-    @Column(name = "billing_address", columnDefinition = "jsonb")
-    private String billingAddress;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billing_address_id")
+    private Address billingAddress;
 
     private String currency;
 
@@ -103,6 +110,7 @@ public class NxOrder {
     private LocalDateTime deliveredAt;
 
     @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String metadata;
 
     @PrePersist

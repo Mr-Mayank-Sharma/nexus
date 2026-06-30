@@ -1,6 +1,8 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,18 +19,21 @@ public class IntegrationFlowStep {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "flow_id", nullable = false)
     private UUID flowId;
 
     @Column(name = "step_order")
     private Integer stepOrder;
 
+    @NotBlank
     @Column(name = "step_type", nullable = false)
     private String stepType;
 
     @Column(name = "transformer_type")
     private String transformerType;
 
+    @NotBlank
     @Column(columnDefinition = "jsonb", nullable = false)
     private String config;
 

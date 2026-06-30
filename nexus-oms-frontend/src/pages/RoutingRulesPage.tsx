@@ -20,7 +20,7 @@ export default function RoutingRulesPage() {
     try {
       setLoading(true)
       const res = await routingRulesApi.getRules()
-      setRules(res.data)
+      setRules(Array.isArray(res.data) ? res.data : res.data?.content ?? [])
     } catch { addToast({ type: 'error', title: 'Failed to load routing rules' })
     } finally { setLoading(false) }
   }

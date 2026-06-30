@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,19 +20,24 @@ public class PurchaseRequestItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "request_id", nullable = false)
     private UUID requestId;
 
+    @NotBlank
     @Column(nullable = false)
     private String sku;
 
+    @NotBlank
     @Column(name = "product_name", nullable = false)
     private String productName;
 
+    @Positive
     private Integer quantity;
 
     private String unit;
 
+    @PositiveOrZero
     @Column(name = "estimated_unit_price")
     private BigDecimal estimatedUnitPrice;
 

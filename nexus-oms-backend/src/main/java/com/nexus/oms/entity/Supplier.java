@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,9 +22,11 @@ public class Supplier {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(name = "supplier_code", nullable = false)
     private String supplierCode;
 
+    @NotBlank
     @Column(name = "company_name", nullable = false)
     private String companyName;
 
@@ -46,6 +49,7 @@ public class Supplier {
 
     private String currency;
 
+    @PositiveOrZero
     @Column(name = "credit_limit")
     private BigDecimal creditLimit;
 
@@ -68,6 +72,7 @@ public class Supplier {
 
     private String phone;
 
+    @Email
     private String email;
 
     private String website;

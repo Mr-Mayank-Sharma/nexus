@@ -1,0 +1,2 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+508,FAILED,ROW_ERROR,"JDBC exception executing SQL [INSERT INTO nx_returns (id, tenant_id, order_id, customer_id, reason, grade, refund_amount, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)] [ERROR: value too long for type character varying(10)] [n/a]",Review the row data for errors and re-import

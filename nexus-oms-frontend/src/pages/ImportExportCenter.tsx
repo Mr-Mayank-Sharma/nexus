@@ -13,6 +13,7 @@ import type { Column, Tab } from '../components/enterprise'
 import * as integrationApi from '../api/integrationPlatform'
 import * as importApi from '../api/importApi'
 import type { ImportResult, ImportFormat } from '../api/importApi'
+import { downloadSampleData } from '../api/importApi'
 import { useToast } from '../hooks/useToast'
 
 const FORMAT_ICONS: Record<string, any> = {
@@ -83,6 +84,7 @@ export default function ImportExportCenter() {
       setEndpoints(Array.isArray(endpointRes.data) ? endpointRes.data : [])
       setStats(statsRes.data as Record<string, any>)
     } catch {
+      addToast({ type: 'error', title: 'Failed to load import/export data' })
     } finally {
       setLoading(false)
     }
@@ -96,7 +98,7 @@ export default function ImportExportCenter() {
       ])
       setEntityTypes(Array.isArray(etRes.data) ? etRes.data : [])
       setFormats(Array.isArray(fmtRes.data) ? fmtRes.data : [])
-    } catch {}
+    } catch { addToast({ type: 'error', title: 'Failed to load import/export metadata' }) }
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
@@ -178,6 +180,21 @@ export default function ImportExportCenter() {
     } catch { addToast({ type: 'error', title: 'Ignore failed' }) }
   }
 
+  const handleGenerateSample = async () => {
+    setImportProcessing(true)
+    try {
+      const blob = await downloadSampleData(importEntityType, 10, importFormat)
+      const fileName = `sample_${importEntityType}_${Date.now()}.${importFormat}`
+      const file = new File([blob], fileName, { type: blob.type || 'text/csv' })
+      setImportFile(file)
+      addToast({ type: 'success', title: `Sample ${importEntityType} data generated (10 records)` })
+    } catch {
+      addToast({ type: 'error', title: 'Failed to generate sample data' })
+    } finally {
+      setImportProcessing(false)
+    }
+  }
+
   const handleImportFile = async () => {
     if (!importFile) return
     setImportProcessing(true)
@@ -252,7 +269,7 @@ export default function ImportExportCenter() {
       key: 'actions', label: 'Actions', width: '120px',
       render: (_: any, row: integrationApi.IntegrationImportJob) => (
         <div className="flex items-center gap-1">
-          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1" title="View Details">
+          <button onClick={() => addToast({ type: 'info', title: 'View details not yet implemented' })} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1" title="View Details">
             <Eye className="w-4 h-4" />
           </button>
           {row.status === 'FAILED' && (
@@ -289,7 +306,7 @@ export default function ImportExportCenter() {
       key: 'actions', label: 'Actions', width: '120px',
       render: (_: any, row: integrationApi.IntegrationExportJob) => (
         <div className="flex items-center gap-1">
-          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1" title="View Details">
+          <button onClick={() => addToast({ type: 'info', title: 'View details not yet implemented' })} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1" title="View Details">
             <Eye className="w-4 h-4" />
           </button>
           {row.status === 'FAILED' && (
@@ -565,6 +582,13 @@ export default function ImportExportCenter() {
                   <input ref={fileInputRef} type="file" className="hidden"
                     accept={formats.find(f => f.id === importFormat)?.extensions || '.csv,.json,.xml,.edi,.xlsx,.xls'}
                     onChange={e => setImportFile(e.target.files?.[0] || null)} />
+                </div>
+                <div className="flex justify-center mt-3">
+                  <button onClick={(e) => { e.stopPropagation(); handleGenerateSample() }}
+                    disabled={importProcessing}
+                    className="enterprise-btn enterprise-btn-secondary text-xs disabled:opacity-50">
+                    <Download className="w-3.5 h-3.5" /> Generate Sample ({importEntityType.replace('-', ' ')}) Data
+                  </button>
                 </div>
               </EnterpriseFormSection>
 

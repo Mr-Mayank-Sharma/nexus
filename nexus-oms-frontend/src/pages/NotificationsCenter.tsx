@@ -11,6 +11,7 @@ import {
 import type { Column, Tab } from '../components/enterprise'
 import * as notificationsApi from '../api/notifications'
 import type { NotificationLog } from '../api/notifications'
+import { useToast } from '../hooks/useToast'
 
 interface NotificationItem {
   id: string
@@ -20,6 +21,8 @@ interface NotificationItem {
   timestamp: string
   read: boolean
   category: string
+  metadata?: Record<string, any>
+  entityId?: string
 }
 
 const typeIcons: Record<string, React.ReactNode> = {
@@ -124,6 +127,8 @@ export default function NotificationsCenter() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const { addToast } = useToast()
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -211,21 +216,25 @@ export default function NotificationsCenter() {
   function handleMarkAllRead() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     setSelectedIds([])
+    addToast({ type: 'success', title: 'All notifications marked as read' })
   }
 
   function handleClearAll() {
     const keep = new Set(selectedIds)
     setNotifications(prev => prev.filter(n => !keep.has(n.id)))
     setSelectedIds([])
+    addToast({ type: 'success', title: 'Selected notifications cleared' })
   }
 
   function toggleRead(id: string) {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: !n.read } : n))
+    addToast({ type: 'success', title: 'Read status updated' })
   }
 
   function handleDelete(id: string) {
     setNotifications(prev => prev.filter(n => n.id !== id))
     if (expandedId === id) setExpandedId(null)
+    addToast({ type: 'success', title: 'Notification deleted' })
   }
 
   function handlePageChange(newPage: number) {
@@ -293,27 +302,49 @@ export default function NotificationsCenter() {
     setExpandedId(expandedId === row.id ? null : row.id)
   }
 
-  const detailActions: Record<string, { label: string; icon: React.ReactNode }[]> = {
+  const handleDetailAction = (action: string, item: NotificationItem) => {
+    switch (action) {
+      case 'View Order':
+        window.open(`/orders/${item.metadata?.orderId || item.entityId || ''}`, '_blank')
+        break
+      case 'View Inventory':
+        window.open(`/inventory`, '_blank')
+        break
+      case 'View Dashboard':
+        window.open(`/`, '_blank')
+        break
+      case 'View Invoice':
+        window.open(`/invoices`, '_blank')
+        break
+      case 'Track Shipment':
+        window.open(`/shipping`, '_blank')
+        break
+      default:
+        break
+    }
+  }
+
+  const detailActions: Record<string, { label: string; icon: React.ReactNode; onClick: (item: NotificationItem) => void }[]> = {
     order: [
-      { label: 'View Order', icon: <Eye className="w-4 h-4" /> },
-      { label: 'View Inventory', icon: <Info className="w-4 h-4" /> },
+      { label: 'View Order', icon: <Eye className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Order', item) },
+      { label: 'View Inventory', icon: <Info className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Inventory', item) },
     ],
     alert: [
-      { label: 'View Inventory', icon: <Info className="w-4 h-4" /> },
-      { label: 'View Dashboard', icon: <Eye className="w-4 h-4" /> },
+      { label: 'View Inventory', icon: <Info className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Inventory', item) },
+      { label: 'View Dashboard', icon: <Eye className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Dashboard', item) },
     ],
     payment: [
-      { label: 'View Invoice', icon: <Eye className="w-4 h-4" /> },
+      { label: 'View Invoice', icon: <Eye className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Invoice', item) },
     ],
     shipment: [
-      { label: 'View Order', icon: <Eye className="w-4 h-4" /> },
-      { label: 'Track Shipment', icon: <TruckIcon className="w-4 h-4" /> },
+      { label: 'View Order', icon: <Eye className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Order', item) },
+      { label: 'Track Shipment', icon: <TruckIcon className="w-4 h-4" />, onClick: (item) => handleDetailAction('Track Shipment', item) },
     ],
     system: [
-      { label: 'View Details', icon: <Eye className="w-4 h-4" /> },
+      { label: 'View Details', icon: <Eye className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Details', item) },
     ],
     success: [
-      { label: 'View Details', icon: <Eye className="w-4 h-4" /> },
+      { label: 'View Details', icon: <Eye className="w-4 h-4" />, onClick: (item) => handleDetailAction('View Details', item) },
     ],
   }
 
@@ -329,7 +360,7 @@ export default function NotificationsCenter() {
           title="Notifications Center"
           subtitle="Manage system alerts and notifications"
           actions={[
-            { label: 'Settings', icon: <Settings className="w-4 h-4" />, onClick: () => {}, variant: 'ghost' },
+            { label: 'Settings', icon: <Settings className="w-4 h-4" />, onClick: () => addToast({ type: 'info', title: 'Notification settings' }), variant: 'ghost' },
           ]}
         />
         <div className="enterprise-card p-12 text-center">
@@ -357,7 +388,7 @@ export default function NotificationsCenter() {
           title="Notifications Center"
           subtitle="Manage system alerts and notifications"
           actions={[
-            { label: 'Settings', icon: <Settings className="w-4 h-4" />, onClick: () => {}, variant: 'ghost' },
+            { label: 'Settings', icon: <Settings className="w-4 h-4" />, onClick: () => addToast({ type: 'info', title: 'Notification settings' }), variant: 'ghost' },
           ]}
         />
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
@@ -394,7 +425,7 @@ export default function NotificationsCenter() {
         title="Notifications Center"
         subtitle="Manage system alerts and notifications"
         actions={[
-          { label: 'Settings', icon: <Settings className="w-4 h-4" />, onClick: () => {}, variant: 'ghost' },
+          { label: 'Settings', icon: <Settings className="w-4 h-4" />, onClick: () => addToast({ type: 'info', title: 'Notification settings' }), variant: 'ghost' },
         ]}
       />
 
@@ -590,7 +621,7 @@ export default function NotificationsCenter() {
                   {actions.length > 0 && (
                     <div className="border-t border-[var(--border-color)] pt-4 flex items-center gap-2">
                       {actions.map((action, i) => (
-                        <button key={i} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+                        <button key={i} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" onClick={() => action.onClick?.(item)}>
                           {action.icon} {action.label}
                         </button>
                       ))}

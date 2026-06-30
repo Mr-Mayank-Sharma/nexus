@@ -43,7 +43,7 @@ export default function DocumentsPage() {
     try {
       setLoading(true)
       const res = await documentsApi.getDocuments(etype || undefined, eid || undefined)
-      setDocs(res.data)
+      setDocs(Array.isArray(res.data) ? res.data : res.data?.content ?? [])
     } catch {
       addToast({ type: 'error', title: 'Failed to load documents' })
     } finally {
@@ -61,7 +61,7 @@ export default function DocumentsPage() {
     setSaving(true)
     try {
       const tagsArray = form.tags.split(',').map(t => t.trim()).filter(Boolean)
-      await documentsApi.createDocument({ ...form, tags: tagsArray, size: form.fileSize, type: form.documentType })
+      await documentsApi.createDocument({ ...form, name: form.title, tags: tagsArray, size: form.fileSize, type: form.documentType })
       addToast({ type: 'success', title: 'Document uploaded' })
       setShowUploadModal(false)
       await fetchDocs()
@@ -92,7 +92,7 @@ export default function DocumentsPage() {
     setVersionsLoading(true)
     try {
       const res = await documentsApi.getDocumentVersions(id)
-      setVersions(res.data)
+      setVersions(Array.isArray(res.data) ? res.data : res.data?.content ?? [])
     } catch {
       addToast({ type: 'error', title: 'Failed to load versions' })
     } finally {
@@ -122,7 +122,7 @@ export default function DocumentsPage() {
       setVersionDocId(null)
       if (expandedId) {
         const res = await documentsApi.getDocumentVersions(expandedId)
-        setVersions(res.data)
+        setVersions(Array.isArray(res.data) ? res.data : res.data?.content ?? [])
       }
     } catch {
       addToast({ type: 'error', title: 'Failed to upload version' })

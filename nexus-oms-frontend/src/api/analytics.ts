@@ -30,3 +30,8 @@ export async function getReturnsAnalytics(): Promise<ApiResponse<Record<string, 
   const { data } = await client.get('/analytics/returns')
   return data
 }
+
+export async function getActivity(): Promise<ApiResponse<any[]>> {
+  const { data } = await client.get('/analytics/activity')
+  return data
+}

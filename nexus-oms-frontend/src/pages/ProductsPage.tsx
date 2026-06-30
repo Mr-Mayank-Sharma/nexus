@@ -9,7 +9,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { useToast } from '../hooks/useToast'
 import * as productsApi from '../api/products'
-import type { Product } from '../api/products'
+import type { Product } from '../types'
 
 const categories = ['All', 'Apparel', 'Accessories', 'Home', 'Stationery']
 const categoryColors: Record<string, string> = {

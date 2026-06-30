@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,14 +40,14 @@ public class NotificationController {
 
     @PostMapping("/templates")
     public ResponseEntity<ApiResponse<NotificationTemplate>> createTemplate(
-            @RequestBody NotificationTemplate template) {
+            @Valid @RequestBody NotificationTemplate template) {
         return ResponseEntity.ok(ApiResponse.success(
                 notificationService.createTemplate(template), "Template created"));
     }
 
     @PutMapping("/templates/{id}")
     public ResponseEntity<ApiResponse<NotificationTemplate>> updateTemplate(
-            @PathVariable UUID id, @RequestBody NotificationTemplate template) {
+            @PathVariable UUID id, @Valid @RequestBody NotificationTemplate template) {
         return ResponseEntity.ok(ApiResponse.success(
                 notificationService.updateTemplate(id, template), "Template updated"));
     }
@@ -77,7 +78,7 @@ public class NotificationController {
     }
 
     @PostMapping("/alerts")
-    public ResponseEntity<ApiResponse<AlertRule>> createAlertRule(@RequestBody AlertRule rule) {
+    public ResponseEntity<ApiResponse<AlertRule>> createAlertRule(@Valid @RequestBody AlertRule rule) {
         return ResponseEntity.ok(ApiResponse.success(
                 notificationService.createAlertRule(rule), "Alert rule created"));
     }

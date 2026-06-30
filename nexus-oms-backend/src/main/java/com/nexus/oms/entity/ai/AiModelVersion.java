@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,17 +11,17 @@ import java.util.UUID;
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class AiModelVersion {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false) private UUID modelId;
-    @Column(nullable = false) private String version;
+    @NotNull @Column(nullable = false) private UUID modelId;
+    @NotBlank @Column(nullable = false) private String version;
     @Column(columnDefinition = "TEXT") private String modelFileUrl;
-    private Long modelSizeBytes;
+    @PositiveOrZero private Long modelSizeBytes;
     private String framework;
     private String frameworkVersion;
-    private java.math.BigDecimal accuracy;
-    private java.math.BigDecimal precision;
-    private java.math.BigDecimal recall;
-    private java.math.BigDecimal f1Score;
-    private java.math.BigDecimal latencyMs;
+    @PositiveOrZero private java.math.BigDecimal accuracy;
+    @PositiveOrZero private java.math.BigDecimal precision;
+    @PositiveOrZero private java.math.BigDecimal recall;
+    @PositiveOrZero private java.math.BigDecimal f1Score;
+    @PositiveOrZero private java.math.BigDecimal latencyMs;
     private UUID trainingDatasetId;
     private UUID validationDatasetId;
     private UUID testDatasetId;

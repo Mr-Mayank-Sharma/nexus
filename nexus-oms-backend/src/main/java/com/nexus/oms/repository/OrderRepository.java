@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,4 +32,12 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
            "LOWER(o.channelOrderId) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(o.trackingNumber) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<NxOrder> search(@Param("tenantId") UUID tenantId, @Param("search") String search, Pageable pageable);
+
+    long countByTenantIdAndCreatedAtAfter(UUID tenantId, LocalDateTime after);
+
+    @Query("SELECT COALESCE(SUM(o.total), 0) FROM NxOrder o WHERE o.tenantId = :tenantId AND o.createdAt >= :after")
+    BigDecimal sumTotalByTenantIdAndCreatedAtAfter(@Param("tenantId") UUID tenantId, @Param("after") LocalDateTime after);
+
+    @Query("SELECT o FROM NxOrder o WHERE o.tenantId = :tenantId ORDER BY o.createdAt DESC")
+    List<NxOrder> findRecentByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 }

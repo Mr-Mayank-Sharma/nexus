@@ -123,7 +123,6 @@ public class OrderRoutingService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (!dryRun) {
-            String finalStrategy = strategy;
             allocations.forEach(a -> {
                 a.setAllocatedAt(LocalDateTime.now());
                 a.setAllocatedBy(getCurrentUserId());
@@ -203,8 +202,7 @@ public class OrderRoutingService {
 
         if (warehouses.isEmpty()) return allocations;
 
-        String shipToJson = order.getShipTo();
-        String shipRegion = extractRegion(shipToJson);
+        String shipRegion = extractRegion(order.getShipToAddress());
 
         List<Warehouse> scored = warehouses.stream()
                 .map(wh -> {
@@ -377,7 +375,7 @@ public class OrderRoutingService {
         }
 
         if (conditions.has("regions")) {
-            String shipRegion = extractRegion(order.getShipTo());
+            String shipRegion = extractRegion(order.getShipToAddress());
             Set<String> regions = new HashSet<>();
             conditions.get("regions").forEach(r -> regions.add(r.asText().toUpperCase()));
             if (shipRegion != null && !regions.contains(shipRegion.toUpperCase())) {
@@ -500,7 +498,7 @@ public class OrderRoutingService {
         int processingDays = 1;
         int transitDays = 3;
 
-        String shipRegion = extractRegion(order.getShipTo());
+        String shipRegion = extractRegion(order.getShipToAddress());
         for (NxOrderAllocation alloc : allocations) {
             String nodeRegion = extractNodeRegion(alloc.getNodeName());
             if (shipRegion != null && shipRegion.equalsIgnoreCase(nodeRegion)) {
@@ -613,7 +611,7 @@ public class OrderRoutingService {
                 .ruleId(rule.getId())
                 .ruleName(rule.getName())
                 .costEstimated(estimateShippingCost(wh, order, qty))
-                .distanceKm(estimateDistance(wh, extractRegion(order.getShipTo())))
+                .distanceKm(estimateDistance(wh, extractRegion(order.getShipToAddress())))
                 .deliveryPromiseConfidence(calculateNodeConfidence(wh, order))
                 .build();
     }
@@ -671,14 +669,10 @@ public class OrderRoutingService {
         return 1;
     }
 
-    private String extractRegion(String shipToJson) {
-        if (shipToJson == null) return null;
-        try {
-            JsonNode node = MAPPER.readTree(shipToJson);
-            if (node.has("state")) return node.get("state").asText();
-            if (node.has("region")) return node.get("region").asText();
-            if (node.has("country")) return node.get("country").asText();
-        } catch (Exception ignored) {}
+    private String extractRegion(Address address) {
+        if (address == null) return null;
+        if (address.getState() != null) return address.getState();
+        if (address.getCountry() != null) return address.getCountry();
         return null;
     }
 

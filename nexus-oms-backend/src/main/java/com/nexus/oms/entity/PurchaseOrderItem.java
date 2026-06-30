@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,33 +20,43 @@ public class PurchaseOrderItem {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "po_id", nullable = false)
     private UUID poId;
 
+    @NotBlank
     @Column(nullable = false)
     private String sku;
 
+    @NotBlank
     @Column(name = "product_name", nullable = false)
     private String productName;
 
+    @Positive
     @Column(name = "quantity_ordered")
     private Integer quantityOrdered;
 
+    @PositiveOrZero
     @Column(name = "quantity_received")
     private Integer quantityReceived;
 
+    @PositiveOrZero
     @Column(name = "quantity_cancelled")
     private Integer quantityCancelled;
 
+    @PositiveOrZero
     @Column(name = "unit_price")
     private BigDecimal unitPrice;
 
+    @PositiveOrZero
     @Column(name = "total_price")
     private BigDecimal totalPrice;
 
+    @PositiveOrZero
     @Column(name = "tax_rate")
     private BigDecimal taxRate;
 
+    @PositiveOrZero
     @Column(name = "discount_percent")
     private BigDecimal discountPercent;
 

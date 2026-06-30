@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,15 +13,18 @@ public class NxFulfillmentException {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "order_id", nullable = false)
     private UUID orderId;
 
     @Column(name = "allocation_id")
     private UUID allocationId;
 
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
+    @NotBlank
     @Column(nullable = false)
     private String type;
 
@@ -30,6 +34,7 @@ public class NxFulfillmentException {
     @Column(nullable = false)
     private String status;
 
+    @NotBlank
     @Column(nullable = false)
     private String title;
 

@@ -1,0 +1,4 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+506,FAILED,ROW_ERROR,"Missing required field (tried: customerName, CustomerName, name, Name)",Review the row data for errors and re-import
+507,FAILED,ROW_ERROR,"Missing required field (tried: sku, SKU, productSku)",Review the row data for errors and re-import
+511,FAILED,ROW_ERROR,"Missing required field (tried: customerName, CustomerName, name, Name)",Review the row data for errors and re-import

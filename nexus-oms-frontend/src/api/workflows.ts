@@ -1,45 +1,6 @@
 import client from './client'
-import { ApiResponse } from '../types'
-
-export interface Workflow {
-  id: string
-  name: string
-  description: string
-  category: string
-  status: 'ACTIVE' | 'INACTIVE' | 'DRAFT' | 'ARCHIVED'
-  triggerType: 'MANUAL' | 'SCHEDULED' | 'EVENT'
-  triggerConfig: Record<string, any>
-  isActive: boolean
-  version: number
-  createdAt: string
-  updatedAt: string
-}
-
-export interface WorkflowStep {
-  id: string
-  workflowId: string
-  name: string
-  type: string
-  config: Record<string, any>
-  order: number
-  isActive: boolean
-  createdAt: string
-}
-
-export interface WorkflowExecution {
-  id: string
-  workflowId: string
-  workflowName: string
-  status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
-  triggerType: string
-  startedAt: string
-  completedAt?: string
-  duration?: number
-  input: Record<string, any>
-  output: Record<string, any>
-  errorMessage?: string
-  createdBy: string
-}
+import { ApiResponse, Workflow, WorkflowStep, WorkflowExecution } from '../types'
+export type { Workflow, WorkflowStep, WorkflowExecution }
 
 export async function getWorkflows(page: number, size: number): Promise<ApiResponse<{ content: Workflow[]; totalElements: number; totalPages: number }>> {
   try {
@@ -70,16 +31,16 @@ export async function createWorkflow(workflowData: Record<string, any>): Promise
 
 export async function updateWorkflowStatus(id: string, status: string): Promise<ApiResponse<Workflow>> {
   try {
-    const { data } = await client.put(`/workflows/${id}/status`, { status })
+    const { data } = await client.put(`/workflows/${id}/status`, null, { params: { status } })
     return data
   } catch (error: any) {
     throw new Error(error.response?.data?.message || error.message || 'Failed to update workflow status')
   }
 }
 
-export async function toggleWorkflow(id: string): Promise<ApiResponse<Workflow>> {
+export async function toggleWorkflow(id: string, active: boolean): Promise<ApiResponse<Workflow>> {
   try {
-    const { data } = await client.put(`/workflows/${id}/toggle`)
+    const { data } = await client.put(`/workflows/${id}/toggle`, null, { params: { active } })
     return data
   } catch (error: any) {
     throw new Error(error.response?.data?.message || error.message || 'Failed to toggle workflow')

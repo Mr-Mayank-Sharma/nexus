@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -35,6 +36,7 @@ public class Document {
     @Column(name = "file_name")
     private String fileName;
 
+    @PositiveOrZero
     @Column(name = "file_size")
     private Long fileSize;
 

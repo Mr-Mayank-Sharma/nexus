@@ -1,0 +1,3 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+506,FAILED,VALIDATION_ERROR,Missing required field: sku,Ensure all required fields are present
+509,FAILED,VALIDATION_ERROR,Missing required field: sku,Ensure all required fields are present

@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,13 +11,13 @@ import java.util.UUID;
 public class AiComputeResource {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
-    @Column(nullable = false) private String name;
+    @NotBlank @Column(nullable = false) private String name;
     private String resourceType;
     private String provider;
     @Column(columnDefinition = "JSONB") private String config;
-    private java.math.BigDecimal allocatedUnits;
-    private java.math.BigDecimal usedUnits;
-    private java.math.BigDecimal costPerUnit;
+    @PositiveOrZero private java.math.BigDecimal allocatedUnits;
+    @PositiveOrZero private java.math.BigDecimal usedUnits;
+    @PositiveOrZero private java.math.BigDecimal costPerUnit;
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

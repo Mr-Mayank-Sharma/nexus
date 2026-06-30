@@ -59,8 +59,34 @@ export default function LoginPage() {
   }, [mfaRequired])
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const ssoToken = params.get('token')
+    const ssoUser = params.get('user')
+    const ssoError = params.get('error')
+
+    if (ssoToken && ssoUser) {
+      localStorage.setItem('nexus_token', ssoToken)
+      localStorage.setItem('nexus_user', JSON.stringify({ username: ssoUser }))
+      window.location.href = '/'
+      return
+    }
+
+    if (ssoError) {
+      const errorMessages: Record<string, string> = {
+        sso_invalid_state: 'SSO session expired. Please try again.',
+        sso_state_expired: 'SSO session expired. Please try again.',
+        sso_not_configured: 'SSO provider is not configured.',
+        sso_token_exchange_failed: 'Failed to complete SSO authentication.',
+        sso_userinfo_failed: 'Failed to retrieve user information.',
+        sso_no_email: 'Could not retrieve email from SSO provider.',
+        sso_callback_failed: 'SSO authentication failed. Please try again.',
+      }
+      setError(errorMessages[ssoError] || 'SSO authentication failed.')
+      window.history.replaceState({}, '', '/login')
+    }
+
     authApi.getTenants().then(res => {
-      if (res.success && res.data.length > 0) {
+      if (res.success && Array.isArray(res.data) && res.data.length > 0) {
         setTenants(res.data)
         if (res.data.length === 1) {
           setSelectedTenant(res.data[0])
@@ -133,27 +159,11 @@ export default function LoginPage() {
     }
   }
 
-  async function handleSsoClick(providerId: string) {
-    setError('')
-    setLoading(true)
-    try {
-      const mockIdToken = btoa(JSON.stringify({
-        email: `${providerId}_user@example.com`,
-        sub: 'sso_' + providerId,
-      }))
-      const fakeToken = `header.${mockIdToken}.signature`
-      await ssoLogin(providerId, fakeToken, selectedTenant?.id)
-      navigate('/', { replace: true })
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as { response?: { data?: { message?: string } } }
-        setError(axiosErr.response?.data?.message || `${providerId} SSO login failed`)
-      } else {
-        setError('An unexpected error occurred')
-      }
-    } finally {
-      setLoading(false)
-    }
+  function handleSsoClick(providerId: string) {
+    const params = new URLSearchParams()
+    if (selectedTenant?.id) params.set('tenantId', selectedTenant.id)
+    const qs = params.toString()
+    window.location.href = `/api/v1/auth/sso/${providerId}/authorize${qs ? '?' + qs : ''}`
   }
 
   async function handleForgotPassword(e: React.FormEvent) {

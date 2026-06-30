@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,15 +21,18 @@ public class IntegrationEndpoint {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(nullable = false)
     private String name;
 
     @Column(columnDefinition = "text")
     private String description;
 
+    @NotBlank
     @Column(name = "endpoint_type", nullable = false)
     private String endpointType;
 
+    @NotBlank
     @Column(nullable = false)
     private String protocol;
 

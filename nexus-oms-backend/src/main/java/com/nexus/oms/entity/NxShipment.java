@@ -1,7 +1,11 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,6 +21,7 @@ public class NxShipment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "order_id", nullable = false)
     private UUID orderId;
 
@@ -41,9 +46,11 @@ public class NxShipment {
     private Boolean voided;
 
     @Column(columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String rate;
 
     @Column(name = "cost_components", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String costComponents;
 
     @Column(name = "origin_node_id")
@@ -55,6 +62,7 @@ public class NxShipment {
     @Column(name = "actual_delivery")
     private LocalDateTime actualDelivery;
 
+    @NotBlank
     @Column(nullable = false)
     private String status;
 

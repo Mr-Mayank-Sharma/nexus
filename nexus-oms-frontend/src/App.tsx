@@ -15,6 +15,7 @@ import B2BPortalPage from './pages/B2BPortalPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import AiPage from './pages/AiPage'
 import AiPlatformPage from './pages/AiPlatformPage'
+import AiExperimentsPage from './pages/AiExperimentsPage'
 import CarriersPage from './pages/CarriersPage'
 import CarrierRateShoppingPage from './pages/CarrierRateShoppingPage'
 import EdiAutomationPage from './pages/EdiAutomationPage'
@@ -83,6 +84,7 @@ export default function App() {
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="ai" element={<AiPage />} />
           <Route path="ai-platform/*" element={<AiPlatformPage />} />
+          <Route path="experiments" element={<AiExperimentsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

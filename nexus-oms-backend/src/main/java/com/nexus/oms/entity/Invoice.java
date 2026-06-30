@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ public class Invoice {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(name = "invoice_number", nullable = false)
     private String invoiceNumber;
 
@@ -75,11 +77,13 @@ public class Invoice {
 
     private String notes;
 
-    @Column(name = "billing_address", columnDefinition = "jsonb")
-    private String billingAddress;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billing_address_id")
+    private Address billingAddress;
 
-    @Column(name = "shipping_address", columnDefinition = "jsonb")
-    private String shippingAddress;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_address_id")
+    private Address shippingAddress;
 
     @Column(columnDefinition = "jsonb")
     private String metadata;

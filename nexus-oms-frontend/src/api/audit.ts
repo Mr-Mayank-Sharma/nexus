@@ -1,34 +1,6 @@
 import client from './client'
-import { ApiResponse } from '../types'
-
-export interface AuditEntry {
-  id: string
-  tenantId: string
-  flowId?: string
-  messageId?: string
-  entityType: string
-  entityId: string
-  action: string
-  status: string
-  requestPayload?: string
-  responsePayload?: string
-  sourceSystem?: string
-  targetSystem?: string
-  processingTimeMs?: number
-  errorMessage?: string
-  ipAddress?: string
-  userAgent?: string
-  createdBy?: string
-  createdAt: string
-}
-
-export interface AuditPage {
-  content: AuditEntry[]
-  totalElements: number
-  totalPages: number
-  size: number
-  number: number
-}
+import { ApiResponse, AuditEntry, AuditPage } from '../types'
+export type { AuditEntry, AuditPage }
 
 export async function getAuditLogs(page = 0, size = 25): Promise<ApiResponse<AuditPage>> {
   const { data } = await client.get('/integration-platform/audit', { params: { page, size } })

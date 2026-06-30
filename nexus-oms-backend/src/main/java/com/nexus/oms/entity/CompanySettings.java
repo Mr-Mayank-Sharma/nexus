@@ -1,6 +1,8 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,9 +19,11 @@ public class CompanySettings {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "tenant_id", unique = true)
     private UUID tenantId;
 
+    @NotBlank
     @Column(name = "company_name")
     private String companyName;
 
@@ -32,6 +36,7 @@ public class CompanySettings {
     @Column(name = "registration_number")
     private String registrationNumber;
 
+    @NotBlank
     @Column(name = "default_currency")
     private String defaultCurrency;
 

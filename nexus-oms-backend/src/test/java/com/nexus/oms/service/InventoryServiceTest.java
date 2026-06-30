@@ -37,7 +37,6 @@ class InventoryServiceTest {
                 .sku("TEST-SKU-001")
                 .quantityOnHand(100)
                 .quantityReserved(10)
-                .quantityAvailable(90)
                 .build();
     }
 

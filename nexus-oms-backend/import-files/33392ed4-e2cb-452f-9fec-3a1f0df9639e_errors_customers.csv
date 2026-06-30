@@ -1,0 +1,4 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+511,FAILED,VALIDATION_ERROR,Missing required field: name,Ensure all required fields are present
+512,FAILED,VALIDATION_ERROR,Missing required field: email,Ensure all required fields are present
+514,FAILED,VALIDATION_ERROR,Missing required field: name; Missing required field: email,Ensure all required fields are present

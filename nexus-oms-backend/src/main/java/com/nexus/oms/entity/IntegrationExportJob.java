@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,9 +24,11 @@ public class IntegrationExportJob {
     @Column(name = "flow_id")
     private UUID flowId;
 
+    @NotBlank
     @Column(name = "job_name", nullable = false)
     private String jobName;
 
+    @NotBlank
     @Column(name = "export_type", nullable = false)
     private String exportType;
 
@@ -35,6 +38,7 @@ public class IntegrationExportJob {
     @Column(name = "query_criteria", columnDefinition = "jsonb")
     private String queryCriteria;
 
+    @NotBlank
     @Column(name = "entity_type", nullable = false)
     private String entityType;
 

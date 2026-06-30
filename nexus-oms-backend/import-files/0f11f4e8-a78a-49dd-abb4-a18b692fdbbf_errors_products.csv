@@ -1,0 +1,5 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+467,FAILED,ROW_ERROR,"JDBC exception executing SQL [INSERT INTO products (id, tenant_id, sku, product_name, description, category, unit_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)] [ERROR: duplicate key value violates unique constraint ""idx_products_tenant_sku""
+  Detail: Key (tenant_id, sku)=(a296dd05-62b8-4a52-ab1c-b3b8f4b9a80a, BEAU-5724) already exists.] [n/a]",Remove duplicate records or use UPSERT mode
+514,FAILED,ROW_ERROR,"Missing required field (tried: sku, SKU, name, productName)",Review the row data for errors and re-import
+516,FAILED,ROW_ERROR,"JDBC exception executing SQL [INSERT INTO products (id, tenant_id, sku, product_name, description, category, unit_price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)] [ERROR: value too long for type character varying(100)] [n/a]",Review the row data for errors and re-import

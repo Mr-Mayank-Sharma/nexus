@@ -70,7 +70,7 @@ export default function UsersPage() {
     try {
       setLoading(true)
       const res = await rbacApi.getUserRoles(0, 100)
-      const mapped: UserRoleItem[] = (res.data.content || []).map((u: any) => ({
+      const mapped: UserRoleItem[] = (res.data?.content ?? []).map((u: any) => ({
         id: u.id,
         userId: u.userId,
         userName: u.userName || u.userEmail || u.userId,
@@ -94,7 +94,7 @@ export default function UsersPage() {
     try {
       setLoading(true)
       const res = await rbacApi.getTeams(0, 100)
-      const mapped: TeamItem[] = (res.data.content || []).map((t: any) => ({
+      const mapped: TeamItem[] = (res.data?.content ?? []).map((t: any) => ({
         id: t.id,
         name: t.name,
         description: t.description || '',
@@ -113,7 +113,7 @@ export default function UsersPage() {
   async function fetchPermissions() {
     try {
       const res = await rbacApi.getPermissions(0, 200)
-      const mapped: PermissionItem[] = (res.data.content || []).map((p: any) => ({
+      const mapped: PermissionItem[] = (res.data?.content ?? []).map((p: any) => ({
         id: p.id,
         role: p.role || p.resource?.split(':')[0] || '',
         permissionGroup: p.resource || '',
@@ -171,13 +171,7 @@ export default function UsersPage() {
   }
 
   async function handleToggleTeam(team: TeamItem) {
-    try {
-      await rbacApi.createTeam({ ...team, isActive: !team.isActive })
-      addToast({ type: 'success', title: `Team ${team.isActive ? 'deactivated' : 'activated'}` })
-      await fetchTeams()
-    } catch {
-      addToast({ type: 'error', title: 'Failed to toggle team' })
-    }
+    addToast({ type: 'warning', title: 'Team update API not available' })
   }
 
   async function handleSetPermission() {

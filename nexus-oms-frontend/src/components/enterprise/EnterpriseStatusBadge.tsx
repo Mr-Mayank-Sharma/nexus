@@ -30,6 +30,20 @@ const colorMap: Record<string, string> = {
   processing: 'enterprise-badge-warning',
   running: 'enterprise-badge-info',
   paused: 'enterprise-badge-warning',
+  requested: 'enterprise-badge-warning',
+  approved: 'enterprise-badge-info',
+  received: 'enterprise-badge-info',
+  inspected: 'enterprise-badge-info',
+  refunded: 'enterprise-badge-success',
+  rejected: 'enterprise-badge-error',
+  blacklisted: 'enterprise-badge-error',
+  expired: 'enterprise-badge-warning',
+  terminated: 'enterprise-badge-error',
+  sent: 'enterprise-badge-info',
+  under_review: 'enterprise-badge-warning',
+  awarded: 'enterprise-badge-success',
+  pending_approval: 'enterprise-badge-warning',
+  partially_received: 'enterprise-badge-info',
 }
 
 export default function EnterpriseStatusBadge({ status, label, children, size = 'md' }: Props) {

@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -19,17 +20,20 @@ public class RfqResponse {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "rfq_id", nullable = false)
     private UUID rfqId;
 
     @Column(name = "supplier_id")
     private UUID supplierId;
 
+    @PositiveOrZero
     @Column(name = "total_amount")
     private BigDecimal totalAmount;
 
     private String currency;
 
+    @Positive
     @Column(name = "delivery_days")
     private Integer deliveryDays;
 

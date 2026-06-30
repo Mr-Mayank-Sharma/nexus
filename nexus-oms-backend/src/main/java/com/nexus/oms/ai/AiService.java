@@ -43,7 +43,7 @@ public class AiService {
                     .carrier(json.path("carrier").asText("AUTO"))
                     .boxSize(json.path("box_size").asText("STANDARD"))
                     .pickPackDetails(json.path("pick_pack").asText("Standard picking"))
-                    .confidence(new BigDecimal(json.path("confidence").asDouble(0.9)))
+                    .confidence(BigDecimal.valueOf(json.path("confidence").asDouble(0.9)))
                     .rule(json.path("rule").asText("BEST_MATCH"))
                     .build();
         } catch (Exception e) {

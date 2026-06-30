@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { GitBranch, Play, Square, List, Settings, Plus, Search, X, Check, Clock, Loader2, ChevronDown, ChevronRight, ExternalLink } from 'lucide-react'
+import { GitBranch, Play, List, Plus, X, Clock, Loader2, ChevronDown, ChevronRight } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import * as workflowsApi from '../api/workflows'
@@ -55,7 +55,7 @@ export default function WorkflowsPage() {
     try {
       setLoading(true)
       const res = await workflowsApi.getWorkflows(0, 100)
-      setWorkflows(res.data.content)
+      setWorkflows(res.data?.content ?? [])
     } catch { addToast({ type: 'error', title: 'Failed to load workflows' })
     } finally { setLoading(false) }
   }
@@ -64,7 +64,7 @@ export default function WorkflowsPage() {
     try {
       setStepsLoading(true)
       const res = await workflowsApi.getWorkflowSteps(workflowId)
-      setSteps(res.data)
+      setSteps(Array.isArray(res.data) ? res.data : res.data?.content ?? [])
     } catch { addToast({ type: 'error', title: 'Failed to load steps' })
     } finally { setStepsLoading(false) }
   }
@@ -73,7 +73,7 @@ export default function WorkflowsPage() {
     try {
       setExecutionsLoading(true)
       const res = await workflowsApi.getExecutions(workflowId, 0, 20)
-      setExecutions(res.data.content)
+      setExecutions(res.data?.content ?? [])
     } catch { addToast({ type: 'error', title: 'Failed to load executions' })
     } finally { setExecutionsLoading(false) }
   }
@@ -184,7 +184,7 @@ export default function WorkflowsPage() {
                 className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                 onClick={() => handleExpand(wf.id)}
               >
-                <button className="text-gray-400">
+                <button className="text-gray-400" onClick={() => handleExpand(wf.id)}>
                   {expandedId === wf.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
                 <div className="flex-1 min-w-0 grid grid-cols-6 gap-4 items-center">
@@ -371,7 +371,7 @@ export default function WorkflowsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Type</label>
                 <select value={createForm.triggerType} onChange={e => setCreateForm({ ...createForm, triggerType: e.target.value })} className="input w-full">
                   <option value="EVENT">Event</option>
-                  <option value="SCHEDULE">Schedule</option>
+                  <option value="SCHEDULED">Schedule</option>
                   <option value="MANUAL">Manual</option>
                 </select>
               </div>

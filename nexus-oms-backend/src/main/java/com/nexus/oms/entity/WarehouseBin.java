@@ -1,6 +1,9 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,12 +24,14 @@ public class WarehouseBin {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotNull
     @Column(name = "warehouse_id", nullable = false)
     private UUID warehouseId;
 
     @Column(name = "zone_id")
     private UUID zoneId;
 
+    @NotBlank
     @Column(nullable = false)
     private String code;
 
@@ -36,15 +41,19 @@ public class WarehouseBin {
     @Column(name = "bin_class")
     private String binClass;
 
+    @PositiveOrZero
     @Column(name = "max_weight_kg")
     private BigDecimal maxWeightKg;
 
+    @PositiveOrZero
     @Column(name = "max_volume_cbm")
     private BigDecimal maxVolumeCbm;
 
+    @PositiveOrZero
     @Column(name = "current_weight_kg")
     private BigDecimal currentWeightKg;
 
+    @PositiveOrZero
     @Column(name = "current_volume_cbm")
     private BigDecimal currentVolumeCbm;
 

@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,11 +12,11 @@ import java.util.UUID;
 public class AiModel {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
-    @Column(nullable = false) private String name;
+    @NotBlank @Column(nullable = false) private String name;
     private String displayName;
     @Column(columnDefinition = "TEXT") private String description;
-    @Column(nullable = false) private String modelType;
-    @Column(nullable = false) private String category;
+    @NotBlank @Column(nullable = false) private String modelType;
+    @NotBlank @Column(nullable = false) private String category;
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "base_model_id") private AiModel baseModel;
     private String status;
     private String currentVersion;

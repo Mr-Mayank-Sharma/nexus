@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Inventory", description = "Inventory management APIs")
 @RestController
 @RequestMapping("/inventory")
 public class InventoryController {
@@ -21,16 +24,19 @@ public class InventoryController {
         this.inventoryService = inventoryService;
     }
 
+    @Operation(summary = "List all inventory for current tenant")
     @GetMapping
     public ResponseEntity<ApiResponse<List<NxInventory>>> getInventory() {
         return ResponseEntity.ok(ApiResponse.success(inventoryService.getInventoryByTenant(TenantContext.getCurrentTenantId())));
     }
 
+    @Operation(summary = "Get inventory by SKU")
     @GetMapping("/{sku}")
     public ResponseEntity<ApiResponse<NxInventory>> getBySku(@PathVariable String sku) {
         return ResponseEntity.ok(ApiResponse.success(inventoryService.getBySku(TenantContext.getCurrentTenantId(), sku)));
     }
 
+    @Operation(summary = "Adjust inventory quantity")
     @PutMapping("/adjust")
     public ResponseEntity<ApiResponse<NxInventory>> adjustInventory(@RequestBody Map<String, Object> request) {
         UUID id = UUID.fromString((String) request.get("id"));
@@ -39,6 +45,7 @@ public class InventoryController {
                 inventoryService.adjustInventory(id, quantityChange), "Inventory adjusted"));
     }
 
+    @Operation(summary = "Get available-to-promise quantity for SKU")
     @GetMapping("/atp")
     public ResponseEntity<ApiResponse<Integer>> getAtp(@RequestParam String sku) {
         return ResponseEntity.ok(ApiResponse.success(

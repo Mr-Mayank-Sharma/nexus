@@ -1,6 +1,8 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,12 +12,12 @@ import java.util.UUID;
 public class AiDataset {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
-    @Column(nullable = false) private String name;
+    @NotBlank @Column(nullable = false) private String name;
     @Column(columnDefinition = "TEXT") private String description;
     private String datasetType;
     @Column(columnDefinition = "TEXT") private String sourceQuery;
-    private Integer recordCount;
-    private Long sizeBytes;
+    @PositiveOrZero private Integer recordCount;
+    @PositiveOrZero private Long sizeBytes;
     @Column(columnDefinition = "TEXT") private String storageUrl;
     @Column(columnDefinition = "JSONB") private String schemaDef;
     @Column(columnDefinition = "JSONB") private String statistics;

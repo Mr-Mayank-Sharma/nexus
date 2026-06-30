@@ -1,16 +1,17 @@
 package com.nexus.oms.controller;
 
-import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.entity.NxInventory;
+import com.nexus.oms.security.JwtTokenProvider;
 import com.nexus.oms.security.TenantAwarePrincipal;
 import com.nexus.oms.service.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -24,6 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(InventoryController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class InventoryControllerTest {
 
     @Autowired
@@ -31,6 +33,9 @@ class InventoryControllerTest {
 
     @MockBean
     private InventoryService inventoryService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
 
     private UUID tenantId;
     private NxInventory testInventory;
@@ -40,7 +45,8 @@ class InventoryControllerTest {
         tenantId = UUID.randomUUID();
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
-                        new TenantAwarePrincipal("testuser", tenantId), null, List.of()
+                        new TenantAwarePrincipal("testuser", tenantId), null,
+                        List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
                 )
         );
         testInventory = NxInventory.builder()

@@ -1,36 +1,6 @@
 import client from './client'
-import { ApiResponse } from '../types'
-
-export interface Document {
-  id: string
-  name: string
-  description: string
-  type: string
-  mimeType: string
-  size: number
-  category: string
-  tags: string[]
-  entityType: string
-  entityId: string
-  currentVersion: number
-  uploadedBy: string
-  uploadedByName: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface DocumentVersion {
-  id: string
-  documentId: string
-  version: number
-  mimeType: string
-  size: number
-  url: string
-  uploadedBy: string
-  notes: string
-  createdAt: string
-}
+import { ApiResponse, Document, DocumentVersion } from '../types'
+export type { Document, DocumentVersion }
 
 export async function getDocuments(entityType?: string, entityId?: string): Promise<ApiResponse<Document[]>> {
   try {
@@ -99,7 +69,7 @@ export async function getDocumentVersions(documentId: string): Promise<ApiRespon
 
 export async function getDocumentsByEntity(entityType: string, entityId: string): Promise<ApiResponse<Document[]>> {
   try {
-    const { data } = await client.get(`/documents/entity/${entityType}/${entityId}`)
+    const { data } = await client.get('/documents/by-entity', { params: { entityType, entityId } })
     return data
   } catch (error: any) {
     throw new Error(error.response?.data?.message || error.message || 'Failed to fetch documents by entity')

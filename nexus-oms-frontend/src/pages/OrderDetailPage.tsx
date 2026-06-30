@@ -12,6 +12,8 @@ import { OrderTimelineEvent, Order } from '../types'
 import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
 import * as aiPlatformApi from '../api/aiPlatform'
+import * as aiOrdersApi from '../api/aiOrders'
+import type { AiSuggestion, AiActionHistory } from '../api/aiOrders'
 
 interface Payment {
   id: string
@@ -43,6 +45,9 @@ export default function OrderDetailPage() {
   const { addToast } = useToast()
 
   const [aiPrediction, setAiPrediction] = useState<{ deliveryDate?: string; confidence?: number; anomaly?: boolean } | null>(null)
+  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([])
+  const [aiHistory, setAiHistory] = useState<AiActionHistory[]>([])
+  const [aiExecuting, setAiExecuting] = useState<string | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [documents, setDocuments] = useState<Document[]>([])
 
@@ -52,10 +57,11 @@ export default function OrderDetailPage() {
     try {
       setLoading(true)
       const res = await ordersApi.getOrderById(id!)
+      const orderNum = res.data.externalId || res.data.channelOrderId || `ORD-${(res.data.id || id!).slice(0, 8).toUpperCase()}`
       setOrder({
         id: res.data.id || id!,
-        orderNumber: res.data.orderNumber || id!,
-        customerName: res.data.customerName || 'Customer',
+        orderNumber: orderNum,
+        customerName: res.data.customerName || (res.data.customerId ? `Customer ${res.data.customerId.slice(0, 8)}` : 'Guest Customer'),
         customerEmail: res.data.customerEmail || '',
         channel: res.data.channel || 'MANUAL',
         status: res.data.status || 'PENDING',
@@ -69,23 +75,24 @@ export default function OrderDetailPage() {
           street: res.data.shipTo.street || res.data.shipTo.line1 || '', city: res.data.shipTo.city || '',
           state: res.data.shipTo.state || '', zip: res.data.shipTo.zip || res.data.shipTo.pincode || '', country: res.data.shipTo.country || '',
         } : { street: '', city: '', state: '', zip: '', country: '' },
-        billingAddress: { street: '', city: '', state: '', zip: '', country: '' },
+        billingAddress: res.data.billingAddress ? {
+          street: res.data.billingAddress.street || res.data.billingAddress.line1 || '', city: res.data.billingAddress.city || '',
+          state: res.data.billingAddress.state || '', zip: res.data.billingAddress.zip || res.data.billingAddress.pincode || '', country: res.data.billingAddress.country || '',
+        } : { street: '', city: '', state: '', zip: '', country: '' },
         fulfillmentType: res.data.fulfillmentType || 'STANDARD',
         allocationNodeId: res.data.allocatedNode || '', carrier: res.data.carrierId || '',
         trackingNumber: res.data.trackingNumber || '', promisedDeliveryDate: res.data.promisedDelivery || '',
-        estimatedShipDate: '', createdAt: res.data.createdAt || new Date().toISOString(),
+        estimatedShipDate: res.data.shippedAt || res.data.promisedDelivery || '',
+        shippedDate: res.data.shippedAt || '', deliveredDate: res.data.deliveredAt || '',
+        createdAt: res.data.createdAt || new Date().toISOString(),
         updatedAt: res.data.updatedAt || new Date().toISOString(), priority: 'MEDIUM',
         hasException: res.data.subStatus === 'EXCEPTION', tags: [], notes: '',
       })
 
-      // Mock payments
-      setPayments([
-        { id: 'pmt1', method: 'Credit Card (****4242)', amount: res.data.total || 0, status: 'CAPTURED', date: res.data.createdAt || new Date().toISOString(), reference: 'TXN-' + Date.now() },
-      ])
-      setDocuments([
-        { id: 'doc1', name: 'Packing Slip', type: 'PDF', size: '245 KB', uploadedAt: new Date().toISOString(), url: '#' },
-        { id: 'doc2', name: 'Shipping Label', type: 'PDF', size: '180 KB', uploadedAt: new Date().toISOString(), url: '#' },
-      ])
+      setPayments(res.data.paymentStatus ? [
+        { id: 'pmt1', method: res.data.paymentReference ? `Ref: ${res.data.paymentReference}` : 'Standard', amount: res.data.total || 0, status: res.data.paymentStatus === 'PAID' ? 'CAPTURED' : res.data.paymentStatus || 'PENDING', date: res.data.createdAt || new Date().toISOString(), reference: res.data.paymentReference || 'N/A' },
+      ] : [])
+      setDocuments([])
 
       // Try AI prediction
       try {
@@ -97,8 +104,20 @@ export default function OrderDetailPage() {
             anomaly: aiRes.data.isAnomaly,
           })
         }
-      } catch {}
-    } catch {
+      } catch { addToast({ type: 'error', title: 'Failed to get AI delivery prediction' }) }
+
+      // Fetch AI suggestions & history
+      try {
+        const [sugRes, histRes] = await Promise.all([
+          aiOrdersApi.getAiSuggestions(id!),
+          aiOrdersApi.getAiHistory(id!),
+        ])
+        setAiSuggestions(sugRes.data || [])
+        setAiHistory(histRes.data || [])
+      } catch { addToast({ type: 'error', title: 'Failed to load AI suggestions' }) }
+    } catch (err) {
+      addToast({ type: 'error', title: 'Failed to load order' })
+      console.error('Failed to fetch order:', err)
       setOrder(null)
     } finally {
       setLoading(false)
@@ -119,6 +138,32 @@ export default function OrderDetailPage() {
       addToast({ type: 'error', title: `Failed to ${action} order` })
     } finally {
       setActionLoading(null)
+    }
+  }
+
+  function handlePrintLabel() {
+    if (!order?.trackingNumber) {
+      addToast({ type: 'info', title: 'No tracking number available', description: 'Ship the order first to generate a label' })
+      return
+    }
+    addToast({ type: 'success', title: 'Label request submitted' })
+  }
+
+  async function handleAiAction(actionType: string) {
+    if (!id) return
+    setAiExecuting(actionType)
+    try {
+      const res = await aiOrdersApi.executeAiAction(id, { actionType })
+      if (res.data?.status === 'SUCCESS') {
+        addToast({ type: 'success', title: `AI action completed: ${res.data.label}` })
+      } else {
+        addToast({ type: 'error', title: `AI action failed: ${res.data?.details || 'Unknown error'}` })
+      }
+      await fetchOrder()
+    } catch {
+      addToast({ type: 'error', title: 'Failed to execute AI action' })
+    } finally {
+      setAiExecuting(null)
     }
   }
 
@@ -202,14 +247,22 @@ export default function OrderDetailPage() {
     if (['SHIPPED', 'IN_TRANSIT', 'DELIVERED'].includes(order.status)) events.push({ id: 'e4', type: 'SHIPPED', title: 'Shipped', description: `Carrier: ${order.carrier} · ${order.trackingNumber}`, timestamp: order.updatedAt, user: 'System' })
     if (order.status === 'DELIVERED') events.push({ id: 'e5', type: 'DELIVERED', title: 'Delivered', description: 'Package delivered', timestamp: order.updatedAt, user: 'System' })
     if (order.status === 'CANCELLED') events.push({ id: 'e6', type: 'CANCELLED', title: 'Cancelled', description: 'Order was cancelled', timestamp: order.updatedAt, user: 'System' })
+    aiHistory.forEach(h => events.push({
+      id: `ai-${h.id}`,
+      type: 'AI_ACTION',
+      title: h.label,
+      description: `${h.details} (${h.actor})`,
+      timestamp: h.timestamp,
+      user: h.actor,
+    }))
     return events
-  }, [order])
+  }, [order, aiHistory])
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]" /></div>
 
   if (!order) return (
     <div className="space-y-6">
-      <button onClick={() => navigate('/orders')} className="enterprise-btn-ghost text-sm flex items-center gap-1.5"><ArrowLeft className="w-4 h-4" /> Back to Orders</button>
+      <button onClick={() => navigate('/orders')} className="enterprise-btn enterprise-btn-ghost text-sm"><ArrowLeft className="w-4 h-4" /> Back to Orders</button>
       <div className="text-center py-12 text-[var(--text-tertiary)]">Order not found</div>
     </div>
   )
@@ -234,18 +287,18 @@ export default function OrderDetailPage() {
             {order.hasException && <EnterpriseStatusBadge status="error" label="Exception" />}
           </div>
           <p className="text-sm text-[var(--text-tertiary)] mt-1">
-            Created {new Date(order.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            Created {new Date(order.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
             {' · '}{order.channel} · {order.fulfillmentType}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {isModifiable && (<button onClick={openModify} className="enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Edit3 className="w-4 h-4" /> Modify</button>)}
-          {isModifiable && (<button onClick={openSplit} className="enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button>)}
-          {order.status === 'PENDING' && (<button onClick={openMerge} className="enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button>)}
-          <button className="enterprise-btn-secondary text-sm"><Printer className="w-4 h-4" /> Print Label</button>
+          {isModifiable && (<button onClick={openModify} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Edit3 className="w-4 h-4" /> Modify</button>)}
+          {isModifiable && (<button onClick={openSplit} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button>)}
+          {order.status === 'PENDING' && (<button onClick={openMerge} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button>)}
+          <button onClick={handlePrintLabel} className="enterprise-btn enterprise-btn-secondary text-sm"><Printer className="w-4 h-4" /> Print Label</button>
           {statusActions.map(a => (
             <button key={a.label} onClick={a.onClick} disabled={a.disabled}
-              className={a.variant === 'primary' ? 'enterprise-btn-primary text-sm' : 'enterprise-btn-danger text-sm'}>
+              className={a.variant === 'primary' ? 'enterprise-btn enterprise-btn-primary text-sm' : 'enterprise-btn enterprise-btn-danger text-sm'}>
               {a.icon}{a.label}
             </button>
           ))}
@@ -275,16 +328,16 @@ export default function OrderDetailPage() {
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)]">{item.productName}</td>
                       <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] font-mono">{item.sku}</td>
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>
-                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">${item.unitPrice.toFixed(2)}</td>
-                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">${item.totalPrice.toFixed(2)}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{order.currency} {item.unitPrice.toFixed(2)}</td>
+                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">{order.currency} {item.totalPrice.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Subtotal</td><td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">${order.subtotal.toFixed(2)}</td></tr>
-                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Shipping</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">${order.shippingCost.toFixed(2)}</td></tr>
-                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Tax</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">${order.tax.toFixed(2)}</td></tr>
-                  <tr className="border-t-2 border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm font-semibold text-[var(--text-primary)] text-right">Total</td><td className="px-6 py-3 text-sm font-bold text-[var(--text-primary)] text-right">${order.total.toFixed(2)}</td></tr>
+                  <tr className="border-t border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Subtotal</td><td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">{order.currency} {order.subtotal.toFixed(2)}</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Shipping</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">{order.currency} {order.shippingCost.toFixed(2)}</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Tax</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">{order.currency} {order.tax.toFixed(2)}</td></tr>
+                  <tr className="border-t-2 border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm font-semibold text-[var(--text-primary)] text-right">Total</td><td className="px-6 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{order.currency} {order.total.toFixed(2)}</td></tr>
                 </tfoot>
               </table>
             </div>
@@ -295,11 +348,11 @@ export default function OrderDetailPage() {
             <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Order Timeline</h3></div>
             <div className="p-6">
               <EnterpriseTimeline
-                items={timelineEvents.map(e => ({
+                events={timelineEvents.map(e => ({
                   id: e.id, title: e.title,
                   description: e.description,
                   timestamp: e.timestamp,
-                  status: e.type === 'DELIVERED' || e.type === 'CONFIRMED' ? 'completed' : e.type === 'SHIPPED' ? 'current' : e.type === 'CANCELLED' || e.type === 'EXCEPTION' ? 'error' : 'pending',
+                  status: e.type === 'DELIVERED' || e.type === 'CONFIRMED' ? 'completed' : e.type === 'SHIPPED' ? 'current' : e.type === 'AI_ACTION' ? 'completed' : e.type === 'CANCELLED' || e.type === 'EXCEPTION' ? 'error' : 'pending',
                 }))}
               />
             </div>
@@ -335,6 +388,37 @@ export default function OrderDetailPage() {
             </div>
           )}
 
+          {/* AI Suggestions */}
+          {aiSuggestions.filter(s => s.confidence > 0.3).length > 0 && (
+            <div className="enterprise-card border border-[var(--color-ai-border)]">
+              <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Brain className="w-4 h-4 text-[var(--color-ai)]" />AI Suggested Actions</h3></div>
+              <div className="p-4 space-y-3">
+                {aiSuggestions.filter(s => s.confidence > 0.3).map(s => (
+                  <div key={s.actionType} className="enterprise-insight">
+                    <Brain className="w-5 h-5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-medium">{s.label}</h4>
+                        <span className="text-xs font-medium text-[var(--color-ai)] whitespace-nowrap">{Math.round(s.confidence * 100)}% confidence</span>
+                      </div>
+                      <p className="text-xs mt-0.5">{s.description}</p>
+                      <div className="w-full h-1.5 bg-[var(--bg-tertiary)] rounded-full mt-2 overflow-hidden">
+                        <div className="h-full rounded-full bg-[var(--color-ai)]" style={{ width: `${s.confidence * 100}%` }} />
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <button onClick={() => handleAiAction(s.actionType)} disabled={aiExecuting !== null}
+                        className="enterprise-btn enterprise-btn-ai enterprise-btn-sm">
+                        {aiExecuting === s.actionType ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Documents */}
           <div className="enterprise-card">
             <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><FileText className="w-4 h-4" />Documents</h3></div>
@@ -355,8 +439,8 @@ export default function OrderDetailPage() {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <button className="enterprise-btn-ghost p-1.5" title="Download"><Download className="w-3.5 h-3.5" /></button>
-                        <button className="enterprise-btn-ghost p-1.5" title="View"><ExternalLink className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => addToast({ type: 'info', title: 'Download not yet implemented' })} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" title="Download"><Download className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => addToast({ type: 'info', title: 'View not yet implemented' })} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" title="View"><ExternalLink className="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
                   ))}
@@ -386,10 +470,26 @@ export default function OrderDetailPage() {
                 <MapPin className="w-4 h-4 text-[var(--text-tertiary)] mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Shipping</p>
-                  <p className="text-sm text-[var(--text-primary)]">{order.shippingAddress.street}</p>
-                  <p className="text-sm text-[var(--text-primary)]">{order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}</p>
+                  {order.shippingAddress.street || order.shippingAddress.city ? (
+                    <>
+                      <p className="text-sm text-[var(--text-primary)]">{order.shippingAddress.street}</p>
+                      <p className="text-sm text-[var(--text-primary)]">{order.shippingAddress.city}{order.shippingAddress.state ? `, ${order.shippingAddress.state}` : ''}{order.shippingAddress.zip ? ` ${order.shippingAddress.zip}` : ''}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm text-[var(--text-tertiary)]">No address provided</p>
+                  )}
                 </div>
               </div>
+              {order.billingAddress.street || order.billingAddress.city ? (
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-[var(--text-tertiary)] mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Billing</p>
+                    <p className="text-sm text-[var(--text-primary)]">{order.billingAddress.street}</p>
+                    <p className="text-sm text-[var(--text-primary)]">{order.billingAddress.city}{order.billingAddress.state ? `, ${order.billingAddress.state}` : ''}{order.billingAddress.zip ? ` ${order.billingAddress.zip}` : ''}</p>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -398,11 +498,12 @@ export default function OrderDetailPage() {
             <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]"><Package className="w-4 h-4 inline mr-1" />Fulfillment</h3></div>
             <div className="p-5 space-y-3">
               <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Type</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.fulfillmentType}</span></div>
-              {order.allocationNodeId && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Allocated Node</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.allocationNodeId}</span></div>}
-              {order.carrier && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Carrier</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.carrier}</span></div>}
-              {order.trackingNumber && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Tracking</span><span className="text-sm font-mono text-[var(--color-primary)]">{order.trackingNumber}</span></div>}
-              {order.promisedDeliveryDate && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Promised Delivery</span><span className="text-sm font-medium text-[var(--text-primary)]">{new Date(order.promisedDeliveryDate).toLocaleDateString()}</span></div>}
-              {order.priority && <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Priority</span><EnterpriseStatusBadge status={order.priority === 'URGENT' ? 'error' : order.priority === 'HIGH' ? 'warning' : 'info'} label={order.priority} size="sm" /></div>}
+              {order.allocationNodeId ? <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Allocated Node</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.allocationNodeId}</span></div> : null}
+              {order.carrier ? <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Carrier</span><span className="text-sm font-medium text-[var(--text-primary)]">{order.carrier}</span></div> : null}
+              {order.trackingNumber ? <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Tracking</span><span className="text-sm font-mono text-[var(--color-primary)]">{order.trackingNumber}</span></div> : null}
+              {order.promisedDeliveryDate ? <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Promised Delivery</span><span className="text-sm font-medium text-[var(--text-primary)]">{new Date(order.promisedDeliveryDate).toLocaleDateString()}</span></div> : null}
+              {order.shippedDate ? <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Shipped</span><span className="text-sm font-medium text-[var(--text-primary)]">{new Date(order.shippedDate).toLocaleDateString()}</span></div> : null}
+              {order.deliveredDate ? <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-secondary)]">Delivered</span><span className="text-sm font-medium text-[var(--text-primary)]">{new Date(order.deliveredDate).toLocaleDateString()}</span></div> : null}
             </div>
           </div>
 
@@ -410,10 +511,12 @@ export default function OrderDetailPage() {
           <div className="enterprise-card">
             <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]"><CreditCard className="w-4 h-4 inline mr-1" />Payments</h3></div>
             <div className="p-5 space-y-3">
-              {payments.map(p => (
+              {payments.length === 0 ? (
+                <p className="text-sm text-[var(--text-tertiary)]">No payments recorded</p>
+              ) : payments.map(p => (
                 <div key={p.id} className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">${p.amount.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{order.currency} {p.amount.toFixed(2)}</p>
                     <p className="text-xs text-[var(--text-tertiary)]">{p.method}</p>
                     <p className="text-xs text-[var(--text-tertiary)]">Ref: {p.reference}</p>
                   </div>
@@ -447,7 +550,7 @@ export default function OrderDetailPage() {
           <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Modify Order</h2>
-              <button onClick={() => setShowModifyModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded"><XCircle className="w-5 h-5" /></button>
+              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="space-y-6">
               <div>
@@ -461,7 +564,7 @@ export default function OrderDetailPage() {
                 </div>
               </div>
               <div>
-                <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Items</h3><button onClick={addModifyRow} className="enterprise-btn-secondary text-xs">+ Add Item</button></div>
+                <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Items</h3><button onClick={addModifyRow} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">+ Add Item</button></div>
                 <div className="space-y-2">
                   {modifyItems.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-2 bg-[var(--bg-tertiary)] p-2 rounded-lg">
@@ -469,15 +572,15 @@ export default function OrderDetailPage() {
                       <input value={item.productName} onChange={e => updateModifyItem(idx, 'productName', e.target.value)} className="enterprise-input flex-[2] text-xs" placeholder="Product" />
                       <input type="number" value={item.quantity} onChange={e => updateModifyItem(idx, 'quantity', parseInt(e.target.value) || 1)} className="enterprise-input w-16 text-xs" min={1} />
                       <input type="number" value={item.unitPrice} onChange={e => updateModifyItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)} className="enterprise-input w-20 text-xs" min={0} step={0.01} />
-                      <button onClick={() => removeModifyItem(idx)} className="p-1 hover:bg-red-50 rounded text-[var(--text-tertiary)] hover:text-red-500"><XCircle className="w-4 h-4" /></button>
+                      <button onClick={() => removeModifyItem(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost hover:text-red-500"><XCircle className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn-primary">
+              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn enterprise-btn-primary">
                 {actionLoading === 'modify' && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Changes
               </button>
@@ -492,7 +595,7 @@ export default function OrderDetailPage() {
           <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Split Order</h2>
-              <button onClick={() => setShowSplitModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded"><XCircle className="w-5 h-5" /></button>
+              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-4">Assign each item to a shipment group. Each group becomes a new order.</p>
             {order && <div className="flex flex-wrap gap-2 mb-4">
@@ -507,7 +610,7 @@ export default function OrderDetailPage() {
                 <div key={gIdx} className="border border-[var(--border-subtle)] rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-medium text-[var(--text-primary)]">Group {gIdx + 1} ({group.itemIds.length} items)</h4>
-                    {splitGroups.length > 1 && <button onClick={() => removeSplitGroup(gIdx)} className="text-xs text-red-500">Remove</button>}
+                    {splitGroups.length > 1 && <button onClick={() => removeSplitGroup(gIdx)} className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-red-500">Remove</button>}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {order?.items.map(item => {
@@ -528,10 +631,10 @@ export default function OrderDetailPage() {
                 </div>
               ))}
             </div>
-            <button onClick={addSplitGroup} className="enterprise-btn-secondary text-sm mt-4">+ Add Group</button>
+            <button onClick={addSplitGroup} className="enterprise-btn enterprise-btn-secondary text-sm mt-4">+ Add Group</button>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn-primary">
+              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn enterprise-btn-primary">
                 {actionLoading === 'split' && <Loader2 className="w-4 h-4 animate-spin" />}
                 Split Order
               </button>
@@ -546,24 +649,24 @@ export default function OrderDetailPage() {
           <div className="enterprise-card p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Merge Orders</h2>
-              <button onClick={() => setShowMergeModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded"><XCircle className="w-5 h-5" /></button>
+              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-4">Current: <strong>{order?.orderNumber}</strong></p>
             <div className="space-y-2">
               {mergeOrderIds.map((oid, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <input value={oid} onChange={e => updateMergeId(idx, e.target.value)} className="enterprise-input flex-1 text-sm font-mono" placeholder="Order UUID" />
-                  {mergeOrderIds.length > 1 && <button onClick={() => removeMergeId(idx)} className="p-1 text-[var(--text-tertiary)] hover:text-red-500"><XCircle className="w-4 h-4" /></button>}
+                  {mergeOrderIds.length > 1 && <button onClick={() => removeMergeId(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-4 h-4" /></button>}
                 </div>
               ))}
             </div>
-            <button onClick={addMergeId} className="enterprise-btn-secondary text-xs mt-2">+ Add Another</button>
+            <button onClick={addMergeId} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary mt-2">+ Add Another</button>
             <hr className="border-[var(--border-subtle)] my-4" />
             <div>
               <label className="enterprise-label">Search Orders</label>
               <div className="flex gap-2 mt-1">
                 <input value={mergeSearchTerm} onChange={e => setMergeSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchOrders()} className="enterprise-input flex-1 text-sm" placeholder="Search by order # or customer..." />
-                <button onClick={searchOrders} disabled={searchingMerge} className="enterprise-btn-secondary text-sm">{searchingMerge ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}</button>
+                <button onClick={searchOrders} disabled={searchingMerge} className="enterprise-btn enterprise-btn-secondary text-sm">{searchingMerge ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}</button>
               </div>
               {mergeResults.length > 0 && (
                 <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
@@ -578,8 +681,8 @@ export default function OrderDetailPage() {
               )}
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn-primary">
+              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn enterprise-btn-primary">
                 {actionLoading === 'merge' && <Loader2 className="w-4 h-4 animate-spin" />}
                 Merge Orders
               </button>

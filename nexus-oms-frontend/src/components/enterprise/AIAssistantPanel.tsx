@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, MessageSquare, Send, Bot, Sparkles, Brain, Loader2, ChevronRight } from 'lucide-react'
+import { X, Send, Bot, Sparkles, Brain, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
+import { sendChatMessage } from '../../api/chatApi'
 
 interface Message {
   id: string
@@ -18,6 +19,8 @@ const quickActions = [
   { label: 'Top customers', query: 'Who are my top 10 customers?' },
   { label: 'Order issues', query: 'Any failed orders today?' },
 ]
+
+const systemPrompt = `You are a helpful AI Operations Assistant for a logistics and order management platform called Nexus OMS. You help users with order tracking, inventory checks, sales reports, stock alerts, customer lookups, and order issue resolution. Keep responses concise and actionable. When appropriate, suggest specific next steps. You have access to real-time data through the platform.`
 
 interface Props {
   open: boolean
@@ -47,7 +50,7 @@ export default function AIAssistantPanel({ open, onClose }: Props) {
     if (open) setTimeout(() => inputRef.current?.focus(), 100)
   }, [open])
 
-  const sendMessage = (text: string) => {
+  const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return
 
     const userMsg: Message = {
@@ -60,23 +63,34 @@ export default function AIAssistantPanel({ open, onClose }: Props) {
     setInput('')
     setLoading(true)
 
-    setTimeout(() => {
-      const responses = [
-        "I've checked the system. Here's what I found: Order OMS-2024-5821 is currently being processed and is expected to ship within 2 hours.",
-        "Sure! Inventory levels look healthy. Top-moving SKU is NEXUS-PRO-X1 with 1,247 units in stock across 3 warehouses.",
-        "Based on current data, sales are up 18% this month compared to last. Your top-performing channel is Shopify.",
-        "I've identified 3 orders that require attention due to payment verification delays. Would you like me to list them?",
-        "The warehouse is operating at 72% capacity. I recommend redistributing inventory from Warehouse A (88% full) to Warehouse C (45% full).",
-      ]
+    try {
+      const history = messages
+        .filter(m => m.id !== 'welcome')
+        .map(m => ({ role: m.role, content: m.content }))
+      history.push({ role: 'user' as const, content: text })
+
+      const content = await sendChatMessage({
+        systemPrompt,
+        messages: history,
+      })
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content,
         timestamp: new Date(),
       }
       setMessages(prev => [...prev, aiMsg])
+    } catch {
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "I'm sorry, I couldn't process your request right now. Please try again or check your connection.",
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, aiMsg])
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   if (!open) return null
@@ -179,7 +193,7 @@ export default function AIAssistantPanel({ open, onClose }: Props) {
             </button>
           </div>
           <p className="text-[10px] text-[var(--text-tertiary)] mt-1.5 text-center">
-            AI responses are simulated. May include inaccuracies.
+            AI responses may include inaccuracies. Verify important information.
           </p>
         </div>
       </div>

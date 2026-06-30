@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import {
-  Plus, Settings, Trash2, RefreshCw, ExternalLink, Store, ShoppingBag, Globe,
-  Loader2, X, Activity, Clock, CheckCircle, XCircle, AlertTriangle, Link,
+  Plus,   Trash2, RefreshCw, ExternalLink, Store, ShoppingBag, Globe,
+  Loader2, X, Clock, CheckCircle, XCircle, Link,
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as api from '../api/integrationStores'
-import { IntegrationStore, StoreSyncStatus, SyncTypeStatus } from '../api/integrationStores'
+import { IntegrationStore, StoreSyncStatus } from '../api/integrationStores'
 import StatusBadge from '../components/common/StatusBadge'
 
 const PLATFORMS = [
@@ -57,7 +57,7 @@ export default function IntegrationStoresPage() {
     try {
       const res = await api.getStoreSyncStatus(st.id)
       setStoreStatus(res.data)
-    } catch {}
+    } catch { addToast({ type: 'error', title: 'Failed to load sync status' }) }
   }
 
   function openCreate() {
@@ -115,6 +115,8 @@ export default function IntegrationStoresPage() {
           case 'FULFILLMENT_PUSH': res = await bc.pushShipments(); break
           case 'REFUND_PUSH': res = await bc.pushRefunds(); break
         }
+      } else {
+        addToast({ type: 'info', title: 'Sync not yet implemented for this platform' })
       }
       if (res?.data) {
         addToast({ type: res.data.status === 'COMPLETED' ? 'success' : 'error',
@@ -265,16 +267,13 @@ export default function IntegrationStoresPage() {
                 <div className="card">
                   <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">Connection Settings</h3></div>
                   <div className="card-body space-y-3">
-                    {settingFields(selectedStore.platform).map(field => {
-                      const existingValue = storeStatus ? '' : ''
-                      return (
-                        <div key={field.key}>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">{field.label}</label>
-                          <input className="input w-full text-sm font-mono" type={field.type || 'text'}
-                            placeholder="Configured" disabled />
-                        </div>
-                      )
-                    })}
+                    {settingFields(selectedStore.platform).map(field => (
+                      <div key={field.key}>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">{field.label}</label>
+                        <input className="input w-full text-sm font-mono" type={field.type || 'text'}
+                          value={storeStatus?.settings?.[field.key] || ''} disabled />
+                      </div>
+                    ))}
                     <p className="text-xs text-gray-400 mt-2">Manage credentials via the store's configuration in control panel.</p>
                   </div>
                 </div>

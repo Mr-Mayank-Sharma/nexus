@@ -37,7 +37,7 @@ export default function ShippingPage() {
     queryKey: ['shipments'],
     queryFn: async () => {
       const res = await shippingApi.getShipments()
-      return res.data as Shipment[]
+      const d = res.data; return Array.isArray(d) ? d : (d?.content ?? []) as Shipment[]
     },
   })
 

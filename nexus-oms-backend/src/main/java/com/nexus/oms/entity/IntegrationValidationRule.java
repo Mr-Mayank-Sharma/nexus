@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,12 +21,15 @@ public class IntegrationValidationRule {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(nullable = false)
     private String name;
 
+    @NotBlank
     @Column(name = "rule_type", nullable = false)
     private String ruleType;
 
+    @NotBlank
     @Column(name = "entity_type", nullable = false)
     private String entityType;
 

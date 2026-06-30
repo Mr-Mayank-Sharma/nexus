@@ -1,51 +1,6 @@
 import client from './client'
-import { ApiResponse } from '../types'
-
-export interface IntegrationStore {
-  id: string
-  tenantId: string
-  storeCode: string
-  storeName: string
-  platform: string
-  platformType?: string
-  status: string
-  currency: string
-  defaultLocale: string
-  timezone: string
-  externalStoreId?: string
-  externalDomain?: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface IntegrationStoreSetting {
-  id: string
-  storeId: string
-  settingType: string
-  settingValue?: string
-  description?: string
-  isEncrypted: boolean
-}
-
-export interface SyncTypeStatus {
-  syncType: string
-  enabled: boolean
-  intervalMinutes: number
-  lastSyncAt?: string
-  lastSyncStatus?: string
-  lastSyncMessage?: string
-}
-
-export interface StoreSyncStatus {
-  storeId: string
-  storeCode: string
-  storeName: string
-  platform: string
-  connected: boolean
-  syncTypes: SyncTypeStatus[]
-  lastError?: string
-}
+import { ApiResponse, IntegrationStore, IntegrationStoreSetting, SyncTypeStatus, StoreSyncStatus } from '../types'
+export type { IntegrationStore, IntegrationStoreSetting, SyncTypeStatus, StoreSyncStatus }
 
 export async function getStores(platform?: string): Promise<ApiResponse<IntegrationStore[]>> {
   const { data } = await client.get('/integration-stores', { params: { platform } })

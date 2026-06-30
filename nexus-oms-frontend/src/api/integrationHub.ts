@@ -1,41 +1,6 @@
 import client from './client'
-
-export interface ConnectorMetadata {
-  name: string
-  version: string
-  vendor: string
-  platformType: string
-  category: string
-  description: string
-  supportedSyncTypes: string[]
-  supportedProtocols: string[]
-  supportedAuthTypes: string[]
-  requiredSettings: string[]
-  supportsWebhooks: boolean
-}
-
-export interface ConnectorInstance {
-  id: string
-  platform: string
-  name: string
-  category: string
-  status: Record<string, any>
-  health: { status: string; lastSuccessAt: string; lastErrorAt: string; consecutiveFailures: number }
-  supportedSyncTypes: string[]
-}
-
-export interface BatchJob {
-  jobId: string
-  connectorId: string
-  syncType: string
-  status: string
-  itemsSucceeded: number
-  itemsFailed: number
-  error: string
-  startedAt: string
-  completedAt: string
-  durationMs: number
-}
+import { ConnectorMetadata, ConnectorInstance, BatchJob } from '../types'
+export type { ConnectorMetadata, ConnectorInstance, BatchJob }
 
 export const integrationHub = {
   async getPlatforms() {

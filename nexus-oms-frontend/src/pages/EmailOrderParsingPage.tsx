@@ -55,7 +55,7 @@ export default function EmailOrderParsingPage() {
       setTotalPages(ordRes.data?.totalPages || 0)
       setKpis(kpiRes.data as Record<string, number>)
     } catch {
-      if (!loading) addToast({ type: 'error', title: 'Failed to load parsed orders' })
+      addToast({ type: 'error', title: 'Failed to load parsed orders' })
     } finally {
       setLoading(false)
     }
@@ -67,7 +67,7 @@ export default function EmailOrderParsingPage() {
     setProcessing(true)
     try {
       if (parseTab === 'csv' && csvFile) {
-        await emailParserApi.parseCsvAttachment(csvFile, csvFile.name, 'email@customer.com')
+        await emailParserApi.parseCsvAttachment(csvFile, csvFile.name, csvFile.name.replace(/\.[^.]+$/, '') + '@imported.com')
       } else {
         await emailParserApi.parseEmailContent(textForm)
       }

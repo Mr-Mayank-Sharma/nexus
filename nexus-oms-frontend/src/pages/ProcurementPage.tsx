@@ -135,7 +135,7 @@ function SuppliersTab() {
     try {
       setLoading(true)
       const res = await procurementApi.getSuppliers(0, 100)
-      setSuppliers(res.data.content)
+      setSuppliers(res.data?.content ?? [])
     } catch {
       addToast({ type: 'error', title: 'Failed to load suppliers' })
     } finally {
@@ -215,7 +215,7 @@ function SuppliersTab() {
       setLoadingContacts((prev) => ({ ...prev, [supplierId]: true }))
       try {
         const res = await procurementApi.getSupplierContacts(supplierId)
-        setContacts((prev) => ({ ...prev, [supplierId]: res.data }))
+        setContacts((prev) => ({ ...prev, [supplierId]: Array.isArray(res.data) ? res.data : (res.data?.content ?? []) }))
       } catch {
         addToast({ type: 'error', title: 'Failed to load contacts' })
       } finally {
@@ -226,7 +226,7 @@ function SuppliersTab() {
       setLoadingContracts((prev) => ({ ...prev, [supplierId]: true }))
       try {
         const res = await procurementApi.getSupplierContracts(supplierId)
-        setContracts((prev) => ({ ...prev, [supplierId]: res.data }))
+        setContracts((prev) => ({ ...prev, [supplierId]: Array.isArray(res.data) ? res.data : (res.data?.content ?? []) }))
       } catch {
         addToast({ type: 'error', title: 'Failed to load contracts' })
       } finally {
@@ -254,7 +254,7 @@ function SuppliersTab() {
       setShowContactForm(null)
       setContactForm({ name: '', jobTitle: '', email: '', phone: '', isPrimary: false })
       const res = await procurementApi.getSupplierContacts(supplierId)
-      setContacts((prev) => ({ ...prev, [supplierId]: res.data }))
+      setContacts((prev) => ({ ...prev, [supplierId]: Array.isArray(res.data) ? res.data : (res.data?.content ?? []) }))
     } catch {
       addToast({ type: 'error', title: 'Failed to add contact' })
     } finally {
@@ -282,7 +282,7 @@ function SuppliersTab() {
       setShowContractForm(null)
       setContractForm({ contractNumber: '', type: 'SERVICE', startDate: '', endDate: '', status: 'ACTIVE', autoRenew: false })
       const res = await procurementApi.getSupplierContracts(supplierId)
-      setContracts((prev) => ({ ...prev, [supplierId]: res.data }))
+      setContracts((prev) => ({ ...prev, [supplierId]: Array.isArray(res.data) ? res.data : (res.data?.content ?? []) }))
     } catch {
       addToast({ type: 'error', title: 'Failed to add contract' })
     } finally {
@@ -355,7 +355,7 @@ function SuppliersTab() {
                       <td className="px-4 py-3 text-sm text-gray-600">{supplier.paymentTerms}</td>
                       <td className="px-4 py-3 text-right">
                         <button
-                          onClick={(e) => { e.stopPropagation(); }}
+                          onClick={(e) => { e.stopPropagation(); setExpandedId(expandedId === supplier.id ? null : supplier.id) }}
                           className="p-1.5 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-600"
                         >
                           <Eye className="w-4 h-4" />
@@ -771,7 +771,7 @@ function RequestsTab() {
     try {
       setLoading(true)
       const res = await procurementApi.getRequests(0, 100)
-      setRequests(res.data.content)
+      setRequests(res.data?.content ?? [])
     } catch {
       addToast({ type: 'error', title: 'Failed to load purchase requests' })
     } finally {
@@ -1128,7 +1128,7 @@ function RfqsTab() {
     try {
       setLoading(true)
       const res = await procurementApi.getRfqs(0, 100)
-      setRfqs(res.data.content)
+      setRfqs(res.data?.content ?? [])
     } catch {
       addToast({ type: 'error', title: 'Failed to load RFQs' })
     } finally {
@@ -1181,7 +1181,7 @@ function RfqsTab() {
       setLoadingResponses((prev) => ({ ...prev, [rfqId]: true }))
       try {
         const res = await procurementApi.getRfqResponses(rfqId)
-        setResponses((prev) => ({ ...prev, [rfqId]: res.data }))
+        setResponses((prev) => ({ ...prev, [rfqId]: Array.isArray(res.data) ? res.data : (res.data?.content ?? []) }))
       } catch {
         addToast({ type: 'error', title: 'Failed to load responses' })
       } finally {
@@ -1458,7 +1458,7 @@ function PurchaseOrdersTab() {
     try {
       setLoading(true)
       const res = await procurementApi.getPurchaseOrders(0, 100)
-      setOrders(res.data.content)
+      setOrders(res.data?.content ?? [])
     } catch {
       addToast({ type: 'error', title: 'Failed to load purchase orders' })
     } finally {

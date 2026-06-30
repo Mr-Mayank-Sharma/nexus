@@ -1,5 +1,6 @@
 package com.nexus.oms.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -21,23 +22,25 @@ import java.util.Map;
 public class RedisConfig {
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setValueSerializer(serializer);
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+        template.setHashValueSerializer(serializer);
         return template;
     }
 
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+    public CacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofMinutes(5))
             .disableCachingNullValues()
             .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
+            .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
 
         Map<String, RedisCacheConfiguration> cacheConfigs = new HashMap<>();
         cacheConfigs.put("inventory", defaultConfig.entryTtl(Duration.ofSeconds(30)));

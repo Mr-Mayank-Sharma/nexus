@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ public class NxReturn {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotNull
     @Column(name = "order_id", nullable = false)
     private UUID orderId;
 
@@ -30,10 +32,20 @@ public class NxReturn {
     @Column(columnDefinition = "TEXT")
     private String reason;
 
+    @Size(max = 10)
     @Column(length = 10)
     private String grade;
 
     private String disposition;
+
+    @Column(name = "rma_number")
+    private String rmaNumber;
+
+    @Column(name = "return_channel")
+    private String returnChannel;
+
+    @Column(name = "rma_type")
+    private String rmaType;
 
     @Column(name = "carrier_id")
     private String carrierId;
@@ -55,6 +67,24 @@ public class NxReturn {
 
     @Column(name = "inspected_at")
     private LocalDateTime inspectedAt;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @Column(name = "approved_by")
+    private UUID approvedBy;
+
+    @Column(name = "received_at")
+    private LocalDateTime receivedAt;
+
+    @Column(name = "received_by")
+    private UUID receivedBy;
+
+    @Column(name = "refunded_at")
+    private LocalDateTime refundedAt;
+
+    @Column(name = "rejected_reason")
+    private String rejectedReason;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

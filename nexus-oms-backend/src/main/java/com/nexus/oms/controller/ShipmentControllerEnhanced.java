@@ -3,10 +3,11 @@ package com.nexus.oms.controller;
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.entity.NxShipment;
 import com.nexus.oms.service.ShipmentServiceEnhanced;
-import com.nexus.oms.tenant.TenantContext;
+import com.nexus.oms.security.TenantContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class ShipmentControllerEnhanced {
     }
 
     @PostMapping("/shipments")
-    public ResponseEntity<ApiResponse<NxShipment>> createShipment(@RequestBody NxShipment shipment) {
+    public ResponseEntity<ApiResponse<NxShipment>> createShipment(@Valid @RequestBody NxShipment shipment) {
         shipment.setTenantId(TenantContext.getCurrentTenantId());
         return ResponseEntity.ok(ApiResponse.success(shippingService.createShipment(shipment), "Shipment created"));
     }

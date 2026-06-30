@@ -65,7 +65,6 @@ public class ShopifyInventorySyncService {
                     int totalAllocated = invList.stream().mapToInt(NxInventory::getQuantityAllocated).sum();
                     int available = totalOnHand - totalAllocated;
 
-                    Map<String, String> levelParams = new HashMap<>();
                     Long inventoryItemId = inventoryItemIds.getOrDefault((long) mapping.getBcProductId(), null);
                     if (inventoryItemId != null) {
                         Map<String, Object> data = new HashMap<>();

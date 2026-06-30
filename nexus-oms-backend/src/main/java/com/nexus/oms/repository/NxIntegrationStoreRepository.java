@@ -10,4 +10,5 @@ public interface NxIntegrationStoreRepository extends JpaRepository<NxIntegratio
     List<NxIntegrationStore> findByTenantId(UUID tenantId);
     List<NxIntegrationStore> findByTenantIdAndPlatform(UUID tenantId, String platform);
     Optional<NxIntegrationStore> findByTenantIdAndStoreCode(UUID tenantId, String storeCode);
+    Optional<NxIntegrationStore> findByExternalDomain(String externalDomain);
 }

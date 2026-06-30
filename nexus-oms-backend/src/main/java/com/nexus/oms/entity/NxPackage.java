@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,9 +13,11 @@ public class NxPackage {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
+    @NotNull
     @Column(name = "order_id", nullable = false)
     private UUID orderId;
 

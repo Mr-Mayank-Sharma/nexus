@@ -45,7 +45,7 @@ export default function PickingPage() {
     queryFn: async () => {
       const status = activeTab === 'all' ? undefined : activeTab.toUpperCase()
       const res = await pickingApi.getPicklists(status)
-      return res.data as Picklist[]
+      const d = res.data; return Array.isArray(d) ? d : (d?.content ?? []) as Picklist[]
     },
   })
 
@@ -58,7 +58,7 @@ export default function PickingPage() {
     queryFn: async () => {
       if (!expandedPicklist) return {}
       const res = await pickingApi.getPicklistItems(expandedPicklist)
-      return { [expandedPicklist]: res.data as PicklistItem[] }
+      const d = res.data; return { [expandedPicklist]: Array.isArray(d) ? d : (d?.content ?? []) as PicklistItem[] }
     },
     enabled: !!expandedPicklist,
   })

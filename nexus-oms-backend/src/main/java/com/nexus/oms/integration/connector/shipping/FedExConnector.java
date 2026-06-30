@@ -103,9 +103,6 @@ public class FedExConnector extends BaseApiConnector {
         try {
             ObjectNode body = objectMapper.createObjectNode();
             body.put("accountNumber", objectMapper.createObjectNode().put("value", accountNumber));
-            // Build rate request body from shipmentDetails
-            ObjectNode rateBody = body.deepCopy();
-
             JsonNode result = restClient.post(baseUrl, "/rate/v1/rates/quotes", defaultHeaders, body);
             return SyncResult.builder()
                     .syncType("RATE_QUOTE")

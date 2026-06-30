@@ -1,0 +1,2 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+1,FAILED,ROW_ERROR,"Missing required field (tried: email, Email, customerEmail, CustomerEmail)",Review the row data for errors and re-import

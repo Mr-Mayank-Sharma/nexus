@@ -50,6 +50,10 @@ public class IntegrationStoreService {
                 .orElseThrow(() -> new ResourceNotFoundException("IntegrationStore", id));
     }
 
+    public Optional<NxIntegrationStore> findStoreByExternalDomain(String domain) {
+        return storeRepository.findByExternalDomain(domain);
+    }
+
     @Transactional
     @CacheEvict(value = "storeSettings", allEntries = true)
     public NxIntegrationStore createStore(UUID tenantId, IntegrationStoreRequest request) {

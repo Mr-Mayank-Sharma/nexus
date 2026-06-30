@@ -26,6 +26,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CustomerRepository customerRepository;
+    private final AddressRepository addressRepository;
     private final InventoryService inventoryService;
     private final KafkaProducerService kafkaProducerService;
     private final ObjectMapper objectMapper;
@@ -34,6 +35,7 @@ public class OrderService {
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         CustomerRepository customerRepository,
+                        AddressRepository addressRepository,
                         InventoryService inventoryService,
                         KafkaProducerService kafkaProducerService,
                         ObjectMapper objectMapper,
@@ -41,6 +43,7 @@ public class OrderService {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
+        this.addressRepository = addressRepository;
         this.inventoryService = inventoryService;
         this.kafkaProducerService = kafkaProducerService;
         this.objectMapper = objectMapper;
@@ -50,22 +53,31 @@ public class OrderService {
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse createOrder(UUID tenantId, OrderRequest request) {
+        Address shipToAddress = addressRepository.save(Address.builder()
+                .tenantId(tenantId)
+                .addressLine1(request.getShippingAddress().getLine1())
+                .addressLine2(request.getShippingAddress().getLine2())
+                .city(request.getShippingAddress().getCity())
+                .state(request.getShippingAddress().getState())
+                .postalCode(request.getShippingAddress().getPincode())
+                .country("IN")
+                .addressType("SHIPPING")
+                .build());
+
         NxCustomer customer = customerRepository.findByEmail(request.getCustomerEmail())
                 .orElseGet(() -> customerRepository.save(NxCustomer.builder()
                         .tenantId(tenantId)
                         .name(request.getCustomerName())
                         .email(request.getCustomerEmail())
-                        .address(toJson(request.getShippingAddress()))
+                        .address(shipToAddress)
                         .build()));
-
-        String shipToJson = toJson(request.getShippingAddress());
 
         NxOrder order = NxOrder.builder()
                 .tenantId(tenantId)
                 .channel(request.getChannel())
                 .customerId(customer.getId())
                 .status("PENDING")
-                .shipTo(shipToJson)
+                .shipToAddress(shipToAddress)
                 .currency("INR")
                 .subtotal(BigDecimal.ZERO)
                 .shippingCost(BigDecimal.ZERO)
@@ -100,7 +112,6 @@ public class OrderService {
         return toOrderResponse(order);
     }
 
-    @Cacheable(value = "orders", key = "#id")
     public OrderResponse getOrder(UUID id) {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
@@ -231,7 +242,17 @@ public class OrderService {
         }
 
         if (request.getShippingAddress() != null) {
-            order.setShipTo(toJson(request.getShippingAddress()));
+            Address addr = addressRepository.save(Address.builder()
+                    .tenantId(tenantId)
+                    .addressLine1(request.getShippingAddress().getLine1())
+                    .addressLine2(request.getShippingAddress().getLine2())
+                    .city(request.getShippingAddress().getCity())
+                    .state(request.getShippingAddress().getState())
+                    .postalCode(request.getShippingAddress().getPincode())
+                    .country("IN")
+                    .addressType("SHIPPING")
+                    .build());
+            order.setShipToAddress(addr);
         }
 
         if (request.getShippingCost() != null) {
@@ -300,7 +321,7 @@ public class OrderService {
                     .channel(order.getChannel())
                     .customerId(order.getCustomerId())
                     .status("PENDING")
-                    .shipTo(order.getShipTo())
+                    .shipToAddress(order.getShipToAddress())
                     .currency(order.getCurrency())
                     .fulfillmentType(order.getFulfillmentType())
                     .subtotal(BigDecimal.ZERO)
@@ -441,8 +462,8 @@ public class OrderService {
                 .status(order.getStatus())
                 .subStatus(order.getSubStatus())
                 .fulfillmentType(order.getFulfillmentType())
-                .shipTo(parseJson(order.getShipTo()))
-                .billingAddress(parseJson(order.getBillingAddress()))
+                .shipTo(toAddressMap(order.getShipToAddress()))
+                .billingAddress(toAddressMap(order.getBillingAddress()))
                 .currency(order.getCurrency())
                 .subtotal(order.getSubtotal())
                 .shippingCost(order.getShippingCost())
@@ -479,12 +500,19 @@ public class OrderService {
                 .build();
     }
 
-    private String toJson(Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            return "{}";
-        }
+    private Map<String, Object> toAddressMap(Address address) {
+        if (address == null) return null;
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("line1", address.getAddressLine1());
+        map.put("line2", address.getAddressLine2());
+        map.put("city", address.getCity());
+        map.put("state", address.getState());
+        map.put("pincode", address.getPostalCode());
+        map.put("country", address.getCountry());
+        map.put("fullName", address.getFullName());
+        map.put("company", address.getCompany());
+        map.put("phone", address.getPhone());
+        return map;
     }
 
     private Object parseJson(String json) {

@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,24 +13,30 @@ public class NxPicklistItem {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "picklist_id", nullable = false)
     private UUID picklistId;
 
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
+    @NotNull
     @Column(name = "order_id", nullable = false)
     private UUID orderId;
 
     @Column(name = "order_item_id")
     private UUID orderItemId;
 
+    @NotBlank
     @Column(nullable = false)
     private String sku;
 
     @Column(name = "product_name")
     private String productName;
 
+    @NotNull
+    @Positive
     @Column(nullable = false)
     private Integer quantity;
 

@@ -1,6 +1,8 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -23,14 +25,17 @@ public class NxCustomer {
     @Column(name = "external_id")
     private String externalId;
 
+    @NotBlank
     @Column(nullable = false)
     private String name;
 
+    @Email
     private String email;
     private String phone;
 
-    @Column(columnDefinition = "jsonb")
-    private String address;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
+    private Address address;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

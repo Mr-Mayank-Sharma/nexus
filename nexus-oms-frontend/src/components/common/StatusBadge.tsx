@@ -29,6 +29,20 @@ const statusStyles: Record<string, string> = {
   PICKED_UP: 'bg-yellow-50 text-yellow-700 border-yellow-200',
   OUT_FOR_DELIVERY: 'bg-orange-50 text-orange-700 border-orange-200',
   CREATED: 'bg-gray-50 text-gray-700 border-gray-200',
+  INACTIVE: 'bg-gray-50 text-gray-500 border-gray-200',
+  DRAFT: 'bg-gray-50 text-gray-600 border-gray-200',
+  BLACKLISTED: 'bg-red-50 text-red-700 border-red-200',
+  EXPIRED: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  TERMINATED: 'bg-red-50 text-red-700 border-red-200',
+  SENT: 'bg-blue-50 text-blue-700 border-blue-200',
+  UNDER_REVIEW: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  AWARDED: 'bg-green-50 text-green-700 border-green-200',
+  PENDING_APPROVAL: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  PARTIALLY_RECEIVED: 'bg-purple-50 text-purple-700 border-purple-200',
+  UP: 'bg-green-50 text-green-700 border-green-200',
+  DOWN: 'bg-red-50 text-red-700 border-red-200',
+  UNKNOWN: 'bg-gray-50 text-gray-600 border-gray-200',
+  SCHEDULED: 'bg-blue-50 text-blue-700 border-blue-200',
 }
 
 const sizeStyles = {

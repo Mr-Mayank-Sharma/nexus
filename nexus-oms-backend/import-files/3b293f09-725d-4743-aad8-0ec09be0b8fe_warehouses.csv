@@ -1,0 +1,511 @@
+code,name,address,city,state,zip,country,capacity_sqft,manager_name,manager_phone,manager_email
+WH-JNVI,Alpha Distribution Hub,7516 Hill Rd,Seattle,CA,83455,US,139581,Manager SPZPQ,+1-676-596-3346,manager@umbrella.com
+WH-ZXII,Delta Storage Facility,1349 River Rd,Seattle,IL,25294,US,121245,Manager NDPUF,+1-758-426-4761,manager@umbrella.com
+WH-GVWM,Eta Distribution Center,9927 Park Ave,New York,MA,68168,US,39240,Manager UIULN,+1-435-727-5310,manager@cyberdyne.com
+WH-PZEK,Epsilon Warehouse,2326 Washington Blvd,Boston,WA,26757,US,114272,Manager HAOEG,+1-648-408-1902,manager@cyberdyne.com
+WH-RDVD,Epsilon Warehouse,1603 River Rd,Miami,MA,42716,US,15909,Manager AETKL,+1-974-197-7050,manager@stark.com
+WH-CQXL,Theta Logistics Hub,5898 Market St,Seattle,PA,43485,US,126413,Manager FPXWR,+1-956-282-6161,manager@hooli.com
+WH-AFLH,Iota Storage,3657 Broadway,Los Angeles,TN,14437,US,89936,Manager BAYRF,+1-780-625-7121,manager@wayne.com
+WH-JYUD,Epsilon Warehouse,4216 Elm St,Phoenix,FL,84165,US,111212,Manager PGYIC,+1-940-514-8055,manager@umbrella.com
+WH-IKDC,Iota Storage,6306 Lake Dr,Nashville,TN,88797,US,166902,Manager VYJRF,+1-530-749-4891,manager@oscorp.com
+WH-DXWW,Delta Storage Facility,7355 Park Ave,Dallas,NY,33165,US,198215,Manager LGVUG,+1-409-723-8678,manager@initech.com
+WH-SKCP,Alpha Distribution Hub,2877 Oak Ave,Minneapolis,TX,60909,US,60229,Manager ICVYG,+1-816-671-8837,manager@oscorp.com
+WH-SLCI,Delta Storage Facility,5468 Market St,New York,TX,42848,US,79551,Manager MKUZJ,+1-592-985-1133,manager@wayne.com
+WH-FJGS,Gamma Logistics Park,184 Elm St,Boston,NY,87464,US,121364,Manager GFSSM,+1-955-145-1278,manager@stark.com
+WH-SCXG,Theta Logistics Hub,9924 Oak Ave,San Antonio,WA,96386,US,148735,Manager SCQHH,+1-583-370-7822,manager@acmecorp.com
+WH-ZLTD,Eta Distribution Center,9236 Main St,Atlanta,CO,33589,US,173317,Manager GMFWI,+1-906-803-9549,manager@stark.com
+WH-DQID,Delta Storage Facility,7304 Oak Ave,San Antonio,CA,36434,US,112665,Manager IDOXM,+1-452-244-5254,manager@stark.com
+WH-NBHO,Epsilon Warehouse,8655 Elm St,Boston,TN,39634,US,108918,Manager YCKRA,+1-686-910-3593,manager@umbrella.com
+WH-SDVC,Kappa Fulfillment,6397 Park Ave,Los Angeles,IL,23906,US,92249,Manager RFSMQ,+1-845-574-4187,manager@umbrella.com
+WH-REKV,Iota Storage,862 Market St,Phoenix,OR,10894,US,119456,Manager JZZOC,+1-471-187-7421,manager@initech.com
+WH-BSXQ,Gamma Logistics Park,3896 Elm St,Dallas,PA,36404,US,176884,Manager WSHLM,+1-847-907-3580,manager@globex.com
+WH-QTCY,Zeta Cross-Dock,1370 River Rd,Boston,WA,68732,US,181853,Manager TZPUF,+1-474-220-9333,manager@massive.com
+WH-YZQY,Gamma Logistics Park,5573 Lake Dr,Los Angeles,AZ,15882,US,190376,Manager DMMHK,+1-504-953-9347,manager@hooli.com
+WH-TEQB,Kappa Fulfillment,3390 Park Ave,Minneapolis,MA,18774,US,199613,Manager QFCNF,+1-673-977-7043,manager@stark.com
+WH-XOJO,Delta Storage Facility,5398 River Rd,Dallas,MN,21521,US,174394,Manager ZSTVI,+1-781-157-5330,manager@oscorp.com
+WH-CTIU,Delta Storage Facility,434 Lake Dr,Denver,IL,90567,US,150491,Manager MNBXW,+1-830-607-3630,manager@umbrella.com
+WH-TLAE,Alpha Distribution Hub,9684 Broadway,Seattle,PA,82293,US,76057,Manager YQHAA,+1-291-810-8666,manager@globex.com
+WH-XTFB,Kappa Fulfillment,1704 Hill Rd,Dallas,WA,11247,US,197626,Manager XCYZJ,+1-643-129-4821,manager@stark.com
+WH-DHYM,Zeta Cross-Dock,4331 Elm St,Phoenix,TN,99568,US,83928,Manager NZMSV,+1-306-533-6178,manager@umbrella.com
+WH-BYXD,Gamma Logistics Park,7733 Park Ave,Houston,FL,34749,US,131583,Manager SYAUM,+1-463-408-2341,manager@cyberdyne.com
+WH-TVUX,Zeta Cross-Dock,5974 Market St,Austin,GA,10442,US,55424,Manager HXNLG,+1-904-677-8718,manager@hooli.com
+WH-MFNI,Kappa Fulfillment,9893 Lake Dr,Denver,OR,12295,US,174641,Manager TTCMA,+1-843-301-9107,manager@oscorp.com
+WH-MJUA,Alpha Distribution Hub,5505 Oak Ave,Seattle,CO,81331,US,18758,Manager UGOBH,+1-863-886-8221,manager@wayne.com
+WH-RUDI,Iota Storage,3526 Hill Rd,Nashville,OH,43134,US,101878,Manager YXVLC,+1-995-494-6671,manager@acmecorp.com
+WH-KMVY,Kappa Fulfillment,123 Broadway,Seattle,OH,55633,US,160276,Manager QMDOF,+1-208-894-3901,manager@globex.com
+WH-FKXK,Gamma Logistics Park,3070 Broadway,New York,IL,80568,US,196543,Manager BFKGX,+1-292-764-2988,manager@oscorp.com
+WH-EYDX,Beta Fulfillment Center,767 Hill Rd,San Antonio,CO,37534,US,9892,Manager RGNVO,+1-312-519-8456,manager@stark.com
+WH-ZKFC,Alpha Distribution Hub,7252 Hill Rd,Denver,MN,64796,US,41298,Manager RXHPC,+1-917-639-3283,manager@globex.com
+WH-XNTX,Epsilon Warehouse,9163 Main St,San Diego,OR,18347,US,153719,Manager RRLTK,+1-484-872-9947,manager@initech.com
+WH-EPPL,Alpha Distribution Hub,3387 Oak Ave,Dallas,GA,71033,US,176265,Manager SLYCX,+1-495-532-7594,manager@globex.com
+WH-YDBP,Beta Fulfillment Center,5892 Hill Rd,Phoenix,IL,78401,US,173905,Manager MIIAZ,+1-676-305-3080,manager@wayne.com
+WH-CFWU,Gamma Logistics Park,6662 Lake Dr,Minneapolis,MA,71860,US,87002,Manager VOXGO,+1-850-104-5110,manager@initech.com
+WH-LXLE,Delta Storage Facility,469 Broadway,New York,MA,85674,US,137472,Manager YLZZE,+1-956-737-9659,manager@stark.com
+WH-LRGU,Eta Distribution Center,369 Lake Dr,San Diego,GA,80883,US,45406,Manager QNOEK,+1-227-895-7148,manager@oscorp.com
+WH-YESX,Epsilon Warehouse,2684 Elm St,Nashville,IL,28266,US,78074,Manager YKSMW,+1-326-236-8463,manager@initech.com
+WH-VFNC,Theta Logistics Hub,9792 Main St,New York,OH,51365,US,39330,Manager XAZFM,+1-472-370-2824,manager@massive.com
+WH-YVZO,Kappa Fulfillment,2762 Park Ave,Atlanta,MA,22374,US,23052,Manager NYLGW,+1-773-663-6232,manager@acmecorp.com
+WH-BWWG,Kappa Fulfillment,2618 Main St,Minneapolis,PA,87352,US,14512,Manager HLOLJ,+1-279-843-4806,manager@umbrella.com
+WH-ONVH,Epsilon Warehouse,2482 Washington Blvd,Denver,GA,71348,US,158972,Manager OQALB,+1-336-391-8370,manager@initech.com
+WH-INGN,Epsilon Warehouse,1485 Broadway,Los Angeles,NY,15532,US,16922,Manager BTMES,+1-913-495-4544,manager@acmecorp.com
+WH-GGDF,Beta Fulfillment Center,4437 Oak Ave,Houston,PA,41476,US,41982,Manager HPBKR,+1-832-304-7383,manager@umbrella.com
+WH-WIIG,Alpha Distribution Hub,7686 Broadway,Seattle,FL,39562,US,179654,Manager BCPTO,+1-760-285-2093,manager@wayne.com
+WH-EWWO,Alpha Distribution Hub,8621 Elm St,Philadelphia,OR,37848,US,77765,Manager YNUXJ,+1-592-570-6831,manager@globex.com
+WH-NBBD,Gamma Logistics Park,8181 Park Ave,Houston,GA,50955,US,186874,Manager PPLTB,+1-571-749-2702,manager@wayne.com
+WH-YCPI,Gamma Logistics Park,4305 Market St,Phoenix,OH,66285,US,70730,Manager ZFKBC,+1-849-783-2676,manager@hooli.com
+WH-LUZB,Iota Storage,9011 Main St,Chicago,GA,25011,US,84171,Manager AEWDB,+1-658-201-7999,manager@umbrella.com
+WH-JGFC,Alpha Distribution Hub,5710 Washington Blvd,San Antonio,OR,88118,US,170335,Manager VOSFU,+1-641-909-7864,manager@stark.com
+WH-NYBK,Kappa Fulfillment,3593 Lake Dr,Boston,WA,34352,US,196232,Manager YJBZM,+1-264-634-5019,manager@globex.com
+WH-XYEY,Iota Storage,2711 Park Ave,Minneapolis,OH,93389,US,79540,Manager YUJYU,+1-520-924-7108,manager@wayne.com
+WH-BWZP,Epsilon Warehouse,9164 Park Ave,San Diego,NY,78122,US,161901,Manager WBLUO,+1-362-672-1117,manager@oscorp.com
+WH-NYDX,Eta Distribution Center,9345 Elm St,San Antonio,MA,18721,US,131438,Manager EKLWJ,+1-779-510-5915,manager@umbrella.com
+WH-XACW,Eta Distribution Center,6934 Elm St,Seattle,PA,37166,US,64287,Manager BEAOT,+1-466-109-9261,manager@massive.com
+WH-MQNA,Alpha Distribution Hub,4430 Broadway,Chicago,TX,29304,US,195279,Manager PUAZM,+1-340-495-5998,manager@acmecorp.com
+WH-VDBC,Theta Logistics Hub,8948 Lake Dr,San Antonio,WA,47138,US,161783,Manager SUYMM,+1-761-451-2555,manager@wayne.com
+WH-PFOF,Alpha Distribution Hub,275 Oak Ave,Minneapolis,CA,84881,US,121069,Manager ZLMCF,+1-943-125-5412,manager@cyberdyne.com
+WH-KITH,Epsilon Warehouse,2212 Lake Dr,Miami,IL,55451,US,165672,Manager VAUKB,+1-417-618-4021,manager@oscorp.com
+WH-GFRB,Zeta Cross-Dock,4874 Market St,Houston,WA,26689,US,107968,Manager UNZLI,+1-811-233-5221,manager@globex.com
+WH-OIEK,Alpha Distribution Hub,2125 Washington Blvd,Atlanta,CA,82364,US,42875,Manager IJHBV,+1-792-501-1066,manager@cyberdyne.com
+WH-SLEX,Epsilon Warehouse,8913 Broadway,New York,AZ,34820,US,194122,Manager MERAO,+1-404-659-2102,manager@hooli.com
+WH-XARE,Alpha Distribution Hub,4100 Oak Ave,Phoenix,MA,80333,US,98626,Manager FRCYL,+1-857-451-1165,manager@globex.com
+WH-RXVB,Beta Fulfillment Center,5280 Park Ave,New York,MN,77168,US,145730,Manager FCRHN,+1-597-129-7932,manager@umbrella.com
+WH-KFPK,Gamma Logistics Park,7043 Market St,San Diego,OH,89324,US,25008,Manager HIWAL,+1-724-522-6926,manager@wayne.com
+WH-BCCU,Epsilon Warehouse,4054 Oak Ave,Boston,CO,98759,US,178065,Manager GAJOO,+1-487-184-2166,manager@wayne.com
+WH-MRVN,Kappa Fulfillment,8969 Elm St,New York,PA,58301,US,124478,Manager NWMDO,+1-227-214-6497,manager@globex.com
+WH-FPZX,Epsilon Warehouse,283 River Rd,Chicago,PA,32333,US,83568,Manager QHTAM,+1-260-664-4745,manager@cyberdyne.com
+WH-HYOQ,Iota Storage,2671 Broadway,Chicago,OH,66393,US,58211,Manager CELRW,+1-386-317-4053,manager@massive.com
+WH-UVSS,Zeta Cross-Dock,9391 Oak Ave,Philadelphia,WA,98879,US,119194,Manager SSOEU,+1-224-174-2706,manager@stark.com
+WH-LVBL,Epsilon Warehouse,7484 River Rd,Chicago,WA,64484,US,179242,Manager SKLZA,+1-519-985-1268,manager@hooli.com
+WH-VVBM,Epsilon Warehouse,1878 Broadway,Austin,PA,22272,US,91764,Manager RBATI,+1-650-161-5287,manager@wayne.com
+WH-BNZN,Kappa Fulfillment,6168 Washington Blvd,New York,TN,86248,US,78720,Manager EQXEY,+1-424-261-9721,manager@initech.com
+WH-ADPL,Eta Distribution Center,2925 Broadway,Phoenix,PA,68692,US,33202,Manager RBAWF,+1-315-791-3400,manager@oscorp.com
+WH-NAVM,Zeta Cross-Dock,9651 Park Ave,Philadelphia,TN,41352,US,121520,Manager SNNHW,+1-833-755-2998,manager@massive.com
+WH-TJNK,Eta Distribution Center,6137 Lake Dr,Phoenix,FL,83032,US,149471,Manager EQIDP,+1-217-129-6541,manager@massive.com
+WH-MIYQ,Alpha Distribution Hub,4879 Park Ave,Nashville,MA,88835,US,175155,Manager VMSKF,+1-239-452-1794,manager@umbrella.com
+WH-KNRG,Delta Storage Facility,5306 Main St,Seattle,PA,14229,US,89973,Manager SFLVS,+1-610-936-8491,manager@initech.com
+WH-VZGS,Iota Storage,1025 Broadway,Houston,MA,93130,US,93089,Manager KZYIZ,+1-214-311-9981,manager@stark.com
+WH-XGVF,Theta Logistics Hub,3653 Broadway,Minneapolis,FL,34566,US,26961,Manager AHCOJ,+1-586-408-2126,manager@massive.com
+WH-ZJRR,Beta Fulfillment Center,1275 Main St,Austin,PA,75057,US,168744,Manager SKESX,+1-251-124-5260,manager@acmecorp.com
+WH-LSKM,Gamma Logistics Park,2641 River Rd,Houston,MA,54710,US,164705,Manager ZSVTV,+1-303-485-3049,manager@globex.com
+WH-PZXG,Theta Logistics Hub,2568 Main St,Seattle,OH,77848,US,16043,Manager TWETF,+1-480-751-8928,manager@oscorp.com
+WH-PYYU,Epsilon Warehouse,7453 Oak Ave,Nashville,WA,52107,US,177708,Manager IQTZM,+1-353-776-8856,manager@massive.com
+WH-PTEM,Alpha Distribution Hub,2266 Hill Rd,San Antonio,CA,62707,US,33975,Manager NNNRD,+1-920-187-7846,manager@oscorp.com
+WH-FVJK,Kappa Fulfillment,4488 River Rd,Nashville,GA,38113,US,14018,Manager ZHASK,+1-701-156-9582,manager@hooli.com
+WH-QZHF,Iota Storage,4525 Hill Rd,Phoenix,GA,64292,US,6134,Manager ELNHM,+1-354-864-3517,manager@globex.com
+WH-WUXE,Beta Fulfillment Center,4769 Lake Dr,Houston,CO,57714,US,139788,Manager QJFYV,+1-427-852-5852,manager@acmecorp.com
+WH-VSNP,Epsilon Warehouse,5382 Market St,Austin,TN,24442,US,47854,Manager STYDW,+1-817-908-3237,manager@oscorp.com
+WH-CYSI,Eta Distribution Center,9757 Hill Rd,Portland,TN,41773,US,145058,Manager NCJCF,+1-400-308-7394,manager@initech.com
+WH-HMLK,Iota Storage,8597 Hill Rd,Chicago,CA,23000,US,88509,Manager EYKGA,+1-225-750-9650,manager@initech.com
+WH-LEGP,Gamma Logistics Park,2858 Washington Blvd,Denver,OR,97343,US,41086,Manager LFQZL,+1-332-958-5853,manager@globex.com
+WH-KIEP,Delta Storage Facility,543 Hill Rd,Houston,OR,58518,US,111008,Manager WBYSL,+1-251-239-9626,manager@initech.com
+WH-HTXD,Theta Logistics Hub,9846 Oak Ave,Minneapolis,CA,60348,US,148736,Manager UTFQZ,+1-929-379-1546,manager@cyberdyne.com
+WH-IMRB,Iota Storage,5018 Washington Blvd,Dallas,TX,40173,US,75852,Manager ZZMBL,+1-315-351-1998,manager@hooli.com
+WH-VNPU,Delta Storage Facility,8556 Hill Rd,Portland,PA,79359,US,5956,Manager BZMZG,+1-830-164-2429,manager@oscorp.com
+WH-HQDI,Eta Distribution Center,2883 Elm St,Phoenix,NY,58884,US,161081,Manager UAOUT,+1-991-720-2393,manager@stark.com
+WH-TNZV,Delta Storage Facility,9330 Main St,Denver,TX,29193,US,115920,Manager VLLBV,+1-994-556-6716,manager@oscorp.com
+WH-YLED,Theta Logistics Hub,5617 Lake Dr,San Diego,CO,97654,US,105521,Manager GZNEJ,+1-917-510-9580,manager@hooli.com
+WH-TUFS,Kappa Fulfillment,124 Elm St,Dallas,AZ,46843,US,148436,Manager IKPYY,+1-723-778-3731,manager@oscorp.com
+WH-GCSK,Gamma Logistics Park,1203 Lake Dr,Chicago,GA,77161,US,48940,Manager TPKXM,+1-773-415-4347,manager@massive.com
+WH-VBYF,Alpha Distribution Hub,7302 Oak Ave,Minneapolis,FL,85993,US,141951,Manager APRWM,+1-808-468-3926,manager@hooli.com
+WH-LNAT,Epsilon Warehouse,4362 Elm St,San Diego,FL,94910,US,130740,Manager MUKGK,+1-235-253-9391,manager@cyberdyne.com
+WH-PUBX,Beta Fulfillment Center,3783 Oak Ave,San Diego,NY,78791,US,22932,Manager JMJEP,+1-581-240-2504,manager@wayne.com
+WH-VUMJ,Zeta Cross-Dock,4369 Lake Dr,Nashville,CA,34108,US,97726,Manager VIOXB,+1-635-594-4003,manager@cyberdyne.com
+WH-PDUP,Iota Storage,3781 Washington Blvd,Philadelphia,CA,16087,US,12964,Manager KKWSQ,+1-263-281-9776,manager@initech.com
+WH-DCTT,Alpha Distribution Hub,7584 Market St,Nashville,AZ,41472,US,108684,Manager NOJFQ,+1-697-320-4114,manager@stark.com
+WH-PDPJ,Delta Storage Facility,1742 Broadway,Houston,NY,91404,US,180191,Manager CBZGN,+1-640-710-5490,manager@acmecorp.com
+WH-UTRZ,Epsilon Warehouse,8545 Oak Ave,San Antonio,AZ,17638,US,141309,Manager UALIG,+1-535-446-2864,manager@initech.com
+WH-QVFZ,Eta Distribution Center,7010 Main St,Chicago,AZ,13462,US,185399,Manager TBKCM,+1-795-431-8858,manager@wayne.com
+WH-KDQA,Beta Fulfillment Center,8182 Market St,Phoenix,OH,42965,US,194586,Manager QIPAU,+1-760-830-4208,manager@hooli.com
+WH-BOKV,Beta Fulfillment Center,3829 Main St,Seattle,OH,85615,US,27770,Manager MXBAM,+1-405-767-7940,manager@oscorp.com
+WH-JSRO,Theta Logistics Hub,4053 Oak Ave,Austin,CO,32380,US,89414,Manager VQXIO,+1-566-955-2458,manager@stark.com
+WH-KJJY,Beta Fulfillment Center,4225 Hill Rd,Atlanta,MN,38252,US,140079,Manager JMRGJ,+1-360-211-6863,manager@wayne.com
+WH-ROUN,Beta Fulfillment Center,1514 River Rd,Minneapolis,OH,42887,US,112277,Manager ERHZI,+1-503-131-4679,manager@hooli.com
+WH-JOWD,Alpha Distribution Hub,5965 Elm St,Austin,MA,96273,US,120165,Manager PLIXG,+1-906-554-5836,manager@oscorp.com
+WH-GQFR,Theta Logistics Hub,3820 Hill Rd,Atlanta,IL,92345,US,146658,Manager ZPOQN,+1-606-121-8009,manager@cyberdyne.com
+WH-VDFI,Delta Storage Facility,8335 Broadway,Minneapolis,OR,31043,US,91729,Manager EUXCQ,+1-810-688-8716,manager@acmecorp.com
+WH-YEHX,Eta Distribution Center,5829 Lake Dr,Miami,OR,19259,US,17365,Manager NIMBY,+1-307-563-2912,manager@hooli.com
+WH-OBYX,Delta Storage Facility,1247 Park Ave,Seattle,WA,81257,US,195687,Manager XKQKK,+1-598-241-9654,manager@hooli.com
+WH-NSVL,Eta Distribution Center,5924 River Rd,San Antonio,OR,98617,US,113683,Manager UPOKK,+1-533-457-6337,manager@wayne.com
+WH-FDHE,Zeta Cross-Dock,5530 Park Ave,Philadelphia,TX,95730,US,96979,Manager LTTHU,+1-777-911-8076,manager@cyberdyne.com
+WH-QQHD,Iota Storage,2681 Oak Ave,San Diego,IL,25063,US,91515,Manager FPCFH,+1-875-110-8952,manager@acmecorp.com
+WH-TWWK,Eta Distribution Center,1986 Washington Blvd,Houston,AZ,45728,US,148515,Manager LPRGS,+1-895-184-1202,manager@globex.com
+WH-ZDNE,Theta Logistics Hub,971 Washington Blvd,Austin,OH,86907,US,199223,Manager AIICR,+1-736-992-2025,manager@stark.com
+WH-GJJS,Eta Distribution Center,6913 River Rd,Minneapolis,IL,58560,US,33418,Manager XEYKF,+1-615-787-5985,manager@initech.com
+WH-MPEB,Kappa Fulfillment,1628 Washington Blvd,Los Angeles,OH,14022,US,164819,Manager RGUXL,+1-742-950-4419,manager@cyberdyne.com
+WH-GYJS,Zeta Cross-Dock,8351 Hill Rd,San Diego,WA,67949,US,59346,Manager WGYFR,+1-299-307-6003,manager@globex.com
+WH-WWPL,Zeta Cross-Dock,2885 Hill Rd,New York,CA,93882,US,26717,Manager WRYKO,+1-389-141-3047,manager@oscorp.com
+WH-MINX,Zeta Cross-Dock,3467 Main St,Phoenix,OH,99785,US,60336,Manager PGGVF,+1-298-943-7345,manager@cyberdyne.com
+WH-GLBJ,Gamma Logistics Park,3288 Elm St,Philadelphia,IL,67407,US,115526,Manager EXYOV,+1-247-969-4492,manager@hooli.com
+WH-DZOP,Iota Storage,5618 Market St,Los Angeles,MA,91092,US,153490,Manager HAENJ,+1-342-568-2953,manager@globex.com
+WH-JFET,Beta Fulfillment Center,5979 Main St,Portland,IL,66033,US,6867,Manager NQHQZ,+1-927-459-8484,manager@cyberdyne.com
+WH-ZHAB,Beta Fulfillment Center,5097 Lake Dr,Austin,MA,66109,US,116944,Manager YWHNT,+1-295-189-4559,manager@globex.com
+WH-ZNPT,Gamma Logistics Park,8851 Washington Blvd,Chicago,NY,10731,US,116149,Manager VEHDE,+1-267-880-5313,manager@cyberdyne.com
+WH-ISVI,Gamma Logistics Park,2242 Broadway,Miami,MA,72183,US,26734,Manager MJSXQ,+1-447-504-3404,manager@stark.com
+WH-MZJK,Beta Fulfillment Center,8611 Park Ave,Austin,MA,74629,US,113727,Manager WTPMV,+1-339-822-8607,manager@oscorp.com
+WH-IUWN,Beta Fulfillment Center,5369 River Rd,Denver,NY,93815,US,6883,Manager QKXLP,+1-628-431-8392,manager@umbrella.com
+WH-ROVH,Iota Storage,6484 Oak Ave,San Antonio,MN,15925,US,127701,Manager IBMJG,+1-929-180-8876,manager@cyberdyne.com
+WH-CEGD,Delta Storage Facility,8295 Hill Rd,Houston,OR,92933,US,197854,Manager HJCDV,+1-782-338-4235,manager@umbrella.com
+WH-DGWE,Eta Distribution Center,9136 Market St,Chicago,CO,81032,US,28212,Manager XFXTI,+1-506-293-3388,manager@globex.com
+WH-EIZN,Gamma Logistics Park,7807 Oak Ave,Phoenix,MA,86983,US,104749,Manager VPHXG,+1-400-529-6525,manager@acmecorp.com
+WH-JBUE,Delta Storage Facility,5366 River Rd,Chicago,MA,14558,US,100560,Manager BHDLF,+1-509-346-6745,manager@oscorp.com
+WH-VRNL,Iota Storage,2512 River Rd,Chicago,WA,95534,US,181249,Manager JDRLT,+1-790-529-2848,manager@oscorp.com
+WH-MXKA,Gamma Logistics Park,1030 Broadway,Phoenix,TN,37679,US,107860,Manager NXTDJ,+1-390-375-6040,manager@oscorp.com
+WH-ULTJ,Eta Distribution Center,9844 Washington Blvd,Phoenix,MA,70955,US,70251,Manager GNKCJ,+1-754-749-5315,manager@acmecorp.com
+WH-QVGS,Alpha Distribution Hub,8895 Washington Blvd,Los Angeles,OR,27888,US,66633,Manager JCQFF,+1-501-665-5840,manager@stark.com
+WH-FICM,Zeta Cross-Dock,3150 Broadway,New York,WA,56395,US,112761,Manager HCRZC,+1-893-532-7035,manager@initech.com
+WH-KLVB,Beta Fulfillment Center,3521 Washington Blvd,Boston,NY,16718,US,40701,Manager HZLSI,+1-500-851-1086,manager@initech.com
+WH-UKZF,Epsilon Warehouse,7148 Park Ave,San Diego,CO,70767,US,145983,Manager MMDAY,+1-883-483-7099,manager@cyberdyne.com
+WH-ZCJJ,Beta Fulfillment Center,2263 Washington Blvd,Philadelphia,PA,25540,US,141780,Manager WZTSW,+1-994-397-6170,manager@acmecorp.com
+WH-DOXR,Epsilon Warehouse,4230 Main St,San Diego,WA,67810,US,166759,Manager EZREK,+1-385-682-9121,manager@umbrella.com
+WH-ORAQ,Delta Storage Facility,8528 Broadway,Austin,MA,19904,US,72941,Manager TVQYB,+1-374-868-7080,manager@umbrella.com
+WH-SUQR,Gamma Logistics Park,9851 Lake Dr,Portland,NY,59844,US,190490,Manager DMBAB,+1-320-438-1635,manager@globex.com
+WH-RNOG,Alpha Distribution Hub,4882 Elm St,Philadelphia,TX,38184,US,72746,Manager TTEEZ,+1-380-787-3621,manager@wayne.com
+WH-YSYD,Beta Fulfillment Center,8297 Lake Dr,Phoenix,FL,71558,US,11786,Manager ELYGV,+1-637-559-8409,manager@initech.com
+WH-KXDA,Alpha Distribution Hub,9264 Main St,Portland,NY,73259,US,195876,Manager KDAPF,+1-628-146-7052,manager@massive.com
+WH-MPXP,Delta Storage Facility,7730 River Rd,Los Angeles,TN,45851,US,180308,Manager XIFXI,+1-589-494-4010,manager@massive.com
+WH-KLMV,Beta Fulfillment Center,9995 Market St,Los Angeles,TX,81637,US,13807,Manager IKDMO,+1-478-346-5561,manager@hooli.com
+WH-LXRA,Kappa Fulfillment,2615 Broadway,Austin,MA,82119,US,83616,Manager FCKJP,+1-804-421-3054,manager@hooli.com
+WH-JGDH,Eta Distribution Center,9433 River Rd,Boston,OH,57449,US,36183,Manager FGXCX,+1-958-779-3673,manager@wayne.com
+WH-SKDJ,Kappa Fulfillment,9992 Broadway,Phoenix,TN,23238,US,194463,Manager AKXTR,+1-246-562-7103,manager@initech.com
+WH-ZQLW,Theta Logistics Hub,9351 Oak Ave,Philadelphia,FL,90608,US,64089,Manager XSAVC,+1-477-375-7730,manager@globex.com
+WH-AZNG,Kappa Fulfillment,7374 Elm St,Phoenix,GA,14208,US,89477,Manager XTECK,+1-465-951-6816,manager@hooli.com
+WH-ZLLH,Alpha Distribution Hub,7792 Main St,Nashville,MN,43693,US,18902,Manager UQBBP,+1-576-222-8326,manager@hooli.com
+WH-WBQS,Epsilon Warehouse,3356 Oak Ave,Seattle,CA,20650,US,160884,Manager TUCQT,+1-380-723-3321,manager@hooli.com
+WH-VYZO,Zeta Cross-Dock,3178 Lake Dr,Boston,OR,75202,US,199419,Manager QZDLI,+1-867-707-7928,manager@umbrella.com
+WH-MKFS,Epsilon Warehouse,9920 Hill Rd,Nashville,MA,24411,US,94223,Manager WXLYM,+1-454-824-2937,manager@initech.com
+WH-IBCG,Zeta Cross-Dock,2673 Park Ave,Austin,OH,23051,US,147971,Manager FUSVA,+1-480-683-5072,manager@massive.com
+WH-OCIC,Beta Fulfillment Center,2739 Broadway,Boston,TN,78771,US,155145,Manager PUBSQ,+1-351-469-6759,manager@oscorp.com
+WH-QHZG,Zeta Cross-Dock,1678 River Rd,Phoenix,MA,22329,US,13869,Manager RSWXK,+1-971-991-4383,manager@oscorp.com
+WH-QTOS,Beta Fulfillment Center,1588 Hill Rd,Nashville,FL,65550,US,59656,Manager ZDGTQ,+1-420-218-1348,manager@initech.com
+WH-PHTZ,Gamma Logistics Park,1866 Washington Blvd,New York,NY,57820,US,104039,Manager PAYGG,+1-313-387-3412,manager@massive.com
+WH-NDOA,Beta Fulfillment Center,7633 Hill Rd,Portland,OR,58739,US,121012,Manager OAUJQ,+1-470-888-2180,manager@oscorp.com
+WH-BBSJ,Eta Distribution Center,3163 Elm St,New York,OR,50359,US,114064,Manager ODBZI,+1-744-197-3761,manager@stark.com
+WH-VUBU,Alpha Distribution Hub,8858 Hill Rd,Miami,FL,16657,US,186391,Manager RVOVR,+1-250-714-9274,manager@hooli.com
+WH-EIRX,Alpha Distribution Hub,2930 Elm St,Austin,OR,25928,US,133359,Manager FVZOR,+1-999-593-8523,manager@stark.com
+WH-ZRRS,Delta Storage Facility,8158 Park Ave,Los Angeles,OR,16588,US,154848,Manager ZTFNJ,+1-528-236-2516,manager@initech.com
+WH-VWXD,Kappa Fulfillment,8267 Elm St,Dallas,NY,30677,US,74148,Manager HPLCV,+1-497-284-1000,manager@oscorp.com
+WH-BQAB,Epsilon Warehouse,4857 Broadway,Houston,NY,48198,US,70025,Manager FGYAK,+1-699-597-7296,manager@massive.com
+WH-FPDC,Kappa Fulfillment,6960 Park Ave,Phoenix,OR,63847,US,113765,Manager PBKSH,+1-293-851-3622,manager@umbrella.com
+WH-ABRY,Epsilon Warehouse,4624 Oak Ave,Los Angeles,AZ,48765,US,103860,Manager FMRTN,+1-778-705-6665,manager@hooli.com
+WH-PGUK,Epsilon Warehouse,4392 Oak Ave,Seattle,AZ,76046,US,191181,Manager JBHMQ,+1-560-939-3584,manager@stark.com
+WH-LEEZ,Delta Storage Facility,7238 Park Ave,Boston,WA,78138,US,88128,Manager SBPWD,+1-210-125-8758,manager@stark.com
+WH-LUFI,Delta Storage Facility,717 Park Ave,Phoenix,OR,70027,US,9608,Manager SGKSH,+1-903-763-1529,manager@oscorp.com
+WH-HVDQ,Epsilon Warehouse,2154 Market St,Chicago,NY,66540,US,125045,Manager UCDOB,+1-691-785-7036,manager@initech.com
+WH-DLWL,Gamma Logistics Park,2997 Park Ave,Phoenix,GA,25450,US,69019,Manager EUVTO,+1-275-700-4642,manager@cyberdyne.com
+WH-DIBA,Zeta Cross-Dock,3825 Broadway,Portland,CA,65175,US,135960,Manager BFHCE,+1-324-370-1816,manager@massive.com
+WH-GNIW,Theta Logistics Hub,6792 Lake Dr,San Diego,MA,78479,US,172658,Manager UZJYE,+1-951-491-6059,manager@hooli.com
+WH-MTKB,Zeta Cross-Dock,8724 Hill Rd,Portland,PA,82583,US,49023,Manager CXOYL,+1-874-971-2946,manager@acmecorp.com
+WH-SLQB,Beta Fulfillment Center,9087 Hill Rd,Chicago,GA,80451,US,43795,Manager QXZXZ,+1-594-399-9696,manager@initech.com
+WH-WUVI,Gamma Logistics Park,5348 Main St,Nashville,PA,79282,US,199612,Manager DOXJM,+1-780-540-6098,manager@hooli.com
+WH-WSXC,Eta Distribution Center,3095 Broadway,Minneapolis,NY,63840,US,185190,Manager DODBL,+1-932-575-5690,manager@acmecorp.com
+WH-UFTP,Epsilon Warehouse,237 Market St,Seattle,CO,14423,US,141766,Manager CSGOP,+1-361-217-7058,manager@hooli.com
+WH-ECSA,Zeta Cross-Dock,8860 Lake Dr,Los Angeles,CA,26078,US,29280,Manager DCRHH,+1-790-595-9187,manager@wayne.com
+WH-WTOH,Gamma Logistics Park,6851 Market St,Houston,WA,14870,US,155058,Manager AZPYP,+1-930-402-4343,manager@oscorp.com
+WH-GNNB,Epsilon Warehouse,1540 Hill Rd,Dallas,OH,76556,US,134384,Manager AORNY,+1-748-545-5754,manager@stark.com
+WH-GMYK,Theta Logistics Hub,2814 Hill Rd,Miami,TX,75453,US,102710,Manager RANND,+1-775-222-7625,manager@globex.com
+WH-EKPP,Zeta Cross-Dock,4133 Park Ave,Denver,OH,50523,US,40760,Manager SMBIT,+1-780-913-1881,manager@umbrella.com
+WH-EHOC,Delta Storage Facility,634 Lake Dr,Austin,CA,91439,US,152597,Manager SORLO,+1-417-854-3152,manager@globex.com
+WH-WUXC,Iota Storage,9187 Market St,Chicago,MA,44462,US,88422,Manager SURXF,+1-446-469-3489,manager@oscorp.com
+WH-GBER,Iota Storage,9511 Washington Blvd,Seattle,FL,22834,US,190588,Manager DEYFE,+1-775-461-1643,manager@cyberdyne.com
+WH-KVSH,Gamma Logistics Park,2233 Elm St,Portland,CO,99906,US,100305,Manager WOGQE,+1-968-452-9544,manager@massive.com
+WH-FEUA,Eta Distribution Center,6148 Park Ave,Chicago,MA,82734,US,110719,Manager ICKOK,+1-792-324-7319,manager@wayne.com
+WH-DGVU,Kappa Fulfillment,6705 Hill Rd,Dallas,MA,87541,US,125150,Manager LQPPH,+1-708-522-3593,manager@hooli.com
+WH-TXSU,Delta Storage Facility,8764 Elm St,Portland,GA,59409,US,36507,Manager YPGMR,+1-449-395-8306,manager@stark.com
+WH-DDDA,Epsilon Warehouse,8012 Hill Rd,Los Angeles,MN,15801,US,57039,Manager MZUNB,+1-294-493-8376,manager@wayne.com
+WH-ZCJW,Gamma Logistics Park,6038 Lake Dr,Portland,PA,44249,US,77626,Manager PBGBM,+1-895-461-6068,manager@stark.com
+WH-RRSI,Delta Storage Facility,2392 Elm St,San Antonio,TX,47529,US,31889,Manager PAKPJ,+1-546-776-2327,manager@massive.com
+WH-HMOP,Kappa Fulfillment,5949 Park Ave,Phoenix,CA,68116,US,81544,Manager BJNHZ,+1-575-810-4816,manager@initech.com
+WH-NUSW,Kappa Fulfillment,3232 Hill Rd,New York,IL,57365,US,139079,Manager RZDOK,+1-378-238-8641,manager@acmecorp.com
+WH-VCUF,Zeta Cross-Dock,7284 River Rd,New York,PA,11771,US,172371,Manager VBBCZ,+1-903-443-2772,manager@umbrella.com
+WH-CKAS,Iota Storage,2247 Oak Ave,Austin,CO,68166,US,6605,Manager FMNWZ,+1-420-212-2948,manager@massive.com
+WH-IPJA,Kappa Fulfillment,3295 Elm St,San Diego,FL,47950,US,82072,Manager NOHVT,+1-274-846-5281,manager@oscorp.com
+WH-WBLS,Epsilon Warehouse,1862 Park Ave,San Diego,MA,32222,US,171142,Manager CVXIL,+1-625-570-4599,manager@hooli.com
+WH-YEFW,Gamma Logistics Park,8735 Lake Dr,Miami,PA,66285,US,106504,Manager COZBZ,+1-456-204-9160,manager@umbrella.com
+WH-NCWZ,Zeta Cross-Dock,9115 Lake Dr,San Antonio,NY,36876,US,21145,Manager HZTTU,+1-398-586-3750,manager@initech.com
+WH-ULOC,Alpha Distribution Hub,1417 River Rd,Chicago,NY,63643,US,112645,Manager SSOJF,+1-406-559-9096,manager@umbrella.com
+WH-DBGS,Gamma Logistics Park,8509 Elm St,Portland,WA,72745,US,181699,Manager OVCXS,+1-902-208-3967,manager@hooli.com
+WH-HZRT,Theta Logistics Hub,7966 Oak Ave,Portland,FL,40676,US,54907,Manager UZJGG,+1-239-720-7096,manager@globex.com
+WH-TNIQ,Epsilon Warehouse,3756 Market St,Philadelphia,MN,40031,US,73590,Manager WJPXK,+1-747-705-5045,manager@wayne.com
+WH-HYDH,Alpha Distribution Hub,8603 River Rd,Portland,CO,16800,US,158553,Manager IJWRL,+1-380-662-6447,manager@stark.com
+WH-YAIM,Gamma Logistics Park,1912 Elm St,Houston,AZ,52964,US,52701,Manager WUTKI,+1-375-762-1995,manager@hooli.com
+WH-TQNG,Delta Storage Facility,8198 Hill Rd,Philadelphia,OR,82801,US,22245,Manager DBFPW,+1-672-746-7070,manager@stark.com
+WH-YZVY,Zeta Cross-Dock,3497 Washington Blvd,Nashville,WA,39853,US,38984,Manager GBDKN,+1-723-351-4111,manager@massive.com
+WH-VRSR,Beta Fulfillment Center,6295 Broadway,San Antonio,WA,87785,US,20853,Manager IRUXQ,+1-969-806-8360,manager@acmecorp.com
+WH-NBHL,Theta Logistics Hub,7136 Lake Dr,Austin,WA,48722,US,153975,Manager FSEMK,+1-696-328-5030,manager@massive.com
+WH-FAGD,Theta Logistics Hub,7725 Washington Blvd,Phoenix,AZ,99510,US,18046,Manager IHJJE,+1-769-463-6224,manager@globex.com
+WH-YMNC,Iota Storage,8519 Elm St,Seattle,TN,81577,US,165492,Manager UGVXI,+1-325-491-5830,manager@hooli.com
+WH-MRVU,Alpha Distribution Hub,1815 Market St,Phoenix,MA,75411,US,18643,Manager YZVXU,+1-396-999-7675,manager@acmecorp.com
+WH-CTZS,Alpha Distribution Hub,2707 Broadway,Atlanta,OH,41576,US,68507,Manager FITAB,+1-982-977-8884,manager@wayne.com
+WH-HZTP,Theta Logistics Hub,7093 Hill Rd,Miami,CO,77824,US,127235,Manager UOPYA,+1-525-297-8491,manager@cyberdyne.com
+WH-IZRT,Delta Storage Facility,7883 Park Ave,Minneapolis,MA,99262,US,7588,Manager IJGKL,+1-426-309-4159,manager@stark.com
+WH-QTFK,Zeta Cross-Dock,1120 River Rd,Portland,CO,83679,US,127238,Manager TLEIP,+1-860-903-7090,manager@acmecorp.com
+WH-IAMC,Alpha Distribution Hub,6955 Park Ave,Portland,OR,92858,US,70934,Manager ITXPG,+1-799-704-2733,manager@stark.com
+WH-TGWV,Kappa Fulfillment,2101 River Rd,Chicago,CO,89212,US,107189,Manager XLXNF,+1-577-886-5365,manager@cyberdyne.com
+WH-XSCS,Eta Distribution Center,9208 River Rd,Minneapolis,WA,23132,US,46046,Manager PDIHY,+1-815-697-9631,manager@umbrella.com
+WH-TCJH,Epsilon Warehouse,4527 Lake Dr,Chicago,OH,23227,US,31296,Manager ZIKHB,+1-964-447-6835,manager@initech.com
+WH-QUCW,Delta Storage Facility,3806 Park Ave,Denver,MN,35304,US,89650,Manager INHSB,+1-411-416-1561,manager@massive.com
+WH-HWOU,Epsilon Warehouse,5821 Market St,Houston,GA,77965,US,54328,Manager WKOUH,+1-246-768-8318,manager@oscorp.com
+WH-HLFQ,Epsilon Warehouse,5979 Broadway,Atlanta,TX,72966,US,85635,Manager TRDBQ,+1-677-901-4854,manager@initech.com
+WH-NXLA,Alpha Distribution Hub,8080 Oak Ave,Atlanta,OR,94096,US,148501,Manager VRZXZ,+1-520-277-3690,manager@hooli.com
+WH-ANZC,Gamma Logistics Park,4823 Park Ave,Miami,NY,44864,US,169854,Manager QMCDP,+1-949-991-8030,manager@massive.com
+WH-VCGX,Epsilon Warehouse,666 Lake Dr,Phoenix,MN,71110,US,128105,Manager PXFXK,+1-619-623-5892,manager@acmecorp.com
+WH-VNEN,Zeta Cross-Dock,4638 Oak Ave,Denver,TX,93549,US,88588,Manager ATMUH,+1-990-315-2478,manager@cyberdyne.com
+WH-GVRE,Eta Distribution Center,3937 Lake Dr,Philadelphia,OH,29234,US,15751,Manager EXUPT,+1-231-491-6355,manager@massive.com
+WH-BNAO,Zeta Cross-Dock,4782 Elm St,Miami,CO,66913,US,25881,Manager YZBIQ,+1-781-202-1178,manager@umbrella.com
+WH-LEFI,Iota Storage,690 Hill Rd,Miami,OR,24681,US,116993,Manager SGGGS,+1-337-619-6215,manager@massive.com
+WH-KSRI,Delta Storage Facility,9089 Main St,Houston,OR,99032,US,79785,Manager LALLL,+1-645-934-4897,manager@umbrella.com
+WH-MXQY,Iota Storage,5546 River Rd,Nashville,IL,60549,US,184245,Manager THHGD,+1-284-347-7688,manager@wayne.com
+WH-VAIC,Delta Storage Facility,2548 Elm St,Nashville,PA,33208,US,188666,Manager ASDOJ,+1-341-165-7618,manager@stark.com
+WH-OIMC,Zeta Cross-Dock,6518 River Rd,Atlanta,TX,85555,US,82208,Manager IOLNM,+1-931-403-5211,manager@hooli.com
+WH-FRIV,Alpha Distribution Hub,6850 Washington Blvd,Seattle,CO,76123,US,133641,Manager XWZEZ,+1-952-862-6150,manager@umbrella.com
+WH-JHGL,Beta Fulfillment Center,2978 Hill Rd,Boston,PA,48054,US,40991,Manager NTMYV,+1-249-217-3994,manager@oscorp.com
+WH-VIKY,Alpha Distribution Hub,9550 Oak Ave,Nashville,NY,47183,US,104185,Manager CEMBR,+1-970-724-2057,manager@acmecorp.com
+WH-FEEA,Zeta Cross-Dock,2324 Oak Ave,Houston,GA,31592,US,163009,Manager NWYHE,+1-722-883-5854,manager@umbrella.com
+WH-YAPW,Kappa Fulfillment,6976 Washington Blvd,Seattle,CO,96573,US,17833,Manager HETIU,+1-211-930-7273,manager@umbrella.com
+WH-IAZQ,Zeta Cross-Dock,8426 Lake Dr,Philadelphia,CA,69351,US,153116,Manager HBYRC,+1-927-718-9570,manager@umbrella.com
+WH-XDTT,Gamma Logistics Park,9364 River Rd,Denver,TX,83517,US,90391,Manager MVMVX,+1-457-972-9401,manager@wayne.com
+WH-VFSI,Eta Distribution Center,2338 River Rd,Nashville,NY,40785,US,178655,Manager FJMRJ,+1-352-719-1955,manager@hooli.com
+WH-CDIZ,Alpha Distribution Hub,3530 Broadway,Minneapolis,MA,45419,US,129242,Manager RYMRD,+1-874-983-6161,manager@oscorp.com
+WH-HYCX,Delta Storage Facility,1338 Broadway,Phoenix,WA,99998,US,195038,Manager CTTDD,+1-436-816-7914,manager@massive.com
+WH-KFVF,Theta Logistics Hub,442 Oak Ave,Denver,MN,62363,US,186457,Manager VFZZU,+1-208-521-7977,manager@hooli.com
+WH-RZYC,Epsilon Warehouse,7813 Main St,Atlanta,WA,86957,US,194374,Manager APCSM,+1-969-289-6822,manager@globex.com
+WH-EGFG,Eta Distribution Center,1041 Market St,Atlanta,OR,91585,US,140480,Manager UYAOQ,+1-446-816-5207,manager@acmecorp.com
+WH-TEHH,Kappa Fulfillment,993 Hill Rd,Atlanta,AZ,23927,US,155645,Manager BUGKB,+1-810-595-4153,manager@cyberdyne.com
+WH-VPGI,Theta Logistics Hub,8293 Market St,Chicago,NY,79280,US,38110,Manager DKOXI,+1-260-899-1583,manager@hooli.com
+WH-KBLI,Epsilon Warehouse,4945 Elm St,Portland,MN,42202,US,117767,Manager GTYPK,+1-325-351-6411,manager@wayne.com
+WH-CGER,Alpha Distribution Hub,7674 River Rd,Dallas,CO,96963,US,150809,Manager KXDAR,+1-497-566-4167,manager@stark.com
+WH-ZXXY,Iota Storage,8099 Washington Blvd,San Antonio,FL,90110,US,54467,Manager KTPXU,+1-607-430-5145,manager@globex.com
+WH-PTEW,Gamma Logistics Park,2232 Main St,Portland,IL,67142,US,112139,Manager QJHDT,+1-746-602-8776,manager@massive.com
+WH-OIHQ,Theta Logistics Hub,143 Washington Blvd,San Antonio,TN,25207,US,43748,Manager ICPAE,+1-505-219-2932,manager@initech.com
+WH-DTWT,Eta Distribution Center,3925 Park Ave,Boston,TN,73855,US,144549,Manager NUXWO,+1-986-419-3134,manager@hooli.com
+WH-OGDF,Kappa Fulfillment,6155 Market St,Chicago,WA,87503,US,150897,Manager OTUCW,+1-555-853-8191,manager@massive.com
+WH-OMSD,Zeta Cross-Dock,7688 Main St,Los Angeles,MA,31636,US,148109,Manager TYQGT,+1-431-248-3705,manager@umbrella.com
+WH-CZXI,Beta Fulfillment Center,6858 Market St,Chicago,MA,26813,US,50269,Manager BCAQN,+1-870-644-9973,manager@globex.com
+WH-CDHR,Epsilon Warehouse,5543 Lake Dr,Boston,MA,39590,US,38242,Manager RFBYO,+1-846-808-9044,manager@hooli.com
+WH-QXCL,Beta Fulfillment Center,935 River Rd,Boston,CA,69550,US,39743,Manager OVXWY,+1-393-107-6207,manager@acmecorp.com
+WH-XGBT,Kappa Fulfillment,1185 Washington Blvd,San Diego,WA,84870,US,85819,Manager AOIMQ,+1-968-582-7710,manager@hooli.com
+WH-FXPX,Theta Logistics Hub,131 Washington Blvd,Portland,PA,39483,US,184715,Manager DQBDE,+1-781-301-1247,manager@wayne.com
+WH-CXAY,Kappa Fulfillment,8800 River Rd,Philadelphia,IL,26838,US,131663,Manager RLLLB,+1-849-275-3055,manager@wayne.com
+WH-JTAH,Alpha Distribution Hub,457 River Rd,San Diego,IL,15914,US,159776,Manager CHCEK,+1-500-955-6421,manager@initech.com
+WH-YFXZ,Alpha Distribution Hub,3611 Washington Blvd,San Diego,AZ,93591,US,21230,Manager VVDOE,+1-484-375-4275,manager@globex.com
+WH-ZZXB,Kappa Fulfillment,6162 Elm St,Nashville,FL,77431,US,85559,Manager OQUHV,+1-694-232-9796,manager@oscorp.com
+WH-XHTP,Theta Logistics Hub,5257 Lake Dr,Phoenix,OH,23557,US,149306,Manager MGOQA,+1-426-311-9056,manager@initech.com
+WH-QMOE,Zeta Cross-Dock,256 Park Ave,Denver,CO,19101,US,63612,Manager VQLOB,+1-631-782-4380,manager@massive.com
+WH-IQQC,Alpha Distribution Hub,4571 Market St,Nashville,AZ,71147,US,8803,Manager ONFLL,+1-559-783-7777,manager@acmecorp.com
+WH-LEYB,Beta Fulfillment Center,6206 Lake Dr,Austin,MN,23731,US,185742,Manager OZRUG,+1-349-449-4996,manager@acmecorp.com
+WH-TTIM,Beta Fulfillment Center,2967 Lake Dr,Seattle,CA,29190,US,182825,Manager AMGQD,+1-515-943-7538,manager@wayne.com
+WH-JCZJ,Gamma Logistics Park,4515 Washington Blvd,Boston,AZ,76474,US,21744,Manager JYSDM,+1-831-948-2647,manager@oscorp.com
+WH-XFZL,Iota Storage,7139 Hill Rd,Chicago,PA,86745,US,193820,Manager JJCRX,+1-513-400-3157,manager@stark.com
+WH-HWLD,Alpha Distribution Hub,1738 Broadway,Dallas,TN,30820,US,121417,Manager QIOAH,+1-343-466-1765,manager@hooli.com
+WH-FTNU,Beta Fulfillment Center,6741 Oak Ave,Seattle,TN,54395,US,163486,Manager AFJVJ,+1-622-936-7026,manager@hooli.com
+WH-FTOG,Beta Fulfillment Center,895 Broadway,Boston,OH,19149,US,42395,Manager WQDJW,+1-762-813-3445,manager@wayne.com
+WH-TETB,Gamma Logistics Park,6168 Park Ave,San Antonio,FL,31865,US,170214,Manager XBRFT,+1-947-126-1573,manager@stark.com
+WH-HPJM,Iota Storage,2700 Broadway,Minneapolis,CO,27032,US,93250,Manager UKHCY,+1-456-253-9133,manager@oscorp.com
+WH-DVVY,Kappa Fulfillment,1858 Elm St,Minneapolis,OH,45735,US,10501,Manager OUYNJ,+1-822-516-8734,manager@massive.com
+WH-BHGI,Gamma Logistics Park,7309 Main St,Nashville,MA,34867,US,14150,Manager DXNSB,+1-504-676-2442,manager@hooli.com
+WH-FQWW,Zeta Cross-Dock,4502 Hill Rd,Dallas,WA,85862,US,35640,Manager VMJZI,+1-492-422-8672,manager@initech.com
+WH-MXAZ,Delta Storage Facility,6948 Broadway,Portland,AZ,90408,US,131100,Manager GARRG,+1-282-626-4364,manager@massive.com
+WH-OHLJ,Theta Logistics Hub,6934 Hill Rd,San Diego,AZ,36533,US,83123,Manager JDNVF,+1-289-572-8895,manager@hooli.com
+WH-BCHO,Epsilon Warehouse,761 Main St,Los Angeles,AZ,67021,US,18062,Manager SQVHY,+1-217-760-6868,manager@cyberdyne.com
+WH-HBAR,Eta Distribution Center,6193 Main St,Nashville,PA,35898,US,148838,Manager HRMDS,+1-819-317-4112,manager@hooli.com
+WH-MOSG,Alpha Distribution Hub,9197 Elm St,Dallas,PA,22496,US,56789,Manager ZEEMF,+1-688-996-7349,manager@massive.com
+WH-PMCE,Alpha Distribution Hub,7707 Market St,New York,NY,88977,US,153326,Manager GYIQB,+1-651-913-2993,manager@acmecorp.com
+WH-SEZF,Beta Fulfillment Center,4445 Hill Rd,Minneapolis,PA,82975,US,192232,Manager NLTMO,+1-202-117-3887,manager@hooli.com
+WH-BTQY,Epsilon Warehouse,8674 Hill Rd,Austin,PA,70015,US,24807,Manager WMWKD,+1-689-555-7791,manager@umbrella.com
+WH-OZQZ,Beta Fulfillment Center,8171 Elm St,New York,MA,75572,US,175591,Manager TNSGH,+1-525-645-2847,manager@cyberdyne.com
+WH-VUKF,Beta Fulfillment Center,3338 Lake Dr,Seattle,WA,98543,US,156168,Manager APVSI,+1-612-257-1540,manager@globex.com
+WH-RZWZ,Alpha Distribution Hub,5746 Park Ave,Atlanta,NY,40007,US,100179,Manager WKZTP,+1-365-778-3040,manager@globex.com
+WH-JMAA,Epsilon Warehouse,9623 River Rd,Nashville,AZ,47886,US,170768,Manager WRCHC,+1-278-787-5233,manager@cyberdyne.com
+WH-PBGT,Alpha Distribution Hub,3544 Oak Ave,Atlanta,MA,54455,US,145504,Manager BVONA,+1-259-854-3730,manager@umbrella.com
+WH-SADK,Eta Distribution Center,996 Elm St,Denver,WA,66991,US,56290,Manager HGNPH,+1-544-869-6943,manager@hooli.com
+WH-WXIP,Beta Fulfillment Center,7208 Oak Ave,Nashville,PA,50319,US,83598,Manager NJBBV,+1-657-310-1258,manager@oscorp.com
+WH-CJPM,Beta Fulfillment Center,4787 Broadway,New York,FL,41538,US,105137,Manager UIOTE,+1-736-154-6304,manager@stark.com
+WH-XMBK,Delta Storage Facility,8602 Washington Blvd,San Diego,PA,19106,US,19919,Manager UVEJX,+1-608-703-8099,manager@initech.com
+WH-UVUY,Eta Distribution Center,6998 Broadway,Dallas,TX,25400,US,74725,Manager CZVAC,+1-246-140-4397,manager@massive.com
+WH-NTCI,Kappa Fulfillment,5368 Washington Blvd,Portland,GA,40944,US,168043,Manager QHCGD,+1-454-393-7445,manager@acmecorp.com
+WH-XYNI,Iota Storage,5898 Market St,Los Angeles,FL,16342,US,164848,Manager TVSDY,+1-558-186-1160,manager@stark.com
+WH-ELKU,Zeta Cross-Dock,547 Washington Blvd,Philadelphia,WA,17901,US,40687,Manager KOAFU,+1-815-177-1757,manager@cyberdyne.com
+WH-NRYM,Gamma Logistics Park,7607 Hill Rd,Houston,AZ,95492,US,193941,Manager RBRXF,+1-319-314-8477,manager@oscorp.com
+WH-RAAV,Alpha Distribution Hub,1562 Elm St,Philadelphia,AZ,99419,US,163777,Manager TBBFQ,+1-884-277-1054,manager@acmecorp.com
+WH-VWBX,Eta Distribution Center,9783 Main St,Los Angeles,CA,15564,US,90833,Manager ZEQYY,+1-229-351-7938,manager@globex.com
+WH-NPDC,Eta Distribution Center,8719 Market St,Atlanta,CO,46975,US,176595,Manager FCERK,+1-675-293-7168,manager@initech.com
+WH-SUMC,Zeta Cross-Dock,7672 Market St,Boston,MA,94093,US,54586,Manager FOFFO,+1-612-169-2124,manager@stark.com
+WH-HEUX,Alpha Distribution Hub,4947 Elm St,Atlanta,TX,11197,US,86887,Manager WBNEC,+1-283-432-3174,manager@globex.com
+WH-XMBG,Iota Storage,7946 Elm St,Chicago,PA,46448,US,100333,Manager JGAOL,+1-786-806-9807,manager@oscorp.com
+WH-TKYD,Alpha Distribution Hub,5206 Park Ave,Atlanta,TX,31297,US,6676,Manager AJFSU,+1-480-639-2776,manager@initech.com
+WH-VXFC,Epsilon Warehouse,2091 Park Ave,San Diego,CO,11674,US,196995,Manager GTSXE,+1-707-363-4041,manager@cyberdyne.com
+WH-TRJV,Eta Distribution Center,3359 Hill Rd,Denver,PA,10417,US,79796,Manager PWDOL,+1-602-774-3867,manager@cyberdyne.com
+WH-TBLM,Beta Fulfillment Center,5671 Lake Dr,Los Angeles,MA,57470,US,8277,Manager LLVKB,+1-444-906-7466,manager@massive.com
+WH-DHFE,Epsilon Warehouse,4531 Washington Blvd,Austin,CA,11445,US,90646,Manager EAVIL,+1-492-170-4733,manager@acmecorp.com
+WH-PKQI,Kappa Fulfillment,8985 Broadway,Los Angeles,MN,24278,US,152743,Manager WETOR,+1-772-312-3537,manager@massive.com
+WH-QNXB,Delta Storage Facility,264 River Rd,Nashville,AZ,97045,US,158688,Manager SAJYG,+1-829-962-4947,manager@acmecorp.com
+WH-DMRO,Kappa Fulfillment,4323 Park Ave,Chicago,WA,95212,US,18879,Manager DAMWE,+1-627-837-3796,manager@cyberdyne.com
+WH-JSDS,Gamma Logistics Park,1360 Main St,Houston,TX,25165,US,146919,Manager UKFUS,+1-394-604-9706,manager@hooli.com
+WH-ULGJ,Alpha Distribution Hub,3593 Market St,Atlanta,WA,52550,US,165016,Manager VTOOJ,+1-477-209-7215,manager@globex.com
+WH-RGIH,Gamma Logistics Park,4305 River Rd,Nashville,OR,30925,US,84038,Manager HVZSA,+1-633-615-4344,manager@globex.com
+WH-HLAC,Iota Storage,8236 Main St,Nashville,OH,90971,US,130089,Manager KRCAQ,+1-493-741-3942,manager@umbrella.com
+WH-RIDJ,Theta Logistics Hub,8346 Lake Dr,Philadelphia,IL,43246,US,133070,Manager GPOIB,+1-242-997-8968,manager@acmecorp.com
+WH-DYWY,Eta Distribution Center,6684 Main St,Dallas,MA,34436,US,189806,Manager MCWQD,+1-242-400-1236,manager@initech.com
+WH-LRHA,Eta Distribution Center,7276 Park Ave,Seattle,IL,74069,US,12039,Manager FJEMT,+1-826-443-4605,manager@massive.com
+WH-XHNK,Iota Storage,787 Broadway,Phoenix,TN,13645,US,65181,Manager GADVI,+1-633-866-5432,manager@stark.com
+WH-RIIQ,Eta Distribution Center,786 Oak Ave,Nashville,NY,71715,US,189766,Manager DXPZX,+1-951-370-9370,manager@wayne.com
+WH-TYQW,Iota Storage,1435 Park Ave,Philadelphia,NY,87078,US,22806,Manager CGKCR,+1-972-164-3471,manager@wayne.com
+WH-MHGN,Zeta Cross-Dock,6915 Lake Dr,San Antonio,AZ,15761,US,25451,Manager MDAZR,+1-818-615-6143,manager@oscorp.com
+WH-IEWI,Delta Storage Facility,347 River Rd,Atlanta,CO,14408,US,104927,Manager FYDJL,+1-454-844-3263,manager@globex.com
+WH-ROZK,Alpha Distribution Hub,3629 Broadway,Philadelphia,CA,44496,US,115139,Manager BUAMC,+1-714-735-8785,manager@acmecorp.com
+WH-NMFN,Alpha Distribution Hub,2345 River Rd,Austin,MA,52326,US,93706,Manager DUCUH,+1-263-475-4114,manager@initech.com
+WH-DSGB,Alpha Distribution Hub,4280 Oak Ave,Atlanta,MA,39076,US,49451,Manager PFJCT,+1-347-976-2421,manager@massive.com
+WH-MHGT,Gamma Logistics Park,8400 Lake Dr,Minneapolis,GA,36946,US,20105,Manager EMNUO,+1-203-736-9265,manager@oscorp.com
+WH-NJLD,Kappa Fulfillment,7581 Broadway,Atlanta,CA,40994,US,105215,Manager SUKBQ,+1-539-349-5855,manager@umbrella.com
+WH-WAKC,Kappa Fulfillment,8461 River Rd,Chicago,MN,21167,US,105419,Manager LPOGU,+1-704-210-5833,manager@massive.com
+WH-WYQD,Delta Storage Facility,3426 River Rd,Chicago,TN,71668,US,8583,Manager XCXFA,+1-748-683-5325,manager@stark.com
+WH-WRXQ,Eta Distribution Center,9291 Hill Rd,Austin,AZ,36602,US,198509,Manager FWATZ,+1-739-274-7085,manager@globex.com
+WH-HXDN,Eta Distribution Center,4247 Market St,New York,CA,67537,US,179215,Manager JQICN,+1-706-330-6477,manager@stark.com
+WH-ZOET,Iota Storage,6614 Oak Ave,Boston,MA,31160,US,197065,Manager FCTYP,+1-238-276-6430,manager@stark.com
+WH-MOQC,Kappa Fulfillment,2423 Elm St,Nashville,TN,50209,US,74487,Manager KUCCX,+1-894-772-8895,manager@hooli.com
+WH-QRRL,Delta Storage Facility,8749 Main St,Miami,MA,64132,US,149593,Manager XHVPQ,+1-700-430-2851,manager@acmecorp.com
+WH-ODWD,Gamma Logistics Park,7632 Elm St,Miami,WA,27317,US,97599,Manager FCMZQ,+1-969-551-3484,manager@stark.com
+WH-PIBI,Gamma Logistics Park,9918 Elm St,Boston,TX,98530,US,185141,Manager PAIOV,+1-221-616-8887,manager@wayne.com
+WH-BYSL,Kappa Fulfillment,7594 Washington Blvd,Miami,GA,22018,US,131305,Manager WBOAJ,+1-241-973-8876,manager@acmecorp.com
+WH-UJHE,Epsilon Warehouse,8900 Park Ave,Minneapolis,TN,36488,US,183842,Manager PZBZZ,+1-383-822-2336,manager@acmecorp.com
+WH-QDQD,Iota Storage,7459 Main St,Nashville,MA,75847,US,68961,Manager NNSQU,+1-262-665-8408,manager@globex.com
+WH-XTFU,Kappa Fulfillment,8202 Washington Blvd,Seattle,IL,28326,US,50277,Manager LKLGX,+1-847-970-3423,manager@acmecorp.com
+WH-UZDU,Zeta Cross-Dock,9753 Elm St,Phoenix,OH,16018,US,158465,Manager CRXHA,+1-735-641-6237,manager@globex.com
+WH-SEDU,Gamma Logistics Park,3761 Hill Rd,Los Angeles,PA,10153,US,16042,Manager TUFOK,+1-735-616-2710,manager@hooli.com
+WH-CCTB,Zeta Cross-Dock,3559 Main St,New York,OR,17994,US,168393,Manager GUSTB,+1-834-814-3191,manager@wayne.com
+WH-EWSM,Kappa Fulfillment,1165 Market St,Atlanta,TX,66360,US,119848,Manager JPWXD,+1-473-255-4766,manager@oscorp.com
+WH-MUDQ,Eta Distribution Center,1752 River Rd,Dallas,TX,29215,US,134803,Manager EIVZX,+1-927-466-6396,manager@cyberdyne.com
+WH-MFBZ,Eta Distribution Center,7999 Broadway,San Diego,FL,53748,US,129359,Manager BPENW,+1-421-964-7287,manager@oscorp.com
+WH-WENB,Kappa Fulfillment,2026 Broadway,Minneapolis,NY,51358,US,175124,Manager UEXYF,+1-488-123-7557,manager@acmecorp.com
+WH-VRPQ,Eta Distribution Center,547 Washington Blvd,San Diego,CA,23120,US,75465,Manager JCVGX,+1-869-737-5012,manager@hooli.com
+WH-ZEKT,Epsilon Warehouse,1575 Oak Ave,Boston,WA,51453,US,21096,Manager SLAJW,+1-356-403-4683,manager@hooli.com
+WH-JAWA,Gamma Logistics Park,6849 Broadway,Atlanta,MN,12833,US,141373,Manager JLLSG,+1-784-582-3183,manager@wayne.com
+WH-ZLTH,Zeta Cross-Dock,7339 Elm St,Nashville,NY,51120,US,155303,Manager VOGPS,+1-951-984-6229,manager@stark.com
+WH-ECXQ,Kappa Fulfillment,3120 Elm St,Atlanta,NY,79460,US,64867,Manager GPVVZ,+1-384-712-7041,manager@umbrella.com
+WH-ERUJ,Epsilon Warehouse,7584 Park Ave,New York,IL,70717,US,80665,Manager MXVJB,+1-723-516-4142,manager@cyberdyne.com
+WH-JVBM,Beta Fulfillment Center,7030 Elm St,New York,MN,85015,US,42691,Manager PVPAX,+1-676-118-3786,manager@umbrella.com
+WH-JEQF,Beta Fulfillment Center,6180 River Rd,Philadelphia,CO,95709,US,6278,Manager NCAID,+1-672-934-4143,manager@globex.com
+WH-CORM,Alpha Distribution Hub,2656 Hill Rd,Miami,IL,62962,US,170323,Manager ZRCIN,+1-287-606-7028,manager@globex.com
+WH-RVMF,Theta Logistics Hub,5610 Lake Dr,New York,PA,40872,US,93100,Manager FXQKD,+1-291-601-8372,manager@massive.com
+WH-MWGW,Kappa Fulfillment,7504 River Rd,Los Angeles,GA,34113,US,167855,Manager XWWAJ,+1-926-940-1621,manager@massive.com
+WH-UJJC,Delta Storage Facility,1288 Lake Dr,Phoenix,TX,58255,US,114984,Manager RIPYS,+1-908-659-1128,manager@initech.com
+WH-TDWA,Eta Distribution Center,9447 Oak Ave,New York,CA,56161,US,165763,Manager YOTKZ,+1-224-979-7145,manager@hooli.com
+WH-JRIN,Epsilon Warehouse,6733 Park Ave,Seattle,OR,20406,US,162890,Manager JHCFG,+1-536-191-2732,manager@oscorp.com
+WH-QLMD,Delta Storage Facility,1213 Hill Rd,Chicago,FL,97374,US,30472,Manager KOZJX,+1-212-745-4900,manager@hooli.com
+WH-KKZW,Delta Storage Facility,7817 Washington Blvd,Boston,NY,34277,US,79862,Manager OAODP,+1-819-713-7544,manager@globex.com
+WH-EGEI,Gamma Logistics Park,8206 Lake Dr,Miami,WA,90984,US,187958,Manager GDDIB,+1-749-378-3110,manager@umbrella.com
+WH-YTNJ,Gamma Logistics Park,4059 Market St,Seattle,AZ,83358,US,27161,Manager YLVRK,+1-642-689-4317,manager@wayne.com
+WH-LGXS,Iota Storage,9699 Washington Blvd,San Diego,CA,47199,US,173782,Manager OKBFS,+1-388-684-6353,manager@hooli.com
+WH-XPCV,Gamma Logistics Park,828 Broadway,Seattle,FL,49981,US,105395,Manager WYSRJ,+1-223-336-1532,manager@hooli.com
+WH-WEDA,Eta Distribution Center,3528 Broadway,Boston,MN,50605,US,187510,Manager CQKNV,+1-243-937-3117,manager@massive.com
+WH-MAPG,Beta Fulfillment Center,9901 River Rd,San Diego,FL,75254,US,27017,Manager TLPAW,+1-977-350-8840,manager@stark.com
+WH-GAIM,Delta Storage Facility,197 Broadway,Chicago,NY,40020,US,98029,Manager QYWQI,+1-400-227-2150,manager@acmecorp.com
+WH-HXFF,Theta Logistics Hub,7847 River Rd,Boston,AZ,72515,US,66260,Manager VKHWA,+1-313-215-5952,manager@initech.com
+WH-MWTE,Epsilon Warehouse,9511 Main St,San Diego,NY,27235,US,174427,Manager RJNGH,+1-894-903-1550,manager@oscorp.com
+WH-SCTT,Eta Distribution Center,6424 Market St,Dallas,GA,40349,US,70064,Manager AQCIW,+1-644-144-2994,manager@umbrella.com
+WH-ODMQ,Gamma Logistics Park,6906 Lake Dr,Dallas,TX,27347,US,84066,Manager RGOXF,+1-836-756-5979,manager@cyberdyne.com
+WH-OHYT,Delta Storage Facility,8240 Oak Ave,New York,MN,53683,US,102338,Manager ARZEB,+1-657-971-1697,manager@wayne.com
+WH-QJIU,Epsilon Warehouse,4304 Oak Ave,San Diego,OH,41946,US,41809,Manager MXKDR,+1-276-220-8396,manager@acmecorp.com
+WH-VMLC,Beta Fulfillment Center,5685 Main St,San Diego,TX,90084,US,191678,Manager GTLZX,+1-397-279-7949,manager@cyberdyne.com
+WH-DTGH,Iota Storage,4009 Lake Dr,Austin,TX,60312,US,186732,Manager YWCLJ,+1-387-658-1156,manager@massive.com
+WH-EMOL,Delta Storage Facility,8479 Broadway,Miami,PA,52955,US,169854,Manager UGGFZ,+1-461-875-6686,manager@massive.com
+WH-JCCX,Beta Fulfillment Center,2689 Hill Rd,Minneapolis,PA,71782,US,145259,Manager UBNCL,+1-262-446-7892,manager@oscorp.com
+WH-OSQZ,Zeta Cross-Dock,3319 Hill Rd,Seattle,CO,14371,US,121541,Manager OCCHC,+1-716-889-6052,manager@globex.com
+WH-AYPG,Iota Storage,7124 Hill Rd,New York,GA,11496,US,56114,Manager RBIZX,+1-902-593-4353,manager@hooli.com
+WH-NFQR,Zeta Cross-Dock,6835 Park Ave,Dallas,GA,93934,US,31535,Manager ZICMC,+1-690-416-2699,manager@wayne.com
+WH-ULXM,Alpha Distribution Hub,9340 River Rd,Portland,CA,76028,US,154447,Manager QDYFA,+1-668-779-3774,manager@umbrella.com
+WH-DJQF,Theta Logistics Hub,4700 Lake Dr,Boston,CA,52779,US,22665,Manager JOXWQ,+1-549-914-2574,manager@wayne.com
+WH-AEAA,Zeta Cross-Dock,926 River Rd,Seattle,CO,23393,US,82495,Manager MYXNW,+1-875-251-5420,manager@oscorp.com
+WH-DIHL,Iota Storage,9417 Main St,Chicago,FL,40067,US,152516,Manager AUTCI,+1-587-186-3953,manager@massive.com
+WH-BRUX,Iota Storage,5733 Broadway,Denver,GA,46584,US,178748,Manager NENTL,+1-731-849-8719,manager@oscorp.com
+WH-GJWS,Gamma Logistics Park,4698 Main St,Chicago,WA,83339,US,78745,Manager RXWUX,+1-262-829-2484,manager@wayne.com
+WH-MJJH,Epsilon Warehouse,7812 River Rd,Phoenix,AZ,19707,US,74745,Manager XYDQX,+1-460-926-7592,manager@umbrella.com
+WH-TNHF,Epsilon Warehouse,9624 Park Ave,Austin,OH,40953,US,156380,Manager KSNMD,+1-219-207-3319,manager@cyberdyne.com
+WH-AYRZ,Delta Storage Facility,8807 Market St,Houston,IL,41843,US,94048,Manager NVGAG,+1-557-845-6616,manager@cyberdyne.com
+WH-MNLT,Iota Storage,1785 Hill Rd,Nashville,OR,97535,US,92913,Manager OXSDS,+1-317-335-5129,manager@hooli.com
+WH-UABH,Iota Storage,5292 Hill Rd,Philadelphia,IL,57798,US,166429,Manager FDCUR,+1-344-295-8860,manager@cyberdyne.com
+WH-GBKQ,Epsilon Warehouse,9296 Hill Rd,Chicago,FL,73763,US,165372,Manager LXHGR,+1-433-803-5201,manager@wayne.com
+WH-SZUX,Alpha Distribution Hub,4104 Main St,Portland,FL,30633,US,121919,Manager IOAGL,+1-526-478-2017,manager@acmecorp.com
+WH-ZSGJ,Theta Logistics Hub,8212 Main St,Seattle,IL,32201,US,113602,Manager YKOYL,+1-888-197-2328,manager@cyberdyne.com
+WH-MWTX,Epsilon Warehouse,8182 Washington Blvd,Atlanta,IL,70271,US,81615,Manager MQQBW,+1-395-684-6336,manager@oscorp.com
+WH-VSAA,Gamma Logistics Park,1081 River Rd,Atlanta,GA,33545,US,86203,Manager BVECD,+1-308-106-7875,manager@oscorp.com
+WH-DBUI,Eta Distribution Center,9099 Market St,Seattle,TN,30731,US,98184,Manager RGPXK,+1-977-262-4143,manager@acmecorp.com
+WH-YADY,Iota Storage,6986 Broadway,Atlanta,CO,95303,US,141680,Manager SSIOR,+1-547-949-8663,manager@massive.com
+WH-ATZE,Alpha Distribution Hub,4648 Oak Ave,Boston,IL,48009,US,147419,Manager NAWOC,+1-565-854-2834,manager@hooli.com
+WH-DYHW,Theta Logistics Hub,746 Main St,Nashville,MN,69089,US,173821,Manager APOGJ,+1-491-981-1140,manager@wayne.com
+WH-MXKR,Epsilon Warehouse,9624 Market St,New York,CA,63429,US,94561,Manager WADOQ,+1-602-975-7763,manager@umbrella.com
+WH-JXOX,Kappa Fulfillment,6884 Park Ave,San Diego,WA,31776,US,117553,Manager ASJGT,+1-485-670-7808,manager@oscorp.com
+WH-NLBA,Delta Storage Facility,2241 River Rd,Miami,PA,77747,US,68132,Manager OIZXQ,+1-523-461-6284,manager@stark.com
+WH-ZKXU,Epsilon Warehouse,8835 Washington Blvd,Minneapolis,IL,64568,US,132946,Manager FVVTN,+1-766-582-1963,manager@cyberdyne.com
+WH-JFIH,Delta Storage Facility,7820 Hill Rd,New York,PA,63435,US,9244,Manager YVNUN,+1-986-647-1871,manager@initech.com
+WH-PUQS,Zeta Cross-Dock,9251 Lake Dr,Seattle,CO,82015,US,159734,Manager QZVDG,+1-681-362-2036,manager@massive.com
+WH-SLTY,Gamma Logistics Park,3770 Washington Blvd,Los Angeles,OR,57766,US,48129,Manager AIGVN,+1-723-208-7463,manager@umbrella.com
+WH-BNYC,Eta Distribution Center,1204 Main St,Los Angeles,CO,56928,US,162812,Manager ESSPC,+1-773-722-1487,manager@initech.com
+WH-YYMG,Delta Storage Facility,2797 River Rd,Atlanta,CO,79683,US,132151,Manager UEULD,+1-556-612-6936,manager@initech.com
+WH-LZKG,Theta Logistics Hub,1862 Market St,Austin,PA,51470,US,55188,Manager EWHMG,+1-978-315-7288,manager@hooli.com
+WH-VGHF,Eta Distribution Center,1213 Broadway,San Diego,TN,54571,US,147088,Manager KXGMG,+1-723-320-4299,manager@wayne.com
+WH-ZOGF,Delta Storage Facility,223 Hill Rd,San Diego,AZ,93159,US,111006,Manager OAEAB,+1-460-356-4568,manager@massive.com
+WH-GPJR,Alpha Distribution Hub,181 Washington Blvd,Phoenix,TX,14316,US,165039,Manager CLFLZ,+1-525-783-2830,manager@umbrella.com
+WH-VPJD,Epsilon Warehouse,6152 Main St,Philadelphia,NY,55575,US,47983,Manager TAVSX,+1-930-788-6748,manager@hooli.com
+WH-ONGL,Beta Fulfillment Center,5639 Elm St,Portland,CO,57378,US,163806,Manager JIWTU,+1-509-479-8576,manager@massive.com
+WH-UEPU,Kappa Fulfillment,158 Elm St,Nashville,MN,47328,US,168588,Manager BNUJA,+1-257-596-7097,manager@cyberdyne.com
+WH-LYDY,Epsilon Warehouse,1692 Broadway,Los Angeles,AZ,88754,US,156672,Manager GIZNW,+1-965-719-3972,manager@initech.com
+WH-DMVZ,Kappa Fulfillment,1521 Hill Rd,Austin,CA,77130,US,34532,Manager LCQPR,+1-209-689-3058,manager@oscorp.com
+WH-FRRB,Delta Storage Facility,1100 Oak Ave,Seattle,GA,60875,US,88488,Manager UBKXF,+1-566-771-1911,manager@stark.com
+WH-WMBI,Eta Distribution Center,7630 Broadway,Philadelphia,IL,21061,US,70786,Manager VYPCP,+1-202-209-8798,manager@massive.com
+WH-LLAW,Alpha Distribution Hub,8603 Elm St,Los Angeles,CO,97197,US,143072,Manager LJSPE,+1-535-793-8584,manager@wayne.com
+WH-UUNV,Eta Distribution Center,6821 Market St,New York,TN,57926,US,85941,Manager IVYHC,+1-306-605-4232,manager@wayne.com
+WH-HDUA,Beta Fulfillment Center,9409 Market St,Austin,IL,83023,US,133438,Manager ZRBCG,+1-357-165-2685,manager@initech.com
+WH-IDCK,Eta Distribution Center,3458 Elm St,Chicago,MN,15517,US,118831,Manager TYVDT,+1-503-889-2126,manager@wayne.com
+WH-KAYK,Beta Fulfillment Center,431 Hill Rd,New York,CO,43179,US,15665,Manager VUUPK,+1-390-662-3445,manager@cyberdyne.com
+WH-XSQP,Kappa Fulfillment,5962 Lake Dr,Los Angeles,WA,35646,US,199148,Manager SYWIE,+1-443-264-7555,manager@wayne.com
+WH-RNNB,Alpha Distribution Hub,8565 Market St,Chicago,CA,88330,US,72703,Manager OVETJ,+1-520-510-9117,manager@initech.com
+WH-LVIK,Beta Fulfillment Center,5909 Main St,Minneapolis,GA,51910,US,188097,Manager MDJBE,+1-219-374-3792,manager@wayne.com
+WH-WXAW,Delta Storage Facility,6140 Main St,Portland,TX,65932,US,157081,Manager ZPSVB,+1-807-396-7049,manager@massive.com
+WH-ONAD,Beta Fulfillment Center,3444 Washington Blvd,Minneapolis,OH,85519,US,122284,Manager JRIKZ,+1-955-150-4401,manager@cyberdyne.com
+WH-VNLB,Gamma Logistics Park,216 Park Ave,Austin,FL,98584,US,28969,Manager WWTOE,+1-638-730-9480,manager@umbrella.com
+WH-MVRF,Theta Logistics Hub,1148 River Rd,Phoenix,WA,14798,US,172228,Manager MUDDH,+1-796-755-4976,manager@umbrella.com
+WH-ALBS,Zeta Cross-Dock,164 Main St,Los Angeles,AZ,91452,US,15781,Manager AVMMY,+1-930-441-5464,manager@massive.com
+WH-GAQJ,Alpha Distribution Hub,3284 River Rd,Nashville,TX,15632,US,49882,Manager LMEHA,+1-589-259-9162,manager@initech.com
+WH-ZNJT,Delta Storage Facility,9639 Main St,New York,WA,59561,US,106491,Manager HXBSW,+1-869-573-7070,manager@stark.com
+WH-ZZPJ,Delta Storage Facility,4485 Park Ave,Austin,AZ,32820,US,150471,Manager DGOTF,+1-551-879-1805,manager@wayne.com
+WH-VELC,Gamma Logistics Park,9276 Washington Blvd,San Antonio,TX,49963,US,77370,Manager XKPEK,+1-411-455-6767,manager@initech.com
+WH-FDVN,Alpha Distribution Hub,7133 Main St,Philadelphia,MA,24726,US,174577,Manager GOUKP,+1-241-337-3322,manager@wayne.com
+WH-ETWX,Iota Storage,3320 Park Ave,Los Angeles,FL,53917,US,141681,Manager RFDBP,+1-377-909-2603,manager@initech.com
+WH-OUDH,Alpha Distribution Hub,481 Oak Ave,Atlanta,FL,77235,US,120629,Manager RVTCU,+1-668-269-8293,manager@oscorp.com
+WH-VRQV,Alpha Distribution Hub,3476 Oak Ave,Seattle,CO,95723,US,116085,Manager OQLYG,+1-566-219-5980,manager@oscorp.com
+WH-BRDD,Eta Distribution Center,5447 Broadway,Nashville,FL,11213,US,180647,Manager PTEAP,+1-392-698-2049,manager@massive.com
+WH-MINE,Alpha Distribution Hub,2193 Park Ave,Miami,TX,66453,US,160572,Manager EXOYR,+1-767-430-5691,manager@initech.com
+WH-TTAW,Alpha Distribution Hub,1462 Park Ave,Houston,CO,98095,US,196324,Manager FBXHZ,+1-372-508-5555,manager@massive.com
+WH-NXFS,Gamma Logistics Park,2770 Oak Ave,Boston,GA,42377,US,44868,Manager IKDAA,+1-327-280-2770,manager@initech.com
+WH-PRLW,Zeta Cross-Dock,2375 Oak Ave,Denver,NY,17772,US,94957,Manager IQUIC,+1-647-319-2931,manager@initech.com
+WH-CULX,Delta Storage Facility,9185 Oak Ave,Dallas,MA,46761,US,45497,Manager YQKPV,+1-820-162-9854,manager@wayne.com
+WH-XOZL,Delta Storage Facility,418 Broadway,Dallas,WA,82841,US,111148,Manager LOBED,+1-624-952-1010,manager@wayne.com
+WH-DNUQ,Beta Fulfillment Center,3807 Hill Rd,Philadelphia,IL,90165,US,40433,Manager YHSSQ,+1-541-814-8366,manager@initech.com
+WH-YIND,Epsilon Warehouse,7004 Elm St,Philadelphia,GA,44549,US,84815,Manager DYLSK,+1-999-180-4747,manager@massive.com
+WH-SDCO,Eta Distribution Center,8934 Park Ave,Nashville,CA,69598,US,33174,Manager VZNKN,+1-580-724-2493,manager@cyberdyne.com
+WH-QENV,Delta Storage Facility,763 Main St,Portland,TX,41129,US,196352,Manager SWLME,+1-627-479-3067,manager@hooli.com
+WH-CDMC,Epsilon Warehouse,5558 Lake Dr,Denver,WA,94463,US,91850,Manager PWGVN,+1-814-106-7553,manager@acmecorp.com
+WH-HHQN,Kappa Fulfillment,6790 Market St,San Diego,OH,33517,US,153158,Manager DHJOC,+1-663-646-6060,manager@oscorp.com
+WH-LIBM,Iota Storage,2177 Hill Rd,Nashville,MN,75985,US,29094,Manager CZJYU,+1-245-270-5906,manager@oscorp.com
+WH-RIPN,Gamma Logistics Park,4853 Elm St,Los Angeles,TX,39033,US,121138,Manager EEETG,+1-318-116-4334,manager@umbrella.com
+WH-DIYB,Beta Fulfillment Center,3864 River Rd,Seattle,TN,48019,US,152926,Manager JNSLT,+1-439-957-2632,manager@stark.com
+WH-QBGK,Epsilon Warehouse,5976 Oak Ave,Dallas,CO,24693,US,134865,Manager LMOYU,+1-408-902-4122,manager@hooli.com
+WH-HIVG,Beta Fulfillment Center,7287 River Rd,Los Angeles,CA,38582,US,108312,Manager NGFFA,+1-395-689-8223,manager@oscorp.com
+WH-BKDB,Iota Storage,5175 Market St,Austin,GA,53204,US,83521,Manager WQYVJ,+1-934-110-5404,manager@hooli.com
+WH-DOLK,Eta Distribution Center,1758 Oak Ave,Denver,CO,81993,US,108723,Manager NGNWL,+1-411-670-3235,manager@globex.com
+WH-XWTF,Theta Logistics Hub,2524 Broadway,San Diego,TN,58900,US,165493,Manager MBVBJ,+1-926-478-9428,manager@acmecorp.com
+WH-JDLV,Iota Storage,5502 Hill Rd,Phoenix,IL,26096,US,191972,Manager RGDCI,+1-987-821-5311,manager@stark.com
+WH-ARFH,Iota Storage,1121 Broadway,Chicago,CO,34156,US,178796,Manager IYRRN,+1-987-380-5182,manager@hooli.com
+WH-MXWO,Delta Storage Facility,7164 Hill Rd,Dallas,TN,63613,US,37935,Manager OCXQT,+1-322-883-2845,manager@umbrella.com
+WH-WCVJ,Eta Distribution Center,4938 River Rd,Miami,OR,59671,US,167219,Manager TLGBH,+1-862-243-9327,manager@initech.com
+WH-VQHP,Theta Logistics Hub,6788 Washington Blvd,Denver,MA,10222,US,29007,Manager XVKYW,+1-667-778-9406,manager@initech.com
+WH-UAJQ,Gamma Logistics Park,7288 River Rd,Atlanta,WA,90227,US,59351,Manager KCVFJ,+1-232-483-5558,manager@massive.com
+WH-UKST,Iota Storage,7746 Lake Dr,San Antonio,MA,72159,US,86398,Manager ZCTUB,+1-396-171-4072,manager@initech.com
+WH-HBXM,Kappa Fulfillment,8159 Main St,Los Angeles,IL,50208,US,189610,Manager AEMWR,+1-742-537-7564,manager@globex.com
+WH-GDQV,Zeta Cross-Dock,9479 Park Ave,Minneapolis,PA,58884,US,137427,Manager GMUDU,+1-854-192-3611,manager@cyberdyne.com
+,,,,,,,,,,
+NO-NAME,,5771 Lake Dr,Boston,OR,68799,US,10000,Mgr,+1-791-134-3456,mgr@umbrella.com
+BAD-CAPACITY,Delta Storage Facility,2074 Oak Ave,Dallas,AZ,14608,US,HUGE,Mgr,+1-933-207-8451,mgr@acmecorp.com
+,,,,,,,,,,
+WH-FINAL,Final Warehouse,7987 Hill Rd,Portland,IL,76620,US,50000,Final Mgr,+1-635-159-9781,final@initech.com

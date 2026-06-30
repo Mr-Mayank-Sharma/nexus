@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,9 +21,11 @@ public class PurchaseRequest {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(name = "request_number", nullable = false)
     private String requestNumber;
 
+    @NotBlank
     @Column(nullable = false)
     private String title;
 

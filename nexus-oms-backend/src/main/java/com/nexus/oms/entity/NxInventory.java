@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class NxInventory {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(nullable = false)
     private String sku;
 

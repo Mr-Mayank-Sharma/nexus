@@ -1,22 +1,17 @@
 import { useState, useEffect, useMemo } from 'react'
 import { clsx } from 'clsx'
 import {
-  RotateCcw, Plus, Search, X, Check, Loader2, ChevronDown, ChevronRight,
-  Eye, PackageCheck, DollarSign, ThumbsUp, RefreshCw, AlertTriangle,
+  RotateCcw, Plus, Search, X, Check, ChevronDown, ChevronRight,
+  Eye, PackageCheck, DollarSign, ThumbsUp, RefreshCw, AlertTriangle, Loader2,
 } from 'lucide-react'
+import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
+import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
+import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
+import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
+import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import * as returnsApi from '../api/returns'
 import type { Return, ReturnItem } from '../types'
 import { useToast } from '../hooks/useToast'
-
-const STATUS_BADGES: Record<string, string> = {
-  REQUESTED: 'enterprise-badge-warning',
-  APPROVED: 'enterprise-badge-info',
-  RECEIVED: 'enterprise-badge-neutral',
-  INSPECTED: 'enterprise-badge-ai',
-  REFUNDED: 'enterprise-badge-success',
-  REJECTED: 'enterprise-badge-error',
-  CANCELLED: 'enterprise-badge-neutral',
-}
 
 const STATUS_COLORS: Record<string, string> = {
   REQUESTED: 'text-amber-600 bg-amber-50 ring-amber-500/20',
@@ -26,6 +21,15 @@ const STATUS_COLORS: Record<string, string> = {
   REFUNDED: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20',
   REJECTED: 'text-red-600 bg-red-50 ring-red-500/20',
   CANCELLED: 'text-gray-400 bg-gray-50 ring-gray-500/20',
+}
+
+const STATUS_KPI_COLORS: Record<string, 'warning' | 'info' | 'neutral' | 'ai' | 'success' | 'error'> = {
+  PENDING: 'warning',
+  APPROVED: 'info',
+  RECEIVED: 'info',
+  INSPECTED: 'ai',
+  REFUNDED: 'success',
+  REJECTED: 'error',
 }
 
 const DISPOSITION_LABELS: Record<string, string> = {
@@ -41,13 +45,13 @@ const CONDITION_OPTIONS = ['LIKE_NEW', 'GOOD', 'FAIR', 'DAMAGED', 'DEFECTIVE']
 const DISPOSITION_OPTIONS = ['RESTOCK', 'REFURBISH', 'RETURN_TO_VENDOR', 'DISPOSE', 'DONATE']
 
 const TABS = [
-  { key: 'ALL', label: 'All Returns' },
-  { key: 'REQUESTED', label: 'Requested' },
-  { key: 'APPROVED', label: 'Approved' },
-  { key: 'RECEIVED', label: 'Received' },
-  { key: 'INSPECTED', label: 'Inspected' },
-  { key: 'REFUNDED', label: 'Refunded' },
-  { key: 'REJECTED', label: 'Rejected' },
+  { id: 'ALL', label: 'All Returns' },
+  { id: 'REQUESTED', label: 'Requested' },
+  { id: 'APPROVED', label: 'Approved' },
+  { id: 'RECEIVED', label: 'Received' },
+  { id: 'INSPECTED', label: 'Inspected' },
+  { id: 'REFUNDED', label: 'Refunded' },
+  { id: 'REJECTED', label: 'Rejected' },
 ]
 
 export default function ReturnsPage() {
@@ -85,6 +89,7 @@ export default function ReturnsPage() {
       setReturns(returnsRes.data || [])
       if (kpisRes.data) setKpis(kpisRes.data as typeof kpis)
     } catch {
+      addToast({ type: 'error', title: 'Failed to load returns' })
       setError('Failed to load returns')
       setReturns([])
     } finally {
@@ -175,82 +180,49 @@ export default function ReturnsPage() {
     finally { setProcessing(null) }
   }
 
-  const KPI_CARDS = [
-    { label: 'Pending', value: kpis.pending, color: 'text-amber-600', bg: 'bg-amber-50', icon: RotateCcw },
-    { label: 'Approved', value: kpis.approved, color: 'text-blue-600', bg: 'bg-blue-50', icon: ThumbsUp },
-    { label: 'Received', value: kpis.received, color: 'text-gray-600', bg: 'bg-gray-50', icon: PackageCheck },
-    { label: 'Inspected', value: kpis.inspected, color: 'text-violet-600', bg: 'bg-violet-50', icon: Eye },
-    { label: 'Refunded', value: kpis.refunded, color: 'text-emerald-600', bg: 'bg-emerald-50', icon: DollarSign },
-    { label: 'Rejected', value: kpis.rejected, color: 'text-red-600', bg: 'bg-red-50', icon: X },
+  const KPI_ITEMS = [
+    { key: 'PENDING', label: 'Pending', value: kpis.pending, icon: RotateCcw },
+    { key: 'APPROVED', label: 'Approved', value: kpis.approved, icon: ThumbsUp },
+    { key: 'RECEIVED', label: 'Received', value: kpis.received, icon: PackageCheck },
+    { key: 'INSPECTED', label: 'Inspected', value: kpis.inspected, icon: Eye },
+    { key: 'REFUNDED', label: 'Refunded', value: kpis.refunded, icon: DollarSign },
+    { key: 'REJECTED', label: 'Rejected', value: kpis.rejected, icon: X },
   ]
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="enterprise-page-header">
-        <div>
-          <h1>Returns Management</h1>
-          <p>{kpis.total} total returns</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => { setCreateForm({ orderId: '', customerId: '', reason: '', returnChannel: 'MANUAL', rmaType: 'RETURN' }); setCreateItems([{ sku: '', productName: '', quantity: 1 }]); setCreateOpen(true) }}
-            className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
-            <Plus className="w-4 h-4" /> Create Return
-          </button>
-          <button onClick={fetchData} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" disabled={loading}>
-            <RefreshCw className={clsx('w-3.5 h-3.5', loading && 'animate-spin')} />
-          </button>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <EnterpriseBreadcrumbs crumbs={[{ label: 'Returns' }]} />
 
-      {/* KPI Cards */}
+      <EnterpriseToolbar
+        title="Returns Management"
+        subtitle={`${kpis.total} total returns`}
+        searchValue={search}
+        onSearch={(v) => setSearch(v)}
+        searchPlaceholder="Search RMA, customer, order..."
+        actions={[
+          {
+            label: 'Create Return', icon: <Plus className="w-4 h-4" />, onClick: () => {
+              setCreateForm({ orderId: '', customerId: '', reason: '', returnChannel: 'MANUAL', rmaType: 'RETURN' })
+              setCreateItems([{ sku: '', productName: '', quantity: 1 }])
+              setCreateOpen(true)
+            }, variant: 'primary',
+          },
+          { label: '', icon: <RefreshCw className={clsx('w-4 h-4', loading && 'animate-spin')} />, onClick: fetchData, variant: 'secondary' },
+        ]}
+      />
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {KPI_CARDS.map(kpi => (
-          <div key={kpi.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{kpi.label}</span>
-              <div className={clsx('w-8 h-8 rounded-lg flex items-center justify-center', kpi.bg, kpi.color)}>
-                <kpi.icon className="w-4 h-4" />
-              </div>
-            </div>
-            <p className={clsx('text-2xl font-bold mt-2', kpi.color)}>{kpi.value}</p>
-          </div>
+        {KPI_ITEMS.map(kpi => (
+          <EnterpriseKPICard key={kpi.key} title={kpi.label} value={kpi.value} icon={<kpi.icon className="w-5 h-5" />} color={STATUS_KPI_COLORS[kpi.key]} />
         ))}
       </div>
 
-      {/* Tabs + Search */}
-      <div className="enterprise-toolbar">
-        <div className="enterprise-toolbar-left">
-          <div className="enterprise-tabs">
-            {TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={clsx('enterprise-tab', activeTab === tab.key && 'enterprise-tab-active')}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="enterprise-toolbar-right">
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search RMA, customer, order..."
-              className="enterprise-input w-full pl-10"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
+      <EnterpriseTabs tabs={TABS} activeTab={activeTab} onChange={setActiveTab} variant="underline" />
 
       {/* Returns List */}
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+          <div className="enterprise-spinner enterprise-spinner-lg" />
         </div>
       ) : error ? (
         <div className="enterprise-empty-state">
@@ -268,132 +240,129 @@ export default function ReturnsPage() {
       ) : (
         <div className="space-y-3">
           {filteredReturns.map(ret => (
-            <div key={ret.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-shadow hover:shadow-sm">
-              <div className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4 flex-1 min-w-0">
-                    <div className={clsx(
-                      'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ring-1',
-                      STATUS_COLORS[ret.status]?.split(' ').slice(1).join(' ') || 'bg-gray-50 ring-gray-200',
-                      STATUS_COLORS[ret.status]?.split(' ')[0] || 'text-gray-600',
-                    )}>
-                      <RotateCcw className="w-5 h-5" />
+            <div key={ret.id} className="enterprise-card overflow-hidden transition-shadow hover:shadow-sm p-5">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
+                  <div className={clsx(
+                    'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ring-1',
+                    STATUS_COLORS[ret.status],
+                  )}>
+                    <RotateCcw className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="font-semibold text-[var(--text-primary)]">{ret.rmaNumber}</span>
+                      <EnterpriseStatusBadge status={ret.status} />
+                      {ret.refundStatus === 'COMPLETED' && <EnterpriseStatusBadge status="success" label="Refunded" />}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">{ret.rmaNumber}</span>
-                        <span className={clsx('enterprise-badge', STATUS_BADGES[ret.status] || 'enterprise-badge-neutral')}>{ret.status}</span>
-                        {ret.refundStatus === 'COMPLETED' && <span className="enterprise-badge enterprise-badge-success">Refunded</span>}
+                    <div className="flex items-center gap-4 mt-1.5 text-sm text-[var(--text-tertiary)] flex-wrap">
+                      <span>Customer: <span className="font-medium text-[var(--text-secondary)]">{ret.customerName}</span></span>
+                      <span>Order: <span className="font-mono text-[var(--text-secondary)]">{ret.orderId?.slice(0, 8)}</span></span>
+                      {ret.reason && <span>Reason: <span className="font-medium text-[var(--text-secondary)]">{ret.reason}</span></span>}
+                      <span>{new Date(ret.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    {ret.items && ret.items.length > 0 && (
+                      <div className="flex items-center gap-2 mt-2">
+                        {ret.items.map((item, i) => (
+                          <span key={i} className="enterprise-tag">
+                            {item.sku}{item.quantity > 1 ? ` x${item.quantity}` : ''}
+                          </span>
+                        ))}
                       </div>
-                      <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
-                        <span>Customer: <span className="font-medium text-gray-700 dark:text-gray-300">{ret.customerName}</span></span>
-                        <span>Order: <span className="font-mono text-gray-700 dark:text-gray-300">{ret.orderId?.slice(0, 8)}</span></span>
-                        {ret.reason && <span>Reason: <span className="font-medium text-gray-700 dark:text-gray-300">{ret.reason}</span></span>}
-                        <span>{new Date(ret.createdAt).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 ml-4">
+                  {ret.status === 'REQUESTED' && (
+                    <button onClick={() => handleApprove(ret.id)} disabled={processing === ret.id}
+                      className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                      {processing === ret.id ? <div className="enterprise-spinner" /> : <Check className="w-3 h-3" />}
+                      Approve
+                    </button>
+                  )}
+                  {ret.status === 'APPROVED' && (
+                    <button onClick={() => handleReceive(ret.id)} disabled={processing === ret.id}
+                      className="enterprise-btn enterprise-btn-sm bg-blue-600 text-white hover:bg-blue-700 border-none disabled:opacity-50">
+                      {processing === ret.id ? <div className="enterprise-spinner" /> : <PackageCheck className="w-3 h-3" />}
+                      Receive
+                    </button>
+                  )}
+                  {ret.status === 'RECEIVED' && (
+                    <button onClick={() => openInspect(ret)} disabled={processing === 'inspect'}
+                      className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
+                      <Eye className="w-3 h-3" /> Inspect
+                    </button>
+                  )}
+                  {ret.status === 'INSPECTED' && (
+                    <button onClick={() => openRefund(ret)} disabled={processing === 'refund'}
+                      className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                      <DollarSign className="w-3 h-3" /> Refund
+                    </button>
+                  )}
+                  {!['REFUNDED', 'REJECTED', 'CANCELLED'].includes(ret.status) && (
+                    <button onClick={() => { setSelectedReturn(ret); setRejectReason(''); setRejectOpen(true) }}
+                      className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                  <button onClick={() => setExpandedId(expandedId === ret.id ? null : ret.id)}
+                    className="w-7 h-7 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]">
+                    {expandedId === ret.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {expandedId === ret.id && (
+                <div className="mt-4 pt-4 border-t border-[var(--border-color)]">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
+                    <div>
+                      <h4 className="font-medium text-[var(--text-primary)] mb-3">Return Details</h4>
+                      <dl className="space-y-2">
+                        {[
+                          ['RMA', ret.rmaNumber],
+                          ['Type', ret.rmaType || 'RETURN'],
+                          ['Channel', ret.returnChannel || 'MANUAL'],
+                          ['Created', new Date(ret.createdAt).toLocaleString()],
+                          ['Refund', `$${(ret.refundAmount || 0).toFixed(2)}`],
+                        ].map(([k, v]) => (
+                          <div key={k} className="flex justify-between py-1 px-3 bg-[var(--bg-tertiary)] rounded-lg">
+                            <span className="text-[var(--text-tertiary)]">{k}</span>
+                            <span className="font-medium text-[var(--text-primary)]">{v}</span>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-[var(--text-primary)] mb-3">Items ({ret.items?.length || 0})</h4>
+                      <div className="space-y-2">
+                        {(ret.items || []).map((item, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs bg-[var(--bg-tertiary)] rounded-lg px-3 py-2">
+                            <div>
+                              <span className="font-medium text-[var(--text-secondary)]">{item.sku}</span>
+                              {item.productName && <span className="text-[var(--text-tertiary)] ml-2">{item.productName}</span>}
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-[var(--text-tertiary)]">x{item.quantity}</span>
+                              {item.condition && <span className={clsx('enterprise-tag', (item.condition === 'DAMAGED' || item.condition === 'DEFECTIVE') && '!text-red-600 !bg-red-50')}>{item.condition}</span>}
+                              {item.disposition && <span className="enterprise-tag">{DISPOSITION_LABELS[item.disposition] || item.disposition}</span>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      {ret.items && ret.items.length > 0 && (
-                        <div className="flex items-center gap-2 mt-2">
-                          {ret.items.map((item, i) => (
-                            <span key={i} className="enterprise-tag">
-                              {item.sku}{item.quantity > 1 ? ` x${item.quantity}` : ''}
-                            </span>
-                          ))}
-                        </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-[var(--text-primary)] mb-3">Reason</h4>
+                      <p className="text-sm text-[var(--text-secondary)] bg-[var(--bg-tertiary)] rounded-lg p-3">{ret.reason || 'No reason provided'}</p>
+                      {ret.rejectedReason && (
+                        <>
+                          <h4 className="font-medium text-red-600 mt-4 mb-2">Rejection Reason</h4>
+                          <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">{ret.rejectedReason}</p>
+                        </>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 ml-4">
-                    {ret.status === 'REQUESTED' && (
-                      <button onClick={() => handleApprove(ret.id)} disabled={processing === ret.id}
-                        className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
-                        {processing === ret.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                        Approve
-                      </button>
-                    )}
-                    {ret.status === 'APPROVED' && (
-                      <button onClick={() => handleReceive(ret.id)} disabled={processing === ret.id}
-                        className="enterprise-btn enterprise-btn-sm bg-blue-600 text-white hover:bg-blue-700 border-none disabled:opacity-50">
-                        {processing === ret.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <PackageCheck className="w-3 h-3" />}
-                        Receive
-                      </button>
-                    )}
-                    {ret.status === 'RECEIVED' && (
-                      <button onClick={() => openInspect(ret)} disabled={processing === 'inspect'}
-                        className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
-                        <Eye className="w-3 h-3" /> Inspect
-                      </button>
-                    )}
-                    {ret.status === 'INSPECTED' && (
-                      <button onClick={() => openRefund(ret)} disabled={processing === 'refund'}
-                        className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
-                        <DollarSign className="w-3 h-3" /> Refund
-                      </button>
-                    )}
-                    {!['REFUNDED', 'REJECTED', 'CANCELLED'].includes(ret.status) && (
-                      <button onClick={() => { setSelectedReturn(ret); setRejectReason(''); setRejectOpen(true) }}
-                        className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                    <button onClick={() => setExpandedId(expandedId === ret.id ? null : ret.id)}
-                      className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                      {expandedId === ret.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                    </button>
-                  </div>
                 </div>
-
-                {expandedId === ret.id && (
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Return Details</h4>
-                        <dl className="space-y-2">
-                          {[
-                            ['RMA', ret.rmaNumber],
-                            ['Type', ret.rmaType || 'RETURN'],
-                            ['Channel', ret.returnChannel || 'MANUAL'],
-                            ['Created', new Date(ret.createdAt).toLocaleString()],
-                            ['Refund', `$${(ret.refundAmount || 0).toFixed(2)}`],
-                          ].map(([k, v]) => (
-                            <div key={k} className="flex justify-between py-1 px-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-                              <span className="text-gray-500">{k}</span>
-                              <span className="font-medium text-gray-900 dark:text-gray-100">{v}</span>
-                            </div>
-                          ))}
-                        </dl>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Items ({ret.items?.length || 0})</h4>
-                        <div className="space-y-2">
-                          {(ret.items || []).map((item, i) => (
-                            <div key={i} className="flex items-center justify-between text-xs bg-gray-50 dark:bg-gray-700/30 rounded-lg px-3 py-2">
-                              <div>
-                                <span className="font-medium text-gray-700 dark:text-gray-300">{item.sku}</span>
-                                {item.productName && <span className="text-gray-500 ml-2">{item.productName}</span>}
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="text-gray-500">x{item.quantity}</span>
-                                {item.condition && <span className={clsx('enterprise-tag', item.condition === 'DAMAGED' || item.condition === 'DEFECTIVE' ? '!text-red-600 !bg-red-50' : '')}>{item.condition}</span>}
-                                {item.disposition && <span className="enterprise-tag">{DISPOSITION_LABELS[item.disposition] || item.disposition}</span>}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Reason</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3">{ret.reason || 'No reason provided'}</p>
-                        {ret.rejectedReason && (
-                          <>
-                            <h4 className="font-medium text-red-600 mt-4 mb-2">Rejection Reason</h4>
-                            <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">{ret.rejectedReason}</p>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           ))}
         </div>
@@ -403,9 +372,9 @@ export default function ReturnsPage() {
       {createOpen && (
         <div className="enterprise-modal-overlay" onClick={() => setCreateOpen(false)}>
           <div className="enterprise-modal max-w-lg" onClick={e => e.stopPropagation()}>
-            <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Create Return</h2>
-              <button onClick={() => setCreateOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><X className="w-5 h-5" /></button>
+              <div className="enterprise-modal-header">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Create Return</h2>
+              <button onClick={() => setCreateOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-5">
               <div className="enterprise-form-row">
@@ -478,18 +447,18 @@ export default function ReturnsPage() {
         <div className="enterprise-modal-overlay" onClick={() => setInspectOpen(false)}>
           <div className="enterprise-modal max-w-xl" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Inspect Return: {selectedReturn.rmaNumber}</h2>
-              <button onClick={() => setInspectOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Inspect Return: {selectedReturn.rmaNumber}</h2>
+              <button onClick={() => setInspectOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4 max-h-[60vh] overflow-y-auto">
               {inspectItems.map((item, i) => (
-                <div key={item.id || i} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-3">
+                <div key={item.id || i} className="border border-[var(--border-color)] rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.sku}</span>
-                      {item.productName && <span className="text-sm text-gray-500 ml-2">{item.productName}</span>}
+                      <span className="font-medium text-[var(--text-primary)]">{item.sku}</span>
+                      {item.productName && <span className="text-sm text-[var(--text-tertiary)] ml-2">{item.productName}</span>}
                     </div>
-                    <span className="text-sm text-gray-500">x{item.quantity}</span>
+                    <span className="text-sm text-[var(--text-tertiary)]">x{item.quantity}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="enterprise-form-group">
@@ -538,13 +507,13 @@ export default function ReturnsPage() {
         <div className="enterprise-modal-overlay" onClick={() => setRefundOpen(false)}>
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Process Refund</h2>
-              <button onClick={() => setRefundOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Process Refund</h2>
+              <button onClick={() => setRefundOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
               <div className="enterprise-form-group">
                 <label>RMA</label>
-                <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">{selectedReturn.rmaNumber}</p>
+                <p className="text-sm text-[var(--text-primary)] font-medium">{selectedReturn.rmaNumber}</p>
               </div>
               <div className="enterprise-form-group">
                 <label>Refund Amount ($)</label>
@@ -571,11 +540,11 @@ export default function ReturnsPage() {
         <div className="enterprise-modal-overlay" onClick={() => setRejectOpen(false)}>
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Reject Return</h2>
-              <button onClick={() => setRejectOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Reject Return</h2>
+              <button onClick={() => setRejectOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
-              <p className="text-sm text-gray-500">Rejecting <strong className="text-gray-900 dark:text-gray-100">{selectedReturn.rmaNumber}</strong></p>
+              <p className="text-sm text-[var(--text-tertiary)]">Rejecting <strong className="text-[var(--text-primary)]">{selectedReturn.rmaNumber}</strong></p>
               <div className="enterprise-form-group">
                 <label>Reason</label>
                 <textarea className="enterprise-textarea" rows={3} placeholder="Why is this return being rejected?" value={rejectReason} onChange={e => setRejectReason(e.target.value)} />

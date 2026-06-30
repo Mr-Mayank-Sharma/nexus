@@ -1,0 +1,5 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+511,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+512,FAILED,ROW_ERROR,"Missing required field (tried: email, Email, customerEmail, CustomerEmail)",Review the row data for errors and re-import
+514,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+516,FAILED,ROW_ERROR,"JDBC exception executing SQL [INSERT INTO nx_customers (id, tenant_id, name, email, phone, address, created_at) VALUES (?, ?, ?, ?, ?, CAST(? AS jsonb), ?)] [ERROR: value too long for type character varying(255)] [n/a]",Ensure JSON fields contain valid JSON

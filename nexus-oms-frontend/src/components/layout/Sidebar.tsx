@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, Warehouse, Truck, RotateCcw, Ship, BarChart3,
   Brain, Settings, ChevronLeft, ChevronRight, GitBranch, ClipboardCheck,
   PackagePlus, Store, Moon, Sun, Zap, Building2, ShoppingCart, Receipt,
-  Bell, FileText, UserCog, Upload, Download, Activity, Cpu, Users, Shield, Globe, Route, TrendingDown, Mail,
+  Bell, FileText, UserCog, Upload, Download, Activity, Cpu, Users, Shield, Globe, Route, TrendingDown, Mail, FlaskConical,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useTheme } from '../../context/ThemeContext'
@@ -50,6 +50,7 @@ const navItems: NavItem[] = [
   { label: 'Analytics', path: '/analytics', icon: <BarChart3 className="w-5 h-5" /> },
   { label: 'AI Models', path: '/ai', icon: <Brain className="w-5 h-5" /> },
   { label: 'AI Platform', path: '/ai-platform', icon: <Cpu className="w-5 h-5" /> },
+  { label: 'Experiments', path: '/experiments', icon: <FlaskConical className="w-5 h-5" /> },
   { label: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5" /> },
 ]
 

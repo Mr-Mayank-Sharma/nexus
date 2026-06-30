@@ -1,38 +1,6 @@
 import client from './client'
-import { ApiResponse } from '../types'
-
-export interface RolePermission {
-  id: string
-  role: string
-  resource: string
-  action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'ALL'
-  conditions?: Record<string, any>
-  isGranted: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-export interface UserRole {
-  id: string
-  userId: string
-  userName: string
-  userEmail: string
-  role: string
-  grantedBy: string
-  grantedAt: string
-  expiresAt?: string
-}
-
-export interface Team {
-  id: string
-  name: string
-  description: string
-  memberCount: number
-  roles: string[]
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
+import { ApiResponse, RolePermission, UserRole, Team } from '../types'
+export type { RolePermission, UserRole, Team }
 
 export async function getPermissions(page: number, size: number): Promise<ApiResponse<{ content: RolePermission[]; totalElements: number; totalPages: number }>> {
   try {

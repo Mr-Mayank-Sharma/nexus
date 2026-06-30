@@ -64,6 +64,7 @@ public class ConnectorConfig {
     public void setLastSyncAt(LocalDateTime lastSyncAt) { this.lastSyncAt = lastSyncAt; }
 
     public String getSetting(String key) { return settings.get(key); }
+    public String getSetting(String key, String defaultValue) { return settings.getOrDefault(key, defaultValue); }
     public void putSetting(String key, String value) { settings.put(key, value); }
 
     public String getCredential(String key) { return credentials.get(key); }

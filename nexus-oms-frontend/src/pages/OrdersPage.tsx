@@ -3,19 +3,26 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Filter, Search, Download, Printer, XCircle, Ship, RotateCcw, Loader2, Plus, X,
+  ShoppingCart, Clock, CheckCircle, Truck, AlertTriangle,
 } from 'lucide-react'
 import DataTable, { Column } from '../components/common/DataTable'
-import StatusBadge from '../components/common/StatusBadge'
+import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
+import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
+import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
+import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
+import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import { Order, ApiResponse } from '../types'
 import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
+
+const STATUS_ORDER = ['PENDING', 'CONFIRMED', 'ALLOCATED', 'SHIPPED', 'DELIVERED', 'EXCEPTION', 'CANCELLED']
 
 export default function OrdersPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [activeTab, setActiveTab] = useState('ALL')
   const [channelFilter, setChannelFilter] = useState<string>('ALL')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<string>('createdAt')
@@ -52,10 +59,10 @@ export default function OrdersPage() {
   })
 
   const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['orders', statusFilter, search],
+    queryKey: ['orders', activeTab, search],
     queryFn: async () => {
       const params: Record<string, string> = {}
-      if (statusFilter !== 'ALL') params.status = statusFilter
+      if (activeTab !== 'ALL') params.status = activeTab
       if (search) params.search = search
       const res: ApiResponse<Order[]> = await ordersApi.getOrders(params)
       const d = res.data
@@ -93,71 +100,83 @@ export default function OrdersPage() {
     onError: () => addToast({ type: 'error', title: 'Failed to cancel order' }),
   })
 
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: orders.length }
+    STATUS_ORDER.forEach(s => counts[s] = orders.filter(o => o.status === s).length)
+    return counts
+  }, [orders])
+
+  const tabs = [
+    { id: 'ALL', label: 'All Orders', icon: <ShoppingCart className="w-4 h-4" />, badge: statusCounts.ALL },
+    ...STATUS_ORDER.filter(s => s !== 'CANCELLED').map(s => ({
+      id: s,
+      label: s.charAt(0) + s.slice(1).toLowerCase(),
+      icon: s === 'PENDING' ? <Clock className="w-4 h-4" /> : s === 'SHIPPED' || s === 'DELIVERED' ? <Truck className="w-4 h-4" /> : s === 'EXCEPTION' ? <AlertTriangle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />,
+      badge: statusCounts[s],
+    })),
+  ]
+
   const columns: Column<Order>[] = [
     { key: 'orderNumber', header: 'Order ID', sortable: true, render: (o) => <span className="font-medium text-primary-600">{o.orderNumber || o.id}</span> },
     { key: 'channel', header: 'Channel', sortable: true, render: (o) => <span className="text-xs font-medium text-gray-500 uppercase">{o.channel}</span> },
     { key: 'customerName', header: 'Customer', sortable: true },
-    { key: 'status', header: 'Status', sortable: true, render: (o) => <StatusBadge status={o.status} /> },
+    { key: 'status', header: 'Status', sortable: true, render: (o) => <EnterpriseStatusBadge status={o.status.toLowerCase()} /> },
     { key: 'items', header: 'Items', render: (o) => <span className="text-gray-500">{o.items?.reduce((s, i) => s + i.quantity, 0) || 0} units</span> },
     { key: 'shippingAddress', header: 'Destination', render: (o) => o.shippingAddress ? <span className="text-gray-500">{o.shippingAddress.city}, {o.shippingAddress.state}</span> : <span className="text-gray-300">—</span> },
     { key: 'carrier', header: 'Carrier', render: (o) => o.carrier ? <span className="text-gray-500">{o.carrier}</span> : <span className="text-gray-300">—</span> },
     { key: 'promisedDeliveryDate', header: 'Promised Delivery', sortable: true, render: (o) => o.promisedDeliveryDate ? <span className="text-gray-500 text-xs">{new Date(o.promisedDeliveryDate).toLocaleDateString()}</span> : <span className="text-gray-300">—</span> },
-    { key: 'hasException', header: '', render: (o) => o.hasException ? <span className="badge bg-red-50 text-red-600">!</span> : null },
+    { key: 'hasException', header: '', render: (o) => o.hasException ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs font-bold">!</span> : null },
   ]
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-          <p className="text-sm text-gray-500 mt-1">{orders.length} total orders</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="btn-secondary text-sm"><Filter className="w-4 h-4" /> Filters</button>
-          <button className="btn-secondary text-sm"><Download className="w-4 h-4" /> Export</button>
-          <button className="btn-primary text-sm" onClick={() => setShowCreate(true)}><Plus className="w-4 h-4" /> New Order</button>
-        </div>
+      <EnterpriseBreadcrumbs crumbs={[{ label: 'Orders' }]} />
+
+      <div className="grid grid-cols-4 gap-4">
+        <EnterpriseKPICard title="Total Orders" value={orders.length} icon={<ShoppingCart className="w-5 h-5" />} color="primary" />
+        <EnterpriseKPICard title="Pending" value={statusCounts.PENDING || 0} icon={<Clock className="w-5 h-5" />} color="amber" />
+        <EnterpriseKPICard title="Shipped" value={statusCounts.SHIPPED || 0} icon={<Truck className="w-5 h-5" />} color="blue" />
+        <EnterpriseKPICard title="Exceptions" value={statusCounts.EXCEPTION || 0} icon={<AlertTriangle className="w-5 h-5" />} color="red" />
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search orders..." className="input pl-10" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
-        </div>
-        <select className="input w-40" value={channelFilter} onChange={(e) => { setChannelFilter(e.target.value); setPage(1) }}>
-          <option value="ALL">All Channels</option>
-          <option value="SHOPIFY">Shopify</option>
-          <option value="AMAZON">Amazon</option>
-          <option value="WOOCOMMERCE">WooCommerce</option>
-          <option value="MANUAL">Manual</option>
-          <option value="API">API</option>
-        </select>
-        <select className="input w-40" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}>
-          <option value="ALL">All Statuses</option>
-          <option value="PENDING">Pending</option>
-          <option value="CONFIRMED">Confirmed</option>
-          <option value="ALLOCATED">Allocated</option>
-          <option value="SHIPPED">Shipped</option>
-          <option value="DELIVERED">Delivered</option>
-          <option value="EXCEPTION">Exception</option>
-        </select>
-      </div>
+      <EnterpriseTabs tabs={tabs} activeTab={activeTab} onChange={(id) => { setActiveTab(id); setPage(1) }} />
+
+      <EnterpriseToolbar
+        searchValue={search}
+        onSearch={(v) => { setSearch(v); setPage(1) }}
+        searchPlaceholder="Search orders..."
+        filters={
+          <select className="enterprise-input w-40" value={channelFilter} onChange={(e) => { setChannelFilter(e.target.value); setPage(1) }}>
+            <option value="ALL">All Channels</option>
+            <option value="SHOPIFY">Shopify</option>
+            <option value="AMAZON">Amazon</option>
+            <option value="WOOCOMMERCE">WooCommerce</option>
+            <option value="MANUAL">Manual</option>
+            <option value="API">API</option>
+          </select>
+        }
+        actions={[
+          { id: 'filters', label: 'Filters', icon: 'Filter', onClick: () => {} },
+          { id: 'export', label: 'Export', icon: 'Download', onClick: () => {} },
+          { id: 'new-order', label: 'New Order', icon: 'Plus', onClick: () => setShowCreate(true), primary: true },
+        ]}
+      />
 
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 rounded-lg border border-primary-200">
           <span className="text-sm text-primary-700 font-medium">{selectedIds.length} selected</span>
           <div className="w-px h-4 bg-primary-200" />
-          <button className="btn-ghost text-xs text-primary-600"><Ship className="w-3.5 h-3.5" /> Book Shipment</button>
-          <button className="btn-ghost text-xs text-primary-600"><Printer className="w-3.5 h-3.5" /> Print Labels</button>
-          <button className="btn-ghost text-xs text-primary-600"><RotateCcw className="w-3.5 h-3.5" /> Reassign</button>
-          <button className="btn-ghost text-xs text-red-600" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600"><Ship className="w-3.5 h-3.5" /> Book Shipment</button>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600"><Printer className="w-3.5 h-3.5" /> Print Labels</button>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600"><RotateCcw className="w-3.5 h-3.5" /> Reassign</button>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-red-600" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
             {cancelMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
             Cancel
           </button>
         </div>
       )}
 
-      <div className="card overflow-hidden">
+      <div className="enterprise-card overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center p-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
@@ -180,44 +199,44 @@ export default function OrdersPage() {
 
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h2 className="text-lg font-semibold">Create Order</h2>
-              <button onClick={() => setShowCreate(false)}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Create Order</h2>
+              <button onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="label">Customer Name</label>
-                  <input className="input" value={createForm.customerName} onChange={e => setCreateForm(f => ({ ...f, customerName: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Customer Name</label>
+                  <input className="enterprise-input w-full" value={createForm.customerName} onChange={e => setCreateForm(f => ({ ...f, customerName: e.target.value }))} />
                 </div>
                 <div className="col-span-2">
-                  <label className="label">Customer Email</label>
-                  <input className="input" type="email" value={createForm.customerEmail} onChange={e => setCreateForm(f => ({ ...f, customerEmail: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Customer Email</label>
+                  <input className="enterprise-input w-full" type="email" value={createForm.customerEmail} onChange={e => setCreateForm(f => ({ ...f, customerEmail: e.target.value }))} />
                 </div>
                 <div className="col-span-2">
-                  <label className="label">Street</label>
-                  <input className="input" value={createForm.street} onChange={e => setCreateForm(f => ({ ...f, street: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Street</label>
+                  <input className="enterprise-input w-full" value={createForm.street} onChange={e => setCreateForm(f => ({ ...f, street: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">City</label>
-                  <input className="input" value={createForm.city} onChange={e => setCreateForm(f => ({ ...f, city: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">City</label>
+                  <input className="enterprise-input w-full" value={createForm.city} onChange={e => setCreateForm(f => ({ ...f, city: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">State</label>
-                  <input className="input" value={createForm.state} onChange={e => setCreateForm(f => ({ ...f, state: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">State</label>
+                  <input className="enterprise-input w-full" value={createForm.state} onChange={e => setCreateForm(f => ({ ...f, state: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">ZIP</label>
-                  <input className="input" value={createForm.zip} onChange={e => setCreateForm(f => ({ ...f, zip: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">ZIP</label>
+                  <input className="enterprise-input w-full" value={createForm.zip} onChange={e => setCreateForm(f => ({ ...f, zip: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">Country</label>
-                  <input className="input" value={createForm.country} onChange={e => setCreateForm(f => ({ ...f, country: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Country</label>
+                  <input className="enterprise-input w-full" value={createForm.country} onChange={e => setCreateForm(f => ({ ...f, country: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">Channel</label>
-                  <select className="input" value={createForm.channel} onChange={e => setCreateForm(f => ({ ...f, channel: e.target.value }))}>
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Channel</label>
+                  <select className="enterprise-input w-full" value={createForm.channel} onChange={e => setCreateForm(f => ({ ...f, channel: e.target.value }))}>
                     <option value="MANUAL">Manual</option>
                     <option value="SHOPIFY">Shopify</option>
                     <option value="AMAZON">Amazon</option>
@@ -226,30 +245,30 @@ export default function OrdersPage() {
                   </select>
                 </div>
               </div>
-              <hr className="border-gray-200" />
-              <p className="text-sm font-medium text-gray-700">Item</p>
+              <hr className="border-gray-200 dark:border-gray-700" />
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Item</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="label">Product Name</label>
-                  <input className="input" value={createForm.productName} onChange={e => setCreateForm(f => ({ ...f, productName: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Product Name</label>
+                  <input className="enterprise-input w-full" value={createForm.productName} onChange={e => setCreateForm(f => ({ ...f, productName: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">SKU</label>
-                  <input className="input" value={createForm.sku} onChange={e => setCreateForm(f => ({ ...f, sku: e.target.value }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">SKU</label>
+                  <input className="enterprise-input w-full" value={createForm.sku} onChange={e => setCreateForm(f => ({ ...f, sku: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="label">Qty</label>
-                  <input className="input" type="number" min={1} value={createForm.quantity} onChange={e => setCreateForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Qty</label>
+                  <input className="enterprise-input w-full" type="number" min={1} value={createForm.quantity} onChange={e => setCreateForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
                 </div>
                 <div>
-                  <label className="label">Unit Price</label>
-                  <input className="input" type="number" min={0} step={0.01} value={createForm.unitPrice} onChange={e => setCreateForm(f => ({ ...f, unitPrice: Number(e.target.value) }))} />
+                  <label className="text-xs font-medium text-gray-500 mb-1 block">Unit Price</label>
+                  <input className="enterprise-input w-full" type="number" min={0} step={0.01} value={createForm.unitPrice} onChange={e => setCreateForm(f => ({ ...f, unitPrice: Number(e.target.value) }))} />
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
-              <button className="btn-secondary text-sm" onClick={() => setShowCreate(false)}>Cancel</button>
-              <button className="btn-primary text-sm" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
+              <button className="enterprise-btn enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
                 {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 {createMutation.isPending ? 'Creating...' : 'Create Order'}
               </button>

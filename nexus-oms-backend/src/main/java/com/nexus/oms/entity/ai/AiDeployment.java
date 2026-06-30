@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,11 +11,11 @@ import java.util.UUID;
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class AiDeployment {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
-    @Column(nullable = false) private UUID tenantId;
-    @Column(nullable = false) private UUID modelId;
-    @Column(nullable = false) private UUID versionId;
+    @NotNull @Column(nullable = false) private UUID tenantId;
+    @NotNull @Column(nullable = false) private UUID modelId;
+    @NotNull @Column(nullable = false) private UUID versionId;
     private String environment;
-    private java.math.BigDecimal trafficWeight;
+    @PositiveOrZero private java.math.BigDecimal trafficWeight;
     @Column(columnDefinition = "TEXT") private String endpointUrl;
     @Column(columnDefinition = "JSONB") private String configOverrides;
     private String status;

@@ -1,31 +1,6 @@
 import client from './client'
-import { ApiResponse, SyncLog, PaginationParams } from '../types'
-
-export interface BigCommerceConfig {
-  id: string
-  tenantId: string
-  storeHash: string
-  accessToken: string
-  clientId?: string
-  apiPath: string
-  isActive: boolean
-  autoSyncOrders: boolean
-  autoSyncInventory: boolean
-  syncIntervalMinutes: number
-  lastOrderSyncAt?: string
-  lastProductSyncAt?: string
-  lastInventorySyncAt?: string
-}
-
-export interface SyncResult {
-  syncLogId: string
-  syncType: string
-  status: string
-  itemsProcessed: number
-  itemsSucceeded: number
-  itemsFailed: number
-  message?: string
-}
+import { ApiResponse, SyncLog, PaginationParams, BigCommerceConfig, SyncResult } from '../types'
+export type { BigCommerceConfig, SyncResult }
 
 export async function getConfig(): Promise<ApiResponse<BigCommerceConfig>> {
   const { data } = await client.get('/integrations/bigcommerce/config')

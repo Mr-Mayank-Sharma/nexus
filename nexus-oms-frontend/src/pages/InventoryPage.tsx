@@ -1,6 +1,10 @@
 import { useState, useMemo, useEffect } from 'react'
-import { Search, Filter, Download, Plus, AlertTriangle } from 'lucide-react'
+import { Download, Plus, AlertTriangle, Package, Layers, CircleDollarSign, Archive } from 'lucide-react'
 import DataTable, { Column } from '../components/common/DataTable'
+import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
+import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
+import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
+import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { Inventory } from '../types'
 import * as inventoryApi from '../api/inventory'
 
@@ -92,34 +96,33 @@ export default function InventoryPage() {
   const totalPages = Math.ceil(filtered.length / pageSize)
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
-  function atpStatus(item: Inventory) {
-    if (item.atp >= item.safetyStock) return 'green'
-    if (item.atp >= item.reorderPoint) return 'yellow'
-    return 'red'
-  }
+  const totalOnHand = inventory.reduce((s, i) => s + i.quantityOnHand, 0)
+  const totalAllocated = inventory.reduce((s, i) => s + i.quantityAllocated, 0)
+  const totalValue = inventory.reduce((s, i) => s + i.totalValue, 0)
+  const lowStockCount = inventory.filter((i) => i.atp < i.reorderPoint).length
 
   const columns: Column<Inventory>[] = [
-    { key: 'sku', header: 'SKU', sortable: true, render: (i) => <span className="font-medium text-gray-900">{i.sku}</span> },
-    { key: 'productName', header: 'Product', sortable: true, render: (i) => <span className="text-gray-700">{i.productName}</span> },
-    { key: 'nodeName', header: 'Node', sortable: true, render: (i) => <span className="text-gray-500 text-xs">{i.nodeName}</span> },
-    { key: 'quantityOnHand', header: 'On Hand', sortable: true, render: (i) => <span className="text-gray-700">{i.quantityOnHand.toLocaleString()}</span> },
-    { key: 'quantityAllocated', header: 'Allocated', sortable: true, render: (i) => <span className="text-gray-500">{i.quantityAllocated.toLocaleString()}</span> },
-    { key: 'quantityReserved', header: 'Reserved', sortable: true, render: (i) => <span className="text-gray-500">{i.quantityReserved.toLocaleString()}</span> },
+    { key: 'sku', header: 'SKU', sortable: true, render: (i) => <span className="font-medium text-[var(--text-primary)]">{i.sku}</span> },
+    { key: 'productName', header: 'Product', sortable: true, render: (i) => <span className="text-[var(--text-secondary)]">{i.productName}</span> },
+    { key: 'nodeName', header: 'Node', sortable: true, render: (i) => <span className="text-[var(--text-tertiary)] text-xs">{i.nodeName}</span> },
+    { key: 'quantityOnHand', header: 'On Hand', sortable: true, render: (i) => <span className="text-[var(--text-primary)]">{i.quantityOnHand.toLocaleString()}</span> },
+    { key: 'quantityAllocated', header: 'Allocated', sortable: true, render: (i) => <span className="text-[var(--text-tertiary)]">{i.quantityAllocated.toLocaleString()}</span> },
+    { key: 'quantityReserved', header: 'Reserved', sortable: true, render: (i) => <span className="text-[var(--text-tertiary)]">{i.quantityReserved.toLocaleString()}</span> },
     {
       key: 'atp', header: 'ATP', sortable: true,
       render: (i) => {
-        const status = atpStatus(i)
+        const status = i.atp >= i.safetyStock ? 'success' : i.atp >= i.reorderPoint ? 'warning' : 'error'
         return (
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${status === 'green' ? 'bg-green-500' : status === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'}`} />
-            <span className={`font-medium ${status === 'red' ? 'text-red-600' : 'text-gray-700'}`}>{i.atp.toLocaleString()}</span>
+            <EnterpriseStatusBadge status={status} size="sm" />
+            <span className="font-medium text-[var(--text-primary)]">{i.atp.toLocaleString()}</span>
           </div>
         )
       },
     },
     {
       key: 'totalValue', header: 'Value', sortable: true,
-      render: (i) => <span className="text-gray-700">${i.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>,
+      render: (i) => <span className="text-[var(--text-primary)]">${i.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>,
     },
   ]
 
@@ -127,37 +130,45 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
-          <p className="text-sm text-gray-500 mt-1">{inventory.length} SKUs across {nodes.length} nodes</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="btn-secondary text-sm"><Download className="w-4 h-4" /> Export</button>
-          <button className="btn-primary text-sm"><Plus className="w-4 h-4" /> Adjust Inventory</button>
-        </div>
+      <EnterpriseBreadcrumbs crumbs={[{ label: 'Inventory' }]} />
+
+      <EnterpriseToolbar
+        title="Inventory"
+        subtitle={`${inventory.length} SKUs across ${nodes.length} nodes`}
+        searchValue={search}
+        onSearch={(v) => { setSearch(v); setPage(1) }}
+        searchPlaceholder="Search by SKU or product name..."
+        filters={
+          <>
+            <select className="enterprise-input w-44" value={nodeFilter} onChange={(e) => { setNodeFilter(e.target.value); setPage(1) }}>
+              <option value="ALL">All Nodes</option>
+              {nodes.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer whitespace-nowrap">
+              <input type="checkbox" className="rounded border-[var(--border-color)] text-[var(--color-primary-600)] focus:ring-[var(--color-primary-500)]"
+                checked={lowStock} onChange={(e) => { setLowStock(e.target.checked); setPage(1) }} />
+              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+              Low stock only
+            </label>
+          </>
+        }
+        actions={[
+          { label: 'Export', icon: <Download className="w-4 h-4" />, onClick: () => {}, variant: 'secondary' },
+          { label: 'Adjust Inventory', icon: <Plus className="w-4 h-4" />, onClick: () => {}, variant: 'primary' },
+        ]}
+      />
+
+      <div className="enterprise-kpi-grid">
+        <EnterpriseKPICard title="Total SKUs" value={inventory.length} icon={<Package className="w-5 h-5" />} color="primary" />
+        <EnterpriseKPICard title="Units On Hand" value={totalOnHand.toLocaleString()} icon={<Layers className="w-5 h-5" />} color="success" />
+        <EnterpriseKPICard title="Units Allocated" value={totalAllocated.toLocaleString()} icon={<CircleDollarSign className="w-5 h-5" />} color="warning" />
+        <EnterpriseKPICard title="Low Stock Items" value={lowStockCount} subtitle={lowStockCount > 0 ? 'Needs reorder' : 'All healthy'} icon={<Archive className="w-5 h-5" />} color={lowStockCount > 0 ? 'error' : 'success'} />
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search by SKU or product name..." className="input pl-10" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
-        </div>
-        <select className="input w-44" value={nodeFilter} onChange={(e) => { setNodeFilter(e.target.value); setPage(1) }}>
-          <option value="ALL">All Nodes</option>
-          {nodes.map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
-        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-          <input type="checkbox" className="rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked={lowStock} onChange={(e) => { setLowStock(e.target.checked); setPage(1) }} />
-          <AlertTriangle className="w-4 h-4 text-yellow-500" />
-          Low stock only
-        </label>
-      </div>
-
-      <div className="card overflow-hidden">
+      <div className="enterprise-card overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+            <div className="enterprise-spinner enterprise-spinner-lg" />
           </div>
         ) : (
           <DataTable columns={columns} data={paged} keyExtractor={(i) => `${i.sku}-${i.nodeId}`} sortBy={sortBy} sortOrder={sortOrder} onSort={(key) => { if (sortBy === key) setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); else { setSortBy(key); setSortOrder('asc') } }} selectedIds={selectedIds} onSelectionChange={setSelectedIds} pagination={{ page, totalPages, total: filtered.length, onPageChange: setPage }} emptyMessage="No inventory items found" />

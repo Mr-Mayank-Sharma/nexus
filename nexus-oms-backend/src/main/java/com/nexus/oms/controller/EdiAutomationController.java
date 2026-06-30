@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -79,7 +80,7 @@ public class EdiAutomationController {
 
     @PostMapping("/partners")
     public ResponseEntity<ApiResponse<NxEdiPartner>> createPartner(
-            @RequestBody NxEdiPartner partner) {
+            @Valid @RequestBody NxEdiPartner partner) {
         return ResponseEntity.ok(ApiResponse.success(
                 ediAutomationService.createPartner(partner), "EDI partner created"));
     }

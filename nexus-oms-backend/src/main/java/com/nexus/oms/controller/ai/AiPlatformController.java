@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+
+
 @RestController
 @RequestMapping("/api/ai")
 public class AiPlatformController {
@@ -27,6 +29,7 @@ public class AiPlatformController {
     private final AiRuleEngineService ruleEngineService;
     private final AiMonitoringService monitoringService;
     private final AiAnalyticsService analyticsService;
+    private final AiExperimentService experimentService;
 
     public AiPlatformController(AiGatewayService gatewayService,
                                  AiModelRegistryService modelRegistryService,
@@ -35,7 +38,8 @@ public class AiPlatformController {
                                  AiInferenceService inferenceService,
                                  AiRuleEngineService ruleEngineService,
                                  AiMonitoringService monitoringService,
-                                 AiAnalyticsService analyticsService) {
+                                 AiAnalyticsService analyticsService,
+                                 AiExperimentService experimentService) {
         this.gatewayService = gatewayService;
         this.modelRegistryService = modelRegistryService;
         this.featureStoreService = featureStoreService;
@@ -44,6 +48,7 @@ public class AiPlatformController {
         this.ruleEngineService = ruleEngineService;
         this.monitoringService = monitoringService;
         this.analyticsService = analyticsService;
+        this.experimentService = experimentService;
     }
 
     private UUID tenant() { return TenantContext.getCurrentTenantId(); }
@@ -199,7 +204,7 @@ public class AiPlatformController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.success(
-                java.util.Collections.emptyList(), "Not implemented"));
+                Page.empty(), "Not implemented"));
     }
 
     // ========== RULE FALLBACKS ==========
@@ -216,5 +221,57 @@ public class AiPlatformController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> directPredict(
             @PathVariable UUID modelId, @PathVariable UUID versionId, @RequestBody Map<String, Object> input) {
         return ResponseEntity.ok(ApiResponse.success(inferenceService.execute(modelId, versionId, input)));
+    }
+
+    // ========== EXPERIMENTS ==========
+    @GetMapping("/experiments")
+    public ResponseEntity<ApiResponse<Page<AiExperiment>>> getExperiments(
+            @RequestParam(required = false) UUID modelId,
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(ApiResponse.success(
+                experimentService.getExperiments(tenant(), modelId, status, PageRequest.of(page, size))));
+    }
+
+    @GetMapping("/experiments/{id}")
+    public ResponseEntity<ApiResponse<AiExperiment>> getExperiment(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(experimentService.getExperiment(id)));
+    }
+
+    @PostMapping("/experiments")
+    public ResponseEntity<ApiResponse<AiExperiment>> createExperiment(@Valid @RequestBody AiExperiment experiment) {
+        experiment.setTenantId(tenant());
+        return ResponseEntity.ok(ApiResponse.success(experimentService.createExperiment(experiment)));
+    }
+
+    @PutMapping("/experiments/{id}")
+    public ResponseEntity<ApiResponse<AiExperiment>> updateExperiment(
+            @PathVariable UUID id, @RequestBody AiExperiment updates) {
+        return ResponseEntity.ok(ApiResponse.success(experimentService.updateExperiment(id, updates)));
+    }
+
+    @PostMapping("/experiments/{id}/start")
+    public ResponseEntity<ApiResponse<AiExperiment>> startExperiment(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(experimentService.startExperiment(id)));
+    }
+
+    @PostMapping("/experiments/{id}/complete")
+    public ResponseEntity<ApiResponse<AiExperiment>> completeExperiment(
+            @PathVariable UUID id, @RequestBody Map<String, UUID> body) {
+        return ResponseEntity.ok(ApiResponse.success(
+                experimentService.completeExperiment(id, body.get("winnerVersionId"))));
+    }
+
+    @PostMapping("/experiments/{id}/rollback")
+    public ResponseEntity<ApiResponse<AiExperiment>> rollbackExperiment(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(experimentService.rollbackExperiment(id)));
+    }
+
+    @PostMapping("/experiments/{id}/fail")
+    public ResponseEntity<ApiResponse<AiExperiment>> failExperiment(
+            @PathVariable UUID id, @RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(ApiResponse.success(
+                experimentService.failExperiment(id, body.getOrDefault("error", "Unknown error"))));
     }
 }

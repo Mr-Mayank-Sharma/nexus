@@ -1,6 +1,9 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,20 +23,25 @@ public class WarehouseEquipment {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotNull
     @Column(name = "warehouse_id", nullable = false)
     private UUID warehouseId;
 
+    @NotBlank
     @Column(nullable = false)
     private String code;
 
+    @NotBlank
     @Column(name = "equipment_type", nullable = false)
     private String equipmentType;
 
     private String model;
 
+    @NotBlank
     @Column(nullable = false)
     private String status;
 
+    @PositiveOrZero
     @Column(name = "battery_level")
     private Integer batteryLevel;
 

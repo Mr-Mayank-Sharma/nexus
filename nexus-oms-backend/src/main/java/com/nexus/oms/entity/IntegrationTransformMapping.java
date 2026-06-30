@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -20,15 +21,19 @@ public class IntegrationTransformMapping {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(nullable = false)
     private String name;
 
+    @NotBlank
     @Column(name = "source_format", nullable = false)
     private String sourceFormat;
 
+    @NotBlank
     @Column(name = "target_format", nullable = false)
     private String targetFormat;
 
+    @NotBlank
     @Column(name = "mapping_definition", columnDefinition = "jsonb", nullable = false)
     private String mappingDefinition;
 

@@ -9,8 +9,11 @@ import com.nexus.oms.service.RbacService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,13 +40,21 @@ public class RbacController {
     }
 
     @PostMapping("/permissions")
-    public ResponseEntity<ApiResponse<RolePermission>> setPermission(@RequestBody RolePermission rolePermission) {
+    public ResponseEntity<ApiResponse<RolePermission>> setPermission(@Valid @RequestBody RolePermission rolePermission) {
         return ResponseEntity.ok(ApiResponse.success(
                 rbacService.setPermission(rolePermission), "Permission set"));
     }
 
     @GetMapping("/user-roles")
-    public ResponseEntity<ApiResponse<List<UserRole>>> getUserRoles(@RequestParam UUID userId) {
+    public ResponseEntity<ApiResponse<Page<UserRole>>> getUserRoles(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(ApiResponse.success(
+                rbacService.getAllUserRoles(PageRequest.of(page, size))));
+    }
+
+    @GetMapping("/user-roles/by-user")
+    public ResponseEntity<ApiResponse<List<UserRole>>> getUserRolesByUser(@RequestParam UUID userId) {
         return ResponseEntity.ok(ApiResponse.success(rbacService.getUserRoles(userId)));
     }
 
@@ -71,7 +82,7 @@ public class RbacController {
     }
 
     @PostMapping("/teams")
-    public ResponseEntity<ApiResponse<Team>> createTeam(@RequestBody Team team) {
+    public ResponseEntity<ApiResponse<Team>> createTeam(@Valid @RequestBody Team team) {
         return ResponseEntity.ok(ApiResponse.success(
                 rbacService.createTeam(team), "Team created"));
     }

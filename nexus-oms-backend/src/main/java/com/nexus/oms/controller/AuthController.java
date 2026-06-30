@@ -4,9 +4,11 @@ import com.nexus.oms.dto.*;
 import com.nexus.oms.service.AuthService;
 import com.nexus.oms.service.CompanySettingsService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -74,5 +76,24 @@ public class AuthController {
     @GetMapping("/sso/providers")
     public ResponseEntity<ApiResponse<List<String>>> getSsoProviders() {
         return ResponseEntity.ok(ApiResponse.success(List.of("okta", "auth0", "google", "microsoft")));
+    }
+
+    @GetMapping("/sso/{provider}/authorize")
+    public void authorizeSso(
+            @PathVariable String provider,
+            @RequestParam(required = false) String tenantId,
+            HttpServletResponse response) throws IOException {
+        String redirectUrl = authService.generateSsoAuthorizationUrl(provider, tenantId);
+        response.sendRedirect(redirectUrl);
+    }
+
+    @GetMapping("/sso/{provider}/callback")
+    public void handleSsoCallback(
+            @PathVariable String provider,
+            @RequestParam String code,
+            @RequestParam String state,
+            HttpServletResponse response) throws IOException {
+        String frontendUrl = authService.handleSsoCallback(provider, code, state);
+        response.sendRedirect(frontendUrl);
     }
 }

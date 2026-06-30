@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Bell, Package, AlertTriangle, CreditCard, Truck, CheckCircle, X, RefreshCw, Settings } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useNavigate } from 'react-router-dom'
+import * as notificationsApi from '../../api/notifications'
 
 interface Notification {
   id: string
@@ -15,14 +16,18 @@ interface Notification {
   actionPath?: string
 }
 
-const mockNotifications: Notification[] = [
-  { id: '1', type: 'order', title: 'New Order #10002459', description: 'Order received from Acme Corp - $12,450', timestamp: '2 min ago', read: false, actionable: true, actionLabel: 'View Order', actionPath: '/orders' },
-  { id: '2', type: 'alert', title: 'Low Stock Alert', description: 'SKU NEXUS-PRO-X1 is below threshold (12 remaining)', timestamp: '15 min ago', read: false, actionable: true, actionLabel: 'View Inventory', actionPath: '/inventory' },
-  { id: '3', type: 'payment', title: 'Payment Confirmed', description: 'Payment of $8,230 received for Order #10002455', timestamp: '1 hour ago', read: false },
-  { id: '4', type: 'shipment', title: 'Shipment Delayed', description: 'Carrier FedEx reported delay for shipment SHP-2024-892', timestamp: '2 hours ago', read: true },
-  { id: '5', type: 'success', title: 'Integration Sync Complete', description: 'Shopify store synced successfully - 245 orders imported', timestamp: '3 hours ago', read: true },
-  { id: '6', type: 'system', title: 'System Update', description: 'Scheduled maintenance completed at 02:00 AM', timestamp: '5 hours ago', read: true },
-]
+function mapLogToNotification(log: any): Notification {
+  const typeMap: Record<string, Notification['type']> = { 'EMAIL': 'system', 'SMS': 'alert', 'PUSH': 'order', 'IN_APP': 'system', 'SLACK': 'alert' }
+  return {
+    id: log.id,
+    type: log.status === 'FAILED' ? 'alert' : (typeMap[log.channel] || 'system'),
+    title: log.subject || 'Notification',
+    description: log.body || '',
+    timestamp: log.createdAt ? new Date(log.createdAt).toLocaleString() : '',
+    read: log.status === 'READ' || log.status === 'DELIVERED',
+    actionable: false,
+  }
+}
 
 const typeIcons = {
   order: Package,
@@ -49,7 +54,20 @@ interface Props {
 
 export default function NotificationsPanel({ open, onClose }: Props) {
   const navigate = useNavigate()
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications)
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [loadingNotifications, setLoadingNotifications] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setLoadingNotifications(true)
+    notificationsApi.getNotificationLogs(0, 20)
+      .then(res => {
+        const items = Array.isArray(res.data) ? res.data : (res.data?.content ?? [])
+        setNotifications(items.map(mapLogToNotification))
+      })
+      .catch(() => {})
+      .finally(() => setLoadingNotifications(false))
+  }, [open])
 
   const unreadCount = notifications.filter(n => !n.read).length
 
@@ -86,7 +104,11 @@ export default function NotificationsPanel({ open, onClose }: Props) {
         </div>
 
         <div className="max-h-[400px] overflow-y-auto">
-          {notifications.length === 0 ? (
+          {loadingNotifications ? (
+            <div className="flex justify-center py-8">
+              <div className="animate-spin w-5 h-5 border-2 border-[var(--color-primary-500)] border-t-transparent rounded-full" />
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="enterprise-empty-state py-8">
               <CheckCircle className="w-8 h-8" />
               <h3>All caught up!</h3>

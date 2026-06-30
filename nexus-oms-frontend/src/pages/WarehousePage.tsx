@@ -85,8 +85,10 @@ const defaultEquipForm = (): EquipmentFormData => ({
   name: '', type: 'FORKLIFT', model: '', serialNumber: '',
 })
 
-const capacityUtil = (wh: Warehouse) =>
-  wh.capacity > 0 ? Math.round((wh.utilizedCapacity / wh.capacity) * 100) : 0
+const capacityUtil = (wh: Warehouse) => {
+  const cap = wh.capacity ?? 0
+  return cap > 0 ? Math.round(((wh.utilizedCapacity ?? 0) / cap) * 100) : 0
+}
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (
@@ -177,7 +179,7 @@ export default function WarehousePage() {
     if (!search) return warehouses
     const q = search.toLowerCase()
     return warehouses.filter(
-      (w) => w.name.toLowerCase().includes(q) || w.code.toLowerCase().includes(q),
+      (w) => (w.name ?? '').toLowerCase().includes(q) || (w.code ?? '').toLowerCase().includes(q),
     )
   }, [warehouses, search])
 
@@ -415,8 +417,8 @@ export default function WarehousePage() {
     }
   }
 
-  const totalCapacity = warehouses.reduce((s, w) => s + w.capacity, 0)
-  const totalUtilized = warehouses.reduce((s, w) => s + w.utilizedCapacity, 0)
+  const totalCapacity = warehouses.reduce((s, w) => s + (w.capacity ?? 0), 0)
+  const totalUtilized = warehouses.reduce((s, w) => s + (w.utilizedCapacity ?? 0), 0)
   const avgUtil = totalCapacity > 0 ? Math.round((totalUtilized / totalCapacity) * 100) : 0
 
   const binStatusColor: Record<string, string> = {
@@ -495,19 +497,19 @@ export default function WarehousePage() {
                         <td className="px-4 py-2.5">
                           <StatusBadge status={z.type} size="sm" />
                         </td>
-                        <td className="px-4 py-2.5 text-gray-700">{z.capacity.toLocaleString()}</td>
+                        <td className="px-4 py-2.5 text-gray-700">{(z.capacity || 0).toLocaleString()}</td>
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-primary-500 rounded-full"
                                 style={{
-                                  width: `${z.capacity > 0 ? Math.min((z.utilizedCapacity / z.capacity) * 100, 100) : 0}%`,
+                                  width: `${(z.capacity || 0) > 0 ? Math.min(Math.round(((z.utilizedCapacity || 0) / (z.capacity || 0)) * 100), 100) : 0}%`,
                                 }}
                               />
                             </div>
                             <span className="text-xs text-gray-500">
-                              {z.capacity > 0 ? Math.round((z.utilizedCapacity / z.capacity) * 100) : 0}%
+                              {(z.capacity || 0) > 0 ? Math.round(((z.utilizedCapacity || 0) / (z.capacity || 0)) * 100) : 0}%
                             </span>
                           </div>
                         </td>
@@ -811,7 +813,7 @@ export default function WarehousePage() {
                     <td className="px-4 py-3">
                       <StatusBadge status={wh.isActive ? 'ACTIVE' : 'INACTIVE'} size="sm" />
                     </td>
-                    <td className="px-4 py-3 text-gray-700">{wh.capacity.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-700">{(wh.capacity ?? 0).toLocaleString()}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">

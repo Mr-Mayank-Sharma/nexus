@@ -23,7 +23,7 @@ export default function CycleCountPage() {
     try {
       setLoading(true)
       const res = await cycleCountsApi.getCycleCounts({ status: statusFilter || undefined })
-      setCounts(res.data)
+      setCounts(Array.isArray(res.data) ? res.data : res.data?.content ?? [])
     } catch { addToast({ type: 'error', title: 'Failed to load cycle counts' })
     } finally { setLoading(false) }
   }

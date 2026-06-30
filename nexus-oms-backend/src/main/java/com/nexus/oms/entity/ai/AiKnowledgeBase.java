@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,15 +11,15 @@ import java.util.UUID;
 public class AiKnowledgeBase {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
-    @Column(nullable = false) private String name;
+    @NotBlank @Column(nullable = false) private String name;
     @Column(columnDefinition = "TEXT") private String description;
     private String embeddingModel;
     private String chunkingStrategy;
-    private Integer chunkSize;
-    private Integer chunkOverlap;
+    @Positive private Integer chunkSize;
+    @PositiveOrZero private Integer chunkOverlap;
     private String status;
-    private Integer documentCount;
-    private Integer vectorSize;
+    @PositiveOrZero private Integer documentCount;
+    @Positive private Integer vectorSize;
     @Column(columnDefinition = "JSONB") private String config;
     private String createdBy;
     private LocalDateTime createdAt;

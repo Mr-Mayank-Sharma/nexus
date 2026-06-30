@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Ship, Truck, Plus, Edit, Trash2, DollarSign, CheckCircle, XCircle, Loader2, X, ChevronDown, ChevronRight, Search } from 'lucide-react'
+import { Ship, Truck, Plus, Edit, Trash2, DollarSign, CheckCircle, BarChart3, Loader2, X } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import client from '../api/client'
 import { EnterpriseToolbar, EnterpriseDataGrid, EnterpriseKPICard, EnterpriseBreadcrumbs, EnterpriseStatusBadge, EnterpriseTabs, EnterpriseFormSection } from '../components/enterprise'
@@ -88,12 +88,8 @@ const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
 const SERVICE_TYPES = ['Ground', '2-Day', 'Overnight']
 
 export async function fetchCarriers(): Promise<Carrier[]> {
-  try {
-    const { data } = await client.get('/carriers')
-    return data.data ?? data
-  } catch {
-    return MOCK_CARRIERS
-  }
+  const { data } = await client.get('/carriers')
+  return data.data ?? data
 }
 
 export async function createCarrierApi(payload: CarrierFormData): Promise<Carrier> {
@@ -146,6 +142,7 @@ export default function CarriersPage() {
       setCarriers(data)
     } catch {
       setCarriers(MOCK_CARRIERS)
+      addToast({ type: 'error', title: 'Failed to load carriers, using mock data' })
     } finally {
       setLoading(false)
     }
@@ -202,30 +199,7 @@ export default function CarriersPage() {
       }
       setShowModal(false)
     } catch {
-      const mockCarrier: Carrier = {
-        id: editingCarrier ? editingCarrier.id : String(Date.now()),
-        name: form.name,
-        code: form.code,
-        status: form.isActive ? 'ACTIVE' : 'INACTIVE',
-        type: form.type,
-        accountNumber: form.accountNumber,
-        apiKey: form.apiKey,
-        apiSecret: form.apiSecret,
-        otdRate: editingCarrier?.otdRate ?? 0,
-        avgCost: editingCarrier?.avgCost ?? 0,
-        totalShipments: editingCarrier?.totalShipments ?? 0,
-        damageRate: editingCarrier?.damageRate ?? 0,
-        isActive: form.isActive,
-        metadata: {},
-      }
-      if (editingCarrier) {
-        setCarriers(prev => prev.map(c => c.id === editingCarrier.id ? mockCarrier : c))
-        addToast({ type: 'success', title: `${form.name} updated (offline)` })
-      } else {
-        setCarriers(prev => [...prev, mockCarrier])
-        addToast({ type: 'success', title: `${form.name} added (offline)` })
-      }
-      setShowModal(false)
+      addToast({ type: 'error', title: `Failed to ${editingCarrier ? 'update' : 'add'} carrier` })
     } finally {
       setSaving(false)
     }
@@ -237,8 +211,7 @@ export default function CarriersPage() {
       setCarriers(prev => prev.filter(c => c.id !== carrier.id))
       addToast({ type: 'success', title: `${carrier.name} removed` })
     } catch {
-      setCarriers(prev => prev.filter(c => c.id !== carrier.id))
-      addToast({ type: 'success', title: `${carrier.name} removed (offline)` })
+      addToast({ type: 'error', title: `Failed to remove ${carrier.name}` })
     }
     if (expandedCarrier?.id === carrier.id) setExpandedCarrier(null)
   }
@@ -261,7 +234,7 @@ export default function CarriersPage() {
         return { carrier: c, rate }
       })
       const best = entries
-        .filter(e => e.rate && c.status !== 'INACTIVE')
+        .filter(e => e.rate && e.carrier.status !== 'INACTIVE')
         .sort((a, b) => (a.rate?.rate ?? Infinity) - (b.rate?.rate ?? Infinity))[0]
       return { serviceType: st, entries, bestCarrier: best?.carrier }
     })
@@ -438,7 +411,7 @@ export default function CarriersPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {(MOCK_RATES[expandedCarrier.id] || []).map((rate, i) => (
+                        {(MOCK_RATES[expandedCarrier.id] || MOCK_RATES['1'] || []).map((rate, i) => (
                           <tr key={i}>
                             <td className="font-medium text-[var(--text-primary)]">{rate.serviceType}</td>
                             <td className="text-right font-mono text-[var(--text-primary)]">{fmtCurrency(rate.rate)}</td>
@@ -456,8 +429,8 @@ export default function CarriersPage() {
                     <BarChart3 className="w-4 h-4 text-[var(--text-tertiary)]" /> OTD Performance (Last 6 Months)
                   </h4>
                   <div className="flex items-end gap-3 h-32 pt-2">
-                    {(OTD_HISTORY[expandedCarrier.id] || []).map((val, i) => {
-                      const maxOTD = Math.max(...(OTD_HISTORY[expandedCarrier.id] || [100]))
+                    {(OTD_HISTORY[expandedCarrier.id] || OTD_HISTORY['1'] || []).map((val, i) => {
+                      const maxOTD = Math.max(...(OTD_HISTORY[expandedCarrier.id] || OTD_HISTORY['1'] || [100]))
                       const height = Math.max(4, (val / maxOTD) * 100)
                       const barColor =
                         val >= 95 ? 'bg-green-500' : val >= 90 ? 'bg-yellow-500' : 'bg-red-500'

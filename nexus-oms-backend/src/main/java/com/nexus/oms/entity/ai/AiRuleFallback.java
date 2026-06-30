@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,16 +11,16 @@ import java.util.UUID;
 public class AiRuleFallback {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
-    @Column(nullable = false) private UUID modelId;
-    @Column(nullable = false) private String name;
+    @NotNull @Column(nullable = false) private UUID modelId;
+    @NotBlank @Column(nullable = false) private String name;
     @Column(columnDefinition = "TEXT") private String description;
-    private Integer priority;
+    @Positive private Integer priority;
     @Column(columnDefinition = "TEXT") private String conditionExpression;
     @Column(columnDefinition = "TEXT") private String actionExpression;
     private String actionType;
     @Column(columnDefinition = "JSONB") private String actionConfig;
-    private java.math.BigDecimal confidenceThresholdLow;
-    private java.math.BigDecimal confidenceThresholdHigh;
+    @PositiveOrZero private java.math.BigDecimal confidenceThresholdLow;
+    @PositiveOrZero private java.math.BigDecimal confidenceThresholdHigh;
     private Boolean isActive;
     private String createdBy;
     private LocalDateTime createdAt;

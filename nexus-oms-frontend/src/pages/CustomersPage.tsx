@@ -10,7 +10,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { useToast } from '../hooks/useToast'
 import * as customersApi from '../api/customers'
-import type { Customer } from '../api/customers'
+import type { Customer } from '../types'
 
 export default function CustomersPage() {
   const queryClient = useQueryClient()
@@ -24,7 +24,7 @@ export default function CustomersPage() {
     queryKey: ['customers'],
     queryFn: async () => {
       const res = await customersApi.getCustomers()
-      return res.data as Customer[]
+      const d = res.data; return Array.isArray(d) ? d : (d?.content ?? []) as Customer[]
     },
   })
 

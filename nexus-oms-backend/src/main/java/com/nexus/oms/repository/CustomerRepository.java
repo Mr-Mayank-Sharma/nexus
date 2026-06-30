@@ -10,4 +10,6 @@ public interface CustomerRepository extends JpaRepository<NxCustomer, UUID> {
     Optional<NxCustomer> findByEmail(String email);
 
     Optional<NxCustomer> findByTenantIdAndExternalId(UUID tenantId, String externalId);
+
+    Optional<NxCustomer> findByTenantIdAndEmail(UUID tenantId, String email);
 }

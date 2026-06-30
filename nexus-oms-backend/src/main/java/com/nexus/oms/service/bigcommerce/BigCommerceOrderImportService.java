@@ -23,7 +23,8 @@ public class BigCommerceOrderImportService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CustomerRepository customerRepository;
-    private final NxNodeRepository nodeRepository;
+    private final AddressRepository addressRepository;
+    private final NodeRepository nodeRepository;
     private final ObjectMapper objectMapper;
 
     public BigCommerceOrderImportService(BigCommerceClient bcClient,
@@ -33,7 +34,8 @@ public class BigCommerceOrderImportService {
                                           OrderRepository orderRepository,
                                           OrderItemRepository orderItemRepository,
                                           CustomerRepository customerRepository,
-                                          NxNodeRepository nodeRepository,
+                                          AddressRepository addressRepository,
+                                          NodeRepository nodeRepository,
                                           ObjectMapper objectMapper) {
         this.bcClient = bcClient;
         this.configRepository = configRepository;
@@ -42,6 +44,7 @@ public class BigCommerceOrderImportService {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
+        this.addressRepository = addressRepository;
         this.nodeRepository = nodeRepository;
         this.objectMapper = objectMapper;
     }
@@ -136,17 +139,18 @@ public class BigCommerceOrderImportService {
             channel = "BIGCOMMERCE_CHANNEL_" + bcOrder.get("channel_id").asInt();
         }
 
-        Map<String, Object> shipTo = new HashMap<>();
         JsonNode billing = bcOrder.get("billing_address");
-        if (billing != null) {
-            shipTo.put("first_name", billing.has("first_name") ? billing.get("first_name").asText() : "");
-            shipTo.put("last_name", billing.has("last_name") ? billing.get("last_name").asText() : "");
-            shipTo.put("street", billing.has("street_1") ? billing.get("street_1").asText() : "");
-            shipTo.put("city", billing.has("city") ? billing.get("city").asText() : "");
-            shipTo.put("state", billing.has("state") ? billing.get("state").asText() : "");
-            shipTo.put("zip", billing.has("zip") ? billing.get("zip").asText() : "");
-            shipTo.put("country", billing.has("country") ? billing.get("country").asText() : "");
-        }
+        Address shipToAddress = addressRepository.save(Address.builder()
+                .tenantId(tenantId)
+                .addressLine1(billing != null && billing.has("street_1") ? billing.get("street_1").asText() : null)
+                .addressLine2(billing != null && billing.has("street_2") ? billing.get("street_2").asText() : null)
+                .city(billing != null && billing.has("city") ? billing.get("city").asText() : null)
+                .state(billing != null && billing.has("state") ? billing.get("state").asText() : null)
+                .postalCode(billing != null && billing.has("zip") ? billing.get("zip").asText() : null)
+                .country(billing != null && billing.has("country") ? billing.get("country").asText() : "US")
+                .fullName(billing != null ? (billing.has("first_name") ? billing.get("first_name").asText() : "") + " " + (billing.has("last_name") ? billing.get("last_name").asText() : "") : null)
+                .addressType("SHIPPING")
+                .build());
 
         NxOrder order = NxOrder.builder()
                 .tenantId(tenantId)
@@ -155,7 +159,7 @@ public class BigCommerceOrderImportService {
                 .channelOrderId(String.valueOf(bcOrderId))
                 .customerId(customer.getId())
                 .status(status)
-                .shipTo(toJson(shipTo))
+                .shipToAddress(shipToAddress)
                 .currency(bcOrder.has("currency_code") ? bcOrder.get("currency_code").asText() : "USD")
                 .subtotal(subtotal)
                 .shippingCost(shippingCost)
@@ -211,18 +215,19 @@ public class BigCommerceOrderImportService {
 
         return customerRepository.findByEmail(email)
                 .orElseGet(() -> {
-                    Map<String, Object> address = new HashMap<>();
-                    if (billing != null) {
-                        address.put("street", billing.has("street_1") ? billing.get("street_1").asText() : "");
-                        address.put("city", billing.has("city") ? billing.get("city").asText() : "");
-                        address.put("state", billing.has("state") ? billing.get("state").asText() : "");
-                        address.put("zip", billing.has("zip") ? billing.get("zip").asText() : "");
-                    }
+                    Address customerAddress = addressRepository.save(Address.builder()
+                            .tenantId(tenantId)
+                            .addressLine1(billing != null && billing.has("street_1") ? billing.get("street_1").asText() : null)
+                            .city(billing != null && billing.has("city") ? billing.get("city").asText() : null)
+                            .state(billing != null && billing.has("state") ? billing.get("state").asText() : null)
+                            .postalCode(billing != null && billing.has("zip") ? billing.get("zip").asText() : null)
+                            .addressType("PRIMARY")
+                            .build());
                     return customerRepository.save(NxCustomer.builder()
                             .tenantId(tenantId)
                             .name(name)
                             .email(email)
-                            .address(toJson(address))
+                            .address(customerAddress)
                             .build());
                 });
     }
@@ -244,11 +249,4 @@ public class BigCommerceOrderImportService {
         };
     }
 
-    private String toJson(Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (Exception e) {
-            return "{}";
-        }
-    }
 }

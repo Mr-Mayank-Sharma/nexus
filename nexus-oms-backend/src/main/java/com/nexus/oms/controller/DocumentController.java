@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -38,14 +39,14 @@ public class DocumentController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Document>> createDocument(@RequestBody Document document) {
+    public ResponseEntity<ApiResponse<Document>> createDocument(@Valid @RequestBody Document document) {
         return ResponseEntity.ok(ApiResponse.success(
                 documentService.createDocument(document), "Document created"));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Document>> updateDocument(@PathVariable UUID id,
-                                                                @RequestBody Document document) {
+                                                                 @Valid @RequestBody Document document) {
         return ResponseEntity.ok(ApiResponse.success(
                 documentService.updateDocument(id, document), "Document updated"));
     }

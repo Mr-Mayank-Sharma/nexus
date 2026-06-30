@@ -1,0 +1,11 @@
+Row Number,Status,Error Code,Error Message,Suggested Resolution
+1,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+2,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+3,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+4,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+5,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+6,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+7,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+8,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+9,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import
+10,FAILED,ROW_ERROR,"Missing required field (tried: name, Name, customerName, CustomerName)",Review the row data for errors and re-import

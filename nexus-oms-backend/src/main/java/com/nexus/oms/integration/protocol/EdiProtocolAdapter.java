@@ -256,7 +256,7 @@ public class EdiProtocolAdapter {
         }
 
         edi.append("TDS").append(sep).append(
-            String.format("%.0f", Double.parseDouble(invoiceData.getOrDefault("total", "0.00").toString()).replace(".", ""))).append(term);
+            String.format("%.0f", Double.parseDouble(invoiceData.getOrDefault("total", "0.00").toString())).replace(".", "")).append(term);
         edi.append("CTT").append(sep).append(items.size()).append(term);
         edi.append("SE").append(sep).append("0001").append(sep).append(
             String.valueOf(edi.toString().split("\n").length + 1)).append(term);

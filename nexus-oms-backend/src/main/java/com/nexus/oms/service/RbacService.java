@@ -10,6 +10,7 @@ import com.nexus.oms.repository.TeamRepository;
 import com.nexus.oms.repository.UserRoleRepository;
 import com.nexus.oms.security.TenantContext;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +68,11 @@ public class RbacService {
         return userRoleRepository.findByUserId(userId);
     }
 
+    public Page<UserRole> getAllUserRoles(Pageable pageable) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return userRoleRepository.findByTenantId(tenantId, pageable);
+    }
+
     @Transactional
     public UserRole assignRole(UUID tenantId, UUID userId, String role) {
         Optional<UserRole> existing = userRoleRepository.findByTenantIdAndUserIdAndRole(tenantId, userId, role);
@@ -101,17 +107,16 @@ public class RbacService {
     }
 
     public boolean hasPermission(UUID tenantId, UUID userId, String permissionName, String action) {
-        List<UserRole> userRoles = userRoleRepository.findByTenantIdAndUserId(tenantId, userId);
-        if (userRoles.isEmpty()) return false;
+        Optional<UserRole> userRole = userRoleRepository.findByTenantIdAndUserId(tenantId, userId);
+        if (userRole.isEmpty()) return false;
 
-        for (UserRole ur : userRoles) {
-            List<RolePermission> perms = rolePermissionRepository
-                    .findByTenantIdAndRole(tenantId, ur.getRole());
-            for (RolePermission rp : perms) {
-                if (rp.getPermissionName().equals(permissionName)) {
-                    Boolean result = getCanAction(rp, action);
-                    if (Boolean.TRUE.equals(result)) return true;
-                }
+        UserRole ur = userRole.get();
+        List<RolePermission> perms = rolePermissionRepository
+                .findByTenantIdAndRole(tenantId, ur.getRole());
+        for (RolePermission rp : perms) {
+            if (rp.getPermissionName().equals(permissionName)) {
+                Boolean result = getCanAction(rp, action);
+                if (Boolean.TRUE.equals(result)) return true;
             }
         }
         return false;

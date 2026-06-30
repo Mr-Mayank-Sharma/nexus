@@ -9,10 +9,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Procurement", description = "Procurement management APIs")
 @RestController
 @RequestMapping("/procurement")
 public class ProcurementController {
@@ -25,6 +29,7 @@ public class ProcurementController {
 
     // ==================== SUPPLIERS ====================
 
+    @Operation(summary = "List all suppliers")
     @GetMapping("/suppliers")
     public ResponseEntity<ApiResponse<Page<Supplier>>> getAllSuppliers(
             @RequestParam(defaultValue = "0") int page,
@@ -33,53 +38,62 @@ public class ProcurementController {
                 procurementService.getAllSuppliers(PageRequest.of(page, size))));
     }
 
+    @Operation(summary = "Get supplier by ID")
     @GetMapping("/suppliers/{id}")
     public ResponseEntity<ApiResponse<Supplier>> getSupplier(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(procurementService.getSupplier(id)));
     }
 
+    @Operation(summary = "Create a new supplier")
     @PostMapping("/suppliers")
-    public ResponseEntity<ApiResponse<Supplier>> createSupplier(@RequestBody Supplier supplier) {
+    public ResponseEntity<ApiResponse<Supplier>> createSupplier(@Valid @RequestBody Supplier supplier) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.createSupplier(supplier), "Supplier created"));
     }
 
+    @Operation(summary = "Update supplier details")
     @PutMapping("/suppliers/{id}")
-    public ResponseEntity<ApiResponse<Supplier>> updateSupplier(@PathVariable UUID id, @RequestBody Supplier supplier) {
+    public ResponseEntity<ApiResponse<Supplier>> updateSupplier(@PathVariable UUID id, @Valid @RequestBody Supplier supplier) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.updateSupplier(id, supplier), "Supplier updated"));
     }
 
+    @Operation(summary = "Delete a supplier")
     @DeleteMapping("/suppliers/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteSupplier(@PathVariable UUID id) {
         procurementService.deleteSupplier(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Supplier deleted"));
     }
 
+    @Operation(summary = "Get supplier contacts")
     @GetMapping("/suppliers/{id}/contacts")
     public ResponseEntity<ApiResponse<List<SupplierContact>>> getSupplierContacts(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(procurementService.getSupplierContacts(id)));
     }
 
-    @PostMapping("/suppliers/contacts")
-    public ResponseEntity<ApiResponse<SupplierContact>> addSupplierContact(@RequestBody SupplierContact contact) {
+    @Operation(summary = "Add a supplier contact")
+    @PostMapping("/supplier-contacts")
+    public ResponseEntity<ApiResponse<SupplierContact>> addSupplierContact(@Valid @RequestBody SupplierContact contact) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.addSupplierContact(contact), "Contact added"));
     }
 
+    @Operation(summary = "Get supplier contracts")
     @GetMapping("/suppliers/{id}/contracts")
     public ResponseEntity<ApiResponse<List<SupplierContract>>> getSupplierContracts(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(procurementService.getSupplierContracts(id)));
     }
 
-    @PostMapping("/suppliers/contracts")
-    public ResponseEntity<ApiResponse<SupplierContract>> addSupplierContract(@RequestBody SupplierContract contract) {
+    @Operation(summary = "Add a supplier contract")
+    @PostMapping("/supplier-contracts")
+    public ResponseEntity<ApiResponse<SupplierContract>> addSupplierContract(@Valid @RequestBody SupplierContract contract) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.addSupplierContract(contract), "Contract added"));
     }
 
     // ==================== PURCHASE REQUESTS ====================
 
+    @Operation(summary = "List all purchase requests")
     @GetMapping("/requests")
     public ResponseEntity<ApiResponse<Page<PurchaseRequest>>> getAllRequests(
             @RequestParam(defaultValue = "0") int page,
@@ -88,37 +102,46 @@ public class ProcurementController {
                 procurementService.getAllRequests(PageRequest.of(page, size))));
     }
 
+    @Operation(summary = "Get purchase request by ID")
     @GetMapping("/requests/{id}")
     public ResponseEntity<ApiResponse<PurchaseRequest>> getRequest(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(procurementService.getRequest(id)));
     }
 
+    @Operation(summary = "Create a purchase request")
     @PostMapping("/requests")
-    public ResponseEntity<ApiResponse<PurchaseRequest>> createRequest(@RequestBody PurchaseRequest request) {
+    public ResponseEntity<ApiResponse<PurchaseRequest>> createRequest(@Valid @RequestBody PurchaseRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.createRequest(request), "Purchase request created"));
     }
 
+    @Operation(summary = "Update purchase request status")
     @PutMapping("/requests/{id}/status")
     public ResponseEntity<ApiResponse<PurchaseRequest>> updateRequestStatus(
-            @PathVariable UUID id, @RequestParam String status) {
+            @PathVariable UUID id, @RequestBody Map<String, String> body) {
+        String status = body.getOrDefault("status", "");
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.updateRequestStatus(id, status), "Status updated"));
     }
 
-    @PostMapping("/requests/items")
-    public ResponseEntity<ApiResponse<PurchaseRequestItem>> addRequestItem(@RequestBody PurchaseRequestItem item) {
+    @Operation(summary = "Add an item to a purchase request")
+    @PostMapping("/requests/{requestId}/items")
+    public ResponseEntity<ApiResponse<PurchaseRequestItem>> addRequestItem(
+            @PathVariable UUID requestId, @Valid @RequestBody PurchaseRequestItem item) {
+        item.setRequestId(requestId);
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.addRequestItem(item), "Item added"));
     }
 
-    @PutMapping("/requests/{id}/submit")
+    @Operation(summary = "Submit purchase request for approval")
+    @PostMapping("/requests/{id}/submit")
     public ResponseEntity<ApiResponse<PurchaseRequest>> submitForApproval(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.submitForApproval(id), "Submitted for approval"));
     }
 
-    @PutMapping("/requests/{id}/approve")
+    @Operation(summary = "Approve a purchase request")
+    @PostMapping("/requests/{id}/approve")
     public ResponseEntity<ApiResponse<PurchaseRequest>> approveRequest(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.approveRequest(id), "Request approved"));
@@ -126,6 +149,7 @@ public class ProcurementController {
 
     // ==================== RFQs ====================
 
+    @Operation(summary = "List all RFQs")
     @GetMapping("/rfqs")
     public ResponseEntity<ApiResponse<Page<Rfq>>> getAllRfqs(
             @RequestParam(defaultValue = "0") int page,
@@ -134,36 +158,44 @@ public class ProcurementController {
                 procurementService.getAllRfqs(PageRequest.of(page, size))));
     }
 
+    @Operation(summary = "Get RFQ by ID")
     @GetMapping("/rfqs/{id}")
     public ResponseEntity<ApiResponse<Rfq>> getRfq(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(procurementService.getRfq(id)));
     }
 
+    @Operation(summary = "Create a new RFQ")
     @PostMapping("/rfqs")
-    public ResponseEntity<ApiResponse<Rfq>> createRfq(@RequestBody Rfq rfq) {
+    public ResponseEntity<ApiResponse<Rfq>> createRfq(@Valid @RequestBody Rfq rfq) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.createRfq(rfq), "RFQ created"));
     }
 
-    @PutMapping("/rfqs/{id}/submit")
+    @Operation(summary = "Submit an RFQ")
+    @PostMapping("/rfqs/{id}/submit")
     public ResponseEntity<ApiResponse<Rfq>> submitRfq(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.submitRfq(id), "RFQ submitted"));
     }
 
+    @Operation(summary = "Get RFQ responses")
     @GetMapping("/rfqs/{id}/responses")
     public ResponseEntity<ApiResponse<List<RfqResponse>>> getRfqResponses(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(procurementService.getRfqResponses(id)));
     }
 
-    @PostMapping("/rfqs/responses")
-    public ResponseEntity<ApiResponse<RfqResponse>> addRfqResponse(@RequestBody RfqResponse response) {
+    @Operation(summary = "Add an RFQ response")
+    @PostMapping("/rfqs/{rfqId}/responses")
+    public ResponseEntity<ApiResponse<RfqResponse>> addRfqResponse(
+            @PathVariable UUID rfqId, @Valid @RequestBody RfqResponse response) {
+        response.setRfqId(rfqId);
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.addRfqResponse(response), "Response added"));
     }
 
     // ==================== PURCHASE ORDERS ====================
 
+    @Operation(summary = "List all purchase orders")
     @GetMapping("/purchase-orders")
     public ResponseEntity<ApiResponse<Page<PurchaseOrder>>> getAllPurchaseOrders(
             @RequestParam(defaultValue = "0") int page,
@@ -172,24 +204,29 @@ public class ProcurementController {
                 procurementService.getAllPurchaseOrders(PageRequest.of(page, size))));
     }
 
+    @Operation(summary = "Get purchase order by ID")
     @GetMapping("/purchase-orders/{id}")
     public ResponseEntity<ApiResponse<PurchaseOrder>> getPurchaseOrder(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(procurementService.getPurchaseOrder(id)));
     }
 
+    @Operation(summary = "Create a purchase order")
     @PostMapping("/purchase-orders")
-    public ResponseEntity<ApiResponse<PurchaseOrder>> createPurchaseOrder(@RequestBody PurchaseOrder purchaseOrder) {
+    public ResponseEntity<ApiResponse<PurchaseOrder>> createPurchaseOrder(@Valid @RequestBody PurchaseOrder purchaseOrder) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.createPurchaseOrder(purchaseOrder), "Purchase order created"));
     }
 
+    @Operation(summary = "Update purchase order status")
     @PutMapping("/purchase-orders/{id}/status")
     public ResponseEntity<ApiResponse<PurchaseOrder>> updatePurchaseOrderStatus(
-            @PathVariable UUID id, @RequestParam String status) {
+            @PathVariable UUID id, @RequestBody Map<String, String> body) {
+        String status = body.getOrDefault("status", "");
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.updatePurchaseOrderStatus(id, status), "Status updated"));
     }
 
+    @Operation(summary = "Receive items for a purchase order")
     @PostMapping("/purchase-orders/{id}/receive")
     public ResponseEntity<ApiResponse<PurchaseOrder>> receiveItems(
             @PathVariable UUID id, @RequestBody List<Map<String, Object>> receivedItems) {
@@ -197,7 +234,8 @@ public class ProcurementController {
                 procurementService.receiveItems(id, receivedItems), "Items received"));
     }
 
-    @PutMapping("/purchase-orders/{id}/approve")
+    @Operation(summary = "Approve a purchase order")
+    @PostMapping("/purchase-orders/{id}/approve")
     public ResponseEntity<ApiResponse<PurchaseOrder>> approvePurchaseOrder(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.approvePurchaseOrder(id), "Purchase order approved"));

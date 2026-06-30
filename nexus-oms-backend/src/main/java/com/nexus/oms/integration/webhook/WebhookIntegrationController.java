@@ -15,14 +15,14 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/integration/webhooks")
-public class WebhookController {
+public class WebhookIntegrationController {
 
-    private static final Logger log = LoggerFactory.getLogger(WebhookController.class);
+    private static final Logger log = LoggerFactory.getLogger(WebhookIntegrationController.class);
     private final ConnectorRegistry registry;
     private final WebhookManager webhookManager;
     private final ObjectMapper objectMapper;
 
-    public WebhookController(ConnectorRegistry registry, WebhookManager webhookManager, ObjectMapper objectMapper) {
+    public WebhookIntegrationController(ConnectorRegistry registry, WebhookManager webhookManager, ObjectMapper objectMapper) {
         this.registry = registry;
         this.webhookManager = webhookManager;
         this.objectMapper = objectMapper;

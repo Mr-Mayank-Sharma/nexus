@@ -1,38 +1,53 @@
 import client from './client'
-import { ApiResponse } from '../types'
-
-export interface Customer {
-  id: string
-  tenantId: string
-  externalId?: string
-  name: string
-  email?: string
-  phone?: string
-  address?: string
-  createdAt: string
-}
+import { ApiResponse, Customer } from '../types'
+export type { Customer }
 
 export async function getCustomers(): Promise<ApiResponse<Customer[]>> {
-  const { data } = await client.get('/customers')
-  return data
+  try {
+    const { data } = await client.get('/customers')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get customers'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getCustomer(id: string): Promise<ApiResponse<Customer>> {
-  const { data } = await client.get(`/customers/${id}`)
-  return data
+  try {
+    const { data } = await client.get(`/customers/${id}`)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get customer'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function createCustomer(payload: Partial<Customer>): Promise<ApiResponse<Customer>> {
-  const { data } = await client.post('/customers', payload)
-  return data
+  try {
+    const { data } = await client.post('/customers', payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to create customer'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function updateCustomer(id: string, payload: Partial<Customer>): Promise<ApiResponse<Customer>> {
-  const { data } = await client.put(`/customers/${id}`, payload)
-  return data
+  try {
+    const { data } = await client.put(`/customers/${id}`, payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to update customer'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function deleteCustomer(id: string): Promise<ApiResponse<null>> {
-  const { data } = await client.delete(`/customers/${id}`)
-  return data
+  try {
+    const { data } = await client.delete(`/customers/${id}`)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to delete customer'
+    return { success: false, error: msg } as any
+  }
 }

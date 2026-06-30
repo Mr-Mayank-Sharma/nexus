@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -21,9 +22,11 @@ public class Rfq {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @NotBlank
     @Column(name = "rfq_number", nullable = false)
     private String rfqNumber;
 
+    @NotBlank
     @Column(nullable = false)
     private String title;
 

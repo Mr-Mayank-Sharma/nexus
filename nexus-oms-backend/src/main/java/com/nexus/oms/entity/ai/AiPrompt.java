@@ -1,6 +1,7 @@
 package com.nexus.oms.entity.ai;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,14 +11,14 @@ import java.util.UUID;
 public class AiPrompt {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
-    @Column(nullable = false) private String name;
+    @NotBlank @Column(nullable = false) private String name;
     @Column(columnDefinition = "TEXT") private String description;
     private UUID modelId;
-    @Column(nullable = false, columnDefinition = "TEXT") private String promptTemplate;
+    @NotBlank @Column(nullable = false, columnDefinition = "TEXT") private String promptTemplate;
     @Column(columnDefinition = "JSONB") private String variables;
     @Column(columnDefinition = "JSONB") private String responseSchema;
-    private java.math.BigDecimal temperature;
-    private Integer maxTokens;
+    @PositiveOrZero private java.math.BigDecimal temperature;
+    @Positive private Integer maxTokens;
     private Integer version;
     private String status;
     private String tags;

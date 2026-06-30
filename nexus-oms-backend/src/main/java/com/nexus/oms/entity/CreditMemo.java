@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,6 +42,7 @@ public class CreditMemo {
 
     private String reason;
 
+    @PositiveOrZero
     private BigDecimal amount;
 
     private String currency;

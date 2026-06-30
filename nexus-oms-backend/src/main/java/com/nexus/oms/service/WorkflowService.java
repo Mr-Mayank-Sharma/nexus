@@ -91,7 +91,7 @@ public class WorkflowService {
     public WorkflowExecution executeWorkflow(UUID workflowId, String entityType, String entityId,
                                              Map<String, Object> inputData) {
         UUID tenantId = TenantContext.getCurrentTenantId();
-        Workflow w = workflowRepository.findById(workflowId)
+        workflowRepository.findById(workflowId)
                 .filter(wf -> wf.getTenantId().equals(tenantId))
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow", workflowId));
 

@@ -1,6 +1,8 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,12 +14,15 @@ public class NxEdiPartner {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
+    @NotBlank
     @Column(name = "partner_code", nullable = false)
     private String partnerCode;
 
+    @NotBlank
     @Column(name = "partner_name", nullable = false)
     private String partnerName;
 

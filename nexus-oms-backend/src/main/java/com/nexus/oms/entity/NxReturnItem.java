@@ -1,6 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,21 +14,26 @@ public class NxReturnItem {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @NotNull
     @Column(name = "return_id", nullable = false)
     private UUID returnId;
 
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
     @Column(name = "order_item_id")
     private UUID orderItemId;
 
+    @NotBlank
     @Column(nullable = false)
     private String sku;
 
     @Column(name = "product_name")
     private String productName;
 
+    @NotNull
+    @Positive
     @Column(nullable = false)
     private Integer quantity;
 
@@ -43,6 +49,7 @@ public class NxReturnItem {
     @Column(name = "condition_notes", columnDefinition = "TEXT")
     private String conditionNotes;
 
+    @Size(max = 10)
     @Column(length = 10)
     private String grade;
 
