@@ -14,3 +14,4 @@ __pycache__
 sandbox/
 *.deb
 *.docx
+.idea/
