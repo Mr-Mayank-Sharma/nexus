@@ -12,8 +12,8 @@ interface Carrier {
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   type: string
   accountNumber: string
-  apiKey?: string
-  apiSecret?: string
+  apiKeyEncrypted?: string
+  apiSecretEncrypted?: string
   otdRate: number
   avgCost: number
   totalShipments: number
@@ -34,8 +34,8 @@ interface CarrierFormData {
   code: string
   type: string
   accountNumber: string
-  apiKey: string
-  apiSecret: string
+  apiKeyEncrypted: string
+  apiSecretEncrypted: string
   isActive: boolean
 }
 
@@ -129,7 +129,7 @@ export default function CarriersPage() {
   const [editingCarrier, setEditingCarrier] = useState<Carrier | null>(null)
   const [expandedCarrier, setExpandedCarrier] = useState<Carrier | null>(null)
   const [form, setForm] = useState<CarrierFormData>({
-    name: '', code: '', type: 'SHIPPING', accountNumber: '', apiKey: '', apiSecret: '', isActive: true,
+    name: '', code: '', type: 'SHIPPING', accountNumber: '', apiKeyEncrypted: '', apiSecretEncrypted: '', isActive: true,
   })
   const { addToast } = useToast()
 
@@ -163,7 +163,7 @@ export default function CarriersPage() {
 
   function openAddModal() {
     setEditingCarrier(null)
-    setForm({ name: '', code: '', type: 'SHIPPING', accountNumber: '', apiKey: '', apiSecret: '', isActive: true })
+    setForm({ name: '', code: '', type: 'SHIPPING', accountNumber: '', apiKeyEncrypted: '', apiSecretEncrypted: '', isActive: true })
     setShowModal(true)
   }
 
@@ -174,8 +174,8 @@ export default function CarriersPage() {
       code: carrier.code,
       type: carrier.type,
       accountNumber: carrier.accountNumber,
-      apiKey: carrier.apiKey || '',
-      apiSecret: carrier.apiSecret || '',
+      apiKeyEncrypted: carrier.apiKeyEncrypted || '',
+      apiSecretEncrypted: carrier.apiSecretEncrypted || '',
       isActive: carrier.isActive,
     })
     setShowModal(true)
@@ -558,12 +558,12 @@ export default function CarriersPage() {
               <EnterpriseFormSection title="API Credentials" description="Optional — used for automated rate fetching and label generation" columns={2}>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-[var(--text-secondary)]">API Key</label>
-                  <input type="password" value={form.apiKey} onChange={e => setForm({ ...form, apiKey: e.target.value })}
+                  <input type="password" value={form.apiKeyEncrypted} onChange={e => setForm({ ...form, apiKeyEncrypted: e.target.value })}
                     className="enterprise-input w-full font-mono" placeholder="••••••••" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-[var(--text-secondary)]">API Secret</label>
-                  <input type="password" value={form.apiSecret} onChange={e => setForm({ ...form, apiSecret: e.target.value })}
+                  <input type="password" value={form.apiSecretEncrypted} onChange={e => setForm({ ...form, apiSecretEncrypted: e.target.value })}
                     className="enterprise-input w-full font-mono" placeholder="••••••••" />
                 </div>
               </EnterpriseFormSection>

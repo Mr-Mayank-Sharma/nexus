@@ -89,7 +89,7 @@ export default function AiExperimentsPage() {
     setCompletingId(id)
     try {
       await completeExperiment(id, '')
-      addToast({ type: 'success', title: 'Experiment completed without a winner' })
+      addToast({ type: 'success', title: 'Experiment completed' })
       loadExperiments()
     } catch { addToast({ type: 'error', title: 'Failed to complete experiment' }) }
     finally { setCompletingId(null) }

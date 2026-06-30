@@ -16,6 +16,7 @@ import java.util.UUID;
 
 public interface AiExperimentRepository extends JpaRepository<AiExperiment, UUID> {
     Page<AiExperiment> findByTenantId(UUID tenantId, Pageable pageable);
+    Page<AiExperiment> findByTenantIdAndStatus(UUID tenantId, String status, Pageable pageable);
     List<AiExperiment> findByModelIdAndStatus(UUID modelId, String status);
     Page<AiExperiment> findByModelId(UUID modelId, Pageable pageable);
 }

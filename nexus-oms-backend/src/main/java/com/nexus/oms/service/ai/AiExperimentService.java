@@ -30,7 +30,7 @@ public class AiExperimentService {
             return repository.findByModelId(modelId, pageable);
         }
         if (status != null && !status.isBlank()) {
-            return repository.findByTenantId(tenantId, pageable);
+            return repository.findByTenantIdAndStatus(tenantId, status, pageable);
         }
         return repository.findByTenantId(tenantId, pageable);
     }

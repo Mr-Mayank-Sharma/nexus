@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -258,9 +259,13 @@ public class AiPlatformController {
 
     @PostMapping("/experiments/{id}/complete")
     public ResponseEntity<ApiResponse<AiExperiment>> completeExperiment(
-            @PathVariable UUID id, @RequestBody Map<String, UUID> body) {
+            @PathVariable UUID id, @RequestBody Map<String, String> body) {
+        UUID winnerVersionId = Optional.ofNullable(body.get("winnerVersionId"))
+                .filter(s -> !s.isBlank())
+                .map(UUID::fromString)
+                .orElse(null);
         return ResponseEntity.ok(ApiResponse.success(
-                experimentService.completeExperiment(id, body.get("winnerVersionId"))));
+                experimentService.completeExperiment(id, winnerVersionId)));
     }
 
     @PostMapping("/experiments/{id}/rollback")
