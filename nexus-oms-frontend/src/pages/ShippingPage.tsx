@@ -99,12 +99,21 @@ export default function ShippingPage() {
         title="Shipping"
         searchPlaceholder="Search by tracking, carrier, order..."
         searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        actions={
-          <button className="enterprise-btn-primary" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4" /> New Shipment
-          </button>
-        }
+        onSearch={setSearchTerm}
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            if (!q) return shipments.slice(0, 10)
+            const term = q.toLowerCase()
+            return shipments.filter(s => s.trackingNumber?.toLowerCase().includes(term) || s.carrier?.toLowerCase().includes(term) || s.orderId?.toLowerCase().includes(term)).slice(0, 10)
+          },
+          onSelect: (item: any) => setSearchTerm(item.trackingNumber || item.id),
+          getOptionLabel: (item: any) => `${item.trackingNumber || item.id} — ${item.carrier || ''}`,
+          getOptionValue: (item: any) => item.id,
+          minChars: 1,
+        }}
+        actions={[
+          { label: 'New Shipment', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary' },
+        ]}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -267,7 +276,7 @@ export default function ShippingPage() {
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create
               </button>
             </div>

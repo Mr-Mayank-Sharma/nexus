@@ -15,6 +15,7 @@ import * as importApi from '../api/importApi'
 import type { ImportResult, ImportFormat } from '../api/importApi'
 import { downloadSampleData } from '../api/importApi'
 import { useToast } from '../hooks/useToast'
+import Autocomplete from '../components/common/Autocomplete'
 
 const FORMAT_ICONS: Record<string, any> = {
   csv: Table,
@@ -72,15 +73,15 @@ export default function ImportExportCenter() {
   const fetchData = useCallback(async () => {
     try {
       const [importRes, exportRes, dlqRes, endpointRes, statsRes] = await Promise.all([
-        integrationApi.getImportJobs({ size: 50 }).catch(() => ({ data: { content: [] } })),
-        integrationApi.getExportJobs({ size: 50 }).catch(() => ({ data: { content: [] } })),
-        integrationApi.getDLQEntries({ size: 50 }).catch(() => ({ data: { content: [] } })),
+        integrationApi.getImportJobs({ size: 50 }).catch(() => ({ data: [] })),
+        integrationApi.getExportJobs({ size: 50 }).catch(() => ({ data: [] })),
+        integrationApi.getDLQEntries({ size: 50 }).catch(() => ({ data: [] })),
         integrationApi.getEndpoints().catch(() => ({ data: [] })),
         integrationApi.getDashboardStats().catch(() => ({ data: {} })),
       ])
-      setImportJobs(importRes.data?.content || [])
-      setExportJobs(exportRes.data?.content || [])
-      setDlqEntries(dlqRes.data?.content || [])
+      setImportJobs(importRes.data || [])
+      setExportJobs(exportRes.data || [])
+      setDlqEntries(dlqRes.data || [])
       setEndpoints(Array.isArray(endpointRes.data) ? endpointRes.data : [])
       setStats(statsRes.data as Record<string, any>)
     } catch {
@@ -236,9 +237,12 @@ export default function ImportExportCenter() {
     { id: 'health', label: 'Integration Health', icon: <Activity className="w-4 h-4" /> },
   ]
 
-  const sourceOptions = ['Shopify', 'Amazon', 'BigCommerce', 'WooCommerce', 'SFTP', 'S3 Bucket', 'API Endpoint', 'SAP ERP']
-  const formatOptions = ['JSON', 'XML', 'CSV', 'EDI_X12', 'EXCEL']
-  const exportTypeOptions = ['Orders', 'Products', 'Inventory', 'Shipments', 'Returns', 'Customers', 'Invoices']
+const sourceOptions = ['Shopify', 'Amazon', 'BigCommerce', 'WooCommerce', 'SFTP', 'S3 Bucket', 'API Endpoint', 'SAP ERP']
+const sourceOpts = sourceOptions.map(o => ({ value: o, label: o }))
+const formatOptions = ['JSON', 'XML', 'CSV', 'EDI_X12', 'EXCEL']
+const formatOpts = formatOptions.map(f => ({ value: f, label: f }))
+const exportTypeOptions = ['Orders', 'Products', 'Inventory', 'Shipments', 'Returns', 'Customers', 'Invoices']
+const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
 
   const importColumns: Column<integrationApi.IntegrationImportJob>[] = [
     { key: 'jobName', label: 'Job Name', sortable: true, minWidth: '180px' },
@@ -468,37 +472,31 @@ export default function ImportExportCenter() {
               <EnterpriseFormSection title="Job Details" columns={1}>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Job Name</label>
-                  <input className="enterprise-input w-full" placeholder={`e.g. ${modalType === 'import' ? 'Shopify Orders Daily Import' : 'Orders CSV Export'}`}
-                    value={formData.jobName} onChange={e => setFormData({ ...formData, jobName: e.target.value })} />
+                  <Autocomplete className="enterprise-input w-full" placeholder={`e.g. ${modalType === 'import' ? 'Shopify Orders Daily Import' : 'Orders CSV Export'}`}
+                    value={formData.jobName} onChange={v => setFormData({ ...formData, jobName: v })} minChars={0} />
                 </div>
               </EnterpriseFormSection>
               <EnterpriseFormSection title="Configuration" columns={2}>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">{modalType === 'import' ? 'Source' : 'Export Type'}</label>
-                  <select className="enterprise-input w-full" value={formData.sourceOrType} onChange={e => setFormData({ ...formData, sourceOrType: e.target.value })}>
-                    <option value="">Select {modalType === 'import' ? 'source' : 'type'}...</option>
-                    {(modalType === 'import' ? sourceOptions : exportTypeOptions).map(opt => (<option key={opt} value={opt}>{opt}</option>))}
-                  </select>
+                  <Autocomplete className="enterprise-input w-full" value={formData.sourceOrType} onChange={v => setFormData({ ...formData, sourceOrType: v })} suggestions={modalType === 'import' ? sourceOpts : exportTypeOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Format</label>
-                  <select className="enterprise-input w-full" value={formData.format} onChange={e => setFormData({ ...formData, format: e.target.value })}>
-                    <option value="">Select format...</option>
-                    {formatOptions.map(f => (<option key={f} value={f}>{f}</option>))}
-                  </select>
+                  <Autocomplete className="enterprise-input w-full" value={formData.format} onChange={v => setFormData({ ...formData, format: v })} suggestions={formatOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
               </EnterpriseFormSection>
               <EnterpriseFormSection title="Advanced" columns={1}>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Configuration (JSON)</label>
-                  <textarea className="enterprise-input w-full font-mono text-xs" rows={4}
+                  <Autocomplete className="enterprise-input w-full font-mono text-xs"
                     placeholder='{"filter": {"dateFrom": "2026-06-01"}, "batchSize": 1000}'
-                    value={formData.configuration} onChange={e => setFormData({ ...formData, configuration: e.target.value })} />
+                    value={formData.configuration} onChange={v => setFormData({ ...formData, configuration: v })} minChars={0} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Schedule (Cron Expression)</label>
-                  <input className="enterprise-input w-full font-mono text-sm" placeholder="0 0 * * * (daily at midnight)"
-                    value={formData.schedule} onChange={e => setFormData({ ...formData, schedule: e.target.value })} />
+                  <Autocomplete className="enterprise-input w-full font-mono text-sm" placeholder="0 0 * * * (daily at midnight)"
+                    value={formData.schedule} onChange={v => setFormData({ ...formData, schedule: v })} minChars={0} />
                 </div>
               </EnterpriseFormSection>
             </div>
@@ -533,20 +531,11 @@ export default function ImportExportCenter() {
               <EnterpriseFormSection title="Import Configuration" columns={2}>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">Entity Type</label>
-                  <select className="enterprise-input w-full" value={importEntityType} onChange={e => setImportEntityType(e.target.value)}>
-                    {entityTypes.map(et => {
-                      const EntityIcon = ENTITY_ICONS[et] || FileText
-                      return <option key={et} value={et}>{et.charAt(0).toUpperCase() + et.slice(1).replace('-', ' ')}</option>
-                    })}
-                  </select>
+                  <Autocomplete className="enterprise-input w-full" value={importEntityType} onChange={v => setImportEntityType(v)} suggestions={entityTypes.map(et => ({ value: et, label: et.charAt(0).toUpperCase() + et.slice(1).replace('-', ' ') }))} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1.5">File Format</label>
-                  <select className="enterprise-input w-full" value={importFormat} onChange={e => setImportFormat(e.target.value)}>
-                    {formats.map(f => (
-                      <option key={f.id} value={f.id}>{f.label}</option>
-                    ))}
-                  </select>
+                  <Autocomplete className="enterprise-input w-full" value={importFormat} onChange={v => setImportFormat(v)} suggestions={formats.map(f => ({ value: f.id, label: f.label }))} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
               </EnterpriseFormSection>
 

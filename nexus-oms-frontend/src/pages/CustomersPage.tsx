@@ -75,12 +75,21 @@ export default function CustomersPage() {
         title="Customers"
         searchPlaceholder="Search by name or email..."
         searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        actions={
-          <button className="enterprise-btn-primary" onClick={openCreate}>
-            <Plus className="w-4 h-4" /> Add Customer
-          </button>
-        }
+        onSearch={setSearchTerm}
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            if (!q) return customers.slice(0, 10)
+            const term = q.toLowerCase()
+            return customers.filter(c => c.name?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term)).slice(0, 10)
+          },
+          onSelect: (item: Customer) => { setSearchTerm(item.name); openEdit(item) },
+          getOptionLabel: (item: Customer) => `${item.name} — ${item.email || item.phone || ''}`,
+          getOptionValue: (item: Customer) => item.id,
+          minChars: 1,
+        }}
+        actions={[
+          { label: 'Add Customer', icon: <Plus className="w-4 h-4" />, onClick: openCreate, variant: 'primary' },
+        ]}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -179,7 +188,11 @@ export default function CustomersPage() {
               <button className="enterprise-btn-primary"
                 onClick={() => editingCustomer ? updateMutation.mutate() : createMutation.mutate()}
                 disabled={!form.name || (editingCustomer ? updateMutation.isPending : createMutation.isPending)}>
-                <Loader2 className={clsx('w-4 h-4 animate-spin', editingCustomer ? updateMutation.isPending ? 'block' : 'hidden' : createMutation.isPending ? 'block' : 'hidden')} />
+                {(editingCustomer ? updateMutation.isPending : createMutation.isPending) ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
                 {editingCustomer ? 'Update' : 'Create'}
               </button>
             </div>

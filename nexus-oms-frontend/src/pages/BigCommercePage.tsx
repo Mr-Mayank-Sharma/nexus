@@ -8,6 +8,7 @@ import * as bcApi from '../api/bigcommerce'
 import { BigCommerceConfig, SyncResult } from '../api/bigcommerce'
 import { SyncLog } from '../types'
 import StatusBadge from '../components/common/StatusBadge'
+import Autocomplete from '../components/common/Autocomplete'
 
 export default function BigCommercePage() {
   const [activeTab, setActiveTab] = useState<'config' | 'sync' | 'logs'>('config')
@@ -120,7 +121,7 @@ export default function BigCommercePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">BigCommerce Integration</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-primary-500" /> BigCommerce Integration</h1>
           <p className="text-sm text-gray-500 mt-1">Connect your BigCommerce store to synchronize orders, inventory, shipments, and refunds</p>
         </div>
         {config?.isActive && (
@@ -153,20 +154,20 @@ export default function BigCommercePage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Store Hash</label>
-                <input value={form.storeHash} onChange={e => setForm({ ...form, storeHash: e.target.value })} className="input w-full font-mono text-sm" placeholder="abc123" />
+                <Autocomplete value={form.storeHash} onChange={v => setForm({ ...form, storeHash: v })} className="input w-full font-mono text-sm" placeholder="abc123" minChars={0} />
                 <p className="text-xs text-gray-400 mt-1">Found in your BigCommerce store URL: https://store-<strong>abc123</strong>.mybigcommerce.com</p>
               </div>
               <div className="col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Access Token</label>
-                <input value={form.accessToken} onChange={e => setForm({ ...form, accessToken: e.target.value })} className="input w-full font-mono text-sm" type="password" placeholder="xxxxxxxxxxxx" />
+                <Autocomplete value={form.accessToken} onChange={v => setForm({ ...form, accessToken: v })} className="input w-full font-mono text-sm" placeholder="xxxxxxxxxxxx" minChars={0} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
-                <input value={form.clientId} onChange={e => setForm({ ...form, clientId: e.target.value })} className="input w-full font-mono text-sm" placeholder="Optional" />
+                <Autocomplete value={form.clientId} onChange={v => setForm({ ...form, clientId: v })} className="input w-full font-mono text-sm" placeholder="Optional" minChars={0} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">API Path</label>
-                <input value={form.apiPath} onChange={e => setForm({ ...form, apiPath: e.target.value })} className="input w-full font-mono text-sm" />
+                <Autocomplete value={form.apiPath} onChange={v => setForm({ ...form, apiPath: v })} className="input w-full font-mono text-sm" minChars={0} />
               </div>
             </div>
 
@@ -184,8 +185,7 @@ export default function BigCommercePage() {
             </div>
             <div className="flex items-center gap-3">
               <label className="text-sm text-gray-700">Sync interval (minutes):</label>
-              <input type="number" value={form.syncIntervalMinutes} onChange={e => setForm({ ...form, syncIntervalMinutes: parseInt(e.target.value) || 15 })}
-                className="input w-20 text-sm" min={5} max={1440} />
+              <Autocomplete value={String(form.syncIntervalMinutes)} onChange={v => setForm({ ...form, syncIntervalMinutes: parseInt(v) || 15 })} className="input w-20 text-sm" minChars={0} />
             </div>
 
             {config?.lastOrderSyncAt && (
@@ -238,7 +238,10 @@ export default function BigCommercePage() {
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600" />
             </div>
           ) : syncLogs.length === 0 ? (
-            <div className="p-6 text-center text-sm text-gray-500">No sync logs yet. Run a sync to see results.</div>
+            <div className="p-6 text-center">
+              <Activity className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No sync logs yet. Run a sync to see results.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

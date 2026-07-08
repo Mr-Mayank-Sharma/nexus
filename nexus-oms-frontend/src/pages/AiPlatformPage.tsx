@@ -76,6 +76,7 @@ export default function AiPlatformPage() {
           { label: 'AI Platform' },
         ]}
       />
+      <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Brain className="w-5 h-5" />AI Platform</h1>
       <EnterpriseTabs
         tabs={[
           { id: 'overview', label: 'Overview', icon: <Brain className="w-4 h-4" /> },

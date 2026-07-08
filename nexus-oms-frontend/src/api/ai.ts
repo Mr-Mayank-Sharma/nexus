@@ -2,7 +2,7 @@ import client from './client'
 import { ApiResponse, AiModel } from '../types'
 
 export async function getModelInfo(): Promise<ApiResponse<AiModel[]>> {
-  const { data } = await client.get('/api/ai/models')
+    const { data } = await client.get('/ai/models')
   return data
 }
 

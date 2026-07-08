@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import * as orderRoutingApi from '../api/orderRouting'
 import type { FulfillmentException } from '../types'
+import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 
 const EXCEPTION_TYPE_ICONS: Record<string, typeof AlertTriangle> = {
@@ -202,16 +203,7 @@ export default function OrderRoutingPage() {
         <div className="space-y-3">
           <div className="enterprise-toolbar">
             <div className="enterprise-toolbar-left">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search exceptions..."
-                  className="enterprise-input pl-9 w-64"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-              </div>
+              <Autocomplete value={search} onChange={setSearch} placeholder="Search exceptions..." minChars={0} />
               <select
                 className="enterprise-select w-40"
                 value={exceptionFilter}

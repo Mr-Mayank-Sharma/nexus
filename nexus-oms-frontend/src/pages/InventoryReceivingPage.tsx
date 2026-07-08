@@ -3,6 +3,7 @@ import { Plus, PackageCheck, Search, X, Loader2, Filter, Download } from 'lucide
 import { useToast } from '../hooks/useToast'
 import { InventoryReceipt, Node } from '../types'
 import * as receiptsApi from '../api/inventoryReceipts'
+import Autocomplete from '../components/common/Autocomplete'
 import StatusBadge from '../components/common/StatusBadge'
 
 export default function InventoryReceivingPage() {
@@ -57,7 +58,7 @@ export default function InventoryReceivingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventory Receiving</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><PackageCheck className="w-7 h-7 text-primary-500" /> Inventory Receiving</h1>
           <p className="text-sm text-gray-500 mt-1">Receive purchase orders, transfer orders, and returns into inventory</p>
         </div>
         <button onClick={openCreate} className="btn-primary text-sm">
@@ -66,10 +67,7 @@ export default function InventoryReceivingPage() {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} className="input pl-9 w-full" placeholder="Search by SKU or product..." />
-        </div>
+        <Autocomplete value={search} onChange={setSearch} placeholder="Search by SKU or product..." minChars={0} className="flex-1 max-w-xs" />
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input w-auto">
           <option value="">All Statuses</option>
           <option value="PENDING">Pending</option>
@@ -191,7 +189,7 @@ export default function InventoryReceivingPage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
                 Create Receipt
               </button>
             </div>

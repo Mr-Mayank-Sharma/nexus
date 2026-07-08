@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { User, LoginRequest, MfaVerificationRequest, SsoLoginRequest } from '../types'
+import { User, LoginRequest, MfaVerificationRequest, SsoLoginRequest, UserRole, ROLE_HIERARCHY } from '../types'
 import * as authApi from '../api/auth'
 
 interface AuthContextType {
@@ -15,6 +15,11 @@ interface AuthContextType {
   logout: () => void
   clearError: () => void
   error: string | null
+  hasPermission: (resource: string, action?: string) => boolean
+  hasRole: (...roles: UserRole[]) => boolean
+  hasAnyRole: (...roles: UserRole[]) => boolean
+  roleLevel: number
+  switchRole: (role: UserRole) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -30,13 +35,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem('nexus_token')
     const storedUser = localStorage.getItem('nexus_user')
+    const storedPermissions = localStorage.getItem('nexus_permissions')
+    const storedSecurityGroups = localStorage.getItem('nexus_security_groups')
     if (storedToken && storedUser) {
       setToken(storedToken)
       try {
-        setUser(JSON.parse(storedUser))
+        const parsed = JSON.parse(storedUser)
+        if (storedPermissions) parsed.permissions = JSON.parse(storedPermissions)
+        if (storedSecurityGroups) parsed.securityGroups = JSON.parse(storedSecurityGroups)
+        setUser(parsed)
       } catch {
         localStorage.removeItem('nexus_token')
         localStorage.removeItem('nexus_user')
+        localStorage.removeItem('nexus_permissions')
+        localStorage.removeItem('nexus_security_groups')
       }
     }
     setIsLoading(false)
@@ -79,19 +91,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const tenantName = authData.tenantName as string
     const email = authData.email as string
     const fullName = authData.fullName as string
+    const permissions = (authData.permissions as string[]) || []
+    const securityGroups = (authData.securityGroups as string[]) || []
+
+    const validRole = ['ADMIN','CEO','OPS_MANAGER','WAREHOUSE_MANAGER','PICKER','PACKER','LOADER','STORE_MANAGER','BOPIS_OWNER','CUSTOMER_SUPPORT','PROCUREMENT_MANAGER','FINANCE','LOGISTICS_MANAGER','VIEWER'].includes(role)
+      ? role as UserRole
+      : 'VIEWER' as UserRole
 
     const user: User = {
       id: '',
       username,
       email: email || '',
       fullName: fullName || username,
-      role: role as User['role'],
-      permissions: [],
+      role: validRole,
+      permissions,
+      securityGroups,
     }
     setUser(user)
     setToken(accessToken)
     localStorage.setItem('nexus_token', accessToken)
     localStorage.setItem('nexus_user', JSON.stringify(user))
+    localStorage.setItem('nexus_permissions', JSON.stringify(permissions))
+    localStorage.setItem('nexus_security_groups', JSON.stringify(securityGroups))
     if (tenantId) localStorage.setItem('nexus_tenant_id', tenantId)
     if (tenantName) localStorage.setItem('nexus_tenant_name', tenantName)
   }, [])
@@ -104,12 +125,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null)
     localStorage.removeItem('nexus_token')
     localStorage.removeItem('nexus_user')
+    localStorage.removeItem('nexus_permissions')
+    localStorage.removeItem('nexus_security_groups')
     localStorage.removeItem('nexus_tenant_id')
     localStorage.removeItem('nexus_tenant_name')
     window.location.href = '/login'
   }, [])
 
   const clearError = useCallback(() => setError(null), [])
+
+  const hasPermission = useCallback((resource: string, action?: string): boolean => {
+    if (!user) return false
+    if (user.role === 'ADMIN') return true
+    if (!action) return user.permissions.includes(resource) || user.permissions.includes(`${resource}:ALL`)
+    return user.permissions.includes(`${resource}:${action}`) || user.permissions.includes(`${resource}:ALL`)
+  }, [user])
+
+  const hasRole = useCallback((...roles: UserRole[]): boolean => {
+    if (!user) return false
+    return roles.includes(user.role)
+  }, [user])
+
+  const hasAnyRole = useCallback((...roles: UserRole[]): boolean => {
+    if (!user) return false
+    return roles.includes(user.role)
+  }, [user])
+
+  const roleLevel = user ? (ROLE_HIERARCHY[user.role] || 0) : 0
+
+  const switchRole = useCallback((newRole: UserRole) => {
+    if (!user) return
+    const updated = { ...user, role: newRole }
+    setUser(updated)
+    localStorage.setItem('nexus_user', JSON.stringify(updated))
+  }, [user])
 
   return (
     <AuthContext.Provider
@@ -126,6 +175,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         clearError,
         error,
+        hasPermission,
+        hasRole,
+        hasAnyRole,
+        roleLevel,
+        switchRole,
       }}
     >
       {children}

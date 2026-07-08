@@ -3,6 +3,7 @@ import { Plus, Search, X, Loader2, ClipboardCheck, CheckCircle, AlertTriangle } 
 import { useToast } from '../hooks/useToast'
 import { CycleCount } from '../types'
 import * as cycleCountsApi from '../api/cycleCounts'
+import Autocomplete from '../components/common/Autocomplete'
 import StatusBadge from '../components/common/StatusBadge'
 
 export default function CycleCountPage() {
@@ -63,7 +64,7 @@ export default function CycleCountPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cycle Counting</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><ClipboardCheck className="w-7 h-7 text-primary-500" /> Cycle Counting</h1>
           <p className="text-sm text-gray-500 mt-1">Regular inventory reconciliation to ensure stock accuracy</p>
         </div>
         <button onClick={openCreate} className="btn-primary text-sm">
@@ -72,10 +73,7 @@ export default function CycleCountPage() {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} className="input pl-9 w-full" placeholder="Search by SKU or product..." />
-        </div>
+        <Autocomplete value={search} onChange={setSearch} placeholder="Search by SKU or product..." minChars={0} className="flex-1 max-w-xs" />
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input w-auto">
           <option value="">All Statuses</option>
           <option value="PENDING">Pending</option>
@@ -173,7 +171,7 @@ export default function CycleCountPage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create
               </button>
             </div>
@@ -204,7 +202,7 @@ export default function CycleCountPage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCountModal(null)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handlePerformCount} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 Submit Count
               </button>
             </div>

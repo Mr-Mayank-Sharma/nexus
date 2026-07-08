@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
 import {
   ArrowLeft, Clock, MapPin, Package, User, CreditCard, Truck, CheckCircle, XCircle,
-  AlertTriangle, FileText, MessageSquare, Printer, Loader2,
+  AlertTriangle, FileText, MessageSquare, Printer, Loader2, Receipt,
   Edit3, Split, Merge, Brain, Download, ExternalLink, Shield,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
@@ -14,6 +14,7 @@ import * as ordersApi from '../api/orders'
 import * as aiPlatformApi from '../api/aiPlatform'
 import * as aiOrdersApi from '../api/aiOrders'
 import type { AiSuggestion, AiActionHistory } from '../api/aiOrders'
+import Autocomplete from '../components/common/Autocomplete'
 
 interface Payment {
   id: string
@@ -57,7 +58,16 @@ export default function OrderDetailPage() {
     try {
       setLoading(true)
       const res = await ordersApi.getOrderById(id!)
-      const orderNum = res.data.externalId || res.data.channelOrderId || `ORD-${(res.data.id || id!).slice(0, 8).toUpperCase()}`
+      const orderNum = res.data.orderNumber || res.data.externalId || res.data.channelOrderId || `ORD-${(res.data.id || id!).slice(0, 8).toUpperCase()}`
+      const rawAddr = res.data.shippingAddress || res.data.shipTo
+      const parseAddress = (a: any): { street: string; city: string; state: string; zip: string; country: string } => {
+        if (!a) return { street: '', city: '', state: '', zip: '', country: '' }
+        if (typeof a === 'string') {
+          const parts = a.split(',').map((s: string) => s.trim())
+          return { street: parts[0] || '', city: parts[1] || '', state: parts[2]?.split(' ')[0] || '', zip: parts[2]?.split(' ')[1] || parts[2] || '', country: parts[3] || '' }
+        }
+        return { street: a.street || a.line1 || '', city: a.city || '', state: a.state || '', zip: a.zip || a.pincode || '', country: a.country || '' }
+      }
       setOrder({
         id: res.data.id || id!,
         orderNumber: orderNum,
@@ -67,26 +77,20 @@ export default function OrderDetailPage() {
         status: res.data.status || 'PENDING',
         items: (res.data.items || []).map((i: any) => ({
           id: i.id, sku: i.sku || '', productName: i.productName || i.sku || '',
-          quantity: i.quantity || 0, unitPrice: i.unitPrice || 0, totalPrice: i.totalPrice || 0,
+          quantity: i.quantity || 0, unitPrice: i.unitPrice || 0, totalPrice: (i.totalPrice || i.unitPrice * i.quantity || 0),
         })),
         total: res.data.total || 0, subtotal: res.data.subtotal || 0,
-        shippingCost: res.data.shippingCost || 0, tax: res.data.taxAmount || 0, currency: res.data.currency || 'USD',
-        shippingAddress: res.data.shipTo ? {
-          street: res.data.shipTo.street || res.data.shipTo.line1 || '', city: res.data.shipTo.city || '',
-          state: res.data.shipTo.state || '', zip: res.data.shipTo.zip || res.data.shipTo.pincode || '', country: res.data.shipTo.country || '',
-        } : { street: '', city: '', state: '', zip: '', country: '' },
-        billingAddress: res.data.billingAddress ? {
-          street: res.data.billingAddress.street || res.data.billingAddress.line1 || '', city: res.data.billingAddress.city || '',
-          state: res.data.billingAddress.state || '', zip: res.data.billingAddress.zip || res.data.billingAddress.pincode || '', country: res.data.billingAddress.country || '',
-        } : { street: '', city: '', state: '', zip: '', country: '' },
+        shippingCost: res.data.shippingCost || 0, tax: res.data.taxAmount || res.data.tax || 0, currency: res.data.currency || 'USD',
+        shippingAddress: parseAddress(rawAddr),
+        billingAddress: res.data.billingAddress ? parseAddress(res.data.billingAddress) : { street: '', city: '', state: '', zip: '', country: '' },
         fulfillmentType: res.data.fulfillmentType || 'STANDARD',
-        allocationNodeId: res.data.allocatedNode || '', carrier: res.data.carrierId || '',
+        allocationNodeId: res.data.allocatedNode || res.data.allocationNodeId || '', carrier: res.data.carrierId || '',
         trackingNumber: res.data.trackingNumber || '', promisedDeliveryDate: res.data.promisedDelivery || '',
-        estimatedShipDate: res.data.shippedAt || res.data.promisedDelivery || '',
+        estimatedShipDate: res.data.shipBy || res.data.estimatedShipDate || res.data.shippedAt || '',
         shippedDate: res.data.shippedAt || '', deliveredDate: res.data.deliveredAt || '',
         createdAt: res.data.createdAt || new Date().toISOString(),
         updatedAt: res.data.updatedAt || new Date().toISOString(), priority: 'MEDIUM',
-        hasException: res.data.subStatus === 'EXCEPTION', tags: [], notes: '',
+        hasException: res.data.subStatus === 'EXCEPTION', tags: [], notes: res.data.notes || '',
       })
 
       setPayments(res.data.paymentStatus ? [
@@ -104,9 +108,9 @@ export default function OrderDetailPage() {
             anomaly: aiRes.data.isAnomaly,
           })
         }
-      } catch { addToast({ type: 'error', title: 'Failed to get AI delivery prediction' }) }
+      } catch { /* AI prediction not available in this build */ }
 
-      // Fetch AI suggestions & history
+      // Fetch AI suggestions & history (silent fail — not available in this build)
       try {
         const [sugRes, histRes] = await Promise.all([
           aiOrdersApi.getAiSuggestions(id!),
@@ -114,7 +118,7 @@ export default function OrderDetailPage() {
         ])
         setAiSuggestions(sugRes.data || [])
         setAiHistory(histRes.data || [])
-      } catch { addToast({ type: 'error', title: 'Failed to load AI suggestions' }) }
+      } catch { setAiSuggestions([]); setAiHistory([]) }
     } catch (err) {
       addToast({ type: 'error', title: 'Failed to load order' })
       console.error('Failed to fetch order:', err)
@@ -142,11 +146,62 @@ export default function OrderDetailPage() {
   }
 
   function handlePrintLabel() {
-    if (!order?.trackingNumber) {
-      addToast({ type: 'info', title: 'No tracking number available', description: 'Ship the order first to generate a label' })
-      return
-    }
-    addToast({ type: 'success', title: 'Label request submitted' })
+    if (!order) return
+    const win = window.open('', '_blank')
+    if (!win) return
+    const items = (typeof order.items === 'string' ? JSON.parse(order.items) : order.items || []) as Array<{sku?:string;productName?:string;quantity?:number}>
+    win.document.write(`<!DOCTYPE html><html><head><title>Label - ${order.orderNumber || order.id}</title>
+      <style>body{font-family:monospace;padding:20px;max-width:400px;margin:auto}
+      h1{font-size:16px;border-bottom:2px solid #000;padding-bottom:8px}
+      table{width:100%;border-collapse:collapse;margin:12px 0}
+      th,td{text-align:left;padding:4px 8px;border-bottom:1px solid #ddd;font-size:12px}
+      .addr{font-size:13px;line-height:1.5;margin:8px 0;padding:8px;border:1px solid #ccc;border-radius:4px}
+      .track{font-size:18px;font-weight:bold;margin:12px 0;padding:8px;background:#f5f5f5;text-align:center;border-radius:4px}
+      .no-print{display:none}@media print{body{padding:10px}.no-print{display:block;text-align:center;margin-bottom:10px;font-size:10px;color:#999}}
+      </style></head><body>
+      <button class="no-print" onclick="window.print()" style="padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff">Print This Label</button>
+      <h1>${order.orderNumber || 'Order'}</h1>
+      <div class="track">${order.trackingNumber || 'No Tracking'}</div>
+      <div class="addr"><strong>Ship To:</strong><br/>${order.customerName || ''}<br/>${order.shippingAddress?.street || ''}<br/>${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.zip || ''}</div>
+      <table><tr><th>SKU</th><th>Product</th><th>Qty</th></tr>
+      ${items.map(i => `<tr><td>${i.sku || ''}</td><td>${i.productName || ''}</td><td>${i.quantity || 0}</td></tr>`).join('')}
+      </table>
+      ${order.trackingNumber ? `<p style="font-size:11px;color:#666">Carrier: ${order.carrier || 'Auto'} &nbsp;|&nbsp; Tracking: ${order.trackingNumber}</p>` : ''}
+      </body></html>`)
+    win.document.close()
+    addToast({ type: 'success', title: 'Label opened in new tab' })
+  }
+
+  function handlePrintInvoice() {
+    if (!order) return
+    const win = window.open('', '_blank')
+    if (!win) return
+    const items = (typeof order.items === 'string' ? JSON.parse(order.items) : order.items || []) as Array<{sku?:string;productName?:string;quantity?:number;unitPrice?:number}>
+    const subtotal = items.reduce((s, i) => s + (i.unitPrice || 0) * (i.quantity || 0), 0)
+    win.document.write(`<!DOCTYPE html><html><head><title>Invoice - ${order.orderNumber || order.id}</title>
+      <style>body{font-family:monospace;padding:30px;max-width:700px;margin:auto}
+      h1{font-size:20px;border-bottom:2px solid #000;padding-bottom:8px}
+      .header{display:flex;justify-content:space-between;margin:12px 0 20px;font-size:12px;color:#555}
+      table{width:100%;border-collapse:collapse;margin:16px 0}
+      th{background:#f5f5f5;text-align:left;padding:8px;border-bottom:2px solid #ddd;font-size:12px}
+      td{padding:8px;border-bottom:1px solid #eee;font-size:12px}
+      .total{text-align:right;font-size:14px;font-weight:bold;margin-top:12px;padding-top:8px;border-top:2px solid #000}
+      .addr{font-size:12px;line-height:1.6;margin:12px 0;padding:12px;border:1px solid #ddd;border-radius:4px}
+      .no-print{text-align:center;margin-bottom:16px}
+      </style></head><body>
+      <button class="no-print" onclick="window.print()" style="padding:8px 24px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:14px">Print Invoice</button>
+      <h1>INVOICE</h1>
+      <div class="header"><span><strong>Order:</strong> ${order.orderNumber || order.id}</span><span><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</span></div>
+      <div class="header"><span><strong>Channel:</strong> ${order.channel || 'N/A'}</span><span><strong>Status:</strong> ${order.status}</span></div>
+      <div class="addr"><strong>Bill To / Ship To:</strong><br/>${order.customerName || 'N/A'}<br/>${order.customerEmail || ''}<br/>${order.shippingAddress?.street || ''}<br/>${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.zip || ''}</div>
+      <table><tr><th>SKU</th><th>Product</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+      ${items.map(i => `<tr><td>${i.sku || ''}</td><td>${i.productName || ''}</td><td>${i.quantity || 0}</td><td>$${(i.unitPrice || 0).toFixed(2)}</td><td>$${((i.unitPrice || 0) * (i.quantity || 0)).toFixed(2)}</td></tr>`).join('')}
+      </table>
+      <div class="total">Total: $${subtotal.toFixed(2)}</div>
+      <p style="font-size:10px;color:#999;margin-top:24px;text-align:center">Thank you for your business</p>
+      </body></html>`)
+    win.document.close()
+    addToast({ type: 'success', title: 'Invoice opened in new tab' })
   }
 
   async function handleAiAction(actionType: string) {
@@ -263,7 +318,10 @@ export default function OrderDetailPage() {
   if (!order) return (
     <div className="space-y-6">
       <button onClick={() => navigate('/orders')} className="enterprise-btn enterprise-btn-ghost text-sm"><ArrowLeft className="w-4 h-4" /> Back to Orders</button>
-      <div className="text-center py-12 text-[var(--text-tertiary)]">Order not found</div>
+      <div className="text-center py-12">
+        <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
+        <p className="text-[var(--text-tertiary)]">Order not found</p>
+      </div>
     </div>
   )
 
@@ -282,7 +340,7 @@ export default function OrderDetailPage() {
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-[var(--text-primary)]">{order.orderNumber}</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2"><Package className="w-6 h-6" />{order.orderNumber}</h1>
             <EnterpriseStatusBadge status={order.status} label={order.status} />
             {order.hasException && <EnterpriseStatusBadge status="error" label="Exception" />}
           </div>
@@ -296,6 +354,7 @@ export default function OrderDetailPage() {
           {isModifiable && (<button onClick={openSplit} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button>)}
           {order.status === 'PENDING' && (<button onClick={openMerge} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button>)}
           <button onClick={handlePrintLabel} className="enterprise-btn enterprise-btn-secondary text-sm"><Printer className="w-4 h-4" /> Print Label</button>
+          <button onClick={handlePrintInvoice} className="enterprise-btn enterprise-btn-secondary text-sm"><Receipt className="w-4 h-4" /> Invoice</button>
           {statusActions.map(a => (
             <button key={a.label} onClick={a.onClick} disabled={a.disabled}
               className={a.variant === 'primary' ? 'enterprise-btn enterprise-btn-primary text-sm' : 'enterprise-btn enterprise-btn-danger text-sm'}>
@@ -424,7 +483,7 @@ export default function OrderDetailPage() {
             <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><FileText className="w-4 h-4" />Documents</h3></div>
             <div className="p-6">
               {documents.length === 0 ? (
-                <p className="text-sm text-[var(--text-tertiary)]">No documents attached</p>
+                <div className="flex items-center gap-2 text-sm text-[var(--text-tertiary)]"><FileText className="w-4 h-4" /> No documents attached</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {documents.map(doc => (
@@ -512,7 +571,7 @@ export default function OrderDetailPage() {
             <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]"><CreditCard className="w-4 h-4 inline mr-1" />Payments</h3></div>
             <div className="p-5 space-y-3">
               {payments.length === 0 ? (
-                <p className="text-sm text-[var(--text-tertiary)]">No payments recorded</p>
+                <div className="flex items-center gap-2 text-sm text-[var(--text-tertiary)]"><CreditCard className="w-4 h-4" /> No payments recorded</div>
               ) : payments.map(p => (
                 <div key={p.id} className="flex items-start justify-between">
                   <div>
@@ -581,7 +640,7 @@ export default function OrderDetailPage() {
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
               <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn enterprise-btn-primary">
-                {actionLoading === 'modify' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {actionLoading === 'modify' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 Save Changes
               </button>
             </div>
@@ -635,7 +694,7 @@ export default function OrderDetailPage() {
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
               <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn enterprise-btn-primary">
-                {actionLoading === 'split' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {actionLoading === 'split' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Split className="w-4 h-4" />}
                 Split Order
               </button>
             </div>
@@ -665,7 +724,16 @@ export default function OrderDetailPage() {
             <div>
               <label className="enterprise-label">Search Orders</label>
               <div className="flex gap-2 mt-1">
-                <input value={mergeSearchTerm} onChange={e => setMergeSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && searchOrders()} className="enterprise-input flex-1 text-sm" placeholder="Search by order # or customer..." />
+                <Autocomplete
+                  value={mergeSearchTerm}
+                  onChange={setMergeSearchTerm}
+                  onSelect={(o: any) => { setMergeSearchTerm(o.orderNumber || o.id); searchOrders() }}
+                  placeholder="Search by order # or customer..."
+                  showSearchIcon={false}
+                  inputClassName="enterprise-input flex-1 text-sm"
+                  clearable={false}
+                  minChars={2}
+                />
                 <button onClick={searchOrders} disabled={searchingMerge} className="enterprise-btn enterprise-btn-secondary text-sm">{searchingMerge ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}</button>
               </div>
               {mergeResults.length > 0 && (
@@ -683,7 +751,7 @@ export default function OrderDetailPage() {
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
               <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn enterprise-btn-primary">
-                {actionLoading === 'merge' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {actionLoading === 'merge' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Merge className="w-4 h-4" />}
                 Merge Orders
               </button>
             </div>

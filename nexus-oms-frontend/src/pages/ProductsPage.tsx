@@ -31,7 +31,20 @@ export default function ProductsPage() {
       try {
         const res = await productsApi.getProducts()
         if (!res || typeof res !== 'object') return []
-        return (Array.isArray(res.data) ? res.data : []) as Product[]
+        const raw = Array.isArray(res.data) ? res.data : []
+        return raw.map((p: any) => ({
+          id: p.id,
+          sku: p.sku,
+          productName: p.name || p.productName,
+          description: p.description,
+          category: p.category,
+          unitPrice: p.price ?? p.unitPrice ?? 0,
+          costPrice: p.cost ?? p.costPrice,
+          weight: p.weight,
+          isActive: p.active ?? p.isActive ?? true,
+          createdAt: p.createdAt || new Date().toISOString(),
+          updatedAt: p.updatedAt || new Date().toISOString(),
+        })) as Product[]
       } catch {
         return [] as Product[]
       }
@@ -89,6 +102,17 @@ export default function ProductsPage() {
         searchPlaceholder="Search by name or SKU..."
         searchValue={searchTerm}
         onSearch={setSearchTerm}
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            if (!q) return products
+            const term = q.toLowerCase()
+            return products.filter(p => p.productName?.toLowerCase().includes(term) || p.sku?.toLowerCase().includes(term)).slice(0, 10)
+          },
+          onSelect: (item: Product) => { setSearchTerm(item.productName); setEditingProduct(item); setShowCreateModal(true) },
+          getOptionLabel: (item: Product) => `${item.productName} — ${item.sku}`,
+          getOptionValue: (item: Product) => item.sku,
+          minChars: 1,
+        }}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -199,7 +223,7 @@ export default function ProductsPage() {
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button className="enterprise-btn-primary" onClick={() => saveMutation.mutate()}
                 disabled={!form.productName || !form.sku || saveMutation.isPending}>
-                {saveMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {editingProduct ? 'Update' : 'Create'}
               </button>
             </div>

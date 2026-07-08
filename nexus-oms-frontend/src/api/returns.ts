@@ -23,7 +23,7 @@ export async function getReturn(id: string): Promise<ApiResponse<Return>> {
 
 export async function getReturnItems(id: string): Promise<ApiResponse<ReturnItem[]>> {
   try {
-    const { data } = await client.get(`/returns/${id}/items`)
+    const { data } = await client.get('/returns', { params: { orderId: id } })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get return items'
@@ -50,7 +50,7 @@ export async function createReturn(params: {
 
 export async function approveReturn(id: string, approvedBy?: string): Promise<ApiResponse<Return>> {
   try {
-    const { data } = await client.post(`/returns/${id}/approve`, null, { params: { approvedBy } })
+    const { data } = await client.patch(`/returns/${id}`, { action: 'approve', approvedBy })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to approve return'
@@ -60,7 +60,7 @@ export async function approveReturn(id: string, approvedBy?: string): Promise<Ap
 
 export async function receiveReturn(id: string, receivedBy?: string): Promise<ApiResponse<Return>> {
   try {
-    const { data } = await client.post(`/returns/${id}/receive`, null, { params: { receivedBy } })
+    const { data } = await client.patch(`/returns/${id}`, { action: 'receive', receivedBy })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to receive return'
@@ -70,7 +70,7 @@ export async function receiveReturn(id: string, receivedBy?: string): Promise<Ap
 
 export async function inspectReturn(id: string, items: ReturnItem[], inspectedBy?: string): Promise<ApiResponse<Return>> {
   try {
-    const { data } = await client.post(`/returns/${id}/inspect`, { items, inspectedBy })
+    const { data } = await client.patch(`/returns/${id}`, { action: 'inspect', items, inspectedBy })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to inspect return'
@@ -80,7 +80,7 @@ export async function inspectReturn(id: string, items: ReturnItem[], inspectedBy
 
 export async function processRefund(id: string, refundAmount: number, refundReference?: string): Promise<ApiResponse<Return>> {
   try {
-    const { data } = await client.post(`/returns/${id}/refund`, { refundAmount, refundReference })
+    const { data } = await client.patch(`/returns/${id}`, { action: 'refund', refundAmount, refundReference })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to process refund'
@@ -90,7 +90,7 @@ export async function processRefund(id: string, refundAmount: number, refundRefe
 
 export async function rejectReturn(id: string, reason: string): Promise<ApiResponse<Return>> {
   try {
-    const { data } = await client.post(`/returns/${id}/reject`, { reason })
+    const { data } = await client.patch(`/returns/${id}`, { action: 'reject', reason })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to reject return'
@@ -100,7 +100,7 @@ export async function rejectReturn(id: string, reason: string): Promise<ApiRespo
 
 export async function updateReturnStatus(id: string, status: ReturnStatus | string): Promise<ApiResponse<Return>> {
   try {
-    const { data } = await client.put(`/returns/${id}/status`, { status })
+    const { data } = await client.patch(`/returns/${id}`, { action: 'status', status })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to update return status'
@@ -118,7 +118,7 @@ export async function getReturnKPIs(): Promise<ApiResponse<{
   rejected: number
 }>> {
   try {
-    const { data } = await client.get('/returns/kpis')
+    const { data } = await client.get('/returns/analytics')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get return KPIs'

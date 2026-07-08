@@ -199,6 +199,17 @@ export default function ReturnsPage() {
         searchValue={search}
         onSearch={(v) => setSearch(v)}
         searchPlaceholder="Search RMA, customer, order..."
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            if (!q) return returns.slice(0, 10)
+            const term = q.toLowerCase()
+            return returns.filter(r => r.rmaNumber?.toLowerCase().includes(term) || r.customerId?.toLowerCase().includes(term) || r.orderId?.toLowerCase().includes(term)).slice(0, 10)
+          },
+          onSelect: (item: any) => setSearch(item.rmaNumber || item.id),
+          getOptionLabel: (item: any) => `${item.rmaNumber || item.id} — ${item.customerId || ''}`,
+          getOptionValue: (item: any) => item.id,
+          minChars: 1,
+        }}
         actions={[
           {
             label: 'Create Return', icon: <Plus className="w-4 h-4" />, onClick: () => {
@@ -434,7 +445,7 @@ export default function ReturnsPage() {
             <div className="enterprise-modal-footer">
               <button onClick={() => setCreateOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleCreate} disabled={processing === 'create' || !createForm.orderId} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                {processing === 'create' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {processing === 'create' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create Return
               </button>
             </div>
@@ -494,7 +505,7 @@ export default function ReturnsPage() {
             <div className="enterprise-modal-footer">
               <button onClick={() => setInspectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleInspect} disabled={processing === 'inspect'} className="enterprise-btn bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
-                {processing === 'inspect' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {processing === 'inspect' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
                 Complete Inspection
               </button>
             </div>
@@ -527,7 +538,7 @@ export default function ReturnsPage() {
             <div className="enterprise-modal-footer">
               <button onClick={() => setRefundOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleRefund} disabled={processing === 'refund' || refundAmount <= 0} className="enterprise-btn bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
-                {processing === 'refund' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {processing === 'refund' ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
                 Process Refund
               </button>
             </div>
@@ -553,7 +564,7 @@ export default function ReturnsPage() {
             <div className="enterprise-modal-footer">
               <button onClick={() => setRejectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleReject} disabled={processing === 'reject'} className="enterprise-btn bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50">
-                {processing === 'reject' && <Loader2 className="w-4 h-4 animate-spin" />}
+                {processing === 'reject' ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                 Reject Return
               </button>
             </div>

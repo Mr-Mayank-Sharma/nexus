@@ -11,13 +11,17 @@ import {
   Search,
   Building2,
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
   Loader2,
   ExternalLink,
+  LogIn,
+  AlertCircle,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import * as authApi from '../api/auth'
 import { TenantInfo } from '../types'
+import Autocomplete from '../components/common/Autocomplete'
 
 type LoginStep = 'tenant' | 'credentials' | 'mfa' | 'forgot-password' | 'forgot-sent'
 
@@ -306,61 +310,39 @@ export default function LoginPage() {
               <p className="text-sm text-gray-500 mb-4">
                 Choose your organization to continue
               </p>
-              <div className="relative mb-4">
-                <div
-                  className="flex items-center justify-between w-full px-4 py-3 border border-gray-300 rounded-xl cursor-pointer hover:border-primary-400 transition-colors"
-                  onClick={() => setTenantOpen(!tenantOpen)}
-                >
-                  {selectedTenant ? (
-                    <span className="text-gray-900 font-medium">{selectedTenant.name}</span>
-                  ) : (
-                    <span className="text-gray-400">Select an organization...</span>
-                  )}
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${tenantOpen ? 'rotate-180' : ''}`} />
-                </div>
-                {tenantOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                    <div className="p-2 border-b border-gray-100">
-                      <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg">
-                        <Search className="w-4 h-4 text-gray-400" />
-                        <input
-                          type="text"
-                          value={tenantSearch}
-                          onChange={e => setTenantSearch(e.target.value)}
-                          placeholder="Search organizations..."
-                          className="flex-1 bg-transparent border-none outline-none text-sm text-gray-900 placeholder-gray-400"
-                          autoFocus
-                        />
+              <Autocomplete
+                value={tenantSearch}
+                onChange={setTenantSearch}
+                onSelect={(t: TenantInfo) => handleTenantSelect(t)}
+                suggestions={tenants}
+                getOptionLabel={(t: TenantInfo) => t.name}
+                getOptionValue={(t: TenantInfo) => t.id}
+                placeholder="Search organizations..."
+                minChars={0}
+                showSearchIcon={false}
+                inputClassName="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:border-primary-400"
+                className="mb-4"
+              />
+              <div className="mt-2 max-h-48 overflow-y-auto space-y-1 mb-4">
+                {(tenantSearch ? tenants.filter(t => t.name.toLowerCase().includes(tenantSearch.toLowerCase())) : tenants).length === 0 ? (
+                  <div className="px-4 py-6 text-center text-sm text-gray-400">No organizations found</div>
+                ) : (
+                  (tenantSearch ? tenants.filter(t => t.name.toLowerCase().includes(tenantSearch.toLowerCase())) : tenants).map(t => (
+                    <button key={t.id}
+                      onClick={() => handleTenantSelect(t)}
+                      className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-primary-50 rounded-lg flex items-center gap-3 ${
+                        selectedTenant?.id === t.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-4 h-4 text-gray-500" />
                       </div>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto">
-                      {filteredTenants.length === 0 ? (
-                        <div className="px-4 py-6 text-center text-sm text-gray-400">
-                          No organizations found
-                        </div>
-                      ) : (
-                        filteredTenants.map(t => (
-                          <button
-                            key={t.id}
-                            onClick={() => handleTenantSelect(t)}
-                            className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-primary-50 flex items-center gap-3 ${
-                              selectedTenant?.id === t.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700'
-                            }`}
-                          >
-                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <Building2 className="w-4 h-4 text-gray-500" />
-                            </div>
-                            <div>
-                              <div className="font-medium">{t.name}</div>
-                              {t.plan && (
-                                <div className="text-xs text-gray-400 capitalize">{t.plan} plan</div>
-                              )}
-                            </div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
+                      <div>
+                        <div className="font-medium">{t.name}</div>
+                        {t.plan && <div className="text-xs text-gray-400 capitalize">{t.plan} plan</div>}
+                      </div>
+                    </button>
+                  ))
                 )}
               </div>
               <button
@@ -368,7 +350,7 @@ export default function LoginPage() {
                 disabled={!selectedTenant}
                 className="btn-primary w-full py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Continue
+                <ArrowRight className="w-4 h-4" /> Continue
               </button>
               <button
                 onClick={() => setStep('credentials')}
@@ -456,8 +438,9 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                    {error}
+                  <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{error}</span>
                   </div>
                 )}
 
@@ -472,7 +455,7 @@ export default function LoginPage() {
                       Signing in...
                     </span>
                   ) : (
-                    'Sign in'
+                    <><LogIn className="w-4 h-4" /> Sign in</>
                   )}
                 </button>
               </form>
@@ -552,8 +535,9 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600 text-center">
-                    {error}
+                  <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{error}</span>
                   </div>
                 )}
 
@@ -614,8 +598,9 @@ export default function LoginPage() {
                     </div>
 
                     {error && (
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                        {error}
+                      <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                        <span>{error}</span>
                       </div>
                     )}
 
@@ -630,7 +615,7 @@ export default function LoginPage() {
                           Sending...
                         </span>
                       ) : (
-                        'Send Reset Link'
+                        <><Mail className="w-4 h-4" /> Send Reset Link</>
                       )}
                     </button>
 

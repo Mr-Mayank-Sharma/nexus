@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Bell, ChevronDown, User, Settings, LogOut, Sparkles, Command } from 'lucide-react'
+import { Search, Bell, ChevronDown, User, Settings, LogOut, Sparkles, Command, Menu } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import NotificationsPanel from '../enterprise/NotificationsPanel'
 import { clsx } from 'clsx'
@@ -8,15 +8,23 @@ interface Props {
   onSearchClick: () => void
   onAiToggle: () => void
   aiPanelOpen: boolean
+  onMenuToggle: () => void
 }
 
-export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen }: Props) {
+export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuToggle }: Props) {
   const { user, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
 
   return (
-    <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6 sticky top-0 z-30 shrink-0">
+    <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shrink-0">
+      <button
+        onClick={onMenuToggle}
+        className="lg:hidden p-2 mr-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        aria-label="Toggle sidebar"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
       <button
         onClick={onSearchClick}
         className="flex items-center gap-3 w-full max-w-md h-9 px-3.5 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 transition-colors group"

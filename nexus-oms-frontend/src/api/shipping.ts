@@ -3,7 +3,7 @@ import { ApiResponse, Shipment } from '../types'
 
 export async function getShipments(): Promise<ApiResponse<Shipment[]>> {
   try {
-    const { data } = await client.get('/shipping/shipments')
+    const { data } = await client.get('/shipments')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get shipments'
@@ -13,7 +13,7 @@ export async function getShipments(): Promise<ApiResponse<Shipment[]>> {
 
 export async function getShipment(id: string): Promise<ApiResponse<Shipment>> {
   try {
-    const { data } = await client.get(`/shipping/shipments/${id}`)
+    const { data } = await client.get(`/shipments/${id}`)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get shipment'
@@ -23,7 +23,7 @@ export async function getShipment(id: string): Promise<ApiResponse<Shipment>> {
 
 export async function getShipmentsByOrder(orderId: string): Promise<ApiResponse<Shipment[]>> {
   try {
-    const { data } = await client.get(`/shipping/orders/${orderId}/shipments`)
+    const { data } = await client.get('/shipments', { params: { orderId } })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get shipments by order'
@@ -33,7 +33,7 @@ export async function getShipmentsByOrder(orderId: string): Promise<ApiResponse<
 
 export async function createShipment(payload: Partial<Shipment>): Promise<ApiResponse<Shipment>> {
   try {
-    const { data } = await client.post('/shipping/shipments', payload)
+    const { data } = await client.post('/shipments', payload)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to create shipment'
@@ -43,9 +43,7 @@ export async function createShipment(payload: Partial<Shipment>): Promise<ApiRes
 
 export async function updateTracking(id: string, trackingNumber: string, carrierId: string, serviceLevel?: string): Promise<ApiResponse<Shipment>> {
   try {
-    const { data } = await client.post(`/shipping/shipments/${id}/tracking`, null, {
-      params: { trackingNumber, carrierId, serviceLevel }
-    })
+    const { data } = await client.put(`/shipments/${id}/tracking`, { trackingNumber, carrierId, serviceLevel })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to update tracking'
@@ -55,7 +53,7 @@ export async function updateTracking(id: string, trackingNumber: string, carrier
 
 export async function markShipped(id: string): Promise<ApiResponse<Shipment>> {
   try {
-    const { data } = await client.post(`/shipping/shipments/${id}/ship`)
+    const { data } = await client.post(`/shipments/${id}/ship`)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to mark shipped'
@@ -65,7 +63,7 @@ export async function markShipped(id: string): Promise<ApiResponse<Shipment>> {
 
 export async function markDelivered(id: string): Promise<ApiResponse<Shipment>> {
   try {
-    const { data } = await client.post(`/shipping/shipments/${id}/deliver`)
+    const { data } = await client.post(`/shipments/${id}/deliver`)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to mark delivered'
@@ -75,7 +73,7 @@ export async function markDelivered(id: string): Promise<ApiResponse<Shipment>> 
 
 export async function voidShipment(id: string): Promise<ApiResponse<Shipment>> {
   try {
-    const { data } = await client.post(`/shipping/shipments/${id}/void`)
+    const { data } = await client.post(`/shipments/${id}/void`)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to void shipment'

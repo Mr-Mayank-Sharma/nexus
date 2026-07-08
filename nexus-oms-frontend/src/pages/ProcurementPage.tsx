@@ -1,7 +1,8 @@
 import React, { useState, useEffect, Fragment } from 'react'
-import { Building2, FileText, ShoppingCart, ClipboardList, Plus, Search, Eye, X, Check, ChevronDown, ChevronRight, Loader2, Star } from 'lucide-react'
+import { Building2, FileText, ShoppingCart, ClipboardList, Plus, Search, Eye, X, Check, ChevronDown, ChevronRight, Loader2, Star, PackageCheck, Send } from 'lucide-react'
 import { clsx } from 'clsx'
 import StatusBadge from '../components/common/StatusBadge'
+import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import * as procurementApi from '../api/procurement'
 import type {
@@ -44,7 +45,7 @@ export default function ProcurementPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Procurement</h1>
+        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-primary-500" /> Procurement</h1>
         <p className="text-sm text-gray-500 mt-1">Manage suppliers, purchase requests, RFQs, and purchase orders</p>
       </div>
 
@@ -128,6 +129,58 @@ function SuppliersTab() {
     status: 'ACTIVE',
     autoRenew: false,
   })
+
+  const supplierTypeOptions = [
+    { value: 'MANUFACTURER', label: 'Manufacturer' },
+    { value: 'DISTRIBUTOR', label: 'Distributor' },
+    { value: 'WHOLESALER', label: 'Wholesaler' },
+    { value: 'SERVICE_PROVIDER', label: 'Service Provider' },
+    { value: 'CONSULTANT', label: 'Consultant' },
+  ]
+
+  const supplierStatusOptions = [
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'INACTIVE', label: 'Inactive' },
+    { value: 'BLACKLISTED', label: 'Blacklisted' },
+  ]
+
+  const paymentTermsOptions = [
+    { value: 'NET15', label: 'Net 15' },
+    { value: 'NET30', label: 'Net 30' },
+    { value: 'NET45', label: 'Net 45' },
+    { value: 'NET60', label: 'Net 60' },
+    { value: 'COD', label: 'Cash on Delivery' },
+  ]
+
+  const currencyOptions = [
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'GBP', label: 'GBP' },
+    { value: 'CAD', label: 'CAD' },
+    { value: 'AUD', label: 'AUD' },
+  ]
+
+  const countryOptions = [
+    { value: 'US', label: 'United States' },
+    { value: 'CA', label: 'Canada' },
+    { value: 'GB', label: 'United Kingdom' },
+    { value: 'DE', label: 'Germany' },
+    { value: 'FR', label: 'France' },
+    { value: 'AU', label: 'Australia' },
+  ]
+
+  const contractTypeOptions = [
+    { value: 'SERVICE', label: 'Service' },
+    { value: 'SUPPLY', label: 'Supply' },
+    { value: 'LEASE', label: 'Lease' },
+    { value: 'NON_DISCLOSURE', label: 'Non-Disclosure' },
+  ]
+
+  const contractStatusOptions = [
+    { value: 'ACTIVE', label: 'Active' },
+    { value: 'EXPIRED', label: 'Expired' },
+    { value: 'TERMINATED', label: 'Terminated' },
+  ]
 
   useEffect(() => { fetchSuppliers() }, [])
 
@@ -417,38 +470,50 @@ function SuppliersTab() {
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
-                                      <input
+                                      <Autocomplete
                                         value={contactForm.name}
-                                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                                        className="input w-full text-sm"
+                                        onChange={(value) => setContactForm({ ...contactForm, name: value })}
+                                        inputClassName="input w-full text-sm"
                                         placeholder="Contact name"
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
                                       />
                                     </div>
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Job Title</label>
-                                      <input
+                                      <Autocomplete
                                         value={contactForm.jobTitle}
-                                        onChange={(e) => setContactForm({ ...contactForm, jobTitle: e.target.value })}
-                                        className="input w-full text-sm"
+                                        onChange={(value) => setContactForm({ ...contactForm, jobTitle: value })}
+                                        inputClassName="input w-full text-sm"
                                         placeholder="Job title"
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
                                       />
                                     </div>
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Email</label>
-                                      <input
+                                      <Autocomplete
                                         value={contactForm.email}
-                                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                                        className="input w-full text-sm"
+                                        onChange={(value) => setContactForm({ ...contactForm, email: value })}
+                                        inputClassName="input w-full text-sm"
                                         placeholder="Email"
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
                                       />
                                     </div>
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Phone</label>
-                                      <input
+                                      <Autocomplete
                                         value={contactForm.phone}
-                                        onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                                        className="input w-full text-sm"
+                                        onChange={(value) => setContactForm({ ...contactForm, phone: value })}
+                                        inputClassName="input w-full text-sm"
                                         placeholder="Phone"
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
                                       />
                                     </div>
                                   </div>
@@ -529,55 +594,67 @@ function SuppliersTab() {
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Contract Number</label>
-                                      <input
+                                      <Autocomplete
                                         value={contractForm.contractNumber}
-                                        onChange={(e) => setContractForm({ ...contractForm, contractNumber: e.target.value })}
-                                        className="input w-full text-sm"
+                                        onChange={(value) => setContractForm({ ...contractForm, contractNumber: value })}
+                                        inputClassName="input w-full text-sm"
                                         placeholder="CON-001"
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
                                       />
                                     </div>
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
-                                      <select
+                                      <Autocomplete
                                         value={contractForm.type}
-                                        onChange={(e) => setContractForm({ ...contractForm, type: e.target.value })}
-                                        className="input w-full text-sm"
-                                      >
-                                        <option value="SERVICE">Service</option>
-                                        <option value="SUPPLY">Supply</option>
-                                        <option value="LEASE">Lease</option>
-                                        <option value="NON_DISCLOSURE">Non-Disclosure</option>
-                                      </select>
+                                        onChange={(value) => setContractForm({ ...contractForm, type: value })}
+                                        suggestions={contractTypeOptions}
+                                        getOptionLabel={o => o.label}
+                                        getOptionValue={o => o.value}
+                                        inputClassName="input w-full text-sm"
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
+                                      />
                                     </div>
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
-                                      <input
-                                        type="date"
+                                      <Autocomplete
                                         value={contractForm.startDate}
-                                        onChange={(e) => setContractForm({ ...contractForm, startDate: e.target.value })}
-                                        className="input w-full text-sm"
+                                        onChange={(value) => setContractForm({ ...contractForm, startDate: value })}
+                                        inputClassName="input w-full text-sm"
+                                        placeholder=""
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
                                       />
                                     </div>
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">End Date</label>
-                                      <input
-                                        type="date"
+                                      <Autocomplete
                                         value={contractForm.endDate}
-                                        onChange={(e) => setContractForm({ ...contractForm, endDate: e.target.value })}
-                                        className="input w-full text-sm"
+                                        onChange={(value) => setContractForm({ ...contractForm, endDate: value })}
+                                        inputClassName="input w-full text-sm"
+                                        placeholder=""
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
                                       />
                                     </div>
                                     <div>
                                       <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
-                                      <select
+                                      <Autocomplete
                                         value={contractForm.status}
-                                        onChange={(e) => setContractForm({ ...contractForm, status: e.target.value })}
-                                        className="input w-full text-sm"
-                                      >
-                                        <option value="ACTIVE">Active</option>
-                                        <option value="EXPIRED">Expired</option>
-                                        <option value="TERMINATED">Terminated</option>
-                                      </select>
+                                        onChange={(value) => setContractForm({ ...contractForm, status: value })}
+                                        suggestions={contractStatusOptions}
+                                        getOptionLabel={o => o.label}
+                                        getOptionValue={o => o.value}
+                                        inputClassName="input w-full text-sm"
+                                        minChars={0}
+                                        showSearchIcon={false}
+                                        clearable={false}
+                                      />
                                     </div>
                                   </div>
                                   <label className="flex items-center gap-2 text-sm text-gray-600">
@@ -626,61 +703,79 @@ function SuppliersTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Code</label>
-                  <input value={form.supplierCode} onChange={e => setForm({ ...form, supplierCode: e.target.value })} className="input w-full" placeholder="SUP-001" />
+                  <Autocomplete value={form.supplierCode} onChange={(value) => setForm({ ...form, supplierCode: value })} inputClassName="input w-full" placeholder="SUP-001" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
-                  <input value={form.companyName} onChange={e => setForm({ ...form, companyName: e.target.value })} className="input w-full" placeholder="Acme Corp" />
+                  <Autocomplete value={form.companyName} onChange={(value) => setForm({ ...form, companyName: value })} inputClassName="input w-full" placeholder="Acme Corp" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Trading Name</label>
-                  <input value={form.tradingName} onChange={e => setForm({ ...form, tradingName: e.target.value })} className="input w-full" placeholder="Acme" />
+                  <Autocomplete value={form.tradingName} onChange={(value) => setForm({ ...form, tradingName: value })} inputClassName="input w-full" placeholder="Acme" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
-                  <input value={form.taxId} onChange={e => setForm({ ...form, taxId: e.target.value })} className="input w-full" placeholder="TAX-12345" />
+                  <Autocomplete value={form.taxId} onChange={(value) => setForm({ ...form, taxId: value })} inputClassName="input w-full" placeholder="TAX-12345" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Type</label>
-                  <select value={form.supplierType} onChange={e => setForm({ ...form, supplierType: e.target.value })} className="input w-full">
-                    <option value="MANUFACTURER">Manufacturer</option>
-                    <option value="DISTRIBUTOR">Distributor</option>
-                    <option value="WHOLESALER">Wholesaler</option>
-                    <option value="SERVICE_PROVIDER">Service Provider</option>
-                    <option value="CONSULTANT">Consultant</option>
-                  </select>
+                  <Autocomplete
+                    value={form.supplierType}
+                    onChange={(value) => setForm({ ...form, supplierType: value })}
+                    suggestions={supplierTypeOptions}
+                    getOptionLabel={o => o.label}
+                    getOptionValue={o => o.value}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="input w-full">
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                    <option value="BLACKLISTED">Blacklisted</option>
-                  </select>
+                  <Autocomplete
+                    value={form.status}
+                    onChange={(value) => setForm({ ...form, status: value })}
+                    suggestions={supplierStatusOptions}
+                    getOptionLabel={o => o.label}
+                    getOptionValue={o => o.value}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Payment Terms</label>
-                  <select value={form.paymentTerms} onChange={e => setForm({ ...form, paymentTerms: e.target.value })} className="input w-full">
-                    <option value="NET15">Net 15</option>
-                    <option value="NET30">Net 30</option>
-                    <option value="NET45">Net 45</option>
-                    <option value="NET60">Net 60</option>
-                    <option value="COD">Cash on Delivery</option>
-                  </select>
+                  <Autocomplete
+                    value={form.paymentTerms}
+                    onChange={(value) => setForm({ ...form, paymentTerms: value })}
+                    suggestions={paymentTermsOptions}
+                    getOptionLabel={o => o.label}
+                    getOptionValue={o => o.value}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                  <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} className="input w-full">
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="CAD">CAD</option>
-                    <option value="AUD">AUD</option>
-                  </select>
+                  <Autocomplete
+                    value={form.currency}
+                    onChange={(value) => setForm({ ...form, currency: value })}
+                    suggestions={currencyOptions}
+                    getOptionLabel={o => o.label}
+                    getOptionValue={o => o.value}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Credit Limit</label>
-                  <input type="number" value={form.creditLimit} onChange={e => setForm({ ...form, creditLimit: e.target.value })} className="input w-full" placeholder="50000" />
+                  <Autocomplete value={form.creditLimit} onChange={(value) => setForm({ ...form, creditLimit: value })} inputClassName="input w-full" placeholder="50000" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
               </div>
 
@@ -689,30 +784,33 @@ function SuppliersTab() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Street</label>
-                    <input value={form.street} onChange={e => setForm({ ...form, street: e.target.value })} className="input w-full" placeholder="123 Main St" />
+                    <Autocomplete value={form.street} onChange={(value) => setForm({ ...form, street: value })} inputClassName="input w-full" placeholder="123 Main St" minChars={0} showSearchIcon={false} clearable={false} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                    <input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="input w-full" placeholder="New York" />
+                    <Autocomplete value={form.city} onChange={(value) => setForm({ ...form, city: value })} inputClassName="input w-full" placeholder="New York" minChars={0} showSearchIcon={false} clearable={false} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
-                    <input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} className="input w-full" placeholder="NY" />
+                    <Autocomplete value={form.state} onChange={(value) => setForm({ ...form, state: value })} inputClassName="input w-full" placeholder="NY" minChars={0} showSearchIcon={false} clearable={false} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
-                    <input value={form.zip} onChange={e => setForm({ ...form, zip: e.target.value })} className="input w-full" placeholder="10001" />
+                    <Autocomplete value={form.zip} onChange={(value) => setForm({ ...form, zip: value })} inputClassName="input w-full" placeholder="10001" minChars={0} showSearchIcon={false} clearable={false} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                    <select value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} className="input w-full">
-                      <option value="US">United States</option>
-                      <option value="CA">Canada</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="DE">Germany</option>
-                      <option value="FR">France</option>
-                      <option value="AU">Australia</option>
-                    </select>
+                    <Autocomplete
+                      value={form.country}
+                      onChange={(value) => setForm({ ...form, country: value })}
+                      suggestions={countryOptions}
+                      getOptionLabel={o => o.label}
+                      getOptionValue={o => o.value}
+                      inputClassName="input w-full"
+                      minChars={0}
+                      showSearchIcon={false}
+                      clearable={false}
+                    />
                   </div>
                 </div>
               </div>
@@ -722,11 +820,11 @@ function SuppliersTab() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                    <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="input w-full" placeholder="+1 555-1234" />
+                    <Autocomplete value={form.phone} onChange={(value) => setForm({ ...form, phone: value })} inputClassName="input w-full" placeholder="+1 555-1234" minChars={0} showSearchIcon={false} clearable={false} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="input w-full" placeholder="contact@acme.com" />
+                    <Autocomplete value={form.email} onChange={(value) => setForm({ ...form, email: value })} inputClassName="input w-full" placeholder="contact@acme.com" minChars={0} showSearchIcon={false} clearable={false} />
                   </div>
                 </div>
               </div>
@@ -734,7 +832,7 @@ function SuppliersTab() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
                 Create Supplier
               </button>
             </div>
@@ -764,6 +862,13 @@ function RequestsTab() {
   })
 
   const [items, setItems] = useState<{ sku: string; productName: string; quantity: number; unitPrice: number }[]>([])
+
+  const priorityOptions = [
+    { value: 'LOW', label: 'Low' },
+    { value: 'MEDIUM', label: 'Medium' },
+    { value: 'HIGH', label: 'High' },
+    { value: 'URGENT', label: 'Urgent' },
+  ]
 
   useEffect(() => { fetchRequests() }, [])
 
@@ -928,8 +1033,8 @@ function RequestsTab() {
                               disabled={submitting === req.id}
                               className="btn-primary text-xs"
                             >
-                              {submitting === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                              Submit
+                                                            {submitting === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                                                            Submit
                             </button>
                           )}
                           {req.status === 'PENDING_APPROVAL' && (
@@ -1000,25 +1105,30 @@ function RequestsTab() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="input w-full" placeholder="Request title" />
+                <Autocomplete value={form.title} onChange={(value) => setForm({ ...form, title: value })} inputClassName="input w-full" placeholder="Request title" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="input w-full" rows={2} placeholder="Describe the request" />
+                <Autocomplete value={form.description} onChange={(value) => setForm({ ...form, description: value })} inputClassName="input w-full" placeholder="Describe the request" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                  <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} className="input w-full">
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="URGENT">Urgent</option>
-                  </select>
+                  <Autocomplete
+                    value={form.priority}
+                    onChange={(value) => setForm({ ...form, priority: value })}
+                    suggestions={priorityOptions}
+                    getOptionLabel={o => o.label}
+                    getOptionValue={o => o.value}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-                  <input value={form.department} onChange={e => setForm({ ...form, department: e.target.value })} className="input w-full" placeholder="e.g. Engineering" />
+                  <Autocomplete value={form.department} onChange={(value) => setForm({ ...form, department: value })} inputClassName="input w-full" placeholder="e.g. Engineering" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
               </div>
 
@@ -1034,38 +1144,47 @@ function RequestsTab() {
                     {items.map((item, index) => (
                       <div key={index} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3">
                         <div className="flex-1">
-                          <input
+                          <Autocomplete
                             value={item.sku}
-                            onChange={(e) => updateItem(index, 'sku', e.target.value)}
-                            className="input w-full text-sm"
+                            onChange={(value) => updateItem(index, 'sku', value)}
+                            inputClassName="input w-full text-sm"
                             placeholder="SKU"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="flex-[2]">
-                          <input
+                          <Autocomplete
                             value={item.productName}
-                            onChange={(e) => updateItem(index, 'productName', e.target.value)}
-                            className="input w-full text-sm"
+                            onChange={(value) => updateItem(index, 'productName', value)}
+                            inputClassName="input w-full text-sm"
                             placeholder="Product name"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="w-20">
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
-                            className="input w-full text-sm"
+                          <Autocomplete
+                            value={String(item.quantity)}
+                            onChange={(value) => updateItem(index, 'quantity', parseInt(value) || 0)}
+                            inputClassName="input w-full text-sm"
                             placeholder="Qty"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="w-24">
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={item.unitPrice}
-                            onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            className="input w-full text-sm"
+                          <Autocomplete
+                            value={String(item.unitPrice)}
+                            onChange={(value) => updateItem(index, 'unitPrice', parseFloat(value) || 0)}
+                            inputClassName="input w-full text-sm"
                             placeholder="Price"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <button onClick={() => removeItem(index)} className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-500">
@@ -1084,13 +1203,13 @@ function RequestsTab() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="input w-full" rows={2} placeholder="Additional notes" />
+                <Autocomplete value={form.notes} onChange={(value) => setForm({ ...form, notes: value })} inputClassName="input w-full" placeholder="Additional notes" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                 Create Request
               </button>
             </div>
@@ -1265,7 +1384,7 @@ function RfqsTab() {
                             disabled={submitting === rfq.id}
                             className="btn-primary text-xs"
                           >
-                            {submitting === rfq.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                            {submitting === rfq.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                             Submit
                           </button>
                         )}
@@ -1335,20 +1454,20 @@ function RfqsTab() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="input w-full" placeholder="RFQ title" />
+                <Autocomplete value={form.title} onChange={(value) => setForm({ ...form, title: value })} inputClassName="input w-full" placeholder="RFQ title" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="input w-full" rows={2} placeholder="Describe what you're requesting" />
+                <Autocomplete value={form.description} onChange={(value) => setForm({ ...form, description: value })} inputClassName="input w-full" placeholder="Describe what you're requesting" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Response Deadline</label>
-                  <input type="date" value={form.responseDeadline} onChange={e => setForm({ ...form, responseDeadline: e.target.value })} className="input w-full" />
+                  <Autocomplete value={form.responseDeadline} onChange={(value) => setForm({ ...form, responseDeadline: value })} inputClassName="input w-full" placeholder="" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Supplier IDs (comma-separated)</label>
-                  <input value={form.supplierIds} onChange={e => setForm({ ...form, supplierIds: e.target.value })} className="input w-full" placeholder="sup1, sup2" />
+                  <Autocomplete value={form.supplierIds} onChange={(value) => setForm({ ...form, supplierIds: value })} inputClassName="input w-full" placeholder="sup1, sup2" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
               </div>
 
@@ -1364,40 +1483,48 @@ function RfqsTab() {
                     {rfqItems.map((item, index) => (
                       <div key={index} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3">
                         <div className="flex-1">
-                          <input
+                          <Autocomplete
                             value={item.sku}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const updated = [...rfqItems]
-                              updated[index] = { ...updated[index], sku: e.target.value }
+                              updated[index] = { ...updated[index], sku: value }
                               setRfqItems(updated)
                             }}
-                            className="input w-full text-sm"
+                            inputClassName="input w-full text-sm"
                             placeholder="SKU"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="flex-[2]">
-                          <input
+                          <Autocomplete
                             value={item.productName}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const updated = [...rfqItems]
-                              updated[index] = { ...updated[index], productName: e.target.value }
+                              updated[index] = { ...updated[index], productName: value }
                               setRfqItems(updated)
                             }}
-                            className="input w-full text-sm"
+                            inputClassName="input w-full text-sm"
                             placeholder="Product name"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="w-20">
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => {
+                          <Autocomplete
+                            value={String(item.quantity)}
+                            onChange={(value) => {
                               const updated = [...rfqItems]
-                              updated[index] = { ...updated[index], quantity: parseInt(e.target.value) || 0 }
+                              updated[index] = { ...updated[index], quantity: parseInt(value) || 0 }
                               setRfqItems(updated)
                             }}
-                            className="input w-full text-sm"
+                            inputClassName="input w-full text-sm"
                             placeholder="Qty"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <button onClick={() => setRfqItems(rfqItems.filter((_, i) => i !== index))} className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-500">
@@ -1411,13 +1538,13 @@ function RfqsTab() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="input w-full" rows={2} placeholder="Additional notes" />
+                <Autocomplete value={form.notes} onChange={(value) => setForm({ ...form, notes: value })} inputClassName="input w-full" placeholder="Additional notes" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                 Create RFQ
               </button>
             </div>
@@ -1451,6 +1578,14 @@ function PurchaseOrdersTab() {
   })
 
   const [poItems, setPoItems] = useState<{ sku: string; productName: string; quantity: number; unitPrice: number }[]>([])
+
+  const paymentTermsOptions = [
+    { value: 'NET15', label: 'Net 15' },
+    { value: 'NET30', label: 'Net 30' },
+    { value: 'NET45', label: 'Net 45' },
+    { value: 'NET60', label: 'Net 60' },
+    { value: 'COD', label: 'Cash on Delivery' },
+  ]
 
   useEffect(() => { fetchOrders() }, [])
 
@@ -1629,16 +1764,16 @@ function PurchaseOrdersTab() {
                               disabled={approving === po.id}
                               className="btn-primary text-xs"
                             >
-                              {approving === po.id ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                              {approving === po.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                               Approve
                             </button>
                           )}
                           {receiveable.includes(po.status) && (
                             <button
                               onClick={(e) => { e.stopPropagation(); openReceive(po) }}
-                              className="btn-secondary text-xs"
-                            >
-                              Receive Items
+                                                            className="btn-secondary text-xs"
+                                                          >
+                                                            <PackageCheck className="w-3 h-3" /> Receive Items
                             </button>
                           )}
                         </div>
@@ -1698,29 +1833,33 @@ function PurchaseOrdersTab() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Supplier Name *</label>
-                  <input value={form.supplierName} onChange={e => setForm({ ...form, supplierName: e.target.value })} className="input w-full" placeholder="Supplier name" />
+                  <Autocomplete value={form.supplierName} onChange={(value) => setForm({ ...form, supplierName: value })} inputClassName="input w-full" placeholder="Supplier name" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Supplier ID</label>
-                  <input value={form.supplierId} onChange={e => setForm({ ...form, supplierId: e.target.value })} className="input w-full" placeholder="Supplier ID (optional)" />
+                  <Autocomplete value={form.supplierId} onChange={(value) => setForm({ ...form, supplierId: value })} inputClassName="input w-full" placeholder="Supplier ID (optional)" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Request ID</label>
-                  <input value={form.requestId} onChange={e => setForm({ ...form, requestId: e.target.value })} className="input w-full" placeholder="Related request (optional)" />
+                  <Autocomplete value={form.requestId} onChange={(value) => setForm({ ...form, requestId: value })} inputClassName="input w-full" placeholder="Related request (optional)" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Payment Terms</label>
-                  <select value={form.paymentTerms} onChange={e => setForm({ ...form, paymentTerms: e.target.value })} className="input w-full">
-                    <option value="NET15">Net 15</option>
-                    <option value="NET30">Net 30</option>
-                    <option value="NET45">Net 45</option>
-                    <option value="NET60">Net 60</option>
-                    <option value="COD">Cash on Delivery</option>
-                  </select>
+                  <Autocomplete
+                    value={form.paymentTerms}
+                    onChange={(value) => setForm({ ...form, paymentTerms: value })}
+                    suggestions={paymentTermsOptions}
+                    getOptionLabel={o => o.label}
+                    getOptionValue={o => o.value}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Expected Delivery</label>
-                  <input type="date" value={form.expectedDeliveryDate} onChange={e => setForm({ ...form, expectedDeliveryDate: e.target.value })} className="input w-full" />
+                  <Autocomplete value={form.expectedDeliveryDate} onChange={(value) => setForm({ ...form, expectedDeliveryDate: value })} inputClassName="input w-full" placeholder="" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
               </div>
 
@@ -1736,54 +1875,63 @@ function PurchaseOrdersTab() {
                     {poItems.map((item, index) => (
                       <div key={index} className="flex items-center gap-2 bg-gray-50 rounded-lg p-3">
                         <div className="flex-1">
-                          <input
+                          <Autocomplete
                             value={item.sku}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const updated = [...poItems]
-                              updated[index] = { ...updated[index], sku: e.target.value }
+                              updated[index] = { ...updated[index], sku: value }
                               setPoItems(updated)
                             }}
-                            className="input w-full text-sm"
+                            inputClassName="input w-full text-sm"
                             placeholder="SKU"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="flex-[2]">
-                          <input
+                          <Autocomplete
                             value={item.productName}
-                            onChange={(e) => {
+                            onChange={(value) => {
                               const updated = [...poItems]
-                              updated[index] = { ...updated[index], productName: e.target.value }
+                              updated[index] = { ...updated[index], productName: value }
                               setPoItems(updated)
                             }}
-                            className="input w-full text-sm"
+                            inputClassName="input w-full text-sm"
                             placeholder="Product name"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="w-20">
-                          <input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) => {
+                          <Autocomplete
+                            value={String(item.quantity)}
+                            onChange={(value) => {
                               const updated = [...poItems]
-                              updated[index] = { ...updated[index], quantity: parseInt(e.target.value) || 0 }
+                              updated[index] = { ...updated[index], quantity: parseInt(value) || 0 }
                               setPoItems(updated)
                             }}
-                            className="input w-full text-sm"
+                            inputClassName="input w-full text-sm"
                             placeholder="Qty"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <div className="w-24">
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={item.unitPrice}
-                            onChange={(e) => {
+                          <Autocomplete
+                            value={String(item.unitPrice)}
+                            onChange={(value) => {
                               const updated = [...poItems]
-                              updated[index] = { ...updated[index], unitPrice: parseFloat(e.target.value) || 0 }
+                              updated[index] = { ...updated[index], unitPrice: parseFloat(value) || 0 }
                               setPoItems(updated)
                             }}
-                            className="input w-full text-sm"
+                            inputClassName="input w-full text-sm"
                             placeholder="Price"
+                            minChars={0}
+                            showSearchIcon={false}
+                            clearable={false}
                           />
                         </div>
                         <button onClick={() => setPoItems(poItems.filter((_, i) => i !== index))} className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-500">
@@ -1802,13 +1950,13 @@ function PurchaseOrdersTab() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="input w-full" rows={2} placeholder="Additional notes" />
+                <Autocomplete value={form.notes} onChange={(value) => setForm({ ...form, notes: value })} inputClassName="input w-full" placeholder="Additional notes" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
                 Create Purchase Order
               </button>
             </div>
@@ -1841,13 +1989,14 @@ function PurchaseOrdersTab() {
                       <td className="px-3 py-3 text-sm text-gray-600 text-right">{item.quantity}</td>
                       <td className="px-3 py-3 text-sm text-gray-600 text-right">{item.quantityReceived}</td>
                       <td className="px-3 py-3 text-right">
-                        <input
-                          type="number"
-                          min={0}
-                          max={item.quantity - item.quantityReceived}
-                          value={receiveItems[item.id] ?? 0}
-                          onChange={(e) => setReceiveItems({ ...receiveItems, [item.id]: parseInt(e.target.value) || 0 })}
-                          className="input w-24 text-sm text-right"
+                        <Autocomplete
+                          value={String(receiveItems[item.id] ?? 0)}
+                          onChange={(value) => setReceiveItems({ ...receiveItems, [item.id]: parseInt(value) || 0 })}
+                          inputClassName="input w-24 text-sm text-right"
+                          placeholder=""
+                          minChars={0}
+                          showSearchIcon={false}
+                          clearable={false}
                         />
                       </td>
                     </tr>
@@ -1858,7 +2007,7 @@ function PurchaseOrdersTab() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowReceiveModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleReceive} disabled={receiving} className="btn-primary text-sm">
-                {receiving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {receiving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
                 Receive Items
               </button>
             </div>

@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Ship, Truck, Plus, Edit, Trash2, DollarSign, CheckCircle, BarChart3, Loader2, X } from 'lucide-react'
+import Autocomplete from '../components/common/Autocomplete'
+import { Search, Ship, Truck, Plus, Edit, Trash2, DollarSign, CheckCircle, BarChart3, Loader2, X } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import client from '../api/client'
-import { EnterpriseToolbar, EnterpriseDataGrid, EnterpriseKPICard, EnterpriseBreadcrumbs, EnterpriseStatusBadge, EnterpriseTabs, EnterpriseFormSection } from '../components/enterprise'
+import { EnterpriseDataGrid, EnterpriseKPICard, EnterpriseBreadcrumbs, EnterpriseStatusBadge, EnterpriseTabs, EnterpriseFormSection } from '../components/enterprise'
 import type { Column } from '../components/enterprise'
 
 interface Carrier {
@@ -301,16 +302,20 @@ export default function CarriersPage() {
         { label: 'Carriers' },
       ]} />
 
-      <EnterpriseToolbar
-        title="Carriers"
-        subtitle="Manage carrier accounts and rate cards"
-        searchValue={search}
-        onSearch={setSearch}
-        searchPlaceholder="Search carriers..."
-        actions={[
-          { label: 'Add Carrier', icon: <Plus className="w-4 h-4" />, onClick: openAddModal, variant: 'primary' },
-        ]}
-      />
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Ship className="w-5 h-5" />Carriers</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-0.5">Manage carrier accounts and rate cards</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={openAddModal} className="enterprise-btn enterprise-btn-primary">
+            <Plus className="w-4 h-4" /> Add Carrier
+          </button>
+        </div>
+      </div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Autocomplete value={search} onChange={setSearch} placeholder="Search carriers..." minChars={0} className="flex-1 max-w-sm" />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <EnterpriseKPICard

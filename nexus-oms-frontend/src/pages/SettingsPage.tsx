@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Settings, Building2, Shield, Plus, X, Save } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as settingsApi from '../api/settings'
+import Autocomplete from '../components/common/Autocomplete'
 
 type Tab = 'general' | 'company' | 'security'
 
@@ -120,7 +121,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Settings className="w-6 h-6" />Settings</h1>
         <p className="text-sm text-gray-500 mt-1">Configure system preferences</p>
       </div>
 
@@ -201,15 +202,15 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                  <input value={company.companyName} onChange={e => setCompany({ ...company, companyName: e.target.value })} className="input w-full" placeholder="Company name" />
+                  <Autocomplete value={company.companyName} onChange={(value) => setCompany({ ...company, companyName: value })} inputClassName="input w-full" placeholder="Company name" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
-                  <input value={company.taxId} onChange={e => setCompany({ ...company, taxId: e.target.value })} className="input w-full" placeholder="Tax ID" />
+                  <Autocomplete value={company.taxId} onChange={(value) => setCompany({ ...company, taxId: value })} inputClassName="input w-full" placeholder="Tax ID" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
-                  <input value={company.registrationNumber} onChange={e => setCompany({ ...company, registrationNumber: e.target.value })} className="input w-full" placeholder="Registration number" />
+                  <Autocomplete value={company.registrationNumber} onChange={(value) => setCompany({ ...company, registrationNumber: value })} inputClassName="input w-full" placeholder="Registration number" minChars={0} showSearchIcon={false} clearable={false} />
                 </div>
               </div>
 
@@ -217,33 +218,63 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Default Currency</label>
-                  <select value={company.defaultCurrency} onChange={e => setCompany({ ...company, defaultCurrency: e.target.value })} className="input w-full">
-                    {currencies.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <Autocomplete
+                    value={company.defaultCurrency}
+                    onChange={(value) => setCompany({ ...company, defaultCurrency: value })}
+                    suggestions={currencies}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                  <select value={company.language} onChange={e => setCompany({ ...company, language: e.target.value })} className="input w-full">
-                    {languages.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
+                  <Autocomplete
+                    value={company.language}
+                    onChange={(value) => setCompany({ ...company, language: value })}
+                    suggestions={languages}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-                  <select value={company.timezone} onChange={e => setCompany({ ...company, timezone: e.target.value })} className="input w-full">
-                    {timezones.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <Autocomplete
+                    value={company.timezone}
+                    onChange={(value) => setCompany({ ...company, timezone: value })}
+                    suggestions={timezones}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date Format</label>
-                  <select value={company.dateFormat} onChange={e => setCompany({ ...company, dateFormat: e.target.value })} className="input w-full">
-                    {dateFormats.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
+                  <Autocomplete
+                    value={company.dateFormat}
+                    onChange={(value) => setCompany({ ...company, dateFormat: value })}
+                    suggestions={dateFormats}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Time Format</label>
-                  <select value={company.timeFormat} onChange={e => setCompany({ ...company, timeFormat: e.target.value })} className="input w-full">
-                    {timeFormats.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <Autocomplete
+                    value={company.timeFormat}
+                    onChange={(value) => setCompany({ ...company, timeFormat: value })}
+                    suggestions={timeFormats}
+                    inputClassName="input w-full"
+                    minChars={0}
+                    showSearchIcon={false}
+                    clearable={false}
+                  />
                 </div>
               </div>
 
@@ -270,12 +301,14 @@ export default function SettingsPage() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <input
+                <Autocomplete
                   value={newFlagName}
-                  onChange={e => setNewFlagName(e.target.value)}
-                  className="input flex-1"
+                  onChange={(value) => setNewFlagName(value)}
+                  inputClassName="input flex-1"
                   placeholder="New flag name"
-                  onKeyDown={e => e.key === 'Enter' && addFeatureFlag()}
+                  minChars={0}
+                  showSearchIcon={false}
+                  clearable={false}
                 />
                 <label className="flex items-center gap-1.5 text-xs text-gray-600 whitespace-nowrap">
                   <input
@@ -306,11 +339,10 @@ export default function SettingsPage() {
         <div className="card p-6 space-y-4">
           <h3 className="text-lg font-semibold text-gray-900">Security Policy</h3>
           <p className="text-sm text-gray-500">Edit the security policy configuration as JSON.</p>
-          <textarea
+          <Autocomplete
             value={securityPolicy}
-            onChange={e => setSecurityPolicy(e.target.value)}
-            className="input w-full font-mono text-xs"
-            rows={16}
+            onChange={(value) => setSecurityPolicy(value)}
+            inputClassName="input w-full font-mono text-xs"
             placeholder='{
   "passwordMinLength": 8,
   "requireSpecialChars": true,
@@ -321,6 +353,9 @@ export default function SettingsPage() {
   "twoFactorRequired": false,
   "allowedIpRanges": []
 }'
+            minChars={0}
+            showSearchIcon={false}
+            clearable={false}
           />
           <div className="flex justify-end">
             <button onClick={handleSaveSecurity} disabled={saving} className="btn-primary text-sm">

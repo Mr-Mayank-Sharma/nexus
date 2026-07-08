@@ -7,6 +7,7 @@ import {
 import { useToast } from '../hooks/useToast'
 import { integrationHub, ConnectorMetadata, ConnectorInstance, BatchJob } from '../api/integrationHub'
 import StatusBadge from '../components/common/StatusBadge'
+import Autocomplete from '../components/common/Autocomplete'
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'E-Commerce': <Package className="w-4 h-4" />,
@@ -143,7 +144,7 @@ export default function IntegrationHubPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Integration Hub</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5"><Plug className="w-7 h-7 text-primary-500" /> Integration Hub</h1>
           <p className="text-sm text-gray-500 mt-1">Enterprise connector framework — 40+ platforms, REST/GraphQL/SOAP/EDI</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -322,13 +323,13 @@ export default function IntegrationHubPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Store Code</label>
-                  <input value={form.storeCode || ''} onChange={e => setForm({ ...form, storeCode: e.target.value })}
-                    className="input w-full font-mono text-sm" placeholder={selectedPlatform.platformType.toLowerCase()} />
+                  <Autocomplete value={form.storeCode || ''} onChange={v => setForm({ ...form, storeCode: v })}
+                    className="input w-full font-mono text-sm" placeholder={selectedPlatform.platformType.toLowerCase()} minChars={0} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Store Name</label>
-                  <input value={form.storeName || ''} onChange={e => setForm({ ...form, storeName: e.target.value })}
-                    className="input w-full text-sm" placeholder={`${selectedPlatform.name} Store`} />
+                  <Autocomplete value={form.storeName || ''} onChange={v => setForm({ ...form, storeName: v })}
+                    className="input w-full text-sm" placeholder={`${selectedPlatform.name} Store`} minChars={0} />
                 </div>
               </div>
 
@@ -339,9 +340,9 @@ export default function IntegrationHubPage() {
                     <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                     </label>
-                    <input type="password" value={form[key] || ''}
-                      onChange={e => setForm({ ...form, [key]: e.target.value })}
-                      className="input w-full font-mono text-sm" placeholder={key} />
+                    <Autocomplete value={form[key] || ''}
+                      onChange={v => setForm({ ...form, [key]: v })}
+                      className="input w-full font-mono text-sm" placeholder={key} minChars={0} />
                   </div>
                 ))}
               </div>

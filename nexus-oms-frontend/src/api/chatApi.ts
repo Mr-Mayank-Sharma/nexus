@@ -11,6 +11,6 @@ export interface ChatRequest {
 }
 
 export async function sendChatMessage(request: ChatRequest): Promise<string> {
-  const { data } = await client.post('/api/ai/chat', request)
+    const { data } = await client.post('/ai/chat', request)
   return data.data.content
 }

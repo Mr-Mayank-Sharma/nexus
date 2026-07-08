@@ -138,6 +138,17 @@ export default function InventoryPage() {
         searchValue={search}
         onSearch={(v) => { setSearch(v); setPage(1) }}
         searchPlaceholder="Search by SKU or product name..."
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            if (!q) return inventory.slice(0, 10)
+            const term = q.toLowerCase()
+            return inventory.filter(i => i.sku?.toLowerCase().includes(term) || i.productName?.toLowerCase().includes(term)).slice(0, 10)
+          },
+          onSelect: (item: Inventory) => setSearch(item.sku),
+          getOptionLabel: (item: Inventory) => `${item.sku} — ${item.productName || ''} (Qty: ${item.quantityOnHand ?? 0})`,
+          getOptionValue: (item: Inventory) => item.sku,
+          minChars: 1,
+        }}
         filters={
           <>
             <select className="enterprise-input w-44" value={nodeFilter} onChange={(e) => { setNodeFilter(e.target.value); setPage(1) }}>

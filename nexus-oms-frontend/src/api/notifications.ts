@@ -6,8 +6,9 @@ export async function getTemplates(page: number, size: number): Promise<ApiRespo
   try {
     const { data } = await client.get('/notifications/templates', { params: { page, size } })
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch templates')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get templates'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -15,8 +16,9 @@ export async function getTemplate(id: string): Promise<ApiResponse<NotificationT
   try {
     const { data } = await client.get(`/notifications/templates/${id}`)
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch template')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get template'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -24,8 +26,9 @@ export async function createTemplate(templateData: Record<string, any>): Promise
   try {
     const { data } = await client.post('/notifications/templates', templateData)
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to create template')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to create template'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -33,8 +36,9 @@ export async function updateTemplate(id: string, templateData: Record<string, an
   try {
     const { data } = await client.put(`/notifications/templates/${id}`, templateData)
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to update template')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to update template'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -42,8 +46,9 @@ export async function sendNotification(channel: string, recipient: string, templ
   try {
     const { data } = await client.post('/notifications/send', { channel, recipient, templateCode, variables })
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to send notification')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to send notification'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -51,8 +56,9 @@ export async function getNotificationLogs(page: number, size: number): Promise<A
   try {
     const { data } = await client.get('/notifications/logs', { params: { page, size } })
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch notification logs')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get notification logs'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -60,8 +66,9 @@ export async function getAlertRules(page: number, size: number): Promise<ApiResp
   try {
     const { data } = await client.get('/notifications/alerts', { params: { page, size } })
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch alert rules')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get alert rules'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -69,8 +76,9 @@ export async function createAlertRule(ruleData: Record<string, any>): Promise<Ap
   try {
     const { data } = await client.post('/notifications/alerts', ruleData)
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to create alert rule')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to create alert rule'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -78,8 +86,9 @@ export async function toggleAlertRule(id: string): Promise<ApiResponse<AlertRule
   try {
     const { data } = await client.put(`/notifications/alerts/${id}/toggle`)
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to toggle alert rule')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to toggle alert rule'
+    return { success: false, error: msg } as any
   }
 }
 
@@ -87,7 +96,8 @@ export async function getUnreadCount(): Promise<ApiResponse<{ count: number }>> 
   try {
     const { data } = await client.get('/notifications/unread-count')
     return data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || error.message || 'Failed to fetch unread count')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get unread count'
+    return { success: false, error: msg } as any
   }
 }

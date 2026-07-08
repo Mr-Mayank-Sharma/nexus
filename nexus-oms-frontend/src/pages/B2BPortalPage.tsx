@@ -9,6 +9,7 @@ import * as customersApi from '../api/customers'
 import * as returnsApi from '../api/returns'
 import * as ordersApi from '../api/orders'
 import type { Customer, Return, Order } from '../types'
+import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 
 const STATUS_BADGES: Record<string, string> = {
@@ -153,24 +154,18 @@ export default function B2BPortalPage() {
       {/* Page Header */}
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
-            <Store className="w-6 h-6 text-primary-600" />
-          </div>
           <div>
-            <h1>B2B Customer Portal</h1>
+            <h1 className="flex items-center gap-2.5"><Store className="w-6 h-6 text-primary-600" />B2B Customer Portal</h1>
             <p>Self-service order management and returns</p>
           </div>
         </div>
-        <select
-          className="enterprise-select w-64"
+        <Autocomplete
           value={selectedCustomerId || ''}
-          onChange={e => setSelectedCustomerId(e.target.value || null)}
-        >
-          {customers.length === 0 && <option value="">No customers</option>}
-          {customers.map(c => (
-            <option key={c.id} value={c.id}>{c.name} &mdash; {c.email}</option>
-          ))}
-        </select>
+          onChange={val => setSelectedCustomerId(val || null)}
+          minChars={0}
+          suggestions={customers.map(c => c.id)}
+          className="w-64"
+        />
       </div>
 
       {/* Customer Profile Card */}
@@ -423,35 +418,21 @@ export default function B2BPortalPage() {
             <div className="enterprise-modal-body space-y-5">
               <div className="enterprise-form-group">
                 <label>Order Number</label>
-                <select className="enterprise-select" value={returnForm.orderId} onChange={e => setReturnForm(f => ({ ...f, orderId: e.target.value }))}>
-                  <option value="">Select an order...</option>
-                  {portalOrders.map(o => (
-                    <option key={o.id} value={o.id}>{o.orderNumber} &mdash; ${o.total.toFixed(2)}</option>
-                  ))}
-                </select>
+                <Autocomplete value={returnForm.orderId} onChange={val => setReturnForm(f => ({ ...f, orderId: val }))} suggestions={portalOrders.map(o => o.id)} minChars={0} />
               </div>
               <div className="enterprise-form-group">
                 <label>Items (SKUs, comma separated)</label>
-                <input type="text" className="enterprise-input" placeholder="SKU-001, SKU-002" value={returnForm.items} onChange={e => setReturnForm(f => ({ ...f, items: e.target.value }))} />
+                <Autocomplete value={returnForm.items} onChange={val => setReturnForm(f => ({ ...f, items: val }))} placeholder="SKU-001, SKU-002" minChars={0} inputClassName="enterprise-input" />
               </div>
               <div className="enterprise-form-group">
                 <label>Reason for Return</label>
-                <select className="enterprise-select" value={returnForm.reason} onChange={e => setReturnForm(f => ({ ...f, reason: e.target.value }))}>
-                  <option value="">Select a reason...</option>
-                  <option value="DEFECTIVE">Defective / Not Working</option>
-                  <option value="WRONG_ITEM">Wrong Item Shipped</option>
-                  <option value="DAMAGED">Damaged in Transit</option>
-                  <option value="NOT_AS_DESC">Not as Described</option>
-                  <option value="CHANGED_MIND">Changed Mind</option>
-                  <option value="DUPLICATE">Duplicate Order</option>
-                  <option value="OTHER">Other</option>
-                </select>
+                <Autocomplete value={returnForm.reason} onChange={val => setReturnForm(f => ({ ...f, reason: val }))} suggestions={['DEFECTIVE', 'WRONG_ITEM', 'DAMAGED', 'NOT_AS_DESC', 'CHANGED_MIND', 'DUPLICATE', 'OTHER']} minChars={0} />
               </div>
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setReturnRequestOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleReturnRequest} disabled={processing || !returnForm.orderId || !returnForm.reason} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                {processing && <Loader2 className="w-4 h-4 animate-spin" />}
+                {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                 Submit Request
               </button>
             </div>

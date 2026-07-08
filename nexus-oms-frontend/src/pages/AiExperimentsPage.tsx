@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Brain, FlaskConical, Play, CheckCircle2, XCircle, RotateCcw, AlertTriangle, Plus, Loader2 } from 'lucide-react'
+import { Brain, Edit, FlaskConical, Play, CheckCircle2, XCircle, RotateCcw, AlertTriangle, Plus, Loader2 } from 'lucide-react'
 import { AiExperiment } from '../types'
 import {
   getExperiments, createExperiment, updateExperiment,
@@ -9,6 +9,7 @@ import { getModels, AiModel } from '../api/aiPlatform'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
+import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 
 const EXPERIMENT_TYPES = ['A_B_TEST', 'CHAMPION_CHALLENGER', 'MULTIVARIATE', 'CANARY'] as const
@@ -125,7 +126,7 @@ export default function AiExperimentsPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Experiments</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><FlaskConical className="w-5 h-5" />Experiments</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-0.5">A/B test and champion/challenger experiments for AI models</p>
         </div>
         <button onClick={() => setShowCreate(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
@@ -142,16 +143,13 @@ export default function AiExperimentsPage() {
       </div>
 
       <div className="flex gap-2 flex-wrap items-center">
-        <select
+        <Autocomplete
           value={modelFilter}
-          onChange={e => { setModelFilter(e.target.value); setPage(0) }}
-          className="enterprise-input text-sm w-auto"
-        >
-          <option value="">All models</option>
-          {models.map(m => (
-            <option key={m.id} value={m.id}>{m.displayName || m.name || m.modelType}</option>
-          ))}
-        </select>
+          onChange={val => { setModelFilter(val); setPage(0) }}
+          minChars={0}
+          suggestions={models.map(m => m.id)}
+          inputClassName="enterprise-input text-sm w-auto"
+        />
         {['', ...STATUS_OPTIONS].map(s => (
           <button key={s}
             onClick={() => { setStatusFilter(s); setPage(0) }}
@@ -169,7 +167,10 @@ export default function AiExperimentsPage() {
       {loading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>
       ) : experiments.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">No experiments found</div>
+        <div className="text-center py-12">
+          <FlaskConical className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+          <p className="text-gray-400">No experiments found</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {experiments.map(exp => (
@@ -193,7 +194,9 @@ export default function AiExperimentsPage() {
                   <div className="flex items-center gap-2">
                     {exp.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700">Edit</button>
+                        <button onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-1">
+                          <Edit className="w-3 h-3" /> Edit
+                        </button>
                         <button onClick={() => handleStart(exp.id)} className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-1">
                           <Play className="w-3 h-3" /> Start
                         </button>
@@ -304,53 +307,44 @@ function ExperimentFormModal({ models, experiment, saving, onSave, onClose }: {
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
-            <input value={name} onChange={e => setName(e.target.value)} required
-              className="enterprise-input w-full" placeholder="e.g. Demand V2 vs V3 A/B Test" />
+            <Autocomplete value={name} onChange={setName} required
+              minChars={0} inputClassName="enterprise-input w-full" placeholder="e.g. Demand V2 vs V3 A/B Test" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <textarea value={description} onChange={e => setDescription(e.target.value)} rows={3}
-              className="enterprise-input w-full" placeholder="Describe the experiment hypothesis" />
+            <Autocomplete value={description} onChange={setDescription}
+              minChars={0} inputClassName="enterprise-input w-full" placeholder="Describe the experiment hypothesis" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model *</label>
-            <select value={modelId} onChange={e => setModelId(e.target.value)} required className="enterprise-input w-full">
-              <option value="">Select model</option>
-              {models.map(m => (
-                <option key={m.id} value={m.id}>{m.displayName || m.name || m.modelType}</option>
-              ))}
-            </select>
+            <Autocomplete value={modelId} onChange={setModelId} required minChars={0} suggestions={models.map(m => m.id)} inputClassName="enterprise-input w-full" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Experiment Type</label>
-            <select value={experimentType} onChange={e => setExperimentType(e.target.value)} className="enterprise-input w-full">
-              {EXPERIMENT_TYPES.map(t => (
-                <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
-              ))}
-            </select>
+            <Autocomplete value={experimentType} onChange={setExperimentType} minChars={0} suggestions={[...EXPERIMENT_TYPES]} inputClassName="enterprise-input w-full" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Champion Version ID</label>
-              <input value={championVersionId} onChange={e => setChampionVersionId(e.target.value)}
-                className="enterprise-input w-full font-mono text-xs" placeholder="UUID" />
+              <Autocomplete value={championVersionId} onChange={setChampionVersionId}
+                minChars={0} inputClassName="enterprise-input w-full font-mono text-xs" placeholder="UUID" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Challenger Version ID</label>
-              <input value={challengerVersionId} onChange={e => setChallengerVersionId(e.target.value)}
-                className="enterprise-input w-full font-mono text-xs" placeholder="UUID" />
+              <Autocomplete value={challengerVersionId} onChange={setChallengerVersionId}
+                minChars={0} inputClassName="enterprise-input w-full font-mono text-xs" placeholder="UUID" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Traffic Split</label>
-              <input value={trafficSplit} onChange={e => setTrafficSplit(e.target.value)} type="number" step="0.01" min="0" max="1"
-                className="enterprise-input w-full" />
+              <Autocomplete value={trafficSplit} onChange={setTrafficSplit}
+                minChars={0} inputClassName="enterprise-input w-full" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Success Metric</label>
-              <input value={successMetric} onChange={e => setSuccessMetric(e.target.value)}
-                className="enterprise-input w-full" placeholder="e.g. accuracy, latency" />
+              <Autocomplete value={successMetric} onChange={setSuccessMetric}
+                minChars={0} inputClassName="enterprise-input w-full" placeholder="e.g. accuracy, latency" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

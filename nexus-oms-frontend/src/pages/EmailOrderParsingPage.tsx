@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import * as emailParserApi from '../api/emailParser'
 import type { EmailParsedOrder } from '../types'
+import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 
 const STATUS_BADGES: Record<string, string> = {
@@ -127,11 +128,8 @@ export default function EmailOrderParsingPage() {
       {/* Page Header */}
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center">
-            <Mail className="w-6 h-6 text-rose-600" />
-          </div>
           <div>
-            <h1>Email Order Parsing</h1>
+            <h1 className="flex items-center gap-2.5"><Mail className="w-6 h-6 text-rose-600" />Email Order Parsing</h1>
             <p>Parse orders from email content, PDFs, and CSV attachments</p>
           </div>
         </div>
@@ -166,11 +164,7 @@ export default function EmailOrderParsingPage() {
       {/* Toolbar */}
       <div className="enterprise-toolbar">
         <div className="enterprise-toolbar-left">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" placeholder="Search orders..." className="enterprise-input pl-9 w-64"
-              value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
+          <Autocomplete value={search} onChange={setSearch} placeholder="Search orders..." minChars={0} />
           <select className="enterprise-select w-40" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0) }}>
             <option value="">All Status</option>
             <option value="NEW">New</option>

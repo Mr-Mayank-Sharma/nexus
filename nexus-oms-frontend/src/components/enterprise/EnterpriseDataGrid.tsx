@@ -175,17 +175,21 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={columns.filter(c => visibleColumns.has(c.key)).length + (selectable ? 1 : 0)}>
-                    {[1, 2, 3, 4, 5].map(i => (
-                      <div key={i} className="flex gap-4 p-3">
-                        {columns.filter(c => visibleColumns.has(c.key)).map((_, j) => (
-                          <div key={j} className="enterprise-skeleton h-4 flex-1" />
-                        ))}
-                      </div>
-                    ))}
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    {selectable && (
+                      <td className="w-10"><div className="enterprise-skeleton w-4 h-4 rounded mx-auto" /></td>
+                    )}
+                    {columns.filter(c => visibleColumns.has(c.key)).map((col, j) => {
+                      const skeletonWidths = ['55%', '75%', '45%', '85%', '60%', '70%', '50%', '80%']
+                      return (
+                        <td key={col.key}>
+                          <div className="enterprise-skeleton h-4" style={{ width: skeletonWidths[j % skeletonWidths.length] }} />
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))
               ) : sortedData.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length + (selectable ? 1 : 0)}>

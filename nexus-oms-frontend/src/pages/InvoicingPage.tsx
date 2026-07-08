@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Receipt, CreditCard, FileText, Plus, Search, X, DollarSign, Loader2 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as invoicingApi from '../api/invoicing'
+import Autocomplete from '../components/common/Autocomplete'
 import { Invoice, InvoiceItem, Payment, CreditMemo } from '../api/invoicing'
 
 type Tab = 'invoices' | 'payments' | 'credit-memos'
@@ -152,8 +153,8 @@ export default function InvoicingPage() {
       setLoadingInvoices(true)
       const res = await invoicingApi.getInvoices(invoicePage - 1, pageSize)
       const d = res.data
-      setInvoices(d.content || [])
-      setInvoiceTotalPages(d.totalPages || 1)
+      setInvoices(Array.isArray(d) ? d : (d?.content || []))
+      setInvoiceTotalPages(res.pagination?.totalPages || (d?.totalPages || 1))
     } catch {
       addToast({ type: 'error', title: 'Failed to load invoices' })
     } finally { setLoadingInvoices(false) }
@@ -164,8 +165,8 @@ export default function InvoicingPage() {
       setLoadingPayments(true)
       const res = await invoicingApi.getPayments(paymentPage - 1, pageSize)
       const d = res.data
-      setPayments(d.content || [])
-      setPaymentTotalPages(d.totalPages || 1)
+      setPayments(Array.isArray(d) ? d : (d?.content || []))
+      setPaymentTotalPages(res.pagination?.totalPages || (d?.totalPages || 1))
     } catch {
       addToast({ type: 'error', title: 'Failed to load payments' })
     } finally { setLoadingPayments(false) }
@@ -176,8 +177,8 @@ export default function InvoicingPage() {
       setLoadingMemos(true)
       const res = await invoicingApi.getCreditMemos(memoPage - 1, pageSize)
       const d = res.data
-      setCreditMemos(d.content || [])
-      setMemoTotalPages(d.totalPages || 1)
+      setCreditMemos(Array.isArray(d) ? d : (d?.content || []))
+      setMemoTotalPages(res.pagination?.totalPages || (d?.totalPages || 1))
     } catch {
       addToast({ type: 'error', title: 'Failed to load credit memos' })
     } finally { setLoadingMemos(false) }
@@ -418,7 +419,7 @@ export default function InvoicingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Invoicing</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Receipt className="w-7 h-7 text-primary-500" /> Invoicing</h1>
           <p className="text-sm text-gray-500 mt-1">Manage invoices, payments, and credit memos</p>
         </div>
       </div>
@@ -471,10 +472,7 @@ export default function InvoicingPage() {
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input value={invoiceSearch} onChange={e => setInvoiceSearch(e.target.value)} className="input pl-9 w-64 text-sm" placeholder="Search invoices..." />
-              </div>
+              <Autocomplete value={invoiceSearch} onChange={setInvoiceSearch} placeholder="Search invoices..." minChars={0} />
             </div>
             <button onClick={() => setShowCreateInvoice(true)} className="btn-primary text-sm">
               <Plus className="w-4 h-4" /> Create Invoice
@@ -668,11 +666,8 @@ export default function InvoicingPage() {
       {tab === 'payments' && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input value={paymentSearch} onChange={e => setPaymentSearch(e.target.value)} className="input pl-9 w-64 text-sm" placeholder="Search payments..." />
-            </div>
-            <button onClick={() => openRecordPayment()} className="btn-primary text-sm">
+          <Autocomplete value={paymentSearch} onChange={setPaymentSearch} placeholder="Search payments..." minChars={0} />
+          <button onClick={() => openRecordPayment()} className="btn-primary text-sm">
               <Plus className="w-4 h-4" /> Record Payment
             </button>
           </div>
@@ -740,10 +735,7 @@ export default function InvoicingPage() {
       {tab === 'credit-memos' && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input value={memoSearch} onChange={e => setMemoSearch(e.target.value)} className="input pl-9 w-64 text-sm" placeholder="Search credit memos..." />
-            </div>
+            <Autocomplete value={memoSearch} onChange={setMemoSearch} placeholder="Search credit memos..." minChars={0} />
             <button onClick={() => setShowCreateMemo(true)} className="btn-primary text-sm">
               <Plus className="w-4 h-4" /> Create Credit Memo
             </button>

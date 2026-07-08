@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import { EnterpriseKPICard, EnterpriseBreadcrumbs, EnterpriseStatusBadge } from '../components/enterprise'
 import { AiModel, TrainingRun } from '../types'
 import { useToast } from '../hooks/useToast'
+import Autocomplete from '../components/common/Autocomplete'
 import * as aiApi from '../api/ai'
 import * as aiPlatformApi from '../api/aiPlatform'
 
@@ -222,7 +223,7 @@ export default function AiPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)]">AI Models</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Brain className="w-5 h-5" />AI Models</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
             Machine learning model health and performance
             {!models && (
@@ -334,11 +335,12 @@ export default function AiPage() {
               <div className="flex items-end gap-3">
                 <div className="flex-1">
                   <label className="block text-xs text-[var(--text-secondary)] mb-1">Input Parameters (JSON)</label>
-                  <textarea
-                    className="enterprise-input w-full min-h-[96px] font-mono text-xs resize-y leading-relaxed"
-                    placeholder='{ "feature1": "value1", "feature2": 42 }'
+                  <Autocomplete
                     value={testInput}
-                    onChange={e => setTestInput(e.target.value)}
+                    onChange={setTestInput}
+                    placeholder='{ "feature1": "value1", "feature2": 42 }'
+                    minChars={0}
+                    inputClassName="enterprise-input w-full min-h-[96px] font-mono text-xs resize-y leading-relaxed"
                   />
                 </div>
                 <button

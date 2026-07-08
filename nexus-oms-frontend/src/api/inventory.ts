@@ -23,7 +23,7 @@ export async function getInventoryBySku(sku: string): Promise<ApiResponse<Invent
 
 export async function getAtp(sku: string): Promise<ApiResponse<{ sku: string; atp: number }>> {
   try {
-    const { data } = await client.get('/inventory/atp', { params: { sku } })
+    const { data } = await client.get('/inventory', { params: { sku } })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get ATP'
@@ -31,9 +31,9 @@ export async function getAtp(sku: string): Promise<ApiResponse<{ sku: string; at
   }
 }
 
-export async function adjustInventory(id: string, quantityChange: number): Promise<ApiResponse<Inventory>> {
+export async function adjustInventory(sku: string, quantity: number, reason: string): Promise<ApiResponse<Inventory>> {
   try {
-    const { data } = await client.put('/inventory/adjust', { id, quantityChange })
+    const { data } = await client.post('/inventory/adjust', { sku, quantity, reason })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to adjust inventory'

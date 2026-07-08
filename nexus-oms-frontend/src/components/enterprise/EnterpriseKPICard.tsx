@@ -16,12 +16,12 @@ interface Props {
 }
 
 const iconColorMap = {
-  primary: 'text-blue-600 bg-blue-50 ring-blue-500/20',
-  success: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20',
-  warning: 'text-amber-600 bg-amber-50 ring-amber-500/20',
-  error: 'text-red-600 bg-red-50 ring-red-500/20',
-  info: 'text-cyan-600 bg-cyan-50 ring-cyan-500/20',
-  ai: 'text-violet-600 bg-violet-50 ring-violet-500/20',
+  primary: 'text-blue-600 bg-blue-50 ring-blue-500/20 dark:text-blue-400 dark:bg-blue-900/30 dark:ring-blue-400/20',
+  success: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-900/30 dark:ring-emerald-400/20',
+  warning: 'text-amber-600 bg-amber-50 ring-amber-500/20 dark:text-amber-400 dark:bg-amber-900/30 dark:ring-amber-400/20',
+  error: 'text-red-600 bg-red-50 ring-red-500/20 dark:text-red-400 dark:bg-red-900/30 dark:ring-red-400/20',
+  info: 'text-cyan-600 bg-cyan-50 ring-cyan-500/20 dark:text-cyan-400 dark:bg-cyan-900/30 dark:ring-cyan-400/20',
+  ai: 'text-violet-600 bg-violet-50 ring-violet-500/20 dark:text-violet-400 dark:bg-violet-900/30 dark:ring-violet-400/20',
 }
 
 export default function EnterpriseKPICard({ title, value, subtitle, icon, trend, trendValue, color = 'primary', loading, onClick, className }: Props) {

@@ -7,6 +7,7 @@ import {
 import * as rateShoppingApi from '../api/rateShopping'
 import type { RateQuote, RateShoppingResult } from '../types'
 import { useToast } from '../hooks/useToast'
+import Autocomplete from '../components/common/Autocomplete'
 
 const SERVICE_LEVELS = [
   { value: '', label: 'All Services' },
@@ -73,11 +74,8 @@ export default function CarrierRateShoppingPage() {
       {/* Page Header */}
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-            <Truck className="w-6 h-6 text-emerald-600" />
-          </div>
           <div>
-            <h1>Carrier Rate Shopping</h1>
+            <h1 className="flex items-center gap-2.5"><Truck className="w-6 h-6 text-emerald-600" />Carrier Rate Shopping</h1>
             <p>Compare real-time rates across carriers to find the best shipping option</p>
           </div>
         </div>
@@ -90,54 +88,48 @@ export default function CarrierRateShoppingPage() {
             <label className="flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-gray-400" /> Origin ZIP
             </label>
-            <input
-              type="text"
+            <Autocomplete
               className="enterprise-input"
               placeholder="94105"
-              maxLength={10}
               value={fromZip}
-              onChange={e => setFromZip(e.target.value)}
+              onChange={v => setFromZip(v)}
+              minChars={0}
             />
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-gray-400" /> Destination ZIP
             </label>
-            <input
-              type="text"
+            <Autocomplete
               className="enterprise-input"
               placeholder="10001"
-              maxLength={10}
               value={toZip}
-              onChange={e => setToZip(e.target.value)}
+              onChange={v => setToZip(v)}
+              minChars={0}
             />
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
               <Scale className="w-3.5 h-3.5 text-gray-400" /> Weight (kg)
             </label>
-            <input
-              type="number"
+            <Autocomplete
               className="enterprise-input"
               placeholder="5.0"
-              min={0}
-              step={0.1}
               value={weight}
-              onChange={e => setWeight(e.target.value)}
+              onChange={v => setWeight(v)}
+              minChars={0}
             />
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-gray-400" /> Declared Value
             </label>
-            <input
-              type="number"
+            <Autocomplete
               className="enterprise-input"
               placeholder="100.00"
-              min={0}
-              step={0.01}
               value={declaredValue}
-              onChange={e => setDeclaredValue(e.target.value)}
+              onChange={v => setDeclaredValue(v)}
+              minChars={0}
             />
           </div>
         </div>
@@ -146,24 +138,19 @@ export default function CarrierRateShoppingPage() {
             <label className="flex items-center gap-1.5">
               <Package className="w-3.5 h-3.5 text-gray-400" /> Packages
             </label>
-            <input
-              type="number"
+            <Autocomplete
               className="enterprise-input"
               placeholder="1"
-              min={1}
               value={numPackages}
-              onChange={e => setNumPackages(e.target.value)}
+              onChange={v => setNumPackages(v)}
+              minChars={0}
             />
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
               <Zap className="w-3.5 h-3.5 text-gray-400" /> Service Level
             </label>
-            <select className="enterprise-select" value={serviceLevel} onChange={e => setServiceLevel(e.target.value)}>
-              {SERVICE_LEVELS.map(sl => (
-                <option key={sl.value} value={sl.value}>{sl.label}</option>
-              ))}
-            </select>
+            <Autocomplete className="enterprise-select" value={serviceLevel} onChange={v => setServiceLevel(v)} suggestions={SERVICE_LEVELS} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
           </div>
           <div className="enterprise-form-group flex items-end">
             <label className="flex items-center gap-2 cursor-pointer">

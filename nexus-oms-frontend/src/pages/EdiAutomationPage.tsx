@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import * as ediApi from '../api/edi'
 import type { EdiDocument } from '../types'
+import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 
 const DOC_TYPE_BADGES: Record<string, string> = {
@@ -125,11 +126,8 @@ export default function EdiAutomationPage() {
       {/* Page Header */}
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center">
-            <FileText className="w-6 h-6 text-cyan-600" />
-          </div>
           <div>
-            <h1>EDI Automation</h1>
+            <h1 className="flex items-center gap-2.5"><FileText className="w-6 h-6 text-cyan-600" />EDI Automation</h1>
             <p>Process 850 Purchase Orders, 856 ASNs, and 810 Invoices</p>
           </div>
         </div>
@@ -164,16 +162,7 @@ export default function EdiAutomationPage() {
       {/* Toolbar */}
       <div className="enterprise-toolbar">
         <div className="enterprise-toolbar-left">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search documents..."
-              className="enterprise-input pl-9 w-64"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
-          </div>
+          <Autocomplete value={search} onChange={setSearch} placeholder="Search documents..." minChars={0} />
           <select className="enterprise-select w-40" value={docTypeFilter} onChange={e => { setDocTypeFilter(e.target.value); setPage(0) }}>
             <option value="">All Types</option>
             <option value="850">850 - Purchase Order</option>

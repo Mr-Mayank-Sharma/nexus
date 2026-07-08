@@ -12,6 +12,7 @@ import type { Column, Tab } from '../components/enterprise'
 import * as notificationsApi from '../api/notifications'
 import type { NotificationLog } from '../api/notifications'
 import { useToast } from '../hooks/useToast'
+import Autocomplete from '../components/common/Autocomplete'
 
 interface NotificationItem {
   id: string
@@ -53,6 +54,12 @@ const typeBadgeColors: Record<string, string> = {
 }
 
 const typeOptions = ['order', 'alert', 'payment', 'shipment', 'system', 'success']
+
+const readFilterOpts = [
+  { value: 'all', label: 'All' },
+  { value: 'read', label: 'Read' },
+  { value: 'unread', label: 'Unread' },
+]
 
 function CreditCardIcon({ className }: { className?: string }) {
   return (
@@ -141,15 +148,17 @@ export default function NotificationsCenter() {
 
       if (logsRes.status === 'fulfilled') {
         const d = logsRes.value.data
-        setNotifications((d.content || []).map(mapLogToItem))
-        setTotalElements(d.totalElements ?? 0)
+        const items = Array.isArray(d) ? d : (d?.content || [])
+        setNotifications(items.map(mapLogToItem))
+        setTotalElements(Array.isArray(d) ? (logsRes.value.pagination?.total ?? 0) : (d?.totalElements ?? 0))
       } else {
         setNotifications([])
         setTotalElements(0)
       }
 
       if (rulesRes.status === 'fulfilled') {
-        setAlertRulesCount(rulesRes.value.data.totalElements ?? 0)
+        const d = rulesRes.value.data
+        setAlertRulesCount(Array.isArray(d) ? (rulesRes.value.pagination?.total ?? 0) : (d?.totalElements ?? 0))
       } else {
         setAlertRulesCount(0)
       }
@@ -470,20 +479,20 @@ export default function NotificationsCenter() {
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-[var(--text-secondary)]">From</span>
-            <input
-              type="date"
+            <Autocomplete
               className="enterprise-input text-sm py-1.5"
               value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)}
+              onChange={v => setDateFrom(v)}
+              minChars={0}
             />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-[var(--text-secondary)]">To</span>
-            <input
-              type="date"
+            <Autocomplete
               className="enterprise-input text-sm py-1.5"
               value={dateTo}
-              onChange={e => setDateTo(e.target.value)}
+              onChange={v => setDateTo(v)}
+              minChars={0}
             />
           </div>
           <div className="w-px h-6 bg-[var(--border-color)]" />
@@ -504,15 +513,15 @@ export default function NotificationsCenter() {
             ))}
           </div>
           <div className="w-px h-6 bg-[var(--border-color)]" />
-          <select
+          <Autocomplete
             className="enterprise-input text-sm py-1.5"
             value={readFilter}
-            onChange={e => setReadFilter(e.target.value as 'all' | 'read' | 'unread')}
-          >
-            <option value="all">All</option>
-            <option value="read">Read</option>
-            <option value="unread">Unread</option>
-          </select>
+            onChange={v => setReadFilter(v as 'all' | 'read' | 'unread')}
+            suggestions={readFilterOpts}
+            getOptionLabel={o => o.label}
+            getOptionValue={o => o.value}
+            minChars={0}
+          />
           <div className="flex-1" />
           <button
             className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm"

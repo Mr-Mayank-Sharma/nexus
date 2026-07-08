@@ -148,6 +148,39 @@ export interface ApiResponse<T> {
   }
 }
 
+export type UserRole =
+  | 'ADMIN'
+  | 'CEO'
+  | 'OPS_MANAGER'
+  | 'WAREHOUSE_MANAGER'
+  | 'PICKER'
+  | 'PACKER'
+  | 'LOADER'
+  | 'STORE_MANAGER'
+  | 'BOPIS_OWNER'
+  | 'CUSTOMER_SUPPORT'
+  | 'PROCUREMENT_MANAGER'
+  | 'FINANCE'
+  | 'LOGISTICS_MANAGER'
+  | 'VIEWER'
+
+export const ROLE_HIERARCHY: Record<UserRole, number> = {
+  ADMIN: 100,
+  CEO: 90,
+  OPS_MANAGER: 80,
+  WAREHOUSE_MANAGER: 70,
+  STORE_MANAGER: 70,
+  LOGISTICS_MANAGER: 70,
+  PROCUREMENT_MANAGER: 60,
+  FINANCE: 60,
+  BOPIS_OWNER: 60,
+  CUSTOMER_SUPPORT: 50,
+  PICKER: 40,
+  PACKER: 40,
+  LOADER: 40,
+  VIEWER: 10,
+}
+
 export interface User {
   id: string
   username: string
@@ -156,9 +189,8 @@ export interface User {
   role: UserRole
   avatar?: string
   permissions: string[]
+  securityGroups?: string[]
 }
-
-export type UserRole = 'ADMIN' | 'MANAGER' | 'OPERATOR' | 'VIEWER'
 
 export interface AuthResponse {
   accessToken: string
@@ -174,6 +206,8 @@ export interface AuthResponse {
   fullName?: string
   passwordResetRequired?: boolean
   ssoProvider?: string
+  permissions?: string[]
+  securityGroups?: string[]
 }
 
 export interface LoginRequest {

@@ -9,6 +9,7 @@ import type {
   Warehouse, WarehouseZone, WarehouseBin, WarehouseStaff, WarehouseEquipment,
 } from '../api/warehouse'
 import { useToast } from '../hooks/useToast'
+import Autocomplete from '../components/common/Autocomplete'
 import StatusBadge from '../components/common/StatusBadge'
 
 interface WarehouseFormData {
@@ -722,7 +723,7 @@ export default function WarehousePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Warehouses</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Building2 className="w-7 h-7 text-primary-500" /> Warehouses</h1>
           <p className="text-sm text-gray-500 mt-1">
             {warehouses.length} facilities &middot; {avgUtil}% avg. capacity
           </p>
@@ -753,16 +754,7 @@ export default function WarehousePage() {
         />
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Search by name or code..."
-          className="input pl-10"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      <Autocomplete value={search} onChange={setSearch} placeholder="Search by name or code..." minChars={0} className="max-w-md" />
 
       {loading ? (
         <div className="flex items-center justify-center p-12">
@@ -916,7 +908,7 @@ export default function WarehousePage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowWhModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSaveWarehouse} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
                 Create Warehouse
               </button>
             </div>
@@ -962,7 +954,7 @@ export default function WarehousePage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowZoneModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSaveZone} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create Zone
               </button>
             </div>
@@ -1044,7 +1036,7 @@ export default function WarehousePage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowBinModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSaveBin} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create Bin
               </button>
             </div>
@@ -1094,7 +1086,7 @@ export default function WarehousePage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowStaffModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSaveStaff} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Add Staff
               </button>
             </div>
@@ -1143,7 +1135,7 @@ export default function WarehousePage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowEquipModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleSaveEquipment} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
                 Add Equipment
               </button>
             </div>

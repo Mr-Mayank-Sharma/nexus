@@ -1,6 +1,7 @@
 import { useState, useEffect, Fragment } from 'react'
 import { FileText, File, Upload, Download, Plus, Search, X, Clock, Tag } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
+import Autocomplete from '../components/common/Autocomplete'
 import * as documentsApi from '../api/documents'
 
 const typeColors: Record<string, string> = {
@@ -152,7 +153,7 @@ export default function DocumentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><FileText className="w-6 h-6" />Documents</h1>
           <p className="text-sm text-gray-500 mt-1">Manage documents and files across entities</p>
         </div>
         <button onClick={openUpload} className="btn-primary text-sm">
@@ -161,15 +162,7 @@ export default function DocumentsPage() {
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="input w-full pl-9"
-            placeholder="Search by title..."
-          />
-        </div>
+        <Autocomplete value={search} onChange={setSearch} placeholder="Search by title..." minChars={0} className="flex-1 max-w-xs" />
         <div className="w-px h-6 bg-gray-200" />
         <select value={entityType} onChange={e => setEntityType(e.target.value)} className="input w-40">
           <option value="">Entity Type</option>

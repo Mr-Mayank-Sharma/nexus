@@ -64,7 +64,8 @@ export default function OrdersPage() {
       const params: Record<string, string> = {}
       if (activeTab !== 'ALL') params.status = activeTab
       if (search) params.search = search
-      const res: ApiResponse<Order[]> = await ordersApi.getOrders(params)
+      params.size = '5000'
+      const res: ApiResponse<Order[]> = await ordersApi.getOrders(params as any)
       const d = res.data
       if (Array.isArray(d)) return d
       if (d && typeof d === 'object' && 'content' in d) return (d as { content: Order[] }).content
@@ -145,6 +146,16 @@ export default function OrdersPage() {
         searchValue={search}
         onSearch={(v) => { setSearch(v); setPage(1) }}
         searchPlaceholder="Search orders..."
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            const res: ApiResponse<Order[]> = await ordersApi.getOrders({ search: q, size: '10' })
+            return Array.isArray(res.data) ? res.data : []
+          },
+          onSelect: (item: Order) => navigate(`/orders/${item.id}`),
+          getOptionLabel: (item: Order) => `${item.orderNumber || item.id} — ${item.customerName || ''}`,
+          getOptionValue: (item: Order) => item.id,
+          minChars: 2,
+        }}
         filters={
           <select className="enterprise-input w-40" value={channelFilter} onChange={(e) => { setChannelFilter(e.target.value); setPage(1) }}>
             <option value="ALL">All Channels</option>
@@ -166,9 +177,29 @@ export default function OrdersPage() {
         <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 rounded-lg border border-primary-200">
           <span className="text-sm text-primary-700 font-medium">{selectedIds.length} selected</span>
           <div className="w-px h-4 bg-primary-200" />
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600"><Ship className="w-3.5 h-3.5" /> Book Shipment</button>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600"><Printer className="w-3.5 h-3.5" /> Print Labels</button>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600"><RotateCcw className="w-3.5 h-3.5" /> Reassign</button>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600" onClick={() => {
+            const ready = selectedIds.filter(id => orders.find(o => o.id === id)?.status === 'ALLOCATED')
+            ready.forEach(id => ordersApi.shipOrder(id, 'auto', 'TN-BATCH-' + Date.now()))
+            addToast({ type: 'success', title: `Shipment booked for ${ready.length} orders` })
+            setTimeout(() => queryClient.invalidateQueries({ queryKey: ['orders'] }), 1000)
+          }}><Ship className="w-3.5 h-3.5" /> Book Shipment</button>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600" onClick={() => {
+            const tnList = selectedIds.map(id => {
+              const o = orders.find(o2 => o2.id === id)
+              return `${o?.orderNumber || id}: ${o?.trackingNumber || 'N/A'}`
+            }).join('\n')
+            const win = window.open('', '_blank')
+            if (win) {
+              win.document.write(`<html><head><title>Labels</title><style>body{font-family:monospace;padding:20px}pre{margin:0 0 20px;border:1px dashed #ccc;padding:10px}</style></head><body>${tnList.map(t => `<pre>${t}</pre>`).join('')}</body></html>`)
+              win.document.close()
+            }
+            addToast({ type: 'success', title: `${selectedIds.length} label(s) opened` })
+          }}><Printer className="w-3.5 h-3.5" /> Print Labels</button>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600" onClick={() => {
+            selectedIds.forEach(id => ordersApi.allocateOrder(id))
+            addToast({ type: 'success', title: `Reallocating ${selectedIds.length} orders` })
+            setTimeout(() => queryClient.invalidateQueries({ queryKey: ['orders'] }), 1000)
+          }}><RotateCcw className="w-3.5 h-3.5" /> Reassign</button>
           <button className="enterprise-btn enterprise-btn-ghost text-xs text-red-600" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
             {cancelMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
             Cancel
@@ -269,7 +300,7 @@ export default function OrdersPage() {
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
               <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
               <button className="enterprise-btn enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {createMutation.isPending ? 'Creating...' : 'Create Order'}
               </button>
             </div>

@@ -3,6 +3,7 @@ import { GitBranch, Play, List, Plus, X, Clock, Loader2, ChevronDown, ChevronRig
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import * as workflowsApi from '../api/workflows'
+import Autocomplete from '../components/common/Autocomplete'
 
 const categoryStyles: Record<string, string> = {
   ORDER: 'bg-blue-100 text-blue-800',
@@ -48,6 +49,20 @@ export default function WorkflowsPage() {
   const [executeWorkflowId, setExecuteWorkflowId] = useState<string | null>(null)
   const [executing, setExecuting] = useState(false)
   const [executeForm, setExecuteForm] = useState({ entityType: '', entityId: '', inputData: '{}' })
+
+  const categoryOptions = [
+    { value: 'ORDER', label: 'Order' },
+    { value: 'INVENTORY', label: 'Inventory' },
+    { value: 'SHIPPING', label: 'Shipping' },
+    { value: 'PROCUREMENT', label: 'Procurement' },
+    { value: 'CUSTOM', label: 'Custom' },
+  ]
+
+  const triggerTypeOptions = [
+    { value: 'EVENT', label: 'Event' },
+    { value: 'SCHEDULED', label: 'Schedule' },
+    { value: 'MANUAL', label: 'Manual' },
+  ]
 
   useEffect(() => { fetchWorkflows() }, [])
 
@@ -154,9 +169,8 @@ export default function WorkflowsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <GitBranch className="w-6 h-6 text-gray-700" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Workflows</h1>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><GitBranch className="w-6 h-6 text-gray-700" />Workflows</h1>
             <p className="text-sm text-gray-500 mt-1">Automate order processing, inventory, and shipping workflows</p>
           </div>
         </div>
@@ -351,33 +365,43 @@ export default function WorkflowsPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Workflow Name</label>
-                <input value={createForm.name} onChange={e => setCreateForm({ ...createForm, name: e.target.value })} className="input w-full" placeholder="e.g. Order Fulfillment Pipeline" />
+                <Autocomplete value={createForm.name} onChange={(value) => setCreateForm({ ...createForm, name: value })} inputClassName="input w-full" placeholder="e.g. Order Fulfillment Pipeline" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea value={createForm.description} onChange={e => setCreateForm({ ...createForm, description: e.target.value })} className="input w-full" rows={2} placeholder="Describe the workflow purpose" />
+                <Autocomplete value={createForm.description} onChange={(value) => setCreateForm({ ...createForm, description: value })} inputClassName="input w-full" placeholder="Describe the workflow purpose" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select value={createForm.category} onChange={e => setCreateForm({ ...createForm, category: e.target.value })} className="input w-full">
-                  <option value="ORDER">Order</option>
-                  <option value="INVENTORY">Inventory</option>
-                  <option value="SHIPPING">Shipping</option>
-                  <option value="PROCUREMENT">Procurement</option>
-                  <option value="CUSTOM">Custom</option>
-                </select>
+                <Autocomplete
+                  value={createForm.category}
+                  onChange={(value) => setCreateForm({ ...createForm, category: value })}
+                  suggestions={categoryOptions}
+                  getOptionLabel={o => o.label}
+                  getOptionValue={o => o.value}
+                  inputClassName="input w-full"
+                  minChars={0}
+                  showSearchIcon={false}
+                  clearable={false}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Type</label>
-                <select value={createForm.triggerType} onChange={e => setCreateForm({ ...createForm, triggerType: e.target.value })} className="input w-full">
-                  <option value="EVENT">Event</option>
-                  <option value="SCHEDULED">Schedule</option>
-                  <option value="MANUAL">Manual</option>
-                </select>
+                <Autocomplete
+                  value={createForm.triggerType}
+                  onChange={(value) => setCreateForm({ ...createForm, triggerType: value })}
+                  suggestions={triggerTypeOptions}
+                  getOptionLabel={o => o.label}
+                  getOptionValue={o => o.value}
+                  inputClassName="input w-full"
+                  minChars={0}
+                  showSearchIcon={false}
+                  clearable={false}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Config (JSON)</label>
-                <textarea value={createForm.triggerConfig} onChange={e => setCreateForm({ ...createForm, triggerConfig: e.target.value })} className="input w-full font-mono text-xs" rows={3} placeholder='{"cron": "0 0 * * *", "eventType": "ORDER_CREATED"}' />
+                <Autocomplete value={createForm.triggerConfig} onChange={(value) => setCreateForm({ ...createForm, triggerConfig: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"cron": "0 0 * * *", "eventType": "ORDER_CREATED"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-gray-700">Active</label>
@@ -392,7 +416,7 @@ export default function WorkflowsPage() {
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create
               </button>
             </div>
@@ -411,15 +435,15 @@ export default function WorkflowsPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Entity Type</label>
-                <input value={executeForm.entityType} onChange={e => setExecuteForm({ ...executeForm, entityType: e.target.value })} className="input w-full" placeholder="e.g. ORDER, INVENTORY" />
+                <Autocomplete value={executeForm.entityType} onChange={(value) => setExecuteForm({ ...executeForm, entityType: value })} inputClassName="input w-full" placeholder="e.g. ORDER, INVENTORY" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Entity ID</label>
-                <input value={executeForm.entityId} onChange={e => setExecuteForm({ ...executeForm, entityId: e.target.value })} className="input w-full" placeholder="e.g. order-123" />
+                <Autocomplete value={executeForm.entityId} onChange={(value) => setExecuteForm({ ...executeForm, entityId: value })} inputClassName="input w-full" placeholder="e.g. order-123" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Input Data (JSON)</label>
-                <textarea value={executeForm.inputData} onChange={e => setExecuteForm({ ...executeForm, inputData: e.target.value })} className="input w-full font-mono text-xs" rows={4} placeholder='{"priority": "HIGH", "notes": "Manual trigger"}' />
+                <Autocomplete value={executeForm.inputData} onChange={(value) => setExecuteForm({ ...executeForm, inputData: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"priority": "HIGH", "notes": "Manual trigger"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">

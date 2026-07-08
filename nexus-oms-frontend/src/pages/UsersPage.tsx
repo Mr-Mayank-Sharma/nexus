@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { UserCog, Users, Shield, Plus, Search, X, Check, Trash2 } from 'lucide-react'
+import Autocomplete from '../components/common/Autocomplete'
+import { UserCog, Users, Shield, Plus, Search, X, Check, Trash2, Lock, ChevronDown, ChevronRight } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as rbacApi from '../api/rbac'
+import { ROLE_WORKSPACES } from '../hooks/useWorkspace'
 import StatusBadge from '../components/common/StatusBadge'
 
-const roles = ['ADMIN', 'OPS', 'WAREHOUSE', 'VIEWER', 'SALES_EXEC', 'CUSTOMER_SUPPORT', 'WAREHOUSE_OPERATOR', 'WAREHOUSE_MANAGER', 'PROCUREMENT_MANAGER', 'FINANCE', 'LOGISTICS_MANAGER', 'CEO']
+const roles = Object.keys(ROLE_WORKSPACES)
 
 interface UserRoleItem {
   id: string
@@ -40,7 +42,17 @@ interface PermissionItem {
   canApprove: boolean
 }
 
-type Tab = 'user-roles' | 'teams'
+interface SecurityGroup {
+  id: string
+  name: string
+  description: string
+  parentGroupId?: string
+  permissions: string[]
+  memberCount: number
+  isInherited: boolean
+}
+
+type Tab = 'user-roles' | 'teams' | 'security-groups'
 
 export default function UsersPage() {
   const [tab, setTab] = useState<Tab>('user-roles')
@@ -53,6 +65,7 @@ export default function UsersPage() {
   const [showPermissions, setShowPermissions] = useState(false)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
   const { addToast } = useToast()
 
   const [roleForm, setRoleForm] = useState({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true })
@@ -61,7 +74,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     if (tab === 'user-roles') fetchUserRoles()
-    else fetchTeams()
+    else if (tab === 'teams') fetchTeams()
   }, [tab])
 
   useEffect(() => { fetchPermissions() }, [])
@@ -197,7 +210,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users & Roles</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Users className="w-6 h-6" />Users & Roles</h1>
           <p className="text-sm text-gray-500 mt-1">Manage user roles, teams, and permissions</p>
         </div>
       </div>
@@ -219,15 +232,20 @@ export default function UsersPage() {
         >
           <Users className="w-4 h-4 inline mr-1.5" /> Teams
         </button>
+        <button
+          onClick={() => setTab('security-groups')}
+          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            tab === 'security-groups' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+          }`}
+        >
+          <Lock className="w-4 h-4 inline mr-1.5" /> Security Groups
+        </button>
       </div>
 
       {tab === 'user-roles' && (
         <>
           <div className="flex items-center justify-between">
-            <div className="relative flex-1 max-w-xs">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input value={search} onChange={e => setSearch(e.target.value)} className="input w-full pl-9" placeholder="Search by user name or ID..." />
-            </div>
+            <Autocomplete value={search} onChange={setSearch} placeholder="Search by user name or ID..." minChars={0} className="flex-1 max-w-xs" />
             <button onClick={() => { setRoleForm({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true }); setShowAssignModal(true) }} className="btn-primary text-sm">
               <Plus className="w-4 h-4" /> Assign Role
             </button>
@@ -348,6 +366,109 @@ export default function UsersPage() {
             </div>
           )}
         </>
+      )}
+
+      {tab === 'security-groups' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-gray-500">OFBiz-style security groups define permissions for users and roles</p>
+            <button className="btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button>
+          </div>
+
+          {[
+            {
+              name: 'PICKING_ADMIN', description: 'Full picking operations management', memberCount: 3,
+              permissions: ['picking:ALL', 'inventory:READ', 'orders:READ'],
+              children: [
+                { name: 'PICKING_OPERATOR', description: 'Picking execution', memberCount: 8, permissions: ['picking:EXECUTE', 'inventory:READ'] },
+                { name: 'PICKING_VIEWER', description: 'View picking status', memberCount: 5, permissions: ['picking:READ'] },
+              ],
+            },
+            {
+              name: 'WAREHOUSE_OPERATIONS', description: 'Warehouse management', memberCount: 6,
+              permissions: ['warehouse:ALL', 'inventory:ALL', 'receiving:ALL', 'cycle-count:EXECUTE'],
+              children: [
+                { name: 'RECEIVING_CLERK', description: 'Receive inbound shipments', memberCount: 4, permissions: ['receiving:EXECUTE', 'inventory:READ'] },
+                { name: 'CYCLE_COUNTER', description: 'Perform cycle counts', memberCount: 3, permissions: ['cycle-count:EXECUTE', 'inventory:READ'] },
+              ],
+            },
+            {
+              name: 'PACKING_ADMIN', description: 'Packing operations', memberCount: 2,
+              permissions: ['packing:ALL', 'shipping:READ'],
+              children: [
+                { name: 'PACKER', description: 'Pack orders', memberCount: 12, permissions: ['packing:EXECUTE'] },
+                { name: 'PACKING_QC', description: 'Quality check packages', memberCount: 2, permissions: ['packing:QC', 'packing:READ'] },
+              ],
+            },
+            {
+              name: 'SHIPPING_ADMIN', description: 'Loading & dispatch management', memberCount: 2,
+              permissions: ['shipping:ALL', 'carriers:ALL'],
+              children: [
+                { name: 'LOADER', description: 'Load & dispatch', memberCount: 6, permissions: ['shipping:LOAD', 'shipping:DISPATCH'] },
+                { name: 'SHIPPING_CLERK', description: 'Shipping documentation', memberCount: 3, permissions: ['shipping:CREATE', 'carriers:READ'] },
+              ],
+            },
+            {
+              name: 'BOPIS_OPERATIONS', description: 'BOPIS fulfillment', memberCount: 4,
+              permissions: ['bopis:ALL', 'orders:READ', 'inventory:READ'],
+              children: [
+                { name: 'BOPIS_PICKER', description: 'Pick BOPIS orders', memberCount: 3, permissions: ['bopis:PICK', 'inventory:READ'] },
+                { name: 'BOPIS_HOST', description: 'Customer handoff', memberCount: 2, permissions: ['bopis:HANDOFF'] },
+              ],
+            },
+          ].map(group => (
+            <div key={group.name} className="card overflow-hidden">
+              <button
+                onClick={() => setExpandedGroup(expandedGroup === group.name ? null : group.name)}
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-gray-900">{group.name}</p>
+                    <p className="text-xs text-gray-500">{group.description} · {group.memberCount} members</p>
+                  </div>
+                </div>
+                {expandedGroup === group.name ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+              </button>
+
+              {expandedGroup === group.name && (
+                <div className="border-t border-gray-100">
+                  <div className="px-4 py-3 bg-gray-50/50">
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Granted Permissions</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.permissions.map(p => (
+                        <span key={p} className="px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{p}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {group.children.map(child => (
+                    <div key={child.name} className="px-4 py-3 border-t border-gray-50 hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{child.name}</p>
+                            <p className="text-xs text-gray-500">{child.description} · {child.memberCount} members</p>
+                          </div>
+                        </div>
+                        <button className="text-xs text-primary-600 hover:text-primary-800 font-medium">Assign</button>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-2 ml-5">
+                        {child.permissions.map(p => (
+                          <span key={p} className="px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 rounded">{p}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
 
       <div className="card">

@@ -47,7 +47,23 @@ export default function AuditPage() {
         title="Audit & Compliance"
         searchPlaceholder="Search by entity, action, system..."
         searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
+        onSearch={setSearchTerm}
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            if (!q) return entries.slice(0, 10)
+            const term = q.toLowerCase()
+            return entries.filter(e =>
+              e.entityType?.toLowerCase().includes(term) ||
+              e.action?.toLowerCase().includes(term) ||
+              e.sourceSystem?.toLowerCase().includes(term) ||
+              e.entityId?.toLowerCase().includes(term)
+            ).slice(0, 10)
+          },
+          onSelect: (item: any) => setSearchTerm(item.entityId || ''),
+          getOptionLabel: (item: any) => `${item.entityType} — ${item.action} (${item.entityId})`,
+          getOptionValue: (item: any) => item.id,
+          minChars: 1,
+        }}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

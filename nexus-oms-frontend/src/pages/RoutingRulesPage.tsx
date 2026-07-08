@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Plus, GripVertical, Pencil, Trash2, ToggleLeft, ToggleRight, ArrowUp, ArrowDown, X, Loader2 } from 'lucide-react'
+import { Plus, GripVertical, Pencil, Trash2, ToggleLeft, ToggleRight, ArrowUp, ArrowDown, X, Loader2, Route } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { RoutingRule } from '../types'
 import * as routingRulesApi from '../api/routingRules'
 import StatusBadge from '../components/common/StatusBadge'
+import Autocomplete from '../components/common/Autocomplete'
 
 export default function RoutingRulesPage() {
   const [rules, setRules] = useState<RoutingRule[]>([])
@@ -13,6 +14,15 @@ export default function RoutingRulesPage() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: '', description: '', ruleType: 'NEAREST_AVAILABLE', conditions: '', actions: '', priority: 1, isActive: true })
   const { addToast } = useToast()
+
+  const ruleTypeOptions = [
+    { value: 'NEAREST_AVAILABLE', label: 'Nearest Available' },
+    { value: 'LOWEST_COST', label: 'Lowest Cost' },
+    { value: 'BEST_CARRIER', label: 'Best Carrier' },
+    { value: 'CAPACITY_BASED', label: 'Capacity Based' },
+    { value: 'CUSTOMER_ZONE', label: 'Customer Zone' },
+    { value: 'INVENTORY_THRESHOLD', label: 'Inventory Threshold' },
+  ]
 
   useEffect(() => { fetchRules() }, [])
 
@@ -95,7 +105,7 @@ export default function RoutingRulesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Routing Rules</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Route className="w-7 h-7 text-primary-500" /> Routing Rules</h1>
           <p className="text-sm text-gray-500 mt-1">Configure order routing logic for fulfillment allocation</p>
         </div>
         <button onClick={openCreate} className="btn-primary text-sm">
@@ -109,6 +119,7 @@ export default function RoutingRulesPage() {
         </div>
       ) : rules.length === 0 ? (
         <div className="text-center py-16 card">
+          <Route className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 text-sm">No routing rules configured. Create your first rule to control order allocation.</p>
         </div>
       ) : (
@@ -161,30 +172,33 @@ export default function RoutingRulesPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Rule Name</label>
-                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="input w-full" placeholder="e.g. Nearest Warehouse First" />
+                <Autocomplete value={form.name} onChange={(value) => setForm({ ...form, name: value })} inputClassName="input w-full" placeholder="e.g. Nearest Warehouse First" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="input w-full" rows={2} placeholder="Describe when this rule applies" />
+                <Autocomplete value={form.description} onChange={(value) => setForm({ ...form, description: value })} inputClassName="input w-full" placeholder="Describe when this rule applies" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Rule Type</label>
-                <select value={form.ruleType} onChange={e => setForm({ ...form, ruleType: e.target.value })} className="input w-full">
-                  <option value="NEAREST_AVAILABLE">Nearest Available</option>
-                  <option value="LOWEST_COST">Lowest Cost</option>
-                  <option value="BEST_CARRIER">Best Carrier</option>
-                  <option value="CAPACITY_BASED">Capacity Based</option>
-                  <option value="CUSTOMER_ZONE">Customer Zone</option>
-                  <option value="INVENTORY_THRESHOLD">Inventory Threshold</option>
-                </select>
+                <Autocomplete
+                  value={form.ruleType}
+                  onChange={(value) => setForm({ ...form, ruleType: value })}
+                  suggestions={ruleTypeOptions}
+                  getOptionLabel={o => o.label}
+                  getOptionValue={o => o.value}
+                  inputClassName="input w-full"
+                  minChars={0}
+                  showSearchIcon={false}
+                  clearable={false}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Conditions (JSON)</label>
-                <textarea value={form.conditions} onChange={e => setForm({ ...form, conditions: e.target.value })} className="input w-full font-mono text-xs" rows={3} placeholder='{"maxDistance": 100, "carrier": "FEDEX"}' />
+                <Autocomplete value={form.conditions} onChange={(value) => setForm({ ...form, conditions: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"maxDistance": 100, "carrier": "FEDEX"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Actions (JSON)</label>
-                <textarea value={form.actions} onChange={e => setForm({ ...form, actions: e.target.value })} className="input w-full font-mono text-xs" rows={3} placeholder='{"allocateTo": "NEAREST_NODE", "priority": "HIGH"}' />
+                <Autocomplete value={form.actions} onChange={(value) => setForm({ ...form, actions: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"allocateTo": "NEAREST_NODE", "priority": "HIGH"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">

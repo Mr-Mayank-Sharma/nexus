@@ -33,7 +33,7 @@ export async function createOrder(orderData: Record<string, any>): Promise<ApiRe
 
 export async function updateOrderStatus(id: string, status: string): Promise<ApiResponse<Order>> {
   try {
-    const { data } = await client.put(`/orders/${id}/status`, { status })
+    const { data } = await client.put(`/orders/${id}`, { status })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to update order status'
@@ -43,7 +43,7 @@ export async function updateOrderStatus(id: string, status: string): Promise<Api
 
 export async function confirmOrder(id: string): Promise<ApiResponse<Order>> {
   try {
-    const { data } = await client.post(`/orders/${id}/confirm`)
+    const { data } = await client.patch(`/orders/${id}/confirm`)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to confirm order'
@@ -53,7 +53,7 @@ export async function confirmOrder(id: string): Promise<ApiResponse<Order>> {
 
 export async function allocateOrder(id: string): Promise<ApiResponse<Order>> {
   try {
-    const { data } = await client.post(`/orders/${id}/allocate`)
+    const { data } = await client.patch(`/orders/${id}/allocate`)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to allocate order'
@@ -63,7 +63,7 @@ export async function allocateOrder(id: string): Promise<ApiResponse<Order>> {
 
 export async function shipOrder(id: string, carrierId: string, trackingNumber: string): Promise<ApiResponse<Order>> {
   try {
-    const { data } = await client.post(`/orders/${id}/ship`, {}, { params: { carrierId, trackingNumber } })
+    const { data } = await client.patch(`/orders/${id}/ship`, { carrierId, trackingNumber })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to ship order'
@@ -73,7 +73,7 @@ export async function shipOrder(id: string, carrierId: string, trackingNumber: s
 
 export async function cancelOrder(id: string): Promise<ApiResponse<Order>> {
   try {
-    const { data } = await client.post(`/orders/${id}/cancel`)
+    const { data } = await client.patch(`/orders/${id}/cancel`)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to cancel order'

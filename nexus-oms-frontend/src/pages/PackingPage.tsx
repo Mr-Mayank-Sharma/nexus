@@ -102,12 +102,21 @@ export default function PackingPage() {
         title="Packing"
         searchPlaceholder="Search by order or box..."
         searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        actions={
-          <button className="enterprise-btn-primary" onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4" /> New Package
-          </button>
-        }
+        onSearch={setSearchTerm}
+        autocomplete={{
+          fetchSuggestions: async (q) => {
+            if (!q) return packages.slice(0, 10)
+            const term = q.toLowerCase()
+            return packages.filter(p => p.orderId?.toLowerCase().includes(term) || p.boxName?.toLowerCase().includes(term)).slice(0, 10)
+          },
+          onSelect: (item: any) => setSearchTerm(item.orderId || item.id),
+          getOptionLabel: (item: any) => `${item.orderId || item.id} — ${item.boxName || ''}`,
+          getOptionValue: (item: any) => item.id,
+          minChars: 1,
+        }}
+        actions={[
+          { label: 'New Package', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary' },
+        ]}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -163,26 +172,26 @@ export default function PackingPage() {
                         {(pkg.status === 'PENDING_PACK' || pkg.status === 'PACKING') && (
                           <>
                             {pkg.status === 'PENDING_PACK' && (
-                              <button className="enterprise-btn-ghost p-1.5 text-blue-500" title="Start Packing" onClick={() => startMutation.mutate(pkg.id)}>
-                                <Play className="w-4 h-4" />
+                              <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => startMutation.mutate(pkg.id)}>
+                                <Play className="w-3.5 h-3.5" /> Start
                               </button>
                             )}
-                            <button className="enterprise-btn-ghost p-1.5 text-green-500" title="Complete Packing" onClick={() => completeMutation.mutate(pkg.id)}>
-                              <CheckCircle className="w-4 h-4" />
+                            <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => completeMutation.mutate(pkg.id)}>
+                              <CheckCircle className="w-3.5 h-3.5" /> Complete
                             </button>
-                            <button className="enterprise-btn-ghost p-1.5 text-red-500" title="Void" onClick={() => { if (confirm('Void this package?')) packingApi.voidPackage(pkg.id).then(invalidate); }}>
-                              <XCircle className="w-4 h-4" />
+                            <button className="enterprise-btn-secondary text-xs px-2 py-1 text-red-600" onClick={() => { if (confirm('Void this package?')) packingApi.voidPackage(pkg.id).then(invalidate); }}>
+                              <XCircle className="w-3.5 h-3.5" /> Void
                             </button>
                           </>
                         )}
                         {pkg.status === 'PACKED' && (
-                          <button className="enterprise-btn-primary text-xs" onClick={() => setShowLabelModal({ id: pkg.id, orderId: pkg.orderId })}>
-                            <Printer className="w-3 h-3" /> Generate Label
+                          <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => setShowLabelModal({ id: pkg.id, orderId: pkg.orderId })}>
+                            <Printer className="w-3.5 h-3.5" /> Generate Label
                           </button>
                         )}
                         {pkg.status === 'LABELED' && (
-                          <button className="enterprise-btn-ghost p-1.5 text-green-500" title="Ship" onClick={() => shipMutation.mutate(pkg.id)}>
-                            <Truck className="w-4 h-4" />
+                          <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => shipMutation.mutate(pkg.id)}>
+                            <Truck className="w-3.5 h-3.5" /> Ship
                           </button>
                         )}
                       </div>
@@ -219,7 +228,7 @@ export default function PackingPage() {
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create
               </button>
             </div>
@@ -258,7 +267,7 @@ export default function PackingPage() {
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowLabelModal(null)}>Cancel</button>
               <button className="enterprise-btn-primary" onClick={() => labelMutation.mutate()} disabled={!labelForm.carrierId || !labelForm.carrierName || labelMutation.isPending}>
-                {labelMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {labelMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
                 Generate Label
               </button>
             </div>

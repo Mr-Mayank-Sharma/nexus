@@ -3,7 +3,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, LineChart, Line,
 } from 'recharts'
-import { Download, TrendingUp, TrendingDown, RefreshCw, AlertTriangle, Clock } from 'lucide-react'
+import { BarChart3, Download, TrendingUp, TrendingDown, RefreshCw, AlertTriangle, Clock } from 'lucide-react'
 import { EnterpriseKPICard, EnterpriseBreadcrumbs } from '../components/enterprise'
 import { useToast } from '../hooks/useToast'
 import * as analyticsApi from '../api/analytics'
@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
         <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'Analytics' }]} />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
             <p className="text-sm text-gray-500 mt-1">Performance metrics and insights</p>
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function AnalyticsPage() {
         <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'Analytics' }]} />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
             <p className="text-sm text-gray-500 mt-1">Performance metrics and insights</p>
           </div>
         </div>
@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
           <p className="text-sm text-gray-500 mt-1">Performance metrics and insights</p>
         </div>
         <div className="flex items-center gap-3">

@@ -7,6 +7,7 @@ import { useToast } from '../hooks/useToast'
 import * as api from '../api/integrationStores'
 import { IntegrationStore, StoreSyncStatus } from '../api/integrationStores'
 import StatusBadge from '../components/common/StatusBadge'
+import Autocomplete from '../components/common/Autocomplete'
 
 const PLATFORMS = [
   { value: 'SHOPIFY', label: 'Shopify', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-emerald-500' },
@@ -14,6 +15,32 @@ const PLATFORMS = [
   { value: 'AMAZON', label: 'Amazon', icon: <Globe className="w-5 h-5" />, color: 'bg-orange-500' },
   { value: 'WOOCOMMERCE', label: 'WooCommerce', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-purple-500' },
   { value: 'MANUAL', label: 'Manual', icon: <Store className="w-5 h-5" />, color: 'bg-gray-500' },
+]
+
+const currencyOpts = [
+  { value: 'USD', label: 'USD' },
+  { value: 'INR', label: 'INR' },
+  { value: 'EUR', label: 'EUR' },
+  { value: 'GBP', label: 'GBP' },
+  { value: 'CAD', label: 'CAD' },
+  { value: 'AUD', label: 'AUD' },
+]
+
+const localeOpts = [
+  { value: 'en_US', label: 'en_US' },
+  { value: 'en_IN', label: 'en_IN' },
+  { value: 'en_GB', label: 'en_GB' },
+  { value: 'fr_FR', label: 'fr_FR' },
+  { value: 'de_DE', label: 'de_DE' },
+]
+
+const timezoneOpts = [
+  { value: 'UTC', label: 'UTC' },
+  { value: 'America/New_York', label: 'ET' },
+  { value: 'America/Chicago', label: 'CT' },
+  { value: 'America/Los_Angeles', label: 'PT' },
+  { value: 'Asia/Kolkata', label: 'IST' },
+  { value: 'Europe/London', label: 'GMT' },
 ]
 
 const SYNC_DEFS: Record<string, { label: string; description: string }> = {
@@ -159,7 +186,7 @@ export default function IntegrationStoresPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sales Channels</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Store className="w-7 h-7 text-primary-500" /> Sales Channels</h1>
           <p className="text-sm text-gray-500 mt-1">OFBiz-style integration store management — connect Shopify, BigCommerce, and more</p>
         </div>
         <button onClick={openCreate} className="btn-primary text-sm">
@@ -270,8 +297,8 @@ export default function IntegrationStoresPage() {
                     {settingFields(selectedStore.platform).map(field => (
                       <div key={field.key}>
                         <label className="block text-xs font-medium text-gray-600 mb-1">{field.label}</label>
-                        <input className="input w-full text-sm font-mono" type={field.type || 'text'}
-                          value={storeStatus?.settings?.[field.key] || ''} disabled />
+                        <Autocomplete className="input w-full text-sm font-mono"
+                          value={storeStatus?.settings?.[field.key] || ''} onChange={() => {}} disabled minChars={0} />
                       </div>
                     ))}
                     <p className="text-xs text-gray-400 mt-2">Manage credentials via the store's configuration in control panel.</p>
@@ -298,18 +325,16 @@ export default function IntegrationStoresPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
-                <select value={form.platform} onChange={e => setForm({ ...form, platform: e.target.value, settings: {} })} className="input w-full">
-                  {PLATFORMS.map(pf => <option key={pf.value} value={pf.value}>{pf.label}</option>)}
-                </select>
+                <Autocomplete value={form.platform} onChange={v => setForm({ ...form, platform: v, settings: {} })} suggestions={PLATFORMS} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Store Code</label>
-                  <input value={form.storeCode} onChange={e => setForm({ ...form, storeCode: e.target.value })} className="input w-full font-mono" placeholder="shopify-us" />
+                  <Autocomplete value={form.storeCode} onChange={v => setForm({ ...form, storeCode: v })} className="input w-full font-mono" placeholder="shopify-us" minChars={0} />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
-                  <input value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })} className="input w-full" placeholder="US Shopify Store" />
+                  <Autocomplete value={form.storeName} onChange={v => setForm({ ...form, storeName: v })} className="input w-full" placeholder="US Shopify Store" minChars={0} />
                 </div>
               </div>
 
@@ -318,9 +343,9 @@ export default function IntegrationStoresPage() {
                 {settingFields(form.platform).map(field => (
                   <div key={field.key} className="mb-3">
                     <label className="block text-xs font-medium text-gray-600 mb-1">{field.label}</label>
-                    <input type={field.type || 'text'} value={form.settings[field.key] || ''}
-                      onChange={e => setForm({ ...form, settings: { ...form.settings, [field.key]: e.target.value } })}
-                      className="input w-full font-mono text-sm" />
+                    <Autocomplete value={form.settings[field.key] || ''}
+                      onChange={v => setForm({ ...form, settings: { ...form.settings, [field.key]: v } })}
+                      className="input w-full font-mono text-sm" minChars={0} />
                   </div>
                 ))}
               </div>
@@ -328,53 +353,33 @@ export default function IntegrationStoresPage() {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
-                  <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} className="input w-full">
-                    <option value="USD">USD</option>
-                    <option value="INR">INR</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="CAD">CAD</option>
-                    <option value="AUD">AUD</option>
-                  </select>
+                  <Autocomplete value={form.currency} onChange={v => setForm({ ...form, currency: v })} suggestions={currencyOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Locale</label>
-                  <select value={form.defaultLocale} onChange={e => setForm({ ...form, defaultLocale: e.target.value })} className="input w-full">
-                    <option value="en_US">en_US</option>
-                    <option value="en_IN">en_IN</option>
-                    <option value="en_GB">en_GB</option>
-                    <option value="fr_FR">fr_FR</option>
-                    <option value="de_DE">de_DE</option>
-                  </select>
+                  <Autocomplete value={form.defaultLocale} onChange={v => setForm({ ...form, defaultLocale: v })} suggestions={localeOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Timezone</label>
-                  <select value={form.timezone} onChange={e => setForm({ ...form, timezone: e.target.value })} className="input w-full">
-                    <option value="UTC">UTC</option>
-                    <option value="America/New_York">ET</option>
-                    <option value="America/Chicago">CT</option>
-                    <option value="America/Los_Angeles">PT</option>
-                    <option value="Asia/Kolkata">IST</option>
-                    <option value="Europe/London">GMT</option>
-                  </select>
+                  <Autocomplete value={form.timezone} onChange={v => setForm({ ...form, timezone: v })} suggestions={timezoneOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">External Store ID</label>
-                  <input value={form.externalStoreId} onChange={e => setForm({ ...form, externalStoreId: e.target.value })} className="input w-full font-mono" placeholder="Shopify location ID" />
+                  <Autocomplete value={form.externalStoreId} onChange={v => setForm({ ...form, externalStoreId: v })} className="input w-full font-mono" placeholder="Shopify location ID" minChars={0} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">External Domain</label>
-                  <input value={form.externalDomain} onChange={e => setForm({ ...form, externalDomain: e.target.value })} className="input w-full font-mono" placeholder="mystore.myshopify.com" />
+                  <Autocomplete value={form.externalDomain} onChange={v => setForm({ ...form, externalDomain: v })} className="input w-full font-mono" placeholder="mystore.myshopify.com" minChars={0} />
                 </div>
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Store className="w-4 h-4" />}
                 Create Store
               </button>
             </div>
