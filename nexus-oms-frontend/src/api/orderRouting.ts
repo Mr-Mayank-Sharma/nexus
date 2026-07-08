@@ -6,33 +6,53 @@ export async function allocateOrder(payload: {
   strategy?: string
   dryRun?: boolean
 }): Promise<ApiResponse<AllocationResult>> {
-  const { data } = await client.post('/order-routing/allocate', payload)
-  return data
+  try {
+    const { data } = await client.post('/order-routing/allocate', payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to allocate order'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function simulateAllocation(payload: {
   orderId: string
   strategy?: string
 }): Promise<ApiResponse<Record<string, unknown>>> {
-  const { data } = await client.post('/order-routing/simulate', payload)
-  return data
+  try {
+    const { data } = await client.post('/order-routing/simulate', payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to simulate allocation'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function reallocateOrder(
   orderId: string,
   strategy = 'HYBRID'
 ): Promise<ApiResponse<AllocationResult>> {
-  const { data } = await client.post('/order-routing/reallocate', null, {
-    params: { orderId, strategy },
-  })
-  return data
+  try {
+    const { data } = await client.post('/order-routing/reallocate', null, {
+      params: { orderId, strategy },
+    })
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to reallocate order'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getAllocations(
   orderId: string
 ): Promise<ApiResponse<OrderAllocation[]>> {
-  const { data } = await client.get(`/order-routing/allocations/${orderId}`)
-  return data
+  try {
+    const { data } = await client.get(`/order-routing/allocations/${orderId}`)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get allocations'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getExceptions(params?: {
@@ -46,40 +66,65 @@ export async function getExceptions(params?: {
   totalElements: number
   number: number
 }>> {
-  const { data } = await client.get('/order-routing/exceptions', { params })
-  return data
+  try {
+    const { data } = await client.get('/order-routing/exceptions', { params })
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get exceptions'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getException(
   id: string
 ): Promise<ApiResponse<FulfillmentException>> {
-  const { data } = await client.get(`/order-routing/exceptions/${id}`)
-  return data
+  try {
+    const { data } = await client.get(`/order-routing/exceptions/${id}`)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get exception'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function resolveException(
   id: string,
   payload: { resolution: string; resolutionStrategy?: string }
 ): Promise<ApiResponse<FulfillmentException>> {
-  const { data } = await client.post(
-    `/order-routing/exceptions/${id}/resolve`,
-    payload
-  )
-  return data
+  try {
+    const { data } = await client.post(
+      `/order-routing/exceptions/${id}/resolve`,
+      payload
+    )
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to resolve exception'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function escalateException(
   id: string
 ): Promise<ApiResponse<FulfillmentException>> {
-  const { data } = await client.post(
-    `/order-routing/exceptions/${id}/escalate`
-  )
-  return data
+  try {
+    const { data } = await client.post(
+      `/order-routing/exceptions/${id}/escalate`
+    )
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to escalate exception'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getRoutingKPIs(): Promise<
   ApiResponse<Record<string, number>>
 > {
-  const { data } = await client.get('/order-routing/kpis')
-  return data
+  try {
+    const { data } = await client.get('/order-routing/kpis')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get routing KPIs'
+    return { success: false, error: msg } as any
+  }
 }

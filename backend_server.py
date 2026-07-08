@@ -2,18 +2,34 @@
 """Backend API server for Nexus OMS. Runs on port 8080.
 Comprehensive replacement for the stale Java JAR — serves all /api/v1/*
 endpoints with JWT auth, CORS, and realistic in-memory data."""
-import json, time, uuid, hmac, hashlib, base64, random, threading
+import json, time, uuid, hmac, hashlib, base64, random, threading, os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urlparse, parse_qs
 
 HOST = "0.0.0.0"
 PORT = 8080
-JWT_SECRET = "***REMOVED***"
+JWT_SECRET = os.environ.get("NEXUS_JWT_SECRET", "***REMOVED***")
 JWT_ALGO = "HS256"
 
-# ──────────────── Users ────────────────
-USERS = {
+# ──────────────── Rate Limiting ────────────────
+LOGIN_ATTEMPTS = {}
+LOGIN_LOCK = threading.Lock()
+RATE_LIMIT_WINDOW = 300  # 5 minutes
+RATE_LIMIT_MAX = 10      # max attempts per window
+
+def _rate_limited(ip):
+    now = time.time()
+    with LOGIN_LOCK:
+        window = [t for t in LOGIN_ATTEMPTS.get(ip, []) if t > now - RATE_LIMIT_WINDOW]
+        LOGIN_ATTEMPTS[ip] = window
+        if len(window) >= RATE_LIMIT_MAX:
+            return True
+        window.append(now)
+    return False
+
+# ──────────────── Users (passwords pre-hashed) ────────────────
+_RAW_USERS = {
     "admin": {"password": "Test1234!", "role": "ADMIN", "name": "Admin User", "email": "admin@nexusoms.com", "permissions": ["*"], "securityGroups": ["ADMIN"]},
     "john.smith": {"password": "picker123", "role": "PICKER", "name": "John Smith", "email": "john.smith@nexusoms.com", "permissions": ["*"], "securityGroups": ["ADMIN"]},
     "sarah.manager": {"password": "manager123", "role": "OPS_MANAGER", "name": "Sarah Manager", "email": "sarah@nexusoms.com", "permissions": ["*"], "securityGroups": ["ADMIN"]},
@@ -21,6 +37,15 @@ USERS = {
     "lisa.finance": {"password": "finance123", "role": "FINANCE", "name": "Lisa Finance", "email": "lisa@nexusoms.com", "permissions": ["*"], "securityGroups": ["ADMIN"]},
     "tom.ceo": {"password": "ceo1234!", "role": "CEO", "name": "Tom CEO", "email": "tom@nexusoms.com", "permissions": ["*"], "securityGroups": ["ADMIN"]},
 }
+USERS = {}
+for _u, _ud in _RAW_USERS.items():
+    _salt = os.urandom(16).hex()
+    _ud["password"] = _salt + ":" + hashlib.sha256((_salt + _ud["password"]).encode()).hexdigest()
+    USERS[_u] = _ud
+
+def _check_password(stored, provided):
+    salt, hsh = stored.split(":", 1)
+    return hsh == hashlib.sha256((salt + provided).encode()).hexdigest()
 
 # ──────────────── Seed Data ────────────────
 PRODUCTS = [
@@ -868,9 +893,12 @@ class NexusAPIHandler(BaseHTTPRequestHandler):
 
     def _handle_auth_post(self, parts):
         if len(parts) >= 4 and parts[3] == "login":
+            ip = self.client_address[0]
+            if _rate_limited(ip):
+                return self._error("Too many login attempts. Try again later.", 429)
             body = self._read_body()
             u = USERS.get(body.get("username",""))
-            if not u or u["password"] != body.get("password",""):
+            if not u or not _check_password(u["password"], body.get("password","")):
                 return self._error("Invalid credentials", 401)
             token = create_jwt(body["username"], u["role"], u["name"], u["email"])
             return self._ok({"data": {

@@ -4,44 +4,94 @@ export type { ConnectorMetadata, ConnectorInstance, BatchJob }
 
 export const integrationHub = {
   async getPlatforms() {
-    const { data } = await client.get('/integration-hub/platforms')
-    return data as ConnectorMetadata[]
+    try {
+      const { data } = await client.get('/integration-hub/platforms')
+      return data as ConnectorMetadata[]
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to get platforms'
+      return { success: false, error: msg } as any
+    }
   },
   async getConnectors() {
-    const { data } = await client.get('/integration-hub/connectors')
-    return data as ConnectorInstance[]
+    try {
+      const { data } = await client.get('/integration-hub/connectors')
+      return data as ConnectorInstance[]
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to get connectors'
+      return { success: false, error: msg } as any
+    }
   },
   async getConnector(id: string) {
-    const { data } = await client.get(`/integration-hub/connectors/${id}`)
-    return data
+    try {
+      const { data } = await client.get(`/integration-hub/connectors/${id}`)
+      return data
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to get connector'
+      return { success: false, error: msg } as any
+    }
   },
   async createConnector(config: Record<string, any>) {
-    const { data } = await client.post('/integration-hub/connectors', config)
-    return data
+    try {
+      const { data } = await client.post('/integration-hub/connectors', config)
+      return data
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to create connector'
+      return { success: false, error: msg } as any
+    }
   },
   async deleteConnector(id: string) {
-    await client.delete(`/integration-hub/connectors/${id}`)
+    try {
+      await client.delete(`/integration-hub/connectors/${id}`)
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to delete connector'
+      return { success: false, error: msg } as any
+    }
   },
   async testConnection(id: string) {
-    const { data } = await client.post(`/integration-hub/connectors/${id}/test`)
-    return data
+    try {
+      const { data } = await client.post(`/integration-hub/connectors/${id}/test`)
+      return data
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to test connection'
+      return { success: false, error: msg } as any
+    }
   },
   async runSync(id: string, syncType: string, params?: Record<string, any>) {
-    const { data } = await client.post(`/integration-hub/connectors/${id}/sync/${syncType}`, params || {})
-    return data as BatchJob
+    try {
+      const { data } = await client.post(`/integration-hub/connectors/${id}/sync/${syncType}`, params || {})
+      return data as BatchJob
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to run sync'
+      return { success: false, error: msg } as any
+    }
   },
   async registerWebhooks(id: string, baseUrl?: string) {
-    const { data } = await client.post(`/integration-hub/connectors/${id}/webhooks`, null, {
-      params: { baseUrl: baseUrl || window.location.origin }
-    })
-    return data
+    try {
+      const { data } = await client.post(`/integration-hub/connectors/${id}/webhooks`, null, {
+        params: { baseUrl: baseUrl || window.location.origin }
+      })
+      return data
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to register webhooks'
+      return { success: false, error: msg } as any
+    }
   },
   async getJobs(connectorId?: string) {
-    const { data } = await client.get('/integration-hub/jobs', { params: { connectorId } })
-    return data as BatchJob[]
+    try {
+      const { data } = await client.get('/integration-hub/jobs', { params: { connectorId } })
+      return data as BatchJob[]
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to get jobs'
+      return { success: false, error: msg } as any
+    }
   },
   async getJob(jobId: string) {
-    const { data } = await client.get(`/integration-hub/jobs/${jobId}`)
-    return data as BatchJob
+    try {
+      const { data } = await client.get(`/integration-hub/jobs/${jobId}`)
+      return data as BatchJob
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to get job'
+      return { success: false, error: msg } as any
+    }
   },
 }

@@ -15,3 +15,5 @@ sandbox/
 *.deb
 *.docx
 .idea/
+.ipynb_checkpoints/
+Untitled.ipynb

@@ -31,31 +31,61 @@ export interface CarrierFormData {
 }
 
 export async function getCarriers(): Promise<ApiResponse<Carrier[]>> {
-  const { data } = await client.get('/carriers')
-  return data
+  try {
+    const { data } = await client.get('/carriers')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get carriers'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getCarrier(id: string): Promise<ApiResponse<Carrier>> {
-  const { data } = await client.get(`/carriers/${id}`)
-  return data
+  try {
+    const { data } = await client.get(`/carriers/${id}`)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get carrier'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function createCarrier(payload: CarrierFormData): Promise<ApiResponse<Carrier>> {
-  const { data } = await client.post('/carriers', payload)
-  return data
+  try {
+    const { data } = await client.post('/carriers', payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to create carrier'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function updateCarrier(id: string, payload: Partial<CarrierFormData>): Promise<ApiResponse<Carrier>> {
-  const { data } = await client.put(`/carriers/${id}`, payload)
-  return data
+  try {
+    const { data } = await client.put(`/carriers/${id}`, payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to update carrier'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function deleteCarrier(id: string): Promise<ApiResponse<null>> {
-  const { data } = await client.delete(`/carriers/${id}`)
-  return data
+  try {
+    const { data } = await client.delete(`/carriers/${id}`)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to delete carrier'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getCarrierKPIs(): Promise<ApiResponse<Record<string, number>>> {
-  const { data } = await client.get('/carriers/kpis')
-  return data
+  try {
+    const { data } = await client.get('/carriers/kpis')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get carrier KPIs'
+    return { success: false, error: msg } as any
+  }
 }

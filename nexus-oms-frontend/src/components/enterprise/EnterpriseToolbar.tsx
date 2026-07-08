@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useState, useRef } from 'react'
 import { Search, X, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -40,7 +40,7 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
   const [loading, setLoading] = useState(false)
   const [fetched, setFetched] = useState(false)
   const [search, setSearch] = useState(searchValue || '')
-  const debounceRef = useState<ReturnType<typeof setTimeout>>()[0] as any
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>()
 
   const currentValue = searchValue !== undefined ? searchValue : search
   const updateValue = onSearch || ((v: string) => setSearch(v))
@@ -48,10 +48,10 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
   const handleChange = (value: string) => {
     updateValue(value)
     if (!autocomplete) return
-    if (debounceRef?.current) clearTimeout(debounceRef.current)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
     const min = autocomplete.minChars ?? 2
     if (value.length < min) { setOptions([]); setFetched(false); return }
-    ;(debounceRef as any) = setTimeout(async () => {
+    debounceRef.current = setTimeout(async () => {
       setLoading(true)
       try {
         const result = await autocomplete.fetchSuggestions(value)

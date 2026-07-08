@@ -12,8 +12,13 @@ export async function shopRates(payload: {
   serviceLevels?: string[]
   orderId?: string
 }): Promise<ApiResponse<RateShoppingResult>> {
-  const { data } = await client.post('/rate-shopping/shop', payload)
-  return data
+  try {
+    const { data } = await client.post('/rate-shopping/shop', payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to shop rates'
+    return { success: false, error: msg } as any
+  }
 }
 
 export async function getBestRate(payload: {
@@ -25,6 +30,11 @@ export async function getBestRate(payload: {
   numPackages?: number
   residential?: boolean
 }): Promise<ApiResponse<RateShoppingResult>> {
-  const { data } = await client.post('/rate-shopping/best', payload)
-  return data
+  try {
+    const { data } = await client.post('/rate-shopping/best', payload)
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get best rate'
+    return { success: false, error: msg } as any
+  }
 }
