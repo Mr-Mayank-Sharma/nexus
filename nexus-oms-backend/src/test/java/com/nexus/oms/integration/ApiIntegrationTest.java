@@ -8,6 +8,7 @@ import org.springframework.web.client.RestTemplate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ApiIntegrationTest {
 

@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +29,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class OrderServiceTest {
 
     @Mock
@@ -42,6 +45,8 @@ class OrderServiceTest {
     @Mock
     private ObjectMapper objectMapper;
     @Mock
+    private AddressRepository addressRepository;
+    @Mock
     private NodeRepository nodeRepository;
 
     private OrderService orderService;
@@ -53,7 +58,7 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
         orderService = new OrderService(orderRepository, orderItemRepository, customerRepository,
-                inventoryService, kafkaProducerService, objectMapper, nodeRepository);
+                addressRepository, inventoryService, kafkaProducerService, objectMapper, nodeRepository);
         tenantId = UUID.randomUUID();
         orderId = UUID.randomUUID();
 

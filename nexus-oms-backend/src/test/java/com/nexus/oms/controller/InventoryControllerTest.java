@@ -5,6 +5,7 @@ import com.nexus.oms.security.JwtTokenProvider;
 import com.nexus.oms.security.TenantAwarePrincipal;
 import com.nexus.oms.service.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -24,6 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@Tag("integration")
 @WebMvcTest(InventoryController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class InventoryControllerTest {

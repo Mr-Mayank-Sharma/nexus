@@ -14,6 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.UUID;
 
@@ -123,6 +124,7 @@ class PermissionAuthorizationFilterTest {
         when(permissionService.resolveResource("/orders/123")).thenReturn("orders");
         when(permissionService.resolveAction("DELETE")).thenReturn("delete");
         when(permissionService.hasPermissionCached("VIEWER", "orders", "delete")).thenReturn(false);
+        when(response.getWriter()).thenReturn(mock(PrintWriter.class));
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
