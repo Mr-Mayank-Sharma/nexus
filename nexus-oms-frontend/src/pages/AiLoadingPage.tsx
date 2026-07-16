@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { getLoadingPlan } from '../api/aiAgents'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { AiLoadingStep } from '../api/aiAgents'
 
 interface MockTruck {
@@ -125,12 +126,14 @@ export default function AiLoadingPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Optimal truck loading sequence</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setSelectedTruck(selectedTruck)}
-            className="enterprise-btn-ai text-sm flex items-center gap-1.5 px-4 py-2"
-          >
-            <RotateCw className="w-4 h-4" /> Optimize Route
-          </button>
+          <PermissionGate resource="settings" action="create">
+            <button
+              onClick={() => setSelectedTruck(selectedTruck)}
+              className="enterprise-btn-ai text-sm flex items-center gap-1.5 px-4 py-2"
+            >
+              <RotateCw className="w-4 h-4" /> Optimize Route
+            </button>
+          </PermissionGate>
         </div>
       </div>
 
@@ -387,22 +390,30 @@ export default function AiLoadingPage() {
                     <Settings className="w-4 h-4 text-orange-500" /> Actions
                   </h3>
                   <div className="space-y-2">
-                    <button
-                      onClick={() => setSelectedTruck(selectedTruck)}
-                      disabled={isFetching}
-                      className="w-full enterprise-btn-ai text-sm py-2.5 flex items-center justify-center gap-1.5"
-                    >
-                      <RotateCw className={clsx('w-4 h-4', isFetching && 'animate-spin')} /> Optimize Route
-                    </button>
-                    <button className="w-full enterprise-btn-primary text-sm py-2.5 flex items-center justify-center gap-1.5">
-                      <CheckCircle className="w-4 h-4" /> Confirm Loading Plan
-                    </button>
-                    <button className="w-full enterprise-btn-secondary text-sm py-2.5 flex items-center justify-center gap-1.5">
-                      <Settings className="w-4 h-4" /> Manual Adjust
-                    </button>
-                    <button className="w-full enterprise-btn-danger text-sm py-2.5 flex items-center justify-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4" /> Override
-                    </button>
+                    <PermissionGate resource="settings" action="create">
+                      <button
+                        onClick={() => setSelectedTruck(selectedTruck)}
+                        disabled={isFetching}
+                        className="w-full enterprise-btn-ai text-sm py-2.5 flex items-center justify-center gap-1.5"
+                      >
+                        <RotateCw className={clsx('w-4 h-4', isFetching && 'animate-spin')} /> Optimize Route
+                      </button>
+                    </PermissionGate>
+                    <PermissionGate resource="settings" action="edit">
+                      <button className="w-full enterprise-btn-primary text-sm py-2.5 flex items-center justify-center gap-1.5">
+                        <CheckCircle className="w-4 h-4" /> Confirm Loading Plan
+                      </button>
+                    </PermissionGate>
+                    <PermissionGate resource="settings" action="edit">
+                      <button className="w-full enterprise-btn-secondary text-sm py-2.5 flex items-center justify-center gap-1.5">
+                        <Settings className="w-4 h-4" /> Manual Adjust
+                      </button>
+                    </PermissionGate>
+                    <PermissionGate resource="settings" action="edit">
+                      <button className="w-full enterprise-btn-danger text-sm py-2.5 flex items-center justify-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4" /> Override
+                      </button>
+                    </PermissionGate>
                   </div>
                 </div>
               </div>

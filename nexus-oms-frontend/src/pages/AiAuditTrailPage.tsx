@@ -7,6 +7,7 @@ import {
 import clsx from 'clsx'
 import { getDecisions } from '../api/aiAgents'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { AiDecision } from '../api/aiAgents'
 
 const DECISION_TYPE_STYLES: Record<string, string> = {

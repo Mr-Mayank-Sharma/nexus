@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 import { UserCog, Users, Shield, Plus, Search, X, Check, Trash2, Lock, ChevronDown, ChevronRight } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
@@ -246,9 +247,11 @@ export default function UsersPage() {
         <>
           <div className="flex items-center justify-between">
             <Autocomplete value={search} onChange={setSearch} placeholder="Search by user name or ID..." minChars={0} className="flex-1 max-w-xs" />
-            <button onClick={() => { setRoleForm({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true }); setShowAssignModal(true) }} className="btn-primary text-sm">
-              <Plus className="w-4 h-4" /> Assign Role
-            </button>
+            <PermissionGate resource="users" action="create">
+              <button onClick={() => { setRoleForm({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true }); setShowAssignModal(true) }} className="btn-primary text-sm">
+                <Plus className="w-4 h-4" /> Assign Role
+              </button>
+            </PermissionGate>
           </div>
 
           {loading ? (
@@ -293,13 +296,15 @@ export default function UsersPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{r.grantedAt ? new Date(r.grantedAt).toLocaleDateString() : '-'}</td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => handleRemoveRole(r.id)}
-                          className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600"
-                          title="Remove role"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <PermissionGate resource="users" action="delete">
+                          <button
+                            onClick={() => handleRemoveRole(r.id)}
+                            className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600"
+                            title="Remove role"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </PermissionGate>
                       </td>
                     </tr>
                   ))}
@@ -313,9 +318,11 @@ export default function UsersPage() {
       {tab === 'teams' && (
         <>
           <div className="flex items-center justify-end">
-            <button onClick={() => { setTeamForm({ name: '', description: '', managerId: '' }); setShowCreateTeamModal(true) }} className="btn-primary text-sm">
-              <Plus className="w-4 h-4" /> Create Team
-            </button>
+            <PermissionGate resource="users" action="create">
+              <button onClick={() => { setTeamForm({ name: '', description: '', managerId: '' }); setShowCreateTeamModal(true) }} className="btn-primary text-sm">
+                <Plus className="w-4 h-4" /> Create Team
+              </button>
+            </PermissionGate>
           </div>
 
           {loading ? (
@@ -372,7 +379,7 @@ export default function UsersPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">OFBiz-style security groups define permissions for users and roles</p>
-            <button className="btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button>
+            <PermissionGate resource="users" action="create"><button className="btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button></PermissionGate>
           </div>
 
           {[
@@ -551,10 +558,12 @@ export default function UsersPage() {
                     {perm.replace('can', 'Can ')}
                   </label>
                 ))}
-                <button onClick={handleSetPermission} disabled={saving} className="btn-primary text-xs ml-auto">
-                  {saving ? <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" /> : <Shield className="w-3.5 h-3.5" />}
-                  Set Permission
-                </button>
+                <PermissionGate resource="users" action="edit">
+                  <button onClick={handleSetPermission} disabled={saving} className="btn-primary text-xs ml-auto">
+                    {saving ? <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" /> : <Shield className="w-3.5 h-3.5" />}
+                    Set Permission
+                  </button>
+                </PermissionGate>
               </div>
             </div>
           </div>
@@ -599,10 +608,12 @@ export default function UsersPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowAssignModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleAssignRole} disabled={saving} className="btn-primary text-sm">
-                {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Shield className="w-4 h-4" />}
-                Assign
-              </button>
+              <PermissionGate resource="users" action="create">
+                <button onClick={handleAssignRole} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Shield className="w-4 h-4" />}
+                  Assign
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -631,10 +642,12 @@ export default function UsersPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreateTeamModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreateTeam} disabled={saving} className="btn-primary text-sm">
-                {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Users className="w-4 h-4" />}
-                Create
-              </button>
+              <PermissionGate resource="users" action="create">
+                <button onClick={handleCreateTeam} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Users className="w-4 h-4" />}
+                  Create
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

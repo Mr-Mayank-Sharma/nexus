@@ -6,6 +6,7 @@ import {
   startExperiment, completeExperiment, rollbackExperiment, failExperiment,
 } from '../api/experimentApi'
 import { getModels, AiModel } from '../api/aiPlatform'
+import PermissionGate from '../components/rbac/PermissionGate'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
@@ -129,9 +130,11 @@ export default function AiExperimentsPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><FlaskConical className="w-5 h-5" />Experiments</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-0.5">A/B test and champion/challenger experiments for AI models</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
-          <Plus className="w-4 h-4" /> New Experiment
-        </button>
+        <PermissionGate resource="settings" action="create">
+          <button onClick={() => setShowCreate(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" /> New Experiment
+          </button>
+        </PermissionGate>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -194,33 +197,45 @@ export default function AiExperimentsPage() {
                   <div className="flex items-center gap-2">
                     {exp.status === 'DRAFT' && (
                       <>
-                        <button onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-1">
-                          <Edit className="w-3 h-3" /> Edit
-                        </button>
-                        <button onClick={() => handleStart(exp.id)} className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-1">
-                          <Play className="w-3 h-3" /> Start
-                        </button>
+                        <PermissionGate resource="settings" action="edit">
+                          <button onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-1">
+                            <Edit className="w-3 h-3" /> Edit
+                          </button>
+                        </PermissionGate>
+                        <PermissionGate resource="settings" action="create">
+                          <button onClick={() => handleStart(exp.id)} className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-1">
+                            <Play className="w-3 h-3" /> Start
+                          </button>
+                        </PermissionGate>
                       </>
                     )}
                     {exp.status === 'RUNNING' && (
                       <>
-                        <button onClick={() => handleComplete(exp.id)} disabled={completingId === exp.id}
-                          className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1">
-                          {completingId === exp.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                          Complete
-                        </button>
-                        <button onClick={() => handleFail(exp.id)} className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1">
-                          <XCircle className="w-3 h-3" /> Fail
-                        </button>
-                        <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1">
-                          <RotateCcw className="w-3 h-3" /> Rollback
-                        </button>
+                        <PermissionGate resource="settings" action="edit">
+                          <button onClick={() => handleComplete(exp.id)} disabled={completingId === exp.id}
+                            className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1">
+                            {completingId === exp.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                            Complete
+                          </button>
+                        </PermissionGate>
+                        <PermissionGate resource="settings" action="edit">
+                          <button onClick={() => handleFail(exp.id)} className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1">
+                            <XCircle className="w-3 h-3" /> Fail
+                          </button>
+                        </PermissionGate>
+                        <PermissionGate resource="settings" action="edit">
+                          <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1">
+                            <RotateCcw className="w-3 h-3" /> Rollback
+                          </button>
+                        </PermissionGate>
                       </>
                     )}
                     {(exp.status === 'COMPLETED' || exp.status === 'ROLLED_BACK' || exp.status === 'FAILED') && (
-                      <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1">
-                        <RotateCcw className="w-3 h-3" /> Rollback
-                      </button>
+                      <PermissionGate resource="settings" action="edit">
+                        <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1">
+                          <RotateCcw className="w-3 h-3" /> Rollback
+                        </button>
+                      </PermissionGate>
                     )}
                   </div>
                 </div>
@@ -349,11 +364,13 @@ function ExperimentFormModal({ models, experiment, saving, onSave, onClose }: {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-            <button type="submit" disabled={saving || !name.trim() || !modelId}
-              className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {experiment ? 'Update' : 'Create'}
-            </button>
+            <PermissionGate resource="settings" action={experiment ? 'edit' : 'create'}>
+              <button type="submit" disabled={saving || !name.trim() || !modelId}
+                className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                {experiment ? 'Update' : 'Create'}
+              </button>
+            </PermissionGate>
           </div>
         </form>
       </div>

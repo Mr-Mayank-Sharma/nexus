@@ -12,6 +12,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import { Order, ApiResponse } from '../types'
+import { PermissionGate } from '../components/rbac'
 import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
 
@@ -169,7 +170,7 @@ export default function OrdersPage() {
         actions={[
           { id: 'filters', label: 'Filters', icon: 'Filter', onClick: () => {} },
           { id: 'export', label: 'Export', icon: 'Download', onClick: () => {} },
-          { id: 'new-order', label: 'New Order', icon: 'Plus', onClick: () => setShowCreate(true), primary: true },
+          { id: 'new-order', label: 'New Order', icon: 'Plus', onClick: () => setShowCreate(true), primary: true, permission: { resource: 'orders', action: 'create' } },
         ]}
       />
 
@@ -200,10 +201,12 @@ export default function OrdersPage() {
             addToast({ type: 'success', title: `Reallocating ${selectedIds.length} orders` })
             setTimeout(() => queryClient.invalidateQueries({ queryKey: ['orders'] }), 1000)
           }}><RotateCcw className="w-3.5 h-3.5" /> Reassign</button>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-red-600" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
-            {cancelMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
-            Cancel
-          </button>
+          <PermissionGate resource="orders" action="delete">
+            <button className="enterprise-btn enterprise-btn-ghost text-xs text-red-600" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
+              {cancelMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+              Cancel
+            </button>
+          </PermissionGate>
         </div>
       )}
 
@@ -299,10 +302,12 @@ export default function OrdersPage() {
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
               <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-              <button className="enterprise-btn enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                {createMutation.isPending ? 'Creating...' : 'Create Order'}
-              </button>
+              <PermissionGate resource="orders" action="create">
+                <button className="enterprise-btn enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  {createMutation.isPending ? 'Creating...' : 'Create Order'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

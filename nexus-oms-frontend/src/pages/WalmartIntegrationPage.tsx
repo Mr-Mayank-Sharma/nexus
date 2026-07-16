@@ -10,6 +10,7 @@ import type { WalmartOrder as ConnectorWalmartOrder } from '../api/connectors/wa
 import { fetchAllStatus } from '../api/connectors/connectorRegistry'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 interface WalmartOrder {
   id: string
@@ -217,14 +218,18 @@ export default function WalmartIntegrationPage() {
               {connected && <p className="text-xs text-gray-400">{MARKETPLACES.find(m => m.value === form.marketplace)?.label} · Channel: {form.channelType}</p>}
             </div>
             {connected ? (
-              <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
-                <XCircle className="w-4 h-4" /> Disconnect
-              </button>
+              <PermissionGate resource="integrations" action="delete">
+                <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
+                  <XCircle className="w-4 h-4" /> Disconnect
+                </button>
+              </PermissionGate>
             ) : (
-              <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
-                {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-                {connecting ? 'Connecting...' : 'Connect'}
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
+                  {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                  {connecting ? 'Connecting...' : 'Connect'}
+                </button>
+              </PermissionGate>
             )}
           </div>
         </div>
@@ -302,15 +307,19 @@ export default function WalmartIntegrationPage() {
             </div>
             <div className="card-footer flex justify-between">
               <div className="flex items-center gap-2">
-                <button onClick={handleSync} disabled={syncing || !connected} className="btn-secondary text-sm">
-                  {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  {syncing ? 'Syncing...' : 'Force Sync'}
-                </button>
+                <PermissionGate resource="integrations" action="create">
+                  <button onClick={handleSync} disabled={syncing || !connected} className="btn-secondary text-sm">
+                    {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    {syncing ? 'Syncing...' : 'Force Sync'}
+                  </button>
+                </PermissionGate>
               </div>
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Save Settings
-              </button>
+              <PermissionGate resource="integrations" action="edit">
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Settings
+                </button>
+              </PermissionGate>
             </div>
           </div>
 
@@ -340,10 +349,12 @@ export default function WalmartIntegrationPage() {
                       <td className="px-6 py-3 text-sm text-gray-700 text-right">{rule.minPrice}</td>
                       <td className="px-6 py-3 text-sm text-gray-700 text-right">{rule.maxPrice}</td>
                       <td className="px-6 py-3 text-center">
-                        <button onClick={() => togglePricingRule(rule.id)}
-                          className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', rule.active ? 'bg-sky-500' : 'bg-gray-300')}>
-                          <span className={clsx('inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform', rule.active ? 'translate-x-[18px]' : 'translate-x-[3px]')} />
-                        </button>
+                        <PermissionGate resource="integrations" action="edit">
+                          <button onClick={() => togglePricingRule(rule.id)}
+                            className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', rule.active ? 'bg-sky-500' : 'bg-gray-300')}>
+                            <span className={clsx('inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform', rule.active ? 'translate-x-[18px]' : 'translate-x-[3px]')} />
+                          </button>
+                        </PermissionGate>
                       </td>
                     </tr>
                   ))}
@@ -351,7 +362,9 @@ export default function WalmartIntegrationPage() {
               </table>
             </div>
             <div className="px-6 py-3 border-t border-gray-100">
-              <button className="btn-secondary text-xs"><DollarSign className="w-3.5 h-3.5" /> Add Pricing Rule</button>
+              <PermissionGate resource="integrations" action="create">
+                <button className="btn-secondary text-xs"><DollarSign className="w-3.5 h-3.5" /> Add Pricing Rule</button>
+              </PermissionGate>
             </div>
           </div>
         </>
@@ -425,10 +438,12 @@ export default function WalmartIntegrationPage() {
             )}
           </div>
           <div className="card-footer">
-            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save Fulfillment Settings
-            </button>
+            <PermissionGate resource="integrations" action="edit">
+              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save Fulfillment Settings
+              </button>
+            </PermissionGate>
           </div>
         </div>
       )}
@@ -509,9 +524,11 @@ export default function WalmartIntegrationPage() {
           </div>
           <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
             <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
-            <button onClick={handleSync} disabled={syncing || !connected} className="btn-ghost text-xs">
-              <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
-            </button>
+            <PermissionGate resource="integrations" action="create">
+              <button onClick={handleSync} disabled={syncing || !connected} className="btn-ghost text-xs">
+                <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
+              </button>
+            </PermissionGate>
           </div>
         </div>
       )}

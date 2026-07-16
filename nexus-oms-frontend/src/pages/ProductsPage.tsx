@@ -7,6 +7,7 @@ import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumb
 import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 import * as productsApi from '../api/products'
 import type { Product } from '../types'
@@ -159,11 +160,15 @@ export default function ProductsPage() {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button className="enterprise-btn-ghost p-1.5" onClick={() => openEdit(p)}><Edit3 className="w-3.5 h-3.5" /></button>
-                  <button className="enterprise-btn-ghost p-1.5 text-red-500"
-                    onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id); }}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <PermissionGate resource="products" action="edit">
+                    <button className="enterprise-btn-ghost p-1.5" onClick={() => openEdit(p)}><Edit3 className="w-3.5 h-3.5" /></button>
+                  </PermissionGate>
+                  <PermissionGate resource="products" action="delete">
+                    <button className="enterprise-btn-ghost p-1.5 text-red-500"
+                      onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id); }}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGate>
                 </div>
               </div>
               <div className="mt-3 flex items-center gap-2">
@@ -221,11 +226,13 @@ export default function ProductsPage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="enterprise-btn-primary" onClick={() => saveMutation.mutate()}
-                disabled={!form.productName || !form.sku || saveMutation.isPending}>
-                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                {editingProduct ? 'Update' : 'Create'}
-              </button>
+              <PermissionGate resource="products" action={editingProduct ? 'edit' : 'create'}>
+                <button className="enterprise-btn-primary" onClick={() => saveMutation.mutate()}
+                  disabled={!form.productName || !form.sku || saveMutation.isPending}>
+                  {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  {editingProduct ? 'Update' : 'Create'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

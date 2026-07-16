@@ -25,13 +25,16 @@ public class RbacService {
     private final RolePermissionRepository rolePermissionRepository;
     private final UserRoleRepository userRoleRepository;
     private final TeamRepository teamRepository;
+    private final PermissionService permissionService;
 
     public RbacService(RolePermissionRepository rolePermissionRepository,
                        UserRoleRepository userRoleRepository,
-                       TeamRepository teamRepository) {
+                       TeamRepository teamRepository,
+                       PermissionService permissionService) {
         this.rolePermissionRepository = rolePermissionRepository;
         this.userRoleRepository = userRoleRepository;
         this.teamRepository = teamRepository;
+        this.permissionService = permissionService;
     }
 
     public List<RolePermission> getPermissions(UUID tenantId) {
@@ -59,9 +62,13 @@ public class RbacService {
             if (p.getCanEdit() != null) rp.setCanEdit(p.getCanEdit());
             if (p.getCanDelete() != null) rp.setCanDelete(p.getCanDelete());
             if (p.getCanApprove() != null) rp.setCanApprove(p.getCanApprove());
-            return rolePermissionRepository.save(rp);
+            RolePermission saved = rolePermissionRepository.save(rp);
+            permissionService.invalidateCache(tenantId, p.getRole());
+            return saved;
         }
-        return rolePermissionRepository.save(p);
+        RolePermission saved = rolePermissionRepository.save(p);
+        permissionService.invalidateCache(tenantId, p.getRole());
+        return saved;
     }
 
     public List<UserRole> getUserRoles(UUID userId) {

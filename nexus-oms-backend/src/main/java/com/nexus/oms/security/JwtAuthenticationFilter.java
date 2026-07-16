@@ -4,11 +4,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -20,9 +22,15 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final JdbcTemplate jdbcTemplate;
+    private final TransactionTemplate transactionTemplate;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
+                                   JdbcTemplate jdbcTemplate,
+                                   TransactionTemplate transactionTemplate) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.jdbcTemplate = jdbcTemplate;
+        this.transactionTemplate = transactionTemplate;
     }
 
     @Override
@@ -45,6 +53,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Set PostgreSQL session variable for RLS tenant isolation.
+            // This must happen in the same connection that serves subsequent queries.
+            transactionTemplate.executeWithoutResult(status ->
+                jdbcTemplate.execute("SET app.current_tenant = '" + tenantId.toString() + "'")
+            );
         }
 
         filterChain.doFilter(request, response);

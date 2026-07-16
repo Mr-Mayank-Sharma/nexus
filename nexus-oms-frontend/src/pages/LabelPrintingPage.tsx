@@ -6,6 +6,7 @@ import {
 import { useToast } from '../hooks/useToast'
 import clsx from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { generateLabel, generateBulkLabels, fetchLabels, fetchCarriers, fetchOrders } from '../api/newBackend'
 
 interface Label {
@@ -192,10 +193,12 @@ export default function LabelPrintingPage() {
               </div>
             </div>
             <div className="mt-4 flex justify-end">
-              <button onClick={handleGenerate}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
-                <Plus className="w-4 h-4" /> Generate Label
-              </button>
+              <PermissionGate resource="settings" action="create">
+                <button onClick={handleGenerate}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
+                  <Plus className="w-4 h-4" /> Generate Label
+                </button>
+              </PermissionGate>
             </div>
           </div>
 
@@ -245,16 +248,20 @@ export default function LabelPrintingPage() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
-                            <button onClick={() => handleReprint(label)}
-                              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
-                              title="Reprint">
-                              <RefreshCw className="w-3.5 h-3.5" />
-                            </button>
-                            <button onClick={() => handleVoid(label)}
-                              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors"
-                              title="Void">
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            <PermissionGate resource="settings" action="edit">
+                              <button onClick={() => handleReprint(label)}
+                                className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
+                                title="Reprint">
+                                <RefreshCw className="w-3.5 h-3.5" />
+                              </button>
+                            </PermissionGate>
+                            <PermissionGate resource="settings" action="delete">
+                              <button onClick={() => handleVoid(label)}
+                                className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors"
+                                title="Void">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </PermissionGate>
                           </div>
                         </td>
                       </tr>
@@ -303,11 +310,13 @@ export default function LabelPrintingPage() {
             )}
             <div className="flex items-center justify-between">
               <span className="text-xs text-[var(--text-tertiary)]">{bulkOrders.length} order(s) selected</span>
-              <button onClick={handleBulkGenerate} disabled={bulkOrders.length === 0 || isBulkGenerating}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-                {isBulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Generate Labels for Selected
-              </button>
+              <PermissionGate resource="settings" action="create">
+                <button onClick={handleBulkGenerate} disabled={bulkOrders.length === 0 || isBulkGenerating}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isBulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Generate Labels for Selected
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

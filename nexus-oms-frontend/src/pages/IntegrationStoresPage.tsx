@@ -8,6 +8,7 @@ import * as api from '../api/integrationStores'
 import { IntegrationStore, StoreSyncStatus } from '../api/integrationStores'
 import StatusBadge from '../components/common/StatusBadge'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const PLATFORMS = [
   { value: 'SHOPIFY', label: 'Shopify', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-emerald-500' },
@@ -189,9 +190,11 @@ export default function IntegrationStoresPage() {
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Store className="w-7 h-7 text-primary-500" /> Sales Channels</h1>
           <p className="text-sm text-gray-500 mt-1">OFBiz-style integration store management — connect Shopify, BigCommerce, and more</p>
         </div>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> New Store
-        </button>
+        <PermissionGate resource="integrations" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> New Store
+          </button>
+        </PermissionGate>
       </div>
 
       {loading ? (
@@ -248,9 +251,11 @@ export default function IntegrationStoresPage() {
                         <a href={`https://${selectedStore.externalDomain}`} target="_blank" rel="noopener noreferrer"
                           className="btn-ghost text-xs"><ExternalLink className="w-3 h-3" /></a>
                       )}
-                      <button onClick={() => handleDelete(selectedStore.id)} className="btn-ghost text-xs text-red-500">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <PermissionGate resource="integrations" action="delete">
+                        <button onClick={() => handleDelete(selectedStore.id)} className="btn-ghost text-xs text-red-500">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </PermissionGate>
                     </div>
                   </div>
 
@@ -272,20 +277,24 @@ export default function IntegrationStoresPage() {
                               {st.lastSyncAt && (
                                 <p className="text-xs text-gray-400 mb-2">Last: {new Date(st.lastSyncAt).toLocaleString()}</p>
                               )}
-                              <button onClick={() => handleSync(st.syncType)} disabled={syncing === st.syncType}
-                                className="btn-primary text-xs w-full">
-                                {syncing === st.syncType ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                                {syncing === st.syncType ? 'Running...' : 'Run Sync'}
-                              </button>
+                               <PermissionGate resource="integrations" action="edit">
+                                 <button onClick={() => handleSync(st.syncType)} disabled={syncing === st.syncType}
+                                   className="btn-primary text-xs w-full">
+                                   {syncing === st.syncType ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                                   {syncing === st.syncType ? 'Running...' : 'Run Sync'}
+                                 </button>
+                               </PermissionGate>
                             </div>
                           )
                         })}
                       </div>
 
                       <div className="flex items-center gap-2 mt-4">
-                        <button onClick={handleRegisterWebhooks} className="btn-secondary text-xs">
-                          <Link className="w-3.5 h-3.5" /> Register Webhooks
-                        </button>
+                        <PermissionGate resource="integrations" action="create">
+                          <button onClick={handleRegisterWebhooks} className="btn-secondary text-xs">
+                            <Link className="w-3.5 h-3.5" /> Register Webhooks
+                          </button>
+                        </PermissionGate>
                       </div>
                     </div>
                   )}
@@ -378,10 +387,12 @@ export default function IntegrationStoresPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Store className="w-4 h-4" />}
-                Create Store
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Store className="w-4 h-4" />}
+                  Create Store
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

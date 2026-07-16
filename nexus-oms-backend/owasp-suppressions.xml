@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- Add known false positives here after running mvn dependency-check:check -->
+    <!-- Example:
+    <suppress>
+        <notes>False positive: CVE-202X-XXXXX does not affect our usage</notes>
+        <cve>CVE-202X-XXXXX</cve>
+    </suppress>
+    -->
+</suppressions>

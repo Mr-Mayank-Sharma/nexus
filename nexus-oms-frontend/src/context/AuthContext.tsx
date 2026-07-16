@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { User, LoginRequest, MfaVerificationRequest, SsoLoginRequest, UserRole, ROLE_HIERARCHY } from '../types'
 import * as authApi from '../api/auth'
+import * as rbacApi from '../api/rbac'
 
 interface AuthContextType {
   user: User | null
@@ -153,11 +154,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const roleLevel = user ? (ROLE_HIERARCHY[user.role] || 0) : 0
 
-  const switchRole = useCallback((newRole: UserRole) => {
-    if (!user) return
-    const updated = { ...user, role: newRole }
-    setUser(updated)
-    localStorage.setItem('nexus_user', JSON.stringify(updated))
+  const switchRole = useCallback(async (newRole: UserRole) => {
+    if (!user || user.role !== 'ADMIN') return
+    try {
+      const permRes = await rbacApi.getPermissionsByRole(newRole)
+      const rolePerms = permRes.data?.data ?? []
+      const permStrings: string[] = rolePerms
+        .filter((rp: { canView?: boolean; canCreate?: boolean; canEdit?: boolean; canDelete?: boolean }) => rp.canView || rp.canCreate || rp.canEdit || rp.canDelete)
+        .flatMap((rp: { permissionGroup: string; canView?: boolean; canCreate?: boolean; canEdit?: boolean; canDelete?: boolean }) => {
+          const perms: string[] = []
+          if (rp.canView) perms.push(`${rp.permissionGroup}:view`)
+          if (rp.canCreate) perms.push(`${rp.permissionGroup}:create`)
+          if (rp.canEdit) perms.push(`${rp.permissionGroup}:edit`)
+          if (rp.canDelete) perms.push(`${rp.permissionGroup}:delete`)
+          return perms
+        })
+      const updated = { ...user, role: newRole, permissions: permStrings }
+      setUser(updated)
+      localStorage.setItem('nexus_user', JSON.stringify(updated))
+      localStorage.setItem('nexus_permissions', JSON.stringify(permStrings))
+    } catch {
+      const updated = { ...user, role: newRole }
+      setUser(updated)
+      localStorage.setItem('nexus_user', JSON.stringify(updated))
+    }
   }, [user])
 
   return (

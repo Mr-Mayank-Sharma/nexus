@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -24,4 +25,5 @@ public class AuthResponse {
     private String fullName;
     private boolean passwordResetRequired;
     private String ssoProvider;
+    private List<String> permissions;
 }

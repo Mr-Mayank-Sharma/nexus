@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { fetchDashboardWidgets, generateReport, fetchReportTemplates, fetchScheduledReports, createScheduledReport } from '../api/newBackend'
 
 type TabId = 'dashboard' | 'reports' | 'scheduled' | 'saved'
@@ -324,15 +325,21 @@ export default function ReportBuilderPage() {
                   </button>
                   {widget.menuOpen && (
                     <div className="absolute right-0 top-8 z-10 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm">
-                      <button className="w-full px-3 py-1.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => refreshWidget(widget.id)}>
-                        <RefreshCw className="w-3.5 h-3.5" /> Refresh
-                      </button>
-                      <button className="w-full px-3 py-1.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { toggleMenu(widget.id); addToast({ type: 'info', title: 'Edit widget', message: widget.title }) }}>
-                        <Edit3 className="w-3.5 h-3.5" /> Edit
-                      </button>
-                      <button className="w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-2" onClick={() => removeWidget(widget.id)}>
-                        <Trash2 className="w-3.5 h-3.5" /> Remove
-                      </button>
+                      <PermissionGate resource="reports" action="edit">
+                        <button className="w-full px-3 py-1.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => refreshWidget(widget.id)}>
+                          <RefreshCw className="w-3.5 h-3.5" /> Refresh
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="reports" action="edit">
+                        <button className="w-full px-3 py-1.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { toggleMenu(widget.id); addToast({ type: 'info', title: 'Edit widget', message: widget.title }) }}>
+                          <Edit3 className="w-3.5 h-3.5" /> Edit
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="reports" action="delete">
+                        <button className="w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-2" onClick={() => removeWidget(widget.id)}>
+                          <Trash2 className="w-3.5 h-3.5" /> Remove
+                        </button>
+                      </PermissionGate>
                     </div>
                   )}
                 </div>
@@ -469,15 +476,17 @@ export default function ReportBuilderPage() {
             </div>
           ))}
 
-          <button
-            onClick={() => setShowAddWidget(true)}
-            className="enterprise-card border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all flex items-center justify-center min-h-[200px] group cursor-pointer"
-          >
-            <div className="text-center">
-              <Plus className="w-8 h-8 mx-auto text-gray-400 group-hover:text-blue-500 mb-2" />
-              <p className="text-sm font-medium text-gray-500 group-hover:text-blue-600">Add Widget</p>
-            </div>
-          </button>
+          <PermissionGate resource="reports" action="create">
+            <button
+              onClick={() => setShowAddWidget(true)}
+              className="enterprise-card border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all flex items-center justify-center min-h-[200px] group cursor-pointer"
+            >
+              <div className="text-center">
+                <Plus className="w-8 h-8 mx-auto text-gray-400 group-hover:text-blue-500 mb-2" />
+                <p className="text-sm font-medium text-gray-500 group-hover:text-blue-600">Add Widget</p>
+              </div>
+            </button>
+          </PermissionGate>
         </div>
       </>
     )
@@ -488,9 +497,11 @@ export default function ReportBuilderPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Report Templates</h2>
-          <button className="enterprise-btn enterprise-btn-primary" onClick={() => setShowCustomReport(true)}>
-            <Plus className="w-4 h-4" /> Create Custom Report
-          </button>
+          <PermissionGate resource="reports" action="create">
+            <button className="enterprise-btn enterprise-btn-primary" onClick={() => setShowCustomReport(true)}>
+              <Plus className="w-4 h-4" /> Create Custom Report
+            </button>
+          </PermissionGate>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -501,15 +512,21 @@ export default function ReportBuilderPage() {
                   <FileBarChart className="w-5 h-5 text-blue-600" />
                 </div>
                 <div className="flex gap-1">
-                  <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'success', title: 'Running report', message: t.name })}>
-                    <Play className="w-3.5 h-3.5" /> Run Now
-                  </button>
-                  <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Schedule report', message: t.name })}>
-                    <Calendar className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Edit template', message: t.name })}>
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
+                  <PermissionGate resource="reports" action="create">
+                    <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'success', title: 'Running report', message: t.name })}>
+                      <Play className="w-3.5 h-3.5" /> Run Now
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate resource="reports" action="create">
+                    <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Schedule report', message: t.name })}>
+                      <Calendar className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate resource="reports" action="edit">
+                    <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Edit template', message: t.name })}>
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGate>
                 </div>
               </div>
               <h3 className="text-sm font-semibold text-gray-900 mb-1">{t.name}</h3>
@@ -559,9 +576,11 @@ export default function ReportBuilderPage() {
                         <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" disabled={r.status !== 'Ready'} onClick={() => addToast({ type: 'success', title: 'Download started' })}>
                           <Download className="w-3.5 h-3.5" />
                         </button>
-                        <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Scheduling report', message: r.name })}>
-                          <Calendar className="w-3.5 h-3.5" />
-                        </button>
+                        <PermissionGate resource="reports" action="create">
+                          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Scheduling report', message: r.name })}>
+                            <Calendar className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
                       </div>
                     </td>
                   </tr>
@@ -579,9 +598,11 @@ export default function ReportBuilderPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">Scheduled Reports</h2>
-          <button className="enterprise-btn enterprise-btn-primary" onClick={() => setShowCreateSchedule(true)}>
-            <Plus className="w-4 h-4" /> Create Schedule
-          </button>
+          <PermissionGate resource="reports" action="create">
+            <button className="enterprise-btn enterprise-btn-primary" onClick={() => setShowCreateSchedule(true)}>
+              <Plus className="w-4 h-4" /> Create Schedule
+            </button>
+          </PermissionGate>
         </div>
 
         <div className="enterprise-card overflow-hidden">
@@ -611,28 +632,36 @@ export default function ReportBuilderPage() {
                     <td className="text-sm">{s.lastSent}</td>
                     <td className="text-sm">{s.nextSend}</td>
                     <td>
-                      <button
-                        onClick={() => toggleScheduleStatus(s.id)}
-                        className={clsx('enterprise-badge cursor-pointer border-0', s.status === 'Active' ? 'enterprise-badge-success' : 'enterprise-badge-error')}
-                      >
-                        {s.status === 'Active' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                        {s.status}
-                      </button>
+                      <PermissionGate resource="reports" action="edit">
+                        <button
+                          onClick={() => toggleScheduleStatus(s.id)}
+                          className={clsx('enterprise-badge cursor-pointer border-0', s.status === 'Active' ? 'enterprise-badge-success' : 'enterprise-badge-error')}
+                        >
+                          {s.status === 'Active' ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                          {s.status}
+                        </button>
+                      </PermissionGate>
                     </td>
                     <td>
                       <div className="flex gap-1">
-                        <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'success', title: 'Running schedule', message: s.name })}>
-                          <Play className="w-3.5 h-3.5" />
-                        </button>
-                        <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Edit schedule', message: s.name })}>
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-red-500" onClick={() => {
-                          setSchedules(prev => prev.filter(x => x.id !== s.id))
-                          addToast({ type: 'info', title: 'Schedule deleted', message: s.name })
-                        }}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <PermissionGate resource="reports" action="create">
+                          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'success', title: 'Running schedule', message: s.name })}>
+                            <Play className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
+                        <PermissionGate resource="reports" action="edit">
+                          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'Edit schedule', message: s.name })}>
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
+                        <PermissionGate resource="reports" action="delete">
+                          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-red-500" onClick={() => {
+                            setSchedules(prev => prev.filter(x => x.id !== s.id))
+                            addToast({ type: 'info', title: 'Schedule deleted', message: s.name })
+                          }}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
                       </div>
                     </td>
                   </tr>
@@ -673,9 +702,11 @@ export default function ReportBuilderPage() {
                           minChars={0}
                           inputClassName="enterprise-input text-sm !h-8 !py-1"
                         />
-                        <button className="enterprise-btn enterprise-btn-primary enterprise-btn-sm" onClick={() => confirmRename(r.id)}>
-                          <CheckCircle className="w-3 h-3" />
-                        </button>
+                        <PermissionGate resource="reports" action="edit">
+                          <button className="enterprise-btn enterprise-btn-primary enterprise-btn-sm" onClick={() => confirmRename(r.id)}>
+                            <CheckCircle className="w-3 h-3" />
+                          </button>
+                        </PermissionGate>
                         <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => setRenamingId(null)}>
                           <XCircle className="w-3 h-3" />
                         </button>
@@ -691,12 +722,16 @@ export default function ReportBuilderPage() {
                   <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => loadSavedReport(r.id)}>
                     <Eye className="w-3.5 h-3.5" />
                   </button>
-                  <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => startRename(r.id)}>
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-red-500" onClick={() => deleteSavedReport(r.id)}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <PermissionGate resource="reports" action="edit">
+                    <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => startRename(r.id)}>
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate resource="reports" action="delete">
+                    <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-red-500" onClick={() => deleteSavedReport(r.id)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGate>
                 </div>
               </div>
             </div>
@@ -760,9 +795,11 @@ export default function ReportBuilderPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowAddWidget(false)}>Cancel</button>
-              <button className="enterprise-btn enterprise-btn-primary" onClick={addWidget}>
-                <Plus className="w-4 h-4" /> Add to Dashboard
-              </button>
+              <PermissionGate resource="reports" action="create">
+                <button className="enterprise-btn enterprise-btn-primary" onClick={addWidget}>
+                  <Plus className="w-4 h-4" /> Add to Dashboard
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -810,10 +847,12 @@ export default function ReportBuilderPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCustomReport(false)}>Cancel</button>
-              <button className="enterprise-btn enterprise-btn-primary" disabled={generating} onClick={handleGenerateReport}>
-                {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                {generating ? 'Generating...' : 'Generate Report'}
-              </button>
+              <PermissionGate resource="reports" action="create">
+                <button className="enterprise-btn enterprise-btn-primary" disabled={generating} onClick={handleGenerateReport}>
+                  {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  {generating ? 'Generating...' : 'Generate Report'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -850,9 +889,11 @@ export default function ReportBuilderPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCreateSchedule(false)}>Cancel</button>
-              <button className="enterprise-btn enterprise-btn-primary" onClick={() => handleScheduleReport(scheduleForm)}>
-                <Calendar className="w-4 h-4" /> Create Schedule
-              </button>
+              <PermissionGate resource="reports" action="create">
+                <button className="enterprise-btn enterprise-btn-primary" onClick={() => handleScheduleReport(scheduleForm)}>
+                  <Calendar className="w-4 h-4" /> Create Schedule
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

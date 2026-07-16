@@ -5,9 +5,12 @@ import com.nexus.oms.entity.CompanySettings;
 import com.nexus.oms.entity.NxUser;
 import com.nexus.oms.exception.BadRequestException;
 import org.springframework.security.authentication.BadCredentialsException;
+import com.nexus.oms.config.SsoProviderConfig;
 import com.nexus.oms.repository.CompanySettingsRepository;
+import com.nexus.oms.repository.RolePermissionRepository;
 import com.nexus.oms.repository.UserRepository;
 import com.nexus.oms.security.JwtTokenProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,14 +36,19 @@ class AuthServiceTest {
     private JwtTokenProvider jwtTokenProvider;
     @Mock
     private CompanySettingsRepository companySettingsRepository;
+    @Mock
+    private RolePermissionRepository rolePermissionRepository;
+    @Mock
+    private SsoProviderConfig ssoProviderConfig;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private AuthService authService;
     private NxUser testUser;
     private UUID tenantId;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepository, passwordEncoder, jwtTokenProvider, companySettingsRepository);
+        authService = new AuthService(userRepository, passwordEncoder, jwtTokenProvider, companySettingsRepository, rolePermissionRepository, ssoProviderConfig, objectMapper);
         tenantId = UUID.randomUUID();
         testUser = NxUser.builder()
                 .id(UUID.randomUUID())

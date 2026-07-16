@@ -12,6 +12,7 @@ import * as pickingApi from '../api/picking'
 import { Order } from '../types'
 import { EnterpriseKPICard, EnterpriseStatusBadge, EnterpriseTabs } from '../components/enterprise'
 import type { Tab } from '../components/enterprise'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 type FulfillmentTab = 'open' | 'in-progress' | 'completed'
 
@@ -227,9 +228,11 @@ export default function FulfillmentPage() {
                         </button>
                         {activeTab === 'open' && (
                           <>
-                            <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => shipMutation.mutate(order.id)} disabled={shipMutation.isPending}>
-                              <Truck className="w-3.5 h-3.5" /> Ship
-                            </button>
+                            <PermissionGate resource="orders" action="edit">
+                              <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => shipMutation.mutate(order.id)} disabled={shipMutation.isPending}>
+                                <Truck className="w-3.5 h-3.5" /> Ship
+                              </button>
+                            </PermissionGate>
                           </>
                         )}
                         {activeTab === 'in-progress' && (

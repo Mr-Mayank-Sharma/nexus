@@ -14,6 +14,7 @@ import * as ordersApi from '../api/orders'
 import * as aiPlatformApi from '../api/aiPlatform'
 import * as aiOrdersApi from '../api/aiOrders'
 import type { AiSuggestion, AiActionHistory } from '../api/aiOrders'
+import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 
 interface Payment {
@@ -350,16 +351,18 @@ export default function OrderDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {isModifiable && (<button onClick={openModify} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Edit3 className="w-4 h-4" /> Modify</button>)}
-          {isModifiable && (<button onClick={openSplit} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button>)}
-          {order.status === 'PENDING' && (<button onClick={openMerge} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button>)}
+          {isModifiable && (<PermissionGate resource="orders" action="edit"><button onClick={openModify} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Edit3 className="w-4 h-4" /> Modify</button></PermissionGate>)}
+          {isModifiable && (<PermissionGate resource="orders" action="edit"><button onClick={openSplit} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button></PermissionGate>)}
+          {order.status === 'PENDING' && (<PermissionGate resource="orders" action="edit"><button onClick={openMerge} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button></PermissionGate>)}
           <button onClick={handlePrintLabel} className="enterprise-btn enterprise-btn-secondary text-sm"><Printer className="w-4 h-4" /> Print Label</button>
           <button onClick={handlePrintInvoice} className="enterprise-btn enterprise-btn-secondary text-sm"><Receipt className="w-4 h-4" /> Invoice</button>
           {statusActions.map(a => (
-            <button key={a.label} onClick={a.onClick} disabled={a.disabled}
-              className={a.variant === 'primary' ? 'enterprise-btn enterprise-btn-primary text-sm' : 'enterprise-btn enterprise-btn-danger text-sm'}>
-              {a.icon}{a.label}
-            </button>
+            <PermissionGate key={a.label} resource="orders" action="edit">
+              <button onClick={a.onClick} disabled={a.disabled}
+                className={a.variant === 'primary' ? 'enterprise-btn enterprise-btn-primary text-sm' : 'enterprise-btn enterprise-btn-danger text-sm'}>
+                {a.icon}{a.label}
+              </button>
+            </PermissionGate>
           ))}
         </div>
       </div>
@@ -466,11 +469,13 @@ export default function OrderDetailPage() {
                       </div>
                     </div>
                     <div className="flex gap-1.5 shrink-0">
-                      <button onClick={() => handleAiAction(s.actionType)} disabled={aiExecuting !== null}
-                        className="enterprise-btn enterprise-btn-ai enterprise-btn-sm">
-                        {aiExecuting === s.actionType ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
-                        Apply
-                      </button>
+                      <PermissionGate resource="orders" action="edit">
+                        <button onClick={() => handleAiAction(s.actionType)} disabled={aiExecuting !== null}
+                          className="enterprise-btn enterprise-btn-ai enterprise-btn-sm">
+                          {aiExecuting === s.actionType ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                          Apply
+                        </button>
+                      </PermissionGate>
                     </div>
                   </div>
                 ))}
@@ -639,10 +644,12 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
               <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn enterprise-btn-primary">
-                {actionLoading === 'modify' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                Save Changes
-              </button>
+              <PermissionGate resource="orders" action="edit">
+                <button onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn enterprise-btn-primary">
+                  {actionLoading === 'modify' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  Save Changes
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -693,10 +700,12 @@ export default function OrderDetailPage() {
             <button onClick={addSplitGroup} className="enterprise-btn enterprise-btn-secondary text-sm mt-4">+ Add Group</button>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
               <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn enterprise-btn-primary">
-                {actionLoading === 'split' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Split className="w-4 h-4" />}
-                Split Order
-              </button>
+              <PermissionGate resource="orders" action="edit">
+                <button onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn enterprise-btn-primary">
+                  {actionLoading === 'split' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Split className="w-4 h-4" />}
+                  Split Order
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -750,10 +759,12 @@ export default function OrderDetailPage() {
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
               <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn enterprise-btn-primary">
-                {actionLoading === 'merge' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Merge className="w-4 h-4" />}
-                Merge Orders
-              </button>
+              <PermissionGate resource="orders" action="edit">
+                <button onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn enterprise-btn-primary">
+                  {actionLoading === 'merge' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Merge className="w-4 h-4" />}
+                  Merge Orders
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

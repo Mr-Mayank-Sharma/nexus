@@ -5,6 +5,7 @@ import {
   ChevronRight, Calendar, Send, Ban,
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 import clsx from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
 import { fetchManifests, createManifest, updateManifest, fetchCarriers } from '../api/newBackend'
@@ -285,11 +286,13 @@ export default function ManifestPage() {
               className="enterprise-input w-full" />
           </div>
           <div className="flex items-end">
-            <button onClick={handleFetchShipments} disabled={isFetching}
-              className="enterprise-btn enterprise-btn-primary w-full justify-center">
-              {isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              Fetch Shipments
-            </button>
+            <PermissionGate resource="logistics" action="create">
+              <button onClick={handleFetchShipments} disabled={isFetching}
+                className="enterprise-btn enterprise-btn-primary w-full justify-center">
+                {isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                Fetch Shipments
+              </button>
+            </PermissionGate>
           </div>
         </div>
 
@@ -331,14 +334,16 @@ export default function ManifestPage() {
               ))}
             </div>
             <div className="p-3 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)] flex justify-end">
-                <button onClick={() => handleCreateManifest({
-                      carrier: createCarrier,
-                      date: new Date().toISOString().split('T')[0],
-                      shipments: fetchedShipments.filter(s => selectedShipments.includes(s.id)),
-                    })}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
-                <FileText className="w-4 h-4" /> Generate Manifest
-              </button>
+                <PermissionGate resource="logistics" action="create">
+                  <button onClick={() => handleCreateManifest({
+                        carrier: createCarrier,
+                        date: new Date().toISOString().split('T')[0],
+                        shipments: fetchedShipments.filter(s => selectedShipments.includes(s.id)),
+                      })}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
+                  <FileText className="w-4 h-4" /> Generate Manifest
+                </button>
+                </PermissionGate>
             </div>
           </div>
         )}
@@ -388,28 +393,36 @@ export default function ManifestPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
-                        <button onClick={() => handleViewDetail(m)}
-                          className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
-                          title="View">
-                          <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => handleDownload(m)}
-                          className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-green-600 transition-colors"
-                          title="Download">
-                          <Download className="w-3.5 h-3.5" />
-                        </button>
-                        {m.status !== 'Submitted' && (
-                          <button onClick={() => handleUpdateManifest(m.id, { status: 'Submitted' })}
+                        <PermissionGate resource="logistics" action="read">
+                          <button onClick={() => handleViewDetail(m)}
                             className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
-                            title="Submit">
-                            <Send className="w-3.5 h-3.5" />
+                            title="View">
+                            <Eye className="w-3.5 h-3.5" />
                           </button>
+                        </PermissionGate>
+                        <PermissionGate resource="logistics" action="edit">
+                          <button onClick={() => handleDownload(m)}
+                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-green-600 transition-colors"
+                            title="Download">
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
+                        {m.status !== 'Submitted' && (
+                          <PermissionGate resource="logistics" action="edit">
+                            <button onClick={() => handleUpdateManifest(m.id, { status: 'Submitted' })}
+                              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
+                              title="Submit">
+                              <Send className="w-3.5 h-3.5" />
+                            </button>
+                          </PermissionGate>
                         )}
-                        <button onClick={() => handleVoid(m)}
-                          className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors"
-                          title="Void">
-                          <Ban className="w-3.5 h-3.5" />
-                        </button>
+                        <PermissionGate resource="logistics" action="delete">
+                          <button onClick={() => handleVoid(m)}
+                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors"
+                            title="Void">
+                            <Ban className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
                       </div>
                     </td>
                   </tr>
@@ -468,10 +481,12 @@ export default function ManifestPage() {
                 <input value={scanInput} onChange={e => setScanInput(e.target.value)}
                   placeholder="Scan or type BOL number..."
                   className="enterprise-input flex-1" />
-                <button onClick={handleBOLScan}
-                  className="enterprise-btn enterprise-btn-secondary">
-                  <Search className="w-4 h-4" /> Scan
-                </button>
+                <PermissionGate resource="logistics" action="edit">
+                  <button onClick={handleBOLScan}
+                    className="enterprise-btn enterprise-btn-secondary">
+                    <Search className="w-4 h-4" /> Scan
+                  </button>
+                </PermissionGate>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -480,10 +495,12 @@ export default function ManifestPage() {
                 placeholder="Type your full name to sign..."
                 rows={2} className="enterprise-input w-full" />
             </div>
-            <button onClick={handleSign}
-              className="enterprise-btn enterprise-btn-primary w-full justify-center">
-              <PenLine className="w-4 h-4" /> Sign & Close Out
-            </button>
+            <PermissionGate resource="logistics" action="edit">
+              <button onClick={handleSign}
+                className="enterprise-btn enterprise-btn-primary w-full justify-center">
+                <PenLine className="w-4 h-4" /> Sign & Close Out
+              </button>
+            </PermissionGate>
           </div>
         </div>
       </div>
@@ -568,16 +585,20 @@ export default function ManifestPage() {
               <button onClick={() => setShowDetail(false)}
                 className="enterprise-btn enterprise-btn-secondary">Close</button>
               {selectedManifest.status === 'Draft' && (
-                <button onClick={handleCloseManifest}
-                  className="enterprise-btn enterprise-btn-primary">
-                  <CheckCircle className="w-4 h-4" /> Close Manifest
-                </button>
+                <PermissionGate resource="logistics" action="edit">
+                  <button onClick={handleCloseManifest}
+                    className="enterprise-btn enterprise-btn-primary">
+                    <CheckCircle className="w-4 h-4" /> Close Manifest
+                  </button>
+                </PermissionGate>
               )}
               {selectedManifest.status !== 'Submitted' && (
-                <button onClick={handleSubmitFromDetail}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
-                  <Send className="w-4 h-4" /> Submit Manifest
-                </button>
+                <PermissionGate resource="logistics" action="edit">
+                  <button onClick={handleSubmitFromDetail}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
+                    <Send className="w-4 h-4" /> Submit Manifest
+                  </button>
+                </PermissionGate>
               )}
             </div>
           </div>

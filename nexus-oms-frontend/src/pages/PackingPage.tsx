@@ -9,6 +9,7 @@ import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 import * as packingApi from '../api/packing'
 import type { NxPackage } from '../types'
@@ -115,7 +116,7 @@ export default function PackingPage() {
           minChars: 1,
         }}
         actions={[
-          { label: 'New Package', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary' },
+          { label: 'New Package', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary', permission: { resource: 'warehouse', action: 'create' } },
         ]}
       />
 
@@ -172,27 +173,37 @@ export default function PackingPage() {
                         {(pkg.status === 'PENDING_PACK' || pkg.status === 'PACKING') && (
                           <>
                             {pkg.status === 'PENDING_PACK' && (
-                              <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => startMutation.mutate(pkg.id)}>
-                                <Play className="w-3.5 h-3.5" /> Start
-                              </button>
+                              <PermissionGate resource="warehouse" action="edit">
+                                <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => startMutation.mutate(pkg.id)}>
+                                  <Play className="w-3.5 h-3.5" /> Start
+                                </button>
+                              </PermissionGate>
                             )}
-                            <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => completeMutation.mutate(pkg.id)}>
-                              <CheckCircle className="w-3.5 h-3.5" /> Complete
-                            </button>
-                            <button className="enterprise-btn-secondary text-xs px-2 py-1 text-red-600" onClick={() => { if (confirm('Void this package?')) packingApi.voidPackage(pkg.id).then(invalidate); }}>
-                              <XCircle className="w-3.5 h-3.5" /> Void
-                            </button>
+                            <PermissionGate resource="warehouse" action="edit">
+                              <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => completeMutation.mutate(pkg.id)}>
+                                <CheckCircle className="w-3.5 h-3.5" /> Complete
+                              </button>
+                            </PermissionGate>
+                            <PermissionGate resource="warehouse" action="delete">
+                              <button className="enterprise-btn-secondary text-xs px-2 py-1 text-red-600" onClick={() => { if (confirm('Void this package?')) packingApi.voidPackage(pkg.id).then(invalidate); }}>
+                                <XCircle className="w-3.5 h-3.5" /> Void
+                              </button>
+                            </PermissionGate>
                           </>
                         )}
                         {pkg.status === 'PACKED' && (
-                          <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => setShowLabelModal({ id: pkg.id, orderId: pkg.orderId })}>
-                            <Printer className="w-3.5 h-3.5" /> Generate Label
-                          </button>
+                          <PermissionGate resource="warehouse" action="edit">
+                            <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => setShowLabelModal({ id: pkg.id, orderId: pkg.orderId })}>
+                              <Printer className="w-3.5 h-3.5" /> Generate Label
+                            </button>
+                          </PermissionGate>
                         )}
                         {pkg.status === 'LABELED' && (
-                          <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => shipMutation.mutate(pkg.id)}>
-                            <Truck className="w-3.5 h-3.5" /> Ship
-                          </button>
+                          <PermissionGate resource="warehouse" action="edit">
+                            <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => shipMutation.mutate(pkg.id)}>
+                              <Truck className="w-3.5 h-3.5" /> Ship
+                            </button>
+                          </PermissionGate>
                         )}
                       </div>
                     </td>
@@ -227,10 +238,12 @@ export default function PackingPage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
+                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -266,10 +279,12 @@ export default function PackingPage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowLabelModal(null)}>Cancel</button>
-              <button className="enterprise-btn-primary" onClick={() => labelMutation.mutate()} disabled={!labelForm.carrierId || !labelForm.carrierName || labelMutation.isPending}>
-                {labelMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
-                Generate Label
-              </button>
+              <PermissionGate resource="warehouse" action="edit">
+                <button className="enterprise-btn-primary" onClick={() => labelMutation.mutate()} disabled={!labelForm.carrierId || !labelForm.carrierName || labelMutation.isPending}>
+                  {labelMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
+                  Generate Label
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

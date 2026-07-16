@@ -5,7 +5,9 @@ import com.nexus.oms.dto.*;
 import com.nexus.oms.entity.CompanySettings;
 import com.nexus.oms.entity.NxUser;
 import com.nexus.oms.exception.BadRequestException;
+import com.nexus.oms.entity.RolePermission;
 import com.nexus.oms.repository.CompanySettingsRepository;
+import com.nexus.oms.repository.RolePermissionRepository;
 import com.nexus.oms.repository.UserRepository;
 import com.nexus.oms.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +23,18 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class AuthService {
 
-    private static final Set<String> ALLOWED_ROLES = Set.of("ADMIN", "CEO", "OPS", "WAREHOUSE", "VIEWER", "FINANCE", "LOGISTICS_MANAGER");
+    private static final Set<String> ALLOWED_ROLES = Set.of(
+        "ADMIN", "CEO", "OPS_MANAGER", "WAREHOUSE_MANAGER",
+        "PICKER", "PACKER", "LOADER",
+        "STORE_MANAGER", "BOPIS_OWNER", "CUSTOMER_SUPPORT",
+        "PROCUREMENT_MANAGER", "FINANCE", "LOGISTICS_MANAGER", "VIEWER"
+    );
     private static final Set<String> SSO_PROVIDERS = Set.of("okta", "auth0", "google", "microsoft");
     private static final long MFA_TOKEN_EXPIRY_MS = 300_000;
     private static final long SSO_STATE_EXPIRY_MS = 600_000;
@@ -35,6 +43,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final CompanySettingsRepository companySettingsRepository;
+    private final RolePermissionRepository rolePermissionRepository;
     private final SsoProviderConfig ssoProviderConfig;
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
@@ -50,12 +59,14 @@ public class AuthService {
                        PasswordEncoder passwordEncoder,
                        JwtTokenProvider jwtTokenProvider,
                        CompanySettingsRepository companySettingsRepository,
+                       RolePermissionRepository rolePermissionRepository,
                        SsoProviderConfig ssoProviderConfig,
                        ObjectMapper objectMapper) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.companySettingsRepository = companySettingsRepository;
+        this.rolePermissionRepository = rolePermissionRepository;
         this.ssoProviderConfig = ssoProviderConfig;
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newHttpClient();
@@ -336,6 +347,20 @@ public class AuthService {
             tenantName = settings.get().getCompanyName();
         }
 
+        List<String> permissions = new ArrayList<>();
+        try {
+            List<RolePermission> rolePerms = rolePermissionRepository
+                    .findByTenantIdAndRole(user.getTenantId(), user.getRole());
+            for (RolePermission rp : rolePerms) {
+                if (Boolean.TRUE.equals(rp.getCanView())) permissions.add(rp.getPermissionGroup() + ":view");
+                if (Boolean.TRUE.equals(rp.getCanCreate())) permissions.add(rp.getPermissionGroup() + ":create");
+                if (Boolean.TRUE.equals(rp.getCanEdit())) permissions.add(rp.getPermissionGroup() + ":edit");
+                if (Boolean.TRUE.equals(rp.getCanDelete())) permissions.add(rp.getPermissionGroup() + ":delete");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch permissions for user {} role {}: {}", user.getUsername(), user.getRole(), e.getMessage());
+        }
+
         return AuthResponse.builder()
                 .accessToken(token)
                 .tokenType("Bearer")
@@ -348,6 +373,7 @@ public class AuthService {
                 .fullName(user.getUsername())
                 .mfaRequired(false)
                 .passwordResetRequired(false)
+                .permissions(permissions)
                 .build();
     }
 

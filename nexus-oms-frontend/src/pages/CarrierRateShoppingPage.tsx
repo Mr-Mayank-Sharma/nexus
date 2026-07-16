@@ -8,6 +8,7 @@ import * as rateShoppingApi from '../api/rateShopping'
 import type { RateQuote, RateShoppingResult } from '../types'
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const SERVICE_LEVELS = [
   { value: '', label: 'All Services' },
@@ -311,12 +312,14 @@ export default function CarrierRateShoppingPage() {
                         <span>Est. {rate.estimatedDelivery}</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => addToast({ type: 'success', title: `Selected ${rate.carrierName} ${rate.serviceName} — $${rate.totalCost.toFixed(2)}` })}
-                      className="enterprise-btn enterprise-btn-primary enterprise-btn-sm shrink-0 ml-4"
-                    >
-                      Select
-                    </button>
+                    <PermissionGate resource="logistics" action="create">
+                      <button
+                        onClick={() => addToast({ type: 'success', title: `Selected ${rate.carrierName} ${rate.serviceName} — $${rate.totalCost.toFixed(2)}` })}
+                        className="enterprise-btn enterprise-btn-primary enterprise-btn-sm shrink-0 ml-4"
+                      >
+                        Select
+                      </button>
+                    </PermissionGate>
                   </div>
                   <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500">
                     <span>Base: ${rate.baseRate.toFixed(2)}</span>

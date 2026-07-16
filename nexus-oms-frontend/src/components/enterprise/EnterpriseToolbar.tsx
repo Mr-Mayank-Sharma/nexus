@@ -1,6 +1,7 @@
 import { ReactNode, useState, useRef } from 'react'
 import { Search, X, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
+import { PermissionGate } from '../rbac'
 
 interface Action {
   label: string
@@ -9,6 +10,7 @@ interface Action {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
   disabled?: boolean
   loading?: boolean
+  permission?: { resource: string; action?: string }
 }
 
 interface AutocompleteConfig<T = any> {
@@ -75,22 +77,28 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
         )}
         {actions && actions.length > 0 && (
           <div className="flex items-center gap-2">
-            {actions.map((action, i) => (
-              <button key={i}
-                className={clsx('enterprise-btn',
-                  action.variant === 'primary' || !action.variant ? 'enterprise-btn-primary' : '',
-                  action.variant === 'secondary' ? 'enterprise-btn-secondary' : '',
-                  action.variant === 'danger' ? 'enterprise-btn-danger' : '',
-                  action.variant === 'ghost' ? 'enterprise-btn-ghost' : '',
-                  action.loading && 'opacity-60'
-                )}
-                disabled={action.disabled || action.loading}
-                onClick={action.onClick}
-              >
-                {action.loading ? <div className="enterprise-spinner" /> : action.icon}
-                {action.label}
-              </button>
-            ))}
+            {actions.map((action, i) => {
+              const btn = (
+                <button key={i}
+                  className={clsx('enterprise-btn',
+                    action.variant === 'primary' || !action.variant ? 'enterprise-btn-primary' : '',
+                    action.variant === 'secondary' ? 'enterprise-btn-secondary' : '',
+                    action.variant === 'danger' ? 'enterprise-btn-danger' : '',
+                    action.variant === 'ghost' ? 'enterprise-btn-ghost' : '',
+                    action.loading && 'opacity-60'
+                  )}
+                  disabled={action.disabled || action.loading}
+                  onClick={action.onClick}
+                >
+                  {action.loading ? <div className="enterprise-spinner" /> : action.icon}
+                  {action.label}
+                </button>
+              )
+              if (action.permission) {
+                return <PermissionGate key={i} resource={action.permission.resource} action={action.permission.action}>{btn}</PermissionGate>
+              }
+              return btn
+            })}
           </div>
         )}
       </div>

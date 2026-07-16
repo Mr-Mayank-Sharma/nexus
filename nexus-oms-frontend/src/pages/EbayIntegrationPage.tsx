@@ -6,6 +6,7 @@ import {
 import { clsx } from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useEffect } from 'react'
 import { fetchEbayOrders, authorizeEbay } from '../api/connectors/ebayConnector'
 import type { EbayOrder as ConnectorEbayOrder } from '../api/connectors/ebayConnector'
@@ -234,14 +235,18 @@ export default function EbayIntegrationPage() {
               {connected && <p className="text-xs text-gray-400">eBay {EBAY_SITES.find(s => s.value === form.site)?.label} · Store: {form.storeName || 'N/A'}</p>}
             </div>
             {connected ? (
-              <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
-                <XCircle className="w-4 h-4" /> Disconnect
-              </button>
+              <PermissionGate resource="integrations" action="delete">
+                <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
+                  <XCircle className="w-4 h-4" /> Disconnect
+                </button>
+              </PermissionGate>
             ) : (
-              <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
-                {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingBag className="w-4 h-4" />}
-                {connecting ? 'Connecting...' : 'Connect'}
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
+                  {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingBag className="w-4 h-4" />}
+                  {connecting ? 'Connecting...' : 'Connect'}
+                </button>
+              </PermissionGate>
             )}
           </div>
         </div>
@@ -311,14 +316,18 @@ export default function EbayIntegrationPage() {
               </div>
             </div>
             <div className="card-footer flex justify-between">
-              <button onClick={handleSync} disabled={syncing || !connected} className="btn-secondary text-sm">
-                {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                {syncing ? 'Syncing...' : 'Run Sync'}
-              </button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Save Settings
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleSync} disabled={syncing || !connected} className="btn-secondary text-sm">
+                  {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {syncing ? 'Syncing...' : 'Run Sync'}
+                </button>
+              </PermissionGate>
+              <PermissionGate resource="integrations" action="edit">
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Save Settings
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </>
@@ -328,9 +337,11 @@ export default function EbayIntegrationPage() {
         <div className="card">
           <div className="card-header flex justify-between items-center">
             <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Tag className="w-4 h-4 text-purple-500" /> eBay → Nexus Category Mapping</h3>
-            <button onClick={() => setShowAddCategory(true)} className="btn-secondary text-xs">
-              <Tag className="w-3.5 h-3.5" /> Add Mapping
-            </button>
+            <PermissionGate resource="integrations" action="create">
+              <button onClick={() => setShowAddCategory(true)} className="btn-secondary text-xs">
+                <Tag className="w-3.5 h-3.5" /> Add Mapping
+              </button>
+            </PermissionGate>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -354,9 +365,11 @@ export default function EbayIntegrationPage() {
                       </div>
                     </td>
                     <td className="px-6 py-3 text-right">
-                      <button onClick={() => handleRemoveCategory(index)} className="btn-ghost text-xs text-red-500">
-                        <XCircle className="w-3.5 h-3.5" />
-                      </button>
+                      <PermissionGate resource="integrations" action="delete">
+                        <button onClick={() => handleRemoveCategory(index)} className="btn-ghost text-xs text-red-500">
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </PermissionGate>
                     </td>
                   </tr>
                 ))}
@@ -399,9 +412,11 @@ export default function EbayIntegrationPage() {
               </div>
               <div className="flex justify-end gap-2 mt-4">
                 <button onClick={() => setShowAddCategory(false)} className="btn-secondary text-xs">Cancel</button>
-                <button onClick={handleAddCategory} className="btn-primary text-xs">
-                  <Tag className="w-3.5 h-3.5" /> Add Mapping
-                </button>
+                <PermissionGate resource="integrations" action="create">
+                  <button onClick={handleAddCategory} className="btn-primary text-xs">
+                    <Tag className="w-3.5 h-3.5" /> Add Mapping
+                  </button>
+                </PermissionGate>
               </div>
             </div>
           )}
@@ -476,9 +491,11 @@ export default function EbayIntegrationPage() {
           <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
             <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
             <div className="flex items-center gap-2">
-              <button onClick={handleSync} disabled={syncing || !connected} className="btn-ghost text-xs">
-                <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleSync} disabled={syncing || !connected} className="btn-ghost text-xs">
+                  <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

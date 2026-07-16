@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import { getPackagingPlan } from '../api/aiAgents'
 import type { AiPackagingPlan, AiBox } from '../api/aiAgents'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 interface MockOrder {
   id: string
@@ -254,22 +255,24 @@ export default function AiPackingPage() {
                   </div>
                 ))}
               </div>
-              <button
-                onClick={handleAnalyze}
-                disabled={loading}
-                className="enterprise-btn-primary w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-sm flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4" /> Analyze
-                  </>
-                )}
-              </button>
+              <PermissionGate resource="settings" action="create">
+                <button
+                  onClick={handleAnalyze}
+                  disabled={loading}
+                  className="enterprise-btn-primary w-full mt-4 bg-emerald-600 hover:bg-emerald-700 text-sm flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-4 h-4" /> Analyze
+                    </>
+                  )}
+                </button>
+              </PermissionGate>
             </div>
           )}
 
@@ -464,15 +467,21 @@ export default function AiPackingPage() {
               {/* Actions */}
               {!overrideMode && (
                 <div className="flex items-center gap-3">
-                  <button onClick={handleAccept} className="enterprise-btn-primary bg-emerald-600 hover:bg-emerald-700 text-sm flex items-center gap-1.5 px-5 py-2.5">
-                    <ThumbsUp className="w-4 h-4" /> Accept Plan
-                  </button>
-                  <button className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-5 py-2.5">
-                    <Edit3 className="w-4 h-4" /> Adjust Boxes
-                  </button>
-                  <button onClick={handleOverride} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-5 py-2.5 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/10">
-                    <RotateCcw className="w-4 h-4" /> Override
-                  </button>
+                  <PermissionGate resource="settings" action="edit">
+                    <button onClick={handleAccept} className="enterprise-btn-primary bg-emerald-600 hover:bg-emerald-700 text-sm flex items-center gap-1.5 px-5 py-2.5">
+                      <ThumbsUp className="w-4 h-4" /> Accept Plan
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate resource="settings" action="edit">
+                    <button className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-5 py-2.5">
+                      <Edit3 className="w-4 h-4" /> Adjust Boxes
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate resource="settings" action="edit">
+                    <button onClick={handleOverride} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-5 py-2.5 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/10">
+                      <RotateCcw className="w-4 h-4" /> Override
+                    </button>
+                  </PermissionGate>
                 </div>
               )}
 
@@ -489,13 +498,15 @@ export default function AiPackingPage() {
                     rows={3}
                   />
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleConfirmOverride}
-                      disabled={!overrideReason.trim()}
-                      className="enterprise-btn-primary bg-amber-600 hover:bg-amber-700 text-sm flex items-center gap-1.5 px-5 py-2.5 disabled:opacity-50"
-                    >
-                      <RotateCcw className="w-4 h-4" /> Confirm Override
-                    </button>
+                    <PermissionGate resource="settings" action="create">
+                      <button
+                        onClick={handleConfirmOverride}
+                        disabled={!overrideReason.trim()}
+                        className="enterprise-btn-primary bg-amber-600 hover:bg-amber-700 text-sm flex items-center gap-1.5 px-5 py-2.5 disabled:opacity-50"
+                      >
+                        <RotateCcw className="w-4 h-4" /> Confirm Override
+                      </button>
+                    </PermissionGate>
                     <button
                       onClick={() => {
                         setOverrideMode(false)

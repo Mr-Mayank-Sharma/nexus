@@ -7,6 +7,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { Inventory } from '../types'
 import * as inventoryApi from '../api/inventory'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 interface RawInventory {
   sku?: string
@@ -165,7 +166,7 @@ export default function InventoryPage() {
         }
         actions={[
           { label: 'Export', icon: <Download className="w-4 h-4" />, onClick: () => {}, variant: 'secondary' },
-          { label: 'Adjust Inventory', icon: <Plus className="w-4 h-4" />, onClick: () => {}, variant: 'primary' },
+          { label: 'Adjust Inventory', icon: <Plus className="w-4 h-4" />, onClick: () => {}, variant: 'primary', permission: { resource: 'inventory', action: 'edit' } },
         ]}
       />
 

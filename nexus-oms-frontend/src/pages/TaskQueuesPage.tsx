@@ -11,6 +11,7 @@ import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { Tab } from '../components/enterprise'
 
 type QueueTab = 'swap' | 'bad-address' | 'fraud' | 'hold'
@@ -195,12 +196,16 @@ export default function TaskQueuesPage() {
                   <button onClick={() => navigate(`/orders/${item.id}`)} className="enterprise-btn-secondary text-xs px-2.5 py-1.5 flex items-center gap-1">
                     <Eye className="w-3.5 h-3.5" /> View
                   </button>
-                  <button onClick={() => resolveMutation.mutate({ id: item.id, action: 'resolve' })} className="enterprise-btn-primary text-xs px-2.5 py-1.5 flex items-center gap-1 bg-green-600 hover:bg-green-700">
-                    <CheckCircle className="w-3.5 h-3.5" /> Resolve
-                  </button>
-                  <button onClick={() => resolveMutation.mutate({ id: item.id, action: 'reject' })} className="enterprise-btn-secondary text-xs px-2.5 py-1.5 flex items-center gap-1 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
-                    <XCircle className="w-3.5 h-3.5" /> Reject
-                  </button>
+                  <PermissionGate resource="warehouse" action="edit">
+                    <button onClick={() => resolveMutation.mutate({ id: item.id, action: 'resolve' })} className="enterprise-btn-primary text-xs px-2.5 py-1.5 flex items-center gap-1 bg-green-600 hover:bg-green-700">
+                      <CheckCircle className="w-3.5 h-3.5" /> Resolve
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate resource="warehouse" action="delete">
+                    <button onClick={() => resolveMutation.mutate({ id: item.id, action: 'reject' })} className="enterprise-btn-secondary text-xs px-2.5 py-1.5 flex items-center gap-1 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                      <XCircle className="w-3.5 h-3.5" /> Reject
+                    </button>
+                  </PermissionGate>
                 </div>
               </div>
             </div>

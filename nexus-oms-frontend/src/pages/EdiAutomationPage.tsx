@@ -8,6 +8,7 @@ import * as ediApi from '../api/edi'
 import type { EdiDocument } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const DOC_TYPE_BADGES: Record<string, string> = {
   '850': 'enterprise-badge-info',
@@ -131,12 +132,14 @@ export default function EdiAutomationPage() {
             <p>Process 850 Purchase Orders, 856 ASNs, and 810 Invoices</p>
           </div>
         </div>
-        <button
-          onClick={() => setUploadOpen(true)}
-          className="enterprise-btn enterprise-btn-primary enterprise-btn-sm"
-        >
-          <Upload className="w-4 h-4" /> Upload EDI
-        </button>
+        <PermissionGate resource="integrations" action="create">
+          <button
+            onClick={() => setUploadOpen(true)}
+            className="enterprise-btn enterprise-btn-primary enterprise-btn-sm"
+          >
+            <Upload className="w-4 h-4" /> Upload EDI
+          </button>
+        </PermissionGate>
       </div>
 
       {/* KPI Cards */}
@@ -245,12 +248,14 @@ export default function EdiAutomationPage() {
                     <Eye className="w-3.5 h-3.5" />
                   </button>
                   {doc.parsedStatus === 'FAILED' && (
-                    <button
-                      onClick={e => { e.stopPropagation(); handleReprocess(doc.id) }}
-                      className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary"
-                    >
-                      <RefreshCw className="w-3 h-3" /> Retry
-                    </button>
+                    <PermissionGate resource="integrations" action="edit">
+                      <button
+                        onClick={e => { e.stopPropagation(); handleReprocess(doc.id) }}
+                        className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary"
+                      >
+                        <RefreshCw className="w-3 h-3" /> Retry
+                      </button>
+                    </PermissionGate>
                   )}
                   {expanded.has(doc.id) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
                 </div>
@@ -367,14 +372,16 @@ export default function EdiAutomationPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setUploadOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button
-                onClick={handleUpload}
-                disabled={processing || (!uploadContent && !uploadFile)}
-                className="enterprise-btn enterprise-btn-primary disabled:opacity-50"
-              >
-                {processing && <Loader2 className="w-4 h-4 animate-spin" />}
-                Process EDI Document
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button
+                  onClick={handleUpload}
+                  disabled={processing || (!uploadContent && !uploadFile)}
+                  className="enterprise-btn enterprise-btn-primary disabled:opacity-50"
+                >
+                  {processing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Process EDI Document
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -442,9 +449,11 @@ export default function EdiAutomationPage() {
             </div>
             <div className="enterprise-modal-footer">
               {selectedDoc.parsedStatus === 'FAILED' && (
-                <button onClick={() => { handleReprocess(selectedDoc.id); setSelectedDoc(null) }} className="enterprise-btn enterprise-btn-secondary">
-                  <RefreshCw className="w-4 h-4" /> Retry Processing
-                </button>
+                <PermissionGate resource="integrations" action="edit">
+                  <button onClick={() => { handleReprocess(selectedDoc.id); setSelectedDoc(null) }} className="enterprise-btn enterprise-btn-secondary">
+                    <RefreshCw className="w-4 h-4" /> Retry Processing
+                  </button>
+                </PermissionGate>
               )}
               <button onClick={() => setSelectedDoc(null)} className="enterprise-btn enterprise-btn-primary">Close</button>
             </div>

@@ -10,6 +10,7 @@ import type { AmazonOrder as ConnectorAmazonOrder } from '../api/connectors/amaz
 import { fetchAllStatus } from '../api/connectors/connectorRegistry'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 interface AmazonOrder {
   id: string
@@ -201,14 +202,18 @@ export default function AmazonIntegrationPage() {
               )}
             </div>
             {connected ? (
-              <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
-                <XCircle className="w-4 h-4" /> Disconnect
-              </button>
+              <PermissionGate resource="integrations" action="delete">
+                <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
+                  <XCircle className="w-4 h-4" /> Disconnect
+                </button>
+              </PermissionGate>
             ) : (
-              <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
-                {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
-                {connecting ? 'Connecting...' : 'Connect'}
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
+                  {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                  {connecting ? 'Connecting...' : 'Connect'}
+                </button>
+              </PermissionGate>
             )}
           </div>
         </div>
@@ -270,14 +275,18 @@ export default function AmazonIntegrationPage() {
           </div>
         </div>
         <div className="card-footer flex justify-between">
-          <button onClick={handleForceSync} disabled={syncing || !connected} className="btn-secondary text-sm">
-            {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-            {syncing ? 'Syncing...' : 'Force Sync'}
-          </button>
-          <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            Save Settings
-          </button>
+          <PermissionGate resource="integrations" action="create">
+            <button onClick={handleForceSync} disabled={syncing || !connected} className="btn-secondary text-sm">
+              {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              {syncing ? 'Syncing...' : 'Force Sync'}
+            </button>
+          </PermissionGate>
+          <PermissionGate resource="integrations" action="edit">
+            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Save Settings
+            </button>
+          </PermissionGate>
         </div>
       </div>
 

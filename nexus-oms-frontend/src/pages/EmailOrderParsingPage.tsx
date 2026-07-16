@@ -8,6 +8,7 @@ import {
 import * as emailParserApi from '../api/emailParser'
 import type { EmailParsedOrder } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 
 const STATUS_BADGES: Record<string, string> = {
@@ -133,12 +134,14 @@ export default function EmailOrderParsingPage() {
             <p>Parse orders from email content, PDFs, and CSV attachments</p>
           </div>
         </div>
-        <button
-          onClick={() => setParseOpen(true)}
-          className="enterprise-btn enterprise-btn-primary enterprise-btn-sm"
-        >
-          <Upload className="w-4 h-4" /> Parse Email
-        </button>
+        <PermissionGate resource="integrations" action="create">
+          <button
+            onClick={() => setParseOpen(true)}
+            className="enterprise-btn enterprise-btn-primary enterprise-btn-sm"
+          >
+            <Upload className="w-4 h-4" /> Parse Email
+          </button>
+        </PermissionGate>
       </div>
 
       {/* KPI Cards */}
@@ -243,14 +246,18 @@ export default function EmailOrderParsingPage() {
                 <div className="flex items-center gap-1.5 shrink-0">
                   {order.status === 'PARSED' && (
                     <>
-                      <button onClick={e => { e.stopPropagation(); handleApprove(order.id) }}
-                        className="enterprise-btn enterprise-btn-xs bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100">
-                        <CheckCircle className="w-3 h-3" /> Approve
-                      </button>
-                      <button onClick={e => { e.stopPropagation(); handleReject(order.id) }}
-                        className="enterprise-btn enterprise-btn-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100">
-                        <XCircle className="w-3 h-3" /> Reject
-                      </button>
+                      <PermissionGate resource="integrations" action="edit">
+                        <button onClick={e => { e.stopPropagation(); handleApprove(order.id) }}
+                          className="enterprise-btn enterprise-btn-xs bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100">
+                          <CheckCircle className="w-3 h-3" /> Approve
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="integrations" action="edit">
+                        <button onClick={e => { e.stopPropagation(); handleReject(order.id) }}
+                          className="enterprise-btn enterprise-btn-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100">
+                          <XCircle className="w-3 h-3" /> Reject
+                        </button>
+                      </PermissionGate>
                     </>
                   )}
                   {expanded.has(order.id) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
@@ -374,11 +381,13 @@ export default function EmailOrderParsingPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setParseOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleParse} disabled={processing || (parseTab === 'text' ? !textForm.body : !csvFile)}
-                className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                {processing && <Loader2 className="w-4 h-4 animate-spin" />}
-                {parseTab === 'text' ? 'Parse Email' : 'Parse CSV'}
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleParse} disabled={processing || (parseTab === 'text' ? !textForm.body : !csvFile)}
+                  className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                  {processing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {parseTab === 'text' ? 'Parse Email' : 'Parse CSV'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

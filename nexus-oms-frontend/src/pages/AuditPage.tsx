@@ -9,6 +9,7 @@ import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import * as auditApi from '../api/audit'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { AuditEntry } from '../api/audit'
 
 export default function AuditPage() {

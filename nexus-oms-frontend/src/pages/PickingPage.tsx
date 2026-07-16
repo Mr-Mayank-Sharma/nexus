@@ -9,6 +9,7 @@ import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../context/AuthContext'
 import * as pickingApi from '../api/picking'
@@ -292,7 +293,7 @@ export default function PickingPage() {
           minChars: 1,
         }}
         actions={[
-          { label: 'New Picklist', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary' },
+          { label: 'New Picklist', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary', permission: { resource: 'warehouse', action: 'create' } },
         ]}
       />
 
@@ -365,37 +366,49 @@ export default function PickingPage() {
                                     </div>
                                     <span className="text-xs font-medium text-blue-700 truncate max-w-[90px]">{pickerNameMap[pl.assigneeId] || pl.assigneeId.slice(0, 8)}</span>
                                   </div>
-                                  <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition-colors" title="Start Picking"
-                                    onClick={e => { e.stopPropagation(); startPickingMutation.mutate(pl.id); }}>
-                                    <Play className="w-3.5 h-3.5" /> Start
-                                  </button>
-                                  <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors" title="Change Picker"
-                                    onClick={e => { e.stopPropagation(); setAssignTarget({ picklistId: pl.id }); }}>
-                                    <UserCheck className="w-3.5 h-3.5" /> Change
-                                  </button>
+                                  <PermissionGate resource="warehouse" action="edit">
+                                    <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition-colors" title="Start Picking"
+                                      onClick={e => { e.stopPropagation(); startPickingMutation.mutate(pl.id); }}>
+                                      <Play className="w-3.5 h-3.5" /> Start
+                                    </button>
+                                  </PermissionGate>
+                                  <PermissionGate resource="warehouse" action="edit">
+                                    <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors" title="Change Picker"
+                                      onClick={e => { e.stopPropagation(); setAssignTarget({ picklistId: pl.id }); }}>
+                                      <UserCheck className="w-3.5 h-3.5" /> Change
+                                    </button>
+                                  </PermissionGate>
                                 </>
                               ) : (
-                                <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors" title="Assign Picker"
-                                  onClick={e => { e.stopPropagation(); setAssignTarget({ picklistId: pl.id }); }}>
-                                  <UserCheck className="w-3.5 h-3.5" /> Assign
-                                </button>
+                                <PermissionGate resource="warehouse" action="edit">
+                                  <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors" title="Assign Picker"
+                                    onClick={e => { e.stopPropagation(); setAssignTarget({ picklistId: pl.id }); }}>
+                                    <UserCheck className="w-3.5 h-3.5" /> Assign
+                                  </button>
+                                </PermissionGate>
                               )}
-                              <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors" title="Print Picklist"
-                                onClick={e => { e.stopPropagation(); handlePrintPicklist(pl); }}>
-                                <Printer className="w-3.5 h-3.5" /> Print
-                              </button>
-                              <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors" title="Cancel Picklist"
-                                onClick={e => { e.stopPropagation(); cancelMutation.mutate(pl.id); }}>
-                                <XCircle className="w-3.5 h-3.5" /> Cancel
-                              </button>
+                              <PermissionGate resource="warehouse" action="read">
+                                <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors" title="Print Picklist"
+                                  onClick={e => { e.stopPropagation(); handlePrintPicklist(pl); }}>
+                                  <Printer className="w-3.5 h-3.5" /> Print
+                                </button>
+                              </PermissionGate>
+                              <PermissionGate resource="warehouse" action="delete">
+                                <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors" title="Cancel Picklist"
+                                  onClick={e => { e.stopPropagation(); cancelMutation.mutate(pl.id); }}>
+                                  <XCircle className="w-3.5 h-3.5" /> Cancel
+                                </button>
+                              </PermissionGate>
                             </>
                           )}
                           {pl.status === 'IN_PROGRESS' && (
                             pl.pickedItems >= pl.totalItems && pl.totalItems > 0 ? (
-                              <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-green-50 text-green-700 border-green-200 hover:bg-green-100 cursor-pointer transition-colors" title="Complete Picklist"
-                                onClick={e => { e.stopPropagation(); completeMutation.mutate(pl.id); }}>
-                                <CheckCircle className="w-3.5 h-3.5" /> Complete
-                              </button>
+                              <PermissionGate resource="warehouse" action="edit">
+                                <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-green-50 text-green-700 border-green-200 hover:bg-green-100 cursor-pointer transition-colors" title="Complete Picklist"
+                                  onClick={e => { e.stopPropagation(); completeMutation.mutate(pl.id); }}>
+                                  <CheckCircle className="w-3.5 h-3.5" /> Complete
+                                </button>
+                              </PermissionGate>
                             ) : (
                               <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed transition-colors" title="Pick all items first" disabled>
                                 <CheckCircle className="w-3.5 h-3.5" /> Complete
@@ -438,10 +451,12 @@ export default function PickingPage() {
                                       <td className="py-1.5"><EnterpriseStatusBadge status={item.status === 'PICKED' ? 'success' : 'pending'} label={item.status} size="sm" /></td>
                                       <td className="py-1.5 text-right">
                                         {item.status === 'PENDING' && pl.startedAt && (
-                                          <button className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
-                                            onClick={() => { setPickTarget({ itemId: item.id }); }}>
-                                            <Play className="w-3 h-3" /> Pick Now
-                                          </button>
+                                          <PermissionGate resource="warehouse" action="edit">
+                                            <button className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                                              onClick={() => { setPickTarget({ itemId: item.id }); }}>
+                                              <Play className="w-3 h-3" /> Pick Now
+                                            </button>
+                                          </PermissionGate>
                                         )}
                                         {item.status === 'PENDING' && !pl.startedAt && (
                                           <span className="text-[10px] text-[var(--text-tertiary)]">Start first</span>
@@ -488,14 +503,15 @@ export default function PickingPage() {
                     const workload = pickerWorkload[s.id] || 0
                     const shift = ss.shift || '-'
                     return (
-                      <button key={s.id} type="button"
-                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-3"
-                        onClick={() => {
-                          assignMutation.mutate({ id: assignTarget.picklistId, staffId: s.id })
-                          setAssignTarget(null)
-                          setStaffSearch('')
-                          setStaffSearchOpen(null)
-                        }}>
+                      <PermissionGate resource="warehouse" action="edit">
+                        <button key={s.id} type="button"
+                          className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-3"
+                          onClick={() => {
+                            assignMutation.mutate({ id: assignTarget.picklistId, staffId: s.id })
+                            setAssignTarget(null)
+                            setStaffSearch('')
+                            setStaffSearchOpen(null)
+                          }}>
                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold shrink-0">
                           {name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
@@ -510,6 +526,7 @@ export default function PickingPage() {
                           <div className="text-[10px] text-[var(--text-tertiary)]">{shift}</div>
                         </div>
                       </button>
+                      </PermissionGate>
                     )
                   })}
                 </div>
@@ -521,7 +538,7 @@ export default function PickingPage() {
           </div>
         </div>
       )})()}
-
+      
       {pickTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setPickTarget(null)}>
           <div className="enterprise-card p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
@@ -542,14 +559,15 @@ export default function PickingPage() {
                     const workload = pickerWorkload[s.id] || 0
                     const shift = ss.shift || '-'
                     return (
-                      <button key={s.id} type="button"
-                        className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-3"
-                        onClick={() => {
-                          pickItemMutation.mutate({ itemId: pickTarget.itemId, staffId: s.id })
-                          setPickTarget(null)
-                          setStaffSearch('')
-                          setStaffSearchOpen(null)
-                        }}>
+                      <PermissionGate resource="warehouse" action="edit">
+                        <button key={s.id} type="button"
+                          className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-3"
+                          onClick={() => {
+                            pickItemMutation.mutate({ itemId: pickTarget.itemId, staffId: s.id })
+                            setPickTarget(null)
+                            setStaffSearch('')
+                            setStaffSearchOpen(null)
+                          }}>
                         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 text-xs font-bold shrink-0">
                           {name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                         </div>
@@ -564,6 +582,7 @@ export default function PickingPage() {
                           <div className="text-[10px] text-[var(--text-tertiary)]">{shift}</div>
                         </div>
                       </button>
+                      </PermissionGate>
                     )
                   })}
                 </div>
@@ -679,11 +698,13 @@ export default function PickingPage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()}
-                disabled={!createForm.name || selectedOrders.length === 0 || selectedOrders.some(s => !s.id) || createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()}
+                  disabled={!createForm.name || selectedOrders.length === 0 || selectedOrders.some(s => !s.id) || createMutation.isPending}>
+                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

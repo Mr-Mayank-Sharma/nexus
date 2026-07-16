@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
 
 interface BopisCustomer {
@@ -128,12 +129,16 @@ export default function BopisOwnerPage() {
                           Waiting {order._waitingMinutes} min
                         </p>
                         <div className="mt-3 flex items-center gap-2">
-                          <button onClick={() => confirmPickup.mutate(order.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700">
-                            <CheckCircle className="w-3.5 h-3.5" /> Confirm Pickup
-                          </button>
-                          <button onClick={() => notifyCustomer.mutate(order.id)} className="enterprise-btn-secondary text-xs px-3 py-1.5">
-                            <Bell className="w-3.5 h-3.5" /> Notify
-                          </button>
+                          <PermissionGate resource="orders" action="edit">
+                            <button onClick={() => confirmPickup.mutate(order.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700">
+                              <CheckCircle className="w-3.5 h-3.5" /> Confirm Pickup
+                            </button>
+                          </PermissionGate>
+                          <PermissionGate resource="orders" action="edit">
+                            <button onClick={() => notifyCustomer.mutate(order.id)} className="enterprise-btn-secondary text-xs px-3 py-1.5">
+                              <Bell className="w-3.5 h-3.5" /> Notify
+                            </button>
+                          </PermissionGate>
                           <button onClick={() => navigate(`/orders/${order.id}`)} className="enterprise-btn-secondary text-xs px-2 py-1.5">
                             <Eye className="w-3.5 h-3.5" />
                           </button>

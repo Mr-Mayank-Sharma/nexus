@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import Autocomplete from '../components/common/Autocomplete'
 import clsx from 'clsx'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 
 interface Payment {
@@ -110,9 +111,11 @@ export default function PaymentsPage() {
           <p>Transaction management, invoicing & reconciliation</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setCreateInvoiceOpen(true)} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
-            <Plus className="w-3.5 h-3.5" /> Create Invoice
-          </button>
+          <PermissionGate resource="payments" action="create">
+            <button onClick={() => setCreateInvoiceOpen(true)} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
+              <Plus className="w-3.5 h-3.5" /> Create Invoice
+            </button>
+          </PermissionGate>
           <button className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
             <Download className="w-3.5 h-3.5" /> Export
           </button>
@@ -261,7 +264,9 @@ export default function PaymentsPage() {
                     <td className="px-4 py-2 text-sm font-mono text-[var(--text-secondary)]">{tx.ref}</td>
                     <td className="px-4 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">${tx.amt.toFixed(2)}</td>
                     <td className="px-4 py-2 text-center">
-                      <button onClick={() => addToast({ type: 'success', title: `Matched ${tx.ref}` })} className="text-xs px-3 py-1 bg-primary-50 text-primary-700 rounded-lg border border-primary-200 hover:bg-primary-100">Match</button>
+                      <PermissionGate resource="payments" action="edit">
+                        <button onClick={() => addToast({ type: 'success', title: `Matched ${tx.ref}` })} className="text-xs px-3 py-1 bg-primary-50 text-primary-700 rounded-lg border border-primary-200 hover:bg-primary-100">Match</button>
+                      </PermissionGate>
                     </td>
                   </tr>
                 ))}
@@ -305,8 +310,12 @@ export default function PaymentsPage() {
                 </div>
               ))}
               <div className="flex gap-2 pt-3">
-                <button className="enterprise-btn-primary text-sm flex-1 py-2" onClick={() => handleUpdateInvoice(showInvoiceDetail.id, { status: 'paid' })}>Mark as Paid</button>
-                <button className="enterprise-btn-secondary text-sm flex-1 py-2">Send Reminder</button>
+                <PermissionGate resource="payments" action="edit">
+                  <button className="enterprise-btn-primary text-sm flex-1 py-2" onClick={() => handleUpdateInvoice(showInvoiceDetail.id, { status: 'paid' })}>Mark as Paid</button>
+                </PermissionGate>
+                <PermissionGate resource="payments" action="edit">
+                  <button className="enterprise-btn-secondary text-sm flex-1 py-2">Send Reminder</button>
+                </PermissionGate>
               </div>
             </div>
           </div>
@@ -325,7 +334,9 @@ export default function PaymentsPage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setCreateInvoiceOpen(false)}>Cancel</button>
-              <button className="enterprise-btn-primary" onClick={() => handleCreateInvoice(invoiceForm)} disabled={!invoiceForm.orderNumber || !invoiceForm.customerName || !invoiceForm.amount}>Create Invoice</button>
+              <PermissionGate resource="payments" action="create">
+                <button className="enterprise-btn-primary" onClick={() => handleCreateInvoice(invoiceForm)} disabled={!invoiceForm.orderNumber || !invoiceForm.customerName || !invoiceForm.amount}>Create Invoice</button>
+              </PermissionGate>
             </div>
           </div>
         </div>

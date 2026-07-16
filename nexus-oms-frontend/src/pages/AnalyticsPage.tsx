@@ -7,6 +7,7 @@ import { BarChart3, Download, TrendingUp, TrendingDown, RefreshCw, AlertTriangle
 import { EnterpriseKPICard, EnterpriseBreadcrumbs } from '../components/enterprise'
 import { useToast } from '../hooks/useToast'
 import * as analyticsApi from '../api/analytics'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const COLORS = ['#1e40af', '#0f766e', '#d97706', '#dc2626', '#7c3aed', '#0891b2']
 
@@ -206,7 +207,9 @@ export default function AnalyticsPage() {
           <button className="btn-primary text-sm" onClick={() => fetchData()}>
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
-          <button className="btn-primary text-sm" onClick={() => addToast({ type: 'info', title: 'Export feature coming soon' })}><Download className="w-4 h-4" /> Export Executive Summary</button>
+          <PermissionGate resource="reports" action="create">
+            <button className="btn-primary text-sm" onClick={() => addToast({ type: 'info', title: 'Export feature coming soon' })}><Download className="w-4 h-4" /> Export Executive Summary</button>
+          </PermissionGate>
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { Plus, GripVertical, Pencil, Trash2, ToggleLeft, ToggleRight, ArrowUp, A
 import { useToast } from '../hooks/useToast'
 import { RoutingRule } from '../types'
 import * as routingRulesApi from '../api/routingRules'
+import PermissionGate from '../components/rbac/PermissionGate'
 import StatusBadge from '../components/common/StatusBadge'
 import Autocomplete from '../components/common/Autocomplete'
 
@@ -108,9 +109,11 @@ export default function RoutingRulesPage() {
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Route className="w-7 h-7 text-primary-500" /> Routing Rules</h1>
           <p className="text-sm text-gray-500 mt-1">Configure order routing logic for fulfillment allocation</p>
         </div>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> New Rule
-        </button>
+        <PermissionGate resource="routing" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> New Rule
+          </button>
+        </PermissionGate>
       </div>
 
       {loading ? (
@@ -147,15 +150,21 @@ export default function RoutingRulesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => handleToggleActive(rule)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
-                  {rule.isActive ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4" />}
-                </button>
-                <button onClick={() => openEdit(rule)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
-                  <Pencil className="w-4 h-4" />
-                </button>
-                <button onClick={() => handleDelete(rule.id)} className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600">
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <PermissionGate resource="routing" action="edit">
+                  <button onClick={() => handleToggleActive(rule)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
+                    {rule.isActive ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4" />}
+                  </button>
+                </PermissionGate>
+                <PermissionGate resource="routing" action="edit">
+                  <button onClick={() => openEdit(rule)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                </PermissionGate>
+                <PermissionGate resource="routing" action="delete">
+                  <button onClick={() => handleDelete(rule.id)} className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </PermissionGate>
               </div>
             </div>
           ))}
@@ -203,10 +212,12 @@ export default function RoutingRulesPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {editingRule ? 'Update' : 'Create'}
-              </button>
+              <PermissionGate resource="routing" action={editingRule ? 'edit' : 'create'}>
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {editingRule ? 'Update' : 'Create'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

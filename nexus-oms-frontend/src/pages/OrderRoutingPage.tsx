@@ -9,6 +9,7 @@ import * as orderRoutingApi from '../api/orderRouting'
 import type { FulfillmentException } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const EXCEPTION_TYPE_ICONS: Record<string, typeof AlertTriangle> = {
   INVENTORY_SHORTAGE: AlertTriangle,
@@ -277,20 +278,24 @@ export default function OrderRoutingPage() {
                               <Brain className="w-3 h-3" />
                               {exception.autoResolvable ? 'Auto-resolve available' : 'Needs manual review'}
                             </span>
-                            <button
-                              onClick={() => { setSelectedException(exception); setResolveOpen(true) }}
-                              className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary"
-                              disabled={exception.status === 'RESOLVED' || exception.status === 'CLOSED'}
-                            >
-                              <CheckCircle2 className="w-3 h-3" /> Resolve
-                            </button>
-                            <button
-                              onClick={() => handleEscalate(exception.id)}
-                              className="enterprise-btn enterprise-btn-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-                              disabled={exception.status === 'RESOLVED' || exception.status === 'CLOSED' || exception.status === 'ESCALATED'}
-                            >
-                              <ArrowUpRight className="w-3 h-3" /> Escalate
-                            </button>
+                            <PermissionGate resource="orders" action="edit">
+                              <button
+                                onClick={() => { setSelectedException(exception); setResolveOpen(true) }}
+                                className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary"
+                                disabled={exception.status === 'RESOLVED' || exception.status === 'CLOSED'}
+                              >
+                                <CheckCircle2 className="w-3 h-3" /> Resolve
+                              </button>
+                            </PermissionGate>
+                            <PermissionGate resource="orders" action="edit">
+                              <button
+                                onClick={() => handleEscalate(exception.id)}
+                                className="enterprise-btn enterprise-btn-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                disabled={exception.status === 'RESOLVED' || exception.status === 'CLOSED' || exception.status === 'ESCALATED'}
+                              >
+                                <ArrowUpRight className="w-3 h-3" /> Escalate
+                              </button>
+                            </PermissionGate>
                           </div>
                         </div>
                         <div className="flex items-center gap-4 mt-3 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
@@ -410,14 +415,16 @@ export default function OrderRoutingPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setResolveOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button
-                onClick={handleResolve}
-                disabled={processing || !resolveForm.resolution}
-                className="enterprise-btn enterprise-btn-primary disabled:opacity-50"
-              >
-                {processing && <Loader2 className="w-4 h-4 animate-spin" />}
-                Resolve Exception
-              </button>
+              <PermissionGate resource="orders" action="edit">
+                <button
+                  onClick={handleResolve}
+                  disabled={processing || !resolveForm.resolution}
+                  className="enterprise-btn enterprise-btn-primary disabled:opacity-50"
+                >
+                  {processing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Resolve Exception
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

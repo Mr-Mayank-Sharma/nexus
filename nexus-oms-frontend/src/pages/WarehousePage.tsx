@@ -11,6 +11,7 @@ import type {
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
 import StatusBadge from '../components/common/StatusBadge'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 interface WarehouseFormData {
   name: string
@@ -471,9 +472,11 @@ export default function WarehousePage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500">{zones.length} zones</p>
-              <button onClick={openAddZone} className="btn-primary text-xs">
-                <Plus className="w-3.5 h-3.5" /> Add Zone
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={openAddZone} className="btn-primary text-xs">
+                  <Plus className="w-3.5 h-3.5" /> Add Zone
+                </button>
+              </PermissionGate>
             </div>
             {zones.length === 0 ? (
               <p className="text-sm text-gray-400 py-6 text-center">No zones configured</p>
@@ -533,9 +536,11 @@ export default function WarehousePage() {
               <span className="text-xs text-green-600 font-medium">{emptyBins} empty</span>
               <span className="text-xs text-blue-600 font-medium">{occupiedBins} occupied</span>
               <div className="flex-1" />
-              <button onClick={openAddBin} className="btn-primary text-xs">
-                <Plus className="w-3.5 h-3.5" /> Add Bin
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={openAddBin} className="btn-primary text-xs">
+                  <Plus className="w-3.5 h-3.5" /> Add Bin
+                </button>
+              </PermissionGate>
             </div>
             {bins.length === 0 ? (
               <p className="text-sm text-gray-400 py-6 text-center">No bins configured</p>
@@ -574,22 +579,26 @@ export default function WarehousePage() {
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-1">
                             {b.status === 'EMPTY' && (
-                              <button
-                                onClick={() => handleReserveBin(b.id)}
-                                className="p-1 hover:bg-yellow-50 rounded text-gray-500 hover:text-yellow-600"
-                                title="Reserve"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
+                              <PermissionGate resource="warehouse" action="edit">
+                                <button
+                                  onClick={() => handleReserveBin(b.id)}
+                                  className="p-1 hover:bg-yellow-50 rounded text-gray-500 hover:text-yellow-600"
+                                  title="Reserve"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                </button>
+                              </PermissionGate>
                             )}
                             {(b.status === 'RESERVED' || b.status === 'OCCUPIED') && (
-                              <button
-                                onClick={() => handleReleaseBin(b.id)}
-                                className="p-1 hover:bg-blue-50 rounded text-gray-500 hover:text-blue-600"
-                                title="Release"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
+                              <PermissionGate resource="warehouse" action="edit">
+                                <button
+                                  onClick={() => handleReleaseBin(b.id)}
+                                  className="p-1 hover:bg-blue-50 rounded text-gray-500 hover:text-blue-600"
+                                  title="Release"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </PermissionGate>
                             )}
                           </div>
                         </td>
@@ -606,9 +615,11 @@ export default function WarehousePage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500">{staff.length} staff</p>
-              <button onClick={openAddStaff} className="btn-primary text-xs">
-                <Plus className="w-3.5 h-3.5" /> Add Staff
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={openAddStaff} className="btn-primary text-xs">
+                  <Plus className="w-3.5 h-3.5" /> Add Staff
+                </button>
+              </PermissionGate>
             </div>
             {staff.length === 0 ? (
               <p className="text-sm text-gray-400 py-6 text-center">No staff assigned</p>
@@ -653,9 +664,11 @@ export default function WarehousePage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500">{equipment.length} items</p>
-              <button onClick={openAddEquipment} className="btn-primary text-xs">
-                <Plus className="w-3.5 h-3.5" /> Add Equipment
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={openAddEquipment} className="btn-primary text-xs">
+                  <Plus className="w-3.5 h-3.5" /> Add Equipment
+                </button>
+              </PermissionGate>
             </div>
             {equipment.length === 0 ? (
               <p className="text-sm text-gray-400 py-6 text-center">No equipment registered</p>
@@ -696,16 +709,18 @@ export default function WarehousePage() {
                             : '-'}
                         </td>
                         <td className="px-4 py-2.5">
-                          <select
-                            value={e.status}
-                            onChange={(ev) => handleEquipStatus(e.id, ev.target.value)}
-                            className="input text-xs py-1 w-28"
-                          >
-                            <option value="AVAILABLE">Available</option>
-                            <option value="IN_USE">In Use</option>
-                            <option value="MAINTENANCE">Maintenance</option>
-                            <option value="OUT_OF_SERVICE">Out of Service</option>
-                          </select>
+                          <PermissionGate resource="warehouse" action="edit">
+                            <select
+                              value={e.status}
+                              onChange={(ev) => handleEquipStatus(e.id, ev.target.value)}
+                              className="input text-xs py-1 w-28"
+                            >
+                              <option value="AVAILABLE">Available</option>
+                              <option value="IN_USE">In Use</option>
+                              <option value="MAINTENANCE">Maintenance</option>
+                              <option value="OUT_OF_SERVICE">Out of Service</option>
+                            </select>
+                          </PermissionGate>
                         </td>
                       </tr>
                     ))}
@@ -728,9 +743,11 @@ export default function WarehousePage() {
             {warehouses.length} facilities &middot; {avgUtil}% avg. capacity
           </p>
         </div>
-        <button onClick={openAddWarehouse} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> Add Warehouse
-        </button>
+        <PermissionGate resource="warehouse" action="create">
+          <button onClick={openAddWarehouse} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> Add Warehouse
+          </button>
+        </PermissionGate>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -819,13 +836,15 @@ export default function WarehousePage() {
                     </td>
                     <td className="px-4 py-3 text-gray-600 text-xs">{wh.managerName || '-'}</td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDeleteWarehouse(wh.id)}
-                        className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <PermissionGate resource="warehouse" action="delete">
+                        <button
+                          onClick={() => handleDeleteWarehouse(wh.id)}
+                          className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </PermissionGate>
                     </td>
                   </tr>
                 )
@@ -907,10 +926,12 @@ export default function WarehousePage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowWhModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSaveWarehouse} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
-                Create Warehouse
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={handleSaveWarehouse} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+                  Create Warehouse
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -953,10 +974,12 @@ export default function WarehousePage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowZoneModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSaveZone} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create Zone
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={handleSaveZone} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create Zone
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -1035,10 +1058,12 @@ export default function WarehousePage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowBinModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSaveBin} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create Bin
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={handleSaveBin} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create Bin
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -1085,10 +1110,12 @@ export default function WarehousePage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowStaffModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSaveStaff} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Add Staff
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={handleSaveStaff} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Add Staff
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -1134,10 +1161,12 @@ export default function WarehousePage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowEquipModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSaveEquipment} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
-                Add Equipment
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={handleSaveEquipment} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
+                  Add Equipment
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Autocomplete from '../components/common/Autocomplete'
 import { Search, Ship, Truck, Plus, Edit, Trash2, DollarSign, CheckCircle, BarChart3, Loader2, X } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 import client from '../api/client'
 import { EnterpriseDataGrid, EnterpriseKPICard, EnterpriseBreadcrumbs, EnterpriseStatusBadge, EnterpriseTabs, EnterpriseFormSection } from '../components/enterprise'
 import type { Column } from '../components/enterprise'
@@ -281,14 +282,18 @@ export default function CarriersPage() {
       key: 'actions', label: 'Actions', width: '100px', align: 'center',
       render: (_, row) => (
         <div className="flex items-center justify-center gap-1">
-          <button onClick={e => { e.stopPropagation(); openEditModal(row) }}
-            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors">
-            <Edit className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={e => { e.stopPropagation(); handleDelete(row) }}
-            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors">
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          <PermissionGate resource="logistics" action="edit">
+            <button onClick={e => { e.stopPropagation(); openEditModal(row) }}
+              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors">
+              <Edit className="w-3.5 h-3.5" />
+            </button>
+          </PermissionGate>
+          <PermissionGate resource="logistics" action="delete">
+            <button onClick={e => { e.stopPropagation(); handleDelete(row) }}
+              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </PermissionGate>
         </div>
       ),
     },
@@ -308,9 +313,11 @@ export default function CarriersPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-0.5">Manage carrier accounts and rate cards</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={openAddModal} className="enterprise-btn enterprise-btn-primary">
-            <Plus className="w-4 h-4" /> Add Carrier
-          </button>
+          <PermissionGate resource="logistics" action="create">
+            <button onClick={openAddModal} className="enterprise-btn enterprise-btn-primary">
+              <Plus className="w-4 h-4" /> Add Carrier
+            </button>
+          </PermissionGate>
         </div>
       </div>
       <div className="flex items-center gap-3 flex-wrap">
@@ -591,10 +598,12 @@ export default function CarriersPage() {
               <button disabled={saving} onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary">
                 Cancel
               </button>
-              <button disabled={saving} onClick={handleSave} className="enterprise-btn enterprise-btn-primary">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                {editingCarrier ? 'Update Carrier' : 'Add Carrier'}
-              </button>
+              <PermissionGate resource="logistics" action={editingCarrier ? 'edit' : 'create'}>
+                <button disabled={saving} onClick={handleSave} className="enterprise-btn enterprise-btn-primary">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {editingCarrier ? 'Update Carrier' : 'Add Carrier'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

@@ -2,17 +2,29 @@ import client from './client'
 import type { ApiResponse, ImportResult, ImportFormat, ImportHistorySummary, ImportRecordLogEntry, ImportHistoryDetail, PagedResponse } from '../types'
 export type { ImportResult, ImportFormat, ImportHistorySummary, ImportRecordLogEntry, ImportHistoryDetail, PagedResponse }
 
+export async function getImportToken(entityType: string): Promise<string | null> {
+  try {
+    const { data } = await client.post('/import/token', null, { params: { entityType } })
+    return data?.data?.token || null
+  } catch {
+    return null
+  }
+}
+
 export async function importFile(
   entityType: string,
   file: File,
-  format?: string
+  format?: string,
+  importToken?: string
 ): Promise<ApiResponse<ImportResult>> {
   const formData = new FormData()
   formData.append('file', file)
   if (format) formData.append('format', format)
 
   try {
-    const { data } = await client.post(`/import/${entityType}`, formData)
+    const headers: Record<string, string> = {}
+    if (importToken) headers['X-Import-Token'] = importToken
+    const { data } = await client.post(`/import/${entityType}`, formData, { headers })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Import failed'

@@ -8,6 +8,7 @@ import com.nexus.oms.repository.ImportHistoryRepository;
 import com.nexus.oms.repository.ImportRecordLogRepository;
 import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.GenericImportService;
+import com.nexus.oms.service.ImportTokenService;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -20,10 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
+
 
 @RestController
 @RequestMapping("/import")
@@ -32,13 +32,29 @@ public class ImportHistoryController {
     private final GenericImportService genericImportService;
     private final ImportHistoryRepository importHistoryRepository;
     private final ImportRecordLogRepository importRecordLogRepository;
+    private final ImportTokenService importTokenService;
 
     public ImportHistoryController(GenericImportService genericImportService,
                                    ImportHistoryRepository importHistoryRepository,
-                                   ImportRecordLogRepository importRecordLogRepository) {
+                                   ImportRecordLogRepository importRecordLogRepository,
+                                   ImportTokenService importTokenService) {
         this.genericImportService = genericImportService;
         this.importHistoryRepository = importHistoryRepository;
         this.importRecordLogRepository = importRecordLogRepository;
+        this.importTokenService = importTokenService;
+    }
+
+    // ---- Signed Upload Token ----
+
+    @PostMapping("/token")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateToken(
+            @RequestParam("entityType") String entityType) {
+        String token = importTokenService.generateToken(entityType);
+        return ResponseEntity.ok(ApiResponse.success(Map.of(
+            "token", token,
+            "entityType", entityType,
+            "expiresInMs", importTokenService.getTtlMs()
+        )));
     }
 
     // ---- Import Execution ----

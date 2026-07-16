@@ -4,6 +4,7 @@ import {
   RotateCcw, Plus, Search, X, Check, ChevronDown, ChevronRight,
   Eye, PackageCheck, DollarSign, ThumbsUp, RefreshCw, AlertTriangle, Loader2,
 } from 'lucide-react'
+import PermissionGate from '../components/rbac/PermissionGate'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
@@ -216,7 +217,7 @@ export default function ReturnsPage() {
               setCreateForm({ orderId: '', customerId: '', reason: '', returnChannel: 'MANUAL', rmaType: 'RETURN' })
               setCreateItems([{ sku: '', productName: '', quantity: 1 }])
               setCreateOpen(true)
-            }, variant: 'primary',
+            }, variant: 'primary', permission: { resource: 'returns', action: 'create' },
           },
           { label: '', icon: <RefreshCw className={clsx('w-4 h-4', loading && 'animate-spin')} />, onClick: fetchData, variant: 'secondary' },
         ]}
@@ -285,36 +286,46 @@ export default function ReturnsPage() {
                 </div>
                 <div className="flex items-center gap-1.5 ml-4">
                   {ret.status === 'REQUESTED' && (
-                    <button onClick={() => handleApprove(ret.id)} disabled={processing === ret.id}
-                      className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
-                      {processing === ret.id ? <div className="enterprise-spinner" /> : <Check className="w-3 h-3" />}
-                      Approve
-                    </button>
+                    <PermissionGate resource="returns" action="edit">
+                      <button onClick={() => handleApprove(ret.id)} disabled={processing === ret.id}
+                        className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                        {processing === ret.id ? <div className="enterprise-spinner" /> : <Check className="w-3 h-3" />}
+                        Approve
+                      </button>
+                    </PermissionGate>
                   )}
                   {ret.status === 'APPROVED' && (
-                    <button onClick={() => handleReceive(ret.id)} disabled={processing === ret.id}
-                      className="enterprise-btn enterprise-btn-sm bg-blue-600 text-white hover:bg-blue-700 border-none disabled:opacity-50">
-                      {processing === ret.id ? <div className="enterprise-spinner" /> : <PackageCheck className="w-3 h-3" />}
-                      Receive
-                    </button>
+                    <PermissionGate resource="returns" action="edit">
+                      <button onClick={() => handleReceive(ret.id)} disabled={processing === ret.id}
+                        className="enterprise-btn enterprise-btn-sm bg-blue-600 text-white hover:bg-blue-700 border-none disabled:opacity-50">
+                        {processing === ret.id ? <div className="enterprise-spinner" /> : <PackageCheck className="w-3 h-3" />}
+                        Receive
+                      </button>
+                    </PermissionGate>
                   )}
                   {ret.status === 'RECEIVED' && (
-                    <button onClick={() => openInspect(ret)} disabled={processing === 'inspect'}
-                      className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
-                      <Eye className="w-3 h-3" /> Inspect
-                    </button>
+                    <PermissionGate resource="returns" action="edit">
+                      <button onClick={() => openInspect(ret)} disabled={processing === 'inspect'}
+                        className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
+                        <Eye className="w-3 h-3" /> Inspect
+                      </button>
+                    </PermissionGate>
                   )}
                   {ret.status === 'INSPECTED' && (
-                    <button onClick={() => openRefund(ret)} disabled={processing === 'refund'}
-                      className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
-                      <DollarSign className="w-3 h-3" /> Refund
-                    </button>
+                    <PermissionGate resource="returns" action="edit">
+                      <button onClick={() => openRefund(ret)} disabled={processing === 'refund'}
+                        className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                        <DollarSign className="w-3 h-3" /> Refund
+                      </button>
+                    </PermissionGate>
                   )}
                   {!['REFUNDED', 'REJECTED', 'CANCELLED'].includes(ret.status) && (
-                    <button onClick={() => { setSelectedReturn(ret); setRejectReason(''); setRejectOpen(true) }}
-                      className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost">
-                      <X className="w-3 h-3" />
-                    </button>
+                    <PermissionGate resource="returns" action="delete">
+                      <button onClick={() => { setSelectedReturn(ret); setRejectReason(''); setRejectOpen(true) }}
+                        className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </PermissionGate>
                   )}
                   <button onClick={() => setExpandedId(expandedId === ret.id ? null : ret.id)}
                     className="w-7 h-7 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]">
@@ -444,10 +455,12 @@ export default function ReturnsPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setCreateOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleCreate} disabled={processing === 'create' || !createForm.orderId} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                {processing === 'create' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create Return
-              </button>
+              <PermissionGate resource="returns" action="create">
+                <button onClick={handleCreate} disabled={processing === 'create' || !createForm.orderId} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                  {processing === 'create' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create Return
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -504,10 +517,12 @@ export default function ReturnsPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setInspectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleInspect} disabled={processing === 'inspect'} className="enterprise-btn bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
-                {processing === 'inspect' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
-                Complete Inspection
-              </button>
+              <PermissionGate resource="returns" action="edit">
+                <button onClick={handleInspect} disabled={processing === 'inspect'} className="enterprise-btn bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
+                  {processing === 'inspect' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
+                  Complete Inspection
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -537,10 +552,12 @@ export default function ReturnsPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setRefundOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleRefund} disabled={processing === 'refund' || refundAmount <= 0} className="enterprise-btn bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
-                {processing === 'refund' ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
-                Process Refund
-              </button>
+              <PermissionGate resource="returns" action="edit">
+                <button onClick={handleRefund} disabled={processing === 'refund' || refundAmount <= 0} className="enterprise-btn bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                  {processing === 'refund' ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
+                  Process Refund
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -563,10 +580,12 @@ export default function ReturnsPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setRejectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleReject} disabled={processing === 'reject'} className="enterprise-btn bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50">
-                {processing === 'reject' ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-                Reject Return
-              </button>
+              <PermissionGate resource="returns" action="delete">
+                <button onClick={handleReject} disabled={processing === 'reject'} className="enterprise-btn bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50">
+                  {processing === 'reject' ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
+                  Reject Return
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

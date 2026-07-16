@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Settings, Building2, Shield, Plus, X, Save } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as settingsApi from '../api/settings'
+import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 
 type Tab = 'general' | 'company' | 'security'
@@ -325,10 +326,12 @@ export default function SettingsPage() {
               </div>
 
               <div className="pt-4 border-t border-gray-100 flex justify-end">
-                <button onClick={handleSaveCompany} disabled={saving} className="btn-primary text-sm">
-                  {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Save className="w-4 h-4" />}
-                  Save Settings
-                </button>
+                <PermissionGate resource="settings" action="edit">
+                  <button onClick={handleSaveCompany} disabled={saving} className="btn-primary text-sm">
+                    {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Save Settings
+                  </button>
+                </PermissionGate>
               </div>
             </>
           )}
@@ -358,10 +361,12 @@ export default function SettingsPage() {
             clearable={false}
           />
           <div className="flex justify-end">
-            <button onClick={handleSaveSecurity} disabled={saving} className="btn-primary text-sm">
-              {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Save className="w-4 h-4" />}
-              Save Security Policy
-            </button>
+            <PermissionGate resource="settings" action="edit">
+              <button onClick={handleSaveSecurity} disabled={saving} className="btn-primary text-sm">
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save Security Policy
+              </button>
+            </PermissionGate>
           </div>
         </div>
       )}

@@ -4,6 +4,7 @@ import { useToast } from '../hooks/useToast'
 import { InventoryReceipt, Node } from '../types'
 import * as receiptsApi from '../api/inventoryReceipts'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import StatusBadge from '../components/common/StatusBadge'
 
 export default function InventoryReceivingPage() {
@@ -61,9 +62,11 @@ export default function InventoryReceivingPage() {
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><PackageCheck className="w-7 h-7 text-primary-500" /> Inventory Receiving</h1>
           <p className="text-sm text-gray-500 mt-1">Receive purchase orders, transfer orders, and returns into inventory</p>
         </div>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> New Receipt
-        </button>
+        <PermissionGate resource="inventory" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> New Receipt
+          </button>
+        </PermissionGate>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -113,9 +116,11 @@ export default function InventoryReceivingPage() {
                     <td className="px-6 py-3 text-center"><StatusBadge status={receipt.status} size="sm" /></td>
                     <td className="px-6 py-3 text-right">
                       {receipt.status === 'PENDING' ? (
-                        <button onClick={() => handleReceive(receipt.id)} className="btn-primary text-xs py-1.5">
-                          <PackageCheck className="w-3.5 h-3.5" /> Receive
-                        </button>
+                        <PermissionGate resource="inventory" action="edit">
+                          <button onClick={() => handleReceive(receipt.id)} className="btn-primary text-xs py-1.5">
+                            <PackageCheck className="w-3.5 h-3.5" /> Receive
+                          </button>
+                        </PermissionGate>
                       ) : (
                         <span className="text-xs text-gray-400">Received by {receipt.receivedBy || 'system'}</span>
                       )}
@@ -188,10 +193,12 @@ export default function InventoryReceivingPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
-                Create Receipt
-              </button>
+              <PermissionGate resource="inventory" action="create">
+                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
+                  Create Receipt
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

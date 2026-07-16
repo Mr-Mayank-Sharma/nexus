@@ -4,6 +4,7 @@ import { useToast } from '../hooks/useToast'
 import { CycleCount } from '../types'
 import * as cycleCountsApi from '../api/cycleCounts'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import StatusBadge from '../components/common/StatusBadge'
 
 export default function CycleCountPage() {
@@ -67,9 +68,11 @@ export default function CycleCountPage() {
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><ClipboardCheck className="w-7 h-7 text-primary-500" /> Cycle Counting</h1>
           <p className="text-sm text-gray-500 mt-1">Regular inventory reconciliation to ensure stock accuracy</p>
         </div>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> New Count
-        </button>
+        <PermissionGate resource="inventory" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> New Count
+          </button>
+        </PermissionGate>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -119,9 +122,11 @@ export default function CycleCountPage() {
                   <p className="text-xs text-gray-400 mt-3">Counted by {count.countedBy} {count.countedAt ? `on ${new Date(count.countedAt).toLocaleDateString()}` : ''}</p>
                 )}
                 {isPending && (
-                  <button onClick={() => { setShowCountModal(count); setCountValue(count.expectedQty) }} className="btn-primary text-xs w-full mt-4">
-                    <ClipboardCheck className="w-3.5 h-3.5" /> Record Count
-                  </button>
+                  <PermissionGate resource="inventory" action="edit">
+                    <button onClick={() => { setShowCountModal(count); setCountValue(count.expectedQty) }} className="btn-primary text-xs w-full mt-4">
+                      <ClipboardCheck className="w-3.5 h-3.5" /> Record Count
+                    </button>
+                  </PermissionGate>
                 )}
                 {!isPending && (
                   <div className="flex items-center gap-1.5 mt-3 text-xs">
@@ -170,10 +175,12 @@ export default function CycleCountPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create
-              </button>
+              <PermissionGate resource="inventory" action="create">
+                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -201,10 +208,12 @@ export default function CycleCountPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCountModal(null)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handlePerformCount} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                Submit Count
-              </button>
+              <PermissionGate resource="inventory" action="edit">
+                <button onClick={handlePerformCount} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  Submit Count
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

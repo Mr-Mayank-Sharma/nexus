@@ -13,7 +13,7 @@ export async function getPermissions(page: number, size: number): Promise<ApiRes
 
 export async function getPermissionsByRole(role: string): Promise<ApiResponse<RolePermission[]>> {
   try {
-    const { data } = await client.get(`/rbac/permissions/${role}`)
+    const { data } = await client.get('/rbac/permissions/role', { params: { role } })
     return data
   } catch (error: any) {
     throw new Error(error.response?.data?.message || error.message || 'Failed to fetch permissions by role')

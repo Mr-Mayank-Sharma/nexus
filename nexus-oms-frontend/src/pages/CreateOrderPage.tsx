@@ -5,6 +5,7 @@ import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import { createOrder, fetchCustomers, fetchProducts } from '../api/newBackend'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 interface LineItem {
   id: string
@@ -228,7 +229,9 @@ export default function CreateOrderPage() {
             </div>
             <div className="flex justify-between mt-4">
               <button onClick={() => setStep('shipping')} className="enterprise-btn-secondary">← Back</button>
-              <button onClick={handleSubmitOrder} className="enterprise-btn-primary bg-green-600 hover:bg-green-700"><CheckCircle className="w-4 h-4" /> Submit Order</button>
+              <PermissionGate resource="orders" action="create">
+                <button onClick={handleSubmitOrder} className="enterprise-btn-primary bg-green-600 hover:bg-green-700"><CheckCircle className="w-4 h-4" /> Submit Order</button>
+              </PermissionGate>
             </div>
           </div>
         </div>

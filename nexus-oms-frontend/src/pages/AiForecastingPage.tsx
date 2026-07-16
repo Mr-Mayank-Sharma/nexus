@@ -7,6 +7,7 @@ import {
 import clsx from 'clsx'
 import { getForecasts, getSupplierRisks, getRecommendations } from '../api/aiAgents'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { AiForecast, AiSupplierRisk, AiRecommendation } from '../api/aiAgents'
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {

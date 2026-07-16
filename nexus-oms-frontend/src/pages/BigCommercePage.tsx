@@ -9,6 +9,7 @@ import { BigCommerceConfig, SyncResult } from '../api/bigcommerce'
 import { SyncLog } from '../types'
 import StatusBadge from '../components/common/StatusBadge'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 export default function BigCommercePage() {
   const [activeTab, setActiveTab] = useState<'config' | 'sync' | 'logs'>('config')
@@ -197,13 +198,17 @@ export default function BigCommercePage() {
             )}
           </div>
           <div className="card-footer flex justify-between">
-            <button onClick={handleRegisterWebhooks} className="btn-secondary text-sm">
-              <Link className="w-4 h-4" /> Register Webhooks
-            </button>
-            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Save Configuration
-            </button>
+            <PermissionGate resource="integrations" action="create">
+              <button onClick={handleRegisterWebhooks} className="btn-secondary text-sm">
+                <Link className="w-4 h-4" /> Register Webhooks
+              </button>
+            </PermissionGate>
+            <PermissionGate resource="integrations" action="edit">
+              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                Save Configuration
+              </button>
+            </PermissionGate>
           </div>
         </div>
       )}
@@ -217,11 +222,13 @@ export default function BigCommercePage() {
               </div>
               <h3 className="text-sm font-semibold text-gray-900">{action.label}</h3>
               <p className="text-xs text-gray-500 mt-1 mb-4">{action.description}</p>
-              <button onClick={() => handleSync(action.id)} disabled={syncing === action.id}
-                className="btn-primary text-xs w-full">
-                {syncing === action.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                {syncing === action.id ? 'Running...' : 'Run Now'}
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={() => handleSync(action.id)} disabled={syncing === action.id}
+                  className="btn-primary text-xs w-full">
+                  {syncing === action.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                  {syncing === action.id ? 'Running...' : 'Run Now'}
+                </button>
+              </PermissionGate>
             </div>
           ))}
         </div>

@@ -14,6 +14,7 @@ import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
 import { fetchReturns, fetchReturnAnalytics, createReturn, updateReturn } from '../api/newBackend'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 type RmaStatus = 'PENDING_APPROVAL' | 'AUTHORIZED' | 'IN_TRANSIT' | 'RECEIVED' | 'INSPECTED' | 'COMPLETED' | 'REJECTED'
 type ItemCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'DAMAGED'
@@ -378,9 +379,11 @@ export default function ReturnsEnhancedPage() {
           <span className="text-sm text-gray-500">Last 30 days</span>
         </div>
         <div className="ml-auto">
-          <button onClick={() => setCreateOpen(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-1.5">
-            <Plus className="w-4 h-4" /> Create RMA
-          </button>
+          <PermissionGate resource="orders" action="create">
+            <button onClick={() => setCreateOpen(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-1.5">
+              <Plus className="w-4 h-4" /> Create RMA
+            </button>
+          </PermissionGate>
         </div>
       </div>
 
@@ -426,12 +429,16 @@ export default function ReturnsEnhancedPage() {
                       <div className="flex items-center justify-end gap-1">
                         {rma.status === 'PENDING_APPROVAL' && (
                           <>
-                            <button onClick={() => setConfirmAction({ type: 'approve', rma })}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
-                              title="Approve"><Check className="w-4 h-4" /></button>
-                            <button onClick={() => setConfirmAction({ type: 'reject', rma })}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
-                              title="Reject"><X className="w-4 h-4" /></button>
+                            <PermissionGate resource="orders" action="edit">
+                              <button onClick={() => setConfirmAction({ type: 'approve', rma })}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
+                                title="Approve"><Check className="w-4 h-4" /></button>
+                            </PermissionGate>
+                            <PermissionGate resource="orders" action="edit">
+                              <button onClick={() => setConfirmAction({ type: 'reject', rma })}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+                                title="Reject"><X className="w-4 h-4" /></button>
+                            </PermissionGate>
                           </>
                         )}
                         {rma.status === 'AUTHORIZED' && (
@@ -441,16 +448,20 @@ export default function ReturnsEnhancedPage() {
                           <span className="text-xs text-cyan-500 italic"><Truck className="w-3.5 h-3.5 inline mr-1" />In transit</span>
                         )}
                         {rma.status === 'RECEIVED' && (
-                          <button onClick={() => openInspection(rma)}
-                            className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none">
-                            <Eye className="w-3 h-3" /> Inspect
-                          </button>
+                          <PermissionGate resource="orders" action="edit">
+                            <button onClick={() => openInspection(rma)}
+                              className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none">
+                              <Eye className="w-3 h-3" /> Inspect
+                            </button>
+                          </PermissionGate>
                         )}
                         {rma.status === 'INSPECTED' && (
-                          <button onClick={() => addToast({ type: 'info', title: `Processing completion for ${rma.rmaNumber}` })}
-                            className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none">
-                            <DollarSign className="w-3 h-3" /> Complete
-                          </button>
+                          <PermissionGate resource="orders" action="edit">
+                            <button onClick={() => addToast({ type: 'info', title: `Processing completion for ${rma.rmaNumber}` })}
+                              className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none">
+                              <DollarSign className="w-3 h-3" /> Complete
+                            </button>
+                          </PermissionGate>
                         )}
                         {rma.status === 'COMPLETED' && (
                           <span className="text-xs text-emerald-600 font-medium">Done</span>
@@ -626,10 +637,12 @@ export default function ReturnsEnhancedPage() {
 
               <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
                 <button onClick={() => setInspectionRma(null)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-                <button onClick={handleInspectSubmit}
-                  className="enterprise-btn bg-violet-600 text-white hover:bg-violet-700 border-none flex items-center gap-1.5">
-                  <Eye className="w-4 h-4" /> Inspect & Submit
-                </button>
+                <PermissionGate resource="orders" action="edit">
+                  <button onClick={handleInspectSubmit}
+                    className="enterprise-btn bg-violet-600 text-white hover:bg-violet-700 border-none flex items-center gap-1.5">
+                    <Eye className="w-4 h-4" /> Inspect & Submit
+                  </button>
+                </PermissionGate>
               </div>
             </div>
           </div>
@@ -663,10 +676,12 @@ export default function ReturnsEnhancedPage() {
                       <p className="text-xs text-gray-400 mt-0.5">Reason: {rma.reason}</p>
                     </div>
                   </div>
-                  <button onClick={() => openInspection(rma)}
-                    className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none shrink-0 ml-4">
-                    <Eye className="w-3.5 h-3.5" /> Inspect
-                  </button>
+                  <PermissionGate resource="orders" action="edit">
+                    <button onClick={() => openInspection(rma)}
+                      className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none shrink-0 ml-4">
+                      <Eye className="w-3.5 h-3.5" /> Inspect
+                    </button>
+                  </PermissionGate>
                 </div>
               ))}
             </div>
@@ -687,10 +702,12 @@ export default function ReturnsEnhancedPage() {
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{cat.count}</h3>
             <p className="text-sm text-gray-500">{cat.label}</p>
             {cat.value > 0 && <p className="text-xs text-gray-400 mt-1">${cat.value.toLocaleString()} recovery value</p>}
-            <button onClick={() => handleProcessDisposition(cat.key)}
-              className="mt-4 w-full enterprise-btn enterprise-btn-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
-              Process Disposition
-            </button>
+            <PermissionGate resource="orders" action="edit">
+              <button onClick={() => handleProcessDisposition(cat.key)}
+                className="mt-4 w-full enterprise-btn enterprise-btn-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                Process Disposition
+              </button>
+            </PermissionGate>
           </div>
         ))}
       </div>
@@ -976,10 +993,12 @@ export default function ReturnsEnhancedPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setCreateOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={async () => { await handleCreateReturn(createForm); setCreateOpen(false); setCreateForm({ customer: '', orderNumber: '', reason: '', reasonType: 'Defective', value: 0 }) }} disabled={!createForm.customer && !createForm.orderNumber}
-                className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                <Plus className="w-4 h-4" /> Create RMA
-              </button>
+              <PermissionGate resource="orders" action="create">
+                <button onClick={async () => { await handleCreateReturn(createForm); setCreateOpen(false); setCreateForm({ customer: '', orderNumber: '', reason: '', reasonType: 'Defective', value: 0 }) }} disabled={!createForm.customer && !createForm.orderNumber}
+                  className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                  <Plus className="w-4 h-4" /> Create RMA
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -1011,15 +1030,19 @@ export default function ReturnsEnhancedPage() {
             <div className="enterprise-modal-footer">
               <button onClick={() => setConfirmAction(null)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               {confirmAction.type === 'approve' ? (
-                <button onClick={() => handleApproveRma(confirmAction.rma)}
-                  className="enterprise-btn bg-emerald-600 text-white hover:bg-emerald-700 border-none">
-                  <Check className="w-4 h-4" /> Approve
-                </button>
+                <PermissionGate resource="orders" action="edit">
+                  <button onClick={() => handleApproveRma(confirmAction.rma)}
+                    className="enterprise-btn bg-emerald-600 text-white hover:bg-emerald-700 border-none">
+                    <Check className="w-4 h-4" /> Approve
+                  </button>
+                </PermissionGate>
               ) : (
-                <button onClick={() => handleRejectRma(confirmAction.rma)}
-                  className="enterprise-btn bg-red-600 text-white hover:bg-red-700 border-none">
-                  <X className="w-4 h-4" /> Reject
-                </button>
+                <PermissionGate resource="orders" action="edit">
+                  <button onClick={() => handleRejectRma(confirmAction.rma)}
+                    className="enterprise-btn bg-red-600 text-white hover:bg-red-700 border-none">
+                    <X className="w-4 h-4" /> Reject
+                  </button>
+                </PermissionGate>
               )}
             </div>
           </div>

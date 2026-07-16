@@ -4,6 +4,7 @@ import {
   Layers, Plus, Play, CheckCircle, XCircle, Clock, Calendar, Zap,
   ChevronDown, ChevronRight, Lightbulb, Search, X, Loader2, TrendingUp,
 } from 'lucide-react'
+import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import { fetchWavePlans, createWavePlan, updateWavePlan } from '../api/newBackend'
@@ -201,9 +202,11 @@ export default function WavePlanningPage() {
           >
             <Calendar className="w-4 h-4" /> {showCalendar ? 'Hide Calendar' : 'Wave Calendar'}
           </button>
-          <button onClick={() => setShowCreateModal(true)} className="btn-primary text-sm">
-            <Plus className="w-4 h-4" /> Create Wave
-          </button>
+          <PermissionGate resource="warehouse" action="create">
+            <button onClick={() => setShowCreateModal(true)} className="btn-primary text-sm">
+              <Plus className="w-4 h-4" /> Create Wave
+            </button>
+          </PermissionGate>
         </div>
       </div>
 
@@ -302,31 +305,37 @@ export default function WavePlanningPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       {wave.status === 'Planned' && (
-                        <button
-                          onClick={() => handleWaveAction(wave.id, { status: 'In Progress' })}
-                          className="p-1.5 hover:bg-blue-50 rounded text-gray-400 hover:text-blue-600"
-                          title="Start Wave"
-                        >
-                          <Play className="w-3.5 h-3.5" />
-                        </button>
+                        <PermissionGate resource="warehouse" action="edit">
+                          <button
+                            onClick={() => handleWaveAction(wave.id, { status: 'In Progress' })}
+                            className="p-1.5 hover:bg-blue-50 rounded text-gray-400 hover:text-blue-600"
+                            title="Start Wave"
+                          >
+                            <Play className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
                       )}
                       {wave.status === 'In Progress' && (
-                        <button
-                          onClick={() => handleWaveAction(wave.id, { status: 'Completed' })}
-                          className="p-1.5 hover:bg-green-50 rounded text-gray-400 hover:text-green-600"
-                          title="Complete Wave"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" />
-                        </button>
+                        <PermissionGate resource="warehouse" action="edit">
+                          <button
+                            onClick={() => handleWaveAction(wave.id, { status: 'Completed' })}
+                            className="p-1.5 hover:bg-green-50 rounded text-gray-400 hover:text-green-600"
+                            title="Complete Wave"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
                       )}
                       {(wave.status === 'Planned' || wave.status === 'In Progress') && (
-                        <button
-                          onClick={() => handleWaveAction(wave.id, { status: 'Cancelled' })}
-                          className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
-                          title="Cancel Wave"
-                        >
-                          <XCircle className="w-3.5 h-3.5" />
-                        </button>
+                        <PermissionGate resource="warehouse" action="edit">
+                          <button
+                            onClick={() => handleWaveAction(wave.id, { status: 'Cancelled' })}
+                            className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
+                            title="Cancel Wave"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                          </button>
+                        </PermissionGate>
                       )}
                     </div>
                   </td>
@@ -384,18 +393,20 @@ export default function WavePlanningPage() {
                   <p className="text-xs text-gray-500">
                     Est. completion: {wave.estimatedCompletion || 'Not set'}
                   </p>
-                  <button
-                    onClick={() => handleOptimize(wave.id)}
-                    disabled={optimizing === wave.id}
-                    className="btn-secondary text-xs flex items-center gap-1.5"
-                  >
-                    {optimizing === wave.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Lightbulb className="w-3.5 h-3.5" />
-                    )}
-                    AI Optimize
-                  </button>
+                  <PermissionGate resource="warehouse" action="edit">
+                    <button
+                      onClick={() => handleOptimize(wave.id)}
+                      disabled={optimizing === wave.id}
+                      className="btn-secondary text-xs flex items-center gap-1.5"
+                    >
+                      {optimizing === wave.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Lightbulb className="w-3.5 h-3.5" />
+                      )}
+                      AI Optimize
+                    </button>
+                  </PermissionGate>
                 </div>
               </div>
             )
@@ -455,18 +466,20 @@ export default function WavePlanningPage() {
                       <p className="text-xs font-medium text-gray-500 mb-1">Estimated Completion</p>
                       <p className="text-sm text-gray-700">{selectedWave.estimatedCompletion || 'Pending'}</p>
                     </div>
-                    <button
-                      onClick={() => handleOptimize(selectedWave.id)}
-                      disabled={optimizing === selectedWave.id}
-                      className="btn-primary text-xs flex items-center gap-1.5"
-                    >
-                      {optimizing === selectedWave.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Lightbulb className="w-3.5 h-3.5" />
-                      )}
-                      {optimizing === selectedWave.id ? 'Optimizing...' : 'AI Optimization Suggestion'}
-                    </button>
+                    <PermissionGate resource="warehouse" action="edit">
+                      <button
+                        onClick={() => handleOptimize(selectedWave.id)}
+                        disabled={optimizing === selectedWave.id}
+                        className="btn-primary text-xs flex items-center gap-1.5"
+                      >
+                        {optimizing === selectedWave.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Lightbulb className="w-3.5 h-3.5" />
+                        )}
+                        {optimizing === selectedWave.id ? 'Optimizing...' : 'AI Optimization Suggestion'}
+                      </button>
+                    </PermissionGate>
                   </>
                 )
               })()}
@@ -559,9 +572,11 @@ export default function WavePlanningPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={() => handleCreateWave(createForm)} className="btn-primary text-sm">
-                <Plus className="w-4 h-4" /> Create Wave
-              </button>
+              <PermissionGate resource="warehouse" action="create">
+                <button onClick={() => handleCreateWave(createForm)} className="btn-primary text-sm">
+                  <Plus className="w-4 h-4" /> Create Wave
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

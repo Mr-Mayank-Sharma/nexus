@@ -5,6 +5,7 @@ import {
   Users, Play, Pause, LogOut, TrendingUp, Clock, UserCheck, Package,
   Truck, Gauge, BarChart3, Calendar, AlertTriangle, Plus, X,
 } from 'lucide-react'
+import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 
@@ -179,12 +180,14 @@ export default function LaborManagementPage() {
           <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
             <Users className="w-4 h-4 text-primary-500" /> Staff Overview
           </h3>
-          <button
-            onClick={() => setShowAssignModal(true)}
-            className="btn-primary text-xs flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" /> Assign to Wave
-          </button>
+          <PermissionGate resource="warehouse" action="edit">
+            <button
+              onClick={() => setShowAssignModal(true)}
+              className="btn-primary text-xs flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" /> Assign to Wave
+            </button>
+          </PermissionGate>
         </div>
         <div className="grid grid-cols-4 gap-4">
           {employees.map((emp) => (
@@ -212,28 +215,34 @@ export default function LaborManagementPage() {
               </div>
               <div className="flex items-center gap-2">
                 {emp.status === 'Active' && (
-                  <button
-                    onClick={() => handleStartBreak(emp.id)}
-                    className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1"
-                  >
-                    <Pause className="w-3 h-3" /> Break
-                  </button>
+                  <PermissionGate resource="warehouse" action="edit">
+                    <button
+                      onClick={() => handleStartBreak(emp.id)}
+                      className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1"
+                    >
+                      <Pause className="w-3 h-3" /> Break
+                    </button>
+                  </PermissionGate>
                 )}
                 {emp.status === 'Break' && (
-                  <button
-                    onClick={() => handleEndBreak(emp.id)}
-                    className="btn-primary text-[10px] px-2 py-1 flex items-center gap-1"
-                  >
-                    <Play className="w-3 h-3" /> Resume
-                  </button>
+                  <PermissionGate resource="warehouse" action="edit">
+                    <button
+                      onClick={() => handleEndBreak(emp.id)}
+                      className="btn-primary text-[10px] px-2 py-1 flex items-center gap-1"
+                    >
+                      <Play className="w-3 h-3" /> Resume
+                    </button>
+                  </PermissionGate>
                 )}
                 {emp.status !== 'Off' && (
-                  <button
-                    onClick={() => handleEndShift(emp.id)}
-                    className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1"
-                  >
-                    <LogOut className="w-3 h-3" /> End Shift
-                  </button>
+                  <PermissionGate resource="warehouse" action="edit">
+                    <button
+                      onClick={() => handleEndShift(emp.id)}
+                      className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1"
+                    >
+                      <LogOut className="w-3 h-3" /> End Shift
+                    </button>
+                  </PermissionGate>
                 )}
               </div>
             </div>
@@ -373,9 +382,11 @@ export default function LaborManagementPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowAssignModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleAssign} className="btn-primary text-sm">
-                <UserCheck className="w-4 h-4" /> Assign
-              </button>
+              <PermissionGate resource="warehouse" action="edit">
+                <button onClick={handleAssign} className="btn-primary text-sm">
+                  <UserCheck className="w-4 h-4" /> Assign
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { getAgents, getDecisions, approveRecommendation, rejectRecommendation } from '../api/aiAgents'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { AiAgent, AiDecision } from '../api/aiAgents'
 
 interface QueueOrder {
@@ -127,15 +128,17 @@ export default function AiOrderRoutingPage() {
           <p>AI-powered fulfillment decisions</p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              queryClient.invalidateQueries({ queryKey: ['ai-agents'] })
-              queryClient.invalidateQueries({ queryKey: ['ai-decisions'] })
-            }}
-            className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Refresh
-          </button>
+          <PermissionGate resource="settings" action="edit">
+            <button
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ['ai-agents'] })
+                queryClient.invalidateQueries({ queryKey: ['ai-decisions'] })
+              }}
+              className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Refresh
+            </button>
+          </PermissionGate>
         </div>
       </div>
 
@@ -305,36 +308,42 @@ export default function AiOrderRoutingPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-1">
-                          <button
-                            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition-colors"
-                            title="Approve"
-                            onClick={() => approveMutation.mutate(order.id)}
-                          >
-                            <CheckCircle className="w-3.5 h-3.5" /> Approve
-                          </button>
-                          <button
-                            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
-                            title="Override"
-                            onClick={() => {
-                              setOverrideState({
-                                orderId: order.id,
-                                currentDecision: order.aiDecision,
-                                currentConfidence: order.confidence,
-                                agentName: order.agentName,
-                              })
-                              setOverrideDecision(order.aiDecision)
-                              setOverrideReason('')
-                            }}
-                          >
-                            <AlertTriangle className="w-3.5 h-3.5" /> Override
-                          </button>
-                          <button
-                            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors"
-                            title="Reject"
-                            onClick={() => rejectMutation.mutate(order.id)}
-                          >
-                            <XCircle className="w-3.5 h-3.5" /> Reject
-                          </button>
+                          <PermissionGate resource="settings" action="edit">
+                            <button
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition-colors"
+                              title="Approve"
+                              onClick={() => approveMutation.mutate(order.id)}
+                            >
+                              <CheckCircle className="w-3.5 h-3.5" /> Approve
+                            </button>
+                          </PermissionGate>
+                          <PermissionGate resource="settings" action="edit">
+                            <button
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                              title="Override"
+                              onClick={() => {
+                                setOverrideState({
+                                  orderId: order.id,
+                                  currentDecision: order.aiDecision,
+                                  currentConfidence: order.confidence,
+                                  agentName: order.agentName,
+                                })
+                                setOverrideDecision(order.aiDecision)
+                                setOverrideReason('')
+                              }}
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5" /> Override
+                            </button>
+                          </PermissionGate>
+                          <PermissionGate resource="settings" action="delete">
+                            <button
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors"
+                              title="Reject"
+                              onClick={() => rejectMutation.mutate(order.id)}
+                            >
+                              <XCircle className="w-3.5 h-3.5" /> Reject
+                            </button>
+                          </PermissionGate>
                         </div>
                       </td>
                     </tr>
@@ -482,13 +491,15 @@ export default function AiOrderRoutingPage() {
               <button className="enterprise-btn-secondary" onClick={() => setOverrideState(null)}>
                 Cancel
               </button>
-              <button
-                className="enterprise-btn-primary"
-                disabled={!overrideReason.trim()}
-                onClick={handleOverrideConfirm}
-              >
-                <AlertTriangle className="w-4 h-4" /> Confirm Override
-              </button>
+              <PermissionGate resource="settings" action="edit">
+                <button
+                  className="enterprise-btn-primary"
+                  disabled={!overrideReason.trim()}
+                  onClick={handleOverrideConfirm}
+                >
+                  <AlertTriangle className="w-4 h-4" /> Confirm Override
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import * as productsApi from '../api/products'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import Autocomplete from '../components/common/Autocomplete'
 import type { Tab } from '../components/enterprise'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 type AtpTab = 'thresholds' | 'safety-stock' | 'store-pickup' | 'shipping'
 
@@ -177,9 +178,11 @@ export default function ATPRulesPage() {
 
       <div className="flex items-center gap-3">
         <Autocomplete value={searchTerm} onChange={setSearchTerm} placeholder={activeTab === 'thresholds' ? 'Search threshold rules...' : activeTab === 'safety-stock' ? 'Search products...' : activeTab === 'store-pickup' ? 'Search stores...' : 'Search shipping rules...'} minChars={0} className="flex-1 max-w-md" />
-        <button className="enterprise-btn-primary text-sm flex items-center gap-1.5 px-4 py-2.5">
-          <Plus className="w-4 h-4" /> Add Rule
-        </button>
+        <PermissionGate resource="inventory" action="create">
+          <button className="enterprise-btn-primary text-sm flex items-center gap-1.5 px-4 py-2.5">
+            <Plus className="w-4 h-4" /> Add Rule
+          </button>
+        </PermissionGate>
       </div>
 
       {/* Thresholds Tab */}
@@ -204,11 +207,17 @@ export default function ATPRulesPage() {
                         <p className="text-xs text-gray-500 dark:text-gray-400">Min·Max</p>
                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{rule.minThreshold}·{rule.maxThreshold}</p>
                       </div>
-                      <button onClick={() => toggleMutation.mutate({ type: 'thresholds', id: rule.id })} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
-                        {rule.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
-                      </button>
-                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4" /></button>
-                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      <PermissionGate resource="inventory" action="edit">
+                        <button onClick={() => toggleMutation.mutate({ type: 'thresholds', id: rule.id })} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                          {rule.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="inventory" action="edit">
+                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4" /></button>
+                      </PermissionGate>
+                      <PermissionGate resource="inventory" action="delete">
+                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                      </PermissionGate>
                     </div>
                   </div>
                 </div>
@@ -250,12 +259,16 @@ export default function ATPRulesPage() {
                       <td className="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">{item.leadTimeDays}d</td>
                       <td className="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">{item.reorderPoint}</td>
                       <td className="px-4 py-3 text-center">
-                        <button onClick={() => toggleMutation.mutate({ type: 'safety-stock', id: item.id })}>
-                          {item.enabled ? <ToggleRight className="w-5 h-5 text-primary-600 mx-auto" /> : <ToggleLeft className="w-5 h-5 text-gray-400 mx-auto" />}
-                        </button>
+                        <PermissionGate resource="inventory" action="edit">
+                          <button onClick={() => toggleMutation.mutate({ type: 'safety-stock', id: item.id })}>
+                            {item.enabled ? <ToggleRight className="w-5 h-5 text-primary-600 mx-auto" /> : <ToggleLeft className="w-5 h-5 text-gray-400 mx-auto" />}
+                          </button>
+                        </PermissionGate>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button className="enterprise-btn-secondary text-xs px-2 py-1"><Edit className="w-3 h-3" /></button>
+                        <PermissionGate resource="inventory" action="edit">
+                          <button className="enterprise-btn-secondary text-xs px-2 py-1"><Edit className="w-3 h-3" /></button>
+                        </PermissionGate>
                       </td>
                     </tr>
                   ))}
@@ -287,9 +300,11 @@ export default function ATPRulesPage() {
                         </p>
                       </div>
                     </div>
-                    <button onClick={() => toggleMutation.mutate({ type: 'store-pickup', id: store.id })}>
-                      {store.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
-                    </button>
+                    <PermissionGate resource="inventory" action="edit">
+                      <button onClick={() => toggleMutation.mutate({ type: 'store-pickup', id: store.id })}>
+                        {store.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
+                      </button>
+                    </PermissionGate>
                   </div>
                 </div>
               ))}
@@ -322,10 +337,14 @@ export default function ATPRulesPage() {
                         <p className="text-xs text-gray-500 dark:text-gray-400">ATP Limit</p>
                         <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{rule.atpLimit}</p>
                       </div>
-                      <button onClick={() => toggleMutation.mutate({ type: 'shipping', id: rule.id })}>
-                        {rule.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
-                      </button>
-                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4" /></button>
+                      <PermissionGate resource="inventory" action="edit">
+                        <button onClick={() => toggleMutation.mutate({ type: 'shipping', id: rule.id })}>
+                          {rule.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="inventory" action="edit">
+                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4" /></button>
+                      </PermissionGate>
                     </div>
                   </div>
                 </div>

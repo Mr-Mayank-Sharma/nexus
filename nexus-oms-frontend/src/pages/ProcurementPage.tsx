@@ -2,6 +2,7 @@ import React, { useState, useEffect, Fragment } from 'react'
 import { Building2, FileText, ShoppingCart, ClipboardList, Plus, Search, Eye, X, Check, ChevronDown, ChevronRight, Loader2, Star, PackageCheck, Send } from 'lucide-react'
 import { clsx } from 'clsx'
 import StatusBadge from '../components/common/StatusBadge'
+import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import * as procurementApi from '../api/procurement'
@@ -357,9 +358,11 @@ function SuppliersTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{suppliers.length} suppliers</p>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> Add Supplier
-        </button>
+        <PermissionGate resource="procurement" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> Add Supplier
+          </button>
+        </PermissionGate>
       </div>
 
       {loading ? (
@@ -422,12 +425,14 @@ function SuppliersTab() {
                             <div>
                               <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-sm font-semibold text-gray-700">Contacts</h4>
-                                <button
-                                  onClick={() => setShowContactForm(showContactForm === supplier.id ? null : supplier.id)}
-                                  className="btn-secondary text-xs"
-                                >
-                                  <Plus className="w-3 h-3" /> Add Contact
-                                </button>
+                                <PermissionGate resource="procurement" action="create">
+                                  <button
+                                    onClick={() => setShowContactForm(showContactForm === supplier.id ? null : supplier.id)}
+                                    className="btn-secondary text-xs"
+                                  >
+                                    <Plus className="w-3 h-3" /> Add Contact
+                                  </button>
+                                </PermissionGate>
                               </div>
                               {loadingContacts[supplier.id] ? (
                                 <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
@@ -528,14 +533,16 @@ function SuppliersTab() {
                                   </label>
                                   <div className="flex justify-end gap-2 pt-2">
                                     <button onClick={() => setShowContactForm(null)} className="btn-secondary text-xs">Cancel</button>
-                                    <button
-                                      onClick={() => handleAddContact(supplier.id)}
-                                      disabled={savingContact}
-                                      className="btn-primary text-xs"
-                                    >
-                                      {savingContact && <Loader2 className="w-3 h-3 animate-spin" />}
-                                      Save
-                                    </button>
+                                    <PermissionGate resource="procurement" action="create">
+                                      <button
+                                        onClick={() => handleAddContact(supplier.id)}
+                                        disabled={savingContact}
+                                        className="btn-primary text-xs"
+                                      >
+                                        {savingContact && <Loader2 className="w-3 h-3 animate-spin" />}
+                                        Save
+                                      </button>
+                                    </PermissionGate>
                                   </div>
                                 </div>
                               )}
@@ -544,12 +551,14 @@ function SuppliersTab() {
                             <div>
                               <div className="flex items-center justify-between mb-3">
                                 <h4 className="text-sm font-semibold text-gray-700">Contracts</h4>
-                                <button
-                                  onClick={() => setShowContractForm(showContractForm === supplier.id ? null : supplier.id)}
-                                  className="btn-secondary text-xs"
-                                >
-                                  <Plus className="w-3 h-3" /> Add Contract
-                                </button>
+                                <PermissionGate resource="procurement" action="create">
+                                  <button
+                                    onClick={() => setShowContractForm(showContractForm === supplier.id ? null : supplier.id)}
+                                    className="btn-secondary text-xs"
+                                  >
+                                    <Plus className="w-3 h-3" /> Add Contract
+                                  </button>
+                                </PermissionGate>
                               </div>
                               {loadingContracts[supplier.id] ? (
                                 <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
@@ -668,14 +677,16 @@ function SuppliersTab() {
                                   </label>
                                   <div className="flex justify-end gap-2 pt-2">
                                     <button onClick={() => setShowContractForm(null)} className="btn-secondary text-xs">Cancel</button>
-                                    <button
-                                      onClick={() => handleAddContract(supplier.id)}
-                                      disabled={savingContract}
-                                      className="btn-primary text-xs"
-                                    >
-                                      {savingContract && <Loader2 className="w-3 h-3 animate-spin" />}
-                                      Save
-                                    </button>
+                                    <PermissionGate resource="procurement" action="create">
+                                      <button
+                                        onClick={() => handleAddContract(supplier.id)}
+                                        disabled={savingContract}
+                                        className="btn-primary text-xs"
+                                      >
+                                        {savingContract && <Loader2 className="w-3 h-3 animate-spin" />}
+                                        Save
+                                      </button>
+                                    </PermissionGate>
                                   </div>
                                 </div>
                               )}
@@ -831,10 +842,12 @@ function SuppliersTab() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
-                Create Supplier
-              </button>
+              <PermissionGate resource="procurement" action="create">
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
+                  Create Supplier
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -967,9 +980,11 @@ function RequestsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{requests.length} requests</p>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> New Request
-        </button>
+        <PermissionGate resource="procurement" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> New Request
+          </button>
+        </PermissionGate>
       </div>
 
       {loading ? (
@@ -1028,24 +1043,28 @@ function RequestsTab() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {req.status === 'DRAFT' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleSubmitForApproval(req.id) }}
-                              disabled={submitting === req.id}
-                              className="btn-primary text-xs"
-                            >
-                                                            {submitting === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                                                            Submit
-                            </button>
+                            <PermissionGate resource="procurement" action="edit">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleSubmitForApproval(req.id) }}
+                                disabled={submitting === req.id}
+                                className="btn-primary text-xs"
+                              >
+                                                                {submitting === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                                                                Submit
+                              </button>
+                            </PermissionGate>
                           )}
                           {req.status === 'PENDING_APPROVAL' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleApprove(req.id) }}
-                              disabled={approving === req.id}
-                              className="btn-primary text-xs"
-                            >
-                              {approving === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                              Approve
-                            </button>
+                            <PermissionGate resource="procurement" action="edit">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleApprove(req.id) }}
+                                disabled={approving === req.id}
+                                className="btn-primary text-xs"
+                              >
+                                {approving === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                Approve
+                              </button>
+                            </PermissionGate>
                           )}
                         </div>
                       </td>
@@ -1135,7 +1154,9 @@ function RequestsTab() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-gray-700">Items</h4>
-                  <button onClick={addItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                  <PermissionGate resource="procurement" action="create">
+                    <button onClick={addItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                  </PermissionGate>
                 </div>
                 {items.length === 0 ? (
                   <p className="text-sm text-gray-400 py-2 text-center">No items added yet</p>
@@ -1208,10 +1229,12 @@ function RequestsTab() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                Create Request
-              </button>
+              <PermissionGate resource="procurement" action="create">
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  Create Request
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -1326,9 +1349,11 @@ function RfqsTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{rfqs.length} RFQs</p>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> New RFQ
-        </button>
+        <PermissionGate resource="procurement" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> New RFQ
+          </button>
+        </PermissionGate>
       </div>
 
       {loading ? (
@@ -1379,14 +1404,16 @@ function RfqsTab() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         {rfq.status === 'DRAFT' && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleSubmit(rfq.id) }}
-                            disabled={submitting === rfq.id}
-                            className="btn-primary text-xs"
-                          >
-                            {submitting === rfq.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                            Submit
-                          </button>
+                          <PermissionGate resource="procurement" action="edit">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleSubmit(rfq.id) }}
+                              disabled={submitting === rfq.id}
+                              className="btn-primary text-xs"
+                            >
+                              {submitting === rfq.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                              Submit
+                            </button>
+                          </PermissionGate>
                         )}
                       </td>
                     </tr>
@@ -1474,7 +1501,9 @@ function RfqsTab() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-gray-700">Items</h4>
-                  <button onClick={addRfqItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                  <PermissionGate resource="procurement" action="create">
+                    <button onClick={addRfqItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                  </PermissionGate>
                 </div>
                 {rfqItems.length === 0 ? (
                   <p className="text-sm text-gray-400 py-2 text-center">No items added yet</p>
@@ -1543,10 +1572,12 @@ function RfqsTab() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-                Create RFQ
-              </button>
+              <PermissionGate resource="procurement" action="create">
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                  Create RFQ
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -1707,9 +1738,11 @@ function PurchaseOrdersTab() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-500">{orders.length} purchase orders</p>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> New Purchase Order
-        </button>
+        <PermissionGate resource="procurement" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> New Purchase Order
+          </button>
+        </PermissionGate>
       </div>
 
       {loading ? (
@@ -1759,22 +1792,26 @@ function PurchaseOrdersTab() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {po.status === 'DRAFT' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleApprove(po.id) }}
-                              disabled={approving === po.id}
-                              className="btn-primary text-xs"
-                            >
-                              {approving === po.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                              Approve
-                            </button>
+                            <PermissionGate resource="procurement" action="edit">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleApprove(po.id) }}
+                                disabled={approving === po.id}
+                                className="btn-primary text-xs"
+                              >
+                                {approving === po.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                Approve
+                              </button>
+                            </PermissionGate>
                           )}
                           {receiveable.includes(po.status) && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openReceive(po) }}
-                                                            className="btn-secondary text-xs"
-                                                          >
-                                                            <PackageCheck className="w-3 h-3" /> Receive Items
-                            </button>
+                            <PermissionGate resource="procurement" action="edit">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openReceive(po) }}
+                                                                className="btn-secondary text-xs"
+                                                              >
+                                                                <PackageCheck className="w-3 h-3" /> Receive Items
+                              </button>
+                            </PermissionGate>
                           )}
                         </div>
                       </td>
@@ -1866,7 +1903,9 @@ function PurchaseOrdersTab() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-gray-700">Items</h4>
-                  <button onClick={addPoItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                  <PermissionGate resource="procurement" action="create">
+                    <button onClick={addPoItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                  </PermissionGate>
                 </div>
                 {poItems.length === 0 ? (
                   <p className="text-sm text-gray-400 py-2 text-center">No items added yet</p>
@@ -1955,10 +1994,12 @@ function PurchaseOrdersTab() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
-                Create Purchase Order
-              </button>
+              <PermissionGate resource="procurement" action="create">
+                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
+                  Create Purchase Order
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -2006,10 +2047,12 @@ function PurchaseOrdersTab() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowReceiveModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleReceive} disabled={receiving} className="btn-primary text-sm">
-                {receiving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
-                Receive Items
-              </button>
+              <PermissionGate resource="procurement" action="edit">
+                <button onClick={handleReceive} disabled={receiving} className="btn-primary text-sm">
+                  {receiving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
+                  Receive Items
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

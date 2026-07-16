@@ -11,6 +11,7 @@ import * as ordersApi from '../api/orders'
 import type { Customer, Return, Order } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const STATUS_BADGES: Record<string, string> = {
   PENDING: 'enterprise-badge-warning',
@@ -287,12 +288,14 @@ export default function B2BPortalPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">My Returns</h3>
-            <button
-              onClick={() => setReturnRequestOpen(true)}
-              className="enterprise-btn enterprise-btn-primary enterprise-btn-sm"
-            >
-              <Plus className="w-4 h-4" /> Request Return
-            </button>
+            <PermissionGate resource="integrations" action="create">
+              <button
+                onClick={() => setReturnRequestOpen(true)}
+                className="enterprise-btn enterprise-btn-primary enterprise-btn-sm"
+              >
+                <Plus className="w-4 h-4" /> Request Return
+              </button>
+            </PermissionGate>
           </div>
           {returns.length === 0 ? (
             <div className="enterprise-empty-state py-16">
@@ -431,10 +434,12 @@ export default function B2BPortalPage() {
             </div>
             <div className="enterprise-modal-footer">
               <button onClick={() => setReturnRequestOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleReturnRequest} disabled={processing || !returnForm.orderId || !returnForm.reason} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-                Submit Request
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleReturnRequest} disabled={processing || !returnForm.orderId || !returnForm.reason} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                  {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                  Submit Request
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

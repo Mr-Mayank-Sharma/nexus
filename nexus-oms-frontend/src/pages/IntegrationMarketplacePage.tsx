@@ -8,6 +8,7 @@ import {
 import { clsx } from 'clsx'
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { fetchAllStatus } from '../api/connectors/connectorRegistry'
 
 interface IntegrationCard {
@@ -321,11 +322,13 @@ export default function IntegrationMarketplacePage() {
                       </button>
                     </>
                   ) : integration.status === 'available' ? (
-                    <button onClick={() => handleConnect(integration.id)} disabled={connecting === integration.id}
-                      className="btn-primary text-xs flex-1">
-                      {connecting === integration.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                      {connecting === integration.id ? 'Connecting...' : 'Connect'}
-                    </button>
+                    <PermissionGate resource="integrations" action="create">
+                      <button onClick={() => handleConnect(integration.id)} disabled={connecting === integration.id}
+                        className="btn-primary text-xs flex-1">
+                        {connecting === integration.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                        {connecting === integration.id ? 'Connecting...' : 'Connect'}
+                      </button>
+                    </PermissionGate>
                   ) : (
                     <button disabled className="btn-secondary text-xs flex-1 opacity-50 cursor-not-allowed">
                       <Clock className="w-3.5 h-3.5" /> Coming Soon
@@ -374,17 +377,19 @@ export default function IntegrationMarketplacePage() {
                         {statusCfg.label}
                       </span>
                     </div>
-                    <button onClick={() => integration.status === 'connected' ? handleOpen(integration.id) : handleConnect(integration.id)}
-                      disabled={connecting === integration.id || integration.status === 'coming_soon'}
-                      className={clsx(
-                        'btn-ghost p-1.5 rounded-lg transition-colors',
-                        integration.status === 'connected' ? 'text-green-500' : 'text-gray-300 hover:text-primary-500',
-                        integration.status === 'coming_soon' && 'opacity-30 cursor-not-allowed',
-                      )}>
-                      {connecting === integration.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
-                       integration.status === 'connected' ? <CheckCircle className="w-4 h-4" /> :
-                       <ArrowRight className="w-4 h-4" />}
-                    </button>
+                    <PermissionGate resource="integrations" action="create">
+                      <button onClick={() => integration.status === 'connected' ? handleOpen(integration.id) : handleConnect(integration.id)}
+                        disabled={connecting === integration.id || integration.status === 'coming_soon'}
+                        className={clsx(
+                          'btn-ghost p-1.5 rounded-lg transition-colors',
+                          integration.status === 'connected' ? 'text-green-500' : 'text-gray-300 hover:text-primary-500',
+                          integration.status === 'coming_soon' && 'opacity-30 cursor-not-allowed',
+                        )}>
+                        {connecting === integration.id ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                         integration.status === 'connected' ? <CheckCircle className="w-4 h-4" /> :
+                         <ArrowRight className="w-4 h-4" />}
+                      </button>
+                    </PermissionGate>
                   </div>
                 )
               })}

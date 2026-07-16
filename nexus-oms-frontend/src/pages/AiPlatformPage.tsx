@@ -29,6 +29,7 @@ import {
   getMonitoringDashboard, getTenantDashboard, getFeatureGroups,
   startTrainingJob, deployModel, getModel, getInferenceLogs,
 } from '../api/aiPlatform'
+import PermissionGate from '../components/rbac/PermissionGate'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
@@ -590,12 +591,14 @@ function AiModelRegistry() {
                               )}
                             </div>
                             <div className="flex gap-2">
-                              <button
-                                onClick={() => handleDeploy(model.id, v.id)}
-                                className="px-2 py-1 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-                              >
-                                Deploy
-                              </button>
+                              <PermissionGate resource="settings" action="edit">
+                                <button
+                                  onClick={() => handleDeploy(model.id, v.id)}
+                                  className="px-2 py-1 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                                >
+                                  Deploy
+                                </button>
+                              </PermissionGate>
                             </div>
                           </div>
                         ))}
@@ -687,9 +690,11 @@ function AiTrainingPipeline() {
           )},
           { header: 'Actions', accessor: 'id' as never, render: (j: AiTrainingJob) => (
             j.status === 'PENDING' ? (
-              <button onClick={() => handleStartJob(j.id)} className="p-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
-                <Play className="w-3.5 h-3.5" />
-              </button>
+              <PermissionGate resource="settings" action="create">
+                <button onClick={() => handleStartJob(j.id)} className="p-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                  <Play className="w-3.5 h-3.5" />
+                </button>
+              </PermissionGate>
             ) : null
           )},
         ]}

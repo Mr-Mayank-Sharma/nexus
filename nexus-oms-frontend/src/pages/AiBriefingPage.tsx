@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { getBriefing, getRecommendations, approveRecommendation, rejectRecommendation, getForecasts } from '../api/aiAgents'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { AiBriefing, AiRecommendation, AiForecast } from '../api/aiAgents'
 
 function formatNumber(n: number): string {
@@ -384,20 +385,24 @@ export default function AiBriefingPage() {
                 </div>
                 {rec.status === 'pending' && (
                   <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                    <button
-                      onClick={() => handleApprove(rec.id)}
-                      disabled={handlingRecs.has(rec.id)}
-                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors disabled:opacity-50"
-                    >
-                      <CheckCircle className="w-3.5 h-3.5" /> Approve
-                    </button>
-                    <button
-                      onClick={() => handleReject(rec.id)}
-                      disabled={handlingRecs.has(rec.id)}
-                      className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
-                    >
-                      <XCircle className="w-3.5 h-3.5" /> Reject
-                    </button>
+                    <PermissionGate resource="settings" action="edit">
+                      <button
+                        onClick={() => handleApprove(rec.id)}
+                        disabled={handlingRecs.has(rec.id)}
+                        className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors disabled:opacity-50"
+                      >
+                        <CheckCircle className="w-3.5 h-3.5" /> Approve
+                      </button>
+                    </PermissionGate>
+                    <PermissionGate resource="settings" action="edit">
+                      <button
+                        onClick={() => handleReject(rec.id)}
+                        disabled={handlingRecs.has(rec.id)}
+                        className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors disabled:opacity-50"
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> Reject
+                      </button>
+                    </PermissionGate>
                     {rec.reasoning.length > 0 && (
                       <div className="ml-auto flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
                         <Brain className="w-3 h-3" /> {rec.reasoning.length} reasons

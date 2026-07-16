@@ -11,6 +11,7 @@ import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
 import * as aiApi from '../api/ai'
 import * as aiPlatformApi from '../api/aiPlatform'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const FALLBACK_MODELS: AiModel[] = [
   {
@@ -273,20 +274,22 @@ export default function AiPage() {
                 v{selectedModel.version} · Last trained {new Date(selectedModel.lastTrained).toLocaleDateString()}
               </p>
             </div>
-            <button
-              onClick={async () => {
-                addToast({ type: 'info', title: 'Initiating retrain...' });
-                try {
-                  await aiPlatformApi.createTrainingJob(selectedModel.id, {});
-                  addToast({ type: 'success', title: 'Retrain job created' });
-                } catch {
-                  addToast({ type: 'error', title: 'Failed to initiate retrain' });
-                }
-              }}
-              className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm"
-            >
-              <RefreshCw className="w-3 h-3" /> Retrain
-            </button>
+            <PermissionGate resource="settings" action="create">
+              <button
+                onClick={async () => {
+                  addToast({ type: 'info', title: 'Initiating retrain...' });
+                  try {
+                    await aiPlatformApi.createTrainingJob(selectedModel.id, {});
+                    addToast({ type: 'success', title: 'Retrain job created' });
+                  } catch {
+                    addToast({ type: 'error', title: 'Failed to initiate retrain' });
+                  }
+                }}
+                className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm"
+              >
+                <RefreshCw className="w-3 h-3" /> Retrain
+              </button>
+            </PermissionGate>
           </div>
           <div className="p-5">
             {selectedModel.status === 'ACTIVE' && (
@@ -343,18 +346,20 @@ export default function AiPage() {
                     inputClassName="enterprise-input w-full min-h-[96px] font-mono text-xs resize-y leading-relaxed"
                   />
                 </div>
-                <button
-                  className="enterprise-btn enterprise-btn-primary text-sm"
-                  onClick={handleRunTest}
-                  disabled={predictMutation.isPending}
-                >
-                  {predictMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Brain className="w-4 h-4" />
-                  )}
-                  {predictMutation.isPending ? 'Running...' : 'Run Test'}
-                </button>
+                <PermissionGate resource="settings" action="create">
+                  <button
+                    className="enterprise-btn enterprise-btn-primary text-sm"
+                    onClick={handleRunTest}
+                    disabled={predictMutation.isPending}
+                  >
+                    {predictMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Brain className="w-4 h-4" />
+                    )}
+                    {predictMutation.isPending ? 'Running...' : 'Run Test'}
+                  </button>
+                </PermissionGate>
               </div>
               {testResult && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg border">

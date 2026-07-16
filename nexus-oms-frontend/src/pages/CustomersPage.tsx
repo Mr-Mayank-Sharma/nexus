@@ -9,6 +9,7 @@ import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { useToast } from '../hooks/useToast'
+import PermissionGate from '../components/rbac/PermissionGate'
 import * as customersApi from '../api/customers'
 import type { Customer } from '../types'
 
@@ -88,7 +89,7 @@ export default function CustomersPage() {
           minChars: 1,
         }}
         actions={[
-          { label: 'Add Customer', icon: <Plus className="w-4 h-4" />, onClick: openCreate, variant: 'primary' },
+          { label: 'Add Customer', icon: <Plus className="w-4 h-4" />, onClick: openCreate, variant: 'primary', permission: { resource: 'customers', action: 'create' } },
         ]}
       />
 
@@ -122,13 +123,17 @@ export default function CustomersPage() {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button className="enterprise-btn-ghost p-1.5" title="Edit" onClick={() => openEdit(c)}>
-                    <Edit3 className="w-3.5 h-3.5" />
-                  </button>
-                  <button className="enterprise-btn-ghost p-1.5 text-red-500" title="Delete"
-                    onClick={() => { if (confirm('Delete this customer?')) deleteMutation.mutate(c.id); }}>
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <PermissionGate resource="customers" action="edit">
+                    <button className="enterprise-btn-ghost p-1.5" title="Edit" onClick={() => openEdit(c)}>
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate resource="customers" action="delete">
+                    <button className="enterprise-btn-ghost p-1.5 text-red-500" title="Delete"
+                      onClick={() => { if (confirm('Delete this customer?')) deleteMutation.mutate(c.id); }}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </PermissionGate>
                 </div>
               </div>
               <div className="mt-4 space-y-2 text-xs text-[var(--text-secondary)]">
@@ -185,16 +190,18 @@ export default function CustomersPage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="enterprise-btn-primary"
-                onClick={() => editingCustomer ? updateMutation.mutate() : createMutation.mutate()}
-                disabled={!form.name || (editingCustomer ? updateMutation.isPending : createMutation.isPending)}>
-                {(editingCustomer ? updateMutation.isPending : createMutation.isPending) ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Plus className="w-4 h-4" />
-                )}
-                {editingCustomer ? 'Update' : 'Create'}
-              </button>
+              <PermissionGate resource="customers" action={editingCustomer ? 'edit' : 'create'}>
+                <button className="enterprise-btn-primary"
+                  onClick={() => editingCustomer ? updateMutation.mutate() : createMutation.mutate()}
+                  disabled={!form.name || (editingCustomer ? updateMutation.isPending : createMutation.isPending)}>
+                  {(editingCustomer ? updateMutation.isPending : createMutation.isPending) ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  {editingCustomer ? 'Update' : 'Create'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Receipt, CreditCard, FileText, Plus, Search, X, DollarSign, Loader2 } from 'lucide-react'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 import * as invoicingApi from '../api/invoicing'
 import Autocomplete from '../components/common/Autocomplete'
@@ -474,9 +475,11 @@ export default function InvoicingPage() {
             <div className="flex items-center gap-2">
               <Autocomplete value={invoiceSearch} onChange={setInvoiceSearch} placeholder="Search invoices..." minChars={0} />
             </div>
-            <button onClick={() => setShowCreateInvoice(true)} className="btn-primary text-sm">
-              <Plus className="w-4 h-4" /> Create Invoice
-            </button>
+            <PermissionGate resource="invoicing" action="create">
+              <button onClick={() => setShowCreateInvoice(true)} className="btn-primary text-sm">
+                <Plus className="w-4 h-4" /> Create Invoice
+              </button>
+            </PermissionGate>
           </div>
 
           {/* Invoice Detail View */}
@@ -559,24 +562,28 @@ export default function InvoicingPage() {
 
               {/* Actions */}
               <div className="flex items-center gap-3 pt-2">
-                <button onClick={() => openRecordPayment(selectedInvoice)} className="btn-primary text-sm">
-                  <DollarSign className="w-4 h-4" /> Record Payment
-                </button>
-                <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-500">Status:</label>
-                  <select
-                    value={selectedInvoice.status}
-                    onChange={e => handleStatusChange(selectedInvoice.id, e.target.value)}
-                    className="input text-sm py-1.5"
-                  >
-                    <option value="DRAFT">DRAFT</option>
-                    <option value="SENT">SENT</option>
-                    <option value="PARTIALLY_PAID">PARTIALLY PAID</option>
-                    <option value="PAID">PAID</option>
-                    <option value="OVERDUE">OVERDUE</option>
-                    <option value="CANCELLED">CANCELLED</option>
-                  </select>
-                </div>
+                <PermissionGate resource="invoicing" action="edit">
+                  <button onClick={() => openRecordPayment(selectedInvoice)} className="btn-primary text-sm">
+                    <DollarSign className="w-4 h-4" /> Record Payment
+                  </button>
+                </PermissionGate>
+                <PermissionGate resource="invoicing" action="edit">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-500">Status:</label>
+                    <select
+                      value={selectedInvoice.status}
+                      onChange={e => handleStatusChange(selectedInvoice.id, e.target.value)}
+                      className="input text-sm py-1.5"
+                    >
+                      <option value="DRAFT">DRAFT</option>
+                      <option value="SENT">SENT</option>
+                      <option value="PARTIALLY_PAID">PARTIALLY PAID</option>
+                      <option value="PAID">PAID</option>
+                      <option value="OVERDUE">OVERDUE</option>
+                      <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                  </div>
+                </PermissionGate>
               </div>
             </div>
           ) : null}
@@ -667,9 +674,11 @@ export default function InvoicingPage() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
           <Autocomplete value={paymentSearch} onChange={setPaymentSearch} placeholder="Search payments..." minChars={0} />
-          <button onClick={() => openRecordPayment()} className="btn-primary text-sm">
-              <Plus className="w-4 h-4" /> Record Payment
-            </button>
+          <PermissionGate resource="invoicing" action="edit">
+            <button onClick={() => openRecordPayment()} className="btn-primary text-sm">
+                <Plus className="w-4 h-4" /> Record Payment
+              </button>
+          </PermissionGate>
           </div>
 
           <div className="card overflow-hidden">
@@ -709,7 +718,9 @@ export default function InvoicingPage() {
                         <td className="px-4 py-3 text-gray-500">{p.processedAt ? new Date(p.processedAt).toLocaleDateString() : new Date(p.createdAt).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-right">
                           {p.status === 'COMPLETED' && (
-                            <button onClick={() => openRefund(p)} className="text-xs text-red-600 hover:text-red-800 font-medium">Refund</button>
+                            <PermissionGate resource="invoicing" action="delete">
+                              <button onClick={() => openRefund(p)} className="text-xs text-red-600 hover:text-red-800 font-medium">Refund</button>
+                            </PermissionGate>
                           )}
                         </td>
                       </tr>
@@ -736,9 +747,11 @@ export default function InvoicingPage() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Autocomplete value={memoSearch} onChange={setMemoSearch} placeholder="Search credit memos..." minChars={0} />
-            <button onClick={() => setShowCreateMemo(true)} className="btn-primary text-sm">
-              <Plus className="w-4 h-4" /> Create Credit Memo
-            </button>
+            <PermissionGate resource="invoicing" action="create">
+              <button onClick={() => setShowCreateMemo(true)} className="btn-primary text-sm">
+                <Plus className="w-4 h-4" /> Create Credit Memo
+              </button>
+            </PermissionGate>
           </div>
 
           <div className="card overflow-hidden">
@@ -879,10 +892,12 @@ export default function InvoicingPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => { setShowCreateInvoice(false); resetInvForm() }} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreateInvoice} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Create Invoice
-              </button>
+              <PermissionGate resource="invoicing" action="create">
+                <button onClick={handleCreateInvoice} disabled={saving} className="btn-primary text-sm">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Create Invoice
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -936,10 +951,12 @@ export default function InvoicingPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowRecordPayment(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleRecordPayment} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Record Payment
-              </button>
+              <PermissionGate resource="invoicing" action="edit">
+                <button onClick={handleRecordPayment} disabled={saving} className="btn-primary text-sm">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Record Payment
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -988,10 +1005,12 @@ export default function InvoicingPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreateMemo(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreateMemo} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Create Memo
-              </button>
+              <PermissionGate resource="invoicing" action="create">
+                <button onClick={handleCreateMemo} disabled={saving} className="btn-primary text-sm">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Create Memo
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -1021,10 +1040,12 @@ export default function InvoicingPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowRefund(null)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleRefund} disabled={saving} className="btn-primary text-sm bg-red-600 hover:bg-red-700">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Process Refund
-              </button>
+              <PermissionGate resource="invoicing" action="delete">
+                <button onClick={handleRefund} disabled={saving} className="btn-primary text-sm bg-red-600 hover:bg-red-700">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Process Refund
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

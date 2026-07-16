@@ -12,6 +12,7 @@ import * as productsApi from '../api/products'
 import { Order } from '../types'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { Tab } from '../components/enterprise'
 
 type Bopistab = 'orders' | 'catalog' | 'ship-to-store'
@@ -132,9 +133,11 @@ export default function BOPISPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-gray-400 dark:text-gray-500">{order.items?.length || 0} items</span>
                       <EnterpriseStatusBadge status="warning" label="Ready" />
-                      <button className="enterprise-btn-primary text-xs px-3 py-1.5" onClick={() => confirmPickupMutation.mutate(order.id)}>
-                        <CheckCircle className="w-3.5 h-3.5" /> Confirm Pickup
-                      </button>
+                      <PermissionGate resource="orders" action="edit">
+                        <button className="enterprise-btn-primary text-xs px-3 py-1.5" onClick={() => confirmPickupMutation.mutate(order.id)}>
+                          <CheckCircle className="w-3.5 h-3.5" /> Confirm Pickup
+                        </button>
+                      </PermissionGate>
                       <button className="enterprise-btn-secondary text-xs px-2 py-1.5" onClick={() => navigate(`/orders/${order.id}`)}>
                         <Eye className="w-3.5 h-3.5" />
                       </button>

@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import * as workflowsApi from '../api/workflows'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const categoryStyles: Record<string, string> = {
   ORDER: 'bg-blue-100 text-blue-800',
@@ -174,9 +175,11 @@ export default function WorkflowsPage() {
             <p className="text-sm text-gray-500 mt-1">Automate order processing, inventory, and shipping workflows</p>
           </div>
         </div>
-        <button onClick={openCreate} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> Create Workflow
-        </button>
+        <PermissionGate resource="workflows" action="create">
+          <button onClick={openCreate} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> Create Workflow
+          </button>
+        </PermissionGate>
       </div>
 
       {/* Content */}
@@ -223,25 +226,29 @@ export default function WorkflowsPage() {
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {wf.status !== 'DRAFT' && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleToggleActive(wf) }}
-                      className={clsx(
-                        'p-1.5 rounded text-xs font-medium transition-colors',
-                        wf.status === 'ACTIVE'
-                          ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                          : 'bg-green-50 text-green-600 hover:bg-green-100'
-                      )}
-                    >
-                      {wf.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
-                    </button>
+                    <PermissionGate resource="workflows" action="edit">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleToggleActive(wf) }}
+                        className={clsx(
+                          'p-1.5 rounded text-xs font-medium transition-colors',
+                          wf.status === 'ACTIVE'
+                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                            : 'bg-green-50 text-green-600 hover:bg-green-100'
+                        )}
+                      >
+                        {wf.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </PermissionGate>
                   )}
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openExecute(wf.id) }}
-                    className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
-                    title="Execute Now"
-                  >
-                    <Play className="w-4 h-4" />
-                  </button>
+                  <PermissionGate resource="workflows" action="create">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openExecute(wf.id) }}
+                      className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
+                      title="Execute Now"
+                    >
+                      <Play className="w-4 h-4" />
+                    </button>
+                  </PermissionGate>
                 </div>
               </div>
 
@@ -415,10 +422,12 @@ export default function WorkflowsPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create
-              </button>
+              <PermissionGate resource="workflows" action="create">
+                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -448,10 +457,12 @@ export default function WorkflowsPage() {
             </div>
             <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
               <button onClick={() => setShowExecuteModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleExecute} disabled={executing} className="btn-primary text-sm">
-                {executing && <Loader2 className="w-4 h-4 animate-spin" />}
-                <Play className="w-4 h-4" /> Execute
-              </button>
+              <PermissionGate resource="workflows" action="create">
+                <button onClick={handleExecute} disabled={executing} className="btn-primary text-sm">
+                  {executing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <Play className="w-4 h-4" /> Execute
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ import { useToast } from '../hooks/useToast'
 import { integrationHub, ConnectorMetadata, ConnectorInstance, BatchJob } from '../api/integrationHub'
 import StatusBadge from '../components/common/StatusBadge'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   'E-Commerce': <Package className="w-4 h-4" />,
@@ -206,15 +207,21 @@ export default function IntegrationHubPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleTest(selectedConnector.id)} className="btn-ghost text-xs">
-                        <TestTube className="w-3.5 h-3.5" /> Test
-                      </button>
-                      <button onClick={() => handleRegisterWebhooks(selectedConnector.id)} className="btn-ghost text-xs">
-                        <Link className="w-3.5 h-3.5" /> Webhooks
-                      </button>
-                      <button onClick={() => handleDelete(selectedConnector.id)} className="btn-ghost text-xs text-red-500">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <PermissionGate resource="integrations" action="edit">
+                        <button onClick={() => handleTest(selectedConnector.id)} className="btn-ghost text-xs">
+                          <TestTube className="w-3.5 h-3.5" /> Test
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="integrations" action="edit">
+                        <button onClick={() => handleRegisterWebhooks(selectedConnector.id)} className="btn-ghost text-xs">
+                          <Link className="w-3.5 h-3.5" /> Webhooks
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="integrations" action="delete">
+                        <button onClick={() => handleDelete(selectedConnector.id)} className="btn-ghost text-xs text-red-500">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </PermissionGate>
                     </div>
                   </div>
 
@@ -243,17 +250,19 @@ export default function IntegrationHubPage() {
                     <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Sync Actions</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {selectedConnector.supportedSyncTypes?.map(st => (
-                        <button key={st} onClick={() => handleSync(selectedConnector.id, st)}
-                          disabled={syncing === `${selectedConnector.id}:${st}`}
-                          className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{st.replace(/_/g, ' ')}</span>
-                            {syncing === `${selectedConnector.id}:${st}` ?
-                              <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-600" /> :
-                              <RefreshCw className="w-3.5 h-3.5 text-gray-400" />}
-                          </div>
-                          <p className="text-xs text-gray-400">Click to run</p>
-                        </button>
+                        <PermissionGate key={st} resource="integrations" action="edit">
+                          <button onClick={() => handleSync(selectedConnector.id, st)}
+                            disabled={syncing === `${selectedConnector.id}:${st}`}
+                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{st.replace(/_/g, ' ')}</span>
+                              {syncing === `${selectedConnector.id}:${st}` ?
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-600" /> :
+                                <RefreshCw className="w-3.5 h-3.5 text-gray-400" />}
+                            </div>
+                            <p className="text-xs text-gray-400">Click to run</p>
+                          </button>
+                        </PermissionGate>
                       ))}
                     </div>
                   </div>
@@ -349,10 +358,12 @@ export default function IntegrationHubPage() {
             </div>
             <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
               <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
-                {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                Connect {selectedPlatform.name}
-              </button>
+              <PermissionGate resource="integrations" action="create">
+                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                  {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Connect {selectedPlatform.name}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

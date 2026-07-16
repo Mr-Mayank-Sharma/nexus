@@ -3,6 +3,7 @@ import { FileText, File, Upload, Download, Plus, Search, X, Clock, Tag } from 'l
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
 import * as documentsApi from '../api/documents'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const typeColors: Record<string, string> = {
   INVOICE: 'bg-blue-100 text-blue-700',
@@ -156,9 +157,11 @@ export default function DocumentsPage() {
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><FileText className="w-6 h-6" />Documents</h1>
           <p className="text-sm text-gray-500 mt-1">Manage documents and files across entities</p>
         </div>
-        <button onClick={openUpload} className="btn-primary text-sm">
-          <Plus className="w-4 h-4" /> Upload Document
-        </button>
+        <PermissionGate resource="settings" action="create">
+          <button onClick={openUpload} className="btn-primary text-sm">
+            <Plus className="w-4 h-4" /> Upload Document
+          </button>
+        </PermissionGate>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -234,20 +237,24 @@ export default function DocumentsPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={e => { e.stopPropagation(); openVersionUpload(doc.id) }}
-                          className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
-                          title="Upload new version"
-                        >
-                          <Upload className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); handleDelete(doc.id) }}
-                          className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600"
-                          title="Delete"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        <PermissionGate resource="settings" action="edit">
+                          <button
+                            onClick={e => { e.stopPropagation(); openVersionUpload(doc.id) }}
+                            className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
+                            title="Upload new version"
+                          >
+                            <Upload className="w-4 h-4" />
+                          </button>
+                        </PermissionGate>
+                        <PermissionGate resource="settings" action="delete">
+                          <button
+                            onClick={e => { e.stopPropagation(); handleDelete(doc.id) }}
+                            className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600"
+                            title="Delete"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </PermissionGate>
                       </div>
                     </td>
                   </tr>
@@ -259,12 +266,14 @@ export default function DocumentsPage() {
                             <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
                               <Clock className="w-4 h-4" /> Document Versions
                             </h4>
-                            <button
-                              onClick={e => { e.stopPropagation(); openVersionUpload(doc.id) }}
-                              className="btn-secondary text-xs"
-                            >
-                              <Upload className="w-3.5 h-3.5" /> Upload New Version
-                            </button>
+                            <PermissionGate resource="settings" action="edit">
+                              <button
+                                onClick={e => { e.stopPropagation(); openVersionUpload(doc.id) }}
+                                className="btn-secondary text-xs"
+                              >
+                                <Upload className="w-3.5 h-3.5" /> Upload New Version
+                              </button>
+                            </PermissionGate>
                           </div>
                           {versionsLoading ? (
                             <div className="flex items-center justify-center py-4">

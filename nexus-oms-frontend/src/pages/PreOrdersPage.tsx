@@ -12,6 +12,7 @@ import * as productsApi from '../api/products'
 import { Order } from '../types'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import type { Tab } from '../components/enterprise'
 
 type PreOrderTab = 'products' | 'orders' | 'audit'

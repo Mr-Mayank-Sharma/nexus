@@ -22,85 +22,45 @@ public class KafkaConsumerService {
 
     @KafkaListener(topics = "order.created")
     public void handleOrderCreated(String message) {
-        try {
-            log.info("Order created event received: {}", message);
-                    auditLogRepository.save(NxAuditLog.builder()
-                    .entityId(UUID.fromString(message))
-                    .entityType("ORDER")
-                    .eventType("CREATED")
-                    .build());
-        } catch (Exception e) {
-            log.error("Error processing order.created event: {}", e.getMessage(), e);
-        }
+        processOrderEvent(message, "ORDER", "CREATED");
     }
 
     @KafkaListener(topics = "order.confirmed")
     public void handleOrderConfirmed(String message) {
-        try {
-            log.info("Order confirmed event received: {}", message);
-            auditLogRepository.save(NxAuditLog.builder()
-                    .entityId(UUID.fromString(message))
-                    .entityType("ORDER")
-                    .eventType("CONFIRMED")
-                    .build());
-        } catch (Exception e) {
-            log.error("Error processing order.confirmed event: {}", e.getMessage(), e);
-        }
+        processOrderEvent(message, "ORDER", "CONFIRMED");
     }
 
     @KafkaListener(topics = "order.allocated")
     public void handleOrderAllocated(String message) {
-        try {
-            log.info("Order allocated event received: {}", message);
-            auditLogRepository.save(NxAuditLog.builder()
-                    .entityId(UUID.fromString(message))
-                    .entityType("ORDER")
-                    .eventType("ALLOCATED")
-                    .build());
-        } catch (Exception e) {
-            log.error("Error processing order.allocated event: {}", e.getMessage(), e);
-        }
+        processOrderEvent(message, "ORDER", "ALLOCATED");
     }
 
     @KafkaListener(topics = "order.shipped")
     public void handleOrderShipped(String message) {
-        try {
-            log.info("Order shipped event received: {}", message);
-            auditLogRepository.save(NxAuditLog.builder()
-                    .entityId(UUID.fromString(message))
-                    .entityType("ORDER")
-                    .eventType("SHIPPED")
-                    .build());
-        } catch (Exception e) {
-            log.error("Error processing order.shipped event: {}", e.getMessage(), e);
-        }
+        processOrderEvent(message, "ORDER", "SHIPPED");
     }
 
     @KafkaListener(topics = "order.delivered")
     public void handleOrderDelivered(String message) {
-        try {
-            log.info("Order delivered event received: {}", message);
-            auditLogRepository.save(NxAuditLog.builder()
-                    .entityId(UUID.fromString(message))
-                    .entityType("ORDER")
-                    .eventType("DELIVERED")
-                    .build());
-        } catch (Exception e) {
-            log.error("Error processing order.delivered event: {}", e.getMessage(), e);
-        }
+        processOrderEvent(message, "ORDER", "DELIVERED");
     }
 
     @KafkaListener(topics = "order.cancelled")
     public void handleOrderCancelled(String message) {
+        processOrderEvent(message, "ORDER", "CANCELLED");
+    }
+
+    private void processOrderEvent(String message, String entityType, String eventType) {
+        log.info("Processing {} event for {}: {}", eventType, entityType, message);
         try {
-            log.info("Order cancelled event received: {}", message);
             auditLogRepository.save(NxAuditLog.builder()
                     .entityId(UUID.fromString(message))
-                    .entityType("ORDER")
-                    .eventType("CANCELLED")
+                    .entityType(entityType)
+                    .eventType(eventType)
                     .build());
         } catch (Exception e) {
-            log.error("Error processing order.cancelled event: {}", e.getMessage(), e);
+            log.error("Error processing {} event: {}", eventType, e.getMessage(), e);
+            throw e;
         }
     }
 }

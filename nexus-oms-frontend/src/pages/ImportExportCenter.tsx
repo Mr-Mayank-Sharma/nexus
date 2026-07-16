@@ -1,3 +1,4 @@
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { clsx } from 'clsx'
 import {
@@ -201,7 +202,8 @@ export default function ImportExportCenter() {
     setImportProcessing(true)
     setImportResult(null)
     try {
-      const res = await importApi.importFile(importEntityType, importFile, importFormat)
+      const token = await importApi.getImportToken(importEntityType)
+      const res = await importApi.importFile(importEntityType, importFile, importFormat, token || undefined)
       if (res.success && res.data) {
         setImportResult(res.data)
         addToast({ type: res.data.errorCount > 0 ? 'warning' : 'success', title: `Imported ${res.data.successCount} of ${res.data.totalRecords} ${importEntityType}` })
@@ -277,14 +279,18 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
             <Eye className="w-4 h-4" />
           </button>
           {row.status === 'FAILED' && (
-            <button onClick={() => handleRetryImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-primary-600" title="Retry">
-              <RefreshCw className="w-4 h-4" />
-            </button>
+            <PermissionGate resource="import" action="edit">
+              <button onClick={() => handleRetryImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-primary-600" title="Retry">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </PermissionGate>
           )}
           {['PROCESSING', 'VALIDATING', 'PENDING'].includes(row.status) && (
-            <button onClick={() => handleCancelImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-red-500" title="Cancel">
-              <XCircle className="w-4 h-4" />
-            </button>
+            <PermissionGate resource="import" action="delete">
+              <button onClick={() => handleCancelImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-red-500" title="Cancel">
+                <XCircle className="w-4 h-4" />
+              </button>
+            </PermissionGate>
           )}
         </div>
       ),
@@ -377,9 +383,9 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
         title="Import/Export Center"
         subtitle="Monitor and manage data integrations"
         actions={[
-          { label: 'Import File', icon: <FileUp className="w-4 h-4" />, onClick: () => { setImportFileOpen(true); setImportResult(null); setImportFile(null) }, variant: 'primary' },
-          { label: 'New Import', icon: <Upload className="w-4 h-4" />, onClick: () => { setModalType('import'); setFormData({ jobName: '', sourceOrType: '', format: '', configuration: '', schedule: '' }); setShowModal(true) }, variant: 'secondary' },
-          { label: 'New Export', icon: <Download className="w-4 h-4" />, onClick: () => { setModalType('export'); setFormData({ jobName: '', sourceOrType: '', format: '', configuration: '', schedule: '' }); setShowModal(true) }, variant: 'ghost' },
+          { label: 'Import File', icon: <FileUp className="w-4 h-4" />, onClick: () => { setImportFileOpen(true); setImportResult(null); setImportFile(null) }, variant: 'primary', permission: { resource: 'import', action: 'create' } },
+          { label: 'New Import', icon: <Upload className="w-4 h-4" />, onClick: () => { setModalType('import'); setFormData({ jobName: '', sourceOrType: '', format: '', configuration: '', schedule: '' }); setShowModal(true) }, variant: 'secondary', permission: { resource: 'import', action: 'create' } },
+          { label: 'New Export', icon: <Download className="w-4 h-4" />, onClick: () => { setModalType('export'); setFormData({ jobName: '', sourceOrType: '', format: '', configuration: '', schedule: '' }); setShowModal(true) }, variant: 'ghost', permission: { resource: 'import', action: 'create' } },
           { label: 'Refresh', icon: <RefreshCw className="w-4 h-4" />, onClick: () => { setLoading(true); fetchData() }, variant: 'ghost' },
         ]}
       />
@@ -503,10 +509,12 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
 
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
               <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleCreateJob} disabled={processing || !formData.jobName} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                {processing && <Loader2 className="w-4 h-4 animate-spin" />}
-                <Play className="w-4 h-4" /> Run {modalType === 'import' ? 'Import' : 'Export'}
-              </button>
+              <PermissionGate resource="import" action="create">
+                <button onClick={handleCreateJob} disabled={processing || !formData.jobName} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                  {processing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <Play className="w-4 h-4" /> Run {modalType === 'import' ? 'Import' : 'Export'}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>
@@ -631,11 +639,13 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
 
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
               <button onClick={resetImportFile} className="enterprise-btn enterprise-btn-secondary">Close</button>
-              <button onClick={handleImportFile} disabled={importProcessing || !importFile}
-                className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                {importProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
-                <FileUp className="w-4 h-4" /> Import {importEntityType.replace('-', ' ')}
-              </button>
+              <PermissionGate resource="import" action="create">
+                <button onClick={handleImportFile} disabled={importProcessing || !importFile}
+                  className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                  {importProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
+                  <FileUp className="w-4 h-4" /> Import {importEntityType.replace('-', ' ')}
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

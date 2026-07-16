@@ -9,6 +9,7 @@ import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 import * as shippingApi from '../api/shipping'
 import type { Shipment } from '../types'
@@ -112,7 +113,7 @@ export default function ShippingPage() {
           minChars: 1,
         }}
         actions={[
-          { label: 'New Shipment', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary' },
+          { label: 'New Shipment', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreateModal(true), variant: 'primary', permission: { resource: 'logistics', action: 'create' } },
         ]}
       />
 
@@ -169,16 +170,20 @@ export default function ShippingPage() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           {s.status === 'PENDING' && (
-                            <button className="enterprise-btn-ghost p-1.5 text-blue-500" title="Mark Shipped"
-                              onClick={e => { e.stopPropagation(); markShippedMutation.mutate(s.id); }}>
-                              <Truck className="w-4 h-4" />
-                            </button>
+                            <PermissionGate resource="logistics" action="edit">
+                              <button className="enterprise-btn-ghost p-1.5 text-blue-500" title="Mark Shipped"
+                                onClick={e => { e.stopPropagation(); markShippedMutation.mutate(s.id); }}>
+                                <Truck className="w-4 h-4" />
+                              </button>
+                            </PermissionGate>
                           )}
                           {(s.status === 'SHIPPED' || s.status === 'IN_TRANSIT') && (
-                            <button className="enterprise-btn-ghost p-1.5 text-green-500" title="Mark Delivered"
-                              onClick={e => { e.stopPropagation(); markDeliveredMutation.mutate(s.id); }}>
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
+                            <PermissionGate resource="logistics" action="edit">
+                              <button className="enterprise-btn-ghost p-1.5 text-green-500" title="Mark Delivered"
+                                onClick={e => { e.stopPropagation(); markDeliveredMutation.mutate(s.id); }}>
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                            </PermissionGate>
                           )}
                           {s.trackingNumber && (
                             <button className="enterprise-btn-ghost p-1.5 text-[var(--text-tertiary)]" title="Track"
@@ -187,10 +192,12 @@ export default function ShippingPage() {
                             </button>
                           )}
                           {s.status !== 'DELIVERED' && s.status !== 'VOIDED' && (
-                            <button className="enterprise-btn-ghost p-1.5 text-red-500" title="Void"
-                              onClick={e => { e.stopPropagation(); if (confirm('Void this shipment?')) voidMutation.mutate(s.id); }}>
-                              <XCircle className="w-4 h-4" />
-                            </button>
+                            <PermissionGate resource="logistics" action="delete">
+                              <button className="enterprise-btn-ghost p-1.5 text-red-500" title="Void"
+                                onClick={e => { e.stopPropagation(); if (confirm('Void this shipment?')) voidMutation.mutate(s.id); }}>
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </PermissionGate>
                           )}
                         </div>
                       </td>
@@ -275,10 +282,12 @@ export default function ShippingPage() {
             </div>
             <div className="flex justify-end gap-2 mt-6">
               <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Create
-              </button>
+              <PermissionGate resource="logistics" action="create">
+                <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
+                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  Create
+                </button>
+              </PermissionGate>
             </div>
           </div>
         </div>

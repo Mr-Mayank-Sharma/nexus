@@ -18,9 +18,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final PermissionAuthorizationFilter permissionAuthorizationFilter;
+    private final ImportTokenAuthenticationFilter importTokenAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          PermissionAuthorizationFilter permissionAuthorizationFilter,
+                          ImportTokenAuthenticationFilter importTokenAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.permissionAuthorizationFilter = permissionAuthorizationFilter;
+        this.importTokenAuthenticationFilter = importTokenAuthenticationFilter;
     }
 
     @Bean
@@ -34,18 +40,12 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/webhooks/**").permitAll()
-                .requestMatchers("/import/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/analytics/**").hasAnyRole("ADMIN", "OPS", "VIEWER")
-                .requestMatchers("/ai/**").hasAnyRole("ADMIN", "OPS")
-                .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole("ADMIN", "OPS")
-                .requestMatchers(HttpMethod.PUT, "/orders/**").hasAnyRole("ADMIN", "OPS")
-                .requestMatchers("/inventory/**").hasAnyRole("ADMIN", "OPS", "WAREHOUSE")
-                .requestMatchers("/shipments/**").hasAnyRole("ADMIN", "OPS", "WAREHOUSE")
-                .requestMatchers(HttpMethod.GET, "/returns/**").hasAnyRole("ADMIN", "OPS", "VIEWER")
-                .requestMatchers("/returns/**").hasAnyRole("ADMIN", "OPS")
+                .requestMatchers(HttpMethod.POST, "/import/**").authenticated()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(importTokenAuthenticationFilter, JwtAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(permissionAuthorizationFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
