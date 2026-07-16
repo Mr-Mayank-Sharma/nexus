@@ -12,7 +12,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class NxCustomer {
 
     @Id
@@ -33,8 +33,11 @@ public class NxCustomer {
     private String email;
     private String phone;
 
+    @Column(name = "address_id")
+    private UUID addressId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "address_id")
+    @JoinColumn(name = "address_id", insertable = false, updatable = false)
     private Address address;
 
     @Column(name = "created_at", nullable = false, updatable = false)

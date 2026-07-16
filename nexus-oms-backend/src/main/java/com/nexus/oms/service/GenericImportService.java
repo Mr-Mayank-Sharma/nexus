@@ -11,6 +11,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -22,6 +23,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -1203,8 +1205,8 @@ public class GenericImportService {
                 PurchaseOrder po = PurchaseOrder.builder()
                     .tenantId(tenantId).poNumber(poNum).supplierId(resolvedSupplierId)
                     .status(strVal(row, "status", "Status", "DRAFT"))
-                    .orderDate(LocalDateTime.now())
-                    .expectedDeliveryDate(LocalDateTime.now().plusDays(30))
+                    .orderDate(LocalDate.now())
+                    .expectedDeliveryDate(LocalDate.now().plusDays(30))
                     .totalAmount(bdVal(row, "total_amount", "amount", "total"))
                     .notes(strVal(row, "notes", "Notes"))
                     .build();
@@ -1280,8 +1282,8 @@ public class GenericImportService {
                     .invoiceNumber(strVal(row, "invoice_number", "invoiceNumber", "INV-" + System.currentTimeMillis()))
                     .orderId(resolvedOrderId)
                     .status(strVal(row, "status", "Status", "DRAFT"))
-                    .invoiceDate(LocalDateTime.now())
-                    .dueDate(LocalDateTime.now().plusDays(30))
+                    .invoiceDate(LocalDate.now())
+                    .dueDate(LocalDate.now().plusDays(30))
                     .totalAmount(bdVal(row, "amount", "Amount", "total_amount", "total"))
                     .build();
                 transactionTemplate.execute(s -> invoiceRepository.save(invoice));
@@ -1356,7 +1358,7 @@ public class GenericImportService {
                     .state(strVal(row, "state", "State"))
                     .zipCode(strVal(row, "zip", "zipCode", "Zip"))
                     .country(strVal(row, "country", "Country", "India"))
-                    .totalCapacitySqm(intVal(row, 10000, "capacity_sqft", "totalCapacitySqm"))
+                    .totalCapacitySqm(BigDecimal.valueOf(intVal(row, 10000, "capacity_sqft", "totalCapacitySqm")))
                     .contactName(strVal(row, "manager_name", "managerName", "contactName"))
                     .contactPhone(strVal(row, "manager_phone", "managerPhone", "contactPhone"))
                     .contactEmail(strVal(row, "manager_email", "managerEmail", "contactEmail"))

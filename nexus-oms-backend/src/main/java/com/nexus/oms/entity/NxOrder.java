@@ -3,6 +3,8 @@ package com.nexus.oms.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -50,8 +52,11 @@ public class NxOrder {
     @Column(name = "ship_from")
     private String shipFrom;
 
+    @Column(name = "ship_to_address_id")
+    private UUID shipToAddressId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ship_to_address_id")
+    @JoinColumn(name = "ship_to_address_id", insertable = false, updatable = false)
     private Address shipToAddress;
 
     @ManyToOne(fetch = FetchType.LAZY)

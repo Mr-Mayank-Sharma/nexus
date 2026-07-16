@@ -28,6 +28,12 @@ public class NxFulfillmentException {
     @Column(nullable = false)
     private String type;
 
+    @Column(name = "exception_type")
+    private String exceptionType;
+
+    @Column(columnDefinition = "TEXT")
+    private String message;
+
     @Column(nullable = false)
     private String severity;
 
@@ -85,6 +91,7 @@ public class NxFulfillmentException {
         if (severity == null) severity = "MEDIUM";
         if (autoResolvable == null) autoResolvable = false;
         if (detectedAt == null) detectedAt = LocalDateTime.now();
+        if (exceptionType == null && type != null) exceptionType = type;
     }
 
     @PreUpdate
