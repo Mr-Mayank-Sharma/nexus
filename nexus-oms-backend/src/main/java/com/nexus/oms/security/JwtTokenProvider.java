@@ -33,6 +33,7 @@ public class JwtTokenProvider {
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(username)
                 .claim("role", role)
                 .claim("tenantId", tenantId.toString())
@@ -52,6 +53,10 @@ public class JwtTokenProvider {
 
     public UUID getTenantIdFromToken(String token) {
         return UUID.fromString(parseClaims(token).get("tenantId", String.class));
+    }
+
+    public String getJtiFromToken(String token) {
+        return parseClaims(token).getId();
     }
 
     public boolean validateToken(String token) {

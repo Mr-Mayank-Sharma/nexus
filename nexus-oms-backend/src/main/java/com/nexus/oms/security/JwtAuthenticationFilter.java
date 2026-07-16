@@ -24,13 +24,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
                                    JdbcTemplate jdbcTemplate,
-                                   TransactionTemplate transactionTemplate) {
+                                   TransactionTemplate transactionTemplate,
+                                   TokenBlacklistService tokenBlacklistService) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.jdbcTemplate = jdbcTemplate;
         this.transactionTemplate = transactionTemplate;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -40,6 +43,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = extractToken(request);
 
         if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+            String jti = jwtTokenProvider.getJtiFromToken(token);
+
+            if (tokenBlacklistService.isBlacklisted(jti)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String username = jwtTokenProvider.getUsernameFromToken(token);
             String role = jwtTokenProvider.getRoleFromToken(token);
             UUID tenantId = jwtTokenProvider.getTenantIdFromToken(token);

@@ -1,40 +1,34 @@
 package com.nexus.oms.filter;
 
+import com.nexus.oms.security.TenantContext;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Order(1)
 public class RateLimitingFilter implements Filter {
 
-    static class WindowCounter {
-        final long windowStart;
-        final AtomicInteger count;
-
-        WindowCounter(long windowStart) {
-            this.windowStart = windowStart;
-            this.count = new AtomicInteger(1);
-        }
-    }
-
     private static final long WINDOW_MS = 1000;
 
-    // Per-endpoint rate limit tiers (requests per second)
-    private static final int TIER_GENERAL = 200;     // read-only GETs, health
-    private static final int TIER_STANDARD = 100;    // standard CRUD
-    private static final int TIER_AUTH = 10;         // login, forgot-password
-    private static final int TIER_IMPORT = 5;        // file uploads, bulk imports
-    private static final int TIER_AI_CHAT = 20;      // AI chat completions
+    private static final int TIER_GENERAL = 200;
+    private static final int TIER_STANDARD = 100;
+    private static final int TIER_AUTH = 10;
+    private static final int TIER_IMPORT = 5;
+    private static final int TIER_AI_CHAT = 20;
 
-    private final Map<String, WindowCounter> counters = new ConcurrentHashMap<>();
+    private final StringRedisTemplate redisTemplate;
+
+    public RateLimitingFilter(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -42,31 +36,27 @@ public class RateLimitingFilter implements Filter {
 
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
-        String path = req.getRequestURI();
-        String method = req.getMethod();
 
         String key = resolveKey(req);
-        int maxRequests = resolveTier(path, method);
+        int maxRequests = resolveTier(req.getRequestURI(), req.getMethod());
 
-        long now = System.currentTimeMillis();
-        WindowCounter counter = counters.compute(key, (k, existing) -> {
-            if (existing == null || (now - existing.windowStart) >= WINDOW_MS) {
-                return new WindowCounter(now);
-            }
-            existing.count.incrementAndGet();
-            return existing;
-        });
+        String redisKey = "ratelimit:" + key;
+        Long count = redisTemplate.opsForValue().increment(redisKey);
+        if (count != null && count == 1) {
+            redisTemplate.expire(redisKey, WINDOW_MS, TimeUnit.MILLISECONDS);
+        }
 
-        if (counter.count.get() > maxRequests) {
+        res.setHeader("X-RateLimit-Limit", String.valueOf(maxRequests));
+        long remaining = Math.max(0, maxRequests - (count != null ? count : 0));
+        res.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
+
+        if (count != null && count > maxRequests) {
             res.setStatus(429);
+            res.setHeader("Retry-After", "1");
             res.setContentType("application/json");
             res.getWriter().write("{\"error\":\"Too many requests\",\"message\":\"Rate limit exceeded. Try again later.\"}");
             return;
         }
-
-        res.setHeader("X-RateLimit-Limit", String.valueOf(maxRequests));
-        res.setHeader("X-RateLimit-Remaining", String.valueOf(maxRequests - counter.count.get()));
-        res.setHeader("X-RateLimit-Reset", String.valueOf(counter.windowStart + WINDOW_MS));
 
         chain.doFilter(request, response);
     }
@@ -82,7 +72,11 @@ public class RateLimitingFilter implements Filter {
     private String resolveKey(HttpServletRequest req) {
         String ip = req.getHeader("X-Forwarded-For");
         if (ip == null || ip.isBlank()) ip = req.getRemoteAddr();
-        String tenant = req.getHeader("X-Tenant-Id");
-        return tenant != null ? tenant + ":" + ip : ip;
+        try {
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            return tenantId.toString() + ":" + ip;
+        } catch (IllegalStateException e) {
+            return ip;
+        }
     }
 }
