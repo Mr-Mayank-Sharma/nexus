@@ -2,10 +2,12 @@ package com.nexus.oms.controller;
 
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.entity.NxShipment;
+import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.ShipmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,6 +21,13 @@ public class ShipmentController {
 
     public ShipmentController(ShipmentService shipmentService) {
         this.shipmentService = shipmentService;
+    }
+
+    @Operation(summary = "List all shipments for current tenant")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NxShipment>>> getShipments() {
+        return ResponseEntity.ok(ApiResponse.success(
+                shipmentService.getShipmentsByTenant(TenantContext.getCurrentTenantId())));
     }
 
     @Operation(summary = "Get shipment by ID")

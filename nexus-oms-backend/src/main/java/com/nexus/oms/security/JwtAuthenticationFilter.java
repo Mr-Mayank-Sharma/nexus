@@ -16,7 +16,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
     private final TokenBlacklistService tokenBlacklistService;
+
+    private Boolean isH2;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
                                    JdbcTemplate jdbcTemplate,
@@ -68,16 +73,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            try {
-                transactionTemplate.executeWithoutResult(status ->
-                    jdbcTemplate.execute("SET app.current_tenant = '" + tenantId.toString() + "'")
-                );
-            } catch (Exception e) {
-                log.warn("Failed to set tenant session variable (non-fatal, likely H2/test env): {}", e.getMessage());
+            if (!isH2()) {
+                try {
+                    transactionTemplate.executeWithoutResult(status ->
+                        jdbcTemplate.execute("SET SESSION app.current_tenant_id = '" + tenantId + "'")
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to set tenant session variable (non-fatal): {}", e.getMessage());
+                }
             }
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isH2() {
+        if (isH2 == null) {
+            DataSource ds = jdbcTemplate.getDataSource();
+            if (ds != null) {
+                try (Connection conn = ds.getConnection()) {
+                    isH2 = conn.getMetaData().getDatabaseProductName().contains("H2");
+                } catch (SQLException e) {
+                    isH2 = false;
+                }
+            } else {
+                isH2 = false;
+            }
+        }
+        return isH2;
     }
 
     private String extractToken(HttpServletRequest request) {

@@ -20,6 +20,11 @@ public class AnalyticsController {
         this.dashboardService = dashboardService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAnalytics() {
+        return ResponseEntity.ok(ApiResponse.success(dashboardService.getKPIs(TenantContext.getCurrentTenantId())));
+    }
+
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboard() {
         return ResponseEntity.ok(ApiResponse.success(dashboardService.getKPIs(TenantContext.getCurrentTenantId())));

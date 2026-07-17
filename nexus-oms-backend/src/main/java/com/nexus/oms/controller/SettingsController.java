@@ -22,6 +22,12 @@ public class SettingsController {
         this.companySettingsService = companySettingsService;
     }
 
+    @Operation(summary = "Get settings dashboard")
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSettingsDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @Operation(summary = "Get company settings")
     @GetMapping("/company")
     public ResponseEntity<ApiResponse<CompanySettings>> getSettings() {

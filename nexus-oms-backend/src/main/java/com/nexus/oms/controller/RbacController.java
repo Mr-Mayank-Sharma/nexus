@@ -28,6 +28,11 @@ public class RbacController {
         this.rbacService = rbacService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, String>>> getRbacDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @GetMapping("/permissions")
     public ResponseEntity<ApiResponse<List<RolePermission>>> getPermissions() {
         return ResponseEntity.ok(ApiResponse.success(

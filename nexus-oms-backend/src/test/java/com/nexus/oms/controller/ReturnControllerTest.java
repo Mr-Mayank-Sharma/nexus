@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -29,7 +31,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Tag("integration")
-@WebMvcTest(ReturnController.class)
+@WebMvcTest(value = ReturnController.class, excludeFilters = {
+    @ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.nexus\\.oms\\.filter\\..*"),
+    @ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.nexus\\.oms\\.security\\.SecurityConfig"),
+    @ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.nexus\\.oms\\.security\\..*Filter")
+})
 @AutoConfigureMockMvc(addFilters = false)
 class ReturnControllerTest {
 
@@ -118,7 +124,7 @@ class ReturnControllerTest {
                     "orderId": "%s",
                     "customerId": "%s",
                     "reason": "DEFECTIVE",
-                    "items": []
+                    "items": [{"sku": "SKU-001", "quantity": 1}]
                 }
                 """.formatted(UUID.randomUUID(), UUID.randomUUID());
 

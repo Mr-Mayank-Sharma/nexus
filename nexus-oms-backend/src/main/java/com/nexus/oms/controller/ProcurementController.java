@@ -27,6 +27,14 @@ public class ProcurementController {
         this.procurementService = procurementService;
     }
 
+    @Operation(summary = "List procurement dashboard")
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getProcurementDashboard() {
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("status", "ok");
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     // ==================== SUPPLIERS ====================
 
     @Operation(summary = "List all suppliers")

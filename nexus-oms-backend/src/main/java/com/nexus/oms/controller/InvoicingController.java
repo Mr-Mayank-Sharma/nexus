@@ -27,6 +27,11 @@ public class InvoicingController {
         this.invoicingService = invoicingService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getInvoicingSummary() {
+        return ResponseEntity.ok(ApiResponse.success(invoicingService.getInvoiceSummary()));
+    }
+
     @GetMapping("/invoices")
     public ResponseEntity<ApiResponse<Page<Invoice>>> getAllInvoices(
             @RequestParam(defaultValue = "0") int page,

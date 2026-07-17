@@ -54,6 +54,11 @@ public class AiPlatformController {
 
     private UUID tenant() { return TenantContext.getCurrentTenantId(); }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, String>>> getAiDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     // ========== GATEWAY ==========
     @PostMapping("/predict/{modelType}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> predict(

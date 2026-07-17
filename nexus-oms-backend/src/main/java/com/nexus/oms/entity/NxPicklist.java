@@ -38,7 +38,7 @@ public class NxPicklist {
     @Column(name = "picked_items")
     private Integer pickedItems;
 
-    @Column(name = "order_ids", columnDefinition = "UUID[]")
+    @Column(name = "order_ids", columnDefinition = "TEXT")
     private String orderIds;
 
     private String notes;

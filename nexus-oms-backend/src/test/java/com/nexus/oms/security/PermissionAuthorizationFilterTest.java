@@ -38,6 +38,7 @@ class PermissionAuthorizationFilterTest {
     @BeforeEach
     void setUp() {
         filter = new PermissionAuthorizationFilter(permissionService);
+        when(request.getContextPath()).thenReturn("");
     }
 
     @AfterEach

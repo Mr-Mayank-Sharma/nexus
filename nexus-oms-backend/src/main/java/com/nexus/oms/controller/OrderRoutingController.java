@@ -28,6 +28,11 @@ public class OrderRoutingController {
         this.orderRoutingService = orderRoutingService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, String>>> getOrderRoutingDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @PostMapping("/allocate")
     public ResponseEntity<ApiResponse<AllocationResult>> allocateOrder(
             @Valid @RequestBody AllocationRequest request) {

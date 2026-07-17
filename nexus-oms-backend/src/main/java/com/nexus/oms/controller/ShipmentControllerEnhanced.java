@@ -22,6 +22,11 @@ public class ShipmentControllerEnhanced {
         this.shippingService = shippingService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getShippingDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @GetMapping("/shipments")
     public ResponseEntity<ApiResponse<List<NxShipment>>> getShipments() {
         return ResponseEntity.ok(ApiResponse.success(

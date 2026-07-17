@@ -1,79 +1,60 @@
 package com.nexus.oms.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.http.*;
-import org.springframework.web.client.RestTemplate;
+
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @Tag("integration")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class ApiIntegrationTest {
-
-    private static final String BASE_URL = "http://localhost:8080/api/v1";
-    private static final RestTemplate restTemplate = new RestTemplate();
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+class ApiIntegrationTest extends AbstractIntegrationTest {
 
     private static String viewerToken;
-    private static String adminToken;
+    private static UUID viewerTenantId;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        if (adminToken == null) {
+            registerAdminUser();
+            registerViewerUser();
+            seedViewerPermissions();
+        }
+    }
+
+    private void registerViewerUser() throws Exception {
+        long ts = System.currentTimeMillis();
+        String body = """
+                {"username": "intviewer-%d", "password": "Test1234!", "role": "VIEWER"}
+                """.formatted(ts);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ResponseEntity<String> resp = restTemplate.postForEntity(
+                baseUrl() + "/auth/register",
+                new HttpEntity<>(body, headers), String.class);
+        assertEquals(HttpStatus.OK, resp.getStatusCode());
+        JsonNode data = objectMapper.readTree(resp.getBody()).get("data");
+        viewerToken = data.get("accessToken").asText();
+        viewerTenantId = UUID.fromString(data.get("tenantId").asText());
+    }
+
+    private void seedViewerPermissions() {
+        seedPermission(viewerTenantId, "VIEWER", "orders", "view", true, false);
+    }
 
     @Test
     @Order(1)
     void testHealthCheck() {
         ResponseEntity<String> response = restTemplate.getForEntity(
-                BASE_URL + "/actuator/health", String.class);
+                baseUrl() + "/actuator/health", String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
     }
 
     @Test
     @Order(2)
-    void testRegisterUsers() throws Exception {
-        long ts = System.currentTimeMillis();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        String viewerBody = """
-                {"username": "intviewer-%d", "password": "Test1234!", "role": "VIEWER"}
-                """.formatted(ts);
-        ResponseEntity<String> viewerResp = restTemplate.exchange(
-                BASE_URL + "/auth/register", HttpMethod.POST,
-                new HttpEntity<>(viewerBody, headers), String.class);
-        assertEquals(HttpStatus.OK, viewerResp.getStatusCode());
-        JsonNode viewerJson = objectMapper.readTree(viewerResp.getBody());
-        viewerToken = viewerJson.get("data").get("accessToken").asText();
-
-        String adminBody = """
-                {"username": "intadmin-%d", "password": "Test1234!", "role": "ADMIN"}
-                """.formatted(ts);
-        ResponseEntity<String> adminResp = restTemplate.exchange(
-                BASE_URL + "/auth/register", HttpMethod.POST,
-                new HttpEntity<>(adminBody, headers), String.class);
-        assertEquals(HttpStatus.OK, adminResp.getStatusCode());
-        JsonNode adminJson = objectMapper.readTree(adminResp.getBody());
-        adminToken = adminJson.get("data").get("accessToken").asText();
-
-        assertNotNull(viewerToken);
-        assertNotNull(adminToken);
-    }
-
-    @Test
-    @Order(3)
-    void testGetOrdersWithAdminAuth() {
-        assertNotNull(adminToken);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(adminToken);
-
-        ResponseEntity<String> response = restTemplate.exchange(
-                BASE_URL + "/orders", HttpMethod.GET,
-                new HttpEntity<>(headers), String.class);
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-    }
-
-    @Test
-    @Order(4)
     void testAdminCanCreateOrder() throws Exception {
         assertNotNull(adminToken);
 
@@ -87,13 +68,9 @@ class ApiIntegrationTest {
                 }
                 """.formatted(System.currentTimeMillis());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(adminToken);
-
         ResponseEntity<String> response = restTemplate.exchange(
-                BASE_URL + "/orders", HttpMethod.POST,
-                new HttpEntity<>(orderBody, headers), String.class);
+                baseUrl() + "/orders", HttpMethod.POST,
+                new HttpEntity<>(orderBody, authHeaders()), String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
         JsonNode json = objectMapper.readTree(response.getBody());
@@ -101,7 +78,7 @@ class ApiIntegrationTest {
     }
 
     @Test
-    @Order(5)
+    @Order(3)
     void testViewerCannotCreateOrder() {
         assertNotNull(viewerToken);
 
@@ -109,47 +86,31 @@ class ApiIntegrationTest {
                 {"customerEmail": "blocked@test.com", "customerName": "Blocked", "shippingAddress": {"line1": "1"}, "channel": "WEB", "items": []}
                 """;
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(viewerToken);
-
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(
-                    BASE_URL + "/orders", HttpMethod.POST,
-                    new HttpEntity<>(orderBody, headers), String.class);
-            fail("Expected 403 Forbidden");
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            assertEquals(HttpStatus.FORBIDDEN, e.getStatusCode());
-        }
+        ResponseEntity<String> response = restTemplate.exchange(
+                baseUrl() + "/orders", HttpMethod.POST,
+                new HttpEntity<>(orderBody, authHeaders(viewerToken)), String.class);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 
     @Test
-    @Order(6)
+    @Order(4)
     void testViewerCanReadOrders() {
         assertNotNull(viewerToken);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(viewerToken);
 
         ResponseEntity<String> response = restTemplate.exchange(
-                BASE_URL + "/orders", HttpMethod.GET,
-                new HttpEntity<>(headers), String.class);
+                baseUrl() + "/orders", HttpMethod.GET,
+                new HttpEntity<>(authHeaders(viewerToken)), String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
-    @Order(7)
+    @Order(5)
     void testViewerCannotAccessInventory() {
         assertNotNull(viewerToken);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(viewerToken);
 
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(
-                    BASE_URL + "/inventory", HttpMethod.GET,
-                    new HttpEntity<>(headers), String.class);
-            fail("Expected 403 Forbidden");
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            assertEquals(HttpStatus.FORBIDDEN, e.getStatusCode());
-        }
+        ResponseEntity<String> response = restTemplate.exchange(
+                baseUrl() + "/inventory", HttpMethod.GET,
+                new HttpEntity<>(authHeaders(viewerToken)), String.class);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 }

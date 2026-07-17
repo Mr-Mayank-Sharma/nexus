@@ -34,6 +34,11 @@ public class ShopifyController {
         this.webhookService = webhookService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, String>>> getShopifyDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @PostMapping("/stores/{storeId}/sync/orders")
     public ResponseEntity<ApiResponse<SyncResult>> syncOrders(@PathVariable UUID storeId) {
         return ResponseEntity.ok(ApiResponse.success(

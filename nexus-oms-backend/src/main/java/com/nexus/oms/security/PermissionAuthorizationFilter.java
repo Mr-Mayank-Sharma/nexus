@@ -40,7 +40,7 @@ public class PermissionAuthorizationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        String path = request.getRequestURI();
+        String path = request.getRequestURI().substring(request.getContextPath().length());
         String method = request.getMethod();
 
         if (isPublicOrPermitAll(path)) {

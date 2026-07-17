@@ -45,6 +45,12 @@ public class IntegrationPlatformController {
     // Endpoints
     // ──────────────────────────────────────────────
 
+    @Operation(summary = "Integration platform dashboard")
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, String>>> getPlatformDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @Operation(summary = "List all integration endpoints")
     @GetMapping("/endpoints")
     public ResponseEntity<ApiResponse<Page<IntegrationEndpoint>>> getAllEndpoints(

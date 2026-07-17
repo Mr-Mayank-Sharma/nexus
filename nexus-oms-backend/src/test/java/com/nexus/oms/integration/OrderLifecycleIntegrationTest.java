@@ -17,13 +17,16 @@ class OrderLifecycleIntegrationTest extends AbstractIntegrationTest {
     private static UUID warehouseNodeId;
     private static final String TEST_SKU = "IT-SKU-001";
 
+    private static boolean initialized = false;
+
     @BeforeEach
     void setUp() throws Exception {
-        if (adminToken == null) {
+        if (!initialized) {
             registerAdminUser();
             warehouseNodeId = initializeWarehouse("Integration Test WH");
             initializeInventory(warehouseNodeId, TEST_SKU, 100);
             initializeInventory(warehouseNodeId, "IT-SKU-002", 50);
+            initialized = true;
         }
     }
 

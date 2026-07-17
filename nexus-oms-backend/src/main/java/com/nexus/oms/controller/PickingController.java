@@ -27,6 +27,13 @@ public class PickingController {
     }
 
     @Operation(summary = "List all picklists")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NxPicklist>>> getAllPicklists() {
+        return ResponseEntity.ok(ApiResponse.success(
+                pickingService.getPicklists(TenantContext.getCurrentTenantId())));
+    }
+
+    @Operation(summary = "List all picklists with optional status filter")
     @GetMapping("/picklists")
     public ResponseEntity<ApiResponse<List<NxPicklist>>> getPicklists(@RequestParam(required = false) String status) {
         UUID tenantId = TenantContext.getCurrentTenantId();

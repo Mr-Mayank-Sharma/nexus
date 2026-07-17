@@ -26,6 +26,13 @@ public class PackingController {
     }
 
     @Operation(summary = "List all packages")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NxPackage>>> getAllPackages() {
+        return ResponseEntity.ok(ApiResponse.success(
+                packingService.getPackages(TenantContext.getCurrentTenantId())));
+    }
+
+    @Operation(summary = "List all packages with optional status filter")
     @GetMapping("/packages")
     public ResponseEntity<ApiResponse<List<NxPackage>>> getPackages(@RequestParam(required = false) String status) {
         UUID tenantId = TenantContext.getCurrentTenantId();

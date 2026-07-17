@@ -25,6 +25,11 @@ public class NotificationController {
         this.notificationService = notificationService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, String>>> getNotificationsDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @GetMapping("/templates")
     public ResponseEntity<ApiResponse<Page<NotificationTemplate>>> getAllTemplates(
             @RequestParam(defaultValue = "0") int page,

@@ -24,6 +24,11 @@ public class RateShoppingController {
         this.rateCacheService = rateCacheService;
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<Map<String, String>>> getRateShoppingDashboard() {
+        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
+    }
+
     @GetMapping("/cache/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCacheStats() {
         return ResponseEntity.ok(ApiResponse.success(rateCacheService.getStats(), "Cache statistics"));

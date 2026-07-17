@@ -31,7 +31,13 @@ public class TenantAwareDataSource implements DataSource {
 
     private static final Logger log = LoggerFactory.getLogger(TenantAwareDataSource.class);
 
+    private static final String SET_SESSION_SQL = "SET SESSION app.current_tenant_id = '%s'";
+    private static final String RESET_SESSION_SQL = "RESET app.current_tenant_id";
+    private static final String SET_H2_SQL = "SET @app_current_tenant_id = '%s'";
+    private static final String RESET_H2_SQL = "SET @app_current_tenant_id = NULL";
+
     private final DataSource delegate;
+    private Boolean isH2; // null = not yet determined
 
     public TenantAwareDataSource(DataSource delegate) {
         this.delegate = delegate;
@@ -55,8 +61,10 @@ public class TenantAwareDataSource implements DataSource {
         try {
             UUID tenantId = TenantContext.getCurrentTenantId();
             if (tenantId != null) {
+                String sql = isH2(connection) ? String.format(SET_H2_SQL, tenantId)
+                                              : String.format(SET_SESSION_SQL, tenantId);
                 try (Statement stmt = connection.createStatement()) {
-                    stmt.execute("SET SESSION app.current_tenant_id = '" + tenantId + "'");
+                    stmt.execute(sql);
                 }
                 log.trace("Set tenant context on connection: {}", tenantId);
             }
@@ -76,11 +84,26 @@ public class TenantAwareDataSource implements DataSource {
     }
 
     private void resetTenantContext(Connection connection) {
+        String sql = isH2(connection) ? RESET_H2_SQL : RESET_SESSION_SQL;
         try (Statement stmt = connection.createStatement()) {
-            stmt.execute("RESET app.current_tenant_id");
+            stmt.execute(sql);
         } catch (SQLException e) {
             log.debug("Could not reset tenant context on connection return", e);
         }
+    }
+
+    private boolean isH2(Connection connection) {
+        if (isH2 == null) {
+            try {
+                String productName = connection.getMetaData().getDatabaseProductName();
+                isH2 = productName != null && productName.contains("H2");
+                log.debug("Database product: {} → isH2={}", productName, isH2);
+            } catch (SQLException e) {
+                log.warn("Could not determine database product name", e);
+                isH2 = false;
+            }
+        }
+        return isH2;
     }
 
     // ── Delegating methods ──────────────────────────────────────────

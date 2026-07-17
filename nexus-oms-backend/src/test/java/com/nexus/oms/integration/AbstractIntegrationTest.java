@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.NxInventory;
 import com.nexus.oms.entity.NxNode;
+import com.nexus.oms.entity.RolePermission;
 import com.nexus.oms.repository.InventoryRepository;
 import com.nexus.oms.repository.NodeRepository;
+import com.nexus.oms.repository.RolePermissionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -38,6 +40,9 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected InventoryRepository inventoryRepository;
+
+    @Autowired
+    protected RolePermissionRepository rolePermissionRepository;
 
     protected static String adminToken;
     protected static UUID tenantId;
@@ -115,5 +120,19 @@ public abstract class AbstractIntegrationTest {
                 .quantityReserved(0)
                 .build();
         return inventoryRepository.save(inv).getId();
+    }
+
+    protected void seedPermission(UUID tenantId, String role, String group, String name, boolean canView, boolean canCreate) {
+        RolePermission rp = RolePermission.builder()
+                .tenantId(tenantId)
+                .role(role)
+                .permissionGroup(group)
+                .permissionName(name)
+                .canView(canView)
+                .canCreate(canCreate)
+                .canEdit(canCreate)
+                .canDelete(false)
+                .build();
+        rolePermissionRepository.save(rp);
     }
 }
