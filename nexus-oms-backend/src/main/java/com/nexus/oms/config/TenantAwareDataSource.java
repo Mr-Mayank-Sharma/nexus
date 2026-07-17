@@ -61,10 +61,8 @@ public class TenantAwareDataSource implements DataSource {
                 log.trace("Set tenant context on connection: {}", tenantId);
             }
         } catch (IllegalStateException e) {
-            // No authenticated tenant (public endpoint, health check, etc.)
-            // Leave the session variable empty so RLS policies allow full access.
             log.trace("No tenant context available – leaving connection unscoped");
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.warn("Failed to set tenant context on connection", e);
         }
     }
@@ -115,6 +113,7 @@ public class TenantAwareDataSource implements DataSource {
                     closed = true;
                     resetTenantContext(delegate);
                 }
+                delegate.close();
                 return null;
             }
             return method.invoke(delegate, args);

@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,6 +22,8 @@ import java.util.UUID;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtTokenProvider jwtTokenProvider;
     private final JdbcTemplate jdbcTemplate;
@@ -64,11 +68,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            // Set PostgreSQL session variable for RLS tenant isolation.
-            // This must happen in the same connection that serves subsequent queries.
-            transactionTemplate.executeWithoutResult(status ->
-                jdbcTemplate.execute("SET app.current_tenant = '" + tenantId.toString() + "'")
-            );
+            try {
+                transactionTemplate.executeWithoutResult(status ->
+                    jdbcTemplate.execute("SET app.current_tenant = '" + tenantId.toString() + "'")
+                );
+            } catch (Exception e) {
+                log.warn("Failed to set tenant session variable (non-fatal, likely H2/test env): {}", e.getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);

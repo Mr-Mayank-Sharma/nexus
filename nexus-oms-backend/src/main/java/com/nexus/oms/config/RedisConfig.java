@@ -1,6 +1,7 @@
 package com.nexus.oms.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,7 @@ import java.util.Map;
 
 @Configuration
 @EnableCaching
+@ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis", matchIfMissing = true)
 public class RedisConfig {
 
     @Bean

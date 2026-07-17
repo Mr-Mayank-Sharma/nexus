@@ -2,10 +2,12 @@ package com.nexus.oms.health;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 public class RateCacheHealthIndicator implements HealthIndicator {
 
     private final StringRedisTemplate redisTemplate;

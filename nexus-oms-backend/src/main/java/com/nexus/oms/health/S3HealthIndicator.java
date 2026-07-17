@@ -3,9 +3,11 @@ package com.nexus.oms.health;
 import com.amazonaws.services.s3.AmazonS3;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("!test")
 public class S3HealthIndicator implements HealthIndicator {
 
     private final AmazonS3 s3Client;

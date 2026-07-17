@@ -76,6 +76,7 @@ public class OrderService {
                 .tenantId(tenantId)
                 .channel(request.getChannel())
                 .customerId(customer.getId())
+                .customerEmail(customer.getEmail())
                 .status("PENDING")
                 .shipToAddress(shipToAddress)
                 .currency("INR")

@@ -30,7 +30,8 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
            "(LOWER(o.status) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(o.channel) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
            "LOWER(o.channelOrderId) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-           "LOWER(o.trackingNumber) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "LOWER(o.trackingNumber) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(o.customerEmail) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<NxOrder> search(@Param("tenantId") UUID tenantId, @Param("search") String search, Pageable pageable);
 
     long countByTenantIdAndCreatedAtAfter(UUID tenantId, LocalDateTime after);

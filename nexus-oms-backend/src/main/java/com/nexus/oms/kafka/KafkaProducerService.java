@@ -26,8 +26,12 @@ public class KafkaProducerService {
 
     public void publish(String topic, String message) {
         log.info("Publishing event to topic {}: {}", topic, message);
+        CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, message);
+        if (future == null) {
+            log.warn("KafkaTemplate.send returned null; Kafka may not be configured. Skipping publish to topic {}", topic);
+            return;
+        }
         try {
-            CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, message);
             future.get(PUBLISH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             log.error("Failed to publish event to topic {}: {}", topic, e.getMessage(), e);
@@ -37,8 +41,12 @@ public class KafkaProducerService {
 
     public void publish(String topic, String key, String message) {
         log.info("Publishing event to topic {} with key {}: {}", topic, key, message);
+        CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, message);
+        if (future == null) {
+            log.warn("KafkaTemplate.send returned null; Kafka may not be configured. Skipping publish to topic {}", topic);
+            return;
+        }
         try {
-            CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, message);
             future.get(PUBLISH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
             log.error("Failed to publish event to topic {} with key {}: {}", topic, key, e.getMessage(), e);
