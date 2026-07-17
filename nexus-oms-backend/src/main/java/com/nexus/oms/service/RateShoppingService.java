@@ -31,11 +31,14 @@ public class RateShoppingService {
 
     private final CarrierRateRepository carrierRateRepository;
     private final RateShoppingLogRepository rateShoppingLogRepository;
+    private final RateCacheService rateCacheService;
 
     public RateShoppingService(CarrierRateRepository carrierRateRepository,
-                                RateShoppingLogRepository rateShoppingLogRepository) {
+                                RateShoppingLogRepository rateShoppingLogRepository,
+                                RateCacheService rateCacheService) {
         this.carrierRateRepository = carrierRateRepository;
         this.rateShoppingLogRepository = rateShoppingLogRepository;
+        this.rateCacheService = rateCacheService;
     }
 
     @Transactional
@@ -55,6 +58,17 @@ public class RateShoppingService {
         if (request.getResidential() == null) {
             request.setResidential(false);
         }
+
+        String cacheKey = rateCacheService.buildCacheKey(
+                request.getFromZip(), request.getToZip(),
+                request.getTotalWeightKg().doubleValue(),
+                null, null);
+        RateShoppingResult cached = rateCacheService.get(cacheKey);
+        if (cached != null) {
+            log.debug("Rate cache hit for key={}", cacheKey);
+            return cached;
+        }
+        log.debug("Rate cache miss for key={}", cacheKey);
 
         List<NxCarrierRate> eligibleRates;
         if (request.getServiceLevels() != null && !request.getServiceLevels().isEmpty()) {
@@ -104,6 +118,8 @@ public class RateShoppingService {
                 .selected(selected)
                 .executionTimeMs(execTime)
                 .build();
+
+        rateCacheService.put(cacheKey, result);
 
         saveShoppingLog(request, result, selected, tenantId);
 

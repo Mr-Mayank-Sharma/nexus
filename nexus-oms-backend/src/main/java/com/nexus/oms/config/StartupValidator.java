@@ -19,6 +19,15 @@ public class StartupValidator {
     @Value("${app.jwt.secret:}")
     private String jwtSecret;
 
+    @Value("${storage.s3.endpoint:}")
+    private String s3Endpoint;
+
+    @Value("${storage.s3.access-key:}")
+    private String s3AccessKey;
+
+    @Value("${storage.s3.secret-key:}")
+    private String s3SecretKey;
+
     public StartupValidator(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
@@ -35,16 +44,25 @@ public class StartupValidator {
 
         String jwtEnv = System.getenv("JWT_SECRET");
         if (jwtEnv == null || jwtEnv.isBlank()) {
-            log.error("FATAL: JWT_SECRET environment variable is not set.");
-            failed = true;
+            log.warn("JWT_SECRET environment variable is not set; using default (not for production).");
         }
 
         if (jwtSecret == null || jwtSecret.isBlank()) {
-            log.error("FATAL: app.jwt.secret property is not set (NEXUS_JWT_SECRET).");
+            log.error("FATAL: app.jwt.secret property is not set (JWT_SECRET).");
             failed = true;
         } else if (jwtSecret.length() < 32) {
             log.error("FATAL: app.jwt.secret must be at least 32 characters, but was {} characters.", jwtSecret.length());
             failed = true;
+        }
+
+        if (s3Endpoint == null || s3Endpoint.isBlank() || s3Endpoint.contains("localhost")) {
+            log.warn("S3 endpoint is localhost; not suitable for production.");
+        }
+        if (s3AccessKey == null || s3AccessKey.isBlank() || "minioadmin".equals(s3AccessKey)) {
+            log.warn("S3 access key is default value; not suitable for production.");
+        }
+        if (s3SecretKey == null || s3SecretKey.isBlank() || "minioadmin".equals(s3SecretKey)) {
+            log.warn("S3 secret key is default value; not suitable for production.");
         }
 
         if (failed) {
