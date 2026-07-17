@@ -4,6 +4,8 @@ import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.ResourceNotFoundException;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.security.TenantContext;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -37,22 +39,26 @@ public class WarehouseService {
 
     // ---- Warehouse CRUD ----
 
+    @Cacheable(value = "warehouses", key = "'page:' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public Page<Warehouse> getAllWarehouses(Pageable pageable) {
         return warehouseRepository.findByTenantId(TenantContext.getCurrentTenantId(), pageable);
     }
 
+    @Cacheable(value = "warehouses", key = "#id")
     public Warehouse getWarehouse(UUID id) {
         return warehouseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse", id));
     }
 
     @Transactional
+    @CacheEvict(value = "warehouses", allEntries = true)
     public Warehouse createWarehouse(Warehouse warehouse) {
         warehouse.setTenantId(TenantContext.getCurrentTenantId());
         return warehouseRepository.save(warehouse);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouses", allEntries = true)
     public Warehouse updateWarehouse(UUID id, Warehouse updates) {
         Warehouse existing = warehouseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse", id));
@@ -85,6 +91,7 @@ public class WarehouseService {
     }
 
     @Transactional
+    @CacheEvict(value = "warehouses", allEntries = true)
     public void deleteWarehouse(UUID id) {
         Warehouse warehouse = warehouseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse", id));
@@ -99,17 +106,20 @@ public class WarehouseService {
 
     // ---- Warehouse Zones ----
 
+    @Cacheable(value = "warehouseZones", key = "#warehouseId")
     public List<WarehouseZone> getZones(UUID warehouseId) {
         return warehouseZoneRepository.findByWarehouseId(warehouseId);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseZones", allEntries = true)
     public WarehouseZone createZone(WarehouseZone zone) {
         zone.setTenantId(TenantContext.getCurrentTenantId());
         return warehouseZoneRepository.save(zone);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseZones", allEntries = true)
     public WarehouseZone updateZone(UUID id, WarehouseZone updates) {
         WarehouseZone existing = warehouseZoneRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WarehouseZone", id));
@@ -135,21 +145,25 @@ public class WarehouseService {
 
     // ---- Warehouse Bins ----
 
+    @Cacheable(value = "warehouseBins", key = "#warehouseId")
     public List<WarehouseBin> getBins(UUID warehouseId) {
         return warehouseBinRepository.findByWarehouseId(warehouseId);
     }
 
+    @Cacheable(value = "warehouseBins", key = "'empty:' + #warehouseId")
     public List<WarehouseBin> getEmptyBins(UUID warehouseId) {
         return warehouseBinRepository.findByWarehouseIdAndIsEmpty(warehouseId, true);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseBins", allEntries = true)
     public WarehouseBin createBin(WarehouseBin bin) {
         bin.setTenantId(TenantContext.getCurrentTenantId());
         return warehouseBinRepository.save(bin);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseBins", allEntries = true)
     public WarehouseBin reserveBin(UUID id) {
         WarehouseBin bin = warehouseBinRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WarehouseBin", id));
@@ -158,6 +172,7 @@ public class WarehouseService {
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseBins", allEntries = true)
     public WarehouseBin releaseBin(UUID id) {
         WarehouseBin bin = warehouseBinRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WarehouseBin", id));
@@ -168,17 +183,20 @@ public class WarehouseService {
 
     // ---- Warehouse Staff ----
 
+    @Cacheable(value = "warehouseStaff", key = "#warehouseId")
     public List<WarehouseStaff> getStaff(UUID warehouseId) {
         return warehouseStaffRepository.findByWarehouseId(warehouseId);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseStaff", allEntries = true)
     public WarehouseStaff createStaff(WarehouseStaff staff) {
         staff.setTenantId(TenantContext.getCurrentTenantId());
         return warehouseStaffRepository.save(staff);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseStaff", allEntries = true)
     public WarehouseStaff updateStaff(UUID id, WarehouseStaff updates) {
         WarehouseStaff existing = warehouseStaffRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WarehouseStaff", id));
@@ -200,6 +218,7 @@ public class WarehouseService {
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseStaff", allEntries = true)
     public WarehouseStaff incrementPickCount(UUID id) {
         WarehouseStaff staff = warehouseStaffRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WarehouseStaff", id));
@@ -209,17 +228,20 @@ public class WarehouseService {
 
     // ---- Warehouse Equipment ----
 
+    @Cacheable(value = "warehouseEquipment", key = "#warehouseId")
     public List<WarehouseEquipment> getEquipment(UUID warehouseId) {
         return warehouseEquipmentRepository.findByWarehouseId(warehouseId);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseEquipment", allEntries = true)
     public WarehouseEquipment createEquipment(WarehouseEquipment equipment) {
         equipment.setTenantId(TenantContext.getCurrentTenantId());
         return warehouseEquipmentRepository.save(equipment);
     }
 
     @Transactional
+    @CacheEvict(value = "warehouseEquipment", allEntries = true)
     public WarehouseEquipment updateEquipmentStatus(UUID id, String status) {
         WarehouseEquipment equipment = warehouseEquipmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("WarehouseEquipment", id));
@@ -229,6 +251,7 @@ public class WarehouseService {
 
     // ---- Dashboard / Summary ----
 
+    @Cacheable(value = "warehouses", key = "'summary:' + #warehouseId")
     public Map<String, Object> getWarehouseSummary(UUID warehouseId) {
         List<WarehouseBin> allBins = warehouseBinRepository.findByWarehouseId(warehouseId);
         long emptyBins = warehouseBinRepository.countByWarehouseIdAndIsEmpty(warehouseId, true);

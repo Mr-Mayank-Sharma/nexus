@@ -35,6 +35,7 @@ public class InventoryService {
         return items.get(0);
     }
 
+    @Cacheable(value = "inventory", key = "'atp:' + #tenantId + ':' + #sku")
     public Integer getAvailableToPromise(UUID tenantId, String sku) {
         return inventoryRepository.getAvailableToPromise(tenantId, sku);
     }
@@ -53,6 +54,7 @@ public class InventoryService {
         return inventoryRepository.save(inv);
     }
 
+    @Cacheable(value = "inventory", key = "'check:' + #tenantId + ':' + #sku + ':' + #nodeId + ':' + #qty")
     @Transactional
     public boolean checkAvailability(UUID tenantId, String sku, UUID nodeId, int qty) {
         return inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)

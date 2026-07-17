@@ -57,6 +57,7 @@ public class DashboardService {
         return kpis;
     }
 
+    @Cacheable(value = "dashboard", key = "'velocity'")
     public Map<String, Object> getOrderVelocity() {
         Map<String, Object> velocity = new LinkedHashMap<>();
         velocity.put("metric", "orders_per_hour");
@@ -64,6 +65,7 @@ public class DashboardService {
         return velocity;
     }
 
+    @Cacheable(value = "dashboard", key = "'exceptions:' + #tenantId")
     public Map<String, Object> getExceptions(UUID tenantId) {
         Map<String, Object> exceptions = new LinkedHashMap<>();
         List<Map<String, Object>> items = new ArrayList<>();
@@ -79,6 +81,7 @@ public class DashboardService {
         return exceptions;
     }
 
+    @Cacheable(value = "dashboard", key = "'activity:' + #tenantId")
     public List<Map<String, Object>> getActivity(UUID tenantId) {
         List<Map<String, Object>> events = new ArrayList<>();
 

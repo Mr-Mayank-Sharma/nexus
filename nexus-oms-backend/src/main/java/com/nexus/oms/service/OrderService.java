@@ -112,6 +112,7 @@ public class OrderService {
         return toOrderResponse(order);
     }
 
+    @Cacheable(value = "orders", key = "#id")
     public OrderResponse getOrder(UUID id) {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));

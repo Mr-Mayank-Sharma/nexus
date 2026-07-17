@@ -46,6 +46,13 @@ public class RedisConfig {
         cacheConfigs.put("inventory", defaultConfig.entryTtl(Duration.ofSeconds(30)));
         cacheConfigs.put("dashboard", defaultConfig.entryTtl(Duration.ofMinutes(2)));
         cacheConfigs.put("storeSettings", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigs.put("orders", defaultConfig.entryTtl(Duration.ofMinutes(2)));
+        cacheConfigs.put("products", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigs.put("warehouses", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigs.put("warehouseZones", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+        cacheConfigs.put("warehouseBins", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("warehouseStaff", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("warehouseEquipment", defaultConfig.entryTtl(Duration.ofMinutes(5)));
 
         return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(defaultConfig)
