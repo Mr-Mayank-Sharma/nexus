@@ -3,6 +3,7 @@ package com.nexus.oms.service.bigcommerce;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.exception.BadRequestException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -40,6 +41,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode getOrders(String apiPath, String accessToken, Map<String, String> params) {
         RestClient client = buildClient(apiPath, accessToken);
         StringBuilder path = new StringBuilder("/stores/{storeHash}/v2/orders");
@@ -57,6 +59,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode getOrderById(String apiPath, String accessToken, int orderId) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
@@ -71,6 +74,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode getProducts(String apiPath, String accessToken, Map<String, String> params) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
@@ -86,6 +90,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode getProductVariants(String apiPath, String accessToken, int productId) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
@@ -100,6 +105,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode updateInventory(String apiPath, String accessToken, int productId, Map<String, Object> inventoryData) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
@@ -119,6 +125,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode createShipment(String apiPath, String accessToken, int orderId, Map<String, Object> shipmentData) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
@@ -138,6 +145,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode createRefund(String apiPath, String accessToken, int orderId, Map<String, Object> refundData) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
@@ -157,6 +165,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode registerWebhook(String apiPath, String accessToken, String scope, String destination) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
@@ -180,6 +189,7 @@ public class BigCommerceClient {
         }
     }
 
+    @CircuitBreaker(name = "bigcommerce-api")
     public JsonNode deleteWebhook(String apiPath, String accessToken, int webhookId) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);

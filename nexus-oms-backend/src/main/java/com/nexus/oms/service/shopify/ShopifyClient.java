@@ -3,6 +3,7 @@ package com.nexus.oms.service.shopify;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.exception.BadRequestException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -81,6 +82,7 @@ public class ShopifyClient {
         }
     }
 
+    @CircuitBreaker(name = "shopify-api")
     private JsonNode doGet(RestClient client, String path, Map<String, String> params) {
         try {
             String uri = path;
@@ -101,6 +103,7 @@ public class ShopifyClient {
         }
     }
 
+    @CircuitBreaker(name = "shopify-api")
     private JsonNode doPost(RestClient client, String path, Map<String, Object> data) {
         try {
             String body = objectMapper.writeValueAsString(data);

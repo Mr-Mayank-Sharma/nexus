@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
@@ -19,6 +21,8 @@ public class RestProtocolAdapter {
     private static final Logger log = LoggerFactory.getLogger(RestProtocolAdapter.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @CircuitBreaker(name = "connector-rest", fallbackMethod = "fallbackGet")
+    @Retry(name = "connector-rest")
     public JsonNode get(String baseUrl, String path, Map<String, String> headers, Map<String, String> queryParams) {
         RestTemplate rt = buildRestTemplate(headers);
         String url = buildUrl(baseUrl, path, queryParams);
@@ -26,6 +30,13 @@ public class RestProtocolAdapter {
         return parseResponse(res, url);
     }
 
+    JsonNode fallbackGet(String baseUrl, String path, Map<String, String> headers, Map<String, String> queryParams, Exception ex) {
+        log.warn("Circuit breaker opened for GET {}: {}", baseUrl + path, ex.getMessage());
+        return objectMapper.createObjectNode().put("error", "Service temporarily unavailable").put("fallback", true);
+    }
+
+    @CircuitBreaker(name = "connector-rest", fallbackMethod = "fallbackPost")
+    @Retry(name = "connector-rest")
     public JsonNode post(String baseUrl, String path, Map<String, String> headers, Object body) {
         RestTemplate rt = buildRestTemplate(headers);
         String url = baseUrl + path;
@@ -34,6 +45,13 @@ public class RestProtocolAdapter {
         return parseResponse(res, url);
     }
 
+    JsonNode fallbackPost(String baseUrl, String path, Map<String, String> headers, Object body, Exception ex) {
+        log.warn("Circuit breaker opened for POST {}: {}", baseUrl + path, ex.getMessage());
+        return objectMapper.createObjectNode().put("error", "Service temporarily unavailable").put("fallback", true);
+    }
+
+    @CircuitBreaker(name = "connector-rest", fallbackMethod = "fallbackPut")
+    @Retry(name = "connector-rest")
     public JsonNode put(String baseUrl, String path, Map<String, String> headers, Object body) {
         RestTemplate rt = buildRestTemplate(headers);
         String url = baseUrl + path;
@@ -42,11 +60,23 @@ public class RestProtocolAdapter {
         return parseResponse(res, url);
     }
 
+    JsonNode fallbackPut(String baseUrl, String path, Map<String, String> headers, Object body, Exception ex) {
+        log.warn("Circuit breaker opened for PUT {}: {}", baseUrl + path, ex.getMessage());
+        return objectMapper.createObjectNode().put("error", "Service temporarily unavailable").put("fallback", true);
+    }
+
+    @CircuitBreaker(name = "connector-rest", fallbackMethod = "fallbackDelete")
+    @Retry(name = "connector-rest")
     public JsonNode delete(String baseUrl, String path, Map<String, String> headers) {
         RestTemplate rt = buildRestTemplate(headers);
         String url = baseUrl + path;
         ResponseEntity<String> res = rt.exchange(url, HttpMethod.DELETE, null, String.class);
         return parseResponse(res, url);
+    }
+
+    JsonNode fallbackDelete(String baseUrl, String path, Map<String, String> headers, Exception ex) {
+        log.warn("Circuit breaker opened for DELETE {}: {}", baseUrl + path, ex.getMessage());
+        return objectMapper.createObjectNode().put("error", "Service temporarily unavailable").put("fallback", true);
     }
 
     public List<JsonNode> paginatedGet(String baseUrl, String path, Map<String, String> headers,

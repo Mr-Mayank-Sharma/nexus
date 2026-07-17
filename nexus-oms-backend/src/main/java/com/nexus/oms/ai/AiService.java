@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.AllocationResponse;
 import com.nexus.oms.dto.DemandForecastResponse;
 import com.nexus.oms.dto.InventoryRecommendation;
-import com.nexus.oms.exception.AiServiceException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +33,7 @@ public class AiService {
         this.baseUrlIntel = baseUrlIntel;
     }
 
+    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
     public AllocationResponse callRoutingAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
@@ -52,6 +53,7 @@ public class AiService {
         }
     }
 
+    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
     public AllocationResponse callCarrierAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
@@ -66,6 +68,7 @@ public class AiService {
         }
     }
 
+    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
     public AllocationResponse callBoxAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
@@ -80,6 +83,7 @@ public class AiService {
         }
     }
 
+    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
     public AllocationResponse callPickPackAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
@@ -94,6 +98,7 @@ public class AiService {
         }
     }
 
+    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackDemand")
     public DemandForecastResponse callDemandAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
@@ -113,6 +118,7 @@ public class AiService {
         }
     }
 
+    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackInventory")
     public InventoryRecommendation callInventoryAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
@@ -131,6 +137,25 @@ public class AiService {
                     .confidence(0.0)
                     .build();
         }
+    }
+
+    AllocationResponse fallbackRouting(Map<String, Object> input, Exception ex) {
+        log.warn("AI circuit breaker opened for routing: {}", ex.getMessage());
+        return fallbackRouting();
+    }
+
+    DemandForecastResponse fallbackDemand(Map<String, Object> input, Exception ex) {
+        log.warn("AI circuit breaker opened for demand: {}", ex.getMessage());
+        return fallbackDemand();
+    }
+
+    InventoryRecommendation fallbackInventory(Map<String, Object> input, Exception ex) {
+        log.warn("AI circuit breaker opened for inventory: {}", ex.getMessage());
+        return InventoryRecommendation.builder()
+                .needsReorder(false)
+                .recommendedQty(0)
+                .confidence(0.0)
+                .build();
     }
 
     private AllocationResponse fallbackRouting() {
