@@ -18,9 +18,9 @@ public class EventBus {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final boolean kafkaEnabled;
 
-    public EventBus(KafkaTemplate<String, String> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-        this.kafkaEnabled = kafkaTemplate != null;
+    public EventBus(java.util.Optional<KafkaTemplate<String, String>> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate.orElse(null);
+        this.kafkaEnabled = this.kafkaTemplate != null;
     }
 
     public void registerHandler(EventHandler handler) {
