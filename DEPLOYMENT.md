@@ -12,6 +12,7 @@
 | `NEXUS_REDIS_PORT` | `6379` | Yes |
 | `NEXUS_KAFKA_BOOTSTRAP` | *(leave empty)* | Optional |
 | `NEXUS_KAFKA_ENABLED` | `false` | Yes |
+| `NEXUS_KAFKA_AUTOCONFIG_EXCLUDE` | `org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration` | Yes |
 | `spring.kafka.listener.auto-start` | `false` | Yes |
 | `app.frontend-url` | `https://nexus-silk-five-61.vercel.app` | Yes |
 | `app.cors.allowed-origins` | `https://nexus-silk-five-61.vercel.app` | Yes |
