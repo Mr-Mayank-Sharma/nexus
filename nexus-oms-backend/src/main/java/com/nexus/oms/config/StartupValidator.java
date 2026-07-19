@@ -39,8 +39,9 @@ public class StartupValidator {
         boolean failed = false;
 
         String dbPassword = System.getenv("DB_PASSWORD");
-        if (dbPassword == null || dbPassword.isBlank()) {
-            log.error("FATAL: DB_PASSWORD environment variable is not set.");
+        String nexusDbPassword = System.getenv("NEXUS_DB_PASSWORD");
+        if ((dbPassword == null || dbPassword.isBlank()) && (nexusDbPassword == null || nexusDbPassword.isBlank())) {
+            log.error("FATAL: Neither DB_PASSWORD nor NEXUS_DB_PASSWORD environment variable is set.");
             failed = true;
         }
 
