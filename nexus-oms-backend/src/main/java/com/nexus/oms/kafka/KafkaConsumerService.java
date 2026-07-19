@@ -4,6 +4,7 @@ import com.nexus.oms.entity.NxAuditLog;
 import com.nexus.oms.repository.AuditLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
+@ConditionalOnProperty(name = "nexus.kafka.enabled", havingValue = "true", matchIfMissing = true)
 public class KafkaConsumerService {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumerService.class);
