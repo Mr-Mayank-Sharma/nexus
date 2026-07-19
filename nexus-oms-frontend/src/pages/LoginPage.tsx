@@ -17,13 +17,14 @@ import {
   ExternalLink,
   LogIn,
   AlertCircle,
+  Users,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import * as authApi from '../api/auth'
-import { TenantInfo } from '../types'
+import { TenantInfo, UserRole } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 
-type LoginStep = 'tenant' | 'credentials' | 'mfa' | 'forgot-password' | 'forgot-sent'
+type LoginStep = 'tenant' | 'credentials' | 'register' | 'mfa' | 'forgot-password' | 'forgot-sent'
 
 const SSO_PROVIDERS = [
   { id: 'google', name: 'Google', color: 'hover:bg-red-50 hover:border-red-200 hover:text-red-600' },
@@ -54,6 +55,11 @@ export default function LoginPage() {
 
   const [forgotEmail, setForgotEmail] = useState('')
 
+  const [registerName, setRegisterName] = useState('')
+  const [registerEmail, setRegisterEmail] = useState('')
+  const [registerPassword, setRegisterPassword] = useState('')
+  const [registerConfirm, setRegisterConfirm] = useState('')
+
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [forgotLoading, setForgotLoading] = useState(false)
@@ -71,7 +77,7 @@ export default function LoginPage() {
     if (ssoToken && ssoUser) {
       localStorage.setItem('nexus_token', ssoToken)
       localStorage.setItem('nexus_user', JSON.stringify({ username: ssoUser }))
-      window.location.href = '/'
+      window.location.href = '/api/v1/'
       return
     }
 
@@ -223,6 +229,49 @@ export default function LoginPage() {
   function resetToCredentials() {
     setStep('credentials')
     setError('')
+  }
+
+  async function handleRegister(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    if (!registerName || !registerEmail || !registerPassword) {
+      setError('Please fill in all fields')
+      return
+    }
+    if (registerPassword !== registerConfirm) {
+      setError('Passwords do not match')
+      return
+    }
+    if (registerPassword.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
+    }
+    setLoading(true)
+    try {
+      const res = await authApi.register({
+        username: registerName,
+        email: registerEmail,
+        password: registerPassword,
+        tenantId: selectedTenant?.id,
+      })
+      if (res.success && res.data?.accessToken) {
+        localStorage.setItem('nexus_token', res.data.accessToken)
+        const user = { id: '', username: registerEmail, email: registerEmail, fullName: registerName, role: res.data.role as UserRole, permissions: res.data.permissions ?? [], securityGroups: res.data.securityGroups ?? [] }
+        localStorage.setItem('nexus_user', JSON.stringify(user))
+        window.location.href = '/api/v1/'
+      } else {
+        setError(res.error || 'Registration failed')
+      }
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { data?: { message?: string } } }
+        setError(axiosErr.response?.data?.message || 'Registration failed')
+      } else {
+        setError('An unexpected error occurred')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -495,9 +544,131 @@ export default function LoginPage() {
                 ))}
               </div>
 
-              <p className="mt-6 text-xs text-gray-400 text-center">
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => { setStep('register'); setError('') }}
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Don't have an account? Sign up
+                </button>
+              </div>
+
+              <p className="mt-4 text-xs text-gray-400 text-center">
                 NexusShip OMS v5.0 &middot; Enterprise Edition
               </p>
+            </div>
+          )}
+
+          {step === 'register' && (
+            <div className="bg-white rounded-2xl shadow-2xl p-8">
+              {selectedTenant && (
+                <button
+                  onClick={() => setStep('tenant')}
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-4 transition-colors"
+                >
+                  <ArrowLeft className="w-3 h-3" />
+                  {selectedTenant.name}
+                </button>
+              )}
+
+              <div className="flex items-center gap-3 mb-6">
+                <Users className="w-6 h-6 text-primary-600" />
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Create account</h2>
+                  {selectedTenant && (
+                    <p className="text-sm text-gray-500">{selectedTenant.name}</p>
+                  )}
+                </div>
+              </div>
+
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+                  <input
+                    type="text"
+                    value={registerName}
+                    onChange={e => setRegisterName(e.target.value)}
+                    className="input"
+                    placeholder="John Doe"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    value={registerEmail}
+                    onChange={e => setRegisterEmail(e.target.value)}
+                    className="input"
+                    placeholder="you@company.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={registerPassword}
+                      onChange={e => setRegisterPassword(e.target.value)}
+                      className="input pr-10"
+                      placeholder="Min. 6 characters"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={registerConfirm}
+                      onChange={e => setRegisterConfirm(e.target.value)}
+                      className="input pr-10"
+                      placeholder="Repeat password"
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary w-full py-2.5"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Creating account...
+                    </span>
+                  ) : (
+                    <><Users className="w-4 h-4" /> Create account</>
+                  )}
+                </button>
+              </form>
+
+              <button
+                onClick={() => { setStep('credentials'); setError(''); setRegisterName(''); setRegisterEmail(''); setRegisterPassword(''); setRegisterConfirm('') }}
+                className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-4 transition-colors"
+              >
+                <ArrowLeft className="w-3 h-3 inline mr-1" />
+                Already have an account? Sign in
+              </button>
             </div>
           )}
 

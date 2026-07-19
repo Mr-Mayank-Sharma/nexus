@@ -1,6 +1,5 @@
 package com.nexus.oms.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.AllocationRequest;
@@ -37,6 +36,7 @@ public class OrderRoutingService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderRoutingService.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private final RuleConditionEvaluator conditionEvaluator = new RuleConditionEvaluator();
 
     private final OrderAllocationRepository allocationRepository;
     private final FulfillmentExceptionRepository exceptionRepository;
@@ -173,9 +173,9 @@ public class OrderRoutingService {
         }
 
         for (NxRoutingRule rule : rules) {
-            if (!evaluateRuleConditions(rule, order)) continue;
+            if (!conditionEvaluator.evaluate(rule, order)) continue;
 
-            JsonNode actions = parseJson(rule.getActions());
+            JsonNode actions = conditionEvaluator.parseJson(rule.getActions());
             if (actions == null || !actions.has("nodeIds")) continue;
 
             List<UUID> targetNodeIds = new ArrayList<>();
@@ -202,7 +202,7 @@ public class OrderRoutingService {
 
         if (warehouses.isEmpty()) return allocations;
 
-        String shipRegion = extractRegion(order.getShipToAddress());
+        String shipRegion = conditionEvaluator.extractRegion(order.getShipToAddress());
 
         List<Warehouse> scored = warehouses.stream()
                 .map(wh -> {
@@ -340,61 +340,6 @@ public class OrderRoutingService {
 
     // ---- Private helpers ----
 
-    private boolean evaluateRuleConditions(NxRoutingRule rule, NxOrder order) {
-        JsonNode conditions = parseJson(rule.getConditions());
-        if (conditions == null) return true;
-
-        if (conditions.has("channels")) {
-            Set<String> channels = new HashSet<>();
-            conditions.get("channels").forEach(c -> channels.add(c.asText().toUpperCase()));
-            if (!channels.contains(order.getChannel() != null ? order.getChannel().toUpperCase() : "")) {
-                return false;
-            }
-        }
-
-        if (conditions.has("fulfillmentTypes")) {
-            Set<String> types = new HashSet<>();
-            conditions.get("fulfillmentTypes").forEach(t -> types.add(t.asText().toUpperCase()));
-            if (!types.contains(order.getFulfillmentType() != null ? order.getFulfillmentType().toUpperCase() : "")) {
-                return false;
-            }
-        }
-
-        if (conditions.has("maxTotal")) {
-            BigDecimal maxTotal = new BigDecimal(conditions.get("maxTotal").asText());
-            if (order.getTotal() != null && order.getTotal().compareTo(maxTotal) > 0) {
-                return false;
-            }
-        }
-
-        if (conditions.has("minTotal")) {
-            BigDecimal minTotal = new BigDecimal(conditions.get("minTotal").asText());
-            if (order.getTotal() != null && order.getTotal().compareTo(minTotal) < 0) {
-                return false;
-            }
-        }
-
-        if (conditions.has("regions")) {
-            String shipRegion = extractRegion(order.getShipToAddress());
-            Set<String> regions = new HashSet<>();
-            conditions.get("regions").forEach(r -> regions.add(r.asText().toUpperCase()));
-            if (shipRegion != null && !regions.contains(shipRegion.toUpperCase())) {
-                return false;
-            }
-        }
-
-        if (conditions.has("priority")) {
-            Set<String> priorities = new HashSet<>();
-            conditions.get("priority").forEach(p -> priorities.add(p.asText().toUpperCase()));
-            String orderPriority = extractPriority(order.getMetadata());
-            if (orderPriority != null && !priorities.contains(orderPriority.toUpperCase())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
     private List<NxOrderAllocation> createDefaultAllocation(NxOrder order, UUID tenantId, List<Warehouse> warehouses) {
         if (warehouses.isEmpty()) {
             NxOrderAllocation failed = NxOrderAllocation.builder()
@@ -498,7 +443,7 @@ public class OrderRoutingService {
         int processingDays = 1;
         int transitDays = 3;
 
-        String shipRegion = extractRegion(order.getShipToAddress());
+        String shipRegion = conditionEvaluator.extractRegion(order.getShipToAddress());
         for (NxOrderAllocation alloc : allocations) {
             String nodeRegion = extractNodeRegion(alloc.getNodeName());
             if (shipRegion != null && shipRegion.equalsIgnoreCase(nodeRegion)) {
@@ -611,7 +556,7 @@ public class OrderRoutingService {
                 .ruleId(rule.getId())
                 .ruleName(rule.getName())
                 .costEstimated(estimateShippingCost(wh, order, qty))
-                .distanceKm(estimateDistance(wh, extractRegion(order.getShipToAddress())))
+                    .distanceKm(estimateDistance(wh, conditionEvaluator.extractRegion(order.getShipToAddress())))
                 .deliveryPromiseConfidence(calculateNodeConfidence(wh, order))
                 .build();
     }
@@ -669,27 +614,10 @@ public class OrderRoutingService {
         return 1;
     }
 
-    private String extractRegion(Address address) {
-        if (address == null) return null;
-        if (address.getState() != null) return address.getState();
-        if (address.getCountry() != null) return address.getCountry();
-        return null;
-    }
-
     private String extractNodeRegion(String nodeName) {
         if (nodeName == null) return null;
         String[] parts = nodeName.split(",");
         return parts.length > 1 ? parts[parts.length - 1].trim() : null;
-    }
-
-    private String extractPriority(String metadataJson) {
-        if (metadataJson == null) return null;
-        try {
-            JsonNode node = MAPPER.readTree(metadataJson);
-            return node.has("priority") ? node.get("priority").asText() : null;
-        } catch (Exception ignored) {
-            return null;
-        }
     }
 
     private UUID getCurrentUserId() {
@@ -700,12 +628,4 @@ public class OrderRoutingService {
         }
     }
 
-    private JsonNode parseJson(String json) {
-        if (json == null || json.isBlank()) return null;
-        try {
-            return MAPPER.readTree(json);
-        } catch (JsonProcessingException e) {
-            return null;
-        }
-    }
 }

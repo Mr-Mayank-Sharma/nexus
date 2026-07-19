@@ -43,6 +43,11 @@ public class TokenBlacklistService {
     }
 
     public boolean isBlacklisted(String jti) {
-        return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + jti));
+        try {
+            return Boolean.TRUE.equals(redisTemplate.hasKey(BLACKLIST_PREFIX + jti));
+        } catch (Exception e) {
+            log.warn("Redis unavailable for blacklist check, allowing jti={}: {}", jti, e.getMessage());
+            return false;
+        }
     }
 }

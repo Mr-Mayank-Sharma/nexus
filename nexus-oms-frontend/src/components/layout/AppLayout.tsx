@@ -5,7 +5,7 @@ import Topbar from './Topbar'
 import GlobalSearch from '../enterprise/GlobalSearch'
 import AIAssistantPanel from '../enterprise/AIAssistantPanel'
 import clsx from 'clsx'
-import useKeyboardShortcut from '../../hooks/useKeyboardShortcut'
+import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 
 export default function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)

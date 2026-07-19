@@ -10,12 +10,18 @@ export interface ChatRequest {
   messages: ChatMessage[]
 }
 
-export async function sendChatMessage(request: ChatRequest): Promise<string> {
+export interface ChatResponse {
+  success: boolean
+  content?: string
+  error?: string
+}
+
+export async function sendChatMessage(request: ChatRequest): Promise<ChatResponse> {
   try {
     const { data } = await client.post('/ai/chat', request)
-    return data.data.content
+    return { success: true, content: data.data.content }
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to send chat message'
-    return { success: false, error: msg } as any
+    return { success: false, error: msg }
   }
 }

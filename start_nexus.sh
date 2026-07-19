@@ -61,13 +61,13 @@ sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='nexus_oms'" 
 log "Starting AI Models API (Port 5000)..."
 source "$AI_ENV"
 cd "$PROJECT_ROOT/supply_chain_ai/api"
-python api_server.py &
+nohup python api_server.py > /tmp/nexus-ai.log 2>&1 &
 AI_PID=$!
 sleep 3
 
 log "Starting AI Intelligence API (Port 5001)..."
 cd "$PROJECT_ROOT/supply_chain_ai2/api"
-python api_demand_inventory.py &
+nohup python api_demand_inventory.py > /tmp/nexus-ai2.log 2>&1 &
 AI2_PID=$!
 sleep 3
 
@@ -92,7 +92,7 @@ done
 log "Starting Spring Boot Backend (Port 8080)..."
 cd "$PROJECT_ROOT/nexus-oms-backend"
 export JAVA_HOME JAVA_OPTS="-Xmx512m"
-mvn spring-boot:run -q &
+nohup mvn spring-boot:run -q > /tmp/nexus-backend.log 2>&1 &
 BACKEND_PID=$!
 
 log "Waiting for backend (up to 60s)..."
@@ -107,7 +107,7 @@ done
 # Step 5: Start React Frontend
 log "Starting React Frontend (Port 3000)..."
 cd "$PROJECT_ROOT/nexus-oms-frontend"
-npx vite --port 3000 --host &
+nohup npx vite --port 3000 --host > /tmp/nexus-frontend.log 2>&1 &
 FRONTEND_PID=$!
 sleep 3
 

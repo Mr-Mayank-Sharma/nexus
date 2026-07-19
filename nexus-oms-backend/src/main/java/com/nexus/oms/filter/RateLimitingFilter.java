@@ -4,6 +4,8 @@ import com.nexus.oms.security.TenantContext;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Order(1)
 public class RateLimitingFilter implements Filter {
+
+    private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
 
     private static final long WINDOW_MS = 1000;
 
@@ -37,25 +41,29 @@ public class RateLimitingFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
-        String key = resolveKey(req);
-        int maxRequests = resolveTier(req.getRequestURI(), req.getMethod());
+        try {
+            String key = resolveKey(req);
+            int maxRequests = resolveTier(req.getRequestURI(), req.getMethod());
 
-        String redisKey = "ratelimit:" + key;
-        Long count = redisTemplate.opsForValue().increment(redisKey);
-        if (count != null && count == 1) {
-            redisTemplate.expire(redisKey, WINDOW_MS, TimeUnit.MILLISECONDS);
-        }
+            String redisKey = "ratelimit:" + key;
+            Long count = redisTemplate.opsForValue().increment(redisKey);
+            if (count != null && count == 1) {
+                redisTemplate.expire(redisKey, WINDOW_MS, TimeUnit.MILLISECONDS);
+            }
 
-        res.setHeader("X-RateLimit-Limit", String.valueOf(maxRequests));
-        long remaining = Math.max(0, maxRequests - (count != null ? count : 0));
-        res.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
+            res.setHeader("X-RateLimit-Limit", String.valueOf(maxRequests));
+            long remaining = Math.max(0, maxRequests - (count != null ? count : 0));
+            res.setHeader("X-RateLimit-Remaining", String.valueOf(remaining));
 
-        if (count != null && count > maxRequests) {
-            res.setStatus(429);
-            res.setHeader("Retry-After", "1");
-            res.setContentType("application/json");
-            res.getWriter().write("{\"error\":\"Too many requests\",\"message\":\"Rate limit exceeded. Try again later.\"}");
-            return;
+            if (count != null && count > maxRequests) {
+                res.setStatus(429);
+                res.setHeader("Retry-After", "1");
+                res.setContentType("application/json");
+                res.getWriter().write("{\"error\":\"Too many requests\",\"message\":\"Rate limit exceeded. Try again later.\"}");
+                return;
+            }
+        } catch (Exception e) {
+            log.warn("Rate limiting unavailable (Redis down?), allowing request: {}", e.getMessage());
         }
 
         chain.doFilter(request, response);

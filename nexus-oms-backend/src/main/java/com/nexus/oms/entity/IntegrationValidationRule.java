@@ -38,7 +38,7 @@ public class IntegrationValidationRule {
 
     private String operator;
 
-    @Column(columnDefinition = "text")
+    @Column(name = "\"value\"", columnDefinition = "text")
     private String value;
 
     @Column(name = "error_message")

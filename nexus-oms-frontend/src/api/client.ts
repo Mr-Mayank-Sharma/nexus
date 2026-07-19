@@ -153,7 +153,7 @@ client.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('nexus_token')
       localStorage.removeItem('nexus_user')
-      window.location.href = '/login'
+      window.location.href = '/api/v1/'
     }
     return Promise.reject(error)
   },

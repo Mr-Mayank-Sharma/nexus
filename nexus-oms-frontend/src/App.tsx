@@ -62,7 +62,6 @@ import IntegrationHubPage from './pages/IntegrationHubPage'
 import ImportExportCenter from './pages/ImportExportCenter'
 import CustomersPage from './pages/CustomersPage'
 import ProductsPage from './pages/ProductsPage'
-import StoresPage from './pages/StoresPage'
 import AuditPage from './pages/AuditPage'
 import NotificationsCenter from './pages/NotificationsCenter'
 import WarehousePage from './pages/WarehousePage'
@@ -111,7 +110,7 @@ export default function App() {
           <Route path="shipping" element={<ShippingPage />} />
           <Route path="customers" element={<CustomersPage />} />
           <Route path="products" element={<ProductsPage />} />
-          <Route path="stores" element={<StoresPage />} />
+          <Route path="stores" element={<IntegrationStoresPage />} />
           <Route path="audit" element={<AuditPage />} />
           <Route path="fulfillment" element={<FulfillmentPage />} />
           <Route path="returns" element={<ReturnsPage />} />

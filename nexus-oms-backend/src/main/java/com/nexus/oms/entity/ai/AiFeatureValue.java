@@ -16,7 +16,7 @@ public class AiFeatureValue {
     @NotNull @Column(nullable = false) private UUID featureId;
     @NotBlank @Column(nullable = false) private String entityId;
     private String entityType;
-    @Column(columnDefinition = "TEXT") private String value;
+    @Column(name = "`value`", columnDefinition = "TEXT") private String value;
     private java.math.BigDecimal numericValue;
     private Boolean boolValue;
     @Column(columnDefinition = "JSONB") private String jsonValue;

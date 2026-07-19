@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('nexus_security_groups')
     localStorage.removeItem('nexus_tenant_id')
     localStorage.removeItem('nexus_tenant_name')
-    window.location.href = '/login'
+    window.location.href = '/api/v1/'
   }, [])
 
   const clearError = useCallback(() => setError(null), [])

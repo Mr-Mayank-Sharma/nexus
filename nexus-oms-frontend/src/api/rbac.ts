@@ -1,6 +1,6 @@
 import client from './client'
-import { ApiResponse, RolePermission, UserRole, Team } from '../types'
-export type { RolePermission, UserRole, Team }
+import { ApiResponse, RolePermission, UserRoleAssignment, Team } from '../types'
+export type { RolePermission, UserRoleAssignment, Team }
 
 export async function getPermissions(page: number, size: number): Promise<ApiResponse<{ content: RolePermission[]; totalElements: number; totalPages: number }>> {
   try {
@@ -38,7 +38,7 @@ export async function getUserRoles(page: number, size: number): Promise<ApiRespo
   }
 }
 
-export async function assignRole(roleData: Record<string, any>): Promise<ApiResponse<UserRole>> {
+export async function assignRole(roleData: Record<string, any>): Promise<ApiResponse<UserRoleAssignment>> {
   try {
     const { data } = await client.post('/rbac/user-roles', roleData)
     return data

@@ -7,7 +7,7 @@ interface Options {
   shift?: boolean
 }
 
-export default function useKeyboardShortcut(
+export function useKeyboardShortcut(
   key: string,
   handler: () => void,
   options: Options = {}
@@ -31,4 +31,3 @@ export default function useKeyboardShortcut(
   }, [key, handler, options])
 }
 
-export { useKeyboardShortcut }

@@ -61,6 +61,16 @@ export async function resetPassword(request: ResetPasswordRequest): Promise<ApiR
   }
 }
 
+export async function register(data: { username: string; email: string; password: string; tenantId?: string }): Promise<ApiResponse<AuthResponse>> {
+  try {
+    const { data: res } = await client.post('/auth/register', data)
+    return res
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Registration failed'
+    return { success: false, error: msg } as any
+  }
+}
+
 export async function getTenants(): Promise<ApiResponse<TenantInfo[]>> {
   try {
     const { data } = await client.get('/auth/tenants')

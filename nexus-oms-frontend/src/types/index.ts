@@ -1354,7 +1354,7 @@ export interface RolePermission {
   updatedAt: string
 }
 
-export interface UserRole {
+export interface UserRoleAssignment {
   id: string
   userId: string
   userName: string

@@ -48,8 +48,14 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .headers(headers -> headers
-                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'"))
-                .frameOptions(frame -> frame.deny())
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data: blob:; " +
+                    "font-src 'self' data:; " +
+                    "connect-src 'self'"))
+                .frameOptions(frame -> frame.sameOrigin())
                 .contentTypeOptions(contentType -> {})
                 .httpStrictTransportSecurity(hsts -> hsts
                     .includeSubDomains(true)
@@ -62,6 +68,18 @@ public class SecurityConfig {
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/webhooks/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/import/**").authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/assets/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/**/*.html")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/**/*.js")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/**/*.css")).permitAll()
+                .requestMatchers(
+                    new AntPathRequestMatcher("/**/*.png"),
+                    new AntPathRequestMatcher("/**/*.jpg"),
+                    new AntPathRequestMatcher("/**/*.svg"),
+                    new AntPathRequestMatcher("/**/*.ico"),
+                    new AntPathRequestMatcher("/**/*.woff2")
+                ).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/")).permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
