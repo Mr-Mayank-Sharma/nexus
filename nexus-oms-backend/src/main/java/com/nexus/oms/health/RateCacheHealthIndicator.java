@@ -25,9 +25,9 @@ public class RateCacheHealthIndicator implements HealthIndicator {
             if ("PONG".equalsIgnoreCase(pong)) {
                 return Health.up().build();
             }
-            return Health.down().withDetail("ping", pong).build();
+            return Health.unknown().withDetail("ping", pong).build();
         } catch (Exception e) {
-            return Health.down(e).build();
+            return Health.unknown().withDetail("reason", "Redis unavailable - rate cache degraded").build();
         }
     }
 }
