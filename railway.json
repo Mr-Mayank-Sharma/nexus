@@ -1,9 +1,0 @@
-{
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "healthcheckPath": "/api/v1/actuator/health",
-    "restartPolicyType": "ON_FAILURE"
-  }
-}
