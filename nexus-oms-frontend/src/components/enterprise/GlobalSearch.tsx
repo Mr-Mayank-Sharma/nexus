@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, Command, FileText, Package, Users, Building2, ShoppingCart, Receipt, BarChart3, Settings, ArrowRight, X, Bell, GitBranch, Upload } from 'lucide-react'
+import { Search, Command, FileText, Package, Users, Building2, ShoppingCart, Receipt, BarChart3, Settings, ArrowRight, X, Bell, GitBranch, Upload, Plus, PackagePlus, Truck, RotateCcw, CreditCard, Eye, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 
@@ -10,12 +10,13 @@ interface SearchItem {
   path: string
   icon: React.ReactNode
   category: string
+  shortcut?: string
 }
 
 const searchItems: SearchItem[] = [
   { id: 'dashboard', label: 'Dashboard', path: '/', icon: <BarChart3 className="w-4 h-4" />, category: 'Navigation' },
   { id: 'orders', label: 'Orders', description: 'View all orders', path: '/orders', icon: <Package className="w-4 h-4" />, category: 'Orders' },
-  { id: 'order-new', label: 'Create Order', description: 'Create a new sales order', path: '/orders/new', icon: <Package className="w-4 h-4" />, category: 'Orders' },
+  { id: 'order-new', label: 'Create Order', description: 'Create a new sales order', path: '/orders/new', icon: <Package className="w-4 h-4" />, category: 'Orders', shortcut: '⌘N' },
   { id: 'customers', label: 'Customers', description: 'Manage customers', path: '/customers', icon: <Users className="w-4 h-4" />, category: 'Customers' },
   { id: 'inventory', label: 'Inventory', description: 'View inventory levels', path: '/inventory', icon: <Building2 className="w-4 h-4" />, category: 'Inventory' },
   { id: 'warehouse', label: 'Warehouse Management', path: '/warehouse', icon: <Building2 className="w-4 h-4" />, category: 'Warehouse' },
@@ -31,6 +32,15 @@ const searchItems: SearchItem[] = [
   { id: 'import-export', label: 'Import/Export Center', path: '/import-export', icon: <Upload className="w-4 h-4" />, category: 'Integrations' },
 ]
 
+const quickActions: SearchItem[] = [
+  { id: 'quick-new-order', label: 'Create New Order', description: 'Start a new sales order', path: '/orders/new', icon: <Plus className="w-4 h-4" />, category: 'Quick Actions', shortcut: '⌘N' },
+  { id: 'quick-add-product', label: 'Add Product', description: 'Add a new product to catalog', path: '/products', icon: <PackagePlus className="w-4 h-4" />, category: 'Quick Actions' },
+  { id: 'quick-receiving', label: 'Receive Inventory', description: 'Start inventory receiving', path: '/inventory/receiving', icon: <Truck className="w-4 h-4" />, category: 'Quick Actions' },
+  { id: 'quick-cycle-count', label: 'Start Cycle Count', description: 'Begin cycle count process', path: '/inventory/cycle-counts', icon: <RotateCcw className="w-4 h-4" />, category: 'Quick Actions' },
+  { id: 'quick-invoice', label: 'Create Invoice', description: 'Generate a new invoice', path: '/invoices', icon: <CreditCard className="w-4 h-4" />, category: 'Quick Actions' },
+  { id: 'quick-reports', label: 'View Reports', description: 'Access analytics dashboard', path: '/analytics', icon: <BarChart3 className="w-4 h-4" />, category: 'Quick Actions' },
+]
+
 interface Props {
   open: boolean
   onClose: () => void
@@ -42,13 +52,15 @@ export default function GlobalSearch({ open, onClose }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
 
+  const allItems = [...quickActions, ...searchItems]
+  
   const filtered = query.trim()
-    ? searchItems.filter(item =>
+    ? allItems.filter(item =>
         item.label.toLowerCase().includes(query.toLowerCase()) ||
         item.description?.toLowerCase().includes(query.toLowerCase()) ||
         item.category.toLowerCase().includes(query.toLowerCase())
       )
-    : searchItems
+    : quickActions
 
   useEffect(() => {
     if (open) {
@@ -106,7 +118,7 @@ export default function GlobalSearch({ open, onClose }: Props) {
             <Search className="w-5 h-5 text-[var(--text-tertiary)] shrink-0" />
             <input ref={inputRef}
               className="flex-1 bg-transparent border-none outline-none text-base text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
-              placeholder="Search pages, orders, customers..."
+              placeholder="Search pages, orders, customers, or type a command..."
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -117,9 +129,16 @@ export default function GlobalSearch({ open, onClose }: Props) {
           </div>
 
           <div className="max-h-[400px] overflow-y-auto p-2">
+            {!query.trim() && (
+              <div className="px-2 py-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
+                Quick Actions
+              </div>
+            )}
             {Object.entries(grouped).map(([category, items]) => (
               <div key={category}>
-                <p className="px-2 py-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">{category}</p>
+                {query.trim() && (
+                  <p className="px-2 py-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">{category}</p>
+                )}
                 {items.map(item => {
                   const idx = globalIdx++
                   const isSelected = idx === selectedIndex
@@ -138,6 +157,11 @@ export default function GlobalSearch({ open, onClose }: Props) {
                         <p className="font-medium">{item.label}</p>
                         {item.description && <p className="text-xs text-[var(--text-tertiary)]">{item.description}</p>}
                       </div>
+                      {item.shortcut && (
+                        <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[var(--bg-card)] border border-[var(--border-color)] rounded">
+                          {item.shortcut}
+                        </kbd>
+                      )}
                       <ArrowRight className={clsx('w-4 h-4', isSelected ? 'opacity-100' : 'opacity-0')} />
                     </button>
                   )

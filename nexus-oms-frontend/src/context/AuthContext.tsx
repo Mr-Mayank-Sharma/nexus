@@ -86,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const storeAuth = useCallback((authData: Record<string, unknown>) => {
     const accessToken = authData.accessToken as string
+    const refreshToken = authData.refreshToken as string
     const username = authData.username as string
     const role = authData.role as string
     const tenantId = authData.tenantId as string
@@ -111,6 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(user)
     setToken(accessToken)
     localStorage.setItem('nexus_token', accessToken)
+    if (refreshToken) {
+      localStorage.setItem('nexus_refresh_token', refreshToken)
+    }
     localStorage.setItem('nexus_user', JSON.stringify(user))
     localStorage.setItem('nexus_permissions', JSON.stringify(permissions))
     localStorage.setItem('nexus_security_groups', JSON.stringify(securityGroups))
@@ -130,7 +134,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('nexus_security_groups')
     localStorage.removeItem('nexus_tenant_id')
     localStorage.removeItem('nexus_tenant_name')
-    window.location.href = '/api/v1/'
+    localStorage.removeItem('nexus_refresh_token')
+    window.location.href = '/#/login'
   }, [])
 
   const clearError = useCallback(() => setError(null), [])

@@ -6,14 +6,57 @@ import GlobalSearch from '../enterprise/GlobalSearch'
 import AIAssistantPanel from '../enterprise/AIAssistantPanel'
 import clsx from 'clsx'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
+import { useWebSocket } from '../../hooks/useWebSocket'
+import { useToast } from '../../hooks/useToast'
 
 export default function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
+  const { toast } = useToast()
 
   useKeyboardShortcut('k', () => setSearchOpen(true), { meta: true, ctrl: true })
+
+  const handleOrderUpdate = (message: { orderId: string; status: string; message: string }) => {
+    toast({
+      title: 'Order Updated',
+      description: `Order ${message.orderId}: ${message.status}`,
+      variant: 'info',
+    })
+  }
+
+  const handleInventoryAlert = (message: { productId: string; alertType: string; message: string }) => {
+    toast({
+      title: 'Inventory Alert',
+      description: message.message,
+      variant: message.alertType === 'LOW_STOCK' ? 'warning' : 'error',
+    })
+  }
+
+  const handleShipmentUpdate = (message: { shipmentId: string; status: string }) => {
+    toast({
+      title: 'Shipment Update',
+      description: `Shipment ${message.shipmentId}: ${message.status}`,
+      variant: 'info',
+    })
+  }
+
+  const handleSystemAlert = (message: { severity: string; title: string; message: string }) => {
+    toast({
+      title: message.title,
+      description: message.message,
+      variant: message.severity === 'CRITICAL' ? 'error' : message.severity === 'WARNING' ? 'warning' : 'info',
+    })
+  }
+
+  useWebSocket({
+    onOrderUpdate: handleOrderUpdate,
+    onInventoryAlert: handleInventoryAlert,
+    onShipmentUpdate: handleShipmentUpdate,
+    onSystemAlert: handleSystemAlert,
+    autoConnect: true,
+  })
 
   useEffect(() => {
     window.scrollTo(0, 0)

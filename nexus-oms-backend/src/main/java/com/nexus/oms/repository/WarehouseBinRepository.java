@@ -20,6 +20,11 @@ public interface WarehouseBinRepository extends JpaRepository<WarehouseBin, UUID
 
     List<WarehouseBin> findByWarehouseIdAndBinType(UUID warehouseId, String binType);
 
+    List<WarehouseBin> findByWarehouseIdAndBinClass(UUID warehouseId, String binClass);
+
+    @Query("SELECT w FROM WarehouseBin w WHERE w.warehouseId = :warehouseId AND w.binClass = :binClass AND w.isEmpty = true AND w.isActive = true")
+    List<WarehouseBin> findAvailableByWarehouseIdAndBinClass(@Param("warehouseId") UUID warehouseId, @Param("binClass") String binClass);
+
     Page<WarehouseBin> findByTenantId(UUID tenantId, Pageable pageable);
 
     @Query("SELECT COUNT(w) FROM WarehouseBin w WHERE w.warehouseId = :warehouseId AND w.isEmpty = :isEmpty")

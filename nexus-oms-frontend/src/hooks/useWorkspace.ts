@@ -76,6 +76,9 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     { id: 'inventory-enhanced', label: 'Multi-Node Inventory', path: '/inventory/enhanced', icon: 'Warehouse' },
     { id: 'wave-planning', label: 'Wave Planning', path: '/wave-planning', icon: 'Layers' },
     { id: 'labor-management', label: 'Labor Management', path: '/labor-management', icon: 'Users' },
+    { id: 'slotting-optimization', label: 'Slotting Optimization', path: '/slotting-optimization', icon: 'Target' },
+    { id: 'yard-dock', label: 'Yard & Dock', path: '/yard-dock', icon: 'Truck' },
+    { id: 'automation-systems', label: 'Automation Systems', path: '/automation-systems', icon: 'Bot' },
     { id: 'label-printing', label: 'Label Printing', path: '/label-printing', icon: 'Printer' },
     { id: 'manifest', label: 'Manifests', path: '/manifest', icon: 'ClipboardList' },
     { id: 'report-builder', label: 'Report Builder', path: '/report-builder', icon: 'BarChart3' },
@@ -118,8 +121,8 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
   const roleModules: Record<string, string[]> = {
     ADMIN: [...all.map(m => m.id), ...all.flatMap(m => m.children?.map(c => c.id) || [])],
     CEO: ['dashboard', 'analytics', 'ai', 'ai-briefing', 'ai-routing', 'ai-packing', 'ai-loading', 'ai-audit', 'ai-forecasting', 'notifications', 'audit', 'documents', 'settings'],
-    OPS_MANAGER: ['dashboard', 'orders', 'customers', 'products', 'inventory', 'fulfillment', 'returns', 'picking', 'packing', 'shipping', 'warehouse', 'routing', 'task-queues', 'ai-briefing', 'ai-routing', 'ai-audit', 'ai-forecasting', 'notifications', 'analytics'],
-    WAREHOUSE_MANAGER: ['dashboard', 'warehouse-dashboard', 'warehouse', 'inventory', 'fulfillment', 'picking', 'packing', 'shipping', 'receiving', 'cycle-counts', 'task-queues', 'analytics', 'notifications'],
+    OPS_MANAGER: ['dashboard', 'orders', 'customers', 'products', 'inventory', 'fulfillment', 'returns', 'picking', 'packing', 'shipping', 'warehouse', 'routing', 'task-queues', 'ai-briefing', 'ai-routing', 'ai-audit', 'ai-forecasting', 'notifications', 'analytics', 'slotting-optimization', 'yard-dock', 'automation-systems'],
+    WAREHOUSE_MANAGER: ['dashboard', 'warehouse-dashboard', 'warehouse', 'inventory', 'fulfillment', 'picking', 'packing', 'shipping', 'receiving', 'cycle-counts', 'task-queues', 'analytics', 'notifications', 'wave-planning', 'labor-management', 'slotting-optimization', 'yard-dock', 'automation-systems'],
     PICKER: ['picking', 'inventory'],
     PACKER: ['packer', 'packing', 'inventory'],
     LOADER: ['loader', 'shipping'],
@@ -128,7 +131,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     CUSTOMER_SUPPORT: ['dashboard', 'orders', 'customers', 'returns', 'products', 'notifications'],
     PROCUREMENT_MANAGER: ['dashboard', 'procurement', 'invoices', 'notifications', 'analytics'],
     FINANCE: ['dashboard', 'invoices', 'payments', 'returns', 'customers', 'analytics', 'notifications'],
-    LOGISTICS_MANAGER: ['dashboard', 'shipping', 'carriers', 'routing', 'fulfillment', 'orders', 'notifications', 'analytics', 'warehouse'],
+    LOGISTICS_MANAGER: ['dashboard', 'shipping', 'carriers', 'routing', 'fulfillment', 'orders', 'notifications', 'analytics', 'warehouse', 'yard-dock'],
     VIEWER: ['dashboard', 'analytics', 'orders', 'inventory'],
   }
 

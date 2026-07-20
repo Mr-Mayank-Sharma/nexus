@@ -1,4 +1,4 @@
-import axios from 'axios'
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 const API_BASE_URL = '/api/v1'
 
@@ -8,6 +8,23 @@ const client = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+let isRefreshing = false
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void
+  reject: (reason?: unknown) => void
+}> = []
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
 
 client.interceptors.request.use(
   (config) => {
@@ -146,15 +163,61 @@ client.interceptors.response.use(
     }
     return response
   },
-  (error) => {
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    
     if (error.response?.data && typeof error.response.data === 'object') {
       error.response.data = applyFieldMapping(error.response.data)
     }
-    if (error.response?.status === 401) {
-      localStorage.removeItem('nexus_token')
-      localStorage.removeItem('nexus_user')
-      window.location.href = '/api/v1/'
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      const refreshToken = localStorage.getItem('nexus_refresh_token')
+      
+      if (!refreshToken) {
+        localStorage.removeItem('nexus_token')
+        localStorage.removeItem('nexus_user')
+        localStorage.removeItem('nexus_refresh_token')
+        window.location.href = '/#/login'
+        return Promise.reject(error)
+      }
+      
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then(token => {
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`
+          }
+          return client(originalRequest)
+        }).catch(err => Promise.reject(err))
+      }
+      
+      originalRequest._retry = true
+      isRefreshing = true
+      
+      try {
+        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken })
+        const newToken = data.data?.accessToken || data.accessToken
+        if (newToken) {
+          localStorage.setItem('nexus_token', newToken)
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${newToken}`
+          }
+          processQueue(null, newToken)
+          return client(originalRequest)
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null)
+        localStorage.removeItem('nexus_token')
+        localStorage.removeItem('nexus_user')
+        localStorage.removeItem('nexus_refresh_token')
+        window.location.href = '/#/login'
+        return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
+      }
     }
+    
     return Promise.reject(error)
   },
 )

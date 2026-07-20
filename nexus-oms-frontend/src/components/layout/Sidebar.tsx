@@ -7,13 +7,84 @@ import {
   Bell, FileText, UserCog, Upload, Download, Activity, Cpu, Users, Shield,
   Globe, Route, TrendingDown, Mail, FlaskConical, ShoppingBag, Calendar,
   Gauge, AlertTriangle, Eye, CreditCard, Tags, Award, ClipboardList,
-  Layers, Printer, ChevronDown,
+  Layers, Printer, ChevronDown, Target, Bot,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import { ROLE_WORKSPACES } from '../../hooks/useWorkspace'
 import type { UserRole } from '../../types'
+
+const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> = {
+  'orders': { resource: 'orders', action: 'view' },
+  'order-search': { resource: 'orders', action: 'view' },
+  'create-order': { resource: 'orders', action: 'create' },
+  'customers': { resource: 'customers', action: 'view' },
+  'products': { resource: 'products', action: 'view' },
+  'inventory': { resource: 'inventory', action: 'view' },
+  'inv-overview': { resource: 'inventory', action: 'view' },
+  'receiving': { resource: 'inventory', action: 'edit' },
+  'cycle-counts': { resource: 'inventory', action: 'edit' },
+  'fulfillment': { resource: 'orders', action: 'view' },
+  'picking': { resource: 'orders', action: 'edit' },
+  'packing': { resource: 'orders', action: 'edit' },
+  'shipping': { resource: 'orders', action: 'edit' },
+  'returns': { resource: 'returns', action: 'view' },
+  'warehouse': { resource: 'warehouse', action: 'view' },
+  'warehouse-dashboard': { resource: 'warehouse', action: 'view' },
+  'packer': { resource: 'orders', action: 'edit' },
+  'loader': { resource: 'orders', action: 'edit' },
+  'store-dashboard': { resource: 'orders', action: 'view' },
+  'bopis': { resource: 'orders', action: 'view' },
+  'bopis-owner': { resource: 'orders', action: 'view' },
+  'pre-orders': { resource: 'orders', action: 'view' },
+  'atp-rules': { resource: 'inventory', action: 'edit' },
+  'task-queues': { resource: 'orders', action: 'view' },
+  'procurement': { resource: 'procurement', action: 'view' },
+  'invoices': { resource: 'invoices', action: 'view' },
+  'payments': { resource: 'payments', action: 'view' },
+  'analytics': { resource: 'analytics', action: 'view' },
+  'ai': { resource: 'ai', action: 'view' },
+  'ai-briefing': { resource: 'ai', action: 'view' },
+  'ai-routing': { resource: 'ai', action: 'view' },
+  'ai-packing': { resource: 'ai', action: 'view' },
+  'ai-loading': { resource: 'ai', action: 'view' },
+  'ai-audit': { resource: 'ai', action: 'view' },
+  'ai-forecasting': { resource: 'ai', action: 'view' },
+  'notifications': { resource: 'notifications', action: 'view' },
+  'workflows': { resource: 'workflows', action: 'view' },
+  'integration-hub': { resource: 'integrations', action: 'view' },
+  'bigcommerce': { resource: 'integrations', action: 'view' },
+  'amazon': { resource: 'integrations', action: 'view' },
+  'ebay': { resource: 'integrations', action: 'view' },
+  'walmart': { resource: 'integrations', action: 'view' },
+  'marketplace-hub': { resource: 'integrations', action: 'view' },
+  'documents': { resource: 'documents', action: 'view' },
+  'users': { resource: 'users', action: 'view' },
+  'settings': { resource: 'settings', action: 'view' },
+  'audit': { resource: 'audit', action: 'view' },
+  'wave-planning': { resource: 'warehouse', action: 'view' },
+  'labor-management': { resource: 'warehouse', action: 'view' },
+  'slotting-optimization': { resource: 'warehouse', action: 'view' },
+  'yard-dock': { resource: 'warehouse', action: 'view' },
+  'automation-systems': { resource: 'warehouse', action: 'view' },
+  'label-printing': { resource: 'orders', action: 'view' },
+  'manifest': { resource: 'orders', action: 'view' },
+  'report-builder': { resource: 'analytics', action: 'view' },
+  'inventory-enhanced': { resource: 'inventory', action: 'view' },
+  'carriers': { resource: 'shipping', action: 'view' },
+  'rate-shopping': { resource: 'shipping', action: 'view' },
+  'routing': { resource: 'routing', action: 'view' },
+  'order-routing': { resource: 'routing', action: 'view' },
+  'edi': { resource: 'integrations', action: 'view' },
+  'email-parser': { resource: 'integrations', action: 'view' },
+  'import-export': { resource: 'integrations', action: 'view' },
+  'b2b-portal': { resource: 'orders', action: 'view' },
+  'stores': { resource: 'stores', action: 'view' },
+  'experiments': { resource: 'ai', action: 'view' },
+  'ai-platform': { resource: 'ai', action: 'view' },
+  'returns-enhanced': { resource: 'returns', action: 'view' },
+}
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   LayoutDashboard: <LayoutDashboard className="w-5 h-5" />,
@@ -60,6 +131,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Plus: <Package className="w-5 h-5" />,
   Layers: <Layers className="w-5 h-5" />,
   Printer: <Printer className="w-5 h-5" />,
+  Target: <Target className="w-5 h-5" />,
+  Bot: <Bot className="w-5 h-5" />,
 }
 
 const STATIC_LINKS = [
@@ -127,20 +200,30 @@ export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
-  const { user } = useAuth()
+  const { user, hasPermission } = useAuth()
 
   const modules = getModulesForRole(user?.role || 'VIEWER')
 
-  const moduleLinks = modules.map(m => ({
-    label: m.label,
-    path: m.path,
-    icon: iconForModule(m.icon),
-    children: m.children?.filter(c => c.path !== m.path).map(c => ({
-      label: c.label,
-      path: c.path,
-      icon: iconForModule(c.icon),
-    })),
-  }))
+  const hasModulePermission = (moduleId: string): boolean => {
+    const perm = MODULE_PERMISSIONS[moduleId]
+    if (!perm) return true
+    return hasPermission(perm.resource, perm.action)
+  }
+
+  const moduleLinks = modules
+    .filter(m => hasModulePermission(m.id))
+    .map(m => ({
+      label: m.label,
+      path: m.path,
+      icon: iconForModule(m.icon),
+      children: m.children
+        ?.filter(c => c.path !== m.path && hasModulePermission(c.id))
+        .map(c => ({
+          label: c.label,
+          path: c.path,
+          icon: iconForModule(c.icon),
+        })),
+    }))
 
   const allLinks = [...STATIC_LINKS, ...moduleLinks]
 

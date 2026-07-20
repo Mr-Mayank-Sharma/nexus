@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface Options {
   ctrl?: boolean
@@ -12,9 +12,12 @@ export function useKeyboardShortcut(
   handler: () => void,
   options: Options = {}
 ) {
+  const handlerRef = useRef(handler)
+  handlerRef.current = handler
+
   useEffect(() => {
+    const { ctrl, meta, alt, shift } = options
     const listener = (e: KeyboardEvent) => {
-      const { ctrl, meta, alt, shift } = options
       if (e.key.toLowerCase() !== key.toLowerCase()) return
       if (ctrl && !e.ctrlKey) return
       if (meta && !e.metaKey) return
@@ -23,11 +26,11 @@ export function useKeyboardShortcut(
       if (!ctrl && !meta && (e.ctrlKey || e.metaKey)) return
 
       e.preventDefault()
-      handler()
+      handlerRef.current()
     }
 
     window.addEventListener('keydown', listener)
     return () => window.removeEventListener('keydown', listener)
-  }, [key, handler, options])
+  }, [key, options.ctrl, options.meta, options.alt, options.shift])
 }
 

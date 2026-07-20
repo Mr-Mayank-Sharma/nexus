@@ -1,79 +1,93 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import ErrorBoundary from './components/layout/ErrorBoundary'
 import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
-import LaunchPadPage from './pages/LaunchPadPage'
-import DashboardPage from './pages/DashboardPage'
-import OrdersPage from './pages/OrdersPage'
-import OrderDetailPage from './pages/OrderDetailPage'
-import InventoryPage from './pages/InventoryPage'
-import FulfillmentPage from './pages/FulfillmentPage'
-import PickingPage from './pages/PickingPage'
-import PackingPage from './pages/PackingPage'
-import ShippingPage from './pages/ShippingPage'
-import ReturnsPage from './pages/ReturnsPage'
-import B2BPortalPage from './pages/B2BPortalPage'
-import BOPISPage from './pages/BOPISPage'
-import AnalyticsPage from './pages/AnalyticsPage'
-import AiPage from './pages/AiPage'
-import AiPlatformPage from './pages/AiPlatformPage'
-import AiExperimentsPage from './pages/AiExperimentsPage'
-import AiBriefingPage from './pages/AiBriefingPage'
-import AiOrderRoutingPage from './pages/AiOrderRoutingPage'
-import AiPackingPage from './pages/AiPackingPage'
-import AiLoadingPage from './pages/AiLoadingPage'
-import AiAuditTrailPage from './pages/AiAuditTrailPage'
-import AiForecastingPage from './pages/AiForecastingPage'
-import AmazonIntegrationPage from './pages/AmazonIntegrationPage'
-import EbayIntegrationPage from './pages/EbayIntegrationPage'
-import WalmartIntegrationPage from './pages/WalmartIntegrationPage'
-import IntegrationMarketplacePage from './pages/IntegrationMarketplacePage'
-import InventoryEnhancedPage from './pages/InventoryEnhancedPage'
-import WavePlanningPage from './pages/WavePlanningPage'
-import LaborManagementPage from './pages/LaborManagementPage'
-import LabelPrintingPage from './pages/LabelPrintingPage'
-import ManifestPage from './pages/ManifestPage'
-import ReportBuilderPage from './pages/ReportBuilderPage'
-import ReturnsEnhancedPage from './pages/ReturnsEnhancedPage'
-import PaymentsPage from './pages/PaymentsPage'
-import CreateOrderPage from './pages/CreateOrderPage'
-import CarriersPage from './pages/CarriersPage'
-import CarrierRateShoppingPage from './pages/CarrierRateShoppingPage'
-import EdiAutomationPage from './pages/EdiAutomationPage'
-import SettingsPage from './pages/SettingsPage'
-import RoutingRulesPage from './pages/RoutingRulesPage'
-import OrderRoutingPage from './pages/OrderRoutingPage'
-import EmailOrderParsingPage from './pages/EmailOrderParsingPage'
-import PreOrdersPage from './pages/PreOrdersPage'
-import ATPRulesPage from './pages/ATPRulesPage'
-import TaskQueuesPage from './pages/TaskQueuesPage'
-import WarehouseDashboardPage from './pages/WarehouseDashboardPage'
-import PackerScreen from './pages/PackerScreen'
-import LoaderScreen from './pages/LoaderScreen'
-import StoreDashboardPage from './pages/StoreDashboardPage'
-import BopisOwnerPage from './pages/BopisOwnerPage'
-import InventoryReceivingPage from './pages/InventoryReceivingPage'
-import CycleCountPage from './pages/CycleCountPage'
-import BigCommercePage from './pages/BigCommercePage'
-import IntegrationStoresPage from './pages/IntegrationStoresPage'
-import IntegrationHubPage from './pages/IntegrationHubPage'
-import ImportExportCenter from './pages/ImportExportCenter'
-import CustomersPage from './pages/CustomersPage'
-import ProductsPage from './pages/ProductsPage'
-import AuditPage from './pages/AuditPage'
-import NotificationsCenter from './pages/NotificationsCenter'
-import WarehousePage from './pages/WarehousePage'
-import ProcurementPage from './pages/ProcurementPage'
-import InvoicingPage from './pages/InvoicingPage'
-import WorkflowsPage from './pages/WorkflowsPage'
-import DocumentsPage from './pages/DocumentsPage'
-import UsersPage from './pages/UsersPage'
+
+const LaunchPadPage = lazy(() => import('./pages/LaunchPadPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const OrdersPage = lazy(() => import('./pages/OrdersPage'))
+const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'))
+const InventoryPage = lazy(() => import('./pages/InventoryPage'))
+const FulfillmentPage = lazy(() => import('./pages/FulfillmentPage'))
+const PickingPage = lazy(() => import('./pages/PickingPage'))
+const PackingPage = lazy(() => import('./pages/PackingPage'))
+const ShippingPage = lazy(() => import('./pages/ShippingPage'))
+const ReturnsPage = lazy(() => import('./pages/ReturnsPage'))
+const B2BPortalPage = lazy(() => import('./pages/B2BPortalPage'))
+const BOPISPage = lazy(() => import('./pages/BOPISPage'))
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
+const AiPage = lazy(() => import('./pages/AiPage'))
+const AiPlatformPage = lazy(() => import('./pages/AiPlatformPage'))
+const AiExperimentsPage = lazy(() => import('./pages/AiExperimentsPage'))
+const AiBriefingPage = lazy(() => import('./pages/AiBriefingPage'))
+const AiOrderRoutingPage = lazy(() => import('./pages/AiOrderRoutingPage'))
+const AiPackingPage = lazy(() => import('./pages/AiPackingPage'))
+const AiLoadingPage = lazy(() => import('./pages/AiLoadingPage'))
+const AiAuditTrailPage = lazy(() => import('./pages/AiAuditTrailPage'))
+const AiForecastingPage = lazy(() => import('./pages/AiForecastingPage'))
+const AmazonIntegrationPage = lazy(() => import('./pages/AmazonIntegrationPage'))
+const EbayIntegrationPage = lazy(() => import('./pages/EbayIntegrationPage'))
+const WalmartIntegrationPage = lazy(() => import('./pages/WalmartIntegrationPage'))
+const IntegrationMarketplacePage = lazy(() => import('./pages/IntegrationMarketplacePage'))
+const InventoryEnhancedPage = lazy(() => import('./pages/InventoryEnhancedPage'))
+const WavePlanningPage = lazy(() => import('./pages/WavePlanningPage'))
+const LaborManagementPage = lazy(() => import('./pages/LaborManagementPage'))
+const LabelPrintingPage = lazy(() => import('./pages/LabelPrintingPage'))
+const ManifestPage = lazy(() => import('./pages/ManifestPage'))
+const ReportBuilderPage = lazy(() => import('./pages/ReportBuilderPage'))
+const ReturnsEnhancedPage = lazy(() => import('./pages/ReturnsEnhancedPage'))
+const PaymentsPage = lazy(() => import('./pages/PaymentsPage'))
+const SlottingOptimizationPage = lazy(() => import('./pages/SlottingOptimizationPage'))
+const YardDockPage = lazy(() => import('./pages/YardDockPage'))
+const AutomationSystemsPage = lazy(() => import('./pages/AutomationSystemsPage'))
+const CreateOrderPage = lazy(() => import('./pages/CreateOrderPage'))
+const CarriersPage = lazy(() => import('./pages/CarriersPage'))
+const CarrierRateShoppingPage = lazy(() => import('./pages/CarrierRateShoppingPage'))
+const EdiAutomationPage = lazy(() => import('./pages/EdiAutomationPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const RoutingRulesPage = lazy(() => import('./pages/RoutingRulesPage'))
+const OrderRoutingPage = lazy(() => import('./pages/OrderRoutingPage'))
+const EmailOrderParsingPage = lazy(() => import('./pages/EmailOrderParsingPage'))
+const PreOrdersPage = lazy(() => import('./pages/PreOrdersPage'))
+const ATPRulesPage = lazy(() => import('./pages/ATPRulesPage'))
+const TaskQueuesPage = lazy(() => import('./pages/TaskQueuesPage'))
+const WarehouseDashboardPage = lazy(() => import('./pages/WarehouseDashboardPage'))
+const PackerScreen = lazy(() => import('./pages/PackerScreen'))
+const LoaderScreen = lazy(() => import('./pages/LoaderScreen'))
+const StoreDashboardPage = lazy(() => import('./pages/StoreDashboardPage'))
+const BopisOwnerPage = lazy(() => import('./pages/BopisOwnerPage'))
+const InventoryReceivingPage = lazy(() => import('./pages/InventoryReceivingPage'))
+const CycleCountPage = lazy(() => import('./pages/CycleCountPage'))
+const BigCommercePage = lazy(() => import('./pages/BigCommercePage'))
+const IntegrationStoresPage = lazy(() => import('./pages/IntegrationStoresPage'))
+const IntegrationHubPage = lazy(() => import('./pages/IntegrationHubPage'))
+const ImportExportCenter = lazy(() => import('./pages/ImportExportCenter'))
+const CustomersPage = lazy(() => import('./pages/CustomersPage'))
+const ProductsPage = lazy(() => import('./pages/ProductsPage'))
+const AuditPage = lazy(() => import('./pages/AuditPage'))
+const NotificationsCenter = lazy(() => import('./pages/NotificationsCenter'))
+const WarehousePage = lazy(() => import('./pages/WarehousePage'))
+const ProcurementPage = lazy(() => import('./pages/ProcurementPage'))
+const InvoicingPage = lazy(() => import('./pages/InvoicingPage'))
+const WorkflowsPage = lazy(() => import('./pages/WorkflowsPage'))
+const DocumentsPage = lazy(() => import('./pages/DocumentsPage'))
+const UsersPage = lazy(() => import('./pages/UsersPage'))
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+    </div>
+  )
+}
 
 export default function App() {
   return (
     <ErrorBoundary>
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
@@ -141,6 +155,9 @@ export default function App() {
           <Route path="integrations/marketplace" element={<IntegrationMarketplacePage />} />
           <Route path="wave-planning" element={<WavePlanningPage />} />
           <Route path="labor-management" element={<LaborManagementPage />} />
+          <Route path="slotting-optimization" element={<SlottingOptimizationPage />} />
+          <Route path="yard-dock" element={<YardDockPage />} />
+          <Route path="automation-systems" element={<AutomationSystemsPage />} />
           <Route path="label-printing" element={<LabelPrintingPage />} />
           <Route path="manifest" element={<ManifestPage />} />
           <Route path="report-builder" element={<ReportBuilderPage />} />
@@ -150,6 +167,7 @@ export default function App() {
         </Route>
       </Route>
     </Routes>
+    </Suspense>
     </ErrorBoundary>
   )
 }
