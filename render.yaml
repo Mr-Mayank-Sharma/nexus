@@ -13,10 +13,8 @@ services:
         value: "false"
       - key: NEXUS_KAFKA_LISTENER_AUTO_START
         value: "false"
-      - key: NEXUS_KAFKA_AUTOCONFIG_EXCLUDE
-        value: ""
       - key: SPRING_AUTOCONFIGURE_EXCLUDE
-        value: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+        value: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration,org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
       - key: NEXUS_DB_URL
         sync: false
       - key: NEXUS_DB_USERNAME
@@ -27,6 +25,12 @@ services:
         sync: false
       - key: NEXUS_REDIS_PORT
         sync: false
+      - key: NEXUS_CACHE_ENABLED
+        value: "false"
+      - key: SPRING_CACHE_TYPE
+        value: none
+      - key: NEXUS_REDIS_HEALTH_ENABLED
+        value: "false"
       - key: NEXUS_JWT_SECRET
         sync: false
       - key: STORAGE_S3_ENABLED
