@@ -1,7 +1,7 @@
 FROM eclipse-temurin:17-jdk-alpine AS builder
 WORKDIR /app
-COPY pom.xml .
-COPY src src/
+COPY nexus-oms-backend/pom.xml .
+COPY nexus-oms-backend/src src/
 RUN apk add --no-cache maven && mvn package -Dmaven.test.skip=true -q
 
 FROM eclipse-temurin:17-jre-alpine
