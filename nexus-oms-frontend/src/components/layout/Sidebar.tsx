@@ -84,6 +84,8 @@ const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> 
   'experiments': { resource: 'ai', action: 'view' },
   'ai-platform': { resource: 'ai', action: 'view' },
   'returns-enhanced': { resource: 'returns', action: 'view' },
+  'promotions': { resource: 'orders', action: 'view' },
+  'endless-aisle': { resource: 'orders', action: 'view' },
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {

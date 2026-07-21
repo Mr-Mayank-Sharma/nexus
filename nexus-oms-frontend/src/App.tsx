@@ -84,6 +84,8 @@ const FulfillmentLimitsPage = lazy(() => import('./pages/FulfillmentLimitsPage')
 const BopisAppPage = lazy(() => import('./pages/BopisAppPage'))
 const ReplenishmentPage = lazy(() => import('./pages/ReplenishmentPage'))
 const FreightAuditPage = lazy(() => import('./pages/FreightAuditPage'))
+const PromotionsPage = lazy(() => import('./pages/PromotionsPage'))
+const EndlessAislePage = lazy(() => import('./pages/EndlessAislePage'))
 
 function PageLoader() {
   return (
@@ -181,6 +183,8 @@ export default function App() {
           <Route path="bopis-app" element={<BopisAppPage />} />
           <Route path="replenishment" element={<ReplenishmentPage />} />
           <Route path="freight-audit" element={<FreightAuditPage />} />
+          <Route path="promotions" element={<PromotionsPage />} />
+          <Route path="endless-aisle" element={<EndlessAislePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>
