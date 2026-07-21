@@ -22,6 +22,8 @@ import * as aiPlatformApi from '../api/aiPlatform'
 import * as pickingApi from '../api/picking'
 import * as ordersApi from '../api/orders'
 import * as packingApi from '../api/packing'
+import promotionsApi from '../api/promotions'
+import endlessAisleApi from '../api/endlessAisle'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 
@@ -73,6 +75,8 @@ export default function DashboardPage() {
   const [pieChartData, setPieChartData] = useState<PieChartData[]>([])
   const [facilities, setFacilities] = useState<FacilityData[]>([])
   const [taskQueue, setTaskQueue] = useState<any>(null)
+  const [promotionStats, setPromotionStats] = useState<{ activeCount: number; totalUses: number; totalDiscount: number; topPromos: any[] }>({ activeCount: 0, totalUses: 0, totalDiscount: 0, topPromos: [] })
+  const [endlessAisleStats, setEndlessAisleStats] = useState<{ pendingOrders: number; inTransit: number; delivered: number; cancelled: number; totalRevenue: number }>({ pendingOrders: 0, inTransit: 0, delivered: 0, cancelled: 0, totalRevenue: 0 })
 
   // Fetch funnel data
   const { data: picklists = [] } = useQuery({
@@ -173,6 +177,33 @@ export default function DashboardPage() {
       if (activityRes?.data && Array.isArray(activityRes.data)) setActivities(activityRes.data as TimelineEvent[])
     } catch { /* non-critical */ }
     finally { setLoading(false) }
+    // Promotions & Endless Aisle stats (non-critical)
+    try {
+      const [promosRes, eaRes] = await Promise.allSettled([
+        promotionsApi.getPromotions(),
+        endlessAisleApi.getEndlessAisleOrders(),
+      ])
+      if (promosRes.status === 'fulfilled') {
+        const list = Array.isArray(promosRes.value.data) ? promosRes.value.data : (promosRes.value.data?.content ?? [])
+        const active = list.filter((p: any) => p.active !== false)
+        setPromotionStats({
+          activeCount: active.length,
+          totalUses: active.reduce((s: number, p: any) => s + (p.currentUses ?? 0), 0),
+          totalDiscount: active.reduce((s: number, p: any) => s + ((p.currentUses ?? 0) * (p.discountValue ?? 0)), 0),
+          topPromos: active.slice(0, 5),
+        })
+      }
+      if (eaRes.status === 'fulfilled') {
+        const eaList = Array.isArray(eaRes.value.data) ? eaRes.value.data : (eaRes.value.data?.content ?? [])
+        setEndlessAisleStats({
+          pendingOrders: eaList.filter((o: any) => o.status === 'PENDING').length,
+          inTransit: eaList.filter((o: any) => o.status === 'IN_TRANSIT').length,
+          delivered: eaList.filter((o: any) => o.status === 'DELIVERED').length,
+          cancelled: eaList.filter((o: any) => o.status === 'CANCELLED').length,
+          totalRevenue: eaList.reduce((s: number, o: any) => s + (o.orderTotal ?? 0), 0),
+        })
+      }
+    } catch { /* non-critical */ }
     try {
       const [demandRes, inventoryRes, shippingRes] = await Promise.allSettled([
         aiPlatformApi.predict('DEMAND_FORECAST', { historicalAverage: 150 }),
@@ -579,6 +610,107 @@ export default function DashboardPage() {
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Promotions & Endless Aisle */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-[var(--text-primary)] flex items-center gap-2"><Percent className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Promotions Overview</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">Active campaigns & redemption</p>
+            </div>
+            <button onClick={() => navigate('/promotions')} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+              View All
+            </button>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-3 gap-4 mb-5">
+              <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                <p className="text-xs text-[var(--text-secondary)]">Active Promos</p>
+                <p className="text-xl font-bold text-[var(--text-primary)] mt-1">{promotionStats.activeCount}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                <p className="text-xs text-[var(--text-secondary)]">Total Redemptions</p>
+                <p className="text-xl font-bold text-[var(--nexus-success-600)] mt-1">{promotionStats.totalUses.toLocaleString()}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                <p className="text-xs text-[var(--text-secondary)]">Discount Given</p>
+                <p className="text-xl font-bold text-[var(--nexus-warning-600)] mt-1">${promotionStats.totalDiscount.toLocaleString()}</p>
+              </div>
+            </div>
+            {promotionStats.topPromos.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Top Promotions</p>
+                {promotionStats.topPromos.map((p: any) => (
+                  <div key={p.id} className="flex items-center justify-between p-2.5 rounded-lg bg-[var(--surface-muted)]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-[var(--nexus-primary-50)] flex items-center justify-center">
+                        <Percent className="w-3.5 h-3.5 text-[var(--nexus-primary-600)]" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{p.name}</p>
+                        <p className="text-[10px] text-[var(--text-tertiary)]">{p.promotionType} · {p.couponCode || 'No code'}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{p.discountValue}{p.promotionType === 'PERCENTAGE' ? '%' : ''}</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">{p.currentUses ?? 0} uses</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center py-8 text-[var(--text-tertiary)]">
+                <Percent className="w-8 h-8 mb-2" />
+                <p className="text-sm">No active promotions</p>
+                <p className="text-xs mt-1">Create a promotion to get started</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border-default)] flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-[var(--text-primary)] flex items-center gap-2"><Warehouse className="w-4 h-4 text-[var(--nexus-ai-500)]" /> Endless Aisle</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">Store-initiated out-of-stock orders</p>
+            </div>
+            <button onClick={() => navigate('/endless-aisle')} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+              View All
+            </button>
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-2 gap-4 mb-5">
+              <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                <p className="text-xs text-[var(--text-secondary)]">Pending</p>
+                <p className="text-xl font-bold text-[var(--nexus-warning-600)] mt-1">{endlessAisleStats.pendingOrders}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                <p className="text-xs text-[var(--text-secondary)]">In Transit</p>
+                <p className="text-xl font-bold text-[var(--nexus-primary-600)] mt-1">{endlessAisleStats.inTransit}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                <p className="text-xs text-[var(--text-secondary)]">Delivered</p>
+                <p className="text-xl font-bold text-[var(--nexus-success-600)] mt-1">{endlessAisleStats.delivered}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                <p className="text-xs text-[var(--text-secondary)]">Cancelled</p>
+                <p className="text-xl font-bold text-[var(--nexus-error-600)] mt-1">{endlessAisleStats.cancelled}</p>
+              </div>
+            </div>
+            <div className="p-4 rounded-lg bg-[var(--nexus-ai-50)] border border-[var(--nexus-ai-200)]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-[var(--nexus-ai-600)]" />
+                  <span className="text-sm font-medium text-[var(--nexus-ai-900)]">Pipeline Revenue</span>
+                </div>
+                <span className="text-lg font-bold text-[var(--nexus-ai-700)]">${endlessAisleStats.totalRevenue.toLocaleString()}</span>
+              </div>
+              <p className="text-xs text-[var(--nexus-ai-700)] mt-1">Total value of all endless aisle orders in the system</p>
             </div>
           </div>
         </div>
