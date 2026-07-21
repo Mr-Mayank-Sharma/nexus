@@ -60,16 +60,16 @@ const BOX_ICONS: Record<string, React.ReactNode> = {
 }
 
 const BOX_COLORS: Record<string, string> = {
-  large: 'text-purple-500 bg-purple-50 dark:bg-purple-900/20',
-  medium: 'text-blue-500 bg-blue-50 dark:bg-blue-900/20',
+  large: 'text-[var(--nexus-ai-500)] bg-[var(--nexus-ai-50)] dark:bg-[var(--nexus-ai-900)]/20',
+  medium: 'text-[var(--nexus-primary-500)] bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
   small: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20',
-  custom: 'text-amber-500 bg-amber-50 dark:bg-amber-900/20',
+  custom: 'text-[var(--nexus-warning-500)] bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20',
 }
 
 const INSIGHTS = [
   { icon: <TrendingUp className="w-4 h-4 text-emerald-500" />, title: 'Material Savings', text: 'Switching to custom foam inserts could save \$1.28 per package' },
-  { icon: <AlertTriangle className="w-4 h-4 text-amber-500" />, title: 'Weight Distribution', text: 'Box #2 exceeds 10 kg — consider splitting heavy items across 2 medium boxes' },
-  { icon: <Info className="w-4 h-4 text-blue-500" />, title: 'Optimization Tip', text: 'Consolidate small items into a single box to reduce void fill usage' },
+  { icon: <AlertTriangle className="w-4 h-4 text-[var(--nexus-warning-500)]" />, title: 'Weight Distribution', text: 'Box #2 exceeds 10 kg — consider splitting heavy items across 2 medium boxes' },
+  { icon: <Info className="w-4 h-4 text-[var(--nexus-primary-500)]" />, title: 'Optimization Tip', text: 'Consolidate small items into a single box to reduce void fill usage' },
   { icon: <Zap className="w-4 h-4 text-violet-500" />, title: 'Speed Improvement', text: 'Estimated pack time can be reduced by 1.5 min with pre-cut materials' },
   { icon: <Shield className="w-4 h-4 text-rose-500" />, title: 'Fragile Alert', text: 'All fragile items placed in correctly labeled boxes' },
 ]
@@ -166,11 +166,11 @@ export default function AiPackingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Package className="w-7 h-7 text-emerald-500" />
             AI Packing Intelligence
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Optimized packaging recommendations</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Optimized packaging recommendations</p>
         </div>
         {plan && (
           <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-full">
@@ -184,7 +184,7 @@ export default function AiPackingPage() {
         {/* Left Panel */}
         <div className="xl:col-span-1 space-y-4">
           <div className="enterprise-card p-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
               <Search className="w-4 h-4 text-emerald-500" /> Order Scan / Select
             </h3>
             <Autocomplete
@@ -193,7 +193,7 @@ export default function AiPackingPage() {
               onSelect={(o: any) => { setSearch(o.id); setOrderSuggestions([]) }}
               placeholder="Search order number..."
               showSearchIcon={false}
-              inputClassName="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              inputClassName="w-full px-3 py-2 text-sm border border-[var(--border-default)] rounded-lg bg-[var(--surface-base)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               clearable={false}
             />
             {orderSuggestions.length > 0 && (
@@ -206,11 +206,11 @@ export default function AiPackingPage() {
                       'w-full text-left p-3 rounded-lg transition-colors text-sm',
                       selectedOrder?.id === order.id
                         ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
-                        : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
+                        : 'bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] border border-transparent'
                     )}
                   >
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{order.id}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{order.items.length} items</p>
+                    <p className="font-medium text-[var(--text-primary)]">{order.id}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{order.items.length} items</p>
                   </button>
                 ))}
               </div>
@@ -225,11 +225,11 @@ export default function AiPackingPage() {
                       'w-full text-left p-3 rounded-lg transition-colors text-sm',
                       selectedOrder?.id === order.id
                         ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800'
-                        : 'bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent'
+                        : 'bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] border border-transparent'
                     )}
                   >
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{order.id}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{order.items.length} items</p>
+                    <p className="font-medium text-[var(--text-primary)]">{order.id}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{order.items.length} items</p>
                   </button>
                 ))}
               </div>
@@ -239,19 +239,19 @@ export default function AiPackingPage() {
           {selectedOrder && (
             <div className="enterprise-card p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
                   <Layers className="w-4 h-4 text-emerald-500" /> Items
                 </h3>
-                <span className="text-xs text-gray-400">{selectedOrder.items.length} total</span>
+                <span className="text-xs text-[var(--text-tertiary)]">{selectedOrder.items.length} total</span>
               </div>
               <div className="space-y-2">
                 {selectedOrder.items.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded bg-gray-50 dark:bg-gray-800/50">
+                  <div key={i} className="flex items-center justify-between p-2 rounded bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.sku}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.name}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{item.sku}</p>
                     </div>
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 ml-2">x{item.qty}</span>
+                    <span className="text-xs font-semibold text-[var(--text-secondary)] ml-2">x{item.qty}</span>
                   </div>
                 ))}
               </div>
@@ -277,8 +277,8 @@ export default function AiPackingPage() {
           )}
 
           {error && (
-            <div className="enterprise-card p-4 border-red-200 dark:border-red-800">
-              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+            <div className="enterprise-card p-4 border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)]">
+              <div className="flex items-center gap-2 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] text-sm">
                 <AlertTriangle className="w-4 h-4" /> {error}
               </div>
             </div>
@@ -286,10 +286,10 @@ export default function AiPackingPage() {
 
           {loading && !plan && (
             <div className="enterprise-card p-8">
-              <div className="flex flex-col items-center gap-3 text-gray-400">
+              <div className="flex flex-col items-center gap-3 text-[var(--text-tertiary)]">
                 <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                 <p className="text-sm">Generating optimal packaging plan...</p>
-                <p className="text-xs text-gray-400">AI is analyzing item dimensions, weights, and fragility</p>
+                <p className="text-xs text-[var(--text-tertiary)]">AI is analyzing item dimensions, weights, and fragility</p>
               </div>
             </div>
           )}
@@ -299,10 +299,10 @@ export default function AiPackingPage() {
         <div className="xl:col-span-2 space-y-4">
           {!plan && !loading && (
             <div className="enterprise-card p-12">
-              <div className="flex flex-col items-center gap-3 text-gray-400">
-                <Package className="w-12 h-12 text-gray-300" />
-                <p className="text-sm font-medium text-gray-500">Select an order and click "Analyze"</p>
-                <p className="text-xs text-gray-400">AI will recommend the optimal packaging plan</p>
+              <div className="flex flex-col items-center gap-3 text-[var(--text-tertiary)]">
+                <Package className="w-12 h-12 text-[var(--text-tertiary)]" />
+                <p className="text-sm font-medium text-[var(--text-secondary)]">Select an order and click "Analyze"</p>
+                <p className="text-xs text-[var(--text-tertiary)]">AI will recommend the optimal packaging plan</p>
               </div>
             </div>
           )}
@@ -311,18 +311,18 @@ export default function AiPackingPage() {
             <>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2">
                     <Box className="w-4 h-4 text-emerald-500" /> Box Plan
                   </h3>
                   {overrideMode && (
-                    <span className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full font-medium">
+                    <span className="text-xs text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 px-2 py-0.5 rounded-full font-medium">
                       Override Mode
                     </span>
                   )}
                 </div>
 
                 {displayBoxes.map((box, idx) => (
-                  <div key={box.id} className="enterprise-card p-4 border border-gray-200 dark:border-gray-700">
+                  <div key={box.id} className="enterprise-card p-4 border border-[var(--border-default)]">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', BOX_COLORS[box.type])}>
@@ -330,12 +330,12 @@ export default function AiPackingPage() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 capitalize">
+                            <p className="text-sm font-semibold text-[var(--text-primary)] capitalize">
                               {overrideMode ? (
                                 <select
                                   value={box.type}
                                   onChange={e => updateBoxType(box.id, e.target.value as AiBox['type'])}
-                                  className="text-sm font-semibold border border-gray-200 dark:border-gray-700 rounded bg-white dark:bg-gray-800 px-1 py-0.5"
+                                  className="text-sm font-semibold border border-[var(--border-default)] rounded bg-[var(--surface-base)] px-1 py-0.5"
                                 >
                                   <option value="small">Small</option>
                                   <option value="medium">Medium</option>
@@ -348,28 +348,28 @@ export default function AiPackingPage() {
                               {' '}Box #{idx + 1}
                             </p>
                           </div>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-[var(--text-secondary)]">
                             {box.dimensions.w} × {box.dimensions.d} × {box.dimensions.h} cm
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => setExpandedBox(expandedBox === box.id ? null : box.id)}
-                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]"
                       >
                         {expandedBox === box.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
                     </div>
 
                     {expandedBox === box.id && (
-                      <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 space-y-3">
+                      <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] space-y-3">
                         <div>
-                          <p className="text-xs font-medium text-gray-500 mb-1.5">Items</p>
+                          <p className="text-xs font-medium text-[var(--text-secondary)] mb-1.5">Items</p>
                           <div className="space-y-1">
                             {box.items.map((item, i) => (
                               <div key={i} className="flex items-center justify-between text-sm">
-                                <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
-                                <span className="text-gray-500 text-xs">SKU: {item.sku} × {item.qty}</span>
+                                <span className="text-[var(--text-secondary)]">{item.name}</span>
+                                <span className="text-[var(--text-secondary)] text-xs">SKU: {item.sku} × {item.qty}</span>
                               </div>
                             ))}
                           </div>
@@ -377,17 +377,17 @@ export default function AiPackingPage() {
 
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <p className="text-xs font-medium text-gray-500 mb-1">Weight</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{box.weight} kg</p>
+                            <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">Weight</p>
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">{box.weight} kg</p>
                           </div>
                           <div>
-                            <p className="text-xs font-medium text-gray-500 mb-1">Volume</p>
-                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{(box.volume / 1000000).toFixed(4)} m³</p>
+                            <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">Volume</p>
+                            <p className="text-sm font-semibold text-[var(--text-primary)]">{(box.volume / 1000000).toFixed(4)} m³</p>
                           </div>
                         </div>
 
                         <div>
-                          <p className="text-xs font-medium text-gray-500 mb-1.5">Materials</p>
+                          <p className="text-xs font-medium text-[var(--text-secondary)] mb-1.5">Materials</p>
                           <div className="flex flex-wrap gap-1.5">
                             {overrideMode
                               ? allMaterials.map(material => (
@@ -398,7 +398,7 @@ export default function AiPackingPage() {
                                       'text-xs px-2.5 py-1 rounded-full font-medium transition-colors',
                                       box.materials.includes(material)
                                         ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
-                                        : 'bg-gray-50 dark:bg-gray-800 text-gray-500 border border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                                        : 'bg-[var(--surface-sunken)] bg-[var(--surface-base)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-[var(--border-default)]'
                                     )}
                                   >
                                     {box.materials.includes(material) ? '✓ ' : '+ '}{material}
@@ -414,7 +414,7 @@ export default function AiPackingPage() {
 
                         {box.labels.length > 0 && (
                           <div>
-                            <p className="text-xs font-medium text-gray-500 mb-1.5">Labels</p>
+                            <p className="text-xs font-medium text-[var(--text-secondary)] mb-1.5">Labels</p>
                             <div className="flex flex-wrap gap-1.5">
                               {box.labels.map(label => (
                                 <span
@@ -422,10 +422,10 @@ export default function AiPackingPage() {
                                   className={clsx(
                                     'text-xs px-2.5 py-1 rounded-full font-medium',
                                     label === 'Fragile'
-                                      ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                                      ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]'
                                       : label === 'This Side Up'
-                                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                      : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400'
+                                      ? 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]'
+                                      : 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]'
                                   )}
                                 >
                                   {label}
@@ -441,24 +441,24 @@ export default function AiPackingPage() {
               </div>
 
               {/* Summary Row */}
-              <div className="enterprise-card p-4 bg-gray-50 dark:bg-gray-800/50">
+              <div className="enterprise-card p-4 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500">Total Boxes</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{plan.boxes.length}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Total Boxes</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)]">{plan.boxes.length}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Total Weight</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{plan.totalWeight} kg</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Total Weight</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)]">{plan.totalWeight} kg</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Total Volume</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{(plan.totalVolume / 1000000).toFixed(2)} m³</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Total Volume</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)]">{(plan.totalVolume / 1000000).toFixed(2)} m³</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Est. Pack Time</p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1">
-                      <Clock className="w-4 h-4 text-gray-400" /> {plan.estimatedTimeMinutes} min
+                    <p className="text-xs text-[var(--text-secondary)]">Est. Pack Time</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-1">
+                      <Clock className="w-4 h-4 text-[var(--text-tertiary)]" /> {plan.estimatedTimeMinutes} min
                     </p>
                   </div>
                 </div>
@@ -478,7 +478,7 @@ export default function AiPackingPage() {
                     </button>
                   </PermissionGate>
                   <PermissionGate resource="settings" action="edit">
-                    <button onClick={handleOverride} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-5 py-2.5 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/10">
+                    <button onClick={handleOverride} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-5 py-2.5 border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)] text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)] hover:bg-[var(--nexus-warning-50)] dark:hover:bg-[var(--nexus-warning-900)]/10">
                       <RotateCcw className="w-4 h-4" /> Override
                     </button>
                   </PermissionGate>
@@ -486,15 +486,15 @@ export default function AiPackingPage() {
               )}
 
               {overrideMode && (
-                <div className="enterprise-card p-4 space-y-3 border-amber-200 dark:border-amber-800">
-                  <h4 className="text-sm font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-2">
+                <div className="enterprise-card p-4 space-y-3 border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]">
+                  <h4 className="text-sm font-semibold text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)] flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" /> Override Reason
                   </h4>
                   <textarea
                     value={overrideReason}
                     onChange={e => setOverrideReason(e.target.value)}
                     placeholder="Describe why you are overriding the AI recommendation..."
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                    className="w-full px-3 py-2 text-sm border border-[var(--border-default)] rounded-lg bg-[var(--surface-base)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
                     rows={3}
                   />
                   <div className="flex items-center gap-3">
@@ -502,7 +502,7 @@ export default function AiPackingPage() {
                       <button
                         onClick={handleConfirmOverride}
                         disabled={!overrideReason.trim()}
-                        className="enterprise-btn-primary bg-amber-600 hover:bg-amber-700 text-sm flex items-center gap-1.5 px-5 py-2.5 disabled:opacity-50"
+                        className="enterprise-btn-primary bg-[var(--nexus-warning-600)] hover:bg-[var(--nexus-warning-700)] text-sm flex items-center gap-1.5 px-5 py-2.5 disabled:opacity-50"
                       >
                         <RotateCcw className="w-4 h-4" /> Confirm Override
                       </button>
@@ -527,25 +527,25 @@ export default function AiPackingPage() {
         {/* Right Sidebar - AI Insights */}
         <div className="xl:col-span-1 space-y-4">
           <div className="enterprise-card p-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
               <Zap className="w-4 h-4 text-emerald-500" /> AI Insights
             </h3>
             {plan ? (
               <div className="space-y-3">
                 {INSIGHTS.map((insight, i) => (
-                  <div key={i} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                  <div key={i} className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
                     <div className="flex items-start gap-2.5">
                       <div className="mt-0.5">{insight.icon}</div>
                       <div>
-                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">{insight.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{insight.text}</p>
+                        <p className="text-xs font-semibold text-[var(--text-secondary)]">{insight.title}</p>
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">{insight.text}</p>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-6 text-gray-400">
+              <div className="text-center py-6 text-[var(--text-tertiary)]">
                 <Info className="w-8 h-8 mx-auto mb-2" />
                 <p className="text-xs">Insights will appear after analysis</p>
               </div>
@@ -556,34 +556,34 @@ export default function AiPackingPage() {
 
       {/* Bottom Section - Recent Packs */}
       <div className="enterprise-card p-5">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-gray-400" /> Recent AI-Packed Orders
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-[var(--text-tertiary)]" /> Recent AI-Packed Orders
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-gray-700">
-                <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Order</th>
-                <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Time</th>
-                <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Boxes</th>
-                <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Weight</th>
-                <th className="text-left py-2.5 px-3 text-xs font-medium text-gray-500">Status</th>
+              <tr className="border-b border-[var(--border-subtle)]">
+                <th className="text-left py-2.5 px-3 text-xs font-medium text-[var(--text-secondary)]">Order</th>
+                <th className="text-left py-2.5 px-3 text-xs font-medium text-[var(--text-secondary)]">Time</th>
+                <th className="text-left py-2.5 px-3 text-xs font-medium text-[var(--text-secondary)]">Boxes</th>
+                <th className="text-left py-2.5 px-3 text-xs font-medium text-[var(--text-secondary)]">Weight</th>
+                <th className="text-left py-2.5 px-3 text-xs font-medium text-[var(--text-secondary)]">Status</th>
               </tr>
             </thead>
             <tbody>
               {RECENT_PACKS.map((pack, i) => (
-                <tr key={i} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                  <td className="py-2.5 px-3 font-medium text-gray-900 dark:text-gray-100">{pack.order}</td>
-                  <td className="py-2.5 px-3 text-gray-500">{pack.date}</td>
-                  <td className="py-2.5 px-3 text-gray-700 dark:text-gray-300">{pack.boxes}</td>
-                  <td className="py-2.5 px-3 text-gray-700 dark:text-gray-300">{pack.weight}</td>
+                <tr key={i} className="border-b border-[var(--border-subtle)] dark:border-[var(--border-strong)] hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
+                  <td className="py-2.5 px-3 font-medium text-[var(--text-primary)]">{pack.order}</td>
+                  <td className="py-2.5 px-3 text-[var(--text-secondary)]">{pack.date}</td>
+                  <td className="py-2.5 px-3 text-[var(--text-secondary)]">{pack.boxes}</td>
+                  <td className="py-2.5 px-3 text-[var(--text-secondary)]">{pack.weight}</td>
                   <td className="py-2.5 px-3">
                     <span
                       className={clsx(
                         'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full',
                         pack.status === 'accepted'
                           ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
-                          : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300'
+                          : 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)]'
                       )}
                     >
                       {pack.status === 'accepted' ? (

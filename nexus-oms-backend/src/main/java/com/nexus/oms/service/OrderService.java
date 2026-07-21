@@ -53,6 +53,10 @@ public class OrderService {
     @Transactional
     @CacheEvict(value = "orders", allEntries = true)
     public OrderResponse createOrder(UUID tenantId, OrderRequest request) {
+        String country = request.getShippingAddress().getCountry() != null 
+                ? request.getShippingAddress().getCountry() 
+                : "US";
+        
         Address shipToAddress = addressRepository.save(Address.builder()
                 .tenantId(tenantId)
                 .addressLine1(request.getShippingAddress().getLine1())
@@ -60,7 +64,7 @@ public class OrderService {
                 .city(request.getShippingAddress().getCity())
                 .state(request.getShippingAddress().getState())
                 .postalCode(request.getShippingAddress().getPincode())
-                .country("IN")
+                .country(country)
                 .addressType("SHIPPING")
                 .build());
 
@@ -72,6 +76,8 @@ public class OrderService {
                         .address(shipToAddress)
                         .build()));
 
+        String currency = request.getCurrency() != null ? request.getCurrency() : "USD";
+        
         NxOrder order = NxOrder.builder()
                 .tenantId(tenantId)
                 .channel(request.getChannel())
@@ -79,7 +85,7 @@ public class OrderService {
                 .customerEmail(customer.getEmail())
                 .status("PENDING")
                 .shipToAddress(shipToAddress)
-                .currency("INR")
+                .currency(currency)
                 .subtotal(BigDecimal.ZERO)
                 .shippingCost(BigDecimal.ZERO)
                 .taxAmount(BigDecimal.ZERO)
@@ -244,6 +250,10 @@ public class OrderService {
         }
 
         if (request.getShippingAddress() != null) {
+            String country = request.getShippingAddress().getCountry() != null 
+                    ? request.getShippingAddress().getCountry() 
+                    : "US";
+            
             Address addr = addressRepository.save(Address.builder()
                     .tenantId(tenantId)
                     .addressLine1(request.getShippingAddress().getLine1())
@@ -251,7 +261,7 @@ public class OrderService {
                     .city(request.getShippingAddress().getCity())
                     .state(request.getShippingAddress().getState())
                     .postalCode(request.getShippingAddress().getPincode())
-                    .country("IN")
+                    .country(country)
                     .addressType("SHIPPING")
                     .build());
             order.setShipToAddress(addr);

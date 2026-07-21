@@ -56,13 +56,13 @@ interface DispoCategory {
 }
 
 const RMA_STATUS_COLORS: Record<RmaStatus, string> = {
-  PENDING_APPROVAL: 'text-amber-600 bg-amber-50 ring-amber-500/20',
-  AUTHORIZED: 'text-blue-600 bg-blue-50 ring-blue-500/20',
-  IN_TRANSIT: 'text-cyan-600 bg-cyan-50 ring-cyan-500/20',
-  RECEIVED: 'text-gray-600 bg-gray-50 ring-gray-500/20',
+  PENDING_APPROVAL: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] ring-amber-500/20',
+  AUTHORIZED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-blue-500/20',
+  IN_TRANSIT: 'text-[var(--nexus-info-600)] bg-[var(--nexus-info-50)] ring-cyan-500/20',
+  RECEIVED: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-gray-500/20',
   INSPECTED: 'text-violet-600 bg-violet-50 ring-violet-500/20',
   COMPLETED: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20',
-  REJECTED: 'text-red-600 bg-red-50 ring-red-500/20',
+  REJECTED: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] ring-red-500/20',
 }
 
 const RMA_STATUS_BADGE: Record<RmaStatus, string> = {
@@ -89,10 +89,10 @@ const TABS = [
 
 const DISPOSITION_CATEGORIES: DispoCategory[] = [
   { key: 'RESTOCK', label: 'Restock', icon: PackageCheck, count: 234, value: 12450, color: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20' },
-  { key: 'REFURBISH', label: 'Refurbish', icon: Wrench, count: 67, value: 3210, color: 'text-blue-600 bg-blue-50 ring-blue-500/20' },
+  { key: 'REFURBISH', label: 'Refurbish', icon: Wrench, count: 67, value: 3210, color: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-blue-500/20' },
   { key: 'DONATE', label: 'Donate', icon: Heart, count: 12, value: 0, color: 'text-pink-600 bg-pink-50 ring-pink-500/20' },
-  { key: 'RECYCLE', label: 'Recycle', icon: Recycle, count: 8, value: 0, color: 'text-cyan-600 bg-cyan-50 ring-cyan-500/20' },
-  { key: 'SCRAP', label: 'Scrap', icon: Trash2, count: 3, value: 0, color: 'text-gray-600 bg-gray-50 ring-gray-500/20' },
+  { key: 'RECYCLE', label: 'Recycle', icon: Recycle, count: 8, value: 0, color: 'text-[var(--nexus-info-600)] bg-[var(--nexus-info-50)] ring-cyan-500/20' },
+  { key: 'SCRAP', label: 'Scrap', icon: Trash2, count: 3, value: 0, color: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-gray-500/20' },
 ]
 
 const DISPOSITION_LABELS: Record<Disposition, string> = {
@@ -227,7 +227,7 @@ function SparklineChart({ data, height = 32 }: { data: number[]; height?: number
   return (
     <svg width={width} height={height} className="overflow-visible">
       <polyline fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        points={points} className="text-blue-500" />
+        points={points} className="text-[var(--nexus-primary-500)]" />
       <circle cx={parseFloat(points.split(' ').pop()!.split(',')[0])} cy={parseFloat(points.split(' ').pop()!.split(',')[1])}
         r="3" className="fill-blue-500" />
     </svg>
@@ -239,7 +239,7 @@ function HorizontalBar({ label, value, max, color }: { label: string; value: num
   return (
     <div className="flex items-center gap-3">
       <span className="text-sm text-[var(--text-secondary)] w-28 shrink-0 truncate">{label}</span>
-      <div className="flex-1 h-5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all', color)} style={{ width: `${pct}%` }} />
       </div>
       <span className="text-sm font-medium text-[var(--text-primary)] w-12 text-right">{value}</span>
@@ -354,9 +354,9 @@ export default function ReturnsEnhancedPage() {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <select className="text-sm bg-transparent border-none outline-none text-gray-700 dark:text-gray-300" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+        <div className="flex items-center gap-2 bg-[var(--surface-base)] border border-[var(--border-default)] rounded-lg px-3 py-2">
+          <Filter className="w-4 h-4 text-[var(--text-tertiary)]" />
+          <select className="text-sm bg-transparent border-none outline-none text-[var(--text-secondary)]" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="ALL">All Statuses</option>
             <option value="PENDING_APPROVAL">Pending Approval</option>
             <option value="AUTHORIZED">Authorized</option>
@@ -367,16 +367,16 @@ export default function ReturnsEnhancedPage() {
             <option value="REJECTED">Rejected</option>
           </select>
         </div>
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
-          <Filter className="w-4 h-4 text-gray-400" />
-          <select className="text-sm bg-transparent border-none outline-none text-gray-700 dark:text-gray-300" value={reasonFilter} onChange={e => setReasonFilter(e.target.value)}>
+        <div className="flex items-center gap-2 bg-[var(--surface-base)] border border-[var(--border-default)] rounded-lg px-3 py-2">
+          <Filter className="w-4 h-4 text-[var(--text-tertiary)]" />
+          <select className="text-sm bg-transparent border-none outline-none text-[var(--text-secondary)]" value={reasonFilter} onChange={e => setReasonFilter(e.target.value)}>
             <option value="ALL">All Reasons</option>
             {REASON_TYPES.map(rt => <option key={rt} value={rt}>{rt}</option>)}
           </select>
         </div>
-        <div className="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
-          <Calendar className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-500">Last 30 days</span>
+        <div className="flex items-center gap-2 bg-[var(--surface-base)] border border-[var(--border-default)] rounded-lg px-3 py-2">
+          <Calendar className="w-4 h-4 text-[var(--text-tertiary)]" />
+          <span className="text-sm text-[var(--text-secondary)]">Last 30 days</span>
         </div>
         <div className="ml-auto">
           <PermissionGate resource="orders" action="create">
@@ -392,39 +392,39 @@ export default function ReturnsEnhancedPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">RMA#</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Order#</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Customer</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Reason</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Status</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Date</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Value</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">RMA#</th>
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Order#</th>
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Customer</th>
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Reason</th>
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Status</th>
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Date</th>
+                <th className="text-right px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Value</th>
+                <th className="text-right px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
               {filteredRmas.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-gray-400">No RMAs match the current filters</td>
+                  <td colSpan={8} className="px-4 py-12 text-center text-[var(--text-tertiary)]">No RMAs match the current filters</td>
                 </tr>
               ) : (
                 filteredRmas.map(rma => (
-                  <tr key={rma.id} className={clsx('group hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors', expandedRma === rma.id && 'bg-gray-50 dark:bg-gray-800/30')}>
+                  <tr key={rma.id} className={clsx('group hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/30 transition-colors', expandedRma === rma.id && 'bg-[var(--surface-sunken)] bg-[var(--surface-base)]/30')}>
                     <td className="px-4 py-3">
-                      <button onClick={() => setExpandedRma(expandedRma === rma.id ? null : rma.id)} className="flex items-center gap-1.5 font-mono text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
+                      <button onClick={() => setExpandedRma(expandedRma === rma.id ? null : rma.id)} className="flex items-center gap-1.5 font-mono text-sm font-medium text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:underline">
                         {expandedRma === rma.id ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                         {rma.rmaNumber}
                       </button>
                     </td>
-                    <td className="px-4 py-3 font-mono text-sm text-gray-600 dark:text-gray-400">{rma.orderNumber}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{rma.customer}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[180px] truncate">{rma.reason}</td>
+                    <td className="px-4 py-3 font-mono text-sm text-[var(--text-secondary)]">{rma.orderNumber}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{rma.customer}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] max-w-[180px] truncate">{rma.reason}</td>
                     <td className="px-4 py-3">
                       <EnterpriseStatusBadge status={RMA_STATUS_BADGE[rma.status]} label={rma.status.replace(/_/g, ' ')} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{new Date(rma.date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100 text-right">${rma.value.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{new Date(rma.date).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)] text-right">${rma.value.toFixed(2)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
                         {rma.status === 'PENDING_APPROVAL' && (
@@ -436,16 +436,16 @@ export default function ReturnsEnhancedPage() {
                             </PermissionGate>
                             <PermissionGate resource="orders" action="edit">
                               <button onClick={() => setConfirmAction({ type: 'reject', rma })}
-                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)] dark:hover:bg-[var(--nexus-error-900)]/30 transition-colors"
                                 title="Reject"><X className="w-4 h-4" /></button>
                             </PermissionGate>
                           </>
                         )}
                         {rma.status === 'AUTHORIZED' && (
-                          <span className="text-xs text-gray-400 italic">Awaiting receipt</span>
+                          <span className="text-xs text-[var(--text-tertiary)] italic">Awaiting receipt</span>
                         )}
                         {rma.status === 'IN_TRANSIT' && (
-                          <span className="text-xs text-cyan-500 italic"><Truck className="w-3.5 h-3.5 inline mr-1" />In transit</span>
+                          <span className="text-xs text-[var(--nexus-info-500)] italic"><Truck className="w-3.5 h-3.5 inline mr-1" />In transit</span>
                         )}
                         {rma.status === 'RECEIVED' && (
                           <PermissionGate resource="orders" action="edit">
@@ -467,7 +467,7 @@ export default function ReturnsEnhancedPage() {
                           <span className="text-xs text-emerald-600 font-medium">Done</span>
                         )}
                         {rma.status === 'REJECTED' && (
-                          <span className="text-xs text-red-400">Rejected</span>
+                          <span className="text-xs text-[var(--nexus-error-400)]">Rejected</span>
                         )}
                       </div>
                     </td>
@@ -487,7 +487,7 @@ export default function ReturnsEnhancedPage() {
           <div className="enterprise-card p-5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">RMA Details</h4>
+                <h4 className="font-semibold text-[var(--text-primary)] mb-3">RMA Details</h4>
                 <dl className="space-y-2">
                   {[
                     ['RMA Number', rma.rmaNumber],
@@ -498,32 +498,32 @@ export default function ReturnsEnhancedPage() {
                     ['Date Created', new Date(rma.date).toLocaleDateString()],
                     ['Total Value', `$${rma.value.toFixed(2)}`],
                   ].map(([k, v]) => (
-                    <div key={k} className="flex justify-between py-1.5 px-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                      <span className="text-gray-500 dark:text-gray-400">{k}</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{v}</span>
+                    <div key={k} className="flex justify-between py-1.5 px-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
+                      <span className="text-[var(--text-secondary)]">{k}</span>
+                      <span className="font-medium text-[var(--text-primary)]">{v}</span>
                     </div>
                   ))}
                 </dl>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Items ({rma.items.length})</h4>
+                <h4 className="font-semibold text-[var(--text-primary)] mb-3">Items ({rma.items.length})</h4>
                 <div className="space-y-2">
                   {rma.items.map((item, i) => (
-                    <div key={item.id || i} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 space-y-1.5">
+                    <div key={item.id || i} className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg p-3 space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-sm font-medium text-gray-700 dark:text-gray-300">{item.sku}</span>
-                        <span className="text-xs text-gray-400">x{item.quantity}</span>
+                        <span className="font-mono text-sm font-medium text-[var(--text-secondary)]">{item.sku}</span>
+                        <span className="text-xs text-[var(--text-tertiary)]">x{item.quantity}</span>
                       </div>
-                      {item.productName && <p className="text-xs text-gray-500">{item.productName}</p>}
+                      {item.productName && <p className="text-xs text-[var(--text-secondary)]">{item.productName}</p>}
                       {item.condition && <span className="enterprise-tag">{item.condition}</span>}
                       {item.disposition && <span className="enterprise-tag ml-1">{DISPOSITION_LABELS[item.disposition] || item.disposition}</span>}
-                      {item.conditionNotes && <p className="text-xs text-gray-400 mt-1">{item.conditionNotes}</p>}
+                      {item.conditionNotes && <p className="text-xs text-[var(--text-tertiary)] mt-1">{item.conditionNotes}</p>}
                     </div>
                   ))}
                 </div>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Status Timeline</h4>
+                <h4 className="font-semibold text-[var(--text-primary)] mb-3">Status Timeline</h4>
                 <div className="space-y-3">
                   {['PENDING_APPROVAL', 'AUTHORIZED', 'IN_TRANSIT', 'RECEIVED', 'INSPECTED', 'COMPLETED'].map((s, i) => {
                     const statusIdx = ['PENDING_APPROVAL', 'AUTHORIZED', 'IN_TRANSIT', 'RECEIVED', 'INSPECTED', 'COMPLETED'].indexOf(rma.status)
@@ -531,8 +531,8 @@ export default function ReturnsEnhancedPage() {
                     const current = i === statusIdx
                     return (
                       <div key={s} className="flex items-center gap-3">
-                        <div className={clsx('w-2.5 h-2.5 rounded-full ring-2 shrink-0', done ? 'bg-emerald-500 ring-emerald-200 dark:ring-emerald-800' : 'bg-gray-200 dark:bg-gray-600 ring-gray-100 dark:ring-gray-700')} />
-                        <span className={clsx('text-xs', current ? 'font-semibold text-gray-900 dark:text-gray-100' : done ? 'text-gray-600 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500')}>
+                        <div className={clsx('w-2.5 h-2.5 rounded-full ring-2 shrink-0', done ? 'bg-emerald-500 ring-emerald-200 dark:ring-emerald-800' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)] ring-gray-100 dark:ring-gray-700')} />
+                        <span className={clsx('text-xs', current ? 'font-semibold text-[var(--text-primary)]' : done ? 'text-[var(--text-secondary)]' : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]')}>
                           {s.replace(/_/g, ' ')}
                         </span>
                       </div>
@@ -553,29 +553,29 @@ export default function ReturnsEnhancedPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <button onClick={() => setInspectionRma(null)} className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 mb-2">
+              <button onClick={() => setInspectionRma(null)} className="text-sm text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:underline flex items-center gap-1 mb-2">
                 <ChevronDown className="w-4 h-4 rotate-90" /> Back to queue
               </button>
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Inspect: {inspectionRma.rmaNumber}</h3>
-              <p className="text-sm text-gray-500">{inspectionRma.customer} &middot; {inspectionRma.orderNumber}</p>
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">Inspect: {inspectionRma.rmaNumber}</h3>
+              <p className="text-sm text-[var(--text-secondary)]">{inspectionRma.customer} &middot; {inspectionRma.orderNumber}</p>
             </div>
           </div>
 
           <div className="enterprise-card p-5">
             <div className="space-y-5">
               {/* Item Info */}
-              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+              <div className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">{inspectionRma.items[0].sku}</span>
-                  <span className="text-sm text-gray-500">x{inspectionRma.items[0].quantity}</span>
+                  <span className="font-mono font-semibold text-[var(--text-primary)]">{inspectionRma.items[0].sku}</span>
+                  <span className="text-sm text-[var(--text-secondary)]">x{inspectionRma.items[0].quantity}</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{inspectionRma.items[0].productName}</p>
+                <p className="text-sm text-[var(--text-secondary)]">{inspectionRma.items[0].productName}</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Condition */}
                 <div className="enterprise-form-group">
-                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
                     <Box className="w-4 h-4" /> Item Condition
                   </label>
                   <select className="enterprise-select mt-1" value={inspectForm.condition}
@@ -586,7 +586,7 @@ export default function ReturnsEnhancedPage() {
 
                 {/* Grade */}
                 <div className="enterprise-form-group">
-                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-[var(--text-secondary)]">
                     <ShieldCheck className="w-4 h-4" /> Grade
                   </label>
                   <div className="flex gap-2 mt-1">
@@ -594,8 +594,8 @@ export default function ReturnsEnhancedPage() {
                       <button key={g} onClick={() => handleGradeChange(g)}
                         className={clsx('w-10 h-10 rounded-lg text-sm font-bold border transition-all',
                           inspectForm.grade === g
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-blue-300'
+                            ? 'bg-[var(--nexus-primary-600)] text-white border-[var(--nexus-primary-600)]'
+                            : 'bg-[var(--surface-base)] text-[var(--text-secondary)] border-[var(--border-default)] hover:border-[var(--nexus-primary-300)]'
                         )}>
                         {g}
                       </button>
@@ -616,7 +616,7 @@ export default function ReturnsEnhancedPage() {
                       className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
                         inspectForm.disposition === d
                           ? 'bg-violet-600 text-white border-violet-600'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-violet-300'
+                          : 'bg-[var(--surface-base)] text-[var(--text-secondary)] border-[var(--border-default)] hover:border-violet-300'
                       )}>
                       {d}
                     </button>
@@ -629,13 +629,13 @@ export default function ReturnsEnhancedPage() {
 
               {/* Condition Notes */}
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Condition Notes</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Condition Notes</label>
                 <textarea className="enterprise-textarea mt-1" rows={3}
                   placeholder="Describe the item's condition, defects, or damage in detail..."
                   value={inspectForm.notes} onChange={e => setInspectForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--border-subtle)]">
                 <button onClick={() => setInspectionRma(null)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
                 <PermissionGate resource="orders" action="edit">
                   <button onClick={handleInspectSubmit}
@@ -650,7 +650,7 @@ export default function ReturnsEnhancedPage() {
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">{receivedRmas.length} returns awaiting inspection</p>
+            <p className="text-sm text-[var(--text-secondary)]">{receivedRmas.length} returns awaiting inspection</p>
           </div>
 
           {receivedRmas.length === 0 ? (
@@ -664,16 +664,16 @@ export default function ReturnsEnhancedPage() {
               {receivedRmas.map(rma => (
                 <div key={rma.id} className="enterprise-card p-4 flex items-center justify-between hover:shadow-sm transition-shadow">
                   <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center shrink-0">
-                      <PackageCheck className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <div className="w-10 h-10 rounded-xl bg-[var(--surface-muted)] flex items-center justify-center shrink-0">
+                      <PackageCheck className="w-5 h-5 text-[var(--text-secondary)]" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">{rma.rmaNumber}</span>
+                        <span className="font-semibold text-[var(--text-primary)]">{rma.rmaNumber}</span>
                         <EnterpriseStatusBadge status="received" />
                       </div>
-                      <p className="text-sm text-gray-500 mt-0.5">{rma.customer} &middot; {rma.orderNumber} &middot; {rma.items[0].productName}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Reason: {rma.reason}</p>
+                      <p className="text-sm text-[var(--text-secondary)] mt-0.5">{rma.customer} &middot; {rma.orderNumber} &middot; {rma.items[0].productName}</p>
+                      <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Reason: {rma.reason}</p>
                     </div>
                   </div>
                   <PermissionGate resource="orders" action="edit">
@@ -699,12 +699,12 @@ export default function ReturnsEnhancedPage() {
             <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center ring-1 mb-4', cat.color)}>
               <cat.icon className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">{cat.count}</h3>
-            <p className="text-sm text-gray-500">{cat.label}</p>
-            {cat.value > 0 && <p className="text-xs text-gray-400 mt-1">${cat.value.toLocaleString()} recovery value</p>}
+            <h3 className="text-lg font-bold text-[var(--text-primary)]">{cat.count}</h3>
+            <p className="text-sm text-[var(--text-secondary)]">{cat.label}</p>
+            {cat.value > 0 && <p className="text-xs text-[var(--text-tertiary)] mt-1">${cat.value.toLocaleString()} recovery value</p>}
             <PermissionGate resource="orders" action="edit">
               <button onClick={() => handleProcessDisposition(cat.key)}
-                className="mt-4 w-full enterprise-btn enterprise-btn-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                className="mt-4 w-full enterprise-btn enterprise-btn-sm border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]">
                 Process Disposition
               </button>
             </PermissionGate>
@@ -713,21 +713,21 @@ export default function ReturnsEnhancedPage() {
       </div>
 
       <div className="enterprise-card p-5">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Disposition Summary</h3>
+        <h3 className="font-semibold text-[var(--text-primary)] mb-4">Disposition Summary</h3>
         <div className="space-y-3">
           {DISPOSITION_CATEGORIES.map(cat => {
             const total = DISPOSITION_CATEGORIES.reduce((s, c) => s + c.count, 0)
             const pct = total > 0 ? Math.round((cat.count / total) * 100) : 0
             return (
               <div key={cat.key} className="flex items-center gap-4">
-                <div className={clsx('w-2 h-2 rounded-full shrink-0', cat.key === 'RESTOCK' ? 'bg-emerald-500' : cat.key === 'REFURBISH' ? 'bg-blue-500' : cat.key === 'DONATE' ? 'bg-pink-500' : cat.key === 'RECYCLE' ? 'bg-cyan-500' : 'bg-gray-500')} />
-                <span className="text-sm text-gray-600 dark:text-gray-400 w-20">{cat.label}</span>
-                <div className="flex-1 h-6 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div className={clsx('h-full rounded-full transition-all', cat.key === 'RESTOCK' ? 'bg-emerald-500' : cat.key === 'REFURBISH' ? 'bg-blue-500' : cat.key === 'DONATE' ? 'bg-pink-500' : cat.key === 'RECYCLE' ? 'bg-cyan-500' : 'bg-gray-500')}
+                <div className={clsx('w-2 h-2 rounded-full shrink-0', cat.key === 'RESTOCK' ? 'bg-emerald-500' : cat.key === 'REFURBISH' ? 'bg-[var(--nexus-primary-50)]0' : cat.key === 'DONATE' ? 'bg-pink-500' : cat.key === 'RECYCLE' ? 'bg-[var(--nexus-info-50)]0' : 'bg-[var(--surface-muted)]')} />
+                <span className="text-sm text-[var(--text-secondary)] w-20">{cat.label}</span>
+                <div className="flex-1 h-6 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                  <div className={clsx('h-full rounded-full transition-all', cat.key === 'RESTOCK' ? 'bg-emerald-500' : cat.key === 'REFURBISH' ? 'bg-[var(--nexus-primary-50)]0' : cat.key === 'DONATE' ? 'bg-pink-500' : cat.key === 'RECYCLE' ? 'bg-[var(--nexus-info-50)]0' : 'bg-[var(--surface-muted)]')}
                     style={{ width: `${pct}%` }} />
                 </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 w-12 text-right">{pct}%</span>
-                <span className="text-sm text-gray-500 w-20 text-right">{cat.count} items</span>
+                <span className="text-sm font-medium text-[var(--text-secondary)] w-12 text-right">{pct}%</span>
+                <span className="text-sm text-[var(--text-secondary)] w-20 text-right">{cat.count} items</span>
               </div>
             )
           })}
@@ -737,8 +737,8 @@ export default function ReturnsEnhancedPage() {
       {/* Refund Rules Section */}
       <div className="enterprise-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-gray-500" />
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Refund Rules Configuration</h3>
+          <Settings className="w-5 h-5 text-[var(--text-secondary)]" />
+          <h3 className="font-semibold text-[var(--text-primary)]">Refund Rules Configuration</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
@@ -753,28 +753,28 @@ export default function ReturnsEnhancedPage() {
             </div>
           </div>
 
-          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+          <div className="bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 rounded-xl p-4 border border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]">
             <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <h4 className="font-medium text-amber-800 dark:text-amber-200 text-sm">Partial Refund Rules</h4>
+              <TrendingDown className="w-4 h-4 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
+              <h4 className="font-medium text-[var(--nexus-warning-800)] dark:text-[var(--nexus-warning-200)] text-sm">Partial Refund Rules</h4>
             </div>
-            <p className="text-xs text-amber-600 dark:text-amber-400">Grade-based: A=100%, B=85%, C=70%, D=50%, F=25%</p>
+            <p className="text-xs text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]">Grade-based: A=100%, B=85%, C=70%, D=50%, F=25%</p>
             <div className="mt-2 flex gap-1.5 flex-wrap">
               {[['A', '100%'], ['B', '85%'], ['C', '70%'], ['D', '50%'], ['F', '25%']].map(([g, p]) => (
-                <span key={g} className="text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-medium">{g}: {p}</span>
+                <span key={g} className="text-xs bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/40 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)] px-1.5 py-0.5 rounded font-medium">{g}: {p}</span>
               ))}
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+          <div className="bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 rounded-xl p-4 border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
             <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <h4 className="font-medium text-blue-800 dark:text-blue-200 text-sm">Restocking Fee</h4>
+              <DollarSign className="w-4 h-4 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
+              <h4 className="font-medium text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)] text-sm">Restocking Fee</h4>
             </div>
-            <p className="text-xs text-blue-600 dark:text-blue-400">15% fee for non-defective returns within 30 days</p>
+            <p className="text-xs text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]">15% fee for non-defective returns within 30 days</p>
             <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-blue-700 dark:text-blue-300">Fee Rate</span>
-              <span className="font-semibold text-blue-800 dark:text-blue-200 bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 rounded text-xs">15%</span>
+              <span className="text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]">Fee Rate</span>
+              <span className="font-semibold text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)] bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40 px-2 py-0.5 rounded text-xs">15%</span>
             </div>
           </div>
         </div>
@@ -786,18 +786,18 @@ export default function ReturnsEnhancedPage() {
     <div className="space-y-6">
       {/* Return Reasons Breakdown */}
       <div className="enterprise-card p-5">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Return Reasons Breakdown</h3>
+        <h3 className="font-semibold text-[var(--text-primary)] mb-4">Return Reasons Breakdown</h3>
         <div className="space-y-3">
           {RETURN_REASONS_BREAKDOWN.map(item => (
             <HorizontalBar key={item.reason} label={item.reason} value={item.count} max={RETURN_REASONS_BREAKDOWN[0].count}
-              color="bg-blue-500" />
+              color="bg-[var(--nexus-primary-50)]0" />
           ))}
         </div>
       </div>
 
       {/* Return Trend */}
       <div className="enterprise-card p-5">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Monthly Return Trend</h3>
+        <h3 className="font-semibold text-[var(--text-primary)] mb-4">Monthly Return Trend</h3>
         <div className="overflow-x-auto">
           <div className="flex items-end gap-2 min-w-[600px] h-40">
             {MONTHLY_RETURN_TREND.map(m => {
@@ -806,21 +806,21 @@ export default function ReturnsEnhancedPage() {
               const rate = (m.returns / m.totalOrders) * 100
               return (
                 <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-gray-400">{rate.toFixed(1)}%</span>
-                  <div className="w-full bg-blue-100 dark:bg-blue-900/30 rounded-t relative" style={{ height: `${h}%` }}>
-                    <div className="absolute inset-x-0 bottom-0 bg-blue-500 dark:bg-blue-400 rounded-t transition-all"
+                  <span className="text-[10px] text-[var(--text-tertiary)]">{rate.toFixed(1)}%</span>
+                  <div className="w-full bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/30 rounded-t relative" style={{ height: `${h}%` }}>
+                    <div className="absolute inset-x-0 bottom-0 bg-[var(--nexus-primary-50)]0 dark:bg-[var(--nexus-primary-400)] rounded-t transition-all"
                       style={{ height: `${h}%` }} />
                   </div>
-                  <span className="text-[10px] text-gray-500 mt-1">{m.month}</span>
+                  <span className="text-[10px] text-[var(--text-secondary)] mt-1">{m.month}</span>
                 </div>
               )
             })}
           </div>
         </div>
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--border-subtle)]">
+          <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
             <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3 text-emerald-500" /> Trend: +12.3% YoY</span>
-            <span>Avg Return Rate: <strong className="text-gray-700 dark:text-gray-300">2.4%</strong></span>
+            <span>Avg Return Rate: <strong className="text-[var(--text-secondary)]">2.4%</strong></span>
           </div>
           <SparklineChart data={MONTHLY_RETURN_TREND.map(m => m.returns)} />
         </div>
@@ -830,15 +830,15 @@ export default function ReturnsEnhancedPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Returned Products */}
         <div className="enterprise-card p-5">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Top Returned Products</h3>
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Top Returned Products</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-700">
-                  <th className="text-left pb-2 font-semibold text-xs text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="text-right pb-2 font-semibold text-xs text-gray-500 uppercase tracking-wider">Returns</th>
-                  <th className="text-right pb-2 font-semibold text-xs text-gray-500 uppercase tracking-wider">Rate</th>
-                  <th className="text-right pb-2 font-semibold text-xs text-gray-500 uppercase tracking-wider">Lost Revenue</th>
+                <tr className="border-b border-[var(--border-subtle)]">
+                  <th className="text-left pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Product</th>
+                  <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Returns</th>
+                  <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Rate</th>
+                  <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Lost Revenue</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -846,15 +846,15 @@ export default function ReturnsEnhancedPage() {
                   <tr key={p.sku} className="text-sm">
                     <td className="py-2.5">
                       <div className="flex flex-col">
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{p.name}</span>
-                        <span className="text-xs text-gray-400 font-mono">{p.sku}</span>
+                        <span className="font-medium text-[var(--text-primary)]">{p.name}</span>
+                        <span className="text-xs text-[var(--text-tertiary)] font-mono">{p.sku}</span>
                       </div>
                     </td>
-                    <td className="py-2.5 text-right font-medium text-gray-900 dark:text-gray-100">{p.returns}</td>
+                    <td className="py-2.5 text-right font-medium text-[var(--text-primary)]">{p.returns}</td>
                     <td className="py-2.5 text-right">
-                      <span className="text-red-600 dark:text-red-400 font-medium">{p.returnRate}%</span>
+                      <span className="text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] font-medium">{p.returnRate}%</span>
                     </td>
-                    <td className="py-2.5 text-right font-medium text-gray-900 dark:text-gray-100">${p.revenueLost.toFixed(2)}</td>
+                    <td className="py-2.5 text-right font-medium text-[var(--text-primary)]">${p.revenueLost.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -864,54 +864,54 @@ export default function ReturnsEnhancedPage() {
 
         {/* Recovery Value by Disposition */}
         <div className="enterprise-card p-5">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Recovery Value by Disposition</h3>
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Recovery Value by Disposition</h3>
           <div className="space-y-4">
             {RECOVERY_BY_DISPOSITION.map(d => (
               <div key={d.disposition}>
                 <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">{d.disposition}</span>
+                  <span className="text-[var(--text-secondary)] font-medium">{d.disposition}</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-gray-500">{d.items} items</span>
-                    {d.recoveryValue > 0 && <span className="font-semibold text-gray-900 dark:text-gray-100">${d.recoveryValue.toLocaleString()}</span>}
-                    <span className={clsx('text-xs font-medium', d.recoveryRate >= 50 ? 'text-emerald-600' : 'text-gray-400')}>{d.recoveryRate}%</span>
+                    <span className="text-[var(--text-secondary)]">{d.items} items</span>
+                    {d.recoveryValue > 0 && <span className="font-semibold text-[var(--text-primary)]">${d.recoveryValue.toLocaleString()}</span>}
+                    <span className={clsx('text-xs font-medium', d.recoveryRate >= 50 ? 'text-emerald-600' : 'text-[var(--text-tertiary)]')}>{d.recoveryRate}%</span>
                   </div>
                 </div>
-                <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <div className={clsx('h-full rounded-full', d.disposition === 'Restock' ? 'bg-emerald-500' : d.disposition === 'Refurbish' ? 'bg-blue-500' : d.disposition === 'Donate' ? 'bg-pink-500' : d.disposition === 'Recycle' ? 'bg-cyan-500' : 'bg-gray-500')}
+                <div className="h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                  <div className={clsx('h-full rounded-full', d.disposition === 'Restock' ? 'bg-emerald-500' : d.disposition === 'Refurbish' ? 'bg-[var(--nexus-primary-50)]0' : d.disposition === 'Donate' ? 'bg-pink-500' : d.disposition === 'Recycle' ? 'bg-[var(--nexus-info-50)]0' : 'bg-[var(--surface-muted)]')}
                     style={{ width: `${d.recoveryRate}%` }} />
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-sm">
-            <span className="text-gray-500">Total Recovery Value</span>
-            <span className="font-bold text-lg text-gray-900 dark:text-gray-100">$15,820</span>
+          <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-sm">
+            <span className="text-[var(--text-secondary)]">Total Recovery Value</span>
+            <span className="font-bold text-lg text-[var(--text-primary)]">$15,820</span>
           </div>
         </div>
       </div>
 
       {/* Return Rate by Channel */}
       <div className="enterprise-card p-5">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Return Rate by Channel</h3>
+        <h3 className="font-semibold text-[var(--text-primary)] mb-4">Return Rate by Channel</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {RETURN_RATE_BY_CHANNEL.map(ch => {
             const avg = RETURN_RATE_BY_CHANNEL.reduce((s, c) => s + c.rate, 0) / RETURN_RATE_BY_CHANNEL.length
             const aboveAvg = ch.rate > avg
             return (
-              <div key={ch.channel} className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
-                <p className="text-sm text-gray-500 mb-1">{ch.channel}</p>
-                <p className={clsx('text-2xl font-bold', aboveAvg ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400')}>
+              <div key={ch.channel} className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-xl p-4 text-center">
+                <p className="text-sm text-[var(--text-secondary)] mb-1">{ch.channel}</p>
+                <p className={clsx('text-2xl font-bold', aboveAvg ? 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]' : 'text-emerald-600 dark:text-emerald-400')}>
                   {ch.rate}%
                 </p>
                 <div className="flex items-center justify-center gap-1 mt-1">
                   {aboveAvg
-                    ? <ArrowUpRight className="w-3 h-3 text-red-500" />
+                    ? <ArrowUpRight className="w-3 h-3 text-[var(--nexus-error-500)]" />
                     : <ArrowDownRight className="w-3 h-3 text-emerald-500" />}
-                  <span className={clsx('text-xs', aboveAvg ? 'text-red-500' : 'text-emerald-500')}>
+                  <span className={clsx('text-xs', aboveAvg ? 'text-[var(--nexus-error-500)]' : 'text-emerald-500')}>
                     {aboveAvg ? '+' : ''}{(ch.rate - avg).toFixed(2)}% vs avg
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">{ch.returns} returns / {ch.orders.toLocaleString()} orders</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-1">{ch.returns} returns / {ch.orders.toLocaleString()} orders</p>
               </div>
             )
           })}
@@ -930,8 +930,8 @@ export default function ReturnsEnhancedPage() {
           <RotateCcw className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Returns Command Center</h1>
-          <p className="text-sm text-gray-500">RMA lifecycle, disposition automation & return analytics</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Returns Command Center</h1>
+          <p className="text-sm text-[var(--text-secondary)]">RMA lifecycle, disposition automation & return analytics</p>
         </div>
       </div>
 
@@ -964,30 +964,30 @@ export default function ReturnsEnhancedPage() {
         <div className="enterprise-modal-overlay" onClick={() => setCreateOpen(false)}>
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Create RMA</h2>
-              <button onClick={() => setCreateOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Create RMA</h2>
+              <button onClick={() => setCreateOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Customer</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Customer</label>
                 <input type="text" className="enterprise-input" placeholder="Customer name" value={createForm.customer} onChange={e => setCreateForm(f => ({ ...f, customer: e.target.value }))} />
               </div>
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Order Number</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Order Number</label>
                 <input type="text" className="enterprise-input" placeholder="ORD-XXXX" value={createForm.orderNumber} onChange={e => setCreateForm(f => ({ ...f, orderNumber: e.target.value }))} />
               </div>
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reason Type</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Reason Type</label>
                 <select className="enterprise-select" value={createForm.reasonType} onChange={e => setCreateForm(f => ({ ...f, reasonType: e.target.value }))}>
                   {REASON_TYPES.map(rt => <option key={rt} value={rt}>{rt}</option>)}
                 </select>
               </div>
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reason Details</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Reason Details</label>
                 <textarea className="enterprise-textarea" rows={2} placeholder="Describe the return reason..." value={createForm.reason} onChange={e => setCreateForm(f => ({ ...f, reason: e.target.value }))} />
               </div>
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Estimated Value ($)</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Estimated Value ($)</label>
                 <input type="number" step="0.01" className="enterprise-input" placeholder="0.00" value={createForm.value || ''} onChange={e => setCreateForm(f => ({ ...f, value: parseFloat(e.target.value) || 0 }))} />
               </div>
             </div>
@@ -1009,20 +1009,20 @@ export default function ReturnsEnhancedPage() {
         <div className="enterprise-modal-overlay" onClick={() => setConfirmAction(null)}>
           <div className="enterprise-modal max-w-sm" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">
                 {confirmAction.type === 'approve' ? 'Approve RMA' : 'Reject RMA'}
               </h2>
-              <button onClick={() => setConfirmAction(null)} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"><X className="w-5 h-5" /></button>
+              <button onClick={() => setConfirmAction(null)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-[var(--text-secondary)]">
                 {confirmAction.type === 'approve'
                   ? `Are you sure you want to approve ${confirmAction.rma.rmaNumber}?`
                   : `Are you sure you want to reject ${confirmAction.rma.rmaNumber}?`}
               </p>
               {confirmAction.type === 'reject' && (
                 <div className="enterprise-form-group">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Rejection Reason</label>
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Rejection Reason</label>
                   <textarea className="enterprise-textarea" rows={3} placeholder="Why is this RMA being rejected?" value={rejectReason} onChange={e => setRejectReason(e.target.value)} />
                 </div>
               )}
@@ -1039,7 +1039,7 @@ export default function ReturnsEnhancedPage() {
               ) : (
                 <PermissionGate resource="orders" action="edit">
                   <button onClick={() => handleRejectRma(confirmAction.rma)}
-                    className="enterprise-btn bg-red-600 text-white hover:bg-red-700 border-none">
+                    className="enterprise-btn bg-[var(--nexus-error-600)] text-white hover:bg-[var(--nexus-error-700)] border-none">
                     <X className="w-4 h-4" /> Reject
                   </button>
                 </PermissionGate>

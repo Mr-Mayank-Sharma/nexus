@@ -99,7 +99,7 @@ export default function CreateOrderPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="enterprise-page-header">
         <div>
-          <h1 className="flex items-center gap-2.5"><Plus className="w-7 h-7 text-primary-500" /> Create Order</h1>
+          <h1 className="flex items-center gap-2.5"><Plus className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Create Order</h1>
           <p>Manual order entry</p>
         </div>
       </div>
@@ -108,18 +108,18 @@ export default function CreateOrderPage() {
       <div className="flex items-center gap-2">
         {['customer', 'items', 'shipping', 'review'].map((s, i) => (
           <div key={s} className="flex items-center gap-2">
-            <button onClick={() => setStep(s as any)} className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors', step === s ? 'bg-primary-600 text-white' : (['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-green-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500'))}>
+            <button onClick={() => setStep(s as any)} className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors', step === s ? 'bg-[var(--nexus-primary-600)] text-white' : (['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-[var(--nexus-success-50)]0 text-white' : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]'))}>
               {['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? <CheckCircle className="w-4 h-4" /> : i + 1}
             </button>
-            <span className={clsx('text-xs font-medium capitalize', step === s ? 'text-primary-600' : 'text-gray-400')}>{s}</span>
-            {i < 3 && <div className={clsx('w-8 h-0.5', ['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700')} />}
+            <span className={clsx('text-xs font-medium capitalize', step === s ? 'text-[var(--text-brand)]' : 'text-[var(--text-tertiary)]')}>{s}</span>
+            {i < 3 && <div className={clsx('w-8 h-0.5', ['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-[var(--nexus-success-50)]0' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)]')} />}
           </div>
         ))}
       </div>
 
       {step === 'customer' && (
         <div className="enterprise-card p-6">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2"><Users className="w-5 h-5 text-primary-500" /> Select Customer</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2"><Users className="w-5 h-5 text-[var(--nexus-primary-500)]" /> Select Customer</h2>
           <Autocomplete
             value={customerSearch}
             onChange={setCustomerSearch}
@@ -131,16 +131,16 @@ export default function CreateOrderPage() {
             minChars={0}
             className="mb-4"
           />
-          <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <div className="mt-4 p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
             <p className="text-xs text-[var(--text-tertiary)] mb-2">Or create as guest</p>
-            <button onClick={() => { setSelectedCustomer({ id: 'guest', name: 'Guest Customer', email: '' }); setStep('items') }} className="text-sm text-primary-600 hover:text-primary-700 font-medium">Continue as Guest →</button>
+            <button onClick={() => { setSelectedCustomer({ id: 'guest', name: 'Guest Customer', email: '' }); setStep('items') }} className="text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] font-medium">Continue as Guest →</button>
           </div>
         </div>
       )}
 
       {step === 'items' && (
         <div className="enterprise-card p-6">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2"><Package className="w-5 h-5 text-primary-500" /> Add Items</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2"><Package className="w-5 h-5 text-[var(--nexus-primary-500)]" /> Add Items</h2>
           <Autocomplete
             value={productSearch}
             onChange={setProductSearch}
@@ -157,15 +157,15 @@ export default function CreateOrderPage() {
               <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Selected Items ({lineItems.length})</h3>
               <div className="space-y-2">
                 {lineItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700">
+                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 border border-[var(--border-subtle)]">
                     <div className="flex-1 min-w-0"><p className="text-sm font-medium text-[var(--text-primary)]">{item.productName}</p><p className="text-xs text-[var(--text-tertiary)]">{item.sku} — ${item.price.toFixed(2)} each</p></div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => updateQty(item.id, item.qty - 1)} className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">−</button>
+                      <button onClick={() => updateQty(item.id, item.qty - 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">−</button>
                       <span className="w-8 text-center text-sm font-semibold text-[var(--text-primary)]">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, item.qty + 1)} className="w-7 h-7 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">+</button>
+                      <button onClick={() => updateQty(item.id, item.qty + 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">+</button>
                     </div>
                     <span className="text-sm font-semibold text-[var(--text-primary)] w-20 text-right">${(item.price * item.qty).toFixed(2)}</span>
-                    <button onClick={() => removeItem(item.id)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={() => removeItem(item.id)} className="p-1.5 rounded-lg hover:bg-[var(--nexus-error-50)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)]"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
               </div>
@@ -180,7 +180,7 @@ export default function CreateOrderPage() {
 
       {step === 'shipping' && (
         <div className="enterprise-card p-6">
-          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-primary-500" /> Shipping Details</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2"><ShoppingCart className="w-5 h-5 text-[var(--nexus-primary-500)]" /> Shipping Details</h2>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2"><label className="enterprise-label">Address</label><input value={shippingInfo.address} onChange={e => setShippingInfo(f => ({ ...f, address: e.target.value }))} className="enterprise-input w-full" placeholder="123 Main Street" /></div>
             <div><label className="enterprise-label">City</label><input value={shippingInfo.city} onChange={e => setShippingInfo(f => ({ ...f, city: e.target.value }))} className="enterprise-input w-full" placeholder="New York" /></div>
@@ -191,7 +191,7 @@ export default function CreateOrderPage() {
               <label className="enterprise-label">Shipping Method</label>
               <div className="flex gap-3">
                 {[{ id: 'ground', label: 'Ground', price: '$9.99', eta: '5-7 days' }, { id: 'express', label: 'Express', price: '$24.99', eta: '2-3 days' }, { id: 'overnight', label: 'Overnight', price: '$49.99', eta: '1 day' }].map(m => (
-                  <button key={m.id} onClick={() => setShippingInfo(f => ({ ...f, method: m.id }))} className={clsx('flex-1 p-3 rounded-lg border text-center transition-colors', shippingInfo.method === m.id ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300')}>
+                  <button key={m.id} onClick={() => setShippingInfo(f => ({ ...f, method: m.id }))} className={clsx('flex-1 p-3 rounded-lg border text-center transition-colors', shippingInfo.method === m.id ? 'border-[var(--nexus-primary-500)] bg-[var(--interactive-selected)]' : 'border-[var(--border-default)] hover:border-[var(--border-default)]')}>
                     <p className="text-sm font-semibold text-[var(--text-primary)]">{m.label}</p>
                     <p className="text-xs text-[var(--text-tertiary)]">{m.price} · {m.eta}</p>
                   </button>
@@ -214,23 +214,23 @@ export default function CreateOrderPage() {
             <div className="space-y-4">
               <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Customer</p><p className="text-sm font-medium text-[var(--text-primary)]">{selectedCustomer?.name}</p></div>
               <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Items ({lineItems.length})</p>{lineItems.map(item => <div key={item.id} className="flex justify-between text-sm py-1"><span>{item.productName} × {item.qty}</span><span>${(item.price * item.qty).toFixed(2)}</span></div>)}</div>
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-1">
+              <div className="border-t border-[var(--border-default)] pt-3 space-y-1">
                 <div className="flex justify-between text-sm"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
                 <div className="flex justify-between text-sm"><span>Tax (8%)</span><span>${tax.toFixed(2)}</span></div>
                 <div className="flex justify-between text-sm"><span>Shipping ({shippingInfo.method})</span><span>${shipping.toFixed(2)}</span></div>
-                <div className="flex justify-between text-lg font-bold text-[var(--text-primary)] border-t border-gray-200 dark:border-gray-700 pt-2"><span>Total</span><span>${total.toFixed(2)}</span></div>
+                <div className="flex justify-between text-lg font-bold text-[var(--text-primary)] border-t border-[var(--border-default)] pt-2"><span>Total</span><span>${total.toFixed(2)}</span></div>
               </div>
               <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Ship To</p><p className="text-sm text-[var(--text-primary)]">{shippingInfo.address}, {shippingInfo.city}, {shippingInfo.state} {shippingInfo.zip}</p></div>
               <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Notes</p><p className="text-sm text-[var(--text-secondary)]">{shippingInfo.notes || 'None'}</p></div>
             </div>
             <div className="flex items-center gap-2 mt-4">
-              <input type="checkbox" id="createAnother" checked={createAnother} onChange={e => setCreateAnother(e.target.checked)} className="rounded border-gray-300" />
+              <input type="checkbox" id="createAnother" checked={createAnother} onChange={e => setCreateAnother(e.target.checked)} className="rounded border-[var(--border-default)]" />
               <label htmlFor="createAnother" className="text-sm text-[var(--text-secondary)]">Create another order after submission</label>
             </div>
             <div className="flex justify-between mt-4">
               <button onClick={() => setStep('shipping')} className="enterprise-btn-secondary">← Back</button>
               <PermissionGate resource="orders" action="create">
-                <button onClick={handleSubmitOrder} className="enterprise-btn-primary bg-green-600 hover:bg-green-700"><CheckCircle className="w-4 h-4" /> Submit Order</button>
+                <button onClick={handleSubmitOrder} className="enterprise-btn-primary bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]"><CheckCircle className="w-4 h-4" /> Submit Order</button>
               </PermissionGate>
             </div>
           </div>

@@ -158,8 +158,8 @@ export default function AiExperimentsPage() {
             onClick={() => { setStatusFilter(s); setPage(0) }}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               statusFilter === s
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                ? 'bg-[var(--nexus-primary-600)] text-white'
+                : 'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
             }`}
           >
             {s || 'All'}
@@ -168,28 +168,28 @@ export default function AiExperimentsPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>
+        <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" /></div>
       ) : experiments.length === 0 ? (
         <div className="text-center py-12">
-          <FlaskConical className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-          <p className="text-gray-400">No experiments found</p>
+          <FlaskConical className="w-12 h-12 mx-auto text-[var(--text-tertiary)] mb-4" />
+          <p className="text-[var(--text-tertiary)]">No experiments found</p>
         </div>
       ) : (
         <div className="space-y-3">
           {experiments.map(exp => (
-            <div key={exp.id} className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700">
+            <div key={exp.id} className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)]">
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                      <FlaskConical className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <div className="w-10 h-10 rounded-lg bg-[var(--nexus-ai-100)] dark:bg-[var(--nexus-ai-900)]/30 flex items-center justify-center">
+                      <FlaskConical className="w-5 h-5 text-[var(--nexus-ai-600)] dark:text-[var(--nexus-ai-400)]" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="font-medium text-gray-900 dark:text-white">{exp.name}</p>
+                        <p className="font-medium text-[var(--text-primary)] dark:text-white">{exp.name}</p>
                         <EnterpriseStatusBadge status={exp.status} />
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
                         {getModelName(exp.modelId)} &middot; {exp.experimentType || '-'} &middot; {exp.trafficSplit != null ? `${(exp.trafficSplit * 100).toFixed(0)}%` : '-'} traffic split
                       </p>
                     </div>
@@ -198,12 +198,12 @@ export default function AiExperimentsPage() {
                     {exp.status === 'DRAFT' && (
                       <>
                         <PermissionGate resource="settings" action="edit">
-                          <button onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center gap-1">
+                          <button onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)] flex items-center gap-1">
                             <Edit className="w-3 h-3" /> Edit
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="settings" action="create">
-                          <button onClick={() => handleStart(exp.id)} className="px-3 py-1.5 text-xs bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-1">
+                          <button onClick={() => handleStart(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--nexus-warning-600)] text-white rounded-lg hover:bg-[var(--nexus-warning-700)] flex items-center gap-1">
                             <Play className="w-3 h-3" /> Start
                           </button>
                         </PermissionGate>
@@ -213,18 +213,18 @@ export default function AiExperimentsPage() {
                       <>
                         <PermissionGate resource="settings" action="edit">
                           <button onClick={() => handleComplete(exp.id)} disabled={completingId === exp.id}
-                            className="px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-1">
+                            className="px-3 py-1.5 text-xs bg-[var(--nexus-success-600)] text-white rounded-lg hover:bg-[var(--nexus-success-700)] flex items-center gap-1">
                             {completingId === exp.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                             Complete
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="settings" action="edit">
-                          <button onClick={() => handleFail(exp.id)} className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-1">
+                          <button onClick={() => handleFail(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--nexus-error-600)] text-white rounded-lg hover:bg-[var(--nexus-error-700)] flex items-center gap-1">
                             <XCircle className="w-3 h-3" /> Fail
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="settings" action="edit">
-                          <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1">
+                          <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--surface-muted)] text-white rounded-lg hover:bg-[var(--surface-muted)] flex items-center gap-1">
                             <RotateCcw className="w-3 h-3" /> Rollback
                           </button>
                         </PermissionGate>
@@ -232,7 +232,7 @@ export default function AiExperimentsPage() {
                     )}
                     {(exp.status === 'COMPLETED' || exp.status === 'ROLLED_BACK' || exp.status === 'FAILED') && (
                       <PermissionGate resource="settings" action="edit">
-                        <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-1">
+                        <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--surface-muted)] text-white rounded-lg hover:bg-[var(--surface-muted)] flex items-center gap-1">
                           <RotateCcw className="w-3 h-3" /> Rollback
                         </button>
                       </PermissionGate>
@@ -240,12 +240,12 @@ export default function AiExperimentsPage() {
                   </div>
                 </div>
                 {exp.description && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 ml-[52px]">{exp.description}</p>
+                  <p className="text-sm text-[var(--text-secondary)] mt-2 ml-[52px]">{exp.description}</p>
                 )}
-                <div className="flex gap-6 mt-3 ml-[52px] text-xs text-gray-400">
+                <div className="flex gap-6 mt-3 ml-[52px] text-xs text-[var(--text-tertiary)]">
                   {exp.championVersionId && <span>Champion: {exp.championVersionId.slice(0, 8)}</span>}
                   {exp.challengerVersionId && <span>Challenger: {exp.challengerVersionId.slice(0, 8)}</span>}
-                  {exp.winnerVersionId && <span className="text-green-600 dark:text-green-400 font-medium">Winner: {exp.winnerVersionId.slice(0, 8)}</span>}
+                  {exp.winnerVersionId && <span className="text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] font-medium">Winner: {exp.winnerVersionId.slice(0, 8)}</span>}
                   {exp.successMetric && <span>Metric: {exp.successMetric}</span>}
                   {exp.startDate && <span>Started: {new Date(exp.startDate).toLocaleDateString()}</span>}
                   {exp.endDate && <span>Ended: {new Date(exp.endDate).toLocaleDateString()}</span>}
@@ -312,52 +312,52 @@ function ExperimentFormModal({ models, experiment, saving, onSave, onClose }: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+    <div className="enterprise-modal-overlay" onClick={onClose}>
+      <div className="enterprise-modal max-w-lg" onClick={e => e.stopPropagation()}>
+        <div className="p-5 border-b border-[var(--border-default)]">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white">
             {experiment ? 'Edit Experiment' : 'New Experiment'}
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name *</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name *</label>
             <Autocomplete value={name} onChange={setName} required
               minChars={0} inputClassName="enterprise-input w-full" placeholder="e.g. Demand V2 vs V3 A/B Test" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
             <Autocomplete value={description} onChange={setDescription}
               minChars={0} inputClassName="enterprise-input w-full" placeholder="Describe the experiment hypothesis" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model *</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Model *</label>
             <Autocomplete value={modelId} onChange={setModelId} required minChars={0} suggestions={models.map(m => m.id)} inputClassName="enterprise-input w-full" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Experiment Type</label>
+            <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Experiment Type</label>
             <Autocomplete value={experimentType} onChange={setExperimentType} minChars={0} suggestions={[...EXPERIMENT_TYPES]} inputClassName="enterprise-input w-full" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Champion Version ID</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Champion Version ID</label>
               <Autocomplete value={championVersionId} onChange={setChampionVersionId}
                 minChars={0} inputClassName="enterprise-input w-full font-mono text-xs" placeholder="UUID" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Challenger Version ID</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Challenger Version ID</label>
               <Autocomplete value={challengerVersionId} onChange={setChallengerVersionId}
                 minChars={0} inputClassName="enterprise-input w-full font-mono text-xs" placeholder="UUID" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Traffic Split</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Traffic Split</label>
               <Autocomplete value={trafficSplit} onChange={setTrafficSplit}
                 minChars={0} inputClassName="enterprise-input w-full" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Success Metric</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Success Metric</label>
               <Autocomplete value={successMetric} onChange={setSuccessMetric}
                 minChars={0} inputClassName="enterprise-input w-full" placeholder="e.g. accuracy, latency" />
             </div>

@@ -287,11 +287,11 @@ export default function ReportBuilderPage() {
   const slaLargeArc = slaAngle > 180 ? 1 : 0
 
   const kpis = [
-    { label: 'Revenue this month', value: '$2.84M', icon: TrendingUp, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Revenue this month', value: '$2.84M', icon: TrendingUp, color: 'text-[var(--nexus-primary-600)]', bg: 'bg-[var(--nexus-primary-50)]' },
     { label: 'Orders', value: '12,438', icon: BarChart3, color: 'text-emerald-600', bg: 'bg-emerald-50' },
     { label: 'Avg order value', value: '$228', icon: TrendingUp, color: 'text-violet-600', bg: 'bg-violet-50' },
-    { label: 'SLA compliance', value: '96.2%', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Return rate', value: '2.1%', icon: TrendingDown, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'SLA compliance', value: '96.2%', icon: CheckCircle, color: 'text-[var(--nexus-success-600)]', bg: 'bg-[var(--nexus-success-50)]' },
+    { label: 'Return rate', value: '2.1%', icon: TrendingDown, color: 'text-[var(--nexus-warning-600)]', bg: 'bg-[var(--nexus-warning-50)]' },
   ]
 
   function renderDashboard() {
@@ -306,8 +306,8 @@ export default function ReportBuilderPage() {
                   <Icon className={clsx('w-5 h-5', kpi.color)} />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">{kpi.label}</p>
-                  <p className="text-lg font-bold text-gray-900">{kpi.value}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{kpi.label}</p>
+                  <p className="text-lg font-bold text-[var(--text-primary)]">{kpi.value}</p>
                 </div>
               </div>
             )
@@ -318,25 +318,25 @@ export default function ReportBuilderPage() {
           {widgetData.map(widget => (
             <div key={widget.id} className="enterprise-card relative">
               <div className="enterprise-card-header">
-                <h3 className="text-sm font-semibold text-gray-900">{widget.title}</h3>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)]">{widget.title}</h3>
                 <div className="relative">
                   <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-icon !w-7 !h-7" onClick={() => toggleMenu(widget.id)}>
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                   {widget.menuOpen && (
-                    <div className="absolute right-0 top-8 z-10 w-36 bg-white border border-gray-200 rounded-lg shadow-lg py-1 text-sm">
+                    <div className="absolute right-0 top-8 z-10 w-36 bg-white border border-[var(--border-default)] rounded-lg shadow-lg py-1 text-sm">
                       <PermissionGate resource="reports" action="edit">
-                        <button className="w-full px-3 py-1.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => refreshWidget(widget.id)}>
+                        <button className="w-full px-3 py-1.5 text-left text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] flex items-center gap-2" onClick={() => refreshWidget(widget.id)}>
                           <RefreshCw className="w-3.5 h-3.5" /> Refresh
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="reports" action="edit">
-                        <button className="w-full px-3 py-1.5 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2" onClick={() => { toggleMenu(widget.id); addToast({ type: 'info', title: 'Edit widget', message: widget.title }) }}>
+                        <button className="w-full px-3 py-1.5 text-left text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] flex items-center gap-2" onClick={() => { toggleMenu(widget.id); addToast({ type: 'info', title: 'Edit widget', message: widget.title }) }}>
                           <Edit3 className="w-3.5 h-3.5" /> Edit
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="reports" action="delete">
-                        <button className="w-full px-3 py-1.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-2" onClick={() => removeWidget(widget.id)}>
+                        <button className="w-full px-3 py-1.5 text-left text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)] flex items-center gap-2" onClick={() => removeWidget(widget.id)}>
                           <Trash2 className="w-3.5 h-3.5" /> Remove
                         </button>
                       </PermissionGate>
@@ -348,11 +348,11 @@ export default function ReportBuilderPage() {
                 {widget.type === 'revenue' && (
                   <div>
                     <div className="flex items-end gap-2 mb-3">
-                      <span className="text-2xl font-bold text-gray-900">$3.15M</span>
-                      <span className="text-sm text-green-600 flex items-center gap-0.5 mb-1"><TrendingUp className="w-3.5 h-3.5" />+12.3%</span>
+                      <span className="text-2xl font-bold text-[var(--text-primary)]">$3.15M</span>
+                      <span className="text-sm text-[var(--nexus-success-600)] flex items-center gap-0.5 mb-1"><TrendingUp className="w-3.5 h-3.5" />+12.3%</span>
                     </div>
                     <Sparkline data={REVENUE_DATA} />
-                    <div className="flex justify-between text-xs text-gray-400 mt-2">
+                    <div className="flex justify-between text-xs text-[var(--text-tertiary)] mt-2">
                       <span>Jan</span><span>Jun</span><span>Dec</span>
                     </div>
                   </div>
@@ -387,8 +387,8 @@ export default function ReportBuilderPage() {
                       {ORDER_STATUS.map(s => (
                         <div key={s.label} className="flex items-center gap-2 text-xs">
                           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                          <span className="text-gray-600">{s.label}</span>
-                          <span className="text-gray-900 font-medium ml-auto">{s.value}%</span>
+                          <span className="text-[var(--text-secondary)]">{s.label}</span>
+                          <span className="text-[var(--text-primary)] font-medium ml-auto">{s.value}%</span>
                         </div>
                       ))}
                     </div>
@@ -402,11 +402,11 @@ export default function ReportBuilderPage() {
                       return (
                         <div key={p.name}>
                           <div className="flex justify-between text-xs mb-0.5">
-                            <span className="text-gray-700 truncate">{p.name}</span>
-                            <span className="text-gray-900 font-medium">${(p.revenue / 1000).toFixed(0)}k</span>
+                            <span className="text-[var(--text-secondary)] truncate">{p.name}</span>
+                            <span className="text-[var(--text-primary)] font-medium">${(p.revenue / 1000).toFixed(0)}k</span>
                           </div>
-                          <div className="w-full bg-gray-100 rounded-full h-2">
-                            <div className="h-2 rounded-full bg-blue-600" style={{ width: `${pct}%` }} />
+                          <div className="w-full bg-[var(--surface-muted)] rounded-full h-2">
+                            <div className="h-2 rounded-full bg-[var(--nexus-primary-600)]" style={{ width: `${pct}%` }} />
                           </div>
                         </div>
                       )
@@ -417,20 +417,20 @@ export default function ReportBuilderPage() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b border-gray-100">
-                          <th className="text-left py-1.5 font-semibold text-gray-500">Carrier</th>
-                          <th className="text-right py-1.5 font-semibold text-gray-500">OTD %</th>
-                          <th className="text-right py-1.5 font-semibold text-gray-500">Cost</th>
-                          <th className="text-right py-1.5 font-semibold text-gray-500">Avg Del.</th>
+                        <tr className="border-b border-[var(--border-subtle)]">
+                          <th className="text-left py-1.5 font-semibold text-[var(--text-secondary)]">Carrier</th>
+                          <th className="text-right py-1.5 font-semibold text-[var(--text-secondary)]">OTD %</th>
+                          <th className="text-right py-1.5 font-semibold text-[var(--text-secondary)]">Cost</th>
+                          <th className="text-right py-1.5 font-semibold text-[var(--text-secondary)]">Avg Del.</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {CARRIER_DATA.map(c => (
                           <tr key={c.carrier}>
-                            <td className="py-1.5 font-medium text-gray-800">{c.carrier}</td>
-                            <td className="py-1.5 text-right text-green-600">{c.otd}%</td>
-                            <td className="py-1.5 text-right text-gray-700">${c.cost.toFixed(2)}</td>
-                            <td className="py-1.5 text-right text-gray-700">{c.avgDelivery}d</td>
+                            <td className="py-1.5 font-medium text-[var(--text-primary)]">{c.carrier}</td>
+                            <td className="py-1.5 text-right text-[var(--nexus-success-600)]">{c.otd}%</td>
+                            <td className="py-1.5 text-right text-[var(--text-secondary)]">${c.cost.toFixed(2)}</td>
+                            <td className="py-1.5 text-right text-[var(--text-secondary)]">{c.avgDelivery}d</td>
                           </tr>
                         ))}
                       </tbody>
@@ -455,16 +455,16 @@ export default function ReportBuilderPage() {
                     {WAREHOUSE_DATA.map(w => (
                       <div key={w.name}>
                         <div className="flex justify-between text-xs mb-0.5">
-                          <span className="text-gray-700 font-medium">{w.name}</span>
-                          <span className="text-gray-500">{w.utilization}%</span>
+                          <span className="text-[var(--text-secondary)] font-medium">{w.name}</span>
+                          <span className="text-[var(--text-secondary)]">{w.utilization}%</span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2.5">
+                        <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
                           <div
-                            className={clsx('h-2.5 rounded-full transition-all', w.utilization > 90 ? 'bg-red-500' : w.utilization > 80 ? 'bg-amber-500' : 'bg-blue-500')}
+                            className={clsx('h-2.5 rounded-full transition-all', w.utilization > 90 ? 'bg-[var(--nexus-error-50)]0' : w.utilization > 80 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-primary-50)]0')}
                             style={{ width: `${w.utilization}%` }}
                           />
                         </div>
-                        <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                        <div className="flex justify-between text-xs text-[var(--text-tertiary)] mt-0.5">
                           <span>{(w.used / 1000).toFixed(0)}k used</span>
                           <span>{(w.capacity / 1000).toFixed(0)}k capacity</span>
                         </div>
@@ -479,11 +479,11 @@ export default function ReportBuilderPage() {
           <PermissionGate resource="reports" action="create">
             <button
               onClick={() => setShowAddWidget(true)}
-              className="enterprise-card border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/30 transition-all flex items-center justify-center min-h-[200px] group cursor-pointer"
+              className="enterprise-card border-2 border-dashed border-[var(--border-default)] hover:border-[var(--nexus-primary-400)] hover:bg-[var(--nexus-primary-50)]/30 transition-all flex items-center justify-center min-h-[200px] group cursor-pointer"
             >
               <div className="text-center">
-                <Plus className="w-8 h-8 mx-auto text-gray-400 group-hover:text-blue-500 mb-2" />
-                <p className="text-sm font-medium text-gray-500 group-hover:text-blue-600">Add Widget</p>
+                <Plus className="w-8 h-8 mx-auto text-[var(--text-tertiary)] group-hover:text-[var(--nexus-primary-500)] mb-2" />
+                <p className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--nexus-primary-600)]">Add Widget</p>
               </div>
             </button>
           </PermissionGate>
@@ -496,7 +496,7 @@ export default function ReportBuilderPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Report Templates</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Report Templates</h2>
           <PermissionGate resource="reports" action="create">
             <button className="enterprise-btn enterprise-btn-primary" onClick={() => setShowCustomReport(true)}>
               <Plus className="w-4 h-4" /> Create Custom Report
@@ -508,8 +508,8 @@ export default function ReportBuilderPage() {
           {reportTemplates.map(t => (
             <div key={t.id} className="enterprise-card p-5">
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2 rounded-lg bg-blue-50">
-                  <FileBarChart className="w-5 h-5 text-blue-600" />
+                <div className="p-2 rounded-lg bg-[var(--nexus-primary-50)]">
+                  <FileBarChart className="w-5 h-5 text-[var(--nexus-primary-600)]" />
                 </div>
                 <div className="flex gap-1">
                   <PermissionGate resource="reports" action="create">
@@ -529,9 +529,9 @@ export default function ReportBuilderPage() {
                   </PermissionGate>
                 </div>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">{t.name}</h3>
-              <p className="text-xs text-gray-500 mb-3">{t.description}</p>
-              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">{t.name}</h3>
+              <p className="text-xs text-[var(--text-secondary)] mb-3">{t.description}</p>
+              <div className="flex items-center gap-1.5 text-xs text-[var(--text-tertiary)]">
                 <Clock className="w-3 h-3" />
                 Last run: {t.lastRun}
               </div>
@@ -541,7 +541,7 @@ export default function ReportBuilderPage() {
 
         <div className="enterprise-card">
           <div className="enterprise-card-header">
-            <h3 className="text-sm font-semibold text-gray-900">Recently Generated Reports</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Recently Generated Reports</h3>
             <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm" onClick={() => addToast({ type: 'info', title: 'View all reports' })}>
               <Eye className="w-3.5 h-3.5" /> View All
             </button>
@@ -560,7 +560,7 @@ export default function ReportBuilderPage() {
               <tbody>
                 {generatedReports.map(r => (
                   <tr key={r.id}>
-                    <td className="font-medium text-gray-900">{r.name}</td>
+                    <td className="font-medium text-[var(--text-primary)]">{r.name}</td>
                     <td>{r.date}</td>
                     <td>
                       <span className="enterprise-badge enterprise-badge-neutral">{r.format}</span>
@@ -597,7 +597,7 @@ export default function ReportBuilderPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Scheduled Reports</h2>
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Scheduled Reports</h2>
           <PermissionGate resource="reports" action="create">
             <button className="enterprise-btn enterprise-btn-primary" onClick={() => setShowCreateSchedule(true)}>
               <Plus className="w-4 h-4" /> Create Schedule
@@ -623,12 +623,12 @@ export default function ReportBuilderPage() {
               <tbody>
                 {scheduledReports.map(s => (
                   <tr key={s.id}>
-                    <td className="font-medium text-gray-900">{s.name}</td>
+                    <td className="font-medium text-[var(--text-primary)]">{s.name}</td>
                     <td>{s.report}</td>
                     <td>
                       <span className="enterprise-badge enterprise-badge-neutral">{s.frequency}</span>
                     </td>
-                    <td className="text-xs text-gray-500">{s.recipients}</td>
+                    <td className="text-xs text-[var(--text-secondary)]">{s.recipients}</td>
                     <td className="text-sm">{s.lastSent}</td>
                     <td className="text-sm">{s.nextSend}</td>
                     <td>
@@ -655,7 +655,7 @@ export default function ReportBuilderPage() {
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="reports" action="delete">
-                          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-red-500" onClick={() => {
+                          <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-[var(--nexus-error-500)]" onClick={() => {
                             setSchedules(prev => prev.filter(x => x.id !== s.id))
                             addToast({ type: 'info', title: 'Schedule deleted', message: s.name })
                           }}>
@@ -684,7 +684,7 @@ export default function ReportBuilderPage() {
   function renderSaved() {
     return (
       <div className="space-y-6">
-        <h2 className="text-lg font-semibold text-gray-900">Saved Report Configurations</h2>
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Saved Report Configurations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {savedReports.map(r => (
             <div key={r.id} className="enterprise-card p-5">
@@ -712,10 +712,10 @@ export default function ReportBuilderPage() {
                         </button>
                       </div>
                     ) : (
-                      <h3 className="text-sm font-semibold text-gray-900">{r.name}</h3>
+                      <h3 className="text-sm font-semibold text-[var(--text-primary)]">{r.name}</h3>
                     )}
-                    <p className="text-xs text-gray-500 mt-0.5">{r.description}</p>
-                    <p className="text-xs text-gray-400 mt-1">Modified: {r.lastModified}</p>
+                    <p className="text-xs text-[var(--text-secondary)] mt-0.5">{r.description}</p>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-1">Modified: {r.lastModified}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -728,7 +728,7 @@ export default function ReportBuilderPage() {
                     </button>
                   </PermissionGate>
                   <PermissionGate resource="reports" action="delete">
-                    <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-red-500" onClick={() => deleteSavedReport(r.id)}>
+                    <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-[var(--nexus-error-500)]" onClick={() => deleteSavedReport(r.id)}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </PermissionGate>
@@ -745,10 +745,10 @@ export default function ReportBuilderPage() {
     <div className="space-y-6" onClick={() => closeMenus()}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <BarChart3 className="w-5 h-5" /> Report Builder &amp; BI
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Custom reports, saved dashboards &amp; scheduled exports</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Custom reports, saved dashboards &amp; scheduled exports</p>
         </div>
       </div>
 
@@ -782,7 +782,7 @@ export default function ReportBuilderPage() {
         <div className="enterprise-modal-overlay" onClick={() => setShowAddWidget(false)}>
           <div className="enterprise-modal" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-base font-semibold text-gray-900">Add Widget</h2>
+              <h2 className="text-base font-semibold text-[var(--text-primary)]">Add Widget</h2>
               <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-icon" onClick={() => setShowAddWidget(false)}>
                 <X className="w-4 h-4" />
               </button>
@@ -809,7 +809,7 @@ export default function ReportBuilderPage() {
         <div className="enterprise-modal-overlay" onClick={() => setShowCustomReport(false)}>
           <div className="enterprise-modal !min-w-[560px]" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-base font-semibold text-gray-900">Create Custom Report</h2>
+              <h2 className="text-base font-semibold text-[var(--text-primary)]">Create Custom Report</h2>
               <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-icon" onClick={() => setShowCustomReport(false)}>
                 <X className="w-4 h-4" />
               </button>
@@ -824,11 +824,11 @@ export default function ReportBuilderPage() {
                 <Autocomplete value={customDateRange} onChange={setCustomDateRange} suggestions={['today', 'last7', 'last30', 'last90', 'thisYear', 'custom']} minChars={0} />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-2 block">Metrics</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)] mb-2 block">Metrics</label>
                 <div className="grid grid-cols-2 gap-2">
                   {METRICS.map(m => (
-                    <label key={m} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                      <Autocomplete value={customMetrics.includes(m) ? 'true' : 'false'} onChange={() => toggleMetric(m)} minChars={0} inputClassName="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <label key={m} className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
+                      <Autocomplete value={customMetrics.includes(m) ? 'true' : 'false'} onChange={() => toggleMetric(m)} minChars={0} inputClassName="rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-blue-500" />
                       {m}
                     </label>
                   ))}
@@ -862,7 +862,7 @@ export default function ReportBuilderPage() {
         <div className="enterprise-modal-overlay" onClick={() => setShowCreateSchedule(false)}>
           <div className="enterprise-modal" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-base font-semibold text-gray-900">Create Schedule</h2>
+              <h2 className="text-base font-semibold text-[var(--text-primary)]">Create Schedule</h2>
               <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-icon" onClick={() => setShowCreateSchedule(false)}>
                 <X className="w-4 h-4" />
               </button>

@@ -1,310 +1,329 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertTriangle, Plus, Search, Sliders, Store, Truck, Shield,
-  Gauge, Save, ToggleLeft, ToggleRight, Info, Trash2, Edit,
+  Gauge, Plus, Sliders, Shield, Trash2, Edit, ToggleLeft, ToggleRight, RefreshCw,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
-import * as productsApi from '../api/products'
+import atpApi from '../api/atp'
+import type { NxATPRule, NxATPSnapshot } from '../api/atp'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import Autocomplete from '../components/common/Autocomplete'
-import type { Tab } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
+import type { Tab } from '../components/enterprise'
 
-type AtpTab = 'thresholds' | 'safety-stock' | 'store-pickup' | 'shipping'
-
-interface ThresholdRule {
-  id: string
-  name: string
-  category: string
-  warehouseId?: string
-  minThreshold: number
-  maxThreshold: number
-  enabled: boolean
-  priority: number
-}
-
-interface SafetyStockRule {
-  id: string
-  productId: string
-  productName: string
-  sku: string
-  safetyStock: number
-  leadTimeDays: number
-  reorderPoint: number
-  enabled: boolean
-}
-
-interface StorePickupConfig {
-  id: string
-  storeId: string
-  storeName: string
-  enabled: boolean
-  bufferDays: number
-  maxQuantity: number
-  cutoffTime: string
-}
-
-interface ShippingRule {
-  id: string
-  name: string
-  carrier: string
-  service: string
-  atpLimit: number
-  priority: number
-  enabled: boolean
-}
+type AtpTab = 'rules' | 'snapshots'
 
 export default function ATPRulesPage() {
   const { addToast } = useToast()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<AtpTab>('thresholds')
+  const [activeTab, setActiveTab] = useState<AtpTab>('rules')
   const [searchTerm, setSearchTerm] = useState('')
+  const [showCreateRule, setShowCreateRule] = useState(false)
+  const [editingRule, setEditingRule] = useState<NxATPRule | null>(null)
 
-  const { data: thresholds = [], isLoading: loadingT } = useQuery({
-    queryKey: ['atp-thresholds'],
+  // Form state for create/edit
+  const [formRule, setFormRule] = useState<Partial<NxATPRule>>({
+    ruleName: '',
+    ruleType: 'PERCENTAGE',
+    priority: 10,
+    enabled: true,
+    formula: '',
+    leadTimeDays: 0,
+    safetyStock: 0,
+    reorderPoint: 0,
+    reorderQuantity: 0,
+    description: '',
+  })
+
+  // ─── Queries ────────────────────────────────────────────────────────
+
+  const { data: rules = [], isLoading: loadingRules, refetch: refetchRules } = useQuery({
+    queryKey: ['atp-rules'],
     queryFn: async () => {
-      const mock: ThresholdRule[] = [
-        { id: 't1', name: 'Electronics Threshold', category: 'Electronics', minThreshold: 10, maxThreshold: 500, enabled: true, priority: 1 },
-        { id: 't2', name: 'Clothing Threshold', category: 'Clothing', minThreshold: 20, maxThreshold: 1000, enabled: true, priority: 2 },
-        { id: 't3', name: 'Food & Grocery', category: 'Groceries', minThreshold: 50, maxThreshold: 2000, enabled: false, priority: 3 },
-        { id: 't4', name: 'Home Goods', category: 'Home', minThreshold: 5, maxThreshold: 300, enabled: true, priority: 4 },
-        { id: 't5', name: 'Premium Items', category: 'Premium', minThreshold: 2, maxThreshold: 50, enabled: true, priority: 5 },
-      ]
-      return mock
+      const res = await atpApi.getRules()
+      return res.data as NxATPRule[]
     },
   })
 
-  const { data: safetyStock = [], isLoading: loadingS } = useQuery({
-    queryKey: ['atp-safety-stock'],
+  const { data: snapshots = [], isLoading: loadingSnapshots, refetch: refetchSnapshots } = useQuery({
+    queryKey: ['atp-snapshots'],
     queryFn: async () => {
-      const res = await productsApi.getProducts()
-      const d = res.data
-      const list = Array.isArray(d) ? d : (d?.content ?? [])
-      return list.slice(0, 20).map((p: any, i: number) => ({
-        id: `ss-${i}`,
-        productId: p.id,
-        productName: p.name || `Product ${i}`,
-        sku: p.sku || `SKU${i}`,
-        safetyStock: Math.floor(Math.random() * 100) + 10,
-        leadTimeDays: Math.floor(Math.random() * 14) + 1,
-        reorderPoint: Math.floor(Math.random() * 50) + 5,
-        enabled: Math.random() > 0.2,
-      }) as SafetyStockRule)
+      const res = await atpApi.getSnapshots()
+      return res.data as NxATPSnapshot[]
     },
-    enabled: activeTab === 'safety-stock',
+    enabled: activeTab === 'snapshots',
   })
 
-  const { data: storeConfigs = [], isLoading: loadingSt } = useQuery({
-    queryKey: ['atp-store-pickup'],
-    queryFn: async () => {
-      const mock: StorePickupConfig[] = [
-        { id: 'sp1', storeId: 'store-1', storeName: 'Downtown Store', enabled: true, bufferDays: 1, maxQuantity: 10, cutoffTime: '14:00' },
-        { id: 'sp2', storeId: 'store-2', storeName: 'Mall Location', enabled: true, bufferDays: 2, maxQuantity: 5, cutoffTime: '12:00' },
-        { id: 'sp3', storeId: 'store-3', storeName: 'Airport Kiosk', enabled: false, bufferDays: 0, maxQuantity: 3, cutoffTime: '10:00' },
-        { id: 'sp4', storeId: 'store-4', storeName: 'Suburban Store', enabled: true, bufferDays: 1, maxQuantity: 8, cutoffTime: '16:00' },
-      ]
-      return mock
+  // ─── Mutations ──────────────────────────────────────────────────────
+
+  const createMutation = useMutation({
+    mutationFn: (data: NxATPRule) => atpApi.createRule(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['atp-rules'] })
+      addToast({ type: 'success', title: 'Rule created' })
+      setShowCreateRule(false)
+      resetForm()
     },
-    enabled: activeTab === 'store-pickup',
+    onError: (err: any) => addToast({ type: 'error', title: 'Failed to create rule', message: err.message }),
   })
 
-  const { data: shippingRules = [], isLoading: loadingSh } = useQuery({
-    queryKey: ['atp-shipping-rules'],
-    queryFn: async () => {
-      const mock: ShippingRule[] = [
-        { id: 'sh1', name: 'Standard Ground', carrier: 'UPS', service: 'Ground', atpLimit: 100, priority: 1, enabled: true },
-        { id: 'sh2', name: 'Express Air', carrier: 'FedEx', service: 'Express', atpLimit: 50, priority: 2, enabled: true },
-        { id: 'sh3', name: 'Next Day', carrier: 'UPS', service: 'Next Day Air', atpLimit: 20, priority: 3, enabled: true },
-        { id: 'sh4', name: 'Economy', carrier: 'USPS', service: 'Parcel Select', atpLimit: 200, priority: 4, enabled: false },
-        { id: 'sh5', name: 'Same Day', carrier: 'OnTrac', service: 'Same Day', atpLimit: 10, priority: 5, enabled: true },
-      ]
-      return mock
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: NxATPRule }) => atpApi.updateRule(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['atp-rules'] })
+      addToast({ type: 'success', title: 'Rule updated' })
+      setEditingRule(null)
+      resetForm()
     },
-    enabled: activeTab === 'shipping',
+    onError: (err: any) => addToast({ type: 'error', title: 'Failed to update rule', message: err.message }),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => atpApi.deleteRule(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['atp-rules'] })
+      addToast({ type: 'success', title: 'Rule deleted' })
+    },
+    onError: (err: any) => addToast({ type: 'error', title: 'Failed to delete rule', message: err.message }),
   })
 
   const toggleMutation = useMutation({
-    mutationFn: async ({ type, id }: { type: AtpTab; id: string }) => {
-      await new Promise(r => setTimeout(r, 300))
-      return { type, id }
-    },
+    mutationFn: (rule: NxATPRule) => atpApi.updateRule(rule.id!, { ...rule, enabled: !rule.enabled }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['atp-thresholds'] })
-      queryClient.invalidateQueries({ queryKey: ['atp-safety-stock'] })
-      queryClient.invalidateQueries({ queryKey: ['atp-store-pickup'] })
-      queryClient.invalidateQueries({ queryKey: ['atp-shipping-rules'] })
-      addToast({ type: 'success', title: 'Rule updated' })
+      queryClient.invalidateQueries({ queryKey: ['atp-rules'] })
+      addToast({ type: 'success', title: 'Rule toggled' })
     },
+    onError: (err: any) => addToast({ type: 'error', title: 'Failed to toggle rule', message: err.message }),
   })
 
+  // ─── Helpers ────────────────────────────────────────────────────────
+
+  function resetForm() {
+    setFormRule({
+      ruleName: '',
+      ruleType: 'PERCENTAGE',
+      priority: 10,
+      enabled: true,
+      formula: '',
+      leadTimeDays: 0,
+      safetyStock: 0,
+      reorderPoint: 0,
+      reorderQuantity: 0,
+      description: '',
+    })
+  }
+
+  function startEdit(rule: NxATPRule) {
+    setFormRule({ ...rule })
+    setEditingRule(rule)
+    setShowCreateRule(true)
+  }
+
+  function handleSubmit() {
+    if (!formRule.ruleName) {
+      addToast({ type: 'error', title: 'Rule name is required' })
+      return
+    }
+    if (editingRule?.id) {
+      updateMutation.mutate({ id: editingRule.id, data: formRule as NxATPRule })
+    } else {
+      createMutation.mutate(formRule as NxATPRule)
+    }
+  }
+
+  // ─── Filtering ──────────────────────────────────────────────────────
+
+  const filteredRules = rules.filter(r =>
+    !searchTerm || r.ruleName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.description?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const filteredSnapshots = snapshots.filter(s =>
+    !searchTerm || s.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    s.nodeName?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const activeRulesCount = rules.filter(r => r.enabled).length
+
   const tabs: Tab[] = [
-    { id: 'thresholds', label: 'Thresholds', badge: thresholds.filter(t => t.enabled).length },
-    { id: 'safety-stock', label: 'Safety Stock', badge: safetyStock.filter(s => s.enabled).length },
-    { id: 'store-pickup', label: 'Store Pickup' },
-    { id: 'shipping', label: 'Shipping' },
+    { id: 'rules', label: 'ATP Rules', badge: activeRulesCount },
+    { id: 'snapshots', label: 'Snapshots', badge: snapshots.length },
   ]
 
-  const filteredThresholds = thresholds.filter(t =>
-    !searchTerm || t.name.toLowerCase().includes(searchTerm.toLowerCase()) || t.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 
-  const filteredSafetyStock = safetyStock.filter(s =>
-    !searchTerm || s.productName.toLowerCase().includes(searchTerm.toLowerCase()) || s.sku.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const getRuleTypeBadge = (type: string) => {
+    switch (type) {
+      case 'PERCENTAGE': return 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-800)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]'
+      case 'FIXED': return 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-800)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]'
+      case 'DYNAMIC': return 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-800)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-400)]'
+      default: return 'bg-[var(--surface-muted)] text-[var(--text-primary)] bg-[var(--surface-sunken)]/30 dark:text-[var(--text-tertiary)]'
+    }
+  }
 
-  const filteredStores = storeConfigs.filter(s =>
-    !searchTerm || s.storeName.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const filteredShipping = shippingRules.filter(s =>
-    !searchTerm || s.name.toLowerCase().includes(searchTerm.toLowerCase()) || s.carrier.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // ─── Render ─────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5"><Gauge className="w-7 h-7 text-primary-500" /> ATP Rules</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Available to Promise — stock allocation rules</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
+            <Gauge className="w-7 h-7 text-[var(--nexus-primary-500)]" /> ATP Rules
+          </h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Available to Promise — stock calculation rules and snapshots</p>
         </div>
         <div className="flex items-center gap-2">
-          <EnterpriseKPICard title="Active Rules" value={thresholds.filter(t => t.enabled).length + safetyStock.filter(s => s.enabled).length + shippingRules.filter(s => s.enabled).length + storeConfigs.filter(s => s.enabled).length} icon={<Gauge className="w-4 h-4" />} color="primary" trend={null} />
+          <EnterpriseKPICard title="Active Rules" value={activeRulesCount} icon={<Gauge className="w-4 h-4" />} color="primary" trend={null} />
+          <EnterpriseKPICard title="Snapshots" value={snapshots.length} icon={<Shield className="w-4 h-4" />} color="info" trend={null} />
         </div>
       </div>
 
       <EnterpriseTabs tabs={tabs} activeTab={activeTab} onChange={t => setActiveTab(t as AtpTab)} />
 
       <div className="flex items-center gap-3">
-        <Autocomplete value={searchTerm} onChange={setSearchTerm} placeholder={activeTab === 'thresholds' ? 'Search threshold rules...' : activeTab === 'safety-stock' ? 'Search products...' : activeTab === 'store-pickup' ? 'Search stores...' : 'Search shipping rules...'} minChars={0} className="flex-1 max-w-md" />
+        <Autocomplete
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder={activeTab === 'rules' ? 'Search rules...' : 'Search by SKU or node...'}
+          minChars={0}
+          className="flex-1 max-w-md"
+        />
         <PermissionGate resource="inventory" action="create">
-          <button className="enterprise-btn-primary text-sm flex items-center gap-1.5 px-4 py-2.5">
+          <button
+            onClick={() => { resetForm(); setEditingRule(null); setShowCreateRule(true) }}
+            className="enterprise-btn-primary text-sm flex items-center gap-1.5 px-4 py-2.5"
+          >
             <Plus className="w-4 h-4" /> Add Rule
           </button>
         </PermissionGate>
+        <button
+          onClick={() => activeTab === 'rules' ? refetchRules() : refetchSnapshots()}
+          className="enterprise-btn-secondary px-3 py-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Thresholds Tab */}
-      {activeTab === 'thresholds' && (
-        <>
-          {loadingT ? (
-            <div className="enterprise-card flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" /></div>
-          ) : (
-            <div className="space-y-3">
-              {filteredThresholds.map(rule => (
-                <div key={rule.id} className="enterprise-card p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Sliders className="w-5 h-5 text-primary-500" />
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{rule.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Category: {rule.category} · Priority {rule.priority}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Min·Max</p>
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{rule.minThreshold}·{rule.maxThreshold}</p>
-                      </div>
-                      <PermissionGate resource="inventory" action="edit">
-                        <button onClick={() => toggleMutation.mutate({ type: 'thresholds', id: rule.id })} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
-                          {rule.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
-                        </button>
-                      </PermissionGate>
-                      <PermissionGate resource="inventory" action="edit">
-                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4" /></button>
-                      </PermissionGate>
-                      <PermissionGate resource="inventory" action="delete">
-                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                      </PermissionGate>
-                    </div>
-                  </div>
-                </div>
-              ))}
+      {/* ─── Create/Edit Rule Form ───────────────────────────────────── */}
+      {showCreateRule && (
+        <div className="enterprise-card p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            {editingRule ? 'Edit ATP Rule' : 'Create ATP Rule'}
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Rule Name *</label>
+              <input type="text" value={formRule.ruleName || ''} onChange={e => setFormRule(p => ({ ...p, ruleName: e.target.value }))}
+                className="enterprise-input w-full" placeholder="e.g. Electronics ATP Rule" />
             </div>
-          )}
-        </>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Rule Type</label>
+              <select value={formRule.ruleType || 'PERCENTAGE'} onChange={e => setFormRule(p => ({ ...p, ruleType: e.target.value as any }))}
+                className="enterprise-input w-full">
+                <option value="PERCENTAGE">Percentage</option>
+                <option value="FIXED">Fixed</option>
+                <option value="DYNAMIC">Dynamic</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Priority</label>
+              <input type="number" value={formRule.priority || 10} onChange={e => setFormRule(p => ({ ...p, priority: parseInt(e.target.value) || 10 }))}
+                className="enterprise-input w-full" min={1} max={100} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Safety Stock</label>
+              <input type="number" value={formRule.safetyStock || 0} onChange={e => setFormRule(p => ({ ...p, safetyStock: parseInt(e.target.value) || 0 }))}
+                className="enterprise-input w-full" min={0} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Reorder Point</label>
+              <input type="number" value={formRule.reorderPoint || 0} onChange={e => setFormRule(p => ({ ...p, reorderPoint: parseInt(e.target.value) || 0 }))}
+                className="enterprise-input w-full" min={0} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Lead Time (days)</label>
+              <input type="number" value={formRule.leadTimeDays || 0} onChange={e => setFormRule(p => ({ ...p, leadTimeDays: parseInt(e.target.value) || 0 }))}
+                className="enterprise-input w-full" min={0} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Formula / Notes</label>
+              <input type="text" value={formRule.description || ''} onChange={e => setFormRule(p => ({ ...p, description: e.target.value }))}
+                className="enterprise-input w-full" placeholder="Description or formula" />
+            </div>
+            <div className="flex items-end gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={formRule.enabled ?? true} onChange={e => setFormRule(p => ({ ...p, enabled: e.target.checked }))}
+                  className="rounded border-[var(--border-default)] text-[var(--text-brand)] focus:ring-[var(--nexus-primary-500)]" />
+                <span className="text-sm text-[var(--text-secondary)]">Enabled</span>
+              </label>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-2">
+            <button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}
+              className="enterprise-btn-primary px-4 py-2 text-sm">
+              {editingRule ? 'Update Rule' : 'Create Rule'}
+            </button>
+            <button onClick={() => { setShowCreateRule(false); setEditingRule(null); resetForm() }}
+              className="enterprise-btn-secondary px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
 
-      {/* Safety Stock Tab */}
-      {activeTab === 'safety-stock' && (
+      {/* ─── Rules Tab ───────────────────────────────────────────────── */}
+      {activeTab === 'rules' && (
         <>
-          {loadingS ? (
-            <div className="enterprise-card flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" /></div>
-          ) : filteredSafetyStock.length === 0 ? (
-            <div className="enterprise-card p-12 text-center"><Shield className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" /><p className="font-medium text-gray-500 dark:text-gray-400">No safety stock rules</p></div>
-          ) : (
-            <div className="enterprise-card overflow-hidden">
-              <table className="enterprise-table w-full">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SKU</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Safety Stock</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Lead Time</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Reorder Point</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Active</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {filteredSafetyStock.map(item => (
-                    <tr key={item.id} className="enterprise-table-row">
-                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{item.productName}</td>
-                      <td className="px-4 py-3 text-xs font-mono text-gray-500 dark:text-gray-400">{item.sku}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{item.safetyStock}</span>
-                      </td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">{item.leadTimeDays}d</td>
-                      <td className="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">{item.reorderPoint}</td>
-                      <td className="px-4 py-3 text-center">
-                        <PermissionGate resource="inventory" action="edit">
-                          <button onClick={() => toggleMutation.mutate({ type: 'safety-stock', id: item.id })}>
-                            {item.enabled ? <ToggleRight className="w-5 h-5 text-primary-600 mx-auto" /> : <ToggleLeft className="w-5 h-5 text-gray-400 mx-auto" />}
-                          </button>
-                        </PermissionGate>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <PermissionGate resource="inventory" action="edit">
-                          <button className="enterprise-btn-secondary text-xs px-2 py-1"><Edit className="w-3 h-3" /></button>
-                        </PermissionGate>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {loadingRules ? (
+            <div className="enterprise-card flex items-center justify-center p-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
             </div>
-          )}
-        </>
-      )}
-
-      {/* Store Pickup Tab */}
-      {activeTab === 'store-pickup' && (
-        <>
-          {loadingSt ? (
-            <div className="enterprise-card flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" /></div>
+          ) : filteredRules.length === 0 ? (
+            <div className="enterprise-card p-12 text-center">
+              <Sliders className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
+              <p className="font-medium text-[var(--text-secondary)]">No ATP rules found</p>
+            </div>
           ) : (
             <div className="space-y-3">
-              {filteredStores.map(store => (
-                <div key={store.id} className="enterprise-card p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+              {filteredRules.map(rule => (
+                <div key={rule.id} className="enterprise-card p-4 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/30 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center', store.enabled ? 'bg-green-50 dark:bg-green-900/20 text-green-600' : 'bg-gray-50 dark:bg-gray-800 text-gray-400')}>
-                        <Store className="w-5 h-5" />
-                      </div>
+                      <Sliders className="w-5 h-5 text-[var(--nexus-primary-500)]" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{store.storeName}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Buffer: {store.bufferDays}d · Max: {store.maxQuantity} units · Cutoff: {store.cutoffTime}
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{rule.ruleName}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium', getRuleTypeBadge(rule.ruleType))}>
+                            {rule.ruleType}
+                          </span>
+                          {' · '}Priority {rule.priority}
+                          {rule.description ? ` · ${rule.description}` : ''}
                         </p>
                       </div>
                     </div>
-                    <PermissionGate resource="inventory" action="edit">
-                      <button onClick={() => toggleMutation.mutate({ type: 'store-pickup', id: store.id })}>
-                        {store.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
-                      </button>
-                    </PermissionGate>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right text-xs text-[var(--text-secondary)]">
+                        <div>Safety: {rule.safetyStock || 0} · Reorder: {rule.reorderPoint || 0}</div>
+                        <div>Lead: {rule.leadTimeDays || 0}d</div>
+                      </div>
+                      <PermissionGate resource="inventory" action="edit">
+                        <button onClick={() => toggleMutation.mutate(rule)} className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded transition-colors">
+                          {rule.enabled ? <ToggleRight className="w-6 h-6 text-[var(--text-brand)]" /> : <ToggleLeft className="w-6 h-6 text-[var(--text-tertiary)]" />}
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="inventory" action="edit">
+                        <button onClick={() => startEdit(rule)} className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-500)] transition-colors">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </PermissionGate>
+                      <PermissionGate resource="inventory" action="delete">
+                        <button onClick={() => rule.id && deleteMutation.mutate(rule.id)}
+                          className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </PermissionGate>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -313,42 +332,57 @@ export default function ATPRulesPage() {
         </>
       )}
 
-      {/* Shipping Rules Tab */}
-      {activeTab === 'shipping' && (
+      {/* ─── Snapshots Tab ───────────────────────────────────────────── */}
+      {activeTab === 'snapshots' && (
         <>
-          {loadingSh ? (
-            <div className="enterprise-card flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" /></div>
+          {loadingSnapshots ? (
+            <div className="enterprise-card flex items-center justify-center p-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
+            </div>
+          ) : filteredSnapshots.length === 0 ? (
+            <div className="enterprise-card p-12 text-center">
+              <Shield className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
+              <p className="font-medium text-[var(--text-secondary)]">No ATP snapshots found</p>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {filteredShipping.map(rule => (
-                <div key={rule.id} className="enterprise-card p-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-600">
-                        <Truck className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{rule.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{rule.carrier} · {rule.service} · Priority {rule.priority}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">ATP Limit</p>
-                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{rule.atpLimit}</p>
-                      </div>
-                      <PermissionGate resource="inventory" action="edit">
-                        <button onClick={() => toggleMutation.mutate({ type: 'shipping', id: rule.id })}>
-                          {rule.enabled ? <ToggleRight className="w-6 h-6 text-primary-600" /> : <ToggleLeft className="w-6 h-6 text-gray-400" />}
-                        </button>
-                      </PermissionGate>
-                      <PermissionGate resource="inventory" action="edit">
-                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-400 hover:text-blue-500 transition-colors"><Edit className="w-4 h-4" /></button>
-                      </PermissionGate>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="enterprise-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="enterprise-table w-full">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Node</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">SKU</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Physical</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Reserved</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Allocated</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">In Transit</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">ATP</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Calculated</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {filteredSnapshots.map(snapshot => (
+                      <tr key={snapshot.id} className="enterprise-table-row">
+                        <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{snapshot.nodeName || snapshot.nodeId}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-[var(--text-secondary)]">{snapshot.sku}</td>
+                        <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{snapshot.physicalStock}</td>
+                        <td className="px-4 py-3 text-center text-sm text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]">{snapshot.reservedStock}</td>
+                        <td className="px-4 py-3 text-center text-sm text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]">{snapshot.allocatedStock}</td>
+                        <td className="px-4 py-3 text-center text-sm text-[var(--nexus-ai-600)] dark:text-[var(--nexus-ai-400)]">{snapshot.inTransitStock}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold',
+                            snapshot.availableToPromise > 0 ? 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-800)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]' : 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-800)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]')}>
+                            {snapshot.availableToPromise}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center text-xs text-[var(--text-secondary)]">
+                          {snapshot.lastCalculatedAt ? formatDate(snapshot.lastCalculatedAt) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </>

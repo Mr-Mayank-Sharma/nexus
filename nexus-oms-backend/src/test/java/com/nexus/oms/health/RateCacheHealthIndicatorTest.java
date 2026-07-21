@@ -45,20 +45,20 @@ class RateCacheHealthIndicatorTest {
     }
 
     @Test
-    void health_whenRedisReturnsUnexpected_returnsDown() {
+    void health_whenRedisReturnsUnexpected_returnsUnknown() {
         when(connection.ping()).thenReturn("UNKNOWN");
 
         Health health = indicator.health();
 
-        assertEquals(Status.DOWN, health.getStatus());
+        assertEquals(Status.UNKNOWN, health.getStatus());
     }
 
     @Test
-    void health_whenRedisThrows_returnsDown() {
+    void health_whenRedisThrows_returnsUnknown() {
         when(connection.ping()).thenThrow(new RuntimeException("Redis unavailable"));
 
         Health health = indicator.health();
 
-        assertEquals(Status.DOWN, health.getStatus());
+        assertEquals(Status.UNKNOWN, health.getStatus());
     }
 }

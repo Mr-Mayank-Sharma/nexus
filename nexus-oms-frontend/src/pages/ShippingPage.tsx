@@ -171,7 +171,7 @@ export default function ShippingPage() {
                         <div className="flex items-center justify-end gap-1">
                           {s.status === 'PENDING' && (
                             <PermissionGate resource="logistics" action="edit">
-                              <button className="enterprise-btn-ghost p-1.5 text-blue-500" title="Mark Shipped"
+                              <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-primary-500)]" title="Mark Shipped"
                                 onClick={e => { e.stopPropagation(); markShippedMutation.mutate(s.id); }}>
                                 <Truck className="w-4 h-4" />
                               </button>
@@ -179,7 +179,7 @@ export default function ShippingPage() {
                           )}
                           {(s.status === 'SHIPPED' || s.status === 'IN_TRANSIT') && (
                             <PermissionGate resource="logistics" action="edit">
-                              <button className="enterprise-btn-ghost p-1.5 text-green-500" title="Mark Delivered"
+                              <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-success-500)]" title="Mark Delivered"
                                 onClick={e => { e.stopPropagation(); markDeliveredMutation.mutate(s.id); }}>
                                 <CheckCircle className="w-4 h-4" />
                               </button>
@@ -193,7 +193,7 @@ export default function ShippingPage() {
                           )}
                           {s.status !== 'DELIVERED' && s.status !== 'VOIDED' && (
                             <PermissionGate resource="logistics" action="delete">
-                              <button className="enterprise-btn-ghost p-1.5 text-red-500" title="Void"
+                              <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]" title="Void"
                                 onClick={e => { e.stopPropagation(); if (confirm('Void this shipment?')) voidMutation.mutate(s.id); }}>
                                 <XCircle className="w-4 h-4" />
                               </button>
@@ -263,7 +263,7 @@ export default function ShippingPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+        <div className="enterprise-modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="enterprise-card p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Create Shipment</h2>
             <div className="space-y-4">

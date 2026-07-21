@@ -95,13 +95,13 @@ const capacityUtil = (wh: Warehouse) => {
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub?: string }) {
   return (
     <div className="card p-4 flex items-center gap-4">
-      <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 flex-shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)] flex items-center justify-center text-[var(--text-brand)] flex-shrink-0">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-500 font-medium">{label}</p>
-        <p className="text-xl font-bold text-gray-900 mt-0.5">{value}</p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+        <p className="text-xs text-[var(--text-secondary)] font-medium">{label}</p>
+        <p className="text-xl font-bold text-[var(--text-primary)] mt-0.5">{value}</p>
+        {sub && <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{sub}</p>}
       </div>
     </div>
   )
@@ -424,17 +424,17 @@ export default function WarehousePage() {
   const avgUtil = totalCapacity > 0 ? Math.round((totalUtilized / totalCapacity) * 100) : 0
 
   const binStatusColor: Record<string, string> = {
-    EMPTY: 'bg-green-100 text-green-700',
-    OCCUPIED: 'bg-blue-100 text-blue-700',
-    RESERVED: 'bg-yellow-100 text-yellow-700',
-    BLOCKED: 'bg-red-100 text-red-700',
+    EMPTY: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]',
+    OCCUPIED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
+    RESERVED: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)]',
+    BLOCKED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]',
   }
 
   const equipStatusColor: Record<string, string> = {
-    AVAILABLE: 'bg-green-100 text-green-700',
-    IN_USE: 'bg-blue-100 text-blue-700',
-    MAINTENANCE: 'bg-yellow-100 text-yellow-700',
-    OUT_OF_SERVICE: 'bg-red-100 text-red-700',
+    AVAILABLE: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]',
+    IN_USE: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
+    MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)]',
+    OUT_OF_SERVICE: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]',
   }
 
   function renderDetailPanel(wh: Warehouse) {
@@ -444,14 +444,14 @@ export default function WarehousePage() {
     if (detailLoading) {
       return (
         <div className="flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
         </div>
       )
     }
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 border-b border-gray-200">
+        <div className="flex items-center gap-3 border-b border-[var(--border-default)]">
           {(['zones', 'bins', 'staff', 'equipment'] as const).map((tab) => (
             <button
               key={tab}
@@ -459,8 +459,8 @@ export default function WarehousePage() {
               className={clsx(
                 'px-3 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize',
                 detailTab === tab
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700',
+                  ? 'border-[var(--nexus-primary-600)] text-[var(--text-brand)]'
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]',
               )}
             >
               {tab}
@@ -471,7 +471,7 @@ export default function WarehousePage() {
         {detailTab === 'zones' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">{zones.length} zones</p>
+              <p className="text-sm text-[var(--text-secondary)]">{zones.length} zones</p>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={openAddZone} className="btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Zone
@@ -479,12 +479,12 @@ export default function WarehousePage() {
               </PermissionGate>
             </div>
             {zones.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center">No zones configured</p>
+              <p className="text-sm text-[var(--text-tertiary)] py-6 text-center">No zones configured</p>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <div className="overflow-x-auto rounded-lg border border-[var(--border-default)]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <tr className="bg-[var(--surface-sunken)] text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                       <th className="px-4 py-2.5">Code</th>
                       <th className="px-4 py-2.5">Name</th>
                       <th className="px-4 py-2.5">Type</th>
@@ -495,24 +495,24 @@ export default function WarehousePage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {zones.map((z) => (
-                      <tr key={z.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2.5 font-medium text-gray-900">{z.code}</td>
-                        <td className="px-4 py-2.5 text-gray-700">{z.name}</td>
+                      <tr key={z.id} className="hover:bg-[var(--surface-sunken)]">
+                        <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{z.code}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)]">{z.name}</td>
                         <td className="px-4 py-2.5">
                           <StatusBadge status={z.type} size="sm" />
                         </td>
-                        <td className="px-4 py-2.5 text-gray-700">{(z.capacity || 0).toLocaleString()}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)]">{(z.capacity || 0).toLocaleString()}</td>
                         <td className="px-4 py-2.5">
                           <div className="flex items-center gap-2">
-                            <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className="w-20 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-primary-500 rounded-full"
+                                className="h-full bg-[var(--nexus-primary-50)]0 rounded-full"
                                 style={{
                                   width: `${(z.capacity || 0) > 0 ? Math.min(Math.round(((z.utilizedCapacity || 0) / (z.capacity || 0)) * 100), 100) : 0}%`,
                                 }}
                               />
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-[var(--text-secondary)]">
                               {(z.capacity || 0) > 0 ? Math.round(((z.utilizedCapacity || 0) / (z.capacity || 0)) * 100) : 0}%
                             </span>
                           </div>
@@ -532,9 +532,9 @@ export default function WarehousePage() {
         {detailTab === 'bins' && (
           <div className="space-y-3">
             <div className="flex items-center gap-4">
-              <p className="text-sm text-gray-500">{bins.length} bins</p>
-              <span className="text-xs text-green-600 font-medium">{emptyBins} empty</span>
-              <span className="text-xs text-blue-600 font-medium">{occupiedBins} occupied</span>
+              <p className="text-sm text-[var(--text-secondary)]">{bins.length} bins</p>
+              <span className="text-xs text-[var(--nexus-success-600)] font-medium">{emptyBins} empty</span>
+              <span className="text-xs text-[var(--nexus-primary-600)] font-medium">{occupiedBins} occupied</span>
               <div className="flex-1" />
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={openAddBin} className="btn-primary text-xs">
@@ -543,12 +543,12 @@ export default function WarehousePage() {
               </PermissionGate>
             </div>
             {bins.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center">No bins configured</p>
+              <p className="text-sm text-[var(--text-tertiary)] py-6 text-center">No bins configured</p>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <div className="overflow-x-auto rounded-lg border border-[var(--border-default)]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <tr className="bg-[var(--surface-sunken)] text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                       <th className="px-4 py-2.5">Code</th>
                       <th className="px-4 py-2.5">Location</th>
                       <th className="px-4 py-2.5">Type</th>
@@ -559,13 +559,13 @@ export default function WarehousePage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {bins.map((b) => (
-                      <tr key={b.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2.5 font-medium text-gray-900">{b.code}</td>
-                        <td className="px-4 py-2.5 text-gray-600 text-xs">
+                      <tr key={b.id} className="hover:bg-[var(--surface-sunken)]">
+                        <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{b.code}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs">
                           {[b.aisle, b.rack, b.shelf, b.position].filter(Boolean).join(' / ') || '-'}
                         </td>
-                        <td className="px-4 py-2.5 text-gray-700">{b.type}</td>
-                        <td className="px-4 py-2.5 text-gray-700">{b.maxWeight} lbs</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)]">{b.type}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)]">{b.maxWeight} lbs</td>
                         <td className="px-4 py-2.5">
                           <span
                             className={clsx(
@@ -582,7 +582,7 @@ export default function WarehousePage() {
                               <PermissionGate resource="warehouse" action="edit">
                                 <button
                                   onClick={() => handleReserveBin(b.id)}
-                                  className="p-1 hover:bg-yellow-50 rounded text-gray-500 hover:text-yellow-600"
+                                  className="p-1 hover:bg-[var(--nexus-warning-50)] rounded text-[var(--text-secondary)] hover:text-[var(--nexus-warning-600)]"
                                   title="Reserve"
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -593,7 +593,7 @@ export default function WarehousePage() {
                               <PermissionGate resource="warehouse" action="edit">
                                 <button
                                   onClick={() => handleReleaseBin(b.id)}
-                                  className="p-1 hover:bg-blue-50 rounded text-gray-500 hover:text-blue-600"
+                                  className="p-1 hover:bg-[var(--nexus-primary-50)] rounded text-[var(--text-secondary)] hover:text-[var(--nexus-primary-600)]"
                                   title="Release"
                                 >
                                   <X className="w-3.5 h-3.5" />
@@ -614,7 +614,7 @@ export default function WarehousePage() {
         {detailTab === 'staff' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">{staff.length} staff</p>
+              <p className="text-sm text-[var(--text-secondary)]">{staff.length} staff</p>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={openAddStaff} className="btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Staff
@@ -622,12 +622,12 @@ export default function WarehousePage() {
               </PermissionGate>
             </div>
             {staff.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center">No staff assigned</p>
+              <p className="text-sm text-[var(--text-tertiary)] py-6 text-center">No staff assigned</p>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <div className="overflow-x-auto rounded-lg border border-[var(--border-default)]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <tr className="bg-[var(--surface-sunken)] text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                       <th className="px-4 py-2.5">Name</th>
                       <th className="px-4 py-2.5">Email</th>
                       <th className="px-4 py-2.5">Role</th>
@@ -638,15 +638,15 @@ export default function WarehousePage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {staff.map((s) => (
-                      <tr key={s.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2.5 font-medium text-gray-900">{s.name}</td>
-                        <td className="px-4 py-2.5 text-gray-500 text-xs">{s.email}</td>
+                      <tr key={s.id} className="hover:bg-[var(--surface-sunken)]">
+                        <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{s.name}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs">{s.email}</td>
                         <td className="px-4 py-2.5">
                           <StatusBadge status={s.role} size="sm" />
                         </td>
-                        <td className="px-4 py-2.5 text-gray-700">{s.shift}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)]">{s.shift}</td>
                         <td className="px-4 py-2.5">
-                          <span className="font-medium text-gray-900">{s.pickCount}</span>
+                          <span className="font-medium text-[var(--text-primary)]">{s.pickCount}</span>
                         </td>
                         <td className="px-4 py-2.5">
                           <StatusBadge status={s.isActive ? 'ACTIVE' : 'INACTIVE'} size="sm" />
@@ -663,7 +663,7 @@ export default function WarehousePage() {
         {detailTab === 'equipment' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">{equipment.length} items</p>
+              <p className="text-sm text-[var(--text-secondary)]">{equipment.length} items</p>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={openAddEquipment} className="btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Equipment
@@ -671,12 +671,12 @@ export default function WarehousePage() {
               </PermissionGate>
             </div>
             {equipment.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center">No equipment registered</p>
+              <p className="text-sm text-[var(--text-tertiary)] py-6 text-center">No equipment registered</p>
             ) : (
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <div className="overflow-x-auto rounded-lg border border-[var(--border-default)]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <tr className="bg-[var(--surface-sunken)] text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                       <th className="px-4 py-2.5">Name</th>
                       <th className="px-4 py-2.5">Type</th>
                       <th className="px-4 py-2.5">Model</th>
@@ -688,11 +688,11 @@ export default function WarehousePage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {equipment.map((e) => (
-                      <tr key={e.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2.5 font-medium text-gray-900">{e.name}</td>
-                        <td className="px-4 py-2.5 text-gray-700">{e.type.replace(/_/g, ' ')}</td>
-                        <td className="px-4 py-2.5 text-gray-600 text-xs">{e.model}</td>
-                        <td className="px-4 py-2.5 text-gray-500 text-xs font-mono">{e.serialNumber}</td>
+                      <tr key={e.id} className="hover:bg-[var(--surface-sunken)]">
+                        <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{e.name}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)]">{e.type.replace(/_/g, ' ')}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs">{e.model}</td>
+                        <td className="px-4 py-2.5 text-[var(--text-secondary)] text-xs font-mono">{e.serialNumber}</td>
                         <td className="px-4 py-2.5">
                           <span
                             className={clsx(
@@ -703,7 +703,7 @@ export default function WarehousePage() {
                             {e.status.replace(/_/g, ' ')}
                           </span>
                         </td>
-                        <td className="px-4 py-2.5 text-xs text-gray-500">
+                        <td className="px-4 py-2.5 text-xs text-[var(--text-secondary)]">
                           {e.nextMaintenanceDate
                             ? new Date(e.nextMaintenanceDate).toLocaleDateString()
                             : '-'}
@@ -738,8 +738,8 @@ export default function WarehousePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Building2 className="w-7 h-7 text-primary-500" /> Warehouses</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Building2 className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Warehouses</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
             {warehouses.length} facilities &middot; {avgUtil}% avg. capacity
           </p>
         </div>
@@ -775,12 +775,12 @@ export default function WarehousePage() {
 
       {loading ? (
         <div className="flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 card">
-          <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">
+          <Building2 className="w-10 h-10 text-[var(--text-tertiary)] mx-auto mb-3" />
+          <p className="text-[var(--text-secondary)] text-sm">
             {search ? 'No warehouses match your search' : 'No warehouses configured. Add your first warehouse to get started.'}
           </p>
         </div>
@@ -788,7 +788,7 @@ export default function WarehousePage() {
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                 <th className="px-4 py-3 w-8" />
                 <th className="px-4 py-3">Code</th>
                 <th className="px-4 py-3">Name</th>
@@ -804,42 +804,42 @@ export default function WarehousePage() {
                 const isExpanded = expandedId === wh.id
                 const util = capacityUtil(wh)
                 return (
-                  <tr key={wh.id} className={clsx('group', isExpanded && 'bg-primary-50/30')}>
+                  <tr key={wh.id} className={clsx('group', isExpanded && 'bg-[var(--nexus-primary-50)]/30')}>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : wh.id)}
-                        className="p-0.5 hover:bg-gray-100 rounded"
+                        className="p-0.5 hover:bg-[var(--surface-muted)] rounded"
                       >
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                          <ChevronDown className="w-4 h-4 text-[var(--text-secondary)]" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                          <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" />
                         )}
                       </button>
                     </td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{wh.code}</td>
-                    <td className="px-4 py-3 text-gray-700">{wh.name}</td>
+                    <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{wh.code}</td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">{wh.name}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={wh.isActive ? 'ACTIVE' : 'INACTIVE'} size="sm" />
                     </td>
-                    <td className="px-4 py-3 text-gray-700">{(wh.capacity ?? 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">{(wh.capacity ?? 0).toLocaleString()}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="w-16 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                           <div
-                            className={clsx('h-full rounded-full', util > 80 ? 'bg-yellow-500' : 'bg-green-500')}
+                            className={clsx('h-full rounded-full', util > 80 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-success-50)]0')}
                             style={{ width: `${Math.min(util, 100)}%` }}
                           />
                         </div>
-                        <span className="text-xs text-gray-500">{util}%</span>
+                        <span className="text-xs text-[var(--text-secondary)]">{util}%</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{wh.managerName || '-'}</td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">{wh.managerName || '-'}</td>
                     <td className="px-4 py-3">
                       <PermissionGate resource="warehouse" action="delete">
                         <button
                           onClick={() => handleDeleteWarehouse(wh.id)}
-                          className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="p-1.5 hover:bg-[var(--nexus-error-50)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)] opacity-0 group-hover:opacity-100 transition-opacity"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -861,27 +861,27 @@ export default function WarehousePage() {
       )}
 
       {showWhModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Add Warehouse</h2>
-              <button onClick={() => setShowWhModal(false)} className="p-1 hover:bg-gray-100 rounded">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Warehouse</h2>
+              <button onClick={() => setShowWhModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
                   <input value={whForm.name} onChange={(e) => setWhForm({ ...whForm, name: e.target.value })} className="input w-full" placeholder="Main Warehouse" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Code</label>
                   <input value={whForm.code} onChange={(e) => setWhForm({ ...whForm, code: e.target.value })} className="input w-full" placeholder="WH-001" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Address</label>
                 <input value={whForm.street} onChange={(e) => setWhForm({ ...whForm, street: e.target.value })} className="input w-full mb-2" placeholder="Street" />
                 <div className="grid grid-cols-3 gap-2">
                   <input value={whForm.city} onChange={(e) => setWhForm({ ...whForm, city: e.target.value })} className="input" placeholder="City" />
@@ -891,11 +891,11 @@ export default function WarehousePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (sq ft)</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Capacity (sq ft)</label>
                   <input type="number" value={whForm.capacity} onChange={(e) => setWhForm({ ...whForm, capacity: Number(e.target.value) })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Status</label>
                   <select value={whForm.status} onChange={(e) => setWhForm({ ...whForm, status: e.target.value })} className="input w-full">
                     <option value="ACTIVE">Active</option>
                     <option value="INACTIVE">Inactive</option>
@@ -905,26 +905,26 @@ export default function WarehousePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Manager</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Manager</label>
                   <input value={whForm.managerName} onChange={(e) => setWhForm({ ...whForm, managerName: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email</label>
                   <input value={whForm.contactEmail} onChange={(e) => setWhForm({ ...whForm, contactEmail: e.target.value })} className="input w-full" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Phone</label>
                   <input value={whForm.contactPhone} onChange={(e) => setWhForm({ ...whForm, contactPhone: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Timezone</label>
                   <input value={whForm.timezone} onChange={(e) => setWhForm({ ...whForm, timezone: e.target.value })} className="input w-full" />
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowWhModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={handleSaveWarehouse} disabled={saving} className="btn-primary text-sm">
@@ -938,27 +938,27 @@ export default function WarehousePage() {
       )}
 
       {showZoneModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Add Zone</h2>
-              <button onClick={() => setShowZoneModal(false)} className="p-1 hover:bg-gray-100 rounded">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Zone</h2>
+              <button onClick={() => setShowZoneModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
                   <input value={zoneForm.name} onChange={(e) => setZoneForm({ ...zoneForm, name: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Code</label>
                   <input value={zoneForm.code} onChange={(e) => setZoneForm({ ...zoneForm, code: e.target.value })} className="input w-full" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
                 <select value={zoneForm.type} onChange={(e) => setZoneForm({ ...zoneForm, type: e.target.value })} className="input w-full">
                   <option value="RECEIVING">Receiving</option>
                   <option value="PICKING">Picking</option>
@@ -968,11 +968,11 @@ export default function WarehousePage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Capacity</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Capacity</label>
                 <input type="number" value={zoneForm.capacity} onChange={(e) => setZoneForm({ ...zoneForm, capacity: Number(e.target.value) })} className="input w-full" />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowZoneModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={handleSaveZone} disabled={saving} className="btn-primary text-sm">
@@ -986,22 +986,22 @@ export default function WarehousePage() {
       )}
 
       {showBinModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Add Bin</h2>
-              <button onClick={() => setShowBinModal(false)} className="p-1 hover:bg-gray-100 rounded">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Bin</h2>
+              <button onClick={() => setShowBinModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Code</label>
                   <input value={binForm.code} onChange={(e) => setBinForm({ ...binForm, code: e.target.value })} className="input w-full" placeholder="A-01-01" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
                   <select value={binForm.type} onChange={(e) => setBinForm({ ...binForm, type: e.target.value })} className="input w-full">
                     <option value="STANDARD">Standard</option>
                     <option value="BULK">Bulk</option>
@@ -1011,7 +1011,7 @@ export default function WarehousePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Zone</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Zone</label>
                 <select value={binForm.zoneId} onChange={(e) => setBinForm({ ...binForm, zoneId: e.target.value })} className="input w-full">
                   <option value="">No zone</option>
                   {zones.map((z) => (
@@ -1021,42 +1021,42 @@ export default function WarehousePage() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Aisle</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Aisle</label>
                   <input value={binForm.aisle} onChange={(e) => setBinForm({ ...binForm, aisle: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Rack</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Rack</label>
                   <input value={binForm.rack} onChange={(e) => setBinForm({ ...binForm, rack: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Shelf</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Shelf</label>
                   <input value={binForm.shelf} onChange={(e) => setBinForm({ ...binForm, shelf: e.target.value })} className="input w-full" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Position</label>
                 <input value={binForm.position} onChange={(e) => setBinForm({ ...binForm, position: e.target.value })} className="input w-full" />
               </div>
               <div className="grid grid-cols-4 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Width</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Width</label>
                   <input type="number" value={binForm.width} onChange={(e) => setBinForm({ ...binForm, width: Number(e.target.value) })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Height</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Height</label>
                   <input type="number" value={binForm.height} onChange={(e) => setBinForm({ ...binForm, height: Number(e.target.value) })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Depth</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Depth</label>
                   <input type="number" value={binForm.depth} onChange={(e) => setBinForm({ ...binForm, depth: Number(e.target.value) })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Wt</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Max Wt</label>
                   <input type="number" value={binForm.maxWeight} onChange={(e) => setBinForm({ ...binForm, maxWeight: Number(e.target.value) })} className="input w-full" />
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowBinModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={handleSaveBin} disabled={saving} className="btn-primary text-sm">
@@ -1070,26 +1070,26 @@ export default function WarehousePage() {
       )}
 
       {showStaffModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Add Staff</h2>
-              <button onClick={() => setShowStaffModal(false)} className="p-1 hover:bg-gray-100 rounded">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Staff</h2>
+              <button onClick={() => setShowStaffModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
                 <input value={staffForm.name} onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })} className="input w-full" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email</label>
                 <input value={staffForm.email} onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })} className="input w-full" type="email" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Role</label>
                   <select value={staffForm.role} onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value })} className="input w-full">
                     <option value="PICKER">Picker</option>
                     <option value="PACKER">Packer</option>
@@ -1099,7 +1099,7 @@ export default function WarehousePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Shift</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Shift</label>
                   <select value={staffForm.shift} onChange={(e) => setStaffForm({ ...staffForm, shift: e.target.value })} className="input w-full">
                     <option value="MORNING">Morning</option>
                     <option value="AFTERNOON">Afternoon</option>
@@ -1108,7 +1108,7 @@ export default function WarehousePage() {
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowStaffModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={handleSaveStaff} disabled={saving} className="btn-primary text-sm">
@@ -1122,22 +1122,22 @@ export default function WarehousePage() {
       )}
 
       {showEquipModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Add Equipment</h2>
-              <button onClick={() => setShowEquipModal(false)} className="p-1 hover:bg-gray-100 rounded">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Equipment</h2>
+              <button onClick={() => setShowEquipModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Name</label>
                   <input value={equipForm.name} onChange={(e) => setEquipForm({ ...equipForm, name: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Type</label>
                   <select value={equipForm.type} onChange={(e) => setEquipForm({ ...equipForm, type: e.target.value })} className="input w-full">
                     <option value="FORKLIFT">Forklift</option>
                     <option value="PALLET_JACK">Pallet Jack</option>
@@ -1150,16 +1150,16 @@ export default function WarehousePage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Model</label>
                   <input value={equipForm.model} onChange={(e) => setEquipForm({ ...equipForm, model: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Serial Number</label>
                   <input value={equipForm.serialNumber} onChange={(e) => setEquipForm({ ...equipForm, serialNumber: e.target.value })} className="input w-full" />
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowEquipModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={handleSaveEquipment} disabled={saving} className="btn-primary text-sm">

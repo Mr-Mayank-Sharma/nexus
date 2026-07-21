@@ -2,87 +2,507 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  transition: background-color 0.3s, color 0.3s;
-}
-
 @layer base {
+  /* ══════════════════════════════════════════════════════════════
+     NEXUS DESIGN SYSTEM — Design Tokens
+     Inspired by Linear, Stripe, Manhattan Active, SAP Fiori
+     ══════════════════════════════════════════════════════════════ */
+
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    /* ── Brand Palette ── */
+    --nexus-primary-50:  #EFF6FF;
+    --nexus-primary-100: #DBEAFE;
+    --nexus-primary-200: #BFDBFE;
+    --nexus-primary-300: #93C5FD;
+    --nexus-primary-400: #60A5FA;
+    --nexus-primary-500: #3B82F6;
+    --nexus-primary-600: #2563EB;
+    --nexus-primary-700: #1D4ED8;
+    --nexus-primary-800: #1E40AF;
+    --nexus-primary-900: #1E3A8A;
+
+    /* ── Neutral Palette (Slate) ── */
+    --nexus-gray-25:  #FCFCFD;
+    --nexus-gray-50:  #F8FAFC;
+    --nexus-gray-100: #F1F5F9;
+    --nexus-gray-200: #E2E8F0;
+    --nexus-gray-300: #CBD5E1;
+    --nexus-gray-400: #94A3B8;
+    --nexus-gray-500: #64748B;
+    --nexus-gray-600: #475569;
+    --nexus-gray-700: #334155;
+    --nexus-gray-800: #1E293B;
+    --nexus-gray-900: #0F172A;
+    --nexus-gray-950: #020617;
+
+    /* ── Semantic Colors ── */
+    --nexus-success-50:  #ECFDF5;
+    --nexus-success-100: #D1FAE5;
+    --nexus-success-500: #10B981;
+    --nexus-success-600: #059669;
+    --nexus-success-700: #047857;
+
+    --nexus-warning-50:  #FFFBEB;
+    --nexus-warning-100: #FEF3C7;
+    --nexus-warning-500: #F59E0B;
+    --nexus-warning-600: #D97706;
+    --nexus-warning-700: #B45309;
+
+    --nexus-error-50:  #FEF2F2;
+    --nexus-error-100: #FEE2E2;
+    --nexus-error-500: #EF4444;
+    --nexus-error-600: #DC2626;
+    --nexus-error-700: #B91C1C;
+
+    --nexus-info-50:  #ECFEFF;
+    --nexus-info-100: #CFFAFE;
+    --nexus-info-500: #06B6D4;
+    --nexus-info-600: #0891B2;
+    --nexus-info-700: #0E7490;
+
+    --nexus-ai-50:  #F5F3FF;
+    --nexus-ai-100: #EDE9FE;
+    --nexus-ai-500: #8B5CF6;
+    --nexus-ai-600: #7C3AED;
+    --nexus-ai-700: #6D28D9;
+
+    /* ── Surface Colors (Light Mode) ── */
+    --surface-base:     #FFFFFF;
+    --surface-raised:   #FFFFFF;
+    --surface-sunken:   #F8FAFC;
+    --surface-overlay:  #FFFFFF;
+    --surface-muted:    #F1F5F9;
+    --surface-inset:    #F8FAFC;
+    --surface-brand:    #EFF6FF;
+
+    /* ── Text Colors ── */
+    --text-primary:    #0F172A;
+    --text-secondary:  #475569;
+    --text-tertiary:   #94A3B8;
+    --text-inverse:    #FFFFFF;
+    --text-brand:      #2563EB;
+    --text-on-brand:   #FFFFFF;
+    --text-success:    #059669;
+    --text-warning:    #D97706;
+    --text-error:      #DC2626;
+    --text-info:       #0891B2;
+    --text-ai:         #7C3AED;
+
+    /* ── Border Colors ── */
+    --border-default:   #E2E8F0;
+    --border-subtle:    #F1F5F9;
+    --border-strong:    #CBD5E1;
+    --border-focus:     #2563EB;
+    --border-brand:     #BFDBFE;
+    --border-success:   #D1FAE5;
+    --border-warning:   #FEF3C7;
+    --border-error:     #FEE2E2;
+    --border-info:      #CFFAFE;
+    --border-ai:        #EDE9FE;
+
+    /* ── Interactive States ── */
+    --interactive-hover:      #F1F5F9;
+    --interactive-pressed:    #E2E8F0;
+    --interactive-selected:   #EFF6FF;
+    --interactive-disabled:   #F8FAFC;
+
+    /* ── Elevation (Light) ── */
+    --elevation-0: none;
+    --elevation-1: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --elevation-2: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --elevation-3: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --elevation-4: 0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+    --elevation-5: 0 20px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
+    --elevation-ring: 0 0 0 3px rgba(37, 99, 235, 0.12);
+
+    /* ── Spacing Scale ── */
+    --space-0:  0;
+    --space-px: 1px;
+    --space-0_5: 2px;
+    --space-1:  4px;
+    --space-1_5: 6px;
+    --space-2:  8px;
+    --space-2_5: 10px;
+    --space-3:  12px;
+    --space-3_5: 14px;
+    --space-4:  16px;
+    --space-5:  20px;
+    --space-6:  24px;
+    --space-7:  28px;
+    --space-8:  32px;
+    --space-9:  36px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-14: 56px;
+    --space-16: 64px;
+    --space-20: 80px;
+
+    /* ── Border Radius ── */
+    --radius-xs:   2px;
+    --radius-sm:   4px;
+    --radius-md:   6px;
+    --radius-lg:   8px;
+    --radius-xl:   10px;
+    --radius-2xl:  12px;
+    --radius-3xl:  16px;
+    --radius-full: 9999px;
+
+    /* ── Typography ── */
+    --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --font-mono:  'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+    --text-xs:   0.75rem;     /* 12px */
+    --text-sm:   0.8125rem;   /* 13px */
+    --text-base: 0.875rem;    /* 14px */
+    --text-lg:   1rem;        /* 16px */
+    --text-xl:   1.125rem;    /* 18px */
+    --text-2xl:  1.25rem;     /* 20px */
+    --text-3xl:  1.5rem;      /* 24px */
+    --text-4xl:  1.875rem;    /* 30px */
+
+    --weight-regular:  400;
+    --weight-medium:   500;
+    --weight-semibold: 600;
+    --weight-bold:     700;
+
+    --leading-none:    1;
+    --leading-tight:   1.25;
+    --leading-snug:    1.375;
+    --leading-normal:  1.5;
+    --leading-relaxed: 1.625;
+
+    --tracking-tight:  -0.025em;
+    --tracking-normal: 0;
+    --tracking-wide:   0.025em;
+
+    /* ── Transitions ── */
+    --duration-instant: 0ms;
+    --duration-fast:    120ms;
+    --duration-normal:  200ms;
+    --duration-slow:    300ms;
+    --duration-slower:  500ms;
+
+    --ease-default: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in:      cubic-bezier(0.4, 0, 1, 1);
+    --ease-out:     cubic-bezier(0, 0, 0.2, 1);
+    --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* ── Layout ── */
+    --sidebar-width:           256px;
+    --sidebar-collapsed-width: 56px;
+    --topbar-height:           56px;
+    --ai-panel-width:          400px;
+    --content-max-width:       1440px;
+
+    /* ── Z-Index Scale ── */
+    --z-base:     0;
+    --z-raised:   10;
+    --z-dropdown: 100;
+    --z-sticky:   200;
+    --z-overlay:  300;
+    --z-modal:    400;
+    --z-toast:    500;
+    --z-tooltip:  600;
+
+    /* ── Legacy Aliases (backward compat for enterprise.css / components) ── */
+    --bg-primary:        var(--surface-base);
+    --bg-secondary:      var(--surface-sunken);
+    --bg-tertiary:       var(--surface-muted);
+    --bg-card:           var(--surface-base);
+    --bg-elevated:       var(--surface-raised);
+    --bg-modal-overlay:  rgba(15, 23, 42, 0.48);
+    --border-color:      var(--border-default);
+    --border-color-hover: var(--border-strong);
+    --border-color-focus: var(--border-focus);
+    --color-primary-50:  var(--nexus-primary-50);
+    --color-primary-100: var(--nexus-primary-100);
+    --color-primary-200: var(--nexus-primary-200);
+    --color-primary-300: var(--nexus-primary-300);
+    --color-primary-400: var(--nexus-primary-400);
+    --color-primary-500: var(--nexus-primary-500);
+    --color-primary-600: var(--nexus-primary-600);
+    --color-primary-700: var(--nexus-primary-700);
+    --color-primary-800: var(--nexus-primary-800);
+    --color-primary-900: var(--nexus-primary-900);
+    --color-success:       var(--nexus-success-500);
+    --color-success-bg:    var(--nexus-success-50);
+    --color-success-text:  var(--nexus-success-700);
+    --color-success-border: var(--nexus-success-100);
+    --color-warning:       var(--nexus-warning-500);
+    --color-warning-bg:    var(--nexus-warning-50);
+    --color-warning-text:  var(--nexus-warning-700);
+    --color-warning-border: var(--nexus-warning-100);
+    --color-error:         var(--nexus-error-500);
+    --color-error-bg:      var(--nexus-error-50);
+    --color-error-text:    var(--nexus-error-700);
+    --color-error-border:  var(--nexus-error-100);
+    --color-info:          var(--nexus-info-500);
+    --color-info-bg:       var(--nexus-info-50);
+    --color-info-text:     var(--nexus-info-700);
+    --color-info-border:   var(--nexus-info-100);
+    --color-ai:            var(--nexus-ai-500);
+    --color-ai-bg:         var(--nexus-ai-50);
+    --color-ai-text:       var(--nexus-ai-700);
+    --color-ai-border:     var(--nexus-ai-100);
+    --color-ai-800:        var(--nexus-ai-700);
   }
 
+  /* ══════════════════════════════════════════════════════════════
+     DARK MODE TOKENS
+     ══════════════════════════════════════════════════════════════ */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 217.2 32.6% 12%;
-    --card-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 20%;
-    --input: 217.2 32.6% 20%;
+    /* ── Surface Colors (Dark Mode) ── */
+    --surface-base:     #111827;
+    --surface-raised:   #1E293B;
+    --surface-sunken:   #0B1120;
+    --surface-overlay:  #1E293B;
+    --surface-muted:    #1E293B;
+    --surface-inset:    #0F172A;
+    --surface-brand:    rgba(37, 99, 235, 0.12);
+
+    /* ── Text Colors (Dark) ── */
+    --text-primary:    #F1F5F9;
+    --text-secondary:  #94A3B8;
+    --text-tertiary:   #64748B;
+    --text-inverse:    #0F172A;
+    --text-brand:      #60A5FA;
+    --text-on-brand:   #FFFFFF;
+    --text-success:    #34D399;
+    --text-warning:    #FBBF24;
+    --text-error:      #F87171;
+    --text-info:       #22D3EE;
+    --text-ai:         #A78BFA;
+
+    /* ── Border Colors (Dark) ── */
+    --border-default:   #1E293B;
+    --border-subtle:    #1E293B;
+    --border-strong:    #334155;
+    --border-focus:     #3B82F6;
+    --border-brand:     rgba(59, 130, 246, 0.3);
+    --border-success:   rgba(16, 185, 129, 0.25);
+    --border-warning:   rgba(245, 158, 11, 0.25);
+    --border-error:     rgba(239, 68, 68, 0.25);
+    --border-info:      rgba(6, 182, 212, 0.25);
+    --border-ai:        rgba(139, 92, 246, 0.25);
+
+    /* ── Interactive States (Dark) ── */
+    --interactive-hover:      rgba(148, 163, 184, 0.08);
+    --interactive-pressed:    rgba(148, 163, 184, 0.12);
+    --interactive-selected:   rgba(37, 99, 235, 0.12);
+    --interactive-disabled:   rgba(148, 163, 184, 0.04);
+
+    /* ── Elevation (Dark — heavier shadows) ── */
+    --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --elevation-2: 0 1px 3px rgba(0, 0, 0, 0.24), 0 1px 2px rgba(0, 0, 0, 0.16);
+    --elevation-3: 0 4px 6px -1px rgba(0, 0, 0, 0.28), 0 2px 4px -2px rgba(0, 0, 0, 0.16);
+    --elevation-4: 0 10px 15px -3px rgba(0, 0, 0, 0.32), 0 4px 6px -4px rgba(0, 0, 0, 0.16);
+    --elevation-5: 0 20px 25px -5px rgba(0, 0, 0, 0.36), 0 8px 10px -6px rgba(0, 0, 0, 0.16);
+    --elevation-ring: 0 0 0 3px rgba(59, 130, 246, 0.24);
+
+    /* ── Semantic Colors (Dark) ── */
+    --nexus-success-50:  rgba(16, 185, 129, 0.1);
+    --nexus-success-100: rgba(16, 185, 129, 0.15);
+    --nexus-warning-50:  rgba(245, 158, 11, 0.1);
+    --nexus-warning-100: rgba(245, 158, 11, 0.15);
+    --nexus-error-50:    rgba(239, 68, 68, 0.1);
+    --nexus-error-100:   rgba(239, 68, 68, 0.15);
+    --nexus-info-50:     rgba(6, 182, 212, 0.1);
+    --nexus-info-100:    rgba(6, 182, 212, 0.15);
+    --nexus-ai-50:       rgba(139, 92, 246, 0.1);
+    --nexus-ai-100:      rgba(139, 92, 246, 0.15);
+
+    /* ── Legacy Aliases (Dark) ── */
+    --bg-primary:        var(--surface-base);
+    --bg-secondary:      var(--surface-sunken);
+    --bg-tertiary:       var(--surface-muted);
+    --bg-card:           var(--surface-base);
+    --bg-elevated:       var(--surface-raised);
+    --bg-modal-overlay:  rgba(0, 0, 0, 0.6);
+    --border-color:      var(--border-default);
+    --border-color-hover: var(--border-strong);
+    --border-color-focus: var(--border-focus);
   }
 
+  /* ── Global Reset ── */
   * {
-    @apply border-gray-200 dark:border-gray-700;
+    border-color: var(--border-default);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
-    @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
+    color: var(--text-primary);
+    background-color: var(--surface-sunken);
+    transition: background-color var(--duration-slow) var(--ease-default),
+                color var(--duration-slow) var(--ease-default);
+  }
+
+  /* ── Focus Ring ── */
+  *:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* ── Selection ── */
+  ::selection {
+    background: var(--nexus-primary-200);
+    color: var(--nexus-primary-900);
+  }
+  .dark ::selection {
+    background: rgba(59, 130, 246, 0.3);
+    color: var(--text-primary);
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: var(--radius-full);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
   }
 }
 
 @layer components {
+  /* ══════════════════════════════════════════════════════════════
+     BASE COMPONENT CLASSES
+     ══════════════════════════════════════════════════════════════ */
+
+  /* ── Sidebar Navigation ── */
   .sidebar-link {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150;
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium;
+    transition: all var(--duration-fast) var(--ease-default);
+    color: var(--text-secondary);
   }
-
+  .sidebar-link:hover {
+    color: var(--text-primary);
+    background: var(--interactive-hover);
+  }
   .sidebar-link-active {
-    @apply bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300;
+    color: var(--text-brand) !important;
+    background: var(--interactive-selected) !important;
+    font-weight: var(--weight-semibold);
   }
-
   .sidebar-link-inactive {
-    @apply text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800;
+    color: var(--text-secondary);
+  }
+  .sidebar-link-inactive:hover {
+    color: var(--text-primary);
+    background: var(--interactive-hover);
   }
 
+  /* ── Card ── */
   .card {
-    @apply bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm;
+    background: var(--surface-base);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--elevation-1);
+    transition: box-shadow var(--duration-fast) var(--ease-default),
+                border-color var(--duration-fast) var(--ease-default);
   }
-
+  .card:hover {
+    box-shadow: var(--elevation-2);
+  }
   .card-header {
-    @apply px-6 py-4 border-b border-gray-100 dark:border-gray-700;
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--border-subtle);
   }
-
   .card-body {
-    @apply p-6;
+    padding: var(--space-6);
   }
 
+  /* ── Button ── */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium;
+    height: 36px;
+    padding: 0 var(--space-4);
+    transition: all var(--duration-fast) var(--ease-default);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    line-height: 1;
   }
-
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-primary-700 px-4 py-2;
+    background: var(--nexus-primary-600);
+    color: var(--text-on-brand);
+    border: none;
+    box-shadow: var(--elevation-1);
   }
-
+  .btn-primary:hover {
+    background: var(--nexus-primary-700);
+    box-shadow: var(--elevation-2);
+  }
   .btn-secondary {
-    @apply btn bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2;
+    background: var(--surface-base);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
   }
-
+  .btn-secondary:hover {
+    background: var(--interactive-hover);
+    border-color: var(--border-strong);
+  }
   .btn-ghost {
-    @apply btn text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1;
+    background: transparent;
+    color: var(--text-secondary);
+    border: none;
+  }
+  .btn-ghost:hover {
+    background: var(--interactive-hover);
+    color: var(--text-primary);
   }
 
+  /* ── Input ── */
   .input {
-    @apply flex h-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:border-primary-500 disabled:cursor-not-allowed disabled:opacity-50;
-    color: inherit;
+    @apply flex w-full rounded-lg text-sm;
+    height: 36px;
+    padding: 0 var(--space-3);
+    background: var(--surface-base);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    transition: border-color var(--duration-fast) var(--ease-default),
+                box-shadow var(--duration-fast) var(--ease-default);
+  }
+  .input::placeholder {
+    color: var(--text-tertiary);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: var(--elevation-ring);
+  }
+  .input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 
+  /* ── Badge ── */
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-full text-xs font-medium;
+    padding: 2px 8px;
+    line-height: 1.4;
   }
 }
 
@@ -97,7 +517,7 @@ html {
 
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
+    scrollbar-color: var(--border-strong) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
@@ -107,10 +527,136 @@ html {
     background: transparent;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 3px;
+    background: var(--border-strong);
+    border-radius: var(--radius-full);
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
+  }
+
+  /* ── Transition utilities ── */
+  .transition-nexus {
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+  .transition-nexus-slow {
+    transition: all var(--duration-normal) var(--ease-default);
+  }
+
+  .transition-colors {
+    transition: color var(--duration-fast) var(--ease-default),
+                background-color var(--duration-fast) var(--ease-default),
+                border-color var(--duration-fast) var(--ease-default);
+  }
+  .transition-opacity {
+    transition: opacity var(--duration-fast) var(--ease-default);
+  }
+  .transition-transform {
+    transition: transform var(--duration-fast) var(--ease-default);
+  }
+  .transition-shadow {
+    transition: box-shadow var(--duration-fast) var(--ease-default);
+  }
+  .transition-all-fast {
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+  .transition-all-normal {
+    transition: all var(--duration-normal) var(--ease-default);
+  }
+  .transition-all-slow {
+    transition: all var(--duration-slow) var(--ease-default);
+  }
+
+  .duration-instant { transition-duration: var(--duration-instant); }
+  .duration-fast { transition-duration: var(--duration-fast); }
+  .duration-normal { transition-duration: var(--duration-normal); }
+  .duration-slow { transition-duration: var(--duration-slow); }
+  .duration-slower { transition-duration: var(--duration-slower); }
+
+  .ease-default { transition-timing-function: var(--ease-default); }
+  .ease-in { transition-timing-function: var(--ease-in); }
+  .ease-out { transition-timing-function: var(--ease-out); }
+  .ease-in-out { transition-timing-function: var(--ease-in-out); }
+  .ease-spring { transition-timing-function: var(--ease-spring); }
+
+  /* ── Animation utilities ── */
+  .animate-nexus-fade-in {
+    animation: nexusFadeIn var(--duration-normal) var(--ease-default) both;
+  }
+  .animate-nexus-slide-up {
+    animation: nexusSlideUp var(--duration-normal) var(--ease-default) both;
+  }
+  .animate-nexus-slide-left {
+    animation: nexusSlideLeft var(--duration-normal) var(--ease-default) both;
+  }
+  .animate-nexus-slide-right {
+    animation: nexusSlideRight var(--duration-normal) var(--ease-default) both;
+  }
+  .animate-nexus-scale-in {
+    animation: nexusScaleIn var(--duration-normal) var(--ease-default) both;
+  }
+  .animate-nexus-spin {
+    animation: nexusSpin 0.6s linear infinite;
+  }
+  .animate-nexus-pulse {
+    animation: nexusPulse 2s var(--ease-in-out) infinite;
+  }
+  .animate-nexus-shimmer {
+    animation: nexusShimmer 1.5s ease-in-out infinite;
+  }
+
+  /* ── Stagger delay utilities ── */
+  .delay-0 { transition-delay: 0ms; }
+  .delay-50 { transition-delay: 50ms; }
+  .delay-100 { transition-delay: 100ms; }
+  .delay-150 { transition-delay: 150ms; }
+  .delay-200 { transition-delay: 200ms; }
+  .delay-300 { transition-delay: 300ms; }
+  .delay-500 { transition-delay: 500ms; }
+
+  /* ── Hover lift effect ── */
+  .hover-lift {
+    transition: transform var(--duration-fast) var(--ease-default),
+                box-shadow var(--duration-fast) var(--ease-default);
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elevation-3);
+  }
+
+  /* ── Hover glow effect (for buttons) ── */
+  .hover-glow {
+    transition: box-shadow var(--duration-fast) var(--ease-default);
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  }
+
+  /* ── Focus ring utility ── */
+  .focus-ring {
+    transition: box-shadow var(--duration-fast) var(--ease-default);
+  }
+  .focus-ring:focus-visible {
+    box-shadow: var(--elevation-ring);
+    outline: none;
+  }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .transition-nexus,
+    .transition-nexus-slow,
+    .transition-colors,
+    .transition-opacity,
+    .transition-transform,
+    .transition-shadow,
+    .transition-all-fast,
+    .transition-all-normal,
+    .transition-all-slow,
+    .hover-lift,
+    .hover-glow,
+    .focus-ring {
+      transition-duration: 0ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
   }
 }

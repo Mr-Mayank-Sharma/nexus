@@ -185,7 +185,7 @@ export default function PackingPage() {
                               </button>
                             </PermissionGate>
                             <PermissionGate resource="warehouse" action="delete">
-                              <button className="enterprise-btn-secondary text-xs px-2 py-1 text-red-600" onClick={() => { if (confirm('Void this package?')) packingApi.voidPackage(pkg.id).then(invalidate); }}>
+                              <button className="enterprise-btn-secondary text-xs px-2 py-1 text-[var(--nexus-error-600)]" onClick={() => { if (confirm('Void this package?')) packingApi.voidPackage(pkg.id).then(invalidate); }}>
                                 <XCircle className="w-3.5 h-3.5" /> Void
                               </button>
                             </PermissionGate>
@@ -216,7 +216,7 @@ export default function PackingPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+        <div className="enterprise-modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="enterprise-card p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Create Package</h2>
             <div className="space-y-4">
@@ -250,7 +250,7 @@ export default function PackingPage() {
       )}
 
       {showLabelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowLabelModal(null)}>
+        <div className="enterprise-modal-overlay" onClick={() => setShowLabelModal(null)}>
           <div className="enterprise-card p-6 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Generate Shipping Label</h2>
             <div className="space-y-4">

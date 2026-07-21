@@ -28,10 +28,10 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  'E-Commerce': 'bg-blue-500', 'Marketplace': 'bg-purple-500', 'ERP': 'bg-orange-500',
-  'CRM': 'bg-green-500', 'WMS': 'bg-teal-500', 'TMS': 'bg-cyan-500',
-  'Shipping': 'bg-yellow-500', 'Payments': 'bg-emerald-500', 'Accounting': 'bg-violet-500',
-  'POS': 'bg-pink-500', 'Communication': 'bg-indigo-500', 'Identity & SSO': 'bg-rose-500',
+  'E-Commerce': 'bg-[var(--nexus-primary-50)]0', 'Marketplace': 'bg-[var(--nexus-ai-50)]0', 'ERP': 'bg-orange-500',
+  'CRM': 'bg-[var(--nexus-success-50)]0', 'WMS': 'bg-[var(--nexus-success-50)]0', 'TMS': 'bg-[var(--nexus-info-50)]0',
+  'Shipping': 'bg-[var(--nexus-warning-50)]0', 'Payments': 'bg-emerald-500', 'Accounting': 'bg-violet-500',
+  'POS': 'bg-pink-500', 'Communication': 'bg-[var(--nexus-primary-50)]0', 'Identity & SSO': 'bg-rose-500',
   'Analytics': 'bg-sky-500', 'AI Platform': 'bg-fuchsia-500',
 }
 
@@ -138,17 +138,17 @@ export default function IntegrationHubPage() {
 
   const platformTypeColor = (type: string) => {
     const meta = platforms.find(p => p.platformType === type)
-    return CATEGORY_COLORS[meta?.category || ''] || 'bg-gray-500'
+    return CATEGORY_COLORS[meta?.category || ''] || 'bg-[var(--surface-muted)]'
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5"><Plug className="w-7 h-7 text-primary-500" /> Integration Hub</h1>
-          <p className="text-sm text-gray-500 mt-1">Enterprise connector framework — 40+ platforms, REST/GraphQL/SOAP/EDI</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Plug className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Integration Hub</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Enterprise connector framework — 40+ platforms, REST/GraphQL/SOAP/EDI</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
           <Activity className="w-3.5 h-3.5" />
           <span>{connectors.length} active connectors</span>
           <Zap className="w-3.5 h-3.5 ml-2" />
@@ -158,28 +158,28 @@ export default function IntegrationHubPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1 space-y-4">
             {categories.map(cat => (
               <div key={cat}>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 px-2">{cat}</h3>
+                <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 px-2">{cat}</h3>
                 <div className="space-y-1">
                   {platforms.filter(p => p.category === cat).map(p => {
                     const active = connectors.find(c => c.platform === p.platformType)
                     return (
                       <button key={p.platformType} onClick={() => active ? setSelectedConnector(active) : openCreate(p)}
-                        className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group">
-                        <div className={`w-6 h-6 rounded ${CATEGORY_COLORS[p.category] || 'bg-gray-500'} flex items-center justify-center text-white`}>
+                        className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] transition-colors group">
+                        <div className={`w-6 h-6 rounded ${CATEGORY_COLORS[p.category] || 'bg-[var(--surface-muted)]'} flex items-center justify-center text-white`}>
                           {CATEGORY_ICONS[p.category] || <Plug className="w-3 h-3" />}
                         </div>
-                        <span className="flex-1 text-gray-700 dark:text-gray-300 group-hover:text-gray-900">{p.name}</span>
+                        <span className="flex-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">{p.name}</span>
                         {active ? (
-                          <span className={`w-2 h-2 rounded-full ${active.health?.status === 'UP' ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className={`w-2 h-2 rounded-full ${active.health?.status === 'UP' ? 'bg-[var(--nexus-success-50)]0' : 'bg-[var(--nexus-error-50)]0'}`} />
                         ) : (
-                          <Plus className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary-500" />
+                          <Plus className="w-3.5 h-3.5 text-[var(--text-tertiary)] group-hover:text-[var(--nexus-primary-500)]" />
                         )}
                       </button>
                     )
@@ -199,10 +199,10 @@ export default function IntegrationHubPage() {
                         {CATEGORY_ICONS[selectedConnector.category] || <Plug className="w-5 h-5" />}
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{selectedConnector.name}</h3>
+                        <h3 className="text-sm font-semibold text-[var(--text-primary)]">{selectedConnector.name}</h3>
                         <div className="flex items-center gap-2 mt-0.5">
                           <StatusBadge status={selectedConnector.health?.status || 'UNKNOWN'} size="sm" />
-                          <span className="text-xs text-gray-400">{selectedConnector.platform}</span>
+                          <span className="text-xs text-[var(--text-tertiary)]">{selectedConnector.platform}</span>
                         </div>
                       </div>
                     </div>
@@ -218,7 +218,7 @@ export default function IntegrationHubPage() {
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleDelete(selectedConnector.id)} className="btn-ghost text-xs text-red-500">
+                        <button onClick={() => handleDelete(selectedConnector.id)} className="btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -227,40 +227,40 @@ export default function IntegrationHubPage() {
 
                   <div className="card-body">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{selectedConnector.health?.consecutiveFailures || 0}</p>
-                        <p className="text-xs text-gray-500">Failures</p>
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                        <p className="text-lg font-bold text-[var(--text-primary)]">{selectedConnector.health?.consecutiveFailures || 0}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">Failures</p>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-lg font-bold text-green-600">{selectedConnector.health?.lastSuccessAt ? 'OK' : '-'}</p>
-                        <p className="text-xs text-gray-500">Last Success</p>
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                        <p className="text-lg font-bold text-[var(--nexus-success-600)]">{selectedConnector.health?.lastSuccessAt ? 'OK' : '-'}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">Last Success</p>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{selectedConnector.supportedSyncTypes?.length || 0}</p>
-                        <p className="text-xs text-gray-500">Sync Types</p>
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                        <p className="text-lg font-bold text-[var(--text-primary)]">{selectedConnector.supportedSyncTypes?.length || 0}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">Sync Types</p>
                       </div>
-                      <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                        <p className="text-lg font-bold text-[var(--text-primary)]">
                           {jobs.filter(j => j.connectorId === selectedConnector.id).length}
                         </p>
-                        <p className="text-xs text-gray-500">Jobs</p>
+                        <p className="text-xs text-[var(--text-secondary)]">Jobs</p>
                       </div>
                     </div>
 
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Sync Actions</h4>
+                    <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase mb-3">Sync Actions</h4>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {selectedConnector.supportedSyncTypes?.map(st => (
                         <PermissionGate key={st} resource="integrations" action="edit">
                           <button onClick={() => handleSync(selectedConnector.id, st)}
                             disabled={syncing === `${selectedConnector.id}:${st}`}
-                            className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            className="border border-[var(--border-default)] rounded-lg p-3 text-left hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)] transition-colors">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{st.replace(/_/g, ' ')}</span>
+                              <span className="text-sm font-medium text-[var(--text-secondary)]">{st.replace(/_/g, ' ')}</span>
                               {syncing === `${selectedConnector.id}:${st}` ?
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-primary-600" /> :
-                                <RefreshCw className="w-3.5 h-3.5 text-gray-400" />}
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--text-brand)]" /> :
+                                <RefreshCw className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />}
                             </div>
-                            <p className="text-xs text-gray-400">Click to run</p>
+                            <p className="text-xs text-[var(--text-tertiary)]">Click to run</p>
                           </button>
                         </PermissionGate>
                       ))}
@@ -269,19 +269,19 @@ export default function IntegrationHubPage() {
                 </div>
 
                 <div className="card">
-                  <div className="card-header"><h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recent Jobs</h3></div>
+                  <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Recent Jobs</h3></div>
                   <div className="card-body">
                     {jobs.filter(j => j.connectorId === selectedConnector.id).length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-4">No jobs yet. Run a sync to see results.</p>
+                      <p className="text-sm text-[var(--text-tertiary)] text-center py-4">No jobs yet. Run a sync to see results.</p>
                     ) : (
                       <div className="space-y-2">
                         {jobs.filter(j => j.connectorId === selectedConnector.id).slice(0, 10).map(j => (
-                          <div key={j.jobId} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm">
+                          <div key={j.jobId} className="flex items-center justify-between p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg text-sm">
                             <div className="flex items-center gap-3">
                               <StatusBadge status={j.status} size="sm" />
-                              <span className="text-gray-700 dark:text-gray-300 font-medium">{j.syncType}</span>
+                              <span className="text-[var(--text-secondary)] font-medium">{j.syncType}</span>
                             </div>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                            <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
                               <span>{j.itemsSucceeded} OK / {j.itemsFailed} failed</span>
                               {j.durationMs > 0 && <span>{(j.durationMs / 1000).toFixed(1)}s</span>}
                             </div>
@@ -293,8 +293,8 @@ export default function IntegrationHubPage() {
                 </div>
               </div>
             ) : (
-              <div className="card p-12 text-center text-gray-400">
-                <Plug className="w-16 h-16 mx-auto mb-4 text-gray-200 dark:text-gray-700" />
+              <div className="card p-12 text-center text-[var(--text-tertiary)]">
+                <Plug className="w-16 h-16 mx-auto mb-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
                 <p className="text-sm">Select a platform from the left panel to view or create a connector</p>
                 <p className="text-xs mt-1">Connected platforms show a green dot</p>
               </div>
@@ -304,49 +304,49 @@ export default function IntegrationHubPage() {
       )}
 
       {showCreate && selectedPlatform && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded ${CATEGORY_COLORS[selectedPlatform.category] || 'bg-gray-500'} flex items-center justify-center text-white`}>
+                <div className={`w-8 h-8 rounded ${CATEGORY_COLORS[selectedPlatform.category] || 'bg-[var(--surface-muted)]'} flex items-center justify-center text-white`}>
                   {CATEGORY_ICONS[selectedPlatform.category] || <Plug className="w-4 h-4" />}
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Connect {selectedPlatform.name}</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Connect {selectedPlatform.name}</h2>
               </div>
-              <button onClick={() => setShowCreate(false)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+              <button onClick={() => setShowCreate(false)} className="p-1 hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <p className="text-sm text-gray-500">{selectedPlatform.description}</p>
+              <p className="text-sm text-[var(--text-secondary)]">{selectedPlatform.description}</p>
 
-              <div className="flex gap-2 text-xs text-gray-500 mb-3">
+              <div className="flex gap-2 text-xs text-[var(--text-secondary)] mb-3">
                 {selectedPlatform.supportedProtocols.map(p => (
-                  <span key={p} className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{p}</span>
+                  <span key={p} className="bg-[var(--surface-muted)] bg-[var(--surface-base)] px-2 py-1 rounded">{p}</span>
                 ))}
                 {selectedPlatform.supportedAuthTypes.map(a => (
-                  <span key={a} className="bg-primary-50 dark:bg-primary-900/20 text-primary-600 px-2 py-1 rounded">{a}</span>
+                  <span key={a} className="bg-[var(--interactive-selected)] text-[var(--text-brand)] px-2 py-1 rounded">{a}</span>
                 ))}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Store Code</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Store Code</label>
                   <Autocomplete value={form.storeCode || ''} onChange={v => setForm({ ...form, storeCode: v })}
                     className="input w-full font-mono text-sm" placeholder={selectedPlatform.platformType.toLowerCase()} minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Store Name</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Store Name</label>
                   <Autocomplete value={form.storeName || ''} onChange={v => setForm({ ...form, storeName: v })}
                     className="input w-full text-sm" placeholder={`${selectedPlatform.name} Store`} minChars={0} />
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">API Credentials</h4>
+              <div className="border-t border-[var(--border-subtle)] pt-4">
+                <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase mb-3">API Credentials</h4>
                 {selectedPlatform.requiredSettings.map(key => (
                   <div key={key} className="mb-3">
-                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">
                       {key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                     </label>
                     <Autocomplete value={form[key] || ''}
@@ -356,7 +356,7 @@ export default function IntegrationHubPage() {
                 ))}
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="integrations" action="create">
                 <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">

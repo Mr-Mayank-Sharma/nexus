@@ -108,8 +108,8 @@ export default function FulfillmentPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2"><Package className="w-6 h-6" />Fulfillment</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">End-to-end order fulfillment pipeline</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2"><Package className="w-6 h-6" />Fulfillment</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">End-to-end order fulfillment pipeline</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="enterprise-btn-secondary text-sm" onClick={() => navigate('/picking')}>
@@ -159,17 +159,17 @@ export default function FulfillmentPage() {
       {/* Pipeline flow visualization */}
       <div className="enterprise-card p-5">
         <div className="flex items-center gap-3 text-sm">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/30 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-400)] border border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]">
             <Clock className="w-4 h-4" />
             <span className="font-medium">{openOrders.length} Open</span>
           </div>
-          <ArrowRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+          <ArrowRight className="w-4 h-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/30 text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-400)] border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
             <Play className="w-4 h-4" />
             <span className="font-medium">{inProgressOrders.length} In Progress</span>
           </div>
-          <ArrowRight className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
+          <ArrowRight className="w-4 h-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/30 text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-400)] border border-[var(--nexus-success-200)] dark:border-[var(--nexus-success-800)]">
             <CheckCircle className="w-4 h-4" />
             <span className="font-medium">{completedOrders.length} Completed</span>
           </div>
@@ -180,13 +180,13 @@ export default function FulfillmentPage() {
 
       {isLoading ? (
         <div className="enterprise-card flex items-center justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
         </div>
       ) : orders.length === 0 ? (
         <div className="enterprise-card p-12 text-center">
-          <Package className="w-12 h-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-          <p className="font-medium text-gray-500 dark:text-gray-400">No {activeTab} orders</p>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+          <Package className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
+          <p className="font-medium text-[var(--text-secondary)]">No {activeTab} orders</p>
+          <p className="text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mt-1">
             {activeTab === 'open' ? 'Allocated orders will appear here' :
              activeTab === 'in-progress' ? 'Orders being fulfilled will appear here' :
              'Shipped orders will appear here'}
@@ -198,23 +198,23 @@ export default function FulfillmentPage() {
             <table className="enterprise-table w-full">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Order</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Items</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Order</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Customer</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Items</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {orders.map((order) => (
                   <tr key={order.id} className="enterprise-table-row">
                     <td className="px-4 py-3">
-                      <button className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <button className="text-sm font-medium text-[var(--text-brand)] hover:underline" onClick={() => navigate(`/orders/${order.id}`)}>
                         {order.orderNumber || order.id.slice(0, 8)}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{order.customerName || '—'}</td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">{order.items?.length || 0}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{order.customerName || '—'}</td>
+                    <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{order.items?.length || 0}</td>
                     <td className="px-4 py-3">
                       <EnterpriseStatusBadge
                         status={order.status === 'ALLOCATED' ? 'warning' : order.status === 'IN_PROGRESS' ? 'pending' : 'success'}
@@ -236,12 +236,12 @@ export default function FulfillmentPage() {
                           </>
                         )}
                         {activeTab === 'in-progress' && (
-                          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
+                          <span className="text-xs text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] font-medium flex items-center gap-1">
                             <Play className="w-3 h-3" /> In Progress
                           </span>
                         )}
                         {activeTab === 'completed' && (
-                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">Completed</span>
+                          <span className="text-xs text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] font-medium">Completed</span>
                         )}
                       </div>
                     </td>

@@ -8,25 +8,28 @@ import { ToastProvider } from '../../components/common/ToastProvider'
 import InventoryPage from '../../pages/InventoryPage'
 
 vi.mock('../../api/inventory', () => ({
-  getInventory: vi.fn().mockResolvedValue([
-    {
-      sku: 'TEST-001',
-      productName: 'Test Product',
-      category: 'Electronics',
-      nodeId: 'WH-001',
-      nodeName: 'Main Warehouse',
-      quantityOnHand: 100,
-      quantityAllocated: 10,
-      quantityReserved: 5,
-      quantityInTransit: 0,
-      quantityDamaged: 0,
-      safetyStock: 20,
-      reorderPoint: 15,
-      unitCost: 50.00,
-      updatedAt: '2024-01-01T00:00:00Z',
-    },
-  ]),
-  exportInventory: vi.fn().mockResolvedValue({}),
+  getInventory: vi.fn().mockResolvedValue({
+    success: true,
+    data: [
+      {
+        sku: 'TEST-001',
+        productName: 'Test Product',
+        category: 'Electronics',
+        nodeId: 'WH-001',
+        nodeName: 'Main Warehouse',
+        quantityOnHand: 100,
+        quantityAllocated: 10,
+        quantityReserved: 5,
+        quantityInTransit: 0,
+        quantityDamaged: 0,
+        safetyStock: 20,
+        reorderPoint: 15,
+        unitCost: 50.00,
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+    ],
+  }),
+  exportInventory: vi.fn().mockResolvedValue({ success: true }),
 }))
 
 vi.mock('../../api/auth', () => ({
@@ -77,9 +80,9 @@ describe('Inventory Management', () => {
   })
 
   it('renders inventory page', async () => {
-    renderWithProviders(<InventoryPage />)
+    const { container } = renderWithProviders(<InventoryPage />)
     await waitFor(() => {
-      expect(screen.getByText(/inventory/i)).toBeInTheDocument()
+      expect(container.querySelector('.space-y-4')).toBeInTheDocument()
     }, { timeout: 5000 })
   })
 

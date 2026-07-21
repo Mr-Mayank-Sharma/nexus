@@ -76,11 +76,11 @@ export default function BopisOwnerPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
-            <ShoppingBag className="w-7 h-7 text-teal-500" />
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
+            <ShoppingBag className="w-7 h-7 text-[var(--nexus-success-500)]" />
             BOPIS Owner Dashboard
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Buy Online Pickup In Store — customer experience management</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Buy Online Pickup In Store — customer experience management</p>
         </div>
         <button onClick={() => navigate('/bopis')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
           <Package className="w-4 h-4" /> Full BOPIS View
@@ -92,11 +92,11 @@ export default function BopisOwnerPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 w-fit">
+      <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-0.5 w-fit">
         {(['ready', 'customers', 'insights'] as const).map(t => (
           <button key={t} onClick={() => setSelectedTab(t)}
             className={clsx('px-4 py-2 text-sm font-medium rounded-md capitalize transition-all',
-              selectedTab === t ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400')}>
+              selectedTab === t ? 'bg-white bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)]')}>
             {t === 'ready' ? 'Ready for Pickup' : t === 'customers' ? 'Customers' : 'Insights'}
           </button>
         ))}
@@ -106,31 +106,31 @@ export default function BopisOwnerPage() {
       {selectedTab === 'ready' && (
         <>
           {isLoading ? (
-            <div className="enterprise-card flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" /></div>
+            <div className="enterprise-card flex items-center justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" /></div>
           ) : readyOrders.length === 0 ? (
-            <div className="enterprise-card p-12 text-center"><CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-300" /><p className="font-medium text-gray-500">All pickups completed!</p></div>
+            <div className="enterprise-card p-12 text-center"><CheckCircle className="w-12 h-12 mx-auto mb-3 text-[var(--nexus-success-300)]" /><p className="font-medium text-[var(--text-secondary)]">All pickups completed!</p></div>
           ) : (
             <div className="space-y-3">
               {readyOrders.map((order: any, i: number) => (
                 <div key={order.id} className="enterprise-card p-4 border-l-4 border-l-green-500">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 mt-0.5">
+                      <div className="w-10 h-10 rounded-xl bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 flex items-center justify-center text-[var(--nexus-success-600)] mt-0.5">
                         <ShoppingBag className="w-5 h-5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{order.orderNumber || `ORD-${i + 1}`}</span>
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">{order.orderNumber || `ORD-${i + 1}`}</span>
                           <EnterpriseStatusBadge status="success" label="Ready" />
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">Order #{order.id?.slice(0, 8)} · {order.items?.length || 3} items</p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">Order #{order.id?.slice(0, 8)} · {order.items?.length || 3} items</p>
+                        <p className="text-xs text-[var(--text-tertiary)] mt-1">
                           <Clock className="w-3 h-3 inline mr-1" />
                           Waiting {order._waitingMinutes} min
                         </p>
                         <div className="mt-3 flex items-center gap-2">
                           <PermissionGate resource="orders" action="edit">
-                            <button onClick={() => confirmPickup.mutate(order.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700">
+                            <button onClick={() => confirmPickup.mutate(order.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
                               <CheckCircle className="w-3.5 h-3.5" /> Confirm Pickup
                             </button>
                           </PermissionGate>
@@ -145,7 +145,7 @@ export default function BopisOwnerPage() {
                         </div>
                       </div>
                     </div>
-                    <span className="text-xs text-gray-400">{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                    <span className="text-xs text-[var(--text-tertiary)]">{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                   </div>
                 </div>
               ))}
@@ -162,24 +162,24 @@ export default function BopisOwnerPage() {
             <table className="enterprise-table w-full">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Contact</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Orders</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Last Pickup</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Customer</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Contact</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Orders</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Last Pickup</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
                 {filteredCustomers.map(c => (
                   <tr key={c.id} className="enterprise-table-row">
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{c.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{c.name}</td>
                     <td className="px-4 py-3">
-                      <p className="text-xs text-gray-500">{c.email}</p>
-                      <p className="text-xs text-gray-400">{c.phone}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{c.email}</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">{c.phone}</p>
                     </td>
-                    <td className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">{c.orderCount}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{c.lastPickup}</td>
+                    <td className="px-4 py-3 text-center text-sm font-semibold text-[var(--text-secondary)]">{c.orderCount}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{c.lastPickup}</td>
                     <td className="px-4 py-3 text-center">
                       <EnterpriseStatusBadge status={c.status === 'vip' ? 'warning' : c.status === 'active' ? 'success' : 'pending'} label={c.status} />
                     </td>
@@ -198,8 +198,8 @@ export default function BopisOwnerPage() {
       {selectedTab === 'insights' && (
         <div className="grid grid-cols-2 gap-6">
           <div className="enterprise-card p-5">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary-500" /> Pickup Time Distribution
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Pickup Time Distribution
             </h3>
             <div className="space-y-2">
               {[
@@ -209,16 +209,16 @@ export default function BopisOwnerPage() {
                 { time: 'Evening (5-8)', pct: 15, orders: 19 },
               ].map((s, i) => (
                 <div key={i}>
-                  <div className="flex justify-between text-xs text-gray-500 mb-1"><span>{s.time}</span><span>{s.orders} orders</span></div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div className={clsx('h-2 rounded-full', i === 0 ? 'bg-blue-400' : i === 1 ? 'bg-primary-500' : i === 2 ? 'bg-amber-400' : 'bg-purple-400')} style={{ width: `${s.pct}%` }} />
+                  <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-1"><span>{s.time}</span><span>{s.orders} orders</span></div>
+                  <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2">
+                    <div className={clsx('h-2 rounded-full', i === 0 ? 'bg-[var(--nexus-primary-400)]' : i === 1 ? 'bg-[var(--nexus-primary-50)]0' : i === 2 ? 'bg-[var(--nexus-warning-400)]' : 'bg-[var(--nexus-ai-400)]')} style={{ width: `${s.pct}%` }} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
           <div className="enterprise-card p-5">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-500" /> Weekly Trend
             </h3>
             <div className="space-y-3">
@@ -232,12 +232,12 @@ export default function BopisOwnerPage() {
                 { day: 'Sun', orders: 8, pickup: 7 },
               ].map((d, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="text-xs font-medium text-gray-500 w-8">{d.day}</span>
-                  <div className="flex-1 h-4 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden flex">
-                    <div className="h-full bg-primary-400 rounded-full" style={{ width: `${(d.orders / 30) * 100}%` }} />
-                    <div className="h-full bg-teal-400 rounded-full" style={{ width: `${(d.pickup / 30) * 100}%`, marginLeft: -4 }} />
+                  <span className="text-xs font-medium text-[var(--text-secondary)] w-8">{d.day}</span>
+                  <div className="flex-1 h-4 bg-[var(--surface-muted)] bg-[var(--surface-base)] rounded-full overflow-hidden flex">
+                    <div className="h-full bg-[var(--nexus-primary-400)] rounded-full" style={{ width: `${(d.orders / 30) * 100}%` }} />
+                    <div className="h-full bg-[var(--nexus-success-400)] rounded-full" style={{ width: `${(d.pickup / 30) * 100}%`, marginLeft: -4 }} />
                   </div>
-                  <span className="text-xs text-gray-400 w-12 text-right">{d.orders}</span>
+                  <span className="text-xs text-[var(--text-tertiary)] w-12 text-right">{d.orders}</span>
                 </div>
               ))}
             </div>

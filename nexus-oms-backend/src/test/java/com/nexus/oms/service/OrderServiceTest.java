@@ -150,7 +150,7 @@ class OrderServiceTest {
         OrderRequest request = new OrderRequest();
         request.setCustomerEmail("test@example.com");
         request.setCustomerName("Test User");
-        request.setShippingAddress(new OrderRequest.ShippingAddress("123 Main St", null, "NYC", "NY", "10001", null, null));
+        request.setShippingAddress(new OrderRequest.ShippingAddress("123 Main St", null, "NYC", "NY", "10001", "US", null, null));
         request.setChannel("WEB");
 
         OrderRequest.OrderItemRequest itemReq = new OrderRequest.OrderItemRequest();
@@ -190,7 +190,7 @@ class OrderServiceTest {
         OrderRequest request = new OrderRequest();
         request.setCustomerEmail("existing@example.com");
         request.setCustomerName("Existing User");
-        request.setShippingAddress(new OrderRequest.ShippingAddress("456 Oak Ave", null, "LA", "CA", "90001", null, null));
+        request.setShippingAddress(new OrderRequest.ShippingAddress("456 Oak Ave", null, "LA", "CA", "90001", "US", null, null));
         request.setChannel("WEB");
 
         OrderRequest.OrderItemRequest itemReq = new OrderRequest.OrderItemRequest();

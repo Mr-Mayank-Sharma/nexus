@@ -69,3 +69,39 @@ export async function createEngineeredStandard(data: Record<string, unknown>) {
 export async function calculateIncentivePay(laborEntryId: string, warehouseId: string) {
   return api.get(`/labor/${laborEntryId}/incentive?warehouseId=${warehouseId}`)
 }
+
+export async function getWorkloadRules(warehouseId: string) {
+  return api.get(`/labor/workload-rules?warehouseId=${warehouseId}`)
+}
+
+export async function createWorkloadRule(data: Record<string, unknown>) {
+  return api.post('/labor/workload-rules', data)
+}
+
+export async function updateWorkloadRule(id: string, data: Record<string, unknown>) {
+  return api.put(`/labor/workload-rules/${id}`, data)
+}
+
+export async function getWorkloadBalance(warehouseId: string) {
+  return api.get(`/labor/workload/balance?warehouseId=${warehouseId}`)
+}
+
+export async function rebalanceWorkload(warehouseId: string) {
+  return api.get(`/labor/workload/rebalance?warehouseId=${warehouseId}`)
+}
+
+export async function calculatePerformanceVsStandard(warehouseId: string, date: string) {
+  return api.get(`/labor/performance/vs-standard?warehouseId=${warehouseId}&date=${date}`)
+}
+
+export async function logProductivity(data: Record<string, unknown>) {
+  return api.post('/labor/productivity', data)
+}
+
+export async function getProductivityLogs(warehouseId: string, daysBack: number = 7) {
+  return api.get(`/labor/productivity?warehouseId=${warehouseId}&daysBack=${daysBack}`)
+}
+
+export async function getProductivityByTaskType(warehouseId: string, daysBack: number = 7) {
+  return api.get(`/labor/productivity/by-task?warehouseId=${warehouseId}&daysBack=${daysBack}`)
+}

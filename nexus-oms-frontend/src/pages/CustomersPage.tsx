@@ -129,7 +129,7 @@ export default function CustomersPage() {
                     </button>
                   </PermissionGate>
                   <PermissionGate resource="customers" action="delete">
-                    <button className="enterprise-btn-ghost p-1.5 text-red-500" title="Delete"
+                    <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]" title="Delete"
                       onClick={() => { if (confirm('Delete this customer?')) deleteMutation.mutate(c.id); }}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -165,7 +165,7 @@ export default function CustomersPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+        <div className="enterprise-modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="enterprise-card p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">
               {editingCustomer ? 'Edit Customer' : 'Add Customer'}

@@ -157,9 +157,9 @@ export default function InventoryPage() {
               {nodes.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
             <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer whitespace-nowrap">
-              <input type="checkbox" className="rounded border-[var(--border-color)] text-[var(--color-primary-600)] focus:ring-[var(--color-primary-500)]"
+              <input type="checkbox" className="rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-[var(--nexus-primary-500)]"
                 checked={lowStock} onChange={(e) => { setLowStock(e.target.checked); setPage(1) }} />
-              <AlertTriangle className="w-4 h-4 text-yellow-500" />
+              <AlertTriangle className="w-4 h-4 text-[var(--nexus-warning-600)]" />
               Low stock only
             </label>
           </>

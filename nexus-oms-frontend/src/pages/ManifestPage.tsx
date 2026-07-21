@@ -34,9 +34,9 @@ interface Manifest {
 const CARRIERS = ['FedEx', 'UPS', 'DHL', 'USPS'] as const
 
 const STATUS_STYLES: Record<string, string> = {
-  Draft: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  Closed: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  Submitted: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  Draft: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-base)] dark:text-[var(--text-tertiary)]',
+  Closed: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  Submitted: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
 }
 
 function generateManifestId(idx: number) {
@@ -220,7 +220,7 @@ export default function ManifestPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white shrink-0">
             <ClipboardList className="w-5 h-5" />
           </div>
           <div>
@@ -229,7 +229,7 @@ export default function ManifestPage() {
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-ai-50)]0 flex items-center justify-center text-white shrink-0">
             <Package className="w-5 h-5" />
           </div>
           <div>
@@ -238,7 +238,7 @@ export default function ManifestPage() {
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-success-50)]0 flex items-center justify-center text-white shrink-0">
             <DollarSign className="w-5 h-5" />
           </div>
           <div>
@@ -247,7 +247,7 @@ export default function ManifestPage() {
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-warning-50)]0 flex items-center justify-center text-white shrink-0">
             <Truck className="w-5 h-5" />
           </div>
           <div>
@@ -259,7 +259,7 @@ export default function ManifestPage() {
 
       <div className="enterprise-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+          <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
             <Plus className="w-4 h-4" />
           </div>
           <div>
@@ -304,7 +304,7 @@ export default function ManifestPage() {
               </span>
               <div className="flex items-center gap-2">
                 <button onClick={() => setSelectedShipments(fetchedShipments.map(s => s.id))}
-                  className="text-xs text-blue-600 hover:underline">Select All</button>
+                  className="text-xs text-[var(--nexus-primary-600)] hover:underline">Select All</button>
                 <button onClick={() => setSelectedShipments([])}
                   className="text-xs text-[var(--text-tertiary)] hover:underline">Clear</button>
               </div>
@@ -314,11 +314,11 @@ export default function ManifestPage() {
                 <label key={s.id}
                   className={clsx(
                     'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors text-sm',
-                    selectedShipments.includes(s.id) ? 'bg-blue-50 dark:bg-blue-900/10' : 'hover:bg-[var(--bg-tertiary)]'
+                    selectedShipments.includes(s.id) ? 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10' : 'hover:bg-[var(--bg-tertiary)]'
                   )}>
                   <input type="checkbox" checked={selectedShipments.includes(s.id)}
                     onChange={() => toggleShipment(s.id)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-blue-500" />
                   <div className="flex-1 flex items-center justify-between">
                     <div>
                       <span className="text-[var(--text-primary)] font-medium">{s.orderId}</span>
@@ -340,7 +340,7 @@ export default function ManifestPage() {
                         date: new Date().toISOString().split('T')[0],
                         shipments: fetchedShipments.filter(s => selectedShipments.includes(s.id)),
                       })}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
+                  className="bg-[var(--nexus-primary-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors inline-flex items-center gap-2 text-sm font-medium">
                   <FileText className="w-4 h-4" /> Generate Manifest
                 </button>
                 </PermissionGate>
@@ -395,14 +395,14 @@ export default function ManifestPage() {
                       <div className="flex items-center justify-center gap-1">
                         <PermissionGate resource="logistics" action="read">
                           <button onClick={() => handleViewDetail(m)}
-                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
+                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors"
                             title="View">
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="logistics" action="edit">
                           <button onClick={() => handleDownload(m)}
-                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-green-600 transition-colors"
+                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-success-600)] transition-colors"
                             title="Download">
                             <Download className="w-3.5 h-3.5" />
                           </button>
@@ -410,7 +410,7 @@ export default function ManifestPage() {
                         {m.status !== 'Submitted' && (
                           <PermissionGate resource="logistics" action="edit">
                             <button onClick={() => handleUpdateManifest(m.id, { status: 'Submitted' })}
-                              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
+                              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors"
                               title="Submit">
                               <Send className="w-3.5 h-3.5" />
                             </button>
@@ -418,7 +418,7 @@ export default function ManifestPage() {
                         )}
                         <PermissionGate resource="logistics" action="delete">
                           <button onClick={() => handleVoid(m)}
-                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors"
+                            className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)] transition-colors"
                             title="Void">
                             <Ban className="w-3.5 h-3.5" />
                           </button>
@@ -436,7 +436,7 @@ export default function ManifestPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="enterprise-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-[var(--nexus-success-50)]0 flex items-center justify-center text-white">
               <DollarSign className="w-4 h-4" />
             </div>
             <div>
@@ -466,7 +466,7 @@ export default function ManifestPage() {
 
         <div className="enterprise-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-[var(--nexus-warning-50)]0 flex items-center justify-center text-white">
               <PenLine className="w-4 h-4" />
             </div>
             <div>
@@ -506,13 +506,13 @@ export default function ManifestPage() {
       </div>
 
       {showDetail && selectedManifest && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        <div className="enterprise-modal-overlay"
           onClick={() => setShowDetail(false)}>
           <div className="enterprise-card p-6 w-full max-w-3xl mx-4 max-h-[85vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
                   <ClipboardList className="w-5 h-5" />
                 </div>
                 <div>
@@ -547,9 +547,9 @@ export default function ManifestPage() {
             </div>
 
             {selectedManifest.bolNumber && (
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="mb-4 p-3 bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10 rounded-lg border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
                 <p className="text-xs text-[var(--text-tertiary)]">BOL Number</p>
-                <p className="text-sm font-mono font-semibold text-blue-700 dark:text-blue-400">{selectedManifest.bolNumber}</p>
+                <p className="text-sm font-mono font-semibold text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-400)]">{selectedManifest.bolNumber}</p>
               </div>
             )}
 
@@ -595,7 +595,7 @@ export default function ManifestPage() {
               {selectedManifest.status !== 'Submitted' && (
                 <PermissionGate resource="logistics" action="edit">
                   <button onClick={handleSubmitFromDetail}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
+                    className="bg-[var(--nexus-primary-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors inline-flex items-center gap-2 text-sm font-medium">
                     <Send className="w-4 h-4" /> Submit Manifest
                   </button>
                 </PermissionGate>

@@ -126,14 +126,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 const CATEGORY_BG: Record<string, string> = {
-  'Overview': 'bg-blue-50 dark:bg-blue-950/20',
-  'Orders & Customers': 'bg-indigo-50 dark:bg-indigo-950/20',
+  'Overview': 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
+  'Orders & Customers': 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
   'Fulfillment & Warehouse': 'bg-emerald-50 dark:bg-emerald-950/20',
-  'Inventory': 'bg-green-50 dark:bg-green-950/20',
+  'Inventory': 'bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20',
   'Products & Channels': 'bg-sky-50 dark:bg-sky-950/20',
-  'Operations': 'bg-amber-50 dark:bg-amber-950/20',
-  'Routing & Intelligence': 'bg-purple-50 dark:bg-purple-950/20',
-  'Administration': 'bg-gray-50 dark:bg-gray-950/20',
+  'Operations': 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20',
+  'Routing & Intelligence': 'bg-[var(--nexus-ai-50)] dark:bg-[var(--nexus-ai-900)]/20',
+  'Administration': 'bg-[var(--surface-sunken)] dark:bg-[var(--surface-sunken)]/20',
 }
 
 function getInitials(name: string): string {
@@ -215,15 +215,15 @@ export default function LaunchPadPage() {
         {!searchQuery && (
           <section>
             <div className="flex items-center gap-2 mb-4">
-              <Star className="w-4.5 h-4.5 text-amber-500 fill-amber-500" />
-              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Favorites</h2>
+              <Star className="w-4.5 h-4.5 text-[var(--nexus-warning-500)] fill-amber-500" />
+              <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Favorites</h2>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {favorites.map(app => (
                 <button
                   key={app.path}
                   onClick={() => navigate(app.path)}
-                  className="group relative flex flex-col items-center gap-2 p-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-200"
+                  className="group relative flex flex-col items-center gap-2 p-4 rounded-xl bg-[var(--surface-base)] border border-[var(--border-default)] shadow-sm hover:shadow-md hover:border-[var(--nexus-primary-300)] dark:hover:border-[var(--nexus-primary-600)] transition-all duration-200"
                 >
                   <div className={clsx(
                     'w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm bg-gradient-to-br',
@@ -231,13 +231,13 @@ export default function LaunchPadPage() {
                   )}>
                     {app.icon}
                   </div>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300 text-center leading-tight">{app.name}</span>
+                  <span className="text-xs font-medium text-[var(--text-secondary)] text-center leading-tight">{app.name}</span>
                   <PermissionGate resource="settings" action="edit">
                     <button
                       onClick={e => { e.stopPropagation(); toggleFavorite(app.path) }}
                       className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      <Star className="w-3.5 h-3.5 text-[var(--nexus-warning-400)] fill-amber-400" />
                     </button>
                   </PermissionGate>
                 </button>
@@ -249,9 +249,9 @@ export default function LaunchPadPage() {
         {/* Category Sections */}
         {grouped.length === 0 ? (
           <div className="text-center py-20">
-            <Search className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-lg font-medium text-gray-500 dark:text-gray-400">No apps match "{searchQuery}"</p>
-            <button onClick={() => setSearchQuery('')} className="mt-3 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400">
+            <Search className="w-12 h-12 mx-auto mb-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
+            <p className="text-lg font-medium text-[var(--text-secondary)]">No apps match "{searchQuery}"</p>
+            <button onClick={() => setSearchQuery('')} className="mt-3 text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] text-[var(--nexus-primary-400)]">
               Clear search
             </button>
           </div>
@@ -264,16 +264,16 @@ export default function LaunchPadPage() {
                 CATEGORY_COLORS[category],
                 'border-l-4'
               )}>
-                <span className="text-gray-500 dark:text-gray-400">{CATEGORY_ICONS[category]}</span>
-                <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">{category}</h2>
-                <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-auto font-medium">{categoryApps.length} apps</span>
+                <span className="text-[var(--text-secondary)]">{CATEGORY_ICONS[category]}</span>
+                <h2 className="text-sm font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{category}</h2>
+                <span className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] ml-auto font-medium">{categoryApps.length} apps</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {categoryApps.map(app => (
                   <button
                     key={app.path}
                     onClick={() => navigate(app.path)}
-                    className="group relative flex flex-col items-center gap-2.5 p-4 rounded-xl bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/50 shadow-sm hover:shadow-md hover:border-primary-300 dark:hover:border-primary-600 hover:-translate-y-0.5 transition-all duration-200 text-left"
+                    className="group relative flex flex-col items-center gap-2.5 p-4 rounded-xl bg-[var(--surface-base)]/80 border border-[var(--border-default)]/50 shadow-sm hover:shadow-md hover:border-[var(--nexus-primary-300)] dark:hover:border-[var(--nexus-primary-600)] hover:-translate-y-0.5 transition-all duration-200 text-left"
                   >
                     {app.isNew && (
                       <span className="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-[9px] font-bold text-white uppercase shadow-sm">
@@ -286,8 +286,8 @@ export default function LaunchPadPage() {
                     )}>
                       {app.icon}
                     </div>
-                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 text-center leading-tight">{app.name}</span>
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500 text-center leading-tight line-clamp-2">{app.description}</span>
+                    <span className="text-xs font-semibold text-[var(--text-primary)] text-center leading-tight">{app.name}</span>
+                    <span className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center leading-tight line-clamp-2">{app.description}</span>
                     <PermissionGate resource="settings" action="edit">
                       <button
                         onClick={e => { e.stopPropagation(); toggleFavorite(app.path) }}
@@ -298,7 +298,7 @@ export default function LaunchPadPage() {
                       >
                         <Star className={clsx(
                           'w-3.5 h-3.5',
-                          favoriteApps.includes(app.path) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 dark:text-gray-600'
+                          favoriteApps.includes(app.path) ? 'text-[var(--nexus-warning-400)] fill-amber-400' : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                         )} />
                       </button>
                     </PermissionGate>

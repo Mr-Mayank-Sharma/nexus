@@ -69,7 +69,33 @@ interface YardStats {
   noShows: number
 }
 
-type ViewMode = 'docks' | 'yard' | 'appointments' | 'calendar'
+type ViewMode = 'docks' | 'yard' | 'appointments' | 'calendar' | 'trailers'
+
+interface Trailer {
+  id: string
+  trailerNumber: string
+  carrierId: string
+  warehouseId: string
+  licensePlate?: string
+  status: 'IN_YARD' | 'DOCKED' | 'IN_TRANSIT' | 'MAINTENANCE'
+  currentDockDoor?: string
+  checkInTime?: string
+  dockTime?: string
+  checkOutTime?: string
+  loaded?: boolean
+  palletCount?: number
+  sealNumber?: string
+  notes?: string
+}
+
+interface TrailerEvent {
+  id: string
+  trailerId: string
+  eventType: string
+  performedBy?: string
+  performedAt: string
+  details?: string
+}
 
 const warehouses = [
   { id: 'wh-main', name: 'Main Warehouse' },
@@ -79,33 +105,33 @@ const warehouses = [
 
 const dockStatusColors: Record<string, string> = {
   AVAILABLE: 'bg-emerald-100 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/30 dark:text-emerald-400',
-  OCCUPIED: 'bg-blue-100 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400',
-  MAINTENANCE: 'bg-amber-100 text-amber-700 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400',
-  CLOSED: 'bg-gray-100 text-gray-500 ring-gray-500/20 dark:bg-gray-700 dark:text-gray-400',
+  OCCUPIED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] ring-blue-600/20 dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] ring-amber-600/20 dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
+  CLOSED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] ring-gray-500/20 bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
 }
 
 const dockStatusBg: Record<string, string> = {
   AVAILABLE: 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10',
-  OCCUPIED: 'border-blue-300 bg-blue-50/50 dark:border-blue-700 dark:bg-blue-900/10',
-  MAINTENANCE: 'border-amber-300 bg-amber-50/50 dark:border-amber-700 dark:bg-amber-900/10',
-  CLOSED: 'border-gray-300 bg-gray-50/50 dark:border-gray-600 dark:bg-gray-800/50',
+  OCCUPIED: 'border-[var(--nexus-primary-300)] bg-[var(--nexus-primary-50)]/50 dark:border-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/10',
+  MAINTENANCE: 'border-[var(--nexus-warning-300)] bg-[var(--nexus-warning-50)]/50 dark:border-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/10',
+  CLOSED: 'border-[var(--border-default)] bg-[var(--surface-sunken)]/50 border-[var(--border-default)] bg-[var(--surface-base)]/50',
 }
 
 const appointmentStatusColors: Record<string, string> = {
-  REQUESTED: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  CONFIRMED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  CHECKED_IN: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  REQUESTED: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
+  CONFIRMED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  CHECKED_IN: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-400)]',
   IN_PROGRESS: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  COMPLETED: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
-  CANCELLED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  NO_SHOW: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  COMPLETED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
+  CANCELLED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
+  NO_SHOW: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
 }
 
 const yardStatusColors: Record<string, string> = {
   AVAILABLE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  OCCUPIED: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  RESERVED: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  CLOSED: 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400',
+  OCCUPIED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  RESERVED: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
+  CLOSED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
 }
 
 const typeLabels: Record<string, string> = {
@@ -227,6 +253,48 @@ function generateMockAppointments(): Appointment[] {
   ]
 }
 
+const trailerStatusColors: Record<string, string> = {
+  IN_YARD: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  DOCKED: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
+  IN_TRANSIT: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-400)]',
+  MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
+}
+
+const defaultTrailerForm = () => ({
+  trailerNumber: '',
+  carrierId: '',
+  licensePlate: '',
+})
+
+function generateMockTrailers(): Trailer[] {
+  const now = new Date().toISOString()
+  const earlier = new Date(Date.now() - 3600000).toISOString()
+  return [
+    { id: 'trl-1', trailerNumber: 'TRL-9921', carrierId: 'FFL', warehouseId: 'wh-main', licensePlate: 'TRK-4521', status: 'DOCKED', currentDockDoor: 'D-03', checkInTime: earlier, dockTime: earlier, loaded: true, palletCount: 18, sealNumber: 'SL-2201' },
+    { id: 'trl-2', trailerNumber: 'TRL-4412', carrierId: 'SWF', warehouseId: 'wh-main', licensePlate: 'TRK-8834', status: 'DOCKED', currentDockDoor: 'D-05', checkInTime: earlier, dockTime: earlier, loaded: false },
+    { id: 'trl-3', trailerNumber: 'TRL-7733', carrierId: 'RHL', warehouseId: 'wh-main', licensePlate: 'TRK-1192', status: 'IN_YARD', checkInTime: earlier, loaded: false },
+    { id: 'trl-4', trailerNumber: 'TRL-2288', carrierId: 'PCF', warehouseId: 'wh-main', licensePlate: 'TRK-6671', status: 'IN_YARD', checkInTime: now, loaded: true, palletCount: 30 },
+    { id: 'trl-5', trailerNumber: 'TRL-5567', carrierId: 'MTD', warehouseId: 'wh-main', licensePlate: 'TRK-5567', status: 'MAINTENANCE', notes: 'Tire replacement needed' },
+    { id: 'trl-6', trailerNumber: 'TRL-1100', carrierId: 'NEX', warehouseId: 'wh-main', status: 'IN_TRANSIT', checkOutTime: now, loaded: true, palletCount: 14, sealNumber: 'SL-2205' },
+  ]
+}
+
+function generateMockTrailerEvents(): TrailerEvent[] {
+  const now = new Date().toISOString()
+  const earlier = new Date(Date.now() - 3600000).toISOString()
+  const earlier2 = new Date(Date.now() - 7200000).toISOString()
+  return [
+    { id: 'te-1', trailerId: 'trl-1', eventType: 'CHECKED_IN', performedBy: 'yard-manager', performedAt: earlier2, details: 'Arrived at gate A' },
+    { id: 'te-2', trailerId: 'trl-1', eventType: 'DOCKED', performedBy: 'yard-manager', performedAt: earlier, details: 'Assigned to D-03' },
+    { id: 'te-3', trailerId: 'trl-3', eventType: 'CHECKED_IN', performedBy: 'gate-guard', performedAt: earlier, details: 'Arrived at gate B' },
+    { id: 'te-4', trailerId: 'trl-5', eventType: 'MAINTENANCE_FLAG', performedBy: 'yard-manager', performedAt: now, details: 'Tire damage reported' },
+  ]
+}
+
+function generateMockTrailerStats() {
+  return { total: 6, inYard: 2, docked: 2, inTransit: 1, maintenance: 1 }
+}
+
 function generateMockStats(): YardStats {
   return { dockUtilization: 72, appointmentsToday: 12, inProgressNow: 3, completedToday: 7, noShows: 1 }
 }
@@ -268,6 +336,17 @@ export default function YardDockPage() {
 
   const [selectedSlotHour, setSelectedSlotHour] = useState<number | null>(null)
 
+  // ── Trailer state ──
+  const [trailers, setTrailers] = useState<Trailer[]>([])
+  const [trailerStats, setTrailerStats] = useState({ total: 0, inYard: 0, docked: 0, inTransit: 0, maintenance: 0 })
+  const [trailerSearch, setTrailerSearch] = useState('')
+  const [trailerStatusFilter, setTrailerStatusFilter] = useState<string>('ALL')
+  const [showCheckInModal, setShowCheckInModal] = useState(false)
+  const [checkInForm, setCheckInForm] = useState(defaultTrailerForm())
+  const [selectedTrailerId, setSelectedTrailerId] = useState<string | null>(null)
+  const [trailerEvents, setTrailerEvents] = useState<TrailerEvent[]>([])
+  const [showEventsModal, setShowEventsModal] = useState(false)
+
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
@@ -295,12 +374,17 @@ export default function YardDockPage() {
       } else {
         buildCalendarSlots(aptsData && aptsData.length > 0 ? aptsData : generateMockAppointments())
       }
+
+      setTrailers(generateMockTrailers())
+      setTrailerStats(generateMockTrailerStats())
     } catch {
       setDockDoors(generateMockDoors())
       setYardLocations(generateMockYardLocations())
       setAppointments(generateMockAppointments())
       setStats(generateMockStats())
       buildCalendarSlots(generateMockAppointments())
+      setTrailers(generateMockTrailers())
+      setTrailerStats(generateMockTrailerStats())
     } finally {
       setLoading(false)
     }
@@ -431,13 +515,93 @@ export default function YardDockPage() {
     }
   }
 
+  async function handleTrailerCheckIn() {
+    if (!checkInForm.trailerNumber.trim() || !checkInForm.carrierId.trim()) {
+      addToast({ type: 'warning', title: 'Trailer number and carrier are required' })
+      return
+    }
+    setSaving(true)
+    try {
+      await yardApi.checkInTrailer(selectedWarehouse, {
+        trailerNumber: checkInForm.trailerNumber,
+        carrierId: checkInForm.carrierId,
+        licensePlate: checkInForm.licensePlate,
+      })
+      addToast({ type: 'success', title: 'Trailer checked in' })
+      setShowCheckInModal(false)
+      setCheckInForm(defaultTrailerForm())
+      setTrailers((prev) => [
+        {
+          id: `trl-${Date.now()}`,
+          trailerNumber: checkInForm.trailerNumber,
+          carrierId: checkInForm.carrierId,
+          warehouseId: selectedWarehouse,
+          licensePlate: checkInForm.licensePlate,
+          status: 'IN_YARD' as const,
+          checkInTime: new Date().toISOString(),
+          loaded: false,
+        },
+        ...prev,
+      ])
+      setTrailerStats((prev) => ({ ...prev, total: prev.total + 1, inYard: prev.inYard + 1 }))
+    } catch {
+      addToast({ type: 'error', title: 'Failed to check in trailer' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDockTrailer(trailerId: string) {
+    const doorNum = prompt('Enter dock door number (e.g. D-01):')
+    if (!doorNum) return
+    try {
+      await yardApi.dockTrailer(trailerId, doorNum)
+      addToast({ type: 'success', title: `Trailer docked at ${doorNum}` })
+      setTrailers((prev) =>
+        prev.map((t) =>
+          t.id === trailerId
+            ? { ...t, status: 'DOCKED' as const, currentDockDoor: doorNum, dockTime: new Date().toISOString() }
+            : t,
+        ),
+      )
+      setTrailerStats((prev) => ({ ...prev, inYard: Math.max(0, prev.inYard - 1), docked: prev.docked + 1 }))
+    } catch {
+      addToast({ type: 'error', title: 'Failed to dock trailer' })
+    }
+  }
+
+  async function handleCheckOutTrailer(trailerId: string) {
+    try {
+      await yardApi.checkOutTrailer(trailerId)
+      addToast({ type: 'success', title: 'Trailer checked out' })
+      setTrailers((prev) =>
+        prev.map((t) =>
+          t.id === trailerId
+            ? { ...t, status: 'IN_TRANSIT' as const, checkOutTime: new Date().toISOString() }
+            : t,
+        ),
+      )
+      setTrailerStats((prev) => ({ ...prev, docked: Math.max(0, prev.docked - 1), inTransit: prev.inTransit + 1 }))
+    } catch {
+      addToast({ type: 'error', title: 'Failed to check out trailer' })
+    }
+  }
+
+  function handleShowTrailerEvents(trailerId: string) {
+    setSelectedTrailerId(trailerId)
+    setTrailerEvents(
+      generateMockTrailerEvents().filter((e) => e.trailerId === trailerId),
+    )
+    setShowEventsModal(true)
+  }
+
   // ── Dock Doors View ──
 
   function renderDockDoorsView() {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--nexus-primary-500)]" />
         </div>
       )
     }
@@ -446,8 +610,8 @@ export default function YardDockPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Dock Doors</h3>
-            <span className="text-xs text-gray-500 dark:text-gray-400">{dockDoors.length} doors</span>
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)]">Dock Doors</h3>
+            <span className="text-xs text-[var(--text-secondary)]">{dockDoors.length} doors</span>
             <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
               {dockDoors.filter((d) => d.status === 'AVAILABLE').length} available
             </span>
@@ -472,21 +636,21 @@ export default function YardDockPage() {
                   <div className={clsx(
                     'w-9 h-9 rounded-lg flex items-center justify-center',
                     door.status === 'AVAILABLE' && 'bg-emerald-100 dark:bg-emerald-900/40',
-                    door.status === 'OCCUPIED' && 'bg-blue-100 dark:bg-blue-900/40',
-                    door.status === 'MAINTENANCE' && 'bg-amber-100 dark:bg-amber-900/40',
-                    door.status === 'CLOSED' && 'bg-gray-100 dark:bg-gray-700',
+                    door.status === 'OCCUPIED' && 'bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40',
+                    door.status === 'MAINTENANCE' && 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/40',
+                    door.status === 'CLOSED' && 'bg-[var(--surface-muted)]',
                   )}>
                     <Truck className={clsx(
                       'w-4.5 h-4.5',
                       door.status === 'AVAILABLE' && 'text-emerald-600 dark:text-emerald-400',
-                      door.status === 'OCCUPIED' && 'text-blue-600 dark:text-blue-400',
-                      door.status === 'MAINTENANCE' && 'text-amber-600 dark:text-amber-400',
-                      door.status === 'CLOSED' && 'text-gray-400',
+                      door.status === 'OCCUPIED' && 'text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]',
+                      door.status === 'MAINTENANCE' && 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]',
+                      door.status === 'CLOSED' && 'text-[var(--text-tertiary)]',
                     )} />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{door.doorNumber}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{typeLabels[door.type] || door.type}</p>
+                    <p className="text-sm font-bold text-[var(--text-primary)]">{door.doorNumber}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{typeLabels[door.type] || door.type}</p>
                   </div>
                 </div>
                 <span className={clsx(
@@ -498,26 +662,26 @@ export default function YardDockPage() {
               </div>
 
               {door.status === 'OCCUPIED' && door.currentVehicle && (
-                <div className="mt-3 pt-3 border-t border-blue-200/50 dark:border-blue-700/30 space-y-2">
+                <div className="mt-3 pt-3 border-t border-[var(--nexus-primary-200)]/50 dark:border-[var(--nexus-primary-700)]/30 space-y-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <Car className="w-4 h-4 text-blue-500" />
-                    <span className="font-medium text-gray-800 dark:text-gray-200">{door.currentVehicle}</span>
+                    <Car className="w-4 h-4 text-[var(--nexus-primary-500)]" />
+                    <span className="font-medium text-[var(--text-primary)]">{door.currentVehicle}</span>
                   </div>
                   {door.driverName && (
                     <div className="flex items-center gap-2 text-sm">
-                      <Users className="w-4 h-4 text-blue-500" />
-                      <span className="text-gray-600 dark:text-gray-400">{door.driverName}</span>
+                      <Users className="w-4 h-4 text-[var(--nexus-primary-500)]" />
+                      <span className="text-[var(--text-secondary)]">{door.driverName}</span>
                     </div>
                   )}
                   {door.driverPhone && (
                     <div className="flex items-center gap-2 text-sm">
-                      <Phone className="w-4 h-4 text-blue-500" />
-                      <span className="text-gray-600 dark:text-gray-400 text-xs">{door.driverPhone}</span>
+                      <Phone className="w-4 h-4 text-[var(--nexus-primary-500)]" />
+                      <span className="text-[var(--text-secondary)] text-xs">{door.driverPhone}</span>
                     </div>
                   )}
                   <button
                     onClick={() => handleReleaseDoor(door.id)}
-                    className="w-full mt-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    className="w-full mt-2 px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] transition-colors"
                   >
                     Release Door
                   </button>
@@ -525,8 +689,8 @@ export default function YardDockPage() {
               )}
 
               {door.status === 'MAINTENANCE' && (
-                <div className="mt-3 pt-3 border-t border-amber-200/50 dark:border-amber-700/30">
-                  <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                <div className="mt-3 pt-3 border-t border-[var(--nexus-warning-200)]/50 dark:border-[var(--nexus-warning-700)]/30">
+                  <div className="flex items-center gap-2 text-xs text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Under maintenance
                   </div>
@@ -561,11 +725,11 @@ export default function YardDockPage() {
           return (
             <div key={zone}>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center">
-                  <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{zone}</span>
+                <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40 flex items-center justify-center">
+                  <span className="text-sm font-bold text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]">{zone}</span>
                 </div>
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Zone {zone}</h3>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <h3 className="text-sm font-semibold text-[var(--text-secondary)]">Zone {zone}</h3>
+                <span className="text-xs text-[var(--text-secondary)]">
                   {occupied}/{zoneLocs.length} occupied
                 </span>
               </div>
@@ -579,15 +743,15 @@ export default function YardDockPage() {
                       className={clsx(
                         'rounded-xl border p-4 transition-all hover:shadow-sm',
                         loc.status === 'AVAILABLE' && 'border-emerald-200 dark:border-emerald-800',
-                        loc.status === 'OCCUPIED' && 'border-blue-200 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-900/10',
-                        loc.status === 'RESERVED' && 'border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/10',
-                        loc.status === 'CLOSED' && 'border-gray-200 dark:border-gray-700 opacity-60',
+                        loc.status === 'OCCUPIED' && 'border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)] bg-[var(--nexus-primary-50)]/30 dark:bg-[var(--nexus-primary-900)]/10',
+                        loc.status === 'RESERVED' && 'border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)] bg-[var(--nexus-warning-50)]/30 dark:bg-[var(--nexus-warning-900)]/10',
+                        loc.status === 'CLOSED' && 'border-[var(--border-default)] opacity-60',
                       )}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="text-sm font-bold text-gray-900 dark:text-gray-100">{loc.locationCode}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{loc.type}</p>
+                          <p className="text-sm font-bold text-[var(--text-primary)]">{loc.locationCode}</p>
+                          <p className="text-xs text-[var(--text-secondary)]">{loc.type}</p>
                         </div>
                         <span className={clsx(
                           'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
@@ -599,16 +763,16 @@ export default function YardDockPage() {
 
                       <div className="mt-3">
                         <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-gray-500 dark:text-gray-400">Capacity</span>
-                          <span className="font-medium text-gray-700 dark:text-gray-300">
+                          <span className="text-[var(--text-secondary)]">Capacity</span>
+                          <span className="font-medium text-[var(--text-secondary)]">
                             {loc.currentCount}/{loc.maxCapacity}
                           </span>
                         </div>
-                        <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full overflow-hidden">
                           <div
                             className={clsx(
                               'h-full rounded-full transition-all',
-                              utilPct > 80 ? 'bg-red-500' : utilPct > 50 ? 'bg-amber-500' : 'bg-emerald-500',
+                              utilPct > 80 ? 'bg-[var(--nexus-error-50)]0' : utilPct > 50 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-emerald-500',
                             )}
                             style={{ width: `${Math.min(utilPct, 100)}%` }}
                           />
@@ -616,7 +780,7 @@ export default function YardDockPage() {
                       </div>
 
                       {loc.vehicleInfo && (
-                        <div className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]">
                           <Car className="w-3.5 h-3.5" />
                           {loc.vehicleInfo}
                         </div>
@@ -631,7 +795,7 @@ export default function YardDockPage() {
                         {loc.status === 'OCCUPIED' && (
                           <button
                             onClick={() => handleReleaseYard(loc.id)}
-                            className="flex-1 px-2 py-1 text-xs font-medium rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition-colors"
+                            className="flex-1 px-2 py-1 text-xs font-medium rounded-lg bg-[var(--surface-muted)] text-white hover:bg-[var(--surface-muted)] transition-colors"
                           >
                             Release
                           </button>
@@ -639,7 +803,7 @@ export default function YardDockPage() {
                         {loc.status === 'RESERVED' && (
                           <button
                             onClick={() => handleReleaseYard(loc.id)}
-                            className="flex-1 px-2 py-1 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+                            className="flex-1 px-2 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-warning-600)] text-white hover:bg-[var(--nexus-warning-700)] transition-colors"
                           >
                             Cancel Reserve
                           </button>
@@ -661,10 +825,10 @@ export default function YardDockPage() {
   function renderAppointmentsView() {
     return (
       <div className="space-y-4">
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800/50 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <tr className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                 <th className="px-4 py-3">Appointment #</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Carrier</th>
@@ -678,24 +842,24 @@ export default function YardDockPage() {
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
               {appointments.map((apt) => (
-                <tr key={apt.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{apt.appointmentNumber}</td>
+                <tr key={apt.id} className="hover:bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-base)]/30 transition-colors">
+                  <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{apt.appointmentNumber}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
                       {typeLabels[apt.type] || apt.type}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <div>
-                      <p className="text-sm text-gray-800 dark:text-gray-200">{apt.carrierName}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{apt.carrierCode}</p>
+                      <p className="text-sm text-[var(--text-primary)]">{apt.carrierName}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{apt.carrierCode}</p>
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <div>
-                      <p className="text-sm text-gray-800 dark:text-gray-200">{apt.driverName}</p>
+                      <p className="text-sm text-[var(--text-primary)]">{apt.driverName}</p>
                       {apt.driverPhone && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{apt.driverPhone}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{apt.driverPhone}</p>
                       )}
                     </div>
                   </td>
@@ -707,11 +871,11 @@ export default function YardDockPage() {
                       {apt.status.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">{apt.dockDoor || '—'}</td>
-                  <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+                  <td className="px-4 py-3 text-sm font-medium text-[var(--text-secondary)]">{apt.dockDoor || '—'}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                     {formatTime(apt.arrivalStart)} – {formatTime(apt.arrivalEnd)}
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <td className="px-4 py-3 text-sm font-medium text-[var(--text-secondary)]">
                     {formatTime(apt.estimatedArrival)}
                   </td>
                   <td className="px-4 py-3">
@@ -719,7 +883,7 @@ export default function YardDockPage() {
                       {apt.status === 'REQUESTED' && (
                         <button
                           onClick={() => handleConfirmAppointment(apt.id)}
-                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] transition-colors"
                         >
                           <Check className="w-3 h-3 inline mr-1" /> Confirm
                         </button>
@@ -727,7 +891,7 @@ export default function YardDockPage() {
                       {apt.status === 'CONFIRMED' && (
                         <button
                           onClick={() => handleCheckIn(apt.id)}
-                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-ai-600)] text-white hover:bg-[var(--nexus-ai-700)] transition-colors"
                         >
                           <Eye className="w-3 h-3 inline mr-1" /> Check In
                         </button>
@@ -752,13 +916,13 @@ export default function YardDockPage() {
                         <>
                           <button
                             onClick={() => handleCancelAppointment(apt.id)}
-                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 transition-colors"
+                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] hover:bg-[var(--nexus-error-200)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)] dark:hover:bg-[var(--nexus-error-900)]/50 transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={() => handleNoShow(apt.id)}
-                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 transition-colors"
+                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] transition-colors"
                           >
                             No Show
                           </button>
@@ -774,8 +938,8 @@ export default function YardDockPage() {
 
         {appointments.length === 0 && (
           <div className="enterprise-empty-state py-16">
-            <Calendar className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No appointments found for this date</p>
+            <Calendar className="w-12 h-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] mx-auto mb-3" />
+            <p className="text-[var(--text-secondary)] text-sm">No appointments found for this date</p>
           </div>
         )}
       </div>
@@ -794,37 +958,37 @@ export default function YardDockPage() {
             className={clsx(
               'flex items-stretch rounded-xl border transition-all cursor-pointer',
               slot.appointments.length > 0
-                ? 'border-blue-200 dark:border-blue-800 hover:border-blue-300 dark:hover:border-blue-700'
-                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
-              selectedSlotHour === slot.hour && 'ring-2 ring-blue-500/30 border-blue-400 dark:border-blue-600',
+                ? 'border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)] hover:border-[var(--nexus-primary-300)] dark:hover:border-[var(--nexus-primary-700)]'
+                : 'border-[var(--border-default)] hover:border-[var(--border-default)] dark:hover:border-[var(--border-default)]',
+              selectedSlotHour === slot.hour && 'ring-2 ring-blue-500/30 border-[var(--nexus-primary-400)] dark:border-[var(--nexus-primary-600)]',
             )}
           >
-            <div className="w-20 flex-shrink-0 flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 rounded-l-xl border-r border-gray-200 dark:border-gray-700">
-              <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+            <div className="w-20 flex-shrink-0 flex items-center justify-center bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-l-xl border-r border-[var(--border-default)]">
+              <span className="text-sm font-semibold text-[var(--text-secondary)]">
                 {String(slot.hour).padStart(2, '0')}:00
               </span>
             </div>
 
             <div className="flex-1 p-3 min-h-[52px]">
               {slot.appointments.length === 0 ? (
-                <p className="text-xs text-gray-400 dark:text-gray-500 py-1">No appointments</p>
+                <p className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] py-1">No appointments</p>
               ) : (
                 <div className="space-y-1.5">
                   {slot.appointments.map((apt) => (
                     <div
                       key={apt.id}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50"
+                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 border border-[var(--nexus-primary-200)]/50 dark:border-[var(--nexus-primary-800)]/50"
                     >
                       <span className={clsx(
                         'w-1.5 h-1.5 rounded-full flex-shrink-0',
                         apt.status === 'IN_PROGRESS' && 'bg-emerald-500',
-                        apt.status === 'CONFIRMED' && 'bg-blue-500',
-                        apt.status === 'CHECKED_IN' && 'bg-purple-500',
-                        apt.status === 'REQUESTED' && 'bg-amber-500',
-                        apt.status === 'COMPLETED' && 'bg-gray-400',
+                        apt.status === 'CONFIRMED' && 'bg-[var(--nexus-primary-50)]0',
+                        apt.status === 'CHECKED_IN' && 'bg-[var(--nexus-ai-50)]0',
+                        apt.status === 'REQUESTED' && 'bg-[var(--nexus-warning-50)]0',
+                        apt.status === 'COMPLETED' && 'bg-[var(--surface-muted)]',
                       )} />
-                      <span className="text-xs font-medium text-gray-800 dark:text-gray-200">{apt.appointmentNumber}</span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{apt.carrierName}</span>
+                      <span className="text-xs font-medium text-[var(--text-primary)]">{apt.appointmentNumber}</span>
+                      <span className="text-xs text-[var(--text-secondary)]">{apt.carrierName}</span>
                       <span className={clsx(
                         'ml-auto text-xs font-medium px-1.5 py-0.5 rounded',
                         appointmentStatusColors[apt.status],
@@ -839,7 +1003,7 @@ export default function YardDockPage() {
 
             {slot.appointments.length > 0 && (
               <div className="w-10 flex-shrink-0 flex items-center justify-center">
-                <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/40 w-6 h-6 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40 w-6 h-6 rounded-full flex items-center justify-center">
                   {slot.appointments.length}
                 </span>
               </div>
@@ -848,9 +1012,9 @@ export default function YardDockPage() {
         ))}
 
         {selectedSlotHour !== null && (
-          <div className="mt-4 p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10">
+          <div className="mt-4 p-4 rounded-xl border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)] bg-[var(--nexus-primary-50)]/50 dark:bg-[var(--nexus-primary-900)]/10">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <h4 className="text-sm font-semibold text-[var(--text-primary)]">
                 {String(selectedSlotHour).padStart(2, '0')}:00 — {String(selectedSlotHour + 1).padStart(2, '0')}:00
               </h4>
               <button
@@ -866,10 +1030,143 @@ export default function YardDockPage() {
               </button>
             </div>
             {calendarSlots.find((s) => s.hour === selectedSlotHour)?.appointments.length === 0 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">No appointments in this slot. Click "New Appointment" to schedule one.</p>
+              <p className="text-xs text-[var(--text-secondary)]">No appointments in this slot. Click "New Appointment" to schedule one.</p>
             )}
           </div>
         )}
+      </div>
+    )
+  }
+
+  // ── Trailers View ──
+
+  function renderTrailersView() {
+    const filtered = trailers.filter((t) => {
+      const matchSearch =
+        !trailerSearch ||
+        t.trailerNumber.toLowerCase().includes(trailerSearch.toLowerCase()) ||
+        t.carrierId.toLowerCase().includes(trailerSearch.toLowerCase()) ||
+        (t.licensePlate ?? '').toLowerCase().includes(trailerSearch.toLowerCase())
+      const matchStatus = trailerStatusFilter === 'ALL' || t.status === trailerStatusFilter
+      return matchSearch && matchStatus
+    })
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              value={trailerSearch}
+              onChange={(e) => setTrailerSearch(e.target.value)}
+              placeholder="Search trailers..."
+              className="enterprise-input text-sm py-1.5 w-52"
+            />
+            <select
+              value={trailerStatusFilter}
+              onChange={(e) => setTrailerStatusFilter(e.target.value)}
+              className="enterprise-input text-sm py-1.5"
+            >
+              <option value="ALL">All Status</option>
+              <option value="IN_YARD">In Yard</option>
+              <option value="DOCKED">Docked</option>
+              <option value="IN_TRANSIT">In Transit</option>
+              <option value="MAINTENANCE">Maintenance</option>
+            </select>
+          </div>
+          <button
+            onClick={() => setShowCheckInModal(true)}
+            className="enterprise-btn enterprise-btn-primary text-xs"
+          >
+            <Plus className="w-3.5 h-3.5" /> Check In Trailer
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Total', value: trailerStats.total, color: 'text-[var(--text-primary)]' },
+            { label: 'In Yard', value: trailerStats.inYard, color: 'text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]' },
+            { label: 'Docked', value: trailerStats.docked, color: 'text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]' },
+            { label: 'In Transit', value: trailerStats.inTransit, color: 'text-[var(--nexus-ai-600)] dark:text-[var(--nexus-ai-400)]' },
+          ].map((s) => (
+            <div key={s.label} className="rounded-lg border border-[var(--border-default)] p-3 text-center">
+              <p className={clsx('text-xl font-bold', s.color)}>{s.value}</p>
+              <p className="text-xs text-[var(--text-secondary)]">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                <th className="px-4 py-3">Trailer #</th>
+                <th className="px-4 py-3">Carrier</th>
+                <th className="px-4 py-3">License Plate</th>
+                <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Dock</th>
+                <th className="px-4 py-3">Check In</th>
+                <th className="px-4 py-3">Pallets</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+              {filtered.map((t) => (
+                <tr key={t.id} className="hover:bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-base)]/30 transition-colors">
+                  <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{t.trailerNumber}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]">{t.carrierId}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">{t.licensePlate ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={clsx(
+                      'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                      trailerStatusColors[t.status],
+                    )}>
+                      {t.status.replace(/_/g, ' ')}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-sm font-medium text-[var(--text-secondary)]">{t.currentDockDoor ?? '—'}</td>
+                  <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
+                    {t.checkInTime ? formatTime(t.checkInTime) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{t.palletCount ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {t.status === 'IN_YARD' && (
+                        <button
+                          onClick={() => handleDockTrailer(t.id)}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-success-600)] text-white hover:bg-[var(--nexus-success-700)] transition-colors"
+                        >
+                          Dock
+                        </button>
+                      )}
+                      {t.status === 'DOCKED' && (
+                        <button
+                          onClick={() => handleCheckOutTrailer(t.id)}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-ai-600)] text-white hover:bg-[var(--nexus-ai-700)] transition-colors"
+                        >
+                          Check Out
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleShowTrailerEvents(t.id)}
+                        className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] transition-colors"
+                      >
+                        <Eye className="w-3 h-3 inline mr-1" /> History
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-10 text-center text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-sm">
+                    No trailers found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     )
   }
@@ -881,6 +1178,7 @@ export default function YardDockPage() {
     { key: 'yard', label: 'Yard', icon: <MapPin className="w-4 h-4" /> },
     { key: 'appointments', label: 'Appointments', icon: <Calendar className="w-4 h-4" /> },
     { key: 'calendar', label: 'Calendar', icon: <CalendarDays className="w-4 h-4" /> },
+    { key: 'trailers', label: 'Trailers', icon: <Package className="w-4 h-4" /> },
   ]
 
   return (
@@ -894,10 +1192,10 @@ export default function YardDockPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
-            <Truck className="w-7 h-7 text-blue-500" /> Yard & Dock Management
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
+            <Truck className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Yard & Dock Management
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
             {warehouses.find((w) => w.id === selectedWarehouse)?.name} &middot; Dock utilization {stats.dockUtilization}%
           </p>
         </div>
@@ -942,9 +1240,9 @@ export default function YardDockPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="enterprise-toolbar flex flex-wrap items-center gap-3 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+      <div className="enterprise-toolbar flex flex-wrap items-center gap-3 p-4 bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)]">
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Warehouse</label>
+          <label className="text-xs font-medium text-[var(--text-secondary)]">Warehouse</label>
           <select
             value={selectedWarehouse}
             onChange={(e) => setSelectedWarehouse(e.target.value)}
@@ -956,10 +1254,10 @@ export default function YardDockPage() {
           </select>
         </div>
 
-        <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
 
         <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Date</label>
+          <label className="text-xs font-medium text-[var(--text-secondary)]">Date</label>
           <input
             type="date"
             value={selectedDate}
@@ -977,9 +1275,9 @@ export default function YardDockPage() {
           <Plus className="w-4 h-4" /> New Appointment
         </button>
 
-        <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
 
-        <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="flex items-center rounded-lg border border-[var(--border-default)] overflow-hidden">
           {views.map((view) => (
             <button
               key={view.key}
@@ -987,8 +1285,8 @@ export default function YardDockPage() {
               className={clsx(
                 'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
                 activeView === view.key
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700',
+                  ? 'bg-[var(--nexus-primary-600)] text-white'
+                  : 'text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)]',
               )}
             >
               {view.icon}
@@ -1004,6 +1302,7 @@ export default function YardDockPage() {
         {activeView === 'yard' && renderYardView()}
         {activeView === 'appointments' && renderAppointmentsView()}
         {activeView === 'calendar' && renderCalendarView()}
+        {activeView === 'trailers' && renderTrailersView()}
       </div>
 
       {/* New Appointment Modal */}
@@ -1013,20 +1312,20 @@ export default function YardDockPage() {
             className="enterprise-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">New Appointment</h2>
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Appointment</h2>
               <button
                 onClick={() => setShowAppointmentModal(false)}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-[var(--text-secondary)]" />
               </button>
             </div>
 
             <div className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Type *</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Type *</label>
                   <select
                     value={aptForm.type}
                     onChange={(e) => setAptForm({ ...aptForm, type: e.target.value })}
@@ -1039,7 +1338,7 @@ export default function YardDockPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Carrier Name *</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Carrier Name *</label>
                   <input
                     value={aptForm.carrierName}
                     onChange={(e) => setAptForm({ ...aptForm, carrierName: e.target.value })}
@@ -1051,7 +1350,7 @@ export default function YardDockPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Carrier Code</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Carrier Code</label>
                   <input
                     value={aptForm.carrierCode}
                     onChange={(e) => setAptForm({ ...aptForm, carrierCode: e.target.value })}
@@ -1060,7 +1359,7 @@ export default function YardDockPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Trailer Number</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Trailer Number</label>
                   <input
                     value={aptForm.trailerNumber}
                     onChange={(e) => setAptForm({ ...aptForm, trailerNumber: e.target.value })}
@@ -1072,7 +1371,7 @@ export default function YardDockPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">License Plate</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">License Plate</label>
                   <input
                     value={aptForm.licensePlate}
                     onChange={(e) => setAptForm({ ...aptForm, licensePlate: e.target.value })}
@@ -1081,7 +1380,7 @@ export default function YardDockPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Driver Name *</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Driver Name *</label>
                   <input
                     value={aptForm.driverName}
                     onChange={(e) => setAptForm({ ...aptForm, driverName: e.target.value })}
@@ -1093,7 +1392,7 @@ export default function YardDockPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Driver Phone</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Driver Phone</label>
                   <input
                     value={aptForm.driverPhone}
                     onChange={(e) => setAptForm({ ...aptForm, driverPhone: e.target.value })}
@@ -1104,11 +1403,11 @@ export default function YardDockPage() {
                 <div />
               </div>
 
-              <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Schedule</h3>
+              <div className="border-t border-[var(--border-subtle)] pt-4">
+                <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Schedule</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Estimated Arrival *</label>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Estimated Arrival *</label>
                     <input
                       type="datetime-local"
                       value={aptForm.estimatedArrival}
@@ -1117,7 +1416,7 @@ export default function YardDockPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Estimated Departure</label>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Estimated Departure</label>
                     <input
                       type="datetime-local"
                       value={aptForm.estimatedDeparture}
@@ -1128,11 +1427,11 @@ export default function YardDockPage() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Load Details</h3>
+              <div className="border-t border-[var(--border-subtle)] pt-4">
+                <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Load Details</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Load Count</label>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Load Count</label>
                     <input
                       type="number"
                       min={0}
@@ -1142,7 +1441,7 @@ export default function YardDockPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Pallet Count</label>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Pallet Count</label>
                     <input
                       type="number"
                       min={0}
@@ -1152,7 +1451,7 @@ export default function YardDockPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Piece Count</label>
+                    <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Piece Count</label>
                     <input
                       type="number"
                       min={0}
@@ -1165,7 +1464,7 @@ export default function YardDockPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Special Instructions</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Special Instructions</label>
                 <textarea
                   value={aptForm.specialInstructions}
                   onChange={(e) => setAptForm({ ...aptForm, specialInstructions: e.target.value })}
@@ -1176,7 +1475,7 @@ export default function YardDockPage() {
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-100 dark:border-gray-700 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button
                 onClick={() => setShowAppointmentModal(false)}
                 className="enterprise-btn text-sm"
@@ -1191,6 +1490,121 @@ export default function YardDockPage() {
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}
                 Create Appointment
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCheckInModal && (
+        <div className="enterprise-modal-overlay" onClick={() => setShowCheckInModal(false)}>
+          <div
+            className="enterprise-modal max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Check In Trailer</h2>
+              <button
+                onClick={() => setShowCheckInModal(false)}
+                className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-[var(--text-secondary)]" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Trailer Number *</label>
+                <input
+                  value={checkInForm.trailerNumber}
+                  onChange={(e) => setCheckInForm({ ...checkInForm, trailerNumber: e.target.value })}
+                  className="enterprise-input w-full text-sm"
+                  placeholder="TRL-9921"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Carrier *</label>
+                <input
+                  value={checkInForm.carrierId}
+                  onChange={(e) => setCheckInForm({ ...checkInForm, carrierId: e.target.value })}
+                  className="enterprise-input w-full text-sm"
+                  placeholder="FFL"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">License Plate</label>
+                <input
+                  value={checkInForm.licensePlate}
+                  onChange={(e) => setCheckInForm({ ...checkInForm, licensePlate: e.target.value })}
+                  className="enterprise-input w-full text-sm"
+                  placeholder="TRK-4521"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
+              <button
+                onClick={() => setShowCheckInModal(false)}
+                className="enterprise-btn text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTrailerCheckIn}
+                disabled={saving}
+                className="enterprise-btn enterprise-btn-primary text-sm"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                Check In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEventsModal && (
+        <div className="enterprise-modal-overlay" onClick={() => setShowEventsModal(false)}>
+          <div
+            className="enterprise-modal max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+                Trailer History — {trailers.find((t) => t.id === selectedTrailerId)?.trailerNumber ?? ''}
+              </h2>
+              <button
+                onClick={() => setShowEventsModal(false)}
+                className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-[var(--text-secondary)]" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {trailerEvents.length === 0 ? (
+                <p className="text-sm text-[var(--text-secondary)] text-center py-8">No events recorded</p>
+              ) : (
+                <div className="space-y-3">
+                  {trailerEvents.map((ev) => (
+                    <div key={ev.id} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 border border-[var(--border-default)]">
+                      <div className="w-8 h-8 rounded-full bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Clock className="w-4 h-4 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-[var(--text-primary)]">{ev.eventType.replace(/_/g, ' ')}</span>
+                          <span className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{formatTime(ev.performedAt)}</span>
+                        </div>
+                        {ev.performedBy && (
+                          <p className="text-xs text-[var(--text-secondary)] mt-0.5">by {ev.performedBy}</p>
+                        )}
+                        {ev.details && (
+                          <p className="text-xs text-[var(--text-secondary)] mt-1">{ev.details}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

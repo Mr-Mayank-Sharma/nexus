@@ -145,7 +145,7 @@ export default function B2BPortalPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" />
       </div>
     )
   }
@@ -156,7 +156,7 @@ export default function B2BPortalPage() {
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="flex items-center gap-2.5"><Store className="w-6 h-6 text-primary-600" />B2B Customer Portal</h1>
+            <h1 className="flex items-center gap-2.5"><Store className="w-6 h-6 text-[var(--text-brand)]" />B2B Customer Portal</h1>
             <p>Self-service order management and returns</p>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function B2BPortalPage() {
 
       {/* Customer Profile Card */}
       {selectedCustomer && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-6">
           <div className="flex items-start gap-5">
             <div className="enterprise-avatar w-14 h-14 text-xl">
               {selectedCustomer.name?.charAt(0) || 'C'}
@@ -179,8 +179,8 @@ export default function B2BPortalPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{selectedCustomer.name}</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedCustomer.email}</p>
+                  <h2 className="text-xl font-bold text-[var(--text-primary)]">{selectedCustomer.name}</h2>
+                  <p className="text-sm text-[var(--text-secondary)]">{selectedCustomer.email}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="enterprise-badge enterprise-badge-success">Active</span>
@@ -194,8 +194,8 @@ export default function B2BPortalPage() {
                   { label: 'Member Since', value: 'Jan 2026' },
                 ].map(stat => (
                   <div key={stat.label} className="text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">{stat.label}: </span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{stat.value}</span>
+                    <span className="text-[var(--text-secondary)]">{stat.label}: </span>
+                    <span className="font-semibold text-[var(--text-primary)]">{stat.value}</span>
                   </div>
                 ))}
               </div>
@@ -224,38 +224,38 @@ export default function B2BPortalPage() {
       {/* Orders Tab */}
       {tab === 'orders' && (
         <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Orders</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Recent Orders</h3>
           {ordersLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+              <Loader2 className="w-6 h-6 animate-spin text-[var(--text-brand)]" />
             </div>
           ) : portalOrders.length === 0 ? (
             <div className="enterprise-empty-state py-12">
-              <Package className="w-8 h-8 mx-auto text-gray-300" />
+              <Package className="w-8 h-8 mx-auto text-[var(--text-tertiary)]" />
               <h3>No orders found</h3>
               <p>This customer has no orders yet</p>
             </div>
           ) : portalOrders.map(order => (
-            <div key={order.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 transition-shadow hover:shadow-sm">
+            <div key={order.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5 transition-shadow hover:shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{order.orderNumber}</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{order.orderNumber}</span>
                     <span className={clsx('enterprise-badge', STATUS_BADGES[order.status])}>{order.status}</span>
                   </div>
-                  <div className="flex items-center gap-5 mt-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+                  <div className="flex items-center gap-5 mt-2 text-sm text-[var(--text-secondary)] flex-wrap">
                     <span>{new Date(order.date).toLocaleDateString()}</span>
                     <span>{order.items} item{order.items > 1 ? 's' : ''}</span>
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">${order.total.toFixed(2)}</span>
+                    <span className="font-semibold text-[var(--text-primary)]">${order.total.toFixed(2)}</span>
                     {order.tracking && (
-                      <span className="inline-flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
+                      <span className="inline-flex items-center gap-1.5 text-[var(--text-brand)]">
                         <Truck className="w-3.5 h-3.5" />
                         {order.carrier}: <span className="font-mono text-xs">{order.tracking}</span>
                       </span>
                     )}
                     {order.eta && (
                       <span className="inline-flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-amber-500" />
+                        <Clock className="w-3.5 h-3.5 text-[var(--nexus-warning-500)]" />
                         Est. {new Date(order.eta).toLocaleDateString()}
                       </span>
                     )}
@@ -271,7 +271,7 @@ export default function B2BPortalPage() {
                   {order.tracking && (
                     <button
                       onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(order.tracking!)}`, '_blank')}
-                      className="enterprise-btn enterprise-btn-sm bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/20 dark:text-primary-300 dark:border-primary-800 hover:bg-primary-100"
+                      className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] border border-[var(--nexus-primary-200)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)] dark:border-[var(--nexus-primary-800)] hover:bg-[var(--nexus-primary-100)]"
                     >
                       <ExternalLink className="w-3.5 h-3.5" /> Track
                     </button>
@@ -287,7 +287,7 @@ export default function B2BPortalPage() {
       {tab === 'returns' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">My Returns</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">My Returns</h3>
             <PermissionGate resource="integrations" action="create">
               <button
                 onClick={() => setReturnRequestOpen(true)}
@@ -305,16 +305,16 @@ export default function B2BPortalPage() {
             </div>
           ) : (
             returns.map(ret => (
-              <div key={ret.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+              <div key={ret.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3">
-                      <span className="font-semibold text-gray-900 dark:text-gray-100">{ret.rmaNumber}</span>
+                      <span className="font-semibold text-[var(--text-primary)]">{ret.rmaNumber}</span>
                       <span className={clsx('enterprise-badge', RETURN_STATUS_BADGES[ret.status] || 'enterprise-badge-neutral')}>{ret.status}</span>
                     </div>
-                    <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
-                      <span>Order: <span className="font-mono text-gray-700 dark:text-gray-300">{ret.orderId?.slice(0, 8)}</span></span>
-                      <span>Reason: <span className="font-medium text-gray-700 dark:text-gray-300">{ret.reason}</span></span>
+                    <div className="flex items-center gap-4 mt-1.5 text-sm text-[var(--text-secondary)] flex-wrap">
+                      <span>Order: <span className="font-mono text-[var(--text-secondary)]">{ret.orderId?.slice(0, 8)}</span></span>
+                      <span>Reason: <span className="font-medium text-[var(--text-secondary)]">{ret.reason}</span></span>
                       {ret.refundAmount > 0 && <span className="font-medium text-emerald-600 dark:text-emerald-400">${ret.refundAmount.toFixed(2)} refunded</span>}
                       <span>{new Date(ret.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -330,16 +330,16 @@ export default function B2BPortalPage() {
                     {ret.returnLabelUrl && (
                       <button
                         onClick={() => window.open(ret.returnLabelUrl!, '_blank')}
-                        className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-primary-600"
+                        className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-[var(--text-brand)]"
                       >
                         <Download className="w-3.5 h-3.5" /> Label
                       </button>
                     )}
                     <span className={clsx('text-xs font-medium px-2.5 py-1 rounded-lg',
-                      ret.status === 'REQUESTED' && 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400',
+                      ret.status === 'REQUESTED' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
                       ret.status === 'REFUNDED' && 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
-                      ret.status === 'REJECTED' && 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400',
-                      (ret.status === 'APPROVED' || ret.status === 'RECEIVED' || ret.status === 'INSPECTED') && 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
+                      ret.status === 'REJECTED' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]',
+                      (ret.status === 'APPROVED' || ret.status === 'RECEIVED' || ret.status === 'INSPECTED') && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]',
                     )}>
                       {ret.status === 'REQUESTED' && 'Awaiting approval'}
                       {ret.status === 'REFUNDED' && 'Completed'}
@@ -357,8 +357,8 @@ export default function B2BPortalPage() {
       {/* Account Tab */}
       {tab === 'account' && selectedCustomer && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-5">Profile</h3>
+          <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-6">
+            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-5">Profile</h3>
             <dl className="space-y-0.5">
               {[
                 { label: 'Name', value: selectedCustomer.name },
@@ -369,39 +369,39 @@ export default function B2BPortalPage() {
                 { label: 'Credit Limit', value: '$25,000.00' },
                 { label: 'Tax ID', value: 'XX-XXXXXXX' },
               ].map(({ label, value }) => (
-                <div key={label} className="flex justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                  <dt className="text-sm text-gray-500 dark:text-gray-400">{label}</dt>
-                  <dd className="text-sm font-medium text-gray-900 dark:text-gray-100">{value}</dd>
+                <div key={label} className="flex justify-between py-2.5 px-3 -mx-3 rounded-lg hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30">
+                  <dt className="text-sm text-[var(--text-secondary)]">{label}</dt>
+                  <dd className="text-sm font-medium text-[var(--text-primary)]">{value}</dd>
                 </div>
               ))}
             </dl>
           </div>
           <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Shipping Addresses</h3>
-              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+            <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Shipping Addresses</h3>
+              <div className="bg-[var(--surface-muted)] rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <MapPin className="w-4 h-4 text-[var(--text-tertiary)] mt-0.5" />
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100">{selectedCustomer.name}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="font-medium text-[var(--text-primary)]">{selectedCustomer.name}</p>
+                    <p className="text-sm text-[var(--text-secondary)] mt-1">
                       123 Commerce Street<br />Suite 400<br />San Francisco, CA 94105<br />United States
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Pricing</h3>
-              <div className="space-y-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4">
+            <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-6">
+              <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Pricing</h3>
+              <div className="space-y-3 bg-[var(--surface-muted)] rounded-xl p-4">
                 {[
                   { label: 'Price List', value: 'Wholesale 2026' },
                   { label: 'Discount', value: '15% off MSRP', valueClass: 'text-emerald-600 dark:text-emerald-400' },
                   { label: 'Shipping', value: 'Free over $500' },
                 ].map(({ label, value, valueClass }) => (
                   <div key={label} className="flex justify-between">
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
-                    <span className={clsx('text-sm font-medium text-gray-900 dark:text-gray-100', valueClass)}>{value}</span>
+                    <span className="text-sm text-[var(--text-secondary)]">{label}</span>
+                    <span className={clsx('text-sm font-medium text-[var(--text-primary)]', valueClass)}>{value}</span>
                   </div>
                 ))}
               </div>
@@ -415,8 +415,8 @@ export default function B2BPortalPage() {
         <div className="enterprise-modal-overlay" onClick={() => setReturnRequestOpen(false)}>
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Request Return</h2>
-              <button onClick={() => setReturnRequestOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"><XCircle className="w-5 h-5" /></button>
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Request Return</h2>
+              <button onClick={() => setReturnRequestOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-5">
               <div className="enterprise-form-group">

@@ -40,6 +40,21 @@ public class AnalyticsController {
         return ResponseEntity.ok(ApiResponse.success(dashboardService.getOrderVelocity()));
     }
 
+    @GetMapping("/alerts")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAlerts() {
+        return ResponseEntity.ok(ApiResponse.success(dashboardService.getAlerts(TenantContext.getCurrentTenantId())));
+    }
+
+    @GetMapping("/order-status-distribution")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOrderStatusDistribution() {
+        return ResponseEntity.ok(ApiResponse.success(dashboardService.getOrderStatusDistribution(TenantContext.getCurrentTenantId())));
+    }
+
+    @GetMapping("/task-queue-summary")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTaskQueueSummary() {
+        return ResponseEntity.ok(ApiResponse.success(dashboardService.getTaskQueueSummary(TenantContext.getCurrentTenantId())));
+    }
+
     @GetMapping("/carrier-performance")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCarrierPerformance() {
         return ResponseEntity.ok(ApiResponse.success(Map.of(

@@ -106,8 +106,8 @@ export default function RoutingRulesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Route className="w-7 h-7 text-primary-500" /> Routing Rules</h1>
-          <p className="text-sm text-gray-500 mt-1">Configure order routing logic for fulfillment allocation</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Route className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Routing Rules</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Configure order routing logic for fulfillment allocation</p>
         </div>
         <PermissionGate resource="routing" action="create">
           <button onClick={openCreate} className="btn-primary text-sm">
@@ -118,50 +118,50 @@ export default function RoutingRulesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
         </div>
       ) : rules.length === 0 ? (
         <div className="text-center py-16 card">
-          <Route className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No routing rules configured. Create your first rule to control order allocation.</p>
+          <Route className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
+          <p className="text-[var(--text-secondary)] text-sm">No routing rules configured. Create your first rule to control order allocation.</p>
         </div>
       ) : (
         <div className="space-y-2">
           {rules.map((rule, index) => (
             <div key={rule.id} className={`card flex items-center gap-4 p-4 ${!rule.isActive ? 'opacity-60' : ''}`}>
-              <div className="flex flex-col gap-0.5 text-gray-400">
-                <button onClick={() => handleMoveUp(index)} className="hover:text-gray-600 disabled:opacity-30" disabled={index === 0}>
+              <div className="flex flex-col gap-0.5 text-[var(--text-tertiary)]">
+                <button onClick={() => handleMoveUp(index)} className="hover:text-[var(--text-secondary)] disabled:opacity-30" disabled={index === 0}>
                   <ArrowUp className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => handleMoveDown(index)} className="hover:text-gray-600 disabled:opacity-30" disabled={index === rules.length - 1}>
+                <button onClick={() => handleMoveDown(index)} className="hover:text-[var(--text-secondary)] disabled:opacity-30" disabled={index === rules.length - 1}>
                   <ArrowDown className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <GripVertical className="w-4 h-4 text-gray-300 flex-shrink-0" />
+              <GripVertical className="w-4 h-4 text-[var(--text-tertiary)] flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-900">{rule.name}</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">{rule.name}</span>
                   <StatusBadge status={rule.isActive ? 'ACTIVE' : 'INACTIVE'} size="sm" />
                 </div>
-                {rule.description && <p className="text-xs text-gray-500 mt-0.5">{rule.description}</p>}
+                {rule.description && <p className="text-xs text-[var(--text-secondary)] mt-0.5">{rule.description}</p>}
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{rule.ruleType.replace(/_/g, ' ')}</span>
-                  <span className="text-xs text-gray-400">Priority {rule.priority}</span>
+                  <span className="text-xs bg-[var(--surface-muted)] px-2 py-0.5 rounded text-[var(--text-secondary)]">{rule.ruleType.replace(/_/g, ' ')}</span>
+                  <span className="text-xs text-[var(--text-tertiary)]">Priority {rule.priority}</span>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <PermissionGate resource="routing" action="edit">
-                  <button onClick={() => handleToggleActive(rule)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
-                    {rule.isActive ? <ToggleRight className="w-4 h-4 text-green-500" /> : <ToggleLeft className="w-4 h-4" />}
+                  <button onClick={() => handleToggleActive(rule)} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
+                    {rule.isActive ? <ToggleRight className="w-4 h-4 text-[var(--nexus-success-500)]" /> : <ToggleLeft className="w-4 h-4" />}
                   </button>
                 </PermissionGate>
                 <PermissionGate resource="routing" action="edit">
-                  <button onClick={() => openEdit(rule)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700">
+                  <button onClick={() => openEdit(rule)} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
                     <Pencil className="w-4 h-4" />
                   </button>
                 </PermissionGate>
                 <PermissionGate resource="routing" action="delete">
-                  <button onClick={() => handleDelete(rule.id)} className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600">
+                  <button onClick={() => handleDelete(rule.id)} className="p-1.5 hover:bg-[var(--nexus-error-50)] rounded text-[var(--text-secondary)] hover:text-[var(--nexus-error-600)]">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </PermissionGate>
@@ -172,23 +172,23 @@ export default function RoutingRulesPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">{editingRule ? 'Edit Rule' : 'New Routing Rule'}</h2>
-              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">{editingRule ? 'Edit Rule' : 'New Routing Rule'}</h2>
+              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rule Name</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Rule Name</label>
                 <Autocomplete value={form.name} onChange={(value) => setForm({ ...form, name: value })} inputClassName="input w-full" placeholder="e.g. Nearest Warehouse First" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
                 <Autocomplete value={form.description} onChange={(value) => setForm({ ...form, description: value })} inputClassName="input w-full" placeholder="Describe when this rule applies" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rule Type</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Rule Type</label>
                 <Autocomplete
                   value={form.ruleType}
                   onChange={(value) => setForm({ ...form, ruleType: value })}
@@ -202,15 +202,15 @@ export default function RoutingRulesPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Conditions (JSON)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Conditions (JSON)</label>
                 <Autocomplete value={form.conditions} onChange={(value) => setForm({ ...form, conditions: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"maxDistance": 100, "carrier": "FEDEX"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Actions (JSON)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Actions (JSON)</label>
                 <Autocomplete value={form.actions} onChange={(value) => setForm({ ...form, actions: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"allocateTo": "NEAREST_NODE", "priority": "HIGH"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="routing" action={editingRule ? 'edit' : 'create'}>
                 <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">

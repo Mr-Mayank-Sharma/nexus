@@ -43,7 +43,7 @@ function ForecastCard({ forecast }: { forecast: AiForecast }) {
         </div>
         <div className={clsx(
           'flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full',
-          trend ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+          trend ? 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-300)]' : 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-300)]'
         )}>
           {trend ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
           {trend ? 'Up' : 'Down'}
@@ -53,7 +53,7 @@ function ForecastCard({ forecast }: { forecast: AiForecast }) {
         <MiniSparkline data={forecast.predicted} color={trend ? '#10B981' : '#EF4444'} />
         <div className="text-right">
           <p className="text-[10px] text-[var(--text-tertiary)]">{forecast.period}</p>
-          <p className="text-xs font-medium text-primary-600">{forecast.confidence}% confidence</p>
+          <p className="text-xs font-medium text-[var(--text-brand)]">{forecast.confidence}% confidence</p>
         </div>
       </div>
       <div className="flex items-end gap-0.5 h-12 mt-2">
@@ -63,10 +63,10 @@ function ForecastCard({ forecast }: { forecast: AiForecast }) {
           return (
             <div key={i} className="flex-1 flex flex-col items-center gap-0.5 group relative">
               <div
-                className={clsx('w-full rounded-t transition-all', isUp ? 'bg-green-400' : 'bg-red-400')}
+                className={clsx('w-full rounded-t transition-all', isUp ? 'bg-[var(--nexus-success-400)]' : 'bg-[var(--nexus-error-400)]')}
                 style={{ height: `${Math.max(h, 6)}%` }}
               />
-              <span className="text-[8px] text-gray-400">D{i + 1}</span>
+              <span className="text-[8px] text-[var(--text-tertiary)]">D{i + 1}</span>
             </div>
           )
         })}
@@ -85,9 +85,9 @@ function SupplierRiskCard({ risk }: { risk: AiSupplierRisk }) {
         <h4 className="text-sm font-semibold text-[var(--text-primary)]">{risk.supplierName}</h4>
         <span className={clsx(
           'text-xs font-bold px-2 py-0.5 rounded-full',
-          risk.riskScore >= 70 ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' :
-          risk.riskScore >= 40 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
-          'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+          risk.riskScore >= 70 ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-300)]' :
+          risk.riskScore >= 40 ? 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-300)]' :
+          'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-300)]'
         )}>
           Risk: {risk.riskScore}
         </span>
@@ -100,13 +100,13 @@ function SupplierRiskCard({ risk }: { risk: AiSupplierRisk }) {
       <div className="flex items-center justify-between">
         <span className={clsx(
           'text-[10px] font-medium px-1.5 py-0.5 rounded',
-          risk.trend === 'improving' ? 'text-green-600 bg-green-50 dark:bg-green-900/20' :
-          risk.trend === 'declining' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' :
-          'text-gray-500 bg-gray-100 dark:bg-gray-700'
+          risk.trend === 'improving' ? 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20' :
+          risk.trend === 'declining' ? 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20' :
+          'text-[var(--text-secondary)] bg-[var(--surface-muted)]'
         )}>
           {risk.trend}
         </span>
-        <p className="text-[10px] text-primary-600 font-medium">{risk.recommendation}</p>
+        <p className="text-[10px] text-[var(--text-brand)] font-medium">{risk.recommendation}</p>
       </div>
     </div>
   )
@@ -151,7 +151,7 @@ export default function AiForecastingPage() {
       <div className="enterprise-page-header">
         <div>
           <h1 className="flex items-center gap-2.5">
-            <BarChart3 className="w-7 h-7 text-primary-500" /> AI Forecasting
+            <BarChart3 className="w-7 h-7 text-[var(--nexus-primary-500)]" /> AI Forecasting
           </h1>
           <p>Demand prediction, supplier risk analysis & AI recommendations</p>
         </div>
@@ -170,7 +170,7 @@ export default function AiForecastingPage() {
             )}
           >
             {tab.label}
-            <span className="text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded-full">{tab.count}</span>
+            <span className="text-[10px] bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded-full">{tab.count}</span>
           </button>
         ))}
       </div>
@@ -179,7 +179,7 @@ export default function AiForecastingPage() {
         <>
           {fcLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-24 bg-gray-200 dark:bg-gray-700 rounded" /></div>)}
+              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-24 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" /></div>)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -188,29 +188,29 @@ export default function AiForecastingPage() {
           )}
           <div className="enterprise-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Brain className="w-5 h-5 text-primary-500" />
+              <Brain className="w-5 h-5 text-[var(--nexus-primary-500)]" />
               <h3 className="font-semibold text-[var(--text-primary)]">AI Insights</h3>
             </div>
             <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/20">
-                <TrendingUp className="w-5 h-5 text-blue-500 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10 border border-[var(--nexus-primary-100)] dark:border-[var(--nexus-primary-900)]/20">
+                <TrendingUp className="w-5 h-5 text-[var(--nexus-primary-500)] mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-medium text-blue-800 dark:text-blue-200">Order volume expected to increase 22% next week</p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">Peak predicted on Thursday with ~15,200 orders. Ensure adequate staffing.</p>
+                  <p className="font-medium text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)]">Order volume expected to increase 22% next week</p>
+                  <p className="text-xs text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] mt-0.5">Peak predicted on Thursday with ~15,200 orders. Ensure adequate staffing.</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-                <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/10 border border-[var(--nexus-warning-100)] dark:border-[var(--nexus-warning-900)]/20">
+                <AlertTriangle className="w-5 h-5 text-[var(--nexus-warning-500)] mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-200">Warehouse capacity at 83%, projected to hit 91%</p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Consider opening secondary warehouse or extending receiving hours.</p>
+                  <p className="font-medium text-[var(--nexus-warning-800)] dark:text-[var(--nexus-warning-200)]">Warehouse capacity at 83%, projected to hit 91%</p>
+                  <p className="text-xs text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)] mt-0.5">Consider opening secondary warehouse or extending receiving hours.</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900/20">
-                <TrendingUp className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/10 border border-[var(--nexus-success-100)] dark:border-[var(--nexus-success-900)]/20">
+                <TrendingUp className="w-5 h-5 text-[var(--nexus-success-500)] mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-medium text-green-800 dark:text-green-200">Carrier SLA predicted to recover to 97.5% by Sunday</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">FedEx performance remains strongest at 98.3% in North Zone.</p>
+                  <p className="font-medium text-[var(--nexus-success-800)] dark:text-[var(--nexus-success-200)]">Carrier SLA predicted to recover to 97.5% by Sunday</p>
+                  <p className="text-xs text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] mt-0.5">FedEx performance remains strongest at 98.3% in North Zone.</p>
                 </div>
               </div>
             </div>
@@ -225,7 +225,7 @@ export default function AiForecastingPage() {
           </div>
           {supLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-20 bg-gray-200 dark:bg-gray-700 rounded" /></div>)}
+              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-20 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" /></div>)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -239,12 +239,12 @@ export default function AiForecastingPage() {
         <>
           {recLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-16 bg-gray-200 dark:bg-gray-700 rounded" /></div>)}
+              {[1, 2, 3].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-16 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" /></div>)}
             </div>
           ) : recommendations.length === 0 ? (
             <div className="enterprise-card p-12 text-center">
-              <Brain className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="font-medium text-gray-500">No recommendations</p>
+              <Brain className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
+              <p className="font-medium text-[var(--text-secondary)]">No recommendations</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -255,22 +255,22 @@ export default function AiForecastingPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className={clsx(
                           'text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full',
-                          rec.impact === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' :
-                          rec.impact === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' :
-                          'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                          rec.impact === 'high' ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-300)]' :
+                          rec.impact === 'medium' ? 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-300)]' :
+                          'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]'
                         )}>{rec.impact}</span>
                         <span className="text-xs text-[var(--text-tertiary)]">{rec.agentName}</span>
                       </div>
                       <h4 className="text-sm font-semibold text-[var(--text-primary)]">{rec.title}</h4>
                       <p className="text-xs text-[var(--text-tertiary)] mt-1">{rec.description}</p>
-                      <p className="text-xs font-medium text-primary-600 mt-1">→ {rec.suggestedAction}</p>
+                      <p className="text-xs font-medium text-[var(--text-brand)] mt-1">→ {rec.suggestedAction}</p>
                     </div>
                     <div className="text-right shrink-0 ml-4">
                       <div className="flex items-center gap-1 justify-end mb-1">
                         <span className="text-xs font-medium">{rec.confidence}%</span>
                       </div>
-                      <div className="w-20 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden ml-auto">
-                        <div className={clsx('h-full rounded-full', rec.confidence >= 90 ? 'bg-green-500' : rec.confidence >= 80 ? 'bg-amber-500' : 'bg-red-500')} style={{ width: `${rec.confidence}%` }} />
+                      <div className="w-20 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden ml-auto">
+                        <div className={clsx('h-full rounded-full', rec.confidence >= 90 ? 'bg-[var(--nexus-success-50)]0' : rec.confidence >= 80 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0')} style={{ width: `${rec.confidence}%` }} />
                       </div>
                       {rec.reasoning.length > 0 && (
                         <div className="mt-2 text-[10px] text-[var(--text-tertiary)]">

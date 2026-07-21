@@ -211,16 +211,16 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Users className="w-6 h-6" />Users & Roles</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage user roles, teams, and permissions</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Users className="w-6 h-6" />Users & Roles</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Manage user roles, teams, and permissions</p>
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-[var(--border-default)]">
         <button
           onClick={() => setTab('user-roles')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'user-roles' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            tab === 'user-roles' ? 'border-[var(--nexus-primary-600)] text-[var(--text-brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
           }`}
         >
           <UserCog className="w-4 h-4 inline mr-1.5" /> User Roles
@@ -228,7 +228,7 @@ export default function UsersPage() {
         <button
           onClick={() => setTab('teams')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'teams' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            tab === 'teams' ? 'border-[var(--nexus-primary-600)] text-[var(--text-brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
           }`}
         >
           <Users className="w-4 h-4 inline mr-1.5" /> Teams
@@ -236,7 +236,7 @@ export default function UsersPage() {
         <button
           onClick={() => setTab('security-groups')}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'security-groups' ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            tab === 'security-groups' ? 'border-[var(--nexus-primary-600)] text-[var(--text-brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
           }`}
         >
           <Lock className="w-4 h-4 inline mr-1.5" /> Security Groups
@@ -256,50 +256,50 @@ export default function UsersPage() {
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
             </div>
           ) : filteredRoles.length === 0 ? (
             <div className="text-center py-16 card">
-              <Shield className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-gray-500 text-sm">No user roles found.</p>
+              <Shield className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
+              <p className="text-[var(--text-secondary)] text-sm">No user roles found.</p>
             </div>
           ) : (
             <div className="card overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User ID</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Team</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Department</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned At</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">User ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Role</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Team</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Department</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Assigned At</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredRoles.map(r => (
-                    <tr key={r.id} className="hover:bg-gray-50">
+                    <tr key={r.id} className="hover:bg-[var(--surface-sunken)]">
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-gray-900">{r.userName}</div>
-                        <div className="text-xs text-gray-500 font-mono">{r.userId}</div>
+                        <div className="text-sm font-medium text-[var(--text-primary)]">{r.userName}</div>
+                        <div className="text-xs text-[var(--text-secondary)] font-mono">{r.userId}</div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]">
                           {r.role.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{r.team || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{r.department || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{r.team || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{r.department || '-'}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={r.isActive ? 'ACTIVE' : 'INACTIVE'} size="sm" />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{r.grantedAt ? new Date(r.grantedAt).toLocaleDateString() : '-'}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{r.grantedAt ? new Date(r.grantedAt).toLocaleDateString() : '-'}</td>
                       <td className="px-4 py-3 text-right">
                         <PermissionGate resource="users" action="delete">
                           <button
                             onClick={() => handleRemoveRole(r.id)}
-                            className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600"
+                            className="p-1.5 hover:bg-[var(--nexus-error-50)] rounded text-[var(--text-secondary)] hover:text-[var(--nexus-error-600)]"
                             title="Remove role"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -327,43 +327,43 @@ export default function UsersPage() {
 
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
             </div>
           ) : teams.length === 0 ? (
             <div className="text-center py-16 card">
-              <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="text-gray-500 text-sm">No teams created yet.</p>
+              <Users className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
+              <p className="text-[var(--text-secondary)] text-sm">No teams created yet.</p>
             </div>
           ) : (
             <div className="card overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Description</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Manager</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Created</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                  <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Description</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Manager</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Created</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {teams.map(t => (
-                    <tr key={t.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{t.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 max-w-[240px] truncate">{t.description || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 font-mono">{t.managerId?.slice(0, 12) || '-'}</td>
+                    <tr key={t.id} className="hover:bg-[var(--surface-sunken)]">
+                      <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{t.name}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)] max-w-[240px] truncate">{t.description || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)] font-mono">{t.managerId?.slice(0, 12) || '-'}</td>
                       <td className="px-4 py-3">
                         <StatusBadge status={t.isActive ? 'ACTIVE' : 'INACTIVE'} size="sm" />
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '-'}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '-'}</td>
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => handleToggleTeam(t)}
-                          className={`p-1.5 rounded text-gray-500 hover:text-gray-700 ${t.isActive ? 'hover:bg-orange-50' : 'hover:bg-green-50'}`}
+                          className={`p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)] ${t.isActive ? 'hover:bg-orange-50' : 'hover:bg-[var(--nexus-success-50)]'}`}
                           title={t.isActive ? 'Deactivate' : 'Activate'}
                         >
-                          {t.isActive ? <X className="w-4 h-4" /> : <Check className="w-4 h-4 text-green-600" />}
+                          {t.isActive ? <X className="w-4 h-4" /> : <Check className="w-4 h-4 text-[var(--nexus-success-600)]" />}
                         </button>
                       </td>
                     </tr>
@@ -378,7 +378,7 @@ export default function UsersPage() {
       {tab === 'security-groups' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">OFBiz-style security groups define permissions for users and roles</p>
+            <p className="text-sm text-[var(--text-secondary)]">OFBiz-style security groups define permissions for users and roles</p>
             <PermissionGate resource="users" action="create"><button className="btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button></PermissionGate>
           </div>
 
@@ -427,46 +427,46 @@ export default function UsersPage() {
             <div key={group.name} className="card overflow-hidden">
               <button
                 onClick={() => setExpandedGroup(expandedGroup === group.name ? null : group.name)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-sunken)] transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
-                    <Lock className="w-5 h-5 text-indigo-600" />
+                  <div className="w-10 h-10 rounded-xl bg-[var(--nexus-primary-50)] flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-[var(--nexus-primary-600)]" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-semibold text-gray-900">{group.name}</p>
-                    <p className="text-xs text-gray-500">{group.description} · {group.memberCount} members</p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">{group.name}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{group.description} · {group.memberCount} members</p>
                   </div>
                 </div>
-                {expandedGroup === group.name ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                {expandedGroup === group.name ? <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" />}
               </button>
 
               {expandedGroup === group.name && (
-                <div className="border-t border-gray-100">
-                  <div className="px-4 py-3 bg-gray-50/50">
-                    <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Granted Permissions</p>
+                <div className="border-t border-[var(--border-subtle)]">
+                  <div className="px-4 py-3 bg-[var(--surface-sunken)]/50">
+                    <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase mb-2">Granted Permissions</p>
                     <div className="flex flex-wrap gap-1.5">
                       {group.permissions.map(p => (
-                        <span key={p} className="px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">{p}</span>
+                        <span key={p} className="px-2 py-0.5 text-[10px] font-medium bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] rounded">{p}</span>
                       ))}
                     </div>
                   </div>
 
                   {group.children.map(child => (
-                    <div key={child.name} className="px-4 py-3 border-t border-gray-50 hover:bg-gray-50">
+                    <div key={child.name} className="px-4 py-3 border-t border-[var(--border-subtle)] hover:bg-[var(--surface-sunken)]">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                          <div className="w-2 h-2 rounded-full bg-[var(--nexus-primary-400)]" />
                           <div>
-                            <p className="text-sm font-medium text-gray-800">{child.name}</p>
-                            <p className="text-xs text-gray-500">{child.description} · {child.memberCount} members</p>
+                            <p className="text-sm font-medium text-[var(--text-primary)]">{child.name}</p>
+                            <p className="text-xs text-[var(--text-secondary)]">{child.description} · {child.memberCount} members</p>
                           </div>
                         </div>
-                        <button className="text-xs text-primary-600 hover:text-primary-800 font-medium">Assign</button>
+                        <button className="text-xs text-[var(--text-brand)] hover:text-[var(--nexus-primary-800)] font-medium">Assign</button>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-2 ml-5">
                         {child.permissions.map(p => (
-                          <span key={p} className="px-2 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 rounded">{p}</span>
+                          <span key={p} className="px-2 py-0.5 text-[10px] font-medium bg-[var(--surface-muted)] text-[var(--text-secondary)] rounded">{p}</span>
                         ))}
                       </div>
                     </div>
@@ -484,42 +484,42 @@ export default function UsersPage() {
           className="flex items-center justify-between w-full p-4 text-left"
         >
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-gray-400" />
-            <span className="text-sm font-semibold text-gray-900">Permissions</span>
-            <span className="text-xs text-gray-500">({permissions.length} entries)</span>
+            <Shield className="w-5 h-5 text-[var(--text-tertiary)]" />
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Permissions</span>
+            <span className="text-xs text-[var(--text-secondary)]">({permissions.length} entries)</span>
           </div>
-          <svg className={`w-4 h-4 text-gray-400 transition-transform ${showPermissions ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className={`w-4 h-4 text-[var(--text-tertiary)] transition-transform ${showPermissions ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
         {showPermissions && (
-          <div className="p-4 border-t border-gray-100 space-y-4">
+          <div className="p-4 border-t border-[var(--border-subtle)] space-y-4">
             {permissions.length > 0 && (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50/50">
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Role</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Permission Group</th>
-                      <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Permission Name</th>
-                      <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase">View</th>
-                      <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Create</th>
-                      <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Edit</th>
-                      <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Delete</th>
-                      <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Approve</th>
+                    <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50">
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Role</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Permission Group</th>
+                      <th className="px-3 py-2 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Permission Name</th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">View</th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Create</th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Edit</th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Delete</th>
+                      <th className="px-3 py-2 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Approve</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {permissions.map(p => (
-                      <tr key={p.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 text-gray-700 font-medium">{p.role}</td>
-                        <td className="px-3 py-2 text-gray-600">{p.permissionGroup}</td>
-                        <td className="px-3 py-2 text-gray-600">{p.permissionName}</td>
-                        <td className="px-3 py-2 text-center">{p.canView ? <Check className="w-4 h-4 text-green-500 inline" /> : <span className="text-gray-300">&mdash;</span>}</td>
-                        <td className="px-3 py-2 text-center">{p.canCreate ? <Check className="w-4 h-4 text-green-500 inline" /> : <span className="text-gray-300">&mdash;</span>}</td>
-                        <td className="px-3 py-2 text-center">{p.canEdit ? <Check className="w-4 h-4 text-green-500 inline" /> : <span className="text-gray-300">&mdash;</span>}</td>
-                        <td className="px-3 py-2 text-center">{p.canDelete ? <Check className="w-4 h-4 text-green-500 inline" /> : <span className="text-gray-300">&mdash;</span>}</td>
-                        <td className="px-3 py-2 text-center">{p.canApprove ? <Check className="w-4 h-4 text-green-500 inline" /> : <span className="text-gray-300">&mdash;</span>}</td>
+                      <tr key={p.id} className="hover:bg-[var(--surface-sunken)]">
+                        <td className="px-3 py-2 text-[var(--text-secondary)] font-medium">{p.role}</td>
+                        <td className="px-3 py-2 text-[var(--text-secondary)]">{p.permissionGroup}</td>
+                        <td className="px-3 py-2 text-[var(--text-secondary)]">{p.permissionName}</td>
+                        <td className="px-3 py-2 text-center">{p.canView ? <Check className="w-4 h-4 text-[var(--nexus-success-500)] inline" /> : <span className="text-[var(--text-tertiary)]">&mdash;</span>}</td>
+                        <td className="px-3 py-2 text-center">{p.canCreate ? <Check className="w-4 h-4 text-[var(--nexus-success-500)] inline" /> : <span className="text-[var(--text-tertiary)]">&mdash;</span>}</td>
+                        <td className="px-3 py-2 text-center">{p.canEdit ? <Check className="w-4 h-4 text-[var(--nexus-success-500)] inline" /> : <span className="text-[var(--text-tertiary)]">&mdash;</span>}</td>
+                        <td className="px-3 py-2 text-center">{p.canDelete ? <Check className="w-4 h-4 text-[var(--nexus-success-500)] inline" /> : <span className="text-[var(--text-tertiary)]">&mdash;</span>}</td>
+                        <td className="px-3 py-2 text-center">{p.canApprove ? <Check className="w-4 h-4 text-[var(--nexus-success-500)] inline" /> : <span className="text-[var(--text-tertiary)]">&mdash;</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -527,33 +527,33 @@ export default function UsersPage() {
               </div>
             )}
 
-            <div className="border-t border-gray-100 pt-4">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Set Permission</h4>
+            <div className="border-t border-[var(--border-subtle)] pt-4">
+              <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Set Permission</h4>
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Role</label>
                   <select value={permForm.role} onChange={e => setPermForm({ ...permForm, role: e.target.value })} className="input w-full">
                     <option value="">Select role</option>
                     {roles.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Permission Group</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Permission Group</label>
                   <input value={permForm.permissionGroup} onChange={e => setPermForm({ ...permForm, permissionGroup: e.target.value })} className="input w-full" placeholder="e.g. orders" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Permission Name</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Permission Name</label>
                   <input value={permForm.permissionName} onChange={e => setPermForm({ ...permForm, permissionName: e.target.value })} className="input w-full" placeholder="e.g. manage_orders" />
                 </div>
               </div>
               <div className="flex items-center gap-4 mt-3">
                 {(['canView', 'canCreate', 'canEdit', 'canDelete', 'canApprove'] as const).map(perm => (
-                  <label key={perm} className="flex items-center gap-1.5 text-xs text-gray-700 cursor-pointer">
+                  <label key={perm} className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={permForm[perm]}
                       onChange={e => setPermForm({ ...permForm, [perm]: e.target.checked })}
-                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      className="rounded border-[var(--border-default)] text-[var(--text-brand)] focus:ring-[var(--nexus-primary-500)]"
                     />
                     {perm.replace('can', 'Can ')}
                   </label>
@@ -571,42 +571,42 @@ export default function UsersPage() {
       </div>
 
       {showAssignModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Assign Role</h2>
-              <button onClick={() => setShowAssignModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Assign Role</h2>
+              <button onClick={() => setShowAssignModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">User ID</label>
                 <input value={roleForm.userId} onChange={e => setRoleForm({ ...roleForm, userId: e.target.value })} className="input w-full" placeholder="User ID" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Role</label>
                 <select value={roleForm.role} onChange={e => setRoleForm({ ...roleForm, role: e.target.value })} className="input w-full">
                   {roles.map(r => <option key={r} value={r}>{r.replace(/_/g, ' ')}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Team</label>
                 <input value={roleForm.team} onChange={e => setRoleForm({ ...roleForm, team: e.target.value })} className="input w-full" placeholder="Team name" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Department</label>
                 <input value={roleForm.department} onChange={e => setRoleForm({ ...roleForm, department: e.target.value })} className="input w-full" placeholder="Department" />
               </div>
-              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={roleForm.isActive}
                   onChange={e => setRoleForm({ ...roleForm, isActive: e.target.checked })}
-                  className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="rounded border-[var(--border-default)] text-[var(--text-brand)] focus:ring-[var(--nexus-primary-500)]"
                 />
                 Active
               </label>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowAssignModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="users" action="create">
                 <button onClick={handleAssignRole} disabled={saving} className="btn-primary text-sm">
@@ -620,27 +620,27 @@ export default function UsersPage() {
       )}
 
       {showCreateTeamModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Create Team</h2>
-              <button onClick={() => setShowCreateTeamModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create Team</h2>
+              <button onClick={() => setShowCreateTeamModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Team Name</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Team Name</label>
                 <input value={teamForm.name} onChange={e => setTeamForm({ ...teamForm, name: e.target.value })} className="input w-full" placeholder="Team name" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
                 <textarea value={teamForm.description} onChange={e => setTeamForm({ ...teamForm, description: e.target.value })} className="input w-full" rows={2} placeholder="Team description" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Manager ID</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Manager ID</label>
                 <input value={teamForm.managerId} onChange={e => setTeamForm({ ...teamForm, managerId: e.target.value })} className="input w-full" placeholder="Manager user ID" />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowCreateTeamModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="users" action="create">
                 <button onClick={handleCreateTeam} disabled={saving} className="btn-primary text-sm">

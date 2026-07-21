@@ -114,10 +114,10 @@ const fmtNumber = (v: number) => v.toLocaleString()
 function OTDBadge({ value }: { value: number }) {
   const color =
     value >= 95
-      ? 'text-green-700 bg-green-100 dark:bg-green-900/30'
+      ? 'text-[var(--nexus-success-700)] bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/30'
       : value >= 90
-        ? 'text-yellow-700 bg-yellow-100 dark:bg-yellow-900/30'
-        : 'text-red-700 bg-red-100 dark:bg-red-900/30'
+        ? 'text-[var(--nexus-warning-700)] bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30'
+        : 'text-[var(--nexus-error-700)] bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/30'
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>{value.toFixed(1)}%</span>
 }
 
@@ -248,7 +248,7 @@ export default function CarriersPage() {
       render: (_, row) => (
         <div className="flex items-center gap-3">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold
-            ${row.status === 'ACTIVE' ? 'bg-blue-500' : row.status === 'INACTIVE' ? 'bg-gray-400' : 'bg-red-400'}`}>
+            ${row.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-50)]0' : row.status === 'INACTIVE' ? 'bg-[var(--surface-muted)]' : 'bg-[var(--nexus-error-400)]'}`}>
             {row.name.charAt(0)}
           </div>
           <div>
@@ -284,13 +284,13 @@ export default function CarriersPage() {
         <div className="flex items-center justify-center gap-1">
           <PermissionGate resource="logistics" action="edit">
             <button onClick={e => { e.stopPropagation(); openEditModal(row) }}
-              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors">
+              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors">
               <Edit className="w-3.5 h-3.5" />
             </button>
           </PermissionGate>
           <PermissionGate resource="logistics" action="delete">
             <button onClick={e => { e.stopPropagation(); handleDelete(row) }}
-              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors">
+              className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)] transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </PermissionGate>
@@ -383,7 +383,7 @@ export default function CarriersPage() {
               <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold
-                    ${expandedCarrier.status === 'ACTIVE' ? 'bg-blue-500' : expandedCarrier.status === 'INACTIVE' ? 'bg-gray-400' : 'bg-red-400'}`}>
+                    ${expandedCarrier.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-50)]0' : expandedCarrier.status === 'INACTIVE' ? 'bg-[var(--surface-muted)]' : 'bg-[var(--nexus-error-400)]'}`}>
                     {expandedCarrier.name.charAt(0)}
                   </div>
                   <div>
@@ -445,7 +445,7 @@ export default function CarriersPage() {
                       const maxOTD = Math.max(...(OTD_HISTORY[expandedCarrier.id] || OTD_HISTORY['1'] || [100]))
                       const height = Math.max(4, (val / maxOTD) * 100)
                       const barColor =
-                        val >= 95 ? 'bg-green-500' : val >= 90 ? 'bg-yellow-500' : 'bg-red-500'
+                        val >= 95 ? 'bg-[var(--nexus-primary-50)]' : val >= 90 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0'
                       return (
                         <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
                           <span className="text-[10px] font-medium text-[var(--text-secondary)]">{val.toFixed(1)}%</span>
@@ -479,7 +479,7 @@ export default function CarriersPage() {
                     <th key={c.id} className={`text-center min-w-[130px] ${c.status === 'INACTIVE' ? 'opacity-50' : ''}`}>
                       <div className="flex flex-col items-center gap-1">
                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-bold
-                          ${c.status === 'ACTIVE' ? 'bg-blue-500' : 'bg-gray-400'}`}>{c.name.charAt(0)}</div>
+                          ${c.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-50)]0' : 'bg-[var(--surface-muted)]'}`}>{c.name.charAt(0)}</div>
                         <span className="text-xs">{c.name}</span>
                       </div>
                     </th>
@@ -508,11 +508,11 @@ export default function CarriersPage() {
             </table>
           </div>
           <div className="p-4 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)] flex items-center gap-2 text-sm">
-            <CheckCircle className="w-4 h-4 text-green-600" />
+            <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />
             <span className="text-[var(--text-secondary)]">Best rate for each tier:</span>
             {rateComparison.map(({ serviceType, bestCarrier }) => (
               bestCarrier && (
-                <span key={serviceType} className="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full text-xs font-medium">
+                <span key={serviceType} className="inline-flex items-center gap-1 bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/30 text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-400)] px-2 py-0.5 rounded-full text-xs font-medium">
                   {serviceType}: {bestCarrier.name}
                 </span>
               )
@@ -522,11 +522,11 @@ export default function CarriersPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => !saving && setShowModal(false)}>
-          <div className="bg-[var(--bg-card)] rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="enterprise-modal-overlay" onClick={() => !saving && setShowModal(false)}>
+          <div className="enterprise-modal max-w-lg onClick={e => e.stopPropagation()}">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
                   <Ship className="w-4 h-4" />
                 </div>
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">
@@ -583,7 +583,7 @@ export default function CarriersPage() {
               <EnterpriseFormSection title="Status" columns={1}>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <div onClick={() => setForm({ ...form, isActive: !form.isActive })}
-                    className={`w-10 h-6 rounded-full transition-colors relative ${form.isActive ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
+                    className={`w-10 h-6 rounded-full transition-colors relative ${form.isActive ? 'bg-[var(--nexus-primary-50)]' : 'bg-[var(--surface-muted)]'}`}>
                     <div className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.isActive ? 'translate-x-4' : ''}`} />
                   </div>
                   <div>

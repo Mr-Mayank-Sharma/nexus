@@ -23,8 +23,8 @@ const STATUS_BADGES: Record<string, string> = {
 
 const CONFIDENCE_COLORS: Record<string, string> = {
   high: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400',
-  medium: 'text-amber-600 bg-amber-50 dark:bg-amber-900/20 dark:text-amber-400',
-  low: 'text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400',
+  medium: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
+  low: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]',
 }
 
 export default function EmailOrderParsingPage() {
@@ -148,18 +148,18 @@ export default function EmailOrderParsingPage() {
       <div className="enterprise-kpi-grid">
         {[
           { label: 'Total Parsed', value: kpis ? (kpis.total || 0) : 0, icon: Mail, color: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400' },
-          { label: 'Pending Review', value: kpis?.pendingReview ?? 0, icon: AlertTriangle, color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' },
+          { label: 'Pending Review', value: kpis?.pendingReview ?? 0, icon: AlertTriangle, color: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]' },
           { label: 'Approved', value: kpis?.approved ?? 0, icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' },
-          { label: 'Rejected', value: kpis?.rejected ?? 0, icon: XCircle, color: kpis?.rejected ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'bg-gray-50 text-gray-600' },
+          { label: 'Rejected', value: kpis?.rejected ?? 0, icon: XCircle, color: kpis?.rejected ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]' : 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div key={kpi.label} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-500">{kpi.label}</span>
+              <span className="text-sm text-[var(--text-secondary)]">{kpi.label}</span>
               <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', kpi.color)}>
                 <kpi.icon className="w-4.5 h-4.5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{kpi.value}</div>
+            <div className="text-2xl font-bold text-[var(--text-primary)]">{kpi.value}</div>
           </div>
         ))}
       </div>
@@ -189,7 +189,7 @@ export default function EmailOrderParsingPage() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div key={i} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
               <div className="enterprise-skeleton h-5 w-64 mb-3" />
               <div className="enterprise-skeleton h-4 w-48 mb-2" />
               <div className="enterprise-skeleton h-4 w-32" />
@@ -198,30 +198,30 @@ export default function EmailOrderParsingPage() {
         </div>
       ) : filteredOrders.length === 0 ? (
         <div className="enterprise-empty-state py-16">
-          <Mail className="w-12 h-12 text-gray-300" />
+          <Mail className="w-12 h-12 text-[var(--text-tertiary)]" />
           <h3>No parsed orders</h3>
           <p>Parse an email or upload a CSV to get started</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filteredOrders.map(order => (
-            <div key={order.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div key={order.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
               <button
                 onClick={() => toggleExpand(order.id)}
-                className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors text-left"
+                className="w-full flex items-center gap-4 p-4 hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors text-left"
               >
                 <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
                   order.status === 'APPROVED' && 'bg-emerald-50 text-emerald-600',
-                  order.status === 'REJECTED' && 'bg-red-50 text-red-600',
-                  ['NEW', 'PARSED'].includes(order.status) && 'bg-blue-50 text-blue-600',
-                  order.status === 'PENDING_REVIEW' && 'bg-amber-50 text-amber-600',
+                  order.status === 'REJECTED' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]',
+                  ['NEW', 'PARSED'].includes(order.status) && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]',
+                  order.status === 'PENDING_REVIEW' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)]',
                 )}>
                   <Mail className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2.5">
                     <span className={clsx('enterprise-badge', STATUS_BADGES[order.status])}>{order.status}</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                    <span className="font-medium text-[var(--text-primary)] truncate">
                       {order.emailSubject || `Order from ${order.customerName || 'Unknown'}`}
                     </span>
                     <span className={clsx('inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold', getConfidenceClass(order.confidenceScore))}>
@@ -229,7 +229,7 @@ export default function EmailOrderParsingPage() {
                       {(order.confidenceScore * 100).toFixed(0)}%
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 flex-wrap">
+                  <div className="flex items-center gap-4 mt-1 text-xs text-[var(--text-secondary)] flex-wrap">
                     {order.customerName && (
                       <span className="flex items-center gap-1"><User className="w-3 h-3" />{order.customerName}</span>
                     )}
@@ -254,45 +254,45 @@ export default function EmailOrderParsingPage() {
                       </PermissionGate>
                       <PermissionGate resource="integrations" action="edit">
                         <button onClick={e => { e.stopPropagation(); handleReject(order.id) }}
-                          className="enterprise-btn enterprise-btn-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100">
+                          className="enterprise-btn enterprise-btn-xs bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] border border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                           <XCircle className="w-3 h-3" /> Reject
                         </button>
                       </PermissionGate>
                     </>
                   )}
-                  {expanded.has(order.id) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                  {expanded.has(order.id) ? <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" />}
                 </div>
               </button>
 
               {expanded.has(order.id) && order.parsedData && (
-                <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="px-4 pb-4 border-t border-[var(--border-subtle)]">
                   <div className="mt-3 space-y-2">
                     <div className="grid grid-cols-2 gap-3">
                       {order.customerName && (
-                        <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-3">
-                          <p className="text-xs text-gray-400">Customer</p>
-                          <p className="text-sm font-medium text-gray-900">{order.customerName}</p>
-                          {order.customerEmail && <p className="text-xs text-gray-500">{order.customerEmail}</p>}
+                        <div className="bg-[var(--surface-sunken)] bg-[var(--surface-muted)]/30 rounded-xl p-3">
+                          <p className="text-xs text-[var(--text-tertiary)]">Customer</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{order.customerName}</p>
+                          {order.customerEmail && <p className="text-xs text-[var(--text-secondary)]">{order.customerEmail}</p>}
                         </div>
                       )}
-                      <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-3">
-                        <p className="text-xs text-gray-400">Source</p>
-                        <p className="text-sm font-medium text-gray-900">{order.attachmentType || 'Email'}</p>
-                        <p className="text-xs text-gray-500">{order.emailFrom || 'Unknown'}</p>
+                      <div className="bg-[var(--surface-sunken)] bg-[var(--surface-muted)]/30 rounded-xl p-3">
+                        <p className="text-xs text-[var(--text-tertiary)]">Source</p>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{order.attachmentType || 'Email'}</p>
+                        <p className="text-xs text-[var(--text-secondary)]">{order.emailFrom || 'Unknown'}</p>
                       </div>
                     </div>
-                    <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Parsed Data</h4>
-                    <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
-                      <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto max-h-60 whitespace-pre-wrap font-mono">
+                    <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Parsed Data</h4>
+                    <div className="bg-[var(--surface-sunken)] bg-[var(--surface-muted)]/30 rounded-xl p-4">
+                      <pre className="text-xs text-[var(--text-secondary)] overflow-x-auto max-h-60 whitespace-pre-wrap font-mono">
                         {JSON.stringify(order.parsedData, null, 2)}
                       </pre>
                     </div>
                     {order.orderId && (
-                      <p className="text-xs text-primary-600">Order created: {order.orderId}</p>
+                      <p className="text-xs text-[var(--text-brand)]">Order created: {order.orderId}</p>
                     )}
                     {order.rejectionReason && (
-                      <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3">
-                        <p className="text-xs text-red-500">Rejection: {order.rejectionReason}</p>
+                      <div className="bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/10 rounded-xl p-3">
+                        <p className="text-xs text-[var(--nexus-error-500)]">Rejection: {order.rejectionReason}</p>
                       </div>
                     )}
                   </div>
@@ -303,7 +303,7 @@ export default function EmailOrderParsingPage() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-gray-400">Page {page + 1} of {totalPages}</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Page {page + 1} of {totalPages}</p>
               <div className="flex items-center gap-1">
                 <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
                   className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary disabled:opacity-30">Previous</button>
@@ -320,8 +320,8 @@ export default function EmailOrderParsingPage() {
         <div className="enterprise-modal-overlay" onClick={() => setParseOpen(false)}>
           <div className="enterprise-modal max-w-lg" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Parse Email Content</h2>
-              <button onClick={() => setParseOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Parse Email Content</h2>
+              <button onClick={() => setParseOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -330,7 +330,7 @@ export default function EmailOrderParsingPage() {
                 {(['text', 'csv'] as const).map(t => (
                   <button key={t} onClick={() => setParseTab(t)}
                     className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                      parseTab === t ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100')}>
+                      parseTab === t ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]')}>
                     {t === 'text' ? 'Email Text' : 'CSV File'}
                   </button>
                 ))}
@@ -359,18 +359,18 @@ export default function EmailOrderParsingPage() {
                 <div className="enterprise-form-group">
                   <label>CSV File</label>
                   <div onClick={() => fileRef.current?.click()}
-                    className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 transition-colors">
+                    className="border-2 border-dashed border-[var(--border-default)] border-[var(--border-default)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--nexus-primary-400)] transition-colors">
                     {csvFile ? (
                       <div className="space-y-1">
-                        <FileText className="w-8 h-8 mx-auto text-primary-500" />
-                        <p className="text-sm font-medium text-gray-900">{csvFile.name}</p>
-                        <p className="text-xs text-gray-400">{(csvFile.size / 1024).toFixed(1)} KB</p>
+                        <FileText className="w-8 h-8 mx-auto text-[var(--nexus-primary-500)]" />
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{csvFile.name}</p>
+                        <p className="text-xs text-[var(--text-tertiary)]">{(csvFile.size / 1024).toFixed(1)} KB</p>
                       </div>
                     ) : (
                       <div className="space-y-1">
-                        <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                        <p className="text-sm text-gray-500">Drop a CSV file or click to browse</p>
-                        <p className="text-xs text-gray-400">.csv files with order data</p>
+                        <Upload className="w-8 h-8 mx-auto text-[var(--text-tertiary)]" />
+                        <p className="text-sm text-[var(--text-secondary)]">Drop a CSV file or click to browse</p>
+                        <p className="text-xs text-[var(--text-tertiary)]">.csv files with order data</p>
                       </div>
                     )}
                     <input ref={fileRef} type="file" accept=".csv" className="hidden"

@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { useToast } from '../../hooks/useToast'
+import ConnectivityBanner from './ConnectivityBanner'
 
 export default function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
@@ -70,13 +71,25 @@ export default function AppLayout() {
   }, [location.pathname])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg-secondary)]">
+    <div className="flex h-screen overflow-hidden bg-[var(--surface-sunken)]">
+      {/* Skip to main content */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[var(--nexus-primary-600)] focus:text-white focus:rounded-lg focus:shadow-lg focus:outline-none"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+          style={{ animation: 'nexusFadeIn 150ms var(--ease-default)' }}
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      {/* Sidebar - desktop static, mobile overlay */}
+      {/* Sidebar — desktop static, mobile overlay */}
       <div className={clsx(
         'shrink-0',
         sidebarOpen
@@ -87,6 +100,7 @@ export default function AppLayout() {
         <Sidebar />
       </div>
 
+      {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <Topbar
           onSearchClick={() => setSearchOpen(true)}
@@ -94,18 +108,24 @@ export default function AppLayout() {
           aiPanelOpen={aiPanelOpen}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
-        <main className={clsx(
-          'flex-1 overflow-y-auto transition-all duration-300',
-          aiPanelOpen ? 'lg:mr-[var(--ai-panel-width)]' : ''
-        )}>
-          <div className="p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+
+        <main
+          id="main-content"
+          className={clsx(
+            'flex-1 overflow-y-auto transition-all duration-300 ease-[var(--ease-default)]',
+            aiPanelOpen ? 'lg:mr-[var(--ai-panel-width)]' : ''
+          )}
+        >
+          <div className="p-6 lg:p-8 max-w-[1440px] mx-auto w-full">
             <Outlet />
           </div>
         </main>
       </div>
 
+      {/* Overlays */}
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <AIAssistantPanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
+      <ConnectivityBanner />
     </div>
   )
 }

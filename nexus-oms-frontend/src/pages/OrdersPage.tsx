@@ -119,15 +119,15 @@ export default function OrdersPage() {
   ]
 
   const columns: Column<Order>[] = [
-    { key: 'orderNumber', header: 'Order ID', sortable: true, render: (o) => <span className="font-medium text-primary-600">{o.orderNumber || o.id}</span> },
-    { key: 'channel', header: 'Channel', sortable: true, render: (o) => <span className="text-xs font-medium text-gray-500 uppercase">{o.channel}</span> },
+    { key: 'orderNumber', header: 'Order ID', sortable: true, render: (o) => <span className="font-medium text-[var(--text-brand)]">{o.orderNumber || o.id}</span> },
+    { key: 'channel', header: 'Channel', sortable: true, render: (o) => <span className="text-xs font-medium text-[var(--text-secondary)] uppercase">{o.channel}</span> },
     { key: 'customerName', header: 'Customer', sortable: true },
     { key: 'status', header: 'Status', sortable: true, render: (o) => <EnterpriseStatusBadge status={o.status.toLowerCase()} /> },
-    { key: 'items', header: 'Items', render: (o) => <span className="text-gray-500">{o.items?.reduce((s, i) => s + i.quantity, 0) || 0} units</span> },
-    { key: 'shippingAddress', header: 'Destination', render: (o) => o.shippingAddress ? <span className="text-gray-500">{o.shippingAddress.city}, {o.shippingAddress.state}</span> : <span className="text-gray-300">—</span> },
-    { key: 'carrier', header: 'Carrier', render: (o) => o.carrier ? <span className="text-gray-500">{o.carrier}</span> : <span className="text-gray-300">—</span> },
-    { key: 'promisedDeliveryDate', header: 'Promised Delivery', sortable: true, render: (o) => o.promisedDeliveryDate ? <span className="text-gray-500 text-xs">{new Date(o.promisedDeliveryDate).toLocaleDateString()}</span> : <span className="text-gray-300">—</span> },
-    { key: 'hasException', header: '', render: (o) => o.hasException ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 text-xs font-bold">!</span> : null },
+    { key: 'items', header: 'Items', render: (o) => <span className="text-[var(--text-secondary)]">{o.items?.reduce((s, i) => s + i.quantity, 0) || 0} units</span> },
+    { key: 'shippingAddress', header: 'Destination', render: (o) => o.shippingAddress ? <span className="text-[var(--text-secondary)]">{o.shippingAddress.city}, {o.shippingAddress.state}</span> : <span className="text-[var(--text-tertiary)]">—</span> },
+    { key: 'carrier', header: 'Carrier', render: (o) => o.carrier ? <span className="text-[var(--text-secondary)]">{o.carrier}</span> : <span className="text-[var(--text-tertiary)]">—</span> },
+    { key: 'promisedDeliveryDate', header: 'Promised Delivery', sortable: true, render: (o) => o.promisedDeliveryDate ? <span className="text-[var(--text-secondary)] text-xs">{new Date(o.promisedDeliveryDate).toLocaleDateString()}</span> : <span className="text-[var(--text-tertiary)]">—</span> },
+    { key: 'hasException', header: '', render: (o) => o.hasException ? <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] text-xs font-bold">!</span> : null },
   ]
 
   return (
@@ -175,16 +175,16 @@ export default function OrdersPage() {
       />
 
       {selectedIds.length > 0 && (
-        <div className="flex items-center gap-2 px-4 py-2 bg-primary-50 rounded-lg border border-primary-200">
-          <span className="text-sm text-primary-700 font-medium">{selectedIds.length} selected</span>
-          <div className="w-px h-4 bg-primary-200" />
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600" onClick={() => {
+        <div className="flex items-center gap-2 px-4 py-2 bg-[var(--interactive-selected)] rounded-lg border border-[var(--nexus-primary-200)]">
+          <span className="text-sm text-[var(--nexus-primary-700)] font-medium">{selectedIds.length} selected</span>
+          <div className="w-px h-4 bg-[var(--nexus-primary-200)]" />
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
             const ready = selectedIds.filter(id => orders.find(o => o.id === id)?.status === 'ALLOCATED')
             ready.forEach(id => ordersApi.shipOrder(id, 'auto', 'TN-BATCH-' + Date.now()))
             addToast({ type: 'success', title: `Shipment booked for ${ready.length} orders` })
             setTimeout(() => queryClient.invalidateQueries({ queryKey: ['orders'] }), 1000)
           }}><Ship className="w-3.5 h-3.5" /> Book Shipment</button>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600" onClick={() => {
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
             const tnList = selectedIds.map(id => {
               const o = orders.find(o2 => o2.id === id)
               return `${o?.orderNumber || id}: ${o?.trackingNumber || 'N/A'}`
@@ -196,13 +196,13 @@ export default function OrdersPage() {
             }
             addToast({ type: 'success', title: `${selectedIds.length} label(s) opened` })
           }}><Printer className="w-3.5 h-3.5" /> Print Labels</button>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600" onClick={() => {
+          <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
             selectedIds.forEach(id => ordersApi.allocateOrder(id))
             addToast({ type: 'success', title: `Reallocating ${selectedIds.length} orders` })
             setTimeout(() => queryClient.invalidateQueries({ queryKey: ['orders'] }), 1000)
           }}><RotateCcw className="w-3.5 h-3.5" /> Reassign</button>
           <PermissionGate resource="orders" action="delete">
-            <button className="enterprise-btn enterprise-btn-ghost text-xs text-red-600" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
+            <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-600)]" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
               {cancelMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
               Cancel
             </button>
@@ -213,7 +213,7 @@ export default function OrdersPage() {
       <div className="enterprise-card overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center p-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
           </div>
         ) : (
           <DataTable
@@ -232,44 +232,44 @@ export default function OrdersPage() {
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Create Order</h2>
-              <button onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"><X className="w-5 h-5 text-gray-400" /></button>
+        <div className="enterprise-modal-overlay" onClick={() => setShowCreate(false)}>
+          <div className="enterprise-modal w-full max-w-lg" onClick={e => e.stopPropagation()}>
+            <div className="enterprise-modal-header">
+              <h2>Create Order</h2>
+              <button onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-[var(--interactive-hover)] rounded-lg transition-colors"><X className="w-5 h-5 text-[var(--text-tertiary)]" /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="enterprise-modal-body space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Customer Name</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Customer Name</label>
                   <input className="enterprise-input w-full" value={createForm.customerName} onChange={e => setCreateForm(f => ({ ...f, customerName: e.target.value }))} />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Customer Email</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Customer Email</label>
                   <input className="enterprise-input w-full" type="email" value={createForm.customerEmail} onChange={e => setCreateForm(f => ({ ...f, customerEmail: e.target.value }))} />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Street</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Street</label>
                   <input className="enterprise-input w-full" value={createForm.street} onChange={e => setCreateForm(f => ({ ...f, street: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">City</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">City</label>
                   <input className="enterprise-input w-full" value={createForm.city} onChange={e => setCreateForm(f => ({ ...f, city: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">State</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">State</label>
                   <input className="enterprise-input w-full" value={createForm.state} onChange={e => setCreateForm(f => ({ ...f, state: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">ZIP</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">ZIP</label>
                   <input className="enterprise-input w-full" value={createForm.zip} onChange={e => setCreateForm(f => ({ ...f, zip: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Country</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Country</label>
                   <input className="enterprise-input w-full" value={createForm.country} onChange={e => setCreateForm(f => ({ ...f, country: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Channel</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Channel</label>
                   <select className="enterprise-input w-full" value={createForm.channel} onChange={e => setCreateForm(f => ({ ...f, channel: e.target.value }))}>
                     <option value="MANUAL">Manual</option>
                     <option value="SHOPIFY">Shopify</option>
@@ -279,28 +279,28 @@ export default function OrdersPage() {
                   </select>
                 </div>
               </div>
-              <hr className="border-gray-200 dark:border-gray-700" />
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Item</p>
+              <hr className="border-[var(--border-default)]" />
+              <p className="text-sm font-medium text-[var(--text-secondary)]">Item</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Product Name</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Product Name</label>
                   <input className="enterprise-input w-full" value={createForm.productName} onChange={e => setCreateForm(f => ({ ...f, productName: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">SKU</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">SKU</label>
                   <input className="enterprise-input w-full" value={createForm.sku} onChange={e => setCreateForm(f => ({ ...f, sku: e.target.value }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Qty</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Qty</label>
                   <input className="enterprise-input w-full" type="number" min={1} value={createForm.quantity} onChange={e => setCreateForm(f => ({ ...f, quantity: Number(e.target.value) }))} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block">Unit Price</label>
+                  <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Unit Price</label>
                   <input className="enterprise-input w-full" type="number" min={0} step={0.01} value={createForm.unitPrice} onChange={e => setCreateForm(f => ({ ...f, unitPrice: Number(e.target.value) }))} />
                 </div>
               </div>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <div className="enterprise-modal-footer bg-[var(--surface-muted)]">
               <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
               <PermissionGate resource="orders" action="create">
                 <button className="enterprise-btn enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>

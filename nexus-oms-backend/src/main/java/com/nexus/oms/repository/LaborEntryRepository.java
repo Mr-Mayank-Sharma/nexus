@@ -2,6 +2,8 @@ package com.nexus.oms.repository;
 
 import com.nexus.oms.entity.NxLaborEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,9 +17,11 @@ public interface LaborEntryRepository extends JpaRepository<NxLaborEntry, UUID> 
 
     List<NxLaborEntry> findByTenantIdAndWarehouseId(UUID tenantId, UUID warehouseId);
 
-    List<NxLaborEntry> findByWarehouseIdAndShiftDate(UUID warehouseId, String shiftDate);
+    @Query("SELECT e FROM NxLaborEntry e WHERE e.warehouseId = :warehouseId AND CAST(e.clockedInAt AS LocalDate) = CAST(:shiftDate AS LocalDate)")
+    List<NxLaborEntry> findByWarehouseIdAndShiftDate(@Param("warehouseId") UUID warehouseId, @Param("shiftDate") String shiftDate);
 
-    List<NxLaborEntry> findByStaffIdAndShiftDate(UUID staffId, String shiftDate);
+    @Query("SELECT e FROM NxLaborEntry e WHERE e.staffId = :staffId AND CAST(e.clockedInAt AS LocalDate) = CAST(:shiftDate AS LocalDate)")
+    List<NxLaborEntry> findByStaffIdAndShiftDate(@Param("staffId") UUID staffId, @Param("shiftDate") String shiftDate);
 
     List<NxLaborEntry> findByWarehouseIdAndStatus(UUID warehouseId, String status);
 

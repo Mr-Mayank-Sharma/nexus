@@ -11,18 +11,18 @@ import PermissionGate from '../components/rbac/PermissionGate'
 import type { AiDecision } from '../api/aiAgents'
 
 const DECISION_TYPE_STYLES: Record<string, string> = {
-  fraud_check: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300',
-  routing: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300',
-  carrier_select: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/20 dark:text-purple-300',
-  inventory_alloc: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300',
+  fraud_check: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-300)]',
+  routing: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] border-[var(--nexus-primary-200)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)]',
+  carrier_select: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] border-[var(--nexus-ai-200)] dark:bg-[var(--nexus-ai-900)]/20 dark:text-[var(--nexus-ai-300)]',
+  inventory_alloc: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-300)]',
   packaging: 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300',
-  picking: 'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/20 dark:text-teal-300',
+  picking: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-300)]',
 }
 
 function confidenceColor(value: number) {
-  if (value >= 90) return 'bg-green-500'
-  if (value >= 70) return 'bg-amber-500'
-  return 'bg-red-500'
+  if (value >= 90) return 'bg-[var(--nexus-success-50)]0'
+  if (value >= 70) return 'bg-[var(--nexus-warning-50)]0'
+  return 'bg-[var(--nexus-error-50)]0'
 }
 
 function formatTime(ms: number): string {
@@ -85,7 +85,7 @@ export default function AiAuditTrailPage() {
       <div className="enterprise-page-header">
         <div>
           <h1 className="flex items-center gap-2.5">
-            <Shield className="w-7 h-7 text-primary-500" /> AI Audit Trail
+            <Shield className="w-7 h-7 text-[var(--nexus-primary-500)]" /> AI Audit Trail
           </h1>
           <p>Complete record of all AI decisions, overrides & approvals</p>
         </div>
@@ -106,19 +106,19 @@ export default function AiAuditTrailPage() {
         </div>
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)]">Auto-Approved</p>
-          <p className="text-2xl font-bold text-green-600">{stats.autoApproved}</p>
+          <p className="text-2xl font-bold text-[var(--nexus-success-600)]">{stats.autoApproved}</p>
         </div>
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)]">Overridden</p>
-          <p className="text-2xl font-bold text-amber-600">{stats.overridden}</p>
+          <p className="text-2xl font-bold text-[var(--nexus-warning-600)]">{stats.overridden}</p>
         </div>
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)]">Fallback Used</p>
-          <p className="text-2xl font-bold text-red-600">{stats.fallback}</p>
+          <p className="text-2xl font-bold text-[var(--nexus-error-600)]">{stats.fallback}</p>
         </div>
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)]">Avg Confidence</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.avgConf}%</p>
+          <p className="text-2xl font-bold text-[var(--nexus-primary-600)]">{stats.avgConf}%</p>
         </div>
       </div>
 
@@ -138,28 +138,28 @@ export default function AiAuditTrailPage() {
             <option value="packaging">Packaging</option>
             <option value="picking">Picking</option>
           </select>
-          <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+          <label className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)] cursor-pointer">
             <input
               type="checkbox"
               checked={showOnlyOverridden}
               onChange={e => { setShowOnlyOverridden(e.target.checked); setShowOnlyApproved(false) }}
-              className="rounded border-gray-300"
+              className="rounded border-[var(--border-default)]"
             />
             Overridden only
           </label>
-          <label className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
+          <label className="flex items-center gap-1.5 text-sm text-[var(--text-secondary)] cursor-pointer">
             <input
               type="checkbox"
               checked={showOnlyApproved}
               onChange={e => { setShowOnlyApproved(e.target.checked); setShowOnlyOverridden(false) }}
-              className="rounded border-gray-300"
+              className="rounded border-[var(--border-default)]"
             />
             Auto-approved only
           </label>
           {Object.entries(typeCounts).map(([type, count]) => (
             <span key={type} className={clsx(
               'text-xs px-2 py-0.5 rounded-full font-medium border',
-              DECISION_TYPE_STYLES[type] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+              DECISION_TYPE_STYLES[type] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]'
             )}>
               {type.replace(/_/g, ' ')}: {count}
             </span>
@@ -170,14 +170,14 @@ export default function AiAuditTrailPage() {
       <div className="enterprise-card overflow-hidden">
         {isLoading ? (
           <div className="p-12 text-center">
-            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm text-gray-400">Loading audit trail...</p>
+            <div className="w-8 h-8 border-2 border-[var(--nexus-primary-500)] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-sm text-[var(--text-tertiary)]">Loading audit trail...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center">
-            <Shield className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="font-medium text-gray-500">No decisions match your filters</p>
-            <p className="text-sm text-gray-400 mt-1">Try adjusting search or filter criteria</p>
+            <Shield className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
+            <p className="font-medium text-[var(--text-secondary)]">No decisions match your filters</p>
+            <p className="text-sm text-[var(--text-tertiary)] mt-1">Try adjusting search or filter criteria</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -197,7 +197,7 @@ export default function AiAuditTrailPage() {
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {filtered.map(dec => {
-                  const badgeColor = DECISION_TYPE_STYLES[dec.decisionType] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                  const badgeColor = DECISION_TYPE_STYLES[dec.decisionType] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]'
                   return (
                     <tr key={dec.id} className="enterprise-table-row">
                       <td className="px-4 py-3 text-xs text-[var(--text-tertiary)] whitespace-nowrap">
@@ -220,14 +220,14 @@ export default function AiAuditTrailPage() {
                           <div className="w-16 h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
                             <div className={`h-full rounded-full ${confidenceColor(dec.confidence)}`} style={{ width: `${Math.round(dec.confidence)}%` }} />
                           </div>
-                          <span className={`text-xs font-medium ${dec.confidence >= 90 ? 'text-green-600' : dec.confidence >= 70 ? 'text-amber-600' : 'text-red-600'}`}>
+                          <span className={`text-xs font-medium ${dec.confidence >= 90 ? 'text-[var(--nexus-success-600)]' : dec.confidence >= 70 ? 'text-[var(--nexus-warning-600)]' : 'text-[var(--nexus-error-600)]'}`}>
                             {Math.round(dec.confidence)}%
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3">
                         {dec.wasOverridden ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                          <span className="inline-flex items-center gap-1 text-xs text-[var(--nexus-warning-700)] bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 px-2 py-0.5 rounded-full border border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]">
                             <AlertTriangle className="w-3 h-3" /> Overridden
                           </span>
                         ) : dec.fallbackUsed ? (
@@ -235,7 +235,7 @@ export default function AiAuditTrailPage() {
                             <AlertTriangle className="w-3 h-3" /> Fallback
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full border border-green-200 dark:border-green-800">
+                          <span className="inline-flex items-center gap-1 text-xs text-[var(--nexus-success-700)] bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 px-2 py-0.5 rounded-full border border-[var(--nexus-success-200)] dark:border-[var(--nexus-success-800)]">
                             <CheckCircle className="w-3 h-3" /> Auto
                           </span>
                         )}
@@ -246,7 +246,7 @@ export default function AiAuditTrailPage() {
                       <td className="px-4 py-3 text-center">
                         <button
                           onClick={() => setSelectedDecision(dec)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                          className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -262,49 +262,49 @@ export default function AiAuditTrailPage() {
 
       {/* Detail Modal */}
       {selectedDecision && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedDecision(null)}>
+        <div className="enterprise-modal-overlay" onClick={() => setSelectedDecision(null)}>
           <div className="enterprise-card p-6 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                <Brain className="w-5 h-5 text-primary-500" /> AI Decision Detail
+                <Brain className="w-5 h-5 text-[var(--nexus-primary-500)]" /> AI Decision Detail
               </h2>
-              <button onClick={() => setSelectedDecision(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+              <button onClick={() => setSelectedDecision(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">✕</button>
             </div>
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase">Order</p>
+                <div className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                  <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase">Order</p>
                   <p className="font-mono font-medium text-[var(--text-primary)]">{selectedDecision.orderNumber || '—'}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase">Agent</p>
+                <div className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                  <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase">Agent</p>
                   <p className="font-medium text-[var(--text-primary)]">{selectedDecision.agentName}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase">Decision Type</p>
+                <div className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                  <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase">Decision Type</p>
                   <p className="capitalize font-medium text-[var(--text-primary)]">{selectedDecision.decisionType.replace(/_/g, ' ')}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase">Confidence</p>
+                <div className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                  <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase">Confidence</p>
                   <p className="font-semibold">{Math.round(selectedDecision.confidence)}%</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase">Model</p>
+                <div className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                  <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase">Model</p>
                   <p className="text-[var(--text-primary)]">{selectedDecision.modelVersion}</p>
                 </div>
-                <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                  <p className="text-[10px] font-medium text-gray-400 uppercase">Processing</p>
+                <div className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                  <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase">Processing</p>
                   <p className="text-[var(--text-primary)]">{formatTime(selectedDecision.processingTimeMs)}</p>
                 </div>
               </div>
-              <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <p className="text-[10px] font-medium text-gray-400 uppercase mb-1">Output Decision</p>
+              <div className="p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+                <p className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase mb-1">Output Decision</p>
                 <p className="font-medium text-[var(--text-primary)]">{selectedDecision.output?.decision || '—'}</p>
               </div>
               {selectedDecision.wasOverridden && (
-                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                  <p className="text-[10px] font-medium text-amber-600 uppercase mb-1">Override</p>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">
+                <div className="p-3 rounded-lg bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 border border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]">
+                  <p className="text-[10px] font-medium text-[var(--nexus-warning-600)] uppercase mb-1">Override</p>
+                  <p className="text-sm text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)]">
                     Overridden by {selectedDecision.overriddenBy || 'Unknown'}
                   </p>
                 </div>
@@ -317,7 +317,7 @@ export default function AiAuditTrailPage() {
                   </p>
                 </div>
               )}
-              <div className="text-[10px] text-gray-400 text-right">
+              <div className="text-[10px] text-[var(--text-tertiary)] text-right">
                 {new Date(selectedDecision.createdAt).toLocaleString()}
               </div>
             </div>

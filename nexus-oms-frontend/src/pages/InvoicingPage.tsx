@@ -9,31 +9,31 @@ import { Invoice, InvoiceItem, Payment, CreditMemo } from '../api/invoicing'
 type Tab = 'invoices' | 'payments' | 'credit-memos'
 
 const invoiceStatusStyles: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700 border-gray-200',
-  SENT: 'bg-blue-50 text-blue-700 border-blue-200',
-  PARTIALLY_PAID: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  PAID: 'bg-green-50 text-green-700 border-green-200',
-  OVERDUE: 'bg-red-50 text-red-700 border-red-200',
-  CANCELLED: 'bg-red-50 text-red-700 border-red-200',
-  REFUNDED: 'bg-purple-50 text-purple-700 border-purple-200',
+  DRAFT: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] border-[var(--border-default)]',
+  SENT: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] border-[var(--nexus-primary-200)]',
+  PARTIALLY_PAID: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)] border-[var(--nexus-warning-200)]',
+  PAID: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]',
+  OVERDUE: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)]',
+  CANCELLED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)]',
+  REFUNDED: 'bg-[var(--nexus-ai-50)] text-[var(--nexus-ai-700)] border-[var(--nexus-ai-200)]',
 }
 
 const paymentStatusStyles: Record<string, string> = {
-  PENDING: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  COMPLETED: 'bg-green-50 text-green-700 border-green-200',
-  FAILED: 'bg-red-50 text-red-700 border-red-200',
-  REFUNDED: 'bg-purple-50 text-purple-700 border-purple-200',
+  PENDING: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)] border-[var(--nexus-warning-200)]',
+  COMPLETED: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]',
+  FAILED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)]',
+  REFUNDED: 'bg-[var(--nexus-ai-50)] text-[var(--nexus-ai-700)] border-[var(--nexus-ai-200)]',
 }
 
 const creditMemoStatusStyles: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700 border-gray-200',
-  ISSUED: 'bg-blue-50 text-blue-700 border-blue-200',
-  APPLIED: 'bg-green-50 text-green-700 border-green-200',
-  VOID: 'bg-red-50 text-red-700 border-red-200',
+  DRAFT: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] border-[var(--border-default)]',
+  ISSUED: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] border-[var(--nexus-primary-200)]',
+  APPLIED: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]',
+  VOID: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)]',
 }
 
 function StatusBadgeLocal({ status, styles }: { status: string; styles: Record<string, string> }) {
-  const s = styles[status] || styles.DRAFT || 'bg-gray-100 text-gray-700 border-gray-200'
+  const s = styles[status] || styles.DRAFT || 'bg-[var(--surface-muted)] text-[var(--text-secondary)] border-[var(--border-default)]'
   return (
     <span className={`inline-flex items-center rounded-full border font-medium px-2.5 py-0.5 text-xs ${s}`}>
       {status.replace(/_/g, ' ')}
@@ -44,7 +44,7 @@ function StatusBadgeLocal({ status, styles }: { status: string; styles: Record<s
 function StatCard({ label, value, prefix = '$', className = '' }: { label: string; value: string | number; prefix?: string; className?: string }) {
   return (
     <div className={`card p-4 flex flex-col ${className}`}>
-      <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{label}</span>
+      <span className="text-xs text-[var(--text-secondary)] font-medium uppercase tracking-wider">{label}</span>
       <span className="text-2xl font-bold mt-1">{prefix}{typeof value === 'number' ? value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : value}</span>
     </div>
   )
@@ -53,7 +53,7 @@ function StatCard({ label, value, prefix = '$', className = '' }: { label: strin
 function Badge({ label, count, className = '' }: { label: string; count: number; className?: string }) {
   return (
     <div className={`card p-3 flex items-center justify-between ${className}`}>
-      <span className="text-sm text-gray-600">{label}</span>
+      <span className="text-sm text-[var(--text-secondary)]">{label}</span>
       <span className="text-lg font-bold">{count}</span>
     </div>
   )
@@ -420,33 +420,33 @@ export default function InvoicingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Receipt className="w-7 h-7 text-primary-500" /> Invoicing</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage invoices, payments, and credit memos</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Receipt className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Invoicing</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Manage invoices, payments, and credit memos</p>
         </div>
       </div>
 
       {/* Summary Bar */}
       <div className="space-y-4">
         {loadingSummary ? (
-          <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /> Loading summary...</div>
+          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]"><Loader2 className="w-4 h-4 animate-spin" /> Loading summary...</div>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <StatCard label="Total Outstanding" value={summary.totalOutstanding ?? 0} />
-              <StatCard label="Total Overdue" value={summary.totalOverdue ?? 0} className="text-red-600" />
-              <StatCard label="Paid This Month" value={summary.paidThisMonth ?? 0} className="text-green-600" />
+              <StatCard label="Total Overdue" value={summary.totalOverdue ?? 0} className="text-[var(--nexus-error-600)]" />
+              <StatCard label="Paid This Month" value={summary.paidThisMonth ?? 0} className="text-[var(--nexus-success-600)]" />
             </div>
             <div className="flex flex-wrap gap-3">
               <Badge label="Pending Invoices" count={summary.pendingCount ?? 0} className="flex-1 min-w-[140px]" />
               <Badge label="Paid Invoices" count={summary.paidCount ?? 0} className="flex-1 min-w-[140px]" />
-              <Badge label="Overdue Invoices" count={summary.overdueCount ?? 0} className="flex-1 min-w-[140px] text-red-600" />
+              <Badge label="Overdue Invoices" count={summary.overdueCount ?? 0} className="flex-1 min-w-[140px] text-[var(--nexus-error-600)]" />
             </div>
           </>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-gray-200">
+      <div className="flex gap-1 border-b border-[var(--border-default)]">
         {[
           { key: 'invoices' as Tab, label: 'Invoices', icon: Receipt },
           { key: 'payments' as Tab, label: 'Payments', icon: CreditCard },
@@ -457,8 +457,8 @@ export default function InvoicingPage() {
             onClick={() => { setTab(key); setSelectedInvoice(null) }}
             className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               tab === key
-                ? 'border-primary-600 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                ? 'border-[var(--nexus-primary-600)] text-[var(--text-brand)]'
+                : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:border-[var(--border-default)]'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -487,27 +487,27 @@ export default function InvoicingPage() {
             <div className="card p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Invoice {selectedInvoice.invoiceNumber}</h3>
-                  <p className="text-sm text-gray-500">{selectedInvoice.customerName} &middot; {selectedInvoice.customerEmail}</p>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)]">Invoice {selectedInvoice.invoiceNumber}</h3>
+                  <p className="text-sm text-[var(--text-secondary)]">{selectedInvoice.customerName} &middot; {selectedInvoice.customerEmail}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <StatusBadgeLocal status={selectedInvoice.status} styles={invoiceStatusStyles} />
-                  <button onClick={closeInvoiceDetail} className="p-1.5 hover:bg-gray-100 rounded text-gray-500"><X className="w-4 h-4" /></button>
+                  <button onClick={closeInvoiceDetail} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)]"><X className="w-4 h-4" /></button>
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                <div><span className="text-gray-500">Total</span><p className="font-semibold">${selectedInvoice.totalAmount.toFixed(2)}</p></div>
-                <div><span className="text-gray-500">Paid</span><p className="font-semibold">${selectedInvoice.amountPaid.toFixed(2)}</p></div>
-                <div><span className="text-gray-500">Balance</span><p className="font-semibold">${selectedInvoice.amountDue.toFixed(2)}</p></div>
-                <div><span className="text-gray-500">Due</span><p className="font-semibold">{selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : '-'}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Total</span><p className="font-semibold">${selectedInvoice.totalAmount.toFixed(2)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Paid</span><p className="font-semibold">${selectedInvoice.amountPaid.toFixed(2)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Balance</span><p className="font-semibold">${selectedInvoice.amountDue.toFixed(2)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Due</span><p className="font-semibold">{selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : '-'}</p></div>
               </div>
 
               {/* Items */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Items</h4>
+                <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Items</h4>
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase">
+                    <tr className="border-b border-[var(--border-subtle)] text-left text-xs text-[var(--text-secondary)] uppercase">
                       <th className="pb-2 font-medium">SKU</th>
                       <th className="pb-2 font-medium">Description</th>
                       <th className="pb-2 font-medium text-right">Qty</th>
@@ -517,9 +517,9 @@ export default function InvoicingPage() {
                   </thead>
                   <tbody>
                     {selectedInvoice.items?.map((item) => (
-                      <tr key={item.id} className="border-b border-gray-50">
-                        <td className="py-2 text-gray-900">{item.sku}</td>
-                        <td className="py-2 text-gray-600">{item.productName}</td>
+                      <tr key={item.id} className="border-b border-[var(--border-subtle)]">
+                        <td className="py-2 text-[var(--text-primary)]">{item.sku}</td>
+                        <td className="py-2 text-[var(--text-secondary)]">{item.productName}</td>
                         <td className="py-2 text-right">{item.quantity}</td>
                         <td className="py-2 text-right">${item.unitPrice.toFixed(2)}</td>
                         <td className="py-2 text-right font-medium">${item.totalPrice.toFixed(2)}</td>
@@ -531,13 +531,13 @@ export default function InvoicingPage() {
 
               {/* Payments on this invoice */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Payments</h4>
+                <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-2">Payments</h4>
                 {invoicePayments.length === 0 ? (
-                  <p className="text-xs text-gray-400">No payments recorded</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">No payments recorded</p>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase">
+                      <tr className="border-b border-[var(--border-subtle)] text-left text-xs text-[var(--text-secondary)] uppercase">
                         <th className="pb-2 font-medium">Transaction</th>
                         <th className="pb-2 font-medium">Method</th>
                         <th className="pb-2 font-medium text-right">Amount</th>
@@ -547,12 +547,12 @@ export default function InvoicingPage() {
                     </thead>
                     <tbody>
                       {invoicePayments.map((p) => (
-                        <tr key={p.id} className="border-b border-gray-50">
-                          <td className="py-2 text-gray-900">{p.transactionId || p.id.slice(0, 8)}</td>
-                          <td className="py-2 text-gray-600">{p.method.replace(/_/g, ' ')}</td>
+                        <tr key={p.id} className="border-b border-[var(--border-subtle)]">
+                          <td className="py-2 text-[var(--text-primary)]">{p.transactionId || p.id.slice(0, 8)}</td>
+                          <td className="py-2 text-[var(--text-secondary)]">{p.method.replace(/_/g, ' ')}</td>
                           <td className="py-2 text-right">${p.amount.toFixed(2)}</td>
                           <td className="py-2"><StatusBadgeLocal status={p.status} styles={paymentStatusStyles} /></td>
-                          <td className="py-2 text-gray-500">{p.processedAt ? new Date(p.processedAt).toLocaleDateString() : '-'}</td>
+                          <td className="py-2 text-[var(--text-secondary)]">{p.processedAt ? new Date(p.processedAt).toLocaleDateString() : '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -569,7 +569,7 @@ export default function InvoicingPage() {
                 </PermissionGate>
                 <PermissionGate resource="invoicing" action="edit">
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-gray-500">Status:</label>
+                    <label className="text-xs text-[var(--text-secondary)]">Status:</label>
                     <select
                       value={selectedInvoice.status}
                       onChange={e => handleStatusChange(selectedInvoice.id, e.target.value)}
@@ -592,18 +592,18 @@ export default function InvoicingPage() {
           <div className="card overflow-hidden">
             {loadingInvoices ? (
               <div className="flex items-center justify-center h-40">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                <Loader2 className="w-6 h-6 animate-spin text-[var(--text-tertiary)]" />
               </div>
             ) : filteredInvoices.length === 0 ? (
               <div className="text-center py-12">
-                <Receipt className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No invoices found</p>
+                <Receipt className="w-10 h-10 text-[var(--text-tertiary)] mx-auto mb-2" />
+                <p className="text-sm text-[var(--text-secondary)]">No invoices found</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase">
+                    <tr className="border-b border-[var(--border-subtle)] text-left text-xs text-[var(--text-secondary)] uppercase">
                       <th className="px-4 py-3 font-medium">Invoice #</th>
                       <th className="px-4 py-3 font-medium">Type</th>
                       <th className="px-4 py-3 font-medium">Customer/Supplier</th>
@@ -619,26 +619,26 @@ export default function InvoicingPage() {
                     {filteredInvoices.map((inv) => (
                       <tr
                         key={inv.id}
-                        className="border-b border-gray-50 hover:bg-gray-50 cursor-pointer"
+                        className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-sunken)] cursor-pointer"
                         onClick={() => openInvoiceDetail(inv)}
                       >
-                        <td className="px-4 py-3 font-medium text-primary-600">{inv.invoiceNumber || inv.id.slice(0, 8)}</td>
-                        <td className="px-4 py-3 text-gray-600">{inv.orderNumber ? 'Sales' : 'Standard'}</td>
-                        <td className="px-4 py-3 text-gray-900">{inv.customerName || inv.supplierName || '-'}</td>
+                        <td className="px-4 py-3 font-medium text-[var(--text-brand)]">{inv.invoiceNumber || inv.id.slice(0, 8)}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{inv.orderNumber ? 'Sales' : 'Standard'}</td>
+                        <td className="px-4 py-3 text-[var(--text-primary)]">{inv.customerName || inv.supplierName || '-'}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={inv.status} styles={invoiceStatusStyles} /></td>
                         <td className="px-4 py-3 text-right font-medium">${inv.totalAmount.toFixed(2)}</td>
                         <td className="px-4 py-3 text-right">${inv.amountPaid.toFixed(2)}</td>
                         <td className="px-4 py-3 text-right font-semibold">${inv.amountDue.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-gray-500">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
-                            <button onClick={() => openRecordPayment(inv)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-primary-600" title="Record Payment">
+                            <button onClick={() => openRecordPayment(inv)} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-brand)]" title="Record Payment">
                               <DollarSign className="w-4 h-4" />
                             </button>
                             <select
                               value={inv.status}
                               onChange={e => handleStatusChange(inv.id, e.target.value)}
-                              className="text-xs border border-gray-200 rounded px-1.5 py-1 bg-white text-gray-600"
+                              className="text-xs border border-[var(--border-default)] rounded px-1.5 py-1 bg-white text-[var(--text-secondary)]"
                               onClick={e => e.stopPropagation()}
                             >
                               <option value="DRAFT">DRAFT</option>
@@ -657,11 +657,11 @@ export default function InvoicingPage() {
               </div>
             )}
             {invoiceTotalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                <span className="text-xs text-gray-500">Page {invoicePage} of {invoiceTotalPages}</span>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)]">
+                <span className="text-xs text-[var(--text-secondary)]">Page {invoicePage} of {invoiceTotalPages}</span>
                 <div className="flex gap-1">
-                  <button disabled={invoicePage <= 1} onClick={() => setInvoicePage(p => p - 1)} className="px-3 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40">Prev</button>
-                  <button disabled={invoicePage >= invoiceTotalPages} onClick={() => setInvoicePage(p => p + 1)} className="px-3 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40">Next</button>
+                  <button disabled={invoicePage <= 1} onClick={() => setInvoicePage(p => p - 1)} className="px-3 py-1 text-xs border border-[var(--border-default)] rounded hover:bg-[var(--surface-sunken)] disabled:opacity-40">Prev</button>
+                  <button disabled={invoicePage >= invoiceTotalPages} onClick={() => setInvoicePage(p => p + 1)} className="px-3 py-1 text-xs border border-[var(--border-default)] rounded hover:bg-[var(--surface-sunken)] disabled:opacity-40">Next</button>
                 </div>
               </div>
             )}
@@ -684,18 +684,18 @@ export default function InvoicingPage() {
           <div className="card overflow-hidden">
             {loadingPayments ? (
               <div className="flex items-center justify-center h-40">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                <Loader2 className="w-6 h-6 animate-spin text-[var(--text-tertiary)]" />
               </div>
             ) : filteredPayments.length === 0 ? (
               <div className="text-center py-12">
-                <CreditCard className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No payments found</p>
+                <CreditCard className="w-10 h-10 text-[var(--text-tertiary)] mx-auto mb-2" />
+                <p className="text-sm text-[var(--text-secondary)]">No payments found</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase">
+                    <tr className="border-b border-[var(--border-subtle)] text-left text-xs text-[var(--text-secondary)] uppercase">
                       <th className="px-4 py-3 font-medium">Payment #</th>
                       <th className="px-4 py-3 font-medium">Invoice</th>
                       <th className="px-4 py-3 font-medium text-right">Amount</th>
@@ -708,18 +708,18 @@ export default function InvoicingPage() {
                   </thead>
                   <tbody>
                     {filteredPayments.map((p) => (
-                      <tr key={p.id} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-primary-600">{p.transactionId || p.id.slice(0, 8)}</td>
-                        <td className="px-4 py-3 text-gray-600">{p.invoiceNumber || p.invoiceId.slice(0, 8)}</td>
+                      <tr key={p.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-sunken)]">
+                        <td className="px-4 py-3 font-medium text-[var(--text-brand)]">{p.transactionId || p.id.slice(0, 8)}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{p.invoiceNumber || p.invoiceId.slice(0, 8)}</td>
                         <td className="px-4 py-3 text-right font-medium">${p.amount.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-gray-600">{p.method.replace(/_/g, ' ')}</td>
-                        <td className="px-4 py-3 text-gray-500">{p.reference || '-'}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{p.method.replace(/_/g, ' ')}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{p.reference || '-'}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={p.status} styles={paymentStatusStyles} /></td>
-                        <td className="px-4 py-3 text-gray-500">{p.processedAt ? new Date(p.processedAt).toLocaleDateString() : new Date(p.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{p.processedAt ? new Date(p.processedAt).toLocaleDateString() : new Date(p.createdAt).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-right">
                           {p.status === 'COMPLETED' && (
                             <PermissionGate resource="invoicing" action="delete">
-                              <button onClick={() => openRefund(p)} className="text-xs text-red-600 hover:text-red-800 font-medium">Refund</button>
+                              <button onClick={() => openRefund(p)} className="text-xs text-[var(--nexus-error-600)] hover:text-[var(--nexus-error-800)] font-medium">Refund</button>
                             </PermissionGate>
                           )}
                         </td>
@@ -730,11 +730,11 @@ export default function InvoicingPage() {
               </div>
             )}
             {paymentTotalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                <span className="text-xs text-gray-500">Page {paymentPage} of {paymentTotalPages}</span>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)]">
+                <span className="text-xs text-[var(--text-secondary)]">Page {paymentPage} of {paymentTotalPages}</span>
                 <div className="flex gap-1">
-                  <button disabled={paymentPage <= 1} onClick={() => setPaymentPage(p => p - 1)} className="px-3 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40">Prev</button>
-                  <button disabled={paymentPage >= paymentTotalPages} onClick={() => setPaymentPage(p => p + 1)} className="px-3 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40">Next</button>
+                  <button disabled={paymentPage <= 1} onClick={() => setPaymentPage(p => p - 1)} className="px-3 py-1 text-xs border border-[var(--border-default)] rounded hover:bg-[var(--surface-sunken)] disabled:opacity-40">Prev</button>
+                  <button disabled={paymentPage >= paymentTotalPages} onClick={() => setPaymentPage(p => p + 1)} className="px-3 py-1 text-xs border border-[var(--border-default)] rounded hover:bg-[var(--surface-sunken)] disabled:opacity-40">Next</button>
                 </div>
               </div>
             )}
@@ -757,18 +757,18 @@ export default function InvoicingPage() {
           <div className="card overflow-hidden">
             {loadingMemos ? (
               <div className="flex items-center justify-center h-40">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                <Loader2 className="w-6 h-6 animate-spin text-[var(--text-tertiary)]" />
               </div>
             ) : filteredMemos.length === 0 ? (
               <div className="text-center py-12">
-                <FileText className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-sm text-gray-500">No credit memos found</p>
+                <FileText className="w-10 h-10 text-[var(--text-tertiary)] mx-auto mb-2" />
+                <p className="text-sm text-[var(--text-secondary)]">No credit memos found</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase">
+                    <tr className="border-b border-[var(--border-subtle)] text-left text-xs text-[var(--text-secondary)] uppercase">
                       <th className="px-4 py-3 font-medium">Memo #</th>
                       <th className="px-4 py-3 font-medium">Type</th>
                       <th className="px-4 py-3 font-medium">Invoice</th>
@@ -780,16 +780,16 @@ export default function InvoicingPage() {
                   </thead>
                   <tbody>
                     {filteredMemos.map((m) => (
-                      <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-primary-600">{m.creditMemoNumber || m.id.slice(0, 8)}</td>
-                        <td className="px-4 py-3 text-gray-600">
+                      <tr key={m.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-sunken)]">
+                        <td className="px-4 py-3 font-medium text-[var(--text-brand)]">{m.creditMemoNumber || m.id.slice(0, 8)}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">
                           {m.creditMemoNumber?.startsWith('CM-REFUND') ? 'Refund' : m.creditMemoNumber?.startsWith('CM-CREDIT') ? 'Credit' : m.totalAmount < 0 ? 'Credit' : 'Refund'}
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{m.invoiceNumber || m.invoiceId.slice(0, 8)}</td>
-                        <td className="px-4 py-3 text-gray-600 max-w-[200px] truncate">{m.reason}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{m.invoiceNumber || m.invoiceId.slice(0, 8)}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)] max-w-[200px] truncate">{m.reason}</td>
                         <td className="px-4 py-3 text-right font-medium">${Math.abs(m.totalAmount).toFixed(2)}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={m.status} styles={creditMemoStatusStyles} /></td>
-                        <td className="px-4 py-3 text-gray-500">{m.issuedDate ? new Date(m.issuedDate).toLocaleDateString() : new Date(m.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-[var(--text-secondary)]">{m.issuedDate ? new Date(m.issuedDate).toLocaleDateString() : new Date(m.createdAt).toLocaleDateString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -797,11 +797,11 @@ export default function InvoicingPage() {
               </div>
             )}
             {memoTotalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-                <span className="text-xs text-gray-500">Page {memoPage} of {memoTotalPages}</span>
+              <div className="flex items-center justify-between px-4 py-3 border-t border-[var(--border-subtle)]">
+                <span className="text-xs text-[var(--text-secondary)]">Page {memoPage} of {memoTotalPages}</span>
                 <div className="flex gap-1">
-                  <button disabled={memoPage <= 1} onClick={() => setMemoPage(p => p - 1)} className="px-3 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40">Prev</button>
-                  <button disabled={memoPage >= memoTotalPages} onClick={() => setMemoPage(p => p + 1)} className="px-3 py-1 text-xs border border-gray-200 rounded hover:bg-gray-50 disabled:opacity-40">Next</button>
+                  <button disabled={memoPage <= 1} onClick={() => setMemoPage(p => p - 1)} className="px-3 py-1 text-xs border border-[var(--border-default)] rounded hover:bg-[var(--surface-sunken)] disabled:opacity-40">Prev</button>
+                  <button disabled={memoPage >= memoTotalPages} onClick={() => setMemoPage(p => p + 1)} className="px-3 py-1 text-xs border border-[var(--border-default)] rounded hover:bg-[var(--surface-sunken)] disabled:opacity-40">Next</button>
                 </div>
               </div>
             )}
@@ -811,16 +811,16 @@ export default function InvoicingPage() {
 
       {/* ── CREATE INVOICE MODAL ── */}
       {showCreateInvoice && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Create Invoice</h2>
-              <button onClick={() => { setShowCreateInvoice(false); resetInvForm() }} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create Invoice</h2>
+              <button onClick={() => { setShowCreateInvoice(false); resetInvForm() }} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Type</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Invoice Type</label>
                   <select value={invForm.invoiceType} onChange={e => setInvForm({ ...invForm, invoiceType: e.target.value })} className="input w-full">
                     <option value="STANDARD">Standard</option>
                     <option value="PURCHASE">Purchase</option>
@@ -828,23 +828,23 @@ export default function InvoicingPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Order ID (optional)</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Order ID (optional)</label>
                   <input value={invForm.orderId} onChange={e => setInvForm({ ...invForm, orderId: e.target.value })} className="input w-full" placeholder="order-123" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Customer Name</label>
                   <input value={invForm.customerName} onChange={e => setInvForm({ ...invForm, customerName: e.target.value })} className="input w-full" placeholder="John Doe" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Email</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Customer Email</label>
                   <input value={invForm.customerEmail} onChange={e => setInvForm({ ...invForm, customerEmail: e.target.value })} className="input w-full" placeholder="john@example.com" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Due Date</label>
                   <input type="date" value={invForm.dueDate} onChange={e => setInvForm({ ...invForm, dueDate: e.target.value })} className="input w-full" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Payment Terms</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Payment Terms</label>
                   <select value={invForm.paymentTerms} onChange={e => setInvForm({ ...invForm, paymentTerms: e.target.value })} className="input w-full">
                     <option value="NET_15">Net 15</option>
                     <option value="NET_30">Net 30</option>
@@ -855,19 +855,19 @@ export default function InvoicingPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Notes</label>
                 <textarea value={invForm.notes} onChange={e => setInvForm({ ...invForm, notes: e.target.value })} className="input w-full" rows={2} placeholder="Optional notes" />
               </div>
 
               {/* Invoice Items */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-gray-700">Invoice Items</label>
-                  <button onClick={addItemRow} className="text-xs text-primary-600 hover:text-primary-800 font-medium">+ Add Item</button>
+                  <label className="text-sm font-medium text-[var(--text-secondary)]">Invoice Items</label>
+                  <button onClick={addItemRow} className="text-xs text-[var(--text-brand)] hover:text-[var(--nexus-primary-800)] font-medium">+ Add Item</button>
                 </div>
                 <div className="space-y-2">
                   {invForm.items.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
+                    <div key={idx} className="flex items-start gap-2 p-2 bg-[var(--surface-sunken)] rounded-lg">
                       <div className="flex-1 min-w-0">
                         <input value={item.sku} onChange={e => updateItem(idx, 'sku', e.target.value)} className="input w-full text-sm mb-1" placeholder="SKU" />
                       </div>
@@ -881,16 +881,16 @@ export default function InvoicingPage() {
                         <input type="number" min={0} step="0.01" value={item.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} className="input w-full text-sm mb-1 text-right" />
                       </div>
                       <div className="w-20 pt-1 text-sm font-medium text-right">${getItemTotal(item).toFixed(2)}</div>
-                      <button onClick={() => removeItemRow(idx)} className="p-1 hover:bg-gray-200 rounded text-gray-400 hover:text-red-500 mt-0.5" disabled={invForm.items.length <= 1}><X className="w-4 h-4" /></button>
+                      <button onClick={() => removeItemRow(idx)} className="p-1 hover:bg-[var(--surface-muted)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] mt-0.5" disabled={invForm.items.length <= 1}><X className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
-                <div className="text-right mt-2 text-sm font-semibold text-gray-900">
+                <div className="text-right mt-2 text-sm font-semibold text-[var(--text-primary)]">
                   Total: ${getInvoiceFormTotal().toFixed(2)}
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => { setShowCreateInvoice(false); resetInvForm() }} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="create">
                 <button onClick={handleCreateInvoice} disabled={saving} className="btn-primary text-sm">
@@ -905,15 +905,15 @@ export default function InvoicingPage() {
 
       {/* ── RECORD PAYMENT MODAL ── */}
       {showRecordPayment && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Record Payment</h2>
-              <button onClick={() => setShowRecordPayment(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Record Payment</h2>
+              <button onClick={() => setShowRecordPayment(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Invoice</label>
                 <select value={paymentForm.invoiceId} onChange={e => {
                   const inv = invoices.find(i => i.id === e.target.value)
                   setPaymentForm({ ...paymentForm, invoiceId: e.target.value, amount: inv?.amountDue || 0 })
@@ -925,11 +925,11 @@ export default function InvoicingPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Amount</label>
                 <input type="number" min={0} step="0.01" value={paymentForm.amount} onChange={e => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })} className="input w-full" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Payment Method</label>
                 <select value={paymentForm.method} onChange={e => setPaymentForm({ ...paymentForm, method: e.target.value as Payment['method'] })} className="input w-full">
                   <option value="CREDIT_CARD">Credit Card</option>
                   <option value="DEBIT_CARD">Debit Card</option>
@@ -941,15 +941,15 @@ export default function InvoicingPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reference (optional)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Reference (optional)</label>
                 <input value={paymentForm.reference} onChange={e => setPaymentForm({ ...paymentForm, reference: e.target.value })} className="input w-full" placeholder="Check #, Transaction ID..." />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Notes</label>
                 <textarea value={paymentForm.notes} onChange={e => setPaymentForm({ ...paymentForm, notes: e.target.value })} className="input w-full" rows={2} placeholder="Optional notes" />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowRecordPayment(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="edit">
                 <button onClick={handleRecordPayment} disabled={saving} className="btn-primary text-sm">
@@ -964,22 +964,22 @@ export default function InvoicingPage() {
 
       {/* ── CREATE CREDIT MEMO MODAL ── */}
       {showCreateMemo && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Create Credit Memo</h2>
-              <button onClick={() => setShowCreateMemo(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create Credit Memo</h2>
+              <button onClick={() => setShowCreateMemo(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Memo Type</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Memo Type</label>
                 <select value={memoForm.memoType} onChange={e => setMemoForm({ ...memoForm, memoType: e.target.value as 'REFUND' | 'CREDIT' })} className="input w-full">
                   <option value="REFUND">Refund</option>
                   <option value="CREDIT">Credit</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Invoice</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Invoice</label>
                 <select value={memoForm.invoiceId} onChange={e => {
                   const inv = invoices.find(i => i.id === e.target.value)
                   setMemoForm({ ...memoForm, invoiceId: e.target.value, invoiceNumber: inv?.invoiceNumber || '' })
@@ -991,19 +991,19 @@ export default function InvoicingPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Reason</label>
                 <textarea value={memoForm.reason} onChange={e => setMemoForm({ ...memoForm, reason: e.target.value })} className="input w-full" rows={2} placeholder="Reason for credit/refund..." />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Amount</label>
                 <input type="number" min={0} step="0.01" value={memoForm.amount} onChange={e => setMemoForm({ ...memoForm, amount: Number(e.target.value) })} className="input w-full" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Notes</label>
                 <textarea value={memoForm.notes} onChange={e => setMemoForm({ ...memoForm, notes: e.target.value })} className="input w-full" rows={2} placeholder="Optional notes" />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowCreateMemo(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="create">
                 <button onClick={handleCreateMemo} disabled={saving} className="btn-primary text-sm">
@@ -1018,30 +1018,30 @@ export default function InvoicingPage() {
 
       {/* ── REFUND MODAL ── */}
       {showRefund && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Process Refund</h2>
-              <button onClick={() => setShowRefund(null)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Process Refund</h2>
+              <button onClick={() => setShowRefund(null)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Payment</label>
-                <p className="text-sm text-gray-900">{showRefund.transactionId || showRefund.id.slice(0, 8)} &mdash; ${showRefund.amount.toFixed(2)}</p>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Payment</label>
+                <p className="text-sm text-[var(--text-primary)]">{showRefund.transactionId || showRefund.id.slice(0, 8)} &mdash; ${showRefund.amount.toFixed(2)}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Refund Amount</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Refund Amount</label>
                 <input type="number" min={0} step="0.01" max={showRefund.amount} value={refundForm.amount} onChange={e => setRefundForm({ ...refundForm, amount: Number(e.target.value) })} className="input w-full" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Reason</label>
                 <textarea value={refundForm.reason} onChange={e => setRefundForm({ ...refundForm, reason: e.target.value })} className="input w-full" rows={2} placeholder="Reason for refund..." />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowRefund(null)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="delete">
-                <button onClick={handleRefund} disabled={saving} className="btn-primary text-sm bg-red-600 hover:bg-red-700">
+                <button onClick={handleRefund} disabled={saving} className="btn-primary text-sm bg-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-700)]">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Process Refund
                 </button>

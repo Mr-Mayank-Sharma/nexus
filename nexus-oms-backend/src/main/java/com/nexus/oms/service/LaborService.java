@@ -1,18 +1,15 @@
 package com.nexus.oms.service;
 
-import com.nexus.oms.entity.NxEngineeredStandard;
-import com.nexus.oms.entity.NxLaborEntry;
-import com.nexus.oms.entity.NxShiftSchedule;
-import com.nexus.oms.entity.WarehouseStaff;
+import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.exception.ResourceNotFoundException;
-import com.nexus.oms.repository.EngineeredStandardRepository;
-import com.nexus.oms.repository.LaborEntryRepository;
-import com.nexus.oms.repository.ShiftScheduleRepository;
-import com.nexus.oms.repository.WarehouseStaffRepository;
+import com.nexus.oms.repository.*;
+import com.nexus.oms.security.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -30,15 +27,21 @@ public class LaborService {
     private final ShiftScheduleRepository shiftScheduleRepository;
     private final EngineeredStandardRepository engineeredStandardRepository;
     private final WarehouseStaffRepository warehouseStaffRepository;
+    private final NxWorkloadRuleRepository workloadRuleRepository;
+    private final NxProductivityLogRepository productivityLogRepository;
 
     public LaborService(LaborEntryRepository laborEntryRepository,
                         ShiftScheduleRepository shiftScheduleRepository,
                         EngineeredStandardRepository engineeredStandardRepository,
-                        WarehouseStaffRepository warehouseStaffRepository) {
+                        WarehouseStaffRepository warehouseStaffRepository,
+                        NxWorkloadRuleRepository workloadRuleRepository,
+                        NxProductivityLogRepository productivityLogRepository) {
         this.laborEntryRepository = laborEntryRepository;
         this.shiftScheduleRepository = shiftScheduleRepository;
         this.engineeredStandardRepository = engineeredStandardRepository;
         this.warehouseStaffRepository = warehouseStaffRepository;
+        this.workloadRuleRepository = workloadRuleRepository;
+        this.productivityLogRepository = productivityLogRepository;
     }
 
     @Transactional
@@ -415,6 +418,195 @@ public class LaborService {
         aggregate.put("efficiencyRating", ratingFromScore(avgProd));
 
         return aggregate;
+    }
+
+    public List<NxWorkloadRule> getWorkloadRules(UUID warehouseId) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return workloadRuleRepository.findByTenantIdAndWarehouseIdAndIsActiveTrue(tenantId, warehouseId);
+    }
+
+    @Transactional
+    public NxWorkloadRule createWorkloadRule(NxWorkloadRule rule) {
+        rule.setTenantId(TenantContext.getCurrentTenantId());
+        if (rule.getIsActive() == null) rule.setIsActive(true);
+        return workloadRuleRepository.save(rule);
+    }
+
+    @Transactional
+    public NxWorkloadRule updateWorkloadRule(UUID id, NxWorkloadRule updates) {
+        NxWorkloadRule existing = workloadRuleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("WorkloadRule", id));
+        if (updates.getRuleName() != null) existing.setRuleName(updates.getRuleName());
+        if (updates.getTaskType() != null) existing.setTaskType(updates.getTaskType());
+        if (updates.getMaxWorkloadWeight() != null) existing.setMaxWorkloadWeight(updates.getMaxWorkloadWeight());
+        if (updates.getPriorityWeight() != null) existing.setPriorityWeight(updates.getPriorityWeight());
+        if (updates.getSkillRequired() != null) existing.setSkillRequired(updates.getSkillRequired());
+        if (updates.getNotes() != null) existing.setNotes(updates.getNotes());
+        return workloadRuleRepository.save(existing);
+    }
+
+    public Map<String, Object> getWorkloadBalance(UUID warehouseId) {
+        String dateStr = java.time.LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        List<NxLaborEntry> entries = laborEntryRepository.findByWarehouseIdAndShiftDate(warehouseId, dateStr);
+
+        List<Map<String, Object>> workers = entries.stream()
+                .filter(e -> !"CLOCKED_OUT".equals(e.getStatus()))
+                .map(e -> {
+                    Map<String, Object> w = new LinkedHashMap<>();
+                    w.put("staffId", e.getStaffId());
+                    w.put("name", e.getFirstName() + " " + e.getLastName());
+                    w.put("employeeCode", e.getEmployeeCode());
+                    w.put("taskType", e.getTaskType());
+                    w.put("status", e.getStatus());
+                    w.put("productivityScore", e.getProductivityScore());
+                    int output = (e.getLinesPicked() != null ? e.getLinesPicked() : 0)
+                            + (e.getLinesPacked() != null ? e.getLinesPacked() : 0)
+                            + (e.getUnitsReceived() != null ? e.getUnitsReceived() : 0)
+                            + (e.getUnitsShipped() != null ? e.getUnitsShipped() : 0);
+                    w.put("currentWorkload", output);
+                    return w;
+                }).collect(Collectors.toList());
+
+        double avgWorkload = workers.stream()
+                .mapToInt(w -> (int) w.get("currentWorkload"))
+                .average().orElse(0.0);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("workers", workers);
+        result.put("averageWorkload", Math.round(avgWorkload));
+        result.put("totalWorkers", workers.size());
+        return result;
+    }
+
+    public List<Map<String, Object>> rebalanceWorkload(UUID warehouseId) {
+        String dateStr = java.time.LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        List<NxLaborEntry> entries = laborEntryRepository.findByWarehouseIdAndShiftDate(warehouseId, dateStr);
+        List<NxWorkloadRule> rules = workloadRuleRepository
+                .findByTenantIdAndWarehouseIdAndIsActiveTrue(TenantContext.getCurrentTenantId(), warehouseId);
+
+        List<Map<String, Object>> recommendations = new ArrayList<>();
+        List<NxLaborEntry> active = entries.stream()
+                .filter(e -> !"CLOCKED_OUT".equals(e.getStatus()))
+                .collect(Collectors.toList());
+
+        if (active.isEmpty()) return recommendations;
+
+        double avgProductivity = active.stream()
+                .mapToDouble(e -> e.getProductivityScore() != null ? e.getProductivityScore() : 0.0)
+                .average().orElse(0.0);
+
+        for (NxLaborEntry entry : active) {
+            double score = entry.getProductivityScore() != null ? entry.getProductivityScore() : 0.0;
+            if (score < avgProductivity * 0.7) {
+                recommendations.add(Map.of(
+                        "staffId", entry.getStaffId(),
+                        "name", entry.getFirstName() + " " + entry.getLastName(),
+                        "currentTask", entry.getTaskType() != null ? entry.getTaskType() : "unassigned",
+                        "productivityScore", score,
+                        "avgProductivity", Math.round(avgProductivity * 100.0) / 100.0,
+                        "recommendation", "Consider reassigning to simpler tasks or providing additional training",
+                        "priority", score < avgProductivity * 0.5 ? "HIGH" : "MEDIUM"
+                ));
+            }
+        }
+        return recommendations;
+    }
+
+    public Map<String, Object> calculatePerformanceVsStandard(UUID warehouseId, LocalDate date) {
+        String dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+        List<NxLaborEntry> entries = laborEntryRepository.findByWarehouseIdAndShiftDate(warehouseId, dateStr);
+        List<NxEngineeredStandard> standards = engineeredStandardRepository.findByWarehouseIdAndIsActive(warehouseId, true);
+
+        Map<String, NxEngineeredStandard> standardMap = standards.stream()
+                .collect(Collectors.toMap(NxEngineeredStandard::getTaskType, s -> s, (a, b) -> a));
+
+        List<Map<String, Object>> workerPerformance = new ArrayList<>();
+        for (NxLaborEntry entry : entries) {
+            if (entry.getTaskType() == null) continue;
+            NxEngineeredStandard std = standardMap.get(entry.getTaskType());
+            Map<String, Object> perf = new LinkedHashMap<>();
+            perf.put("staffId", entry.getStaffId());
+            perf.put("name", entry.getFirstName() + " " + entry.getLastName());
+            perf.put("taskType", entry.getTaskType());
+            perf.put("productivityScore", entry.getProductivityScore());
+
+            if (std != null) {
+                perf.put("standardValue", std.getStandardValue());
+                perf.put("uom", std.getUom());
+                double actual = entry.getProductivityScore() != null ? entry.getProductivityScore() : 0.0;
+                double target = std.getStandardValue();
+                double vsStandardPct = target > 0 ? ((actual - target) / target) * 100 : 0.0;
+                perf.put("vsStandardPct", Math.round(vsStandardPct * 100.0) / 100.0);
+                perf.put("rating", vsStandardPct >= 10 ? "ABOVE_STANDARD"
+                        : vsStandardPct >= -10 ? "AT_STANDARD" : "BELOW_STANDARD");
+            } else {
+                perf.put("standardValue", null);
+                perf.put("uom", null);
+                perf.put("vsStandardPct", null);
+                perf.put("rating", "NO_STANDARD");
+            }
+            workerPerformance.add(perf);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("date", dateStr);
+        result.put("workerPerformance", workerPerformance);
+        result.put("totalWorkers", workerPerformance.size());
+        long aboveStandard = workerPerformance.stream()
+                .filter(w -> "ABOVE_STANDARD".equals(w.get("rating"))).count();
+        long atStandard = workerPerformance.stream()
+                .filter(w -> "AT_STANDARD".equals(w.get("rating"))).count();
+        long belowStandard = workerPerformance.stream()
+                .filter(w -> "BELOW_STANDARD".equals(w.get("rating"))).count();
+        result.put("aboveStandard", aboveStandard);
+        result.put("atStandard", atStandard);
+        result.put("belowStandard", belowStandard);
+        return result;
+    }
+
+    @Transactional
+    public NxProductivityLog logProductivity(NxProductivityLog log) {
+        log.setTenantId(TenantContext.getCurrentTenantId());
+        if (log.getItemsPerHour() == null && log.getItemsCompleted() != null && log.getTimeSpentMinutes() != null && log.getTimeSpentMinutes() > 0) {
+            log.setItemsPerHour(BigDecimal.valueOf(log.getItemsCompleted())
+                    .divide(BigDecimal.valueOf(log.getTimeSpentMinutes()), 2, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(60)));
+        }
+        return productivityLogRepository.save(log);
+    }
+
+    public List<Map<String, Object>> getProductivityLogs(UUID warehouseId, int daysBack) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        java.time.LocalDateTime start = java.time.LocalDateTime.now().minusDays(daysBack);
+        java.time.LocalDateTime end = java.time.LocalDateTime.now();
+        List<Object[]> aggregated = productivityLogRepository.aggregateByStaff(warehouseId, start, end);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object[] row : aggregated) {
+            result.add(Map.of(
+                    "staffId", row[0],
+                    "avgItemsPerHour", row[1] != null ? row[1] : 0,
+                    "avgQualityScore", row[2] != null ? row[2] : 0,
+                    "avgVsStandardPct", row[3] != null ? row[3] : 0
+            ));
+        }
+        return result;
+    }
+
+    public List<Map<String, Object>> getProductivityByTaskType(UUID warehouseId, int daysBack) {
+        java.time.LocalDateTime start = java.time.LocalDateTime.now().minusDays(daysBack);
+        java.time.LocalDateTime end = java.time.LocalDateTime.now();
+        List<Object[]> aggregated = productivityLogRepository.aggregateByTaskType(warehouseId, start, end);
+
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Object[] row : aggregated) {
+            result.add(Map.of(
+                    "taskType", row[0],
+                    "avgItemsPerHour", row[1] != null ? row[1] : 0,
+                    "logCount", row[2]
+            ));
+        }
+        return result;
     }
 
     private int toInt(Object value) {

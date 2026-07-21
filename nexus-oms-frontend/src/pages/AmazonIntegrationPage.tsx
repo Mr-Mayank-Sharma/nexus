@@ -168,19 +168,19 @@ export default function AmazonIntegrationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Globe className="w-7 h-7 text-orange-500" /> Amazon Integration</h1>
-          <p className="text-sm text-gray-500 mt-1">Connect Amazon Seller Central to sync orders, inventory, and fulfillment data</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Globe className="w-7 h-7 text-orange-500" /> Amazon Integration</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Connect Amazon Seller Central to sync orders, inventory, and fulfillment data</p>
         </div>
         <div className="flex items-center gap-3">
           {connected ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-xs font-medium text-green-700">Connected</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)] rounded-lg">
+              <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />
+              <span className="text-xs font-medium text-[var(--nexus-success-700)]">Connected</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg">
-              <XCircle className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-medium text-gray-500">Disconnected</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface-sunken)] border border-[var(--border-default)] rounded-lg">
+              <XCircle className="w-4 h-4 text-[var(--text-tertiary)]" />
+              <span className="text-xs font-medium text-[var(--text-secondary)]">Disconnected</span>
             </div>
           )}
         </div>
@@ -189,21 +189,21 @@ export default function AmazonIntegrationPage() {
       {/* Connection Card */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Link className="w-4 h-4 text-orange-500" /> Connection</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Link className="w-4 h-4 text-orange-500" /> Connection</h3>
         </div>
         <div className="card-body">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-sm text-gray-700">
-                Status: <span className={clsx('font-semibold', connected ? 'text-green-600' : 'text-gray-500')}>{connected ? 'Connected' : 'Disconnected'}</span>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Status: <span className={clsx('font-semibold', connected ? 'text-[var(--nexus-success-600)]' : 'text-[var(--text-secondary)]')}>{connected ? 'Connected' : 'Disconnected'}</span>
               </p>
               {connected && (
-                <p className="text-xs text-gray-400">Marketplace: {MARKETPLACES.find(m => m.value === form.marketplace)?.label} · Seller ID: {form.sellerId}</p>
+                <p className="text-xs text-[var(--text-tertiary)]">Marketplace: {MARKETPLACES.find(m => m.value === form.marketplace)?.label} · Seller ID: {form.sellerId}</p>
               )}
             </div>
             {connected ? (
               <PermissionGate resource="integrations" action="delete">
-                <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
+                <button onClick={handleDisconnect} className="btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
                 </button>
               </PermissionGate>
@@ -222,26 +222,26 @@ export default function AmazonIntegrationPage() {
       {/* Store Settings */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Settings className="w-4 h-4 text-orange-500" /> Store Settings</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Settings className="w-4 h-4 text-orange-500" /> Store Settings</h3>
         </div>
         <div className="card-body space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Marketplace</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Marketplace</label>
               <select value={form.marketplace} onChange={e => setForm({ ...form, marketplace: e.target.value })} className="input w-full text-sm">
                 {MARKETPLACES.map(m => <option key={m.value} value={m.value}>{m.label} ({m.region})</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Store Name</label>
               <input value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })} className="input w-full text-sm" placeholder="My Amazon Store" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Seller ID</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Seller ID</label>
               <input value={form.sellerId} onChange={e => setForm({ ...form, sellerId: e.target.value })} className="input w-full font-mono text-sm" placeholder="AXXXXXXXXXXXXX" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">MWS Auth Token</label>
+              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">MWS Auth Token</label>
               <input type="password" value={form.mwsAuthToken} onChange={e => setForm({ ...form, mwsAuthToken: e.target.value })} className="input w-full font-mono text-sm" placeholder="amzn.mws.xxxxxxxx" />
             </div>
           </div>
@@ -251,25 +251,25 @@ export default function AmazonIntegrationPage() {
       {/* Sync Settings */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><RefreshCw className="w-4 h-4 text-orange-500" /> Sync Settings</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><RefreshCw className="w-4 h-4 text-orange-500" /> Sync Settings</h3>
         </div>
         <div className="card-body space-y-4">
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.autoSyncOrders} onChange={e => setForm({ ...form, autoSyncOrders: e.target.checked })} className="rounded border-gray-300" />
+              <input type="checkbox" checked={form.autoSyncOrders} onChange={e => setForm({ ...form, autoSyncOrders: e.target.checked })} className="rounded border-[var(--border-default)]" />
               Auto-sync orders
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.importUnshippedOrders} onChange={e => setForm({ ...form, importUnshippedOrders: e.target.checked })} className="rounded border-gray-300" />
+              <input type="checkbox" checked={form.importUnshippedOrders} onChange={e => setForm({ ...form, importUnshippedOrders: e.target.checked })} className="rounded border-[var(--border-default)]" />
               Import unshipped orders
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.syncInventory} onChange={e => setForm({ ...form, syncInventory: e.target.checked })} className="rounded border-gray-300" />
+              <input type="checkbox" checked={form.syncInventory} onChange={e => setForm({ ...form, syncInventory: e.target.checked })} className="rounded border-[var(--border-default)]" />
               Sync inventory
             </label>
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm text-gray-700">Sync interval (minutes):</label>
+            <label className="text-sm text-[var(--text-secondary)]">Sync interval (minutes):</label>
             <input type="number" value={form.syncIntervalMinutes} onChange={e => setForm({ ...form, syncIntervalMinutes: parseInt(e.target.value) || 15 })}
               className="input w-20 text-sm" min={5} max={1440} />
           </div>
@@ -293,19 +293,19 @@ export default function AmazonIntegrationPage() {
       {/* Order Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="card p-5 text-center">
-          <ShoppingCart className="w-6 h-6 text-blue-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-gray-900">{stats.syncedToday}</p>
-          <p className="text-xs text-gray-500">Synced Today</p>
+          <ShoppingCart className="w-6 h-6 text-[var(--nexus-primary-500)] mx-auto mb-2" />
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.syncedToday}</p>
+          <p className="text-xs text-[var(--text-secondary)]">Synced Today</p>
         </div>
         <div className="card p-5 text-center">
-          <Clock className="w-6 h-6 text-amber-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
-          <p className="text-xs text-gray-500">Pending Sync</p>
+          <Clock className="w-6 h-6 text-[var(--nexus-warning-500)] mx-auto mb-2" />
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.pending}</p>
+          <p className="text-xs text-[var(--text-secondary)]">Pending Sync</p>
         </div>
         <div className="card p-5 text-center">
-          <AlertTriangle className="w-6 h-6 text-red-500 mx-auto mb-2" />
-          <p className="text-2xl font-bold text-gray-900">{stats.errors}</p>
-          <p className="text-xs text-gray-500">Sync Errors</p>
+          <AlertTriangle className="w-6 h-6 text-[var(--nexus-error-500)] mx-auto mb-2" />
+          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.errors}</p>
+          <p className="text-xs text-[var(--text-secondary)]">Sync Errors</p>
         </div>
       </div>
 
@@ -313,7 +313,7 @@ export default function AmazonIntegrationPage() {
       <div className="card">
         <div className="card-header">
           <div className="flex items-center justify-between w-full">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-orange-500" /> Recent Amazon Orders</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-orange-500" /> Recent Amazon Orders</h3>
             <div className="flex items-center gap-3">
               <Autocomplete value={searchTerm} onChange={setSearchTerm} placeholder="Search orders..." minChars={0} />
               <select value={filterMarketplace} onChange={e => setFilterMarketplace(e.target.value)} className="input text-xs w-28">
@@ -332,47 +332,47 @@ export default function AmazonIntegrationPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Marketplace</th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Items</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Amount</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Sync</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Placed At</th>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Order ID</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Marketplace</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Items</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Amount</th>
+                <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Sync</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Placed At</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-400">No orders found matching your filters</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
                 </tr>
               ) : filteredOrders.map(order => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm font-mono text-gray-900">{order.orderId}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600">{order.marketplace}</td>
+                <tr key={order.id} className="hover:bg-[var(--surface-sunken)]">
+                  <td className="px-6 py-3 text-sm font-mono text-[var(--text-primary)]">{order.orderId}</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">{order.marketplace}</td>
                   <td className="px-6 py-3">
                     <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', {
-                      'bg-green-50 text-green-700': order.status === 'Shipped',
-                      'bg-blue-50 text-blue-700': order.status === 'Unshipped',
-                      'bg-yellow-50 text-yellow-700': order.status === 'Pending',
-                      'bg-red-50 text-red-700': order.status === 'Cancelled',
+                      'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)]': order.status === 'Shipped',
+                      'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)]': order.status === 'Unshipped',
+                      'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)]': order.status === 'Pending',
+                      'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]': order.status === 'Cancelled',
                     })}>{order.status}</span>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{order.items}</td>
-                  <td className="px-6 py-3 text-sm text-gray-900 text-right font-medium">{order.amount}</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{order.items}</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium">{order.amount}</td>
                   <td className="px-6 py-3 text-center">
-                    {order.syncStatus === 'SYNCED' ? <CheckCircle className="w-4 h-4 text-green-500 mx-auto" /> :
-                     order.syncStatus === 'PENDING' ? <Clock className="w-4 h-4 text-amber-400 mx-auto" /> :
-                     <XCircle className="w-4 h-4 text-red-500 mx-auto" />}
+                    {order.syncStatus === 'SYNCED' ? <CheckCircle className="w-4 h-4 text-[var(--nexus-success-500)] mx-auto" /> :
+                     order.syncStatus === 'PENDING' ? <Clock className="w-4 h-4 text-[var(--nexus-warning-400)] mx-auto" /> :
+                     <XCircle className="w-4 h-4 text-[var(--nexus-error-500)] mx-auto" />}
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-400 text-right">{order.placedAt}</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] text-right">{order.placedAt}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+        <div className="px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-tertiary)]">
           <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
           <button className="btn-ghost text-xs"><Download className="w-3.5 h-3.5" /> Export</button>
         </div>

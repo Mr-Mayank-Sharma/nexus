@@ -50,7 +50,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       {children}
-      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm" aria-live="polite" aria-relevant="additions removals">
         {toasts.map(toast => {
           const toastType = ['success', 'error', 'info', 'warning'].includes(toast.type) ? toast.type : 'info'
           const Icon = icons[toastType]
@@ -69,6 +69,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => removeToast(toast.id)}
                 className="shrink-0 hover:opacity-70 transition-opacity"
+                aria-label="Dismiss notification"
               >
                 <X className="w-4 h-4" />
               </button>

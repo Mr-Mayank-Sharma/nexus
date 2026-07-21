@@ -164,7 +164,7 @@ export default function ProductsPage() {
                     <button className="enterprise-btn-ghost p-1.5" onClick={() => openEdit(p)}><Edit3 className="w-3.5 h-3.5" /></button>
                   </PermissionGate>
                   <PermissionGate resource="products" action="delete">
-                    <button className="enterprise-btn-ghost p-1.5 text-red-500"
+                    <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]"
                       onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id); }}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -189,7 +189,7 @@ export default function ProductsPage() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+        <div className="enterprise-modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="enterprise-card p-6 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">{editingProduct ? 'Edit Product' : 'Add Product'}</h2>
             <div className="grid grid-cols-2 gap-4">

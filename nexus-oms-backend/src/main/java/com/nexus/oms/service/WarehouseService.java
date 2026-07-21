@@ -7,10 +7,12 @@ import com.nexus.oms.security.TenantContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -250,6 +252,25 @@ public class WarehouseService {
     }
 
     // ---- Dashboard / Summary ----
+
+    @Cacheable(value = "warehouses", key = "'all-summary'")
+    public List<Map<String, Object>> getAllWarehousesSummary() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Warehouse> warehouses = warehouseRepository.findByTenantId(tenantId, PageRequest.of(0, 50)).getContent();
+        List<Map<String, Object>> summaries = new ArrayList<>();
+
+        for (Warehouse wh : warehouses) {
+            Map<String, Object> summary = getWarehouseSummary(wh.getId());
+            summary.put("id", wh.getId().toString());
+            summary.put("name", wh.getName());
+            summary.put("code", wh.getCode());
+            summary.put("status", wh.getStatus());
+            summary.put("city", wh.getCity());
+            summary.put("country", wh.getCountry());
+            summaries.add(summary);
+        }
+        return summaries;
+    }
 
     @Cacheable(value = "warehouses", key = "'summary:' + #warehouseId")
     public Map<String, Object> getWarehouseSummary(UUID warehouseId) {

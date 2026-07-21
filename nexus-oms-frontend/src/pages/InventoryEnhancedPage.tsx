@@ -155,22 +155,22 @@ const nodeIconMap: Record<string, typeof Building2> = {
 }
 
 function capacityColor(cap: number): string {
-  if (cap >= 80) return 'bg-red-500'
-  if (cap >= 60) return 'bg-amber-500'
+  if (cap >= 80) return 'bg-[var(--nexus-error-50)]0'
+  if (cap >= 60) return 'bg-[var(--nexus-warning-50)]0'
   if (cap >= 35) return 'bg-emerald-500'
-  return 'bg-blue-500'
+  return 'bg-[var(--nexus-primary-50)]0'
 }
 
 function atpColor(atp: number): string {
   if (atp > 50) return 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
-  if (atp >= 10) return 'text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/20'
-  return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+  if (atp >= 10) return 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] dark:text-[var(--nexus-warning-400)] dark:bg-[var(--nexus-warning-900)]/20'
+  return 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:text-[var(--nexus-error-400)] dark:bg-[var(--nexus-error-900)]/20'
 }
 
 function atpBgBar(atp: number): string {
   if (atp > 50) return 'bg-emerald-500'
-  if (atp >= 10) return 'bg-amber-500'
-  return 'bg-red-500'
+  if (atp >= 10) return 'bg-[var(--nexus-warning-50)]0'
+  return 'bg-[var(--nexus-error-50)]0'
 }
 
 export default function InventoryEnhancedPage() {
@@ -222,11 +222,11 @@ export default function InventoryEnhancedPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
-            <Warehouse className="w-7 h-7 text-amber-500" />
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
+            <Warehouse className="w-7 h-7 text-[var(--nexus-warning-500)]" />
             Multi-Node Inventory
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Real-time inventory across all fulfillment nodes</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Real-time inventory across all fulfillment nodes</p>
         </div>
       </div>
 
@@ -243,46 +243,46 @@ export default function InventoryEnhancedPage() {
       <div className="enterprise-card p-5">
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-amber-500" />
+            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[var(--nexus-warning-500)]" />
               Warehouse Breakdown
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Capacity and inventory across all nodes</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Capacity and inventory across all nodes</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {warehouseData.map(w => {
             const Icon = nodeIconMap[w.type] || Building2
             return (
-              <div key={w.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
+              <div key={w.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <div className="w-9 h-9 rounded-lg bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{w.name}</p>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500">{w.id} · {w.type}</p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{w.name}</p>
+                    <p className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{w.id} · {w.type}</p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <div>
                     <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-gray-500 dark:text-gray-400">Capacity</span>
-                      <span className="font-semibold text-gray-700 dark:text-gray-300">{w.capacity}%</span>
+                      <span className="text-[var(--text-secondary)]">Capacity</span>
+                      <span className="font-semibold text-[var(--text-secondary)]">{w.capacity}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2">
                       <div className={clsx(capacityColor(w.capacity), 'h-2 rounded-full transition-all')} style={{ width: `${w.capacity}%` }} />
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500 dark:text-gray-400">Total Units</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{w.totalUnits.toLocaleString()}</span>
+                    <span className="text-[var(--text-secondary)]">Total Units</span>
+                    <span className="font-medium text-[var(--text-primary)]">{w.totalUnits.toLocaleString()}</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-500 dark:text-gray-400">SKUs</span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{w.skuCount.toLocaleString()}</span>
+                    <span className="text-[var(--text-secondary)]">SKUs</span>
+                    <span className="font-medium text-[var(--text-primary)]">{w.skuCount.toLocaleString()}</span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 pt-1 border-t border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center justify-between text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]">
                     <Clock className="w-3 h-3" />
                     <span>{w.lastUpdated}</span>
                   </div>
@@ -297,26 +297,26 @@ export default function InventoryEnhancedPage() {
       <div className="enterprise-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
               <RefreshCw className="w-4 h-4 text-emerald-500" />
               ATP Simulator
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Available-to-Promise across all fulfillment nodes</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Available-to-Promise across all fulfillment nodes</p>
           </div>
         </div>
         <div className="relative mb-4">
           <Autocomplete value={atpSearch} onChange={setAtpSearch} placeholder="Search product by SKU or name..." minChars={0} />
           {filteredProducts.length > 0 && atpSearch && (
-            <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+            <div className="absolute z-10 mt-1 w-full bg-[var(--surface-base)] border border-[var(--border-default)] rounded-xl shadow-lg overflow-hidden">
               {filteredProducts.map(p => (
                 <button
                   key={p.sku}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0"
                   onClick={() => handleSelectProduct(p.sku)}
                 >
-                  <Hash className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="font-medium text-gray-900 dark:text-gray-100">{p.sku}</span>
-                  <span className="text-gray-500 dark:text-gray-400">— {p.productName}</span>
+                  <Hash className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+                  <span className="font-medium text-[var(--text-primary)]">{p.sku}</span>
+                  <span className="text-[var(--text-secondary)]">— {p.productName}</span>
                 </button>
               ))}
             </div>
@@ -325,30 +325,30 @@ export default function InventoryEnhancedPage() {
         {selectedProduct && (
           <div className="overflow-x-auto">
             <div className="mb-3 flex items-center gap-2 text-sm">
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{selectedProduct.sku}</span>
-              <span className="text-gray-500 dark:text-gray-400">— {selectedProduct.productName}</span>
+              <span className="font-semibold text-[var(--text-primary)]">{selectedProduct.sku}</span>
+              <span className="text-[var(--text-secondary)]">— {selectedProduct.productName}</span>
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Node</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Available</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reserved</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Incoming</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">On Order</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ATP</th>
+                <tr className="border-b border-[var(--border-default)]">
+                  <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Node</th>
+                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Available</th>
+                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Reserved</th>
+                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Incoming</th>
+                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">On Order</th>
+                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">ATP</th>
                 </tr>
               </thead>
               <tbody>
                 {selectedProduct.nodes.map(n => {
                   const atp = n.available - n.reserved + n.incoming
                   return (
-                    <tr key={n.nodeName} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <td className="py-2.5 px-3 text-gray-900 dark:text-gray-100 font-medium">{n.nodeName}</td>
-                      <td className="py-2.5 px-3 text-right text-gray-700 dark:text-gray-300">{n.available.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-gray-700 dark:text-gray-300">{n.reserved.toLocaleString()}</td>
+                    <tr key={n.nodeName} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
+                      <td className="py-2.5 px-3 text-[var(--text-primary)] font-medium">{n.nodeName}</td>
+                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.available.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.reserved.toLocaleString()}</td>
                       <td className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">+{n.incoming.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-gray-700 dark:text-gray-300">{n.onOrder.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.onOrder.toLocaleString()}</td>
                       <td className="py-2.5 px-3 text-right">
                         <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold', atpColor(atp))}>
                           <span className={clsx('w-1.5 h-1.5 rounded-full', atpBgBar(atp))} />
@@ -363,7 +363,7 @@ export default function InventoryEnhancedPage() {
           </div>
         )}
         {!selectedProduct && (
-          <div className="text-center py-8 text-sm text-gray-400 dark:text-gray-500">
+          <div className="text-center py-8 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
             <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
             Search for a product to view ATP across all nodes
           </div>
@@ -374,11 +374,11 @@ export default function InventoryEnhancedPage() {
       <div className="enterprise-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Truck className="w-4 h-4 text-blue-500" />
+            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <Truck className="w-4 h-4 text-[var(--nexus-primary-500)]" />
               Inventory Transfers
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Stock movement between nodes</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Stock movement between nodes</p>
           </div>
           <button
             className="enterprise-btn-primary text-sm flex items-center gap-1.5 px-4 py-2"
@@ -391,33 +391,33 @@ export default function InventoryEnhancedPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">From → To</th>
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">SKU</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Qty</th>
-                <th className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+              <tr className="border-b border-[var(--border-default)]">
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">From → To</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">SKU</th>
+                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Qty</th>
+                <th className="text-center py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
+                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Date</th>
               </tr>
             </thead>
             <tbody>
               {mockTransfers.map(t => (
-                <tr key={t.id} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                <tr key={t.id} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
                   <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-1.5 text-sm text-gray-900 dark:text-gray-100">
+                    <div className="flex items-center gap-1.5 text-sm text-[var(--text-primary)]">
                       <span className="font-medium">{t.from}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-gray-400" />
+                      <ArrowRight className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
                       <span className="font-medium">{t.to}</span>
                     </div>
                   </td>
                   <td className="py-2.5 px-3">
-                    <div className="text-gray-900 dark:text-gray-100 font-medium">{t.sku}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{t.productName}</div>
+                    <div className="text-[var(--text-primary)] font-medium">{t.sku}</div>
+                    <div className="text-xs text-[var(--text-secondary)]">{t.productName}</div>
                   </td>
-                  <td className="py-2.5 px-3 text-right text-gray-900 dark:text-gray-100 font-medium">{t.qty.toLocaleString()}</td>
+                  <td className="py-2.5 px-3 text-right text-[var(--text-primary)] font-medium">{t.qty.toLocaleString()}</td>
                   <td className="py-2.5 px-3 text-center">
                     <EnterpriseStatusBadge status={t.status.toLowerCase().replace(/\s+/g, '_')} label={t.status} />
                   </td>
-                  <td className="py-2.5 px-3 text-right text-gray-500 dark:text-gray-400 text-xs">{t.date}</td>
+                  <td className="py-2.5 px-3 text-right text-[var(--text-secondary)] text-xs">{t.date}</td>
                 </tr>
               ))}
             </tbody>
@@ -429,14 +429,14 @@ export default function InventoryEnhancedPage() {
       <div className="enterprise-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-500" />
+            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-[var(--nexus-error-500)]" />
               Stock Alerts
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Inventory items requiring attention</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Inventory items requiring attention</p>
           </div>
         </div>
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 w-fit mb-4">
+        <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-0.5 w-fit mb-4">
           {(['low', 'overstock', 'dead'] as const).map(tab => (
             <button
               key={tab}
@@ -444,16 +444,16 @@ export default function InventoryEnhancedPage() {
               className={clsx(
                 'px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all',
                 alertTab === tab
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'bg-white bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]'
               )}
             >
               {tab === 'low' ? 'Low Stock' : tab === 'overstock' ? 'Overstock' : 'Dead Stock'}
               <span className={clsx(
                 'ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full',
                 alertTab === tab
-                  ? 'bg-gray-200 dark:bg-gray-500 text-gray-700 dark:text-gray-200'
-                  : 'bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                  ? 'bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)] text-[var(--text-secondary)] text-[var(--text-primary)]'
+                  : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
               )}>
                 {tab === 'low' ? lowStockAlerts.length : tab === 'overstock' ? overstockAlerts.length : deadStockAlerts.length}
               </span>
@@ -463,13 +463,13 @@ export default function InventoryEnhancedPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">SKU</th>
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Product</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Current Stock</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Reorder Point</th>
-                <th className="text-center py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Node</th>
+              <tr className="border-b border-[var(--border-default)]">
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">SKU</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Product</th>
+                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Current Stock</th>
+                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Reorder Point</th>
+                <th className="text-center py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
+                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Node</th>
               </tr>
             </thead>
             <tbody>
@@ -477,15 +477,15 @@ export default function InventoryEnhancedPage() {
                 const isLow = a.currentStock < a.reorderPoint
                 const isOver = a.currentStock > a.maxStock
                 return (
-                  <tr key={`${a.sku}-${i}`} className="border-b border-gray-100 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                    <td className="py-2.5 px-3 text-gray-900 dark:text-gray-100 font-medium">{a.sku}</td>
-                    <td className="py-2.5 px-3 text-gray-700 dark:text-gray-300">{a.productName}</td>
+                  <tr key={`${a.sku}-${i}`} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
+                    <td className="py-2.5 px-3 text-[var(--text-primary)] font-medium">{a.sku}</td>
+                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">{a.productName}</td>
                     <td className="py-2.5 px-3 text-right font-semibold">
-                      <span className={clsx(isLow && 'text-red-600 dark:text-red-400', isOver && 'text-amber-600 dark:text-amber-400', !isLow && !isOver && 'text-gray-900 dark:text-gray-100')}>
+                      <span className={clsx(isLow && 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]', isOver && 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]', !isLow && !isOver && 'text-[var(--text-primary)]')}>
                         {a.currentStock.toLocaleString()}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-right text-gray-500 dark:text-gray-400">{a.reorderPoint.toLocaleString()}</td>
+                    <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{a.reorderPoint.toLocaleString()}</td>
                     <td className="py-2.5 px-3 text-center">
                       {isLow ? (
                         <EnterpriseStatusBadge status="error" label="Low Stock" />
@@ -495,7 +495,7 @@ export default function InventoryEnhancedPage() {
                         <EnterpriseStatusBadge status="neutral" label="Dead Stock" />
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-gray-500 dark:text-gray-400">{a.node}</td>
+                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">{a.node}</td>
                   </tr>
                 )
               })}
@@ -508,11 +508,11 @@ export default function InventoryEnhancedPage() {
       <div className="enterprise-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-violet-500" />
               AI Replenishment Suggestions
             </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Intelligent recommendations based on stock levels and demand</p>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Intelligent recommendations based on stock levels and demand</p>
           </div>
         </div>
         <div className="space-y-2">
@@ -522,32 +522,32 @@ export default function InventoryEnhancedPage() {
               className={clsx(
                 'flex items-start gap-3 p-3 rounded-xl border transition-colors',
                 s.type === 'reorder'
-                  ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30'
-                  : 'bg-amber-50/50 dark:bg-amber-900/10 border-amber-100 dark:border-amber-900/30'
+                  ? 'bg-[var(--nexus-error-50)]/50 dark:bg-[var(--nexus-error-900)]/10 border-[var(--nexus-error-100)] dark:border-[var(--nexus-error-900)]/30'
+                  : 'bg-[var(--nexus-warning-50)]/50 dark:bg-[var(--nexus-warning-900)]/10 border-[var(--nexus-warning-100)] dark:border-[var(--nexus-warning-900)]/30'
               )}
             >
               <div className={clsx(
                 'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5',
-                s.type === 'reorder' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-amber-100 dark:bg-amber-900/30'
+                s.type === 'reorder' ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/30' : 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30'
               )}>
                 {s.type === 'reorder' ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+                  <TrendingUp className="w-3.5 h-3.5 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]" />
                 ) : (
-                  <Archive className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <Archive className="w-3.5 h-3.5 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-gray-800 dark:text-gray-200">{s.message}</p>
+                <p className="text-sm text-[var(--text-primary)]">{s.message}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={clsx(
                     'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                    s.priority === 'high' && 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
-                    s.priority === 'medium' && 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-                    s.priority === 'low' && 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+                    s.priority === 'high' && 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/30 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]',
+                    s.priority === 'medium' && 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]',
+                    s.priority === 'low' && 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
                   )}>
                     {s.priority} priority
                   </span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                  <span className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     {s.type === 'reorder' ? 'Reorder needed' : 'Overstock detected'}
                   </span>
                 </div>
@@ -559,20 +559,20 @@ export default function InventoryEnhancedPage() {
 
       {/* Create Transfer Modal */}
       {showTransferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 w-full max-w-md mx-4 overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <Truck className="w-4 h-4 text-blue-500" />
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
+              <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <Truck className="w-4 h-4 text-[var(--nexus-primary-500)]" />
                 Create Transfer
               </h3>
-              <button onClick={() => setShowTransferModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <button onClick={() => setShowTransferModal(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">From Node</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">From Node</label>
                 <select
                   className="enterprise-input w-full"
                   value={transferForm.from}
@@ -583,7 +583,7 @@ export default function InventoryEnhancedPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">To Node</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">To Node</label>
                 <select
                   className="enterprise-input w-full"
                   value={transferForm.to}
@@ -594,7 +594,7 @@ export default function InventoryEnhancedPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">SKU</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">SKU</label>
                 <input
                   className="enterprise-input w-full"
                   placeholder="e.g. SKU-001"
@@ -603,7 +603,7 @@ export default function InventoryEnhancedPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Quantity</label>
+                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Quantity</label>
                 <input
                   type="number"
                   className="enterprise-input w-full"
@@ -614,7 +614,7 @@ export default function InventoryEnhancedPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
               <button className="enterprise-btn-secondary text-sm px-4 py-2" onClick={() => setShowTransferModal(false)}>Cancel</button>
               <button
                 className="enterprise-btn-primary text-sm px-4 py-2"

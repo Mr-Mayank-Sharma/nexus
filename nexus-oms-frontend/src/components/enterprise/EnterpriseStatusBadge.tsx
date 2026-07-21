@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { ReactNode } from 'react'
+import { memo, ReactNode } from 'react'
 
 type StatusType = 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary'
 
@@ -46,7 +46,7 @@ const colorMap: Record<string, string> = {
   partially_received: 'enterprise-badge-info',
 }
 
-export default function EnterpriseStatusBadge({ status, label, children, size = 'md' }: Props) {
+export default memo(function EnterpriseStatusBadge({ status, label, children, size = 'md' }: Props) {
   const content = label || children || status
   const className = colorMap[status.toLowerCase()] || 'enterprise-badge-neutral'
 
@@ -55,4 +55,4 @@ export default function EnterpriseStatusBadge({ status, label, children, size = 
       {content}
     </span>
   )
-}
+})

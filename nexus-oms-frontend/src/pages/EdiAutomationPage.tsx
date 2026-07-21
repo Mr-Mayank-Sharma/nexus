@@ -128,7 +128,7 @@ export default function EdiAutomationPage() {
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="flex items-center gap-2.5"><FileText className="w-6 h-6 text-cyan-600" />EDI Automation</h1>
+            <h1 className="flex items-center gap-2.5"><FileText className="w-6 h-6 text-[var(--nexus-info-600)]" />EDI Automation</h1>
             <p>Process 850 Purchase Orders, 856 ASNs, and 810 Invoices</p>
           </div>
         </div>
@@ -145,19 +145,19 @@ export default function EdiAutomationPage() {
       {/* KPI Cards */}
       <div className="enterprise-kpi-grid">
         {[
-          { label: 'Total Documents', value: kpis ? (kpis.totalDocuments || 0) + (kpis.failed || 0) : 0, icon: FileText, color: 'bg-blue-50 text-blue-600' },
-          { label: 'Pending', value: kpis?.pending ?? 0, icon: Clock, color: 'bg-gray-50 text-gray-600' },
+          { label: 'Total Documents', value: kpis ? (kpis.totalDocuments || 0) + (kpis.failed || 0) : 0, icon: FileText, color: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]' },
+          { label: 'Pending', value: kpis?.pending ?? 0, icon: Clock, color: 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
           { label: 'Parsed / Validated', value: (kpis?.parsed ?? 0) + (kpis?.validated ?? 0), icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600' },
-          { label: 'Failed', value: kpis?.failed ?? 0, icon: XCircle, color: kpis?.failed ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-600' },
+          { label: 'Failed', value: kpis?.failed ?? 0, icon: XCircle, color: kpis?.failed ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]' : 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div key={kpi.label} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-500">{kpi.label}</span>
+              <span className="text-sm text-[var(--text-secondary)]">{kpi.label}</span>
               <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', kpi.color)}>
                 <kpi.icon className="w-4.5 h-4.5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{kpi.value}</div>
+            <div className="text-2xl font-bold text-[var(--text-primary)]">{kpi.value}</div>
           </div>
         ))}
       </div>
@@ -191,7 +191,7 @@ export default function EdiAutomationPage() {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div key={i} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
               <div className="enterprise-skeleton h-5 w-64 mb-3" />
               <div className="enterprise-skeleton h-4 w-48" />
             </div>
@@ -199,21 +199,21 @@ export default function EdiAutomationPage() {
         </div>
       ) : filteredDocs.length === 0 ? (
         <div className="enterprise-empty-state py-16">
-          <FileText className="w-12 h-12 text-gray-300" />
+          <FileText className="w-12 h-12 text-[var(--text-tertiary)]" />
           <h3>No EDI documents</h3>
           <p>Upload an 850, 856, or 810 file to get started</p>
         </div>
       ) : (
         <div className="space-y-2">
           {filteredDocs.map(doc => (
-            <div key={doc.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div key={doc.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
               <button
                 onClick={() => toggleExpand(doc.id)}
-                className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors text-left"
+                className="w-full flex items-center gap-4 p-4 hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors text-left"
               >
                 <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-                  doc.docType === '850' && 'bg-blue-50 text-blue-600',
-                  doc.docType === '856' && 'bg-amber-50 text-amber-600',
+                  doc.docType === '850' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]',
+                  doc.docType === '856' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)]',
                   doc.docType === '810' && 'bg-violet-50 text-violet-600')}>
                   <FileText className="w-5 h-5" />
                 </div>
@@ -222,22 +222,22 @@ export default function EdiAutomationPage() {
                     <span className={clsx('enterprise-badge', DOC_TYPE_BADGES[doc.docType])}>
                       {doc.docType}
                     </span>
-                    <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                    <span className="font-medium text-[var(--text-primary)] truncate">
                       {doc.filename || `EDI ${doc.docType}`}
                     </span>
                     <span className={clsx('enterprise-badge', STATUS_BADGES[doc.parsedStatus])}>
                       {doc.parsedStatus}
                     </span>
                     {doc.controlNumber && (
-                      <span className="text-xs text-gray-400 font-mono">#{doc.controlNumber}</span>
+                      <span className="text-xs text-[var(--text-tertiary)] font-mono">#{doc.controlNumber}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-4 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center gap-4 mt-1 text-xs text-[var(--text-secondary)]">
                     {doc.partnerName && <span>{doc.partnerName}</span>}
                     {doc.partnerId && <span className="font-mono">{doc.partnerId}</span>}
                     <span>{new Date(doc.createdAt).toLocaleString()}</span>
                     {doc.orderId && <span className="font-mono">Order: {doc.orderId.slice(0, 8)}</span>}
-                    {doc.errorMessage && <span className="text-red-500">{doc.errorMessage}</span>}
+                    {doc.errorMessage && <span className="text-[var(--nexus-error-500)]">{doc.errorMessage}</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -257,24 +257,24 @@ export default function EdiAutomationPage() {
                       </button>
                     </PermissionGate>
                   )}
-                  {expanded.has(doc.id) ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />}
+                  {expanded.has(doc.id) ? <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" />}
                 </div>
               </button>
 
               {/* Expanded parsed data */}
               {expanded.has(doc.id) && doc.parsedData && (
-                <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="px-4 pb-4 border-t border-[var(--border-subtle)]">
                   <div className="mt-3 space-y-2">
-                    <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Parsed Data</h4>
-                    <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
-                      <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto max-h-80 whitespace-pre-wrap font-mono">
+                    <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Parsed Data</h4>
+                    <div className="bg-[var(--surface-sunken)] bg-[var(--surface-muted)]/30 rounded-xl p-4">
+                      <pre className="text-xs text-[var(--text-secondary)] overflow-x-auto max-h-80 whitespace-pre-wrap font-mono">
                         {JSON.stringify(doc.parsedData, null, 2)}
                       </pre>
                     </div>
                     {doc.validationErrors && doc.validationErrors.length > 0 && (
-                      <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3">
-                        <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">Validation Errors</p>
-                        <ul className="text-xs text-red-500 space-y-0.5">
+                      <div className="bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/10 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] mb-1">Validation Errors</p>
+                        <ul className="text-xs text-[var(--nexus-error-500)] space-y-0.5">
                           {doc.validationErrors.map((err, i) => <li key={i}>{err}</li>)}
                         </ul>
                       </div>
@@ -288,7 +288,7 @@ export default function EdiAutomationPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[var(--text-tertiary)]">
                 Page {page + 1} of {totalPages}
               </p>
               <div className="flex items-center gap-1">
@@ -317,8 +317,8 @@ export default function EdiAutomationPage() {
         <div className="enterprise-modal-overlay" onClick={() => setUploadOpen(false)}>
           <div className="enterprise-modal max-w-lg" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Upload EDI Document</h2>
-              <button onClick={() => setUploadOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Upload EDI Document</h2>
+              <button onClick={() => setUploadOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -335,19 +335,19 @@ export default function EdiAutomationPage() {
                 <label>Upload File (optional)</label>
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-primary-400 dark:hover:border-primary-500 transition-colors"
+                  className="border-2 border-dashed border-[var(--border-default)] border-[var(--border-default)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--nexus-primary-400)] dark:hover:border-[var(--nexus-primary-500)] transition-colors"
                 >
                   {uploadFile ? (
                     <div className="space-y-1">
-                      <FileText className="w-8 h-8 mx-auto text-primary-500" />
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{uploadFile.name}</p>
-                      <p className="text-xs text-gray-400">{(uploadFile.size / 1024).toFixed(1)} KB</p>
+                      <FileText className="w-8 h-8 mx-auto text-[var(--nexus-primary-500)]" />
+                      <p className="text-sm font-medium text-[var(--text-primary)]">{uploadFile.name}</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">{(uploadFile.size / 1024).toFixed(1)} KB</p>
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                      <p className="text-sm text-gray-500">Drop a file or click to browse</p>
-                      <p className="text-xs text-gray-400">.edi, .txt, or .x12 files</p>
+                      <Upload className="w-8 h-8 mx-auto text-[var(--text-tertiary)]" />
+                      <p className="text-sm text-[var(--text-secondary)]">Drop a file or click to browse</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">.edi, .txt, or .x12 files</p>
                     </div>
                   )}
                   <input
@@ -392,8 +392,8 @@ export default function EdiAutomationPage() {
         <div className="enterprise-modal-overlay" onClick={() => setSelectedDoc(null)}>
           <div className="enterprise-modal max-w-2xl" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">EDI Document Details</h2>
-              <button onClick={() => setSelectedDoc(null)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">EDI Document Details</h2>
+              <button onClick={() => setSelectedDoc(null)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -409,19 +409,19 @@ export default function EdiAutomationPage() {
                   { label: 'Processed At', value: selectedDoc.processedAt ? new Date(selectedDoc.processedAt).toLocaleString() : 'N/A' },
                   { label: 'Order ID', value: selectedDoc.orderId ? selectedDoc.orderId.slice(0, 8) : 'N/A' },
                 ].map(({ label, value }) => (
-                  <div key={label} className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-3">
-                    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{value}</p>
+                  <div key={label} className="bg-[var(--surface-sunken)] bg-[var(--surface-muted)]/30 rounded-xl p-3">
+                    <p className="text-xs text-[var(--text-tertiary)] mb-0.5">{label}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{value}</p>
                   </div>
                 ))}
               </div>
 
               {selectedDoc.validationErrors && selectedDoc.validationErrors.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-2">Validation Errors</h4>
-                  <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3 space-y-1">
+                  <h4 className="text-xs font-semibold text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] uppercase tracking-wider mb-2">Validation Errors</h4>
+                  <div className="bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/10 rounded-xl p-3 space-y-1">
                     {selectedDoc.validationErrors.map((err, i) => (
-                      <p key={i} className="text-xs text-red-500">{err}</p>
+                      <p key={i} className="text-xs text-[var(--nexus-error-500)]">{err}</p>
                     ))}
                   </div>
                 </div>
@@ -429,9 +429,9 @@ export default function EdiAutomationPage() {
 
               {selectedDoc.parsedData && (
                 <div>
-                  <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Parsed Data</h4>
-                  <div className="bg-gray-50 dark:bg-gray-700/30 rounded-xl p-4">
-                    <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto whitespace-pre-wrap font-mono max-h-60">
+                  <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">Parsed Data</h4>
+                  <div className="bg-[var(--surface-sunken)] bg-[var(--surface-muted)]/30 rounded-xl p-4">
+                    <pre className="text-xs text-[var(--text-secondary)] overflow-x-auto whitespace-pre-wrap font-mono max-h-60">
                       {JSON.stringify(selectedDoc.parsedData, null, 2)}
                     </pre>
                   </div>
@@ -440,9 +440,9 @@ export default function EdiAutomationPage() {
 
               {selectedDoc.errorMessage && (
                 <div>
-                  <h4 className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider mb-2">Error</h4>
-                  <div className="bg-red-50 dark:bg-red-900/10 rounded-xl p-3">
-                    <p className="text-xs text-red-500">{selectedDoc.errorMessage}</p>
+                  <h4 className="text-xs font-semibold text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] uppercase tracking-wider mb-2">Error</h4>
+                  <div className="bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/10 rounded-xl p-3">
+                    <p className="text-xs text-[var(--nexus-error-500)]">{selectedDoc.errorMessage}</p>
                   </div>
                 </div>
               )}

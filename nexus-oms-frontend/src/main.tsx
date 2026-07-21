@@ -6,6 +6,9 @@ import { AuthProvider } from './context/AuthContext'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { ToastProvider } from './components/common/ToastProvider'
 import { ThemeProvider } from './context/ThemeContext'
+import { useServiceWorker } from './hooks/useServiceWorker'
+import UpdateBanner from './components/pwa/UpdateBanner'
+import OfflineReadyBanner from './components/pwa/OfflineReadyBanner'
 import App from './App'
 import './index.css'
 import './styles/design-tokens.css'
@@ -21,6 +24,17 @@ const queryClient = new QueryClient({
   },
 })
 
+function PWAUpdater() {
+  const { needRefresh, offlineReady, updateSW, dismissUpdate, dismissOffline } = useServiceWorker()
+
+  return (
+    <>
+      {needRefresh && <UpdateBanner onUpdate={updateSW} onDismiss={dismissUpdate} />}
+      {offlineReady && <OfflineReadyBanner onDismiss={dismissOffline} />}
+    </>
+  )
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <HashRouter>
@@ -29,6 +43,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <ToastProvider>
             <ThemeProvider>
               <AuthProvider>
+                <PWAUpdater />
                 <App />
               </AuthProvider>
             </ThemeProvider>

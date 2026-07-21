@@ -30,14 +30,14 @@ const EXCEPTION_SEVERITY_CLASSES: Record<string, string> = {
   LOW: 'enterprise-badge-info',
   MEDIUM: 'enterprise-badge-warning',
   HIGH: 'enterprise-badge-error',
-  CRITICAL: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 ring-1 ring-red-200 dark:ring-red-800',
+  CRITICAL: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-300)] ring-1 ring-red-200 dark:ring-red-800',
 }
 
 const EXCEPTION_STATUS_CLASSES: Record<string, string> = {
   OPEN: 'enterprise-badge-error',
   IN_PROGRESS: 'enterprise-badge-warning',
   RESOLVED: 'enterprise-badge-success',
-  ESCALATED: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  ESCALATED: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-300)]',
   CLOSED: 'enterprise-badge-neutral',
 }
 
@@ -156,22 +156,22 @@ export default function OrderRoutingPage() {
       {/* KPI Cards */}
       <div className="enterprise-kpi-grid">
         {[
-          { label: 'Allocations Today', value: kpis?.totalAllocationsToday ?? 0, icon: TrendingUp, color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400', trend: kpis?.totalAllocationsToday ? `${kpis.totalAllocationsToday} total` : 'No data' },
+          { label: 'Allocations Today', value: kpis?.totalAllocationsToday ?? 0, icon: TrendingUp, color: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]', trend: kpis?.totalAllocationsToday ? `${kpis.totalAllocationsToday} total` : 'No data' },
           { label: 'Active Allocations', value: kpis?.activeAllocations ?? 0, icon: Zap, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400', trend: 'Currently allocated' },
-          { label: 'Open Exceptions', value: kpis?.openExceptions ?? 0, icon: AlertTriangle, color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400', trend: 'Requiring attention' },
-          { label: 'Critical Exceptions', value: kpis?.criticalExceptions ?? 0, icon: XCircle, color: kpis?.criticalExceptions ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'bg-gray-50 text-gray-600 dark:bg-gray-800 dark:text-gray-400', trend: kpis?.criticalExceptions ? 'Requires immediate action' : 'All clear' },
+          { label: 'Open Exceptions', value: kpis?.openExceptions ?? 0, icon: AlertTriangle, color: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]', trend: 'Requiring attention' },
+          { label: 'Critical Exceptions', value: kpis?.criticalExceptions ?? 0, icon: XCircle, color: kpis?.criticalExceptions ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]' : 'bg-[var(--surface-sunken)] text-[var(--text-secondary)] bg-[var(--surface-base)] dark:text-[var(--text-tertiary)]', trend: kpis?.criticalExceptions ? 'Requires immediate action' : 'All clear' },
         ].map(kpi => (
-          <div key={kpi.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+          <div key={kpi.label} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-gray-500 dark:text-gray-400">{kpi.label}</span>
+              <span className="text-sm text-[var(--text-secondary)]">{kpi.label}</span>
               <div className={clsx('w-9 h-9 rounded-xl flex items-center justify-center', kpi.color)}>
                 <kpi.icon className="w-4.5 h-4.5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            <div className="text-2xl font-bold text-[var(--text-primary)]">
               {kpi.value}
             </div>
-            <div className="mt-1.5 pt-2 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+            <div className="mt-1.5 pt-2 border-t border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
               {kpi.trend}
             </div>
           </div>
@@ -186,7 +186,7 @@ export default function OrderRoutingPage() {
         >
           <AlertTriangle className="w-4 h-4" /> Exceptions
           {totalExceptions > 0 && (
-            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 rounded-full">
+            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-300)] rounded-full">
               {totalExceptions}
             </span>
           )}
@@ -223,7 +223,7 @@ export default function OrderRoutingPage() {
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => (
-                <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+                <div key={i} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
                   <div className="enterprise-skeleton h-5 w-48 mb-3" />
                   <div className="enterprise-skeleton h-4 w-96 mb-2" />
                   <div className="enterprise-skeleton h-4 w-64" />
@@ -242,13 +242,13 @@ export default function OrderRoutingPage() {
               .map(exception => {
                 const Icon = EXCEPTION_TYPE_ICONS[exception.type] || AlertTriangle
                 return (
-                  <div key={exception.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 transition-shadow hover:shadow-sm">
+                  <div key={exception.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5 transition-shadow hover:shadow-sm">
                     <div className="flex items-start gap-4">
                       <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5',
-                        exception.severity === 'CRITICAL' && 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400',
+                        exception.severity === 'CRITICAL' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]',
                         exception.severity === 'HIGH' && 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400',
-                        exception.severity === 'MEDIUM' && 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400',
-                        exception.severity === 'LOW' && 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
+                        exception.severity === 'MEDIUM' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
+                        exception.severity === 'LOW' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]',
                       )}>
                         <Icon className="w-5 h-5" />
                       </div>
@@ -256,7 +256,7 @@ export default function OrderRoutingPage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <div className="flex items-center gap-2.5">
-                              <h4 className="font-semibold text-gray-900 dark:text-gray-100">{exception.title}</h4>
+                              <h4 className="font-semibold text-[var(--text-primary)]">{exception.title}</h4>
                               <span className={clsx('enterprise-badge', EXCEPTION_SEVERITY_CLASSES[exception.severity])}>
                                 {exception.severity}
                               </span>
@@ -265,7 +265,7 @@ export default function OrderRoutingPage() {
                               </span>
                             </div>
                             {exception.description && (
-                              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{exception.description}</p>
+                              <p className="text-sm text-[var(--text-secondary)] mt-1">{exception.description}</p>
                             )}
                           </div>
                           <div className="flex items-center gap-1.5 ml-4 shrink-0">
@@ -273,7 +273,7 @@ export default function OrderRoutingPage() {
                               'inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md',
                               exception.autoResolvable
                                 ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20'
-                                : 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800'
+                                : 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]'
                             )}>
                               <Brain className="w-3 h-3" />
                               {exception.autoResolvable ? 'Auto-resolve available' : 'Needs manual review'}
@@ -290,7 +290,7 @@ export default function OrderRoutingPage() {
                             <PermissionGate resource="orders" action="edit">
                               <button
                                 onClick={() => handleEscalate(exception.id)}
-                                className="enterprise-btn enterprise-btn-xs bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                                className="enterprise-btn enterprise-btn-xs bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] border border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)] dark:border-[var(--nexus-error-800)]"
                                 disabled={exception.status === 'RESOLVED' || exception.status === 'CLOSED' || exception.status === 'ESCALATED'}
                               >
                                 <ArrowUpRight className="w-3 h-3" /> Escalate
@@ -298,11 +298,11 @@ export default function OrderRoutingPage() {
                             </PermissionGate>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4 mt-3 text-xs text-gray-400 dark:text-gray-500 flex-wrap">
+                        <div className="flex items-center gap-4 mt-3 text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] flex-wrap">
                           <span className="font-mono">#{exception.orderId?.slice(0, 8)}</span>
                           <span>{new Date(exception.detectedAt).toLocaleString()}</span>
                           {exception.resolutionStrategy && (
-                            <span className="font-medium text-gray-600 dark:text-gray-300">
+                            <span className="font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
                               Suggested: {exception.resolutionStrategy.replace('_', ' ')}
                             </span>
                           )}
@@ -323,21 +323,21 @@ export default function OrderRoutingPage() {
       {tab === 'allocations' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Allocation History</h3>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Allocation History</h3>
           </div>
           {allocations.length === 0 ? (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-8">
+            <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-8">
               <div className="enterprise-empty-state">
-                <Route className="w-12 h-12 text-primary-400" />
+                <Route className="w-12 h-12 text-[var(--nexus-primary-400)]" />
                 <h3>No allocations yet</h3>
                 <p>Order allocations will appear here once orders are routed</p>
               </div>
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     <th className="px-4 py-3">Order</th>
                     <th className="px-4 py-3">Source</th>
                     <th className="px-4 py-3">Destination</th>
@@ -348,17 +348,17 @@ export default function OrderRoutingPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                   {(allocations as any[]).map((a: any, i: number) => (
-                    <tr key={a.id || i} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                      <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{a.orderId || a.orderNumber || '-'}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{a.sourceNode || a.source || '-'}</td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">{a.destinationNode || a.destination || '-'}</td>
+                    <tr key={a.id || i} className="hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30">
+                      <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{a.orderId || a.orderNumber || '-'}</td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">{a.sourceNode || a.source || '-'}</td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)]">{a.destinationNode || a.destination || '-'}</td>
                       <td className="px-4 py-3">
                         <span className={clsx('enterprise-badge', STRATEGY_BADGES[a.strategy] || 'enterprise-badge-neutral')}>{a.strategy || '-'}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={clsx('enterprise-badge', a.status === 'ACTIVE' ? 'enterprise-badge-success' : 'enterprise-badge-neutral')}>{a.status || '-'}</span>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400 text-xs">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '-'}</td>
+                      <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -373,15 +373,15 @@ export default function OrderRoutingPage() {
         <div className="enterprise-modal-overlay" onClick={() => setResolveOpen(false)}>
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Resolve Exception</h2>
-              <button onClick={() => setResolveOpen(false)} className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <h2 className="text-lg font-bold text-[var(--text-primary)]">Resolve Exception</h2>
+              <button onClick={() => setResolveOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
             <div className="enterprise-modal-body space-y-5">
-              <div className="bg-amber-50 dark:bg-amber-900/10 rounded-xl p-4 space-y-1.5">
-                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{selectedException.title}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+              <div className="bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/10 rounded-xl p-4 space-y-1.5">
+                <p className="font-medium text-[var(--text-primary)] text-sm">{selectedException.title}</p>
+                <p className="text-xs text-[var(--text-secondary)]">
                   {selectedException.severity} severity &middot; {selectedException.type.replace('_', ' ')}
                 </p>
               </div>

@@ -610,11 +610,11 @@ export default function OrderDetailPage() {
 
       {/* MODIFY MODAL */}
       {showModifyModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="enterprise-modal-overlay">
           <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Modify Order</h2>
-              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-5 h-5" /></button>
+              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close modify dialog"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="space-y-6">
               <div>
@@ -636,7 +636,7 @@ export default function OrderDetailPage() {
                       <input value={item.productName} onChange={e => updateModifyItem(idx, 'productName', e.target.value)} className="enterprise-input flex-[2] text-xs" placeholder="Product" />
                       <input type="number" value={item.quantity} onChange={e => updateModifyItem(idx, 'quantity', parseInt(e.target.value) || 1)} className="enterprise-input w-16 text-xs" min={1} />
                       <input type="number" value={item.unitPrice} onChange={e => updateModifyItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)} className="enterprise-input w-20 text-xs" min={0} step={0.01} />
-                      <button onClick={() => removeModifyItem(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost hover:text-red-500"><XCircle className="w-4 h-4" /></button>
+                      <button onClick={() => removeModifyItem(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost hover:text-[var(--nexus-error-500)]" aria-label="Remove item"><XCircle className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
@@ -657,11 +657,11 @@ export default function OrderDetailPage() {
 
       {/* SPLIT MODAL */}
       {showSplitModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="enterprise-modal-overlay">
           <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Split Order</h2>
-              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-5 h-5" /></button>
+              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close split dialog"><XCircle className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-4">Assign each item to a shipment group. Each group becomes a new order.</p>
             {order && <div className="flex flex-wrap gap-2 mb-4">
@@ -676,7 +676,7 @@ export default function OrderDetailPage() {
                 <div key={gIdx} className="border border-[var(--border-subtle)] rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-medium text-[var(--text-primary)]">Group {gIdx + 1} ({group.itemIds.length} items)</h4>
-                    {splitGroups.length > 1 && <button onClick={() => removeSplitGroup(gIdx)} className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-red-500">Remove</button>}
+                    {splitGroups.length > 1 && <button onClick={() => removeSplitGroup(gIdx)} className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-[var(--nexus-error-500)]">Remove</button>}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {order?.items.map(item => {
@@ -713,11 +713,11 @@ export default function OrderDetailPage() {
 
       {/* MERGE MODAL */}
       {showMergeModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="enterprise-modal-overlay">
           <div className="enterprise-card p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Merge Orders</h2>
-              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-5 h-5" /></button>
+              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close merge dialog"><XCircle className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-4">Current: <strong>{order?.orderNumber}</strong></p>
             <div className="space-y-2">

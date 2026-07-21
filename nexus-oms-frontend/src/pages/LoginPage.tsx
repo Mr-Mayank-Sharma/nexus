@@ -27,10 +27,10 @@ import Autocomplete from '../components/common/Autocomplete'
 type LoginStep = 'tenant' | 'credentials' | 'register' | 'mfa' | 'forgot-password' | 'forgot-sent'
 
 const SSO_PROVIDERS = [
-  { id: 'google', name: 'Google', color: 'hover:bg-red-50 hover:border-red-200 hover:text-red-600' },
-  { id: 'microsoft', name: 'Microsoft', color: 'hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600' },
+  { id: 'google', name: 'Google', color: 'hover:bg-[var(--nexus-error-50)] hover:border-[var(--nexus-error-200)] hover:text-[var(--nexus-error-600)]' },
+  { id: 'microsoft', name: 'Microsoft', color: 'hover:bg-[var(--nexus-primary-50)] hover:border-[var(--nexus-primary-200)] hover:text-[var(--nexus-primary-600)]' },
   { id: 'okta', name: 'Okta', color: 'hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600' },
-  { id: 'auth0', name: 'Auth0', color: 'hover:bg-purple-50 hover:border-purple-200 hover:text-purple-600' },
+  { id: 'auth0', name: 'Auth0', color: 'hover:bg-[var(--nexus-ai-50)] hover:border-[var(--nexus-ai-200)] hover:text-[var(--nexus-ai-600)]' },
 ]
 
 export default function LoginPage() {
@@ -302,39 +302,39 @@ export default function LoginPage() {
           <div className="space-y-6">
             <h2 className="text-4xl font-bold text-white leading-tight">
               Supply Chain<br />
-              <span className="text-primary-200">Command Center</span>
+              <span className="text-[var(--nexus-primary-200)]">Command Center</span>
             </h2>
-            <p className="text-lg text-primary-100 leading-relaxed max-w-md">
+            <p className="text-lg text-[var(--nexus-primary-100)] leading-relaxed max-w-md">
               Unify orders, inventory, warehouse operations, and carrier management
               across your entire enterprise in one intelligent platform.
             </p>
             <div className="grid grid-cols-2 gap-4 pt-4">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <div className="text-3xl font-bold text-white">50K+</div>
-                <div className="text-sm text-primary-200 mt-1">Orders Daily</div>
+                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Orders Daily</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <div className="text-3xl font-bold text-white">99.9%</div>
-                <div className="text-sm text-primary-200 mt-1">Uptime SLA</div>
+                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Uptime SLA</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <div className="text-3xl font-bold text-white">150+</div>
-                <div className="text-sm text-primary-200 mt-1">Integrations</div>
+                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Integrations</div>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
                 <div className="text-3xl font-bold text-white">40%</div>
-                <div className="text-sm text-primary-200 mt-1">Cost Reduction</div>
+                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Cost Reduction</div>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-primary-200 text-sm">
+          <div className="flex items-center gap-4 text-[var(--nexus-primary-200)] text-sm">
             <a href="#" className="hover:text-white transition-colors">Documentation</a>
-            <div className="w-1 h-1 bg-primary-300 rounded-full" />
+            <div className="w-1 h-1 bg-[var(--nexus-primary-300)] rounded-full" />
             <a href="#" className="hover:text-white transition-colors">API Status</a>
-            <div className="w-1 h-1 bg-primary-300 rounded-full" />
+            <div className="w-1 h-1 bg-[var(--nexus-primary-300)] rounded-full" />
             <a href="#" className="hover:text-white transition-colors">Support</a>
-            <div className="flex-1 text-right text-primary-300">
+            <div className="flex-1 text-right text-[var(--nexus-primary-300)]">
               &copy; 2026 Nexus Technologies
             </div>
           </div>
@@ -344,7 +344,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="flex items-center justify-center w-10 h-10 bg-primary-600 rounded-xl">
+            <div className="flex items-center justify-center w-10 h-10 bg-[var(--nexus-primary-600)] rounded-xl">
               <Ship className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold text-white">NexusShip</span>
@@ -353,10 +353,10 @@ export default function LoginPage() {
           {step === 'tenant' && (
             <div className="bg-white rounded-2xl shadow-2xl p-8">
               <div className="flex items-center gap-3 mb-6">
-                <Building2 className="w-6 h-6 text-primary-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Select Organization</h2>
+                <Building2 className="w-6 h-6 text-[var(--text-brand)]" />
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">Select Organization</h2>
               </div>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-[var(--text-secondary)] mb-4">
                 Choose your organization to continue
               </p>
               <Autocomplete
@@ -369,26 +369,26 @@ export default function LoginPage() {
                 placeholder="Search organizations..."
                 minChars={0}
                 showSearchIcon={false}
-                inputClassName="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:border-primary-400"
+                inputClassName="w-full px-4 py-3 border border-[var(--border-default)] rounded-xl text-sm focus:border-[var(--nexus-primary-400)]"
                 className="mb-4"
               />
               <div className="mt-2 max-h-48 overflow-y-auto space-y-1 mb-4">
                 {(tenantSearch ? tenants.filter(t => t.name.toLowerCase().includes(tenantSearch.toLowerCase())) : tenants).length === 0 ? (
-                  <div className="px-4 py-6 text-center text-sm text-gray-400">No organizations found</div>
+                  <div className="px-4 py-6 text-center text-sm text-[var(--text-tertiary)]">No organizations found</div>
                 ) : (
                   (tenantSearch ? tenants.filter(t => t.name.toLowerCase().includes(tenantSearch.toLowerCase())) : tenants).map(t => (
                     <button key={t.id}
                       onClick={() => handleTenantSelect(t)}
-                      className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-primary-50 rounded-lg flex items-center gap-3 ${
-                        selectedTenant?.id === t.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700'
+                      className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-[var(--nexus-primary-50)] rounded-lg flex items-center gap-3 ${
+                        selectedTenant?.id === t.id ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] font-medium' : 'text-[var(--text-secondary)]'
                       }`}
                     >
-                      <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Building2 className="w-4 h-4 text-gray-500" />
+                      <div className="w-8 h-8 bg-[var(--surface-muted)] rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Building2 className="w-4 h-4 text-[var(--text-secondary)]" />
                       </div>
                       <div>
                         <div className="font-medium">{t.name}</div>
-                        {t.plan && <div className="text-xs text-gray-400 capitalize">{t.plan} plan</div>}
+                        {t.plan && <div className="text-xs text-[var(--text-tertiary)] capitalize">{t.plan} plan</div>}
                       </div>
                     </button>
                   ))
@@ -403,7 +403,7 @@ export default function LoginPage() {
               </button>
               <button
                 onClick={() => setStep('credentials')}
-                className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-3 transition-colors"
+                className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] mt-3 transition-colors"
               >
                 Skip &mdash; continue without selecting
               </button>
@@ -415,7 +415,7 @@ export default function LoginPage() {
               {selectedTenant && (
                 <button
                   onClick={() => setStep('tenant')}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-4 transition-colors"
+                  className="flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-3 h-3" />
                   {selectedTenant.name}
@@ -423,18 +423,18 @@ export default function LoginPage() {
               )}
 
               <div className="flex items-center gap-3 mb-6">
-                <Lock className="w-6 h-6 text-primary-600" />
+                <Lock className="w-6 h-6 text-[var(--text-brand)]" />
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Sign in</h2>
+                  <h2 className="text-xl font-semibold text-[var(--text-primary)]">Sign in</h2>
                   {selectedTenant && (
-                    <p className="text-sm text-gray-500">{selectedTenant.name}</p>
+                    <p className="text-sm text-[var(--text-secondary)]">{selectedTenant.name}</p>
                   )}
                 </div>
               </div>
 
               <form onSubmit={handleCredentialsLogin} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Username</label>
                   <input
                     type="text"
                     value={username}
@@ -447,7 +447,7 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -460,7 +460,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -473,21 +473,21 @@ export default function LoginPage() {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={e => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                      className="w-4 h-4 text-[var(--text-brand)] border-[var(--border-default)] rounded focus:ring-[var(--nexus-primary-500)]"
                     />
-                    <span className="text-sm text-gray-600">Remember me</span>
+                    <span className="text-sm text-[var(--text-secondary)]">Remember me</span>
                   </label>
                   <button
                     type="button"
                     onClick={() => setStep('forgot-password')}
-                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                    className="text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] font-medium"
                   >
                     Forgot password?
                   </button>
                 </div>
 
                 {error && (
-                  <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                  <div className="flex items-start gap-2.5 p-3 bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 border border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)] rounded-lg text-sm text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]">
                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                     <span>{error}</span>
                   </div>
@@ -511,10 +511,10 @@ export default function LoginPage() {
 
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-[var(--border-default)]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-400">Or continue with</span>
+                  <span className="px-4 bg-white text-[var(--text-tertiary)]">Or continue with</span>
                 </div>
               </div>
 
@@ -525,7 +525,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => handleSsoClick(p.id)}
                     disabled={loading}
-                    className={`flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white ${p.color} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                    className={`flex items-center justify-center gap-2 px-4 py-2.5 border border-[var(--border-default)] rounded-xl text-sm font-medium text-[var(--text-secondary)] bg-white ${p.color} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     {p.id === 'google' && (
                       <svg className="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -548,13 +548,13 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setStep('register'); setError('') }}
-                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                  className="text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] font-medium"
                 >
                   Don't have an account? Sign up
                 </button>
               </div>
 
-              <p className="mt-4 text-xs text-gray-400 text-center">
+              <p className="mt-4 text-xs text-[var(--text-tertiary)] text-center">
                 NexusShip OMS v5.0 &middot; Enterprise Edition
               </p>
             </div>
@@ -565,7 +565,7 @@ export default function LoginPage() {
               {selectedTenant && (
                 <button
                   onClick={() => setStep('tenant')}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-4 transition-colors"
+                  className="flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] mb-4 transition-colors"
                 >
                   <ArrowLeft className="w-3 h-3" />
                   {selectedTenant.name}
@@ -573,18 +573,18 @@ export default function LoginPage() {
               )}
 
               <div className="flex items-center gap-3 mb-6">
-                <Users className="w-6 h-6 text-primary-600" />
+                <Users className="w-6 h-6 text-[var(--text-brand)]" />
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Create account</h2>
+                  <h2 className="text-xl font-semibold text-[var(--text-primary)]">Create account</h2>
                   {selectedTenant && (
-                    <p className="text-sm text-gray-500">{selectedTenant.name}</p>
+                    <p className="text-sm text-[var(--text-secondary)]">{selectedTenant.name}</p>
                   )}
                 </div>
               </div>
 
               <form onSubmit={handleRegister} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Full name</label>
                   <input
                     type="text"
                     value={registerName}
@@ -596,7 +596,7 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Email</label>
                   <input
                     type="email"
                     value={registerEmail}
@@ -607,7 +607,7 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -619,7 +619,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -627,7 +627,7 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Confirm password</label>
                   <div className="relative">
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -640,7 +640,7 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                  <div className="flex items-start gap-2.5 p-3 bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 border border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)] rounded-lg text-sm text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]">
                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                     <span>{error}</span>
                   </div>
@@ -664,7 +664,7 @@ export default function LoginPage() {
 
               <button
                 onClick={() => { setStep('credentials'); setError(''); setRegisterName(''); setRegisterEmail(''); setRegisterPassword(''); setRegisterConfirm('') }}
-                className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-4 transition-colors"
+                className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] mt-4 transition-colors"
               >
                 <ArrowLeft className="w-3 h-3 inline mr-1" />
                 Already have an account? Sign in
@@ -675,16 +675,16 @@ export default function LoginPage() {
           {step === 'mfa' && (
             <div className="bg-white rounded-2xl shadow-2xl p-8">
               <div className="flex items-center gap-3 mb-6">
-                <Shield className="w-6 h-6 text-primary-600" />
+                <Shield className="w-6 h-6 text-[var(--text-brand)]" />
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900">Two-Factor Authentication</h2>
-                  <p className="text-sm text-gray-500">Enter the verification code from your authenticator app</p>
+                  <h2 className="text-xl font-semibold text-[var(--text-primary)]">Two-Factor Authentication</h2>
+                  <p className="text-sm text-[var(--text-secondary)]">Enter the verification code from your authenticator app</p>
                 </div>
               </div>
 
               <form onSubmit={handleMfaVerify} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3 text-center">
                     Verification code
                   </label>
                   <div className="flex gap-2 justify-center" onPaste={handleTotpPaste}>
@@ -698,7 +698,7 @@ export default function LoginPage() {
                         value={digit}
                         onChange={e => handleTotpChange(i, e.target.value)}
                         onKeyDown={e => handleTotpKeyDown(i, e)}
-                        className="w-11 h-12 text-center text-lg font-semibold border border-gray-300 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-200 outline-none transition-all"
+                        className="w-11 h-12 text-center text-lg font-semibold border border-[var(--border-default)] rounded-xl focus:border-[var(--nexus-primary-500)] focus:ring-2 focus:ring-primary-200 outline-none transition-all"
                         autoFocus={i === 0}
                       />
                     ))}
@@ -706,7 +706,7 @@ export default function LoginPage() {
                 </div>
 
                 {error && (
-                  <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                  <div className="flex items-start gap-2.5 p-3 bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 border border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)] rounded-lg text-sm text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]">
                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                     <span>{error}</span>
                   </div>
@@ -730,7 +730,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={resetToCredentials}
-                  className="w-full text-center text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                  className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
                 >
                   <ArrowLeft className="w-3 h-3 inline mr-1" />
                   Back to sign in
@@ -744,10 +744,10 @@ export default function LoginPage() {
               {step === 'forgot-password' && (
                 <>
                   <div className="flex items-center gap-3 mb-6">
-                    <Mail className="w-6 h-6 text-primary-600" />
+                    <Mail className="w-6 h-6 text-[var(--text-brand)]" />
                     <div>
-                      <h2 className="text-xl font-semibold text-gray-900">Reset password</h2>
-                      <p className="text-sm text-gray-500">
+                      <h2 className="text-xl font-semibold text-[var(--text-primary)]">Reset password</h2>
+                      <p className="text-sm text-[var(--text-secondary)]">
                         Enter your email address and we'll send you a reset link
                       </p>
                     </div>
@@ -755,7 +755,7 @@ export default function LoginPage() {
 
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                         Email address
                       </label>
                       <input
@@ -769,7 +769,7 @@ export default function LoginPage() {
                     </div>
 
                     {error && (
-                      <div className="flex items-start gap-2.5 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+                      <div className="flex items-start gap-2.5 p-3 bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 border border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)] rounded-lg text-sm text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]">
                         <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                         <span>{error}</span>
                       </div>
@@ -793,7 +793,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={resetToCredentials}
-                      className="w-full text-center text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                      className="w-full text-center text-sm text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors"
                     >
                       <ArrowLeft className="w-3 h-3 inline mr-1" />
                       Back to sign in
@@ -804,20 +804,20 @@ export default function LoginPage() {
 
               {step === 'forgot-sent' && (
                 <div className="text-center py-4">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle2 className="w-8 h-8 text-green-600" />
+                  <div className="w-16 h-16 bg-[var(--nexus-success-100)] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CheckCircle2 className="w-8 h-8 text-[var(--nexus-success-600)]" />
                   </div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-2">Check your email</h2>
-                  <p className="text-sm text-gray-500 mb-6">
-                    We've sent a password reset link to <strong className="text-gray-700">{forgotEmail}</strong>
+                  <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Check your email</h2>
+                  <p className="text-sm text-[var(--text-secondary)] mb-6">
+                    We've sent a password reset link to <strong className="text-[var(--text-secondary)]">{forgotEmail}</strong>
                   </p>
-                  <div className="p-4 bg-blue-50 rounded-xl text-xs text-blue-700 text-left mb-6">
+                  <div className="p-4 bg-[var(--nexus-primary-50)] rounded-xl text-xs text-[var(--nexus-primary-700)] text-left mb-6">
                     <strong className="block mb-1">Didn't receive the email?</strong>
                     Check your spam folder or try a different email address. The link expires in 1 hour.
                   </div>
                   <button
                     onClick={resetToCredentials}
-                    className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                    className="text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] font-medium"
                   >
                     <ArrowLeft className="w-3 h-3 inline mr-1" />
                     Back to sign in
@@ -828,7 +828,7 @@ export default function LoginPage() {
           )}
 
           {!mfaRequired && step !== 'forgot-password' && step !== 'forgot-sent' && (
-            <p className="mt-6 text-xs text-gray-500 text-center lg:hidden">
+            <p className="mt-6 text-xs text-[var(--text-secondary)] text-center lg:hidden">
               NexusShip OMS v5.0 &middot; Enterprise Edition &middot; &copy; 2026
             </p>
           )}

@@ -1,9 +1,7 @@
 package com.nexus.oms.controller;
 
 import com.nexus.oms.dto.ApiResponse;
-import com.nexus.oms.entity.NxEngineeredStandard;
-import com.nexus.oms.entity.NxLaborEntry;
-import com.nexus.oms.entity.NxShiftSchedule;
+import com.nexus.oms.entity.*;
 import com.nexus.oms.service.LaborService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -159,5 +157,81 @@ public class LaborController {
             @PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 laborService.calculateIncentivePay(id)));
+    }
+
+    @Operation(summary = "Get workload rules for a warehouse")
+    @GetMapping("/workload-rules")
+    public ResponseEntity<ApiResponse<List<NxWorkloadRule>>> getWorkloadRules(
+            @RequestParam UUID warehouseId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.getWorkloadRules(warehouseId)));
+    }
+
+    @Operation(summary = "Create a workload rule")
+    @PostMapping("/workload-rules")
+    public ResponseEntity<ApiResponse<NxWorkloadRule>> createWorkloadRule(
+            @RequestBody NxWorkloadRule rule) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.createWorkloadRule(rule), "Workload rule created"));
+    }
+
+    @Operation(summary = "Update a workload rule")
+    @PutMapping("/workload-rules/{id}")
+    public ResponseEntity<ApiResponse<NxWorkloadRule>> updateWorkloadRule(
+            @PathVariable UUID id,
+            @RequestBody NxWorkloadRule rule) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.updateWorkloadRule(id, rule), "Workload rule updated"));
+    }
+
+    @Operation(summary = "Get current workload balance for a warehouse")
+    @GetMapping("/workload/balance")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getWorkloadBalance(
+            @RequestParam UUID warehouseId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.getWorkloadBalance(warehouseId)));
+    }
+
+    @Operation(summary = "Get workload rebalancing recommendations")
+    @GetMapping("/workload/rebalance")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> rebalanceWorkload(
+            @RequestParam UUID warehouseId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.rebalanceWorkload(warehouseId)));
+    }
+
+    @Operation(summary = "Calculate performance vs engineered standards")
+    @GetMapping("/performance/vs-standard")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> calculatePerformanceVsStandard(
+            @RequestParam UUID warehouseId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.calculatePerformanceVsStandard(warehouseId, date)));
+    }
+
+    @Operation(summary = "Log a productivity entry")
+    @PostMapping("/productivity")
+    public ResponseEntity<ApiResponse<NxProductivityLog>> logProductivity(
+            @RequestBody NxProductivityLog log) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.logProductivity(log), "Productivity logged"));
+    }
+
+    @Operation(summary = "Get productivity logs for a warehouse")
+    @GetMapping("/productivity")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getProductivityLogs(
+            @RequestParam UUID warehouseId,
+            @RequestParam(defaultValue = "7") int daysBack) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.getProductivityLogs(warehouseId, daysBack)));
+    }
+
+    @Operation(summary = "Get productivity breakdown by task type")
+    @GetMapping("/productivity/by-task")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getProductivityByTaskType(
+            @RequestParam UUID warehouseId,
+            @RequestParam(defaultValue = "7") int daysBack) {
+        return ResponseEntity.ok(ApiResponse.success(
+                laborService.getProductivityByTaskType(warehouseId, daysBack)));
     }
 }

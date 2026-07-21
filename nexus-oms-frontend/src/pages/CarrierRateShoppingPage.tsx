@@ -83,11 +83,11 @@ export default function CarrierRateShoppingPage() {
       </div>
 
       {/* Search Form */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-gray-400" /> Origin ZIP
+              <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)]" /> Origin ZIP
             </label>
             <Autocomplete
               className="enterprise-input"
@@ -99,7 +99,7 @@ export default function CarrierRateShoppingPage() {
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-gray-400" /> Destination ZIP
+              <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)]" /> Destination ZIP
             </label>
             <Autocomplete
               className="enterprise-input"
@@ -111,7 +111,7 @@ export default function CarrierRateShoppingPage() {
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
-              <Scale className="w-3.5 h-3.5 text-gray-400" /> Weight (kg)
+              <Scale className="w-3.5 h-3.5 text-[var(--text-tertiary)]" /> Weight (kg)
             </label>
             <Autocomplete
               className="enterprise-input"
@@ -123,7 +123,7 @@ export default function CarrierRateShoppingPage() {
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
-              <DollarSign className="w-3.5 h-3.5 text-gray-400" /> Declared Value
+              <DollarSign className="w-3.5 h-3.5 text-[var(--text-tertiary)]" /> Declared Value
             </label>
             <Autocomplete
               className="enterprise-input"
@@ -137,7 +137,7 @@ export default function CarrierRateShoppingPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5 text-gray-400" /> Packages
+              <Package className="w-3.5 h-3.5 text-[var(--text-tertiary)]" /> Packages
             </label>
             <Autocomplete
               className="enterprise-input"
@@ -149,7 +149,7 @@ export default function CarrierRateShoppingPage() {
           </div>
           <div className="enterprise-form-group">
             <label className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-gray-400" /> Service Level
+              <Zap className="w-3.5 h-3.5 text-[var(--text-tertiary)]" /> Service Level
             </label>
             <Autocomplete className="enterprise-select" value={serviceLevel} onChange={v => setServiceLevel(v)} suggestions={SERVICE_LEVELS} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
           </div>
@@ -159,9 +159,9 @@ export default function CarrierRateShoppingPage() {
                 type="checkbox"
                 checked={residential}
                 onChange={e => setResidential(e.target.checked)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-[var(--border-default)] text-[var(--text-brand)] focus:ring-[var(--nexus-primary-500)]"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Residential Address</span>
+              <span className="text-sm text-[var(--text-secondary)]">Residential Address</span>
             </label>
           </div>
           <div className="enterprise-form-group flex items-end">
@@ -181,7 +181,7 @@ export default function CarrierRateShoppingPage() {
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+            <div key={i} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
               <div className="flex items-center gap-4">
                 <div className="enterprise-skeleton w-12 h-12 rounded-xl" />
                 <div className="flex-1 space-y-2">
@@ -197,7 +197,7 @@ export default function CarrierRateShoppingPage() {
 
       {result && result.rates.length === 0 && !loading && (
         <div className="enterprise-empty-state py-16">
-          <Truck className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+          <Truck className="w-12 h-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
           <h3>No rates found</h3>
           <p>Try adjusting the weight or destination</p>
         </div>
@@ -210,19 +210,19 @@ export default function CarrierRateShoppingPage() {
             {[
               { label: 'Fastest', quote: result.fastest, icon: Zap, color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400' },
               { label: 'Cheapest', quote: result.cheapest, icon: DollarSign, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' },
-              { label: 'Best Value', quote: result.bestValue, icon: Star, color: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400' },
+              { label: 'Best Value', quote: result.bestValue, icon: Star, color: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]' },
             ].map(cat => cat.quote && (
-              <div key={cat.label} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+              <div key={cat.label} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className={clsx('w-8 h-8 rounded-lg flex items-center justify-center', cat.color)}>
                       <cat.icon className="w-4 h-4" />
                     </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{cat.label}</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{cat.label}</span>
                   </div>
-                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100">${cat.quote.totalCost.toFixed(2)}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)]">${cat.quote.totalCost.toFixed(2)}</span>
                 </div>
-                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1 pt-2 border-t border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] mt-1 pt-2 border-t border-[var(--border-subtle)]">
                   <span>{cat.quote.carrierName} {cat.quote.serviceName}</span>
                   <span>{cat.quote.transitDaysMin}-{cat.quote.transitDaysMax} days</span>
                 </div>
@@ -232,23 +232,23 @@ export default function CarrierRateShoppingPage() {
 
           {/* Sort and count */}
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-[var(--text-secondary)]">
               {result.rates.length} rate{result.rates.length !== 1 ? 's' : ''} found
               <span className="mx-2">&middot;</span>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{result.fromZip}</span>
+              <span className="font-medium text-[var(--text-secondary)]">{result.fromZip}</span>
               <ArrowRight className="w-3 h-3 inline mx-1" />
-              <span className="font-medium text-gray-700 dark:text-gray-300">{result.toZip}</span>
+              <span className="font-medium text-[var(--text-secondary)]">{result.toZip}</span>
               <span className="mx-2">&middot;</span>
               {result.totalWeightKg} kg
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Sort:</span>
+              <span className="text-xs text-[var(--text-tertiary)]">Sort:</span>
               <button
                 onClick={() => setSortBy('cost')}
                 className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   sortBy === 'cost'
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800')}
+                    ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)]')}
               >
                 <DollarSign className="w-3 h-3 inline mr-1" />Cost
               </button>
@@ -256,8 +256,8 @@ export default function CarrierRateShoppingPage() {
                 onClick={() => setSortBy('speed')}
                 className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   sortBy === 'speed'
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800')}
+                    ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)]')}
               >
                 <Clock className="w-3 h-3 inline mr-1" />Speed
               </button>
@@ -269,18 +269,18 @@ export default function CarrierRateShoppingPage() {
             <div
               key={`${rate.carrierCode}-${rate.serviceLevel}`}
               className={clsx(
-                'bg-white dark:bg-gray-800 rounded-xl border p-5 transition-all duration-150 hover:shadow-sm',
+                'bg-[var(--surface-base)] rounded-xl border p-5 transition-all duration-150 hover:shadow-sm',
                 rate === result.cheapest
                   ? 'border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-200 dark:ring-emerald-800'
-                  : 'border-gray-200 dark:border-gray-700',
+                  : 'border-[var(--border-default)]',
               )}
             >
               <div className="flex items-start gap-4">
                 <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center shrink-0',
-                  rate.carrierCode === 'FEDEX' && 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400',
-                  rate.carrierCode === 'UPS' && 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400',
-                  rate.carrierCode === 'USPS' && 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
-                  !['FEDEX', 'UPS', 'USPS'].includes(rate.carrierCode) && 'bg-gray-50 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
+                  rate.carrierCode === 'FEDEX' && 'bg-[var(--nexus-ai-50)] text-[var(--nexus-ai-600)] dark:bg-[var(--nexus-ai-900)]/20 dark:text-[var(--nexus-ai-400)]',
+                  rate.carrierCode === 'UPS' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
+                  rate.carrierCode === 'USPS' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]',
+                  !['FEDEX', 'UPS', 'USPS'].includes(rate.carrierCode) && 'bg-[var(--surface-sunken)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
                 )}>
                   <Truck className="w-6 h-6" />
                 </div>
@@ -288,7 +288,7 @@ export default function CarrierRateShoppingPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2.5">
-                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">{rate.carrierName}</h3>
+                        <h3 className="font-semibold text-[var(--text-primary)]">{rate.carrierName}</h3>
                         <span className="enterprise-badge enterprise-badge-neutral">{rate.serviceName}</span>
                         {rate.recommendation && (
                           <span className={clsx('enterprise-badge', RECOMMENDATION_BADGES[rate.recommendation])}>
@@ -301,8 +301,8 @@ export default function CarrierRateShoppingPage() {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-                        <span className="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+                      <div className="flex items-center gap-4 mt-1.5 text-sm text-[var(--text-secondary)]">
+                        <span className="font-semibold text-2xl text-[var(--text-primary)]">
                           ${rate.totalCost.toFixed(2)}
                         </span>
                         <span className="flex items-center gap-1">
@@ -321,7 +321,7 @@ export default function CarrierRateShoppingPage() {
                       </button>
                     </PermissionGate>
                   </div>
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-400 dark:text-gray-500">
+                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[var(--border-subtle)] text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     <span>Base: ${rate.baseRate.toFixed(2)}</span>
                     {rate.perKgCharge > 0 && <span>Per kg: ${rate.perKgCharge.toFixed(2)}</span>}
                     {rate.fuelSurcharge > 0 && <span>Fuel: ${rate.fuelSurcharge.toFixed(2)}</span>}
@@ -334,7 +334,7 @@ export default function CarrierRateShoppingPage() {
           ))}
 
           {/* Execution time */}
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-right">
+          <p className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-right">
             Queried in {result.executionTimeMs}ms
           </p>
         </>

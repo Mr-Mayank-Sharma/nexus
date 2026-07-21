@@ -111,19 +111,19 @@ export default function BigCommercePage() {
   ]
 
   const syncActions = [
-    { id: 'orders', label: 'Import Orders', description: 'Pull new/updated orders from BigCommerce', icon: <ShoppingCart className="w-5 h-5" />, color: 'bg-blue-500' },
-    { id: 'products', label: 'Sync Products', description: 'Sync product catalog and create mappings', icon: <Package className="w-5 h-5" />, color: 'bg-purple-500' },
-    { id: 'inventory', label: 'Push Inventory', description: 'Push NexusShip inventory levels to BigCommerce', icon: <Database className="w-5 h-5" />, color: 'bg-green-500' },
-    { id: 'shipments', label: 'Push Shipments', description: 'Push tracking info to BigCommerce orders', icon: <Truck className="w-5 h-5" />, color: 'bg-yellow-500' },
-    { id: 'refunds', label: 'Push Refunds', description: 'Push NexusShip return refunds to BigCommerce', icon: <RotateCcw className="w-5 h-5" />, color: 'bg-red-500' },
+    { id: 'orders', label: 'Import Orders', description: 'Pull new/updated orders from BigCommerce', icon: <ShoppingCart className="w-5 h-5" />, color: 'bg-[var(--nexus-primary-50)]0' },
+    { id: 'products', label: 'Sync Products', description: 'Sync product catalog and create mappings', icon: <Package className="w-5 h-5" />, color: 'bg-[var(--nexus-ai-50)]0' },
+    { id: 'inventory', label: 'Push Inventory', description: 'Push NexusShip inventory levels to BigCommerce', icon: <Database className="w-5 h-5" />, color: 'bg-[var(--nexus-success-50)]0' },
+    { id: 'shipments', label: 'Push Shipments', description: 'Push tracking info to BigCommerce orders', icon: <Truck className="w-5 h-5" />, color: 'bg-[var(--nexus-warning-50)]0' },
+    { id: 'refunds', label: 'Push Refunds', description: 'Push NexusShip return refunds to BigCommerce', icon: <RotateCcw className="w-5 h-5" />, color: 'bg-[var(--nexus-error-50)]0' },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-primary-500" /> BigCommerce Integration</h1>
-          <p className="text-sm text-gray-500 mt-1">Connect your BigCommerce store to synchronize orders, inventory, shipments, and refunds</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-[var(--nexus-primary-500)]" /> BigCommerce Integration</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Connect your BigCommerce store to synchronize orders, inventory, shipments, and refunds</p>
         </div>
         {config?.isActive && (
           <a href={`https://store-${config.storeHash}.mybigcommerce.com`} target="_blank" rel="noopener noreferrer"
@@ -133,11 +133,11 @@ export default function BigCommercePage() {
         )}
       </div>
 
-      <div className="flex items-center gap-1 border-b border-gray-200">
+      <div className="flex items-center gap-1 border-b border-[var(--border-default)]">
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.id ? 'border-primary-600 text-primary-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              activeTab === tab.id ? 'border-[var(--nexus-primary-600)] text-[var(--text-brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
             }`}>
             {tab.icon}{tab.label}
           </button>
@@ -146,51 +146,51 @@ export default function BigCommercePage() {
 
       {activeTab === 'config' && (
         <div className="card max-w-2xl">
-          <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">API Credentials</h3></div>
+          <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">API Credentials</h3></div>
           <div className="card-body space-y-4">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[var(--text-secondary)]">
               Create API credentials in your BigCommerce control panel under <strong>Advanced Settings &gt; API Accounts &gt; Create API Account</strong>.
               Ensure the account has Orders, Products, Inventory, and Shipments permissions.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Store Hash</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Store Hash</label>
                 <Autocomplete value={form.storeHash} onChange={v => setForm({ ...form, storeHash: v })} className="input w-full font-mono text-sm" placeholder="abc123" minChars={0} />
-                <p className="text-xs text-gray-400 mt-1">Found in your BigCommerce store URL: https://store-<strong>abc123</strong>.mybigcommerce.com</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-1">Found in your BigCommerce store URL: https://store-<strong>abc123</strong>.mybigcommerce.com</p>
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Access Token</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Access Token</label>
                 <Autocomplete value={form.accessToken} onChange={v => setForm({ ...form, accessToken: v })} className="input w-full font-mono text-sm" placeholder="xxxxxxxxxxxx" minChars={0} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Client ID</label>
                 <Autocomplete value={form.clientId} onChange={v => setForm({ ...form, clientId: v })} className="input w-full font-mono text-sm" placeholder="Optional" minChars={0} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">API Path</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">API Path</label>
                 <Autocomplete value={form.apiPath} onChange={v => setForm({ ...form, apiPath: v })} className="input w-full font-mono text-sm" minChars={0} />
               </div>
             </div>
 
-            <hr className="border-gray-100" />
-            <h4 className="text-sm font-medium text-gray-700">Auto-Sync Settings</h4>
+            <hr className="border-[var(--border-subtle)]" />
+            <h4 className="text-sm font-medium text-[var(--text-secondary)]">Auto-Sync Settings</h4>
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.autoSyncOrders} onChange={e => setForm({ ...form, autoSyncOrders: e.target.checked })} className="rounded border-gray-300" />
+                <input type="checkbox" checked={form.autoSyncOrders} onChange={e => setForm({ ...form, autoSyncOrders: e.target.checked })} className="rounded border-[var(--border-default)]" />
                 Auto-sync orders
               </label>
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.autoSyncInventory} onChange={e => setForm({ ...form, autoSyncInventory: e.target.checked })} className="rounded border-gray-300" />
+                <input type="checkbox" checked={form.autoSyncInventory} onChange={e => setForm({ ...form, autoSyncInventory: e.target.checked })} className="rounded border-[var(--border-default)]" />
                 Auto-sync inventory
               </label>
             </div>
             <div className="flex items-center gap-3">
-              <label className="text-sm text-gray-700">Sync interval (minutes):</label>
+              <label className="text-sm text-[var(--text-secondary)]">Sync interval (minutes):</label>
               <Autocomplete value={String(form.syncIntervalMinutes)} onChange={v => setForm({ ...form, syncIntervalMinutes: parseInt(v) || 15 })} className="input w-20 text-sm" minChars={0} />
             </div>
 
             {config?.lastOrderSyncAt && (
-              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-500 space-y-1">
+              <div className="bg-[var(--surface-sunken)] rounded-lg p-3 text-xs text-[var(--text-secondary)] space-y-1">
                 <p>Last order sync: {new Date(config.lastOrderSyncAt).toLocaleString()}</p>
                 <p>Last product sync: {config.lastProductSyncAt ? new Date(config.lastProductSyncAt).toLocaleString() : 'Never'}</p>
                 <p>Last inventory sync: {config.lastInventorySyncAt ? new Date(config.lastInventorySyncAt).toLocaleString() : 'Never'}</p>
@@ -220,8 +220,8 @@ export default function BigCommercePage() {
               <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mb-3`}>
                 <div className="text-white">{action.icon}</div>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">{action.label}</h3>
-              <p className="text-xs text-gray-500 mt-1 mb-4">{action.description}</p>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)]">{action.label}</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-1 mb-4">{action.description}</p>
               <PermissionGate resource="integrations" action="create">
                 <button onClick={() => handleSync(action.id)} disabled={syncing === action.id}
                   className="btn-primary text-xs w-full">
@@ -237,40 +237,40 @@ export default function BigCommercePage() {
       {activeTab === 'logs' && (
         <div className="card">
           <div className="card-header flex justify-between items-center">
-            <h3 className="text-sm font-semibold text-gray-900">Sync History</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">Sync History</h3>
             <button onClick={fetchLogs} className="btn-ghost p-1"><RefreshCw className="w-4 h-4" /></button>
           </div>
           {logsLoading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600" />
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--nexus-primary-600)]" />
             </div>
           ) : syncLogs.length === 0 ? (
             <div className="p-6 text-center">
-              <Activity className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No sync logs yet. Run a sync to see results.</p>
+              <Activity className="w-10 h-10 text-[var(--text-tertiary)] mx-auto mb-2" />
+              <p className="text-sm text-[var(--text-secondary)]">No sync logs yet. Run a sync to see results.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Processed</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Succeeded</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Failed</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Started</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Processed</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Succeeded</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Failed</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Started</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {syncLogs.map(log => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-sm font-medium text-gray-900">{log.syncType.replace(/_/g, ' ')}</td>
+                    <tr key={log.id} className="hover:bg-[var(--surface-sunken)]">
+                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{log.syncType.replace(/_/g, ' ')}</td>
                       <td className="px-6 py-3"><StatusBadge status={log.status} size="sm" /></td>
-                      <td className="px-6 py-3 text-sm text-gray-700 text-right">{log.itemsProcessed}</td>
-                      <td className="px-6 py-3 text-sm text-green-600 text-right">{log.itemsSucceeded}</td>
-                      <td className="px-6 py-3 text-sm text-red-600 text-right">{log.itemsFailed}</td>
-                      <td className="px-6 py-3 text-sm text-gray-400 text-right">{new Date(log.startedAt).toLocaleString()}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{log.itemsProcessed}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--nexus-success-600)] text-right">{log.itemsSucceeded}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--nexus-error-600)] text-right">{log.itemsFailed}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] text-right">{new Date(log.startedAt).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>

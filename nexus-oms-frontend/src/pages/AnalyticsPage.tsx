@@ -126,14 +126,14 @@ export default function AnalyticsPage() {
         <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'Analytics' }]} />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
-            <p className="text-sm text-gray-500 mt-1">Performance metrics and insights</p>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Performance metrics and insights</p>
           </div>
         </div>
         <div className="card p-12 text-center">
-          <AlertTriangle className="w-14 h-14 mx-auto text-red-500 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load analytics</h2>
-          <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">{error}. Check your connection and try again.</p>
+          <AlertTriangle className="w-14 h-14 mx-auto text-[var(--nexus-error-500)] mb-4" />
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Failed to load analytics</h2>
+          <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-md mx-auto">{error}. Check your connection and try again.</p>
           <button onClick={fetchData} className="btn-primary inline-flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
             Retry
@@ -149,8 +149,8 @@ export default function AnalyticsPage() {
         <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'Analytics' }]} />
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
-            <p className="text-sm text-gray-500 mt-1">Performance metrics and insights</p>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Performance metrics and insights</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -194,12 +194,12 @@ export default function AnalyticsPage() {
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
-          <p className="text-sm text-gray-500 mt-1">Performance metrics and insights</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Performance metrics and insights</p>
         </div>
         <div className="flex items-center gap-3">
           {lastUpdated && (
-            <span className="text-xs text-gray-400 flex items-center gap-1">
+            <span className="text-xs text-[var(--text-tertiary)] flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
               Last updated: {lastUpdated}
             </span>
@@ -251,34 +251,34 @@ export default function AnalyticsPage() {
 
       {/* Carrier Scorecard */}
       <div className="card">
-        <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">Carrier Scorecard</h3></div>
+        <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Carrier Scorecard</h3></div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50/50">
-                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Carrier</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Shipments</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">OTD %</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Damage Rate</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Avg Cost/Shipment</th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Score</th>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Carrier</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Shipments</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">OTD %</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Damage Rate</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Avg Cost/Shipment</th>
+                <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Score</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {carrierData.map((c) => (
-                <tr key={c.carrier} className="hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm font-medium text-gray-900">{c.carrier}</td>
-                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{c.shipments.toLocaleString()}</td>
+                <tr key={c.carrier} className="hover:bg-[var(--surface-sunken)]">
+                  <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{c.carrier}</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{c.shipments.toLocaleString()}</td>
                   <td className="px-6 py-3 text-sm text-right">
                     <span className="flex items-center justify-end gap-1">
-                      {c.otdRate >= 95 ? <TrendingUp className="w-3.5 h-3.5 text-green-500" /> : <TrendingDown className="w-3.5 h-3.5 text-red-500" />}
+                      {c.otdRate >= 95 ? <TrendingUp className="w-3.5 h-3.5 text-[var(--nexus-success-500)]" /> : <TrendingDown className="w-3.5 h-3.5 text-[var(--nexus-error-500)]" />}
                       {c.otdRate}%
                     </span>
                   </td>
-                  <td className="px-6 py-3 text-sm text-gray-700 text-right">{c.damageRate}%</td>
-                  <td className="px-6 py-3 text-sm text-gray-700 text-right">${c.avgCost.toFixed(2)}</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{c.damageRate}%</td>
+                  <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">${c.avgCost.toFixed(2)}</td>
                   <td className="px-6 py-3 text-right">
-                    <span className={`badge ${c.otdRate >= 95 ? 'bg-green-50 text-green-700' : c.otdRate >= 92 ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'}`}>
+                    <span className={`badge ${c.otdRate >= 95 ? 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)]' : c.otdRate >= 92 ? 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)]' : 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]'}`}>
                       {c.otdRate >= 95 ? 'Excellent' : c.otdRate >= 92 ? 'Average' : 'Poor'}
                     </span>
                   </td>
@@ -292,7 +292,7 @@ export default function AnalyticsPage() {
       {/* Charts Row 1: Cost Breakdown + Lane Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">Cost Breakdown</h3></div>
+          <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Cost Breakdown</h3></div>
           <div className="card-body">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -308,7 +308,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
         <div className="card">
-          <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">Lane Analysis</h3></div>
+          <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Lane Analysis</h3></div>
           <div className="card-body">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
@@ -331,7 +331,7 @@ export default function AnalyticsPage() {
       {/* Charts Row 2: Returns Analytics + Cost Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="card">
-          <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">Returns Analytics</h3></div>
+          <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Returns Analytics</h3></div>
           <div className="card-body">
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -347,7 +347,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
         <div className="card">
-          <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">Cost Distribution</h3></div>
+          <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Cost Distribution</h3></div>
           <div className="card-body">
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">

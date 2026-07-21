@@ -51,11 +51,11 @@ export default function PackerScreen() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <PackagePlus className="w-7 h-7 text-emerald-500" />
             Packing Station
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Scan, pack, and label orders for shipment</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Scan, pack, and label orders for shipment</p>
         </div>
         <button onClick={() => navigate('/packing')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
           <Box className="w-4 h-4" /> Full Packing View
@@ -80,7 +80,7 @@ export default function PackerScreen() {
               onChange={setScanInput}
               placeholder="Scan or enter order / package ID..."
               minChars={0}
-              inputClassName="w-full pl-10 pr-4 py-3 text-sm border-2 border-emerald-200 dark:border-emerald-800 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              inputClassName="w-full pl-10 pr-4 py-3 text-sm border-2 border-emerald-200 dark:border-emerald-800 rounded-xl bg-[var(--surface-base)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             />
             <QrCode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
           </div>
@@ -93,24 +93,24 @@ export default function PackerScreen() {
       <div className="grid grid-cols-2 gap-6">
         {/* Pending Queue */}
         <div className="enterprise-card p-5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Package className="w-4 h-4 text-amber-500" /> Packing Queue
-            <span className="ml-auto text-xs text-gray-400">{pendingPacks.length} items</span>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Package className="w-4 h-4 text-[var(--nexus-warning-500)]" /> Packing Queue
+            <span className="ml-auto text-xs text-[var(--text-tertiary)]">{pendingPacks.length} items</span>
           </h3>
           {pendingPacks.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <CheckCircle className="w-10 h-10 mx-auto mb-2 text-green-300" />
+            <div className="text-center py-8 text-[var(--text-tertiary)]">
+              <CheckCircle className="w-10 h-10 mx-auto mb-2 text-[var(--nexus-success-300)]" />
               <p className="text-sm">All caught up!</p>
             </div>
           ) : (
             <div className="space-y-2">
               {pendingPacks.slice(0, 8).map((pkg: any, i: number) => (
-                <div key={pkg.id || i} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <div key={pkg.id || i} className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] transition-colors">
                   <div className="flex items-center gap-3">
-                    <Package className="w-4 h-4 text-gray-400" />
+                    <Package className="w-4 h-4 text-[var(--text-tertiary)]" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Package #{pkg.id?.slice(0, 8) || `PKG-${i + 1}`}</p>
-                      <p className="text-xs text-gray-500">{pkg.orderNumber || `ORD-${i + 1}`}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)]">Package #{pkg.id?.slice(0, 8) || `PKG-${i + 1}`}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{pkg.orderNumber || `ORD-${i + 1}`}</p>
                     </div>
                   </div>
                   <button onClick={() => startPacking.mutate(pkg.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700">
@@ -124,28 +124,28 @@ export default function PackerScreen() {
 
         {/* In Progress */}
         <div className="enterprise-card p-5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-            <Box className="w-4 h-4 text-blue-500" /> In Progress
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+            <Box className="w-4 h-4 text-[var(--nexus-primary-500)]" /> In Progress
           </h3>
           {inProgress.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <PackagePlus className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+            <div className="text-center py-8 text-[var(--text-tertiary)]">
+              <PackagePlus className="w-10 h-10 mx-auto mb-2 text-[var(--text-tertiary)]" />
               <p className="text-sm">No active packing</p>
             </div>
           ) : (
             <div className="space-y-2">
               {inProgress.map((pkg: any, i: number) => (
-                <div key={pkg.id || i} className="flex items-center justify-between p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800">
+                <div key={pkg.id || i} className="flex items-center justify-between p-3 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10 border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
                   <div className="flex items-center gap-3">
-                    <Box className="w-4 h-4 text-blue-500" />
+                    <Box className="w-4 h-4 text-[var(--nexus-primary-500)]" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Package #{pkg.id?.slice(0, 8)}</p>
-                      <p className="text-xs text-gray-500">3 items · Box size: M</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)]">Package #{pkg.id?.slice(0, 8)}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">3 items · Box size: M</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button className="enterprise-btn-secondary text-xs px-2 py-1"><Printer className="w-3 h-3" /></button>
-                    <button onClick={() => completePacking.mutate(pkg.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700">
+                    <button onClick={() => completePacking.mutate(pkg.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
                       <CheckCircle className="w-3 h-3" /> Complete
                     </button>
                   </div>

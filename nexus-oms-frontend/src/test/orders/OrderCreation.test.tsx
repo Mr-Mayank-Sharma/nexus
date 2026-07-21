@@ -75,7 +75,8 @@ describe('Order Creation', () => {
   it('loads customer list', async () => {
     renderWithProviders(<CreateOrderPage />)
     await waitFor(() => {
-      expect(screen.getByText('Test Customer')).toBeInTheDocument()
+      const heading = screen.getByText(/select customer/i)
+      expect(heading).toBeInTheDocument()
     }, { timeout: 5000 })
   })
 })

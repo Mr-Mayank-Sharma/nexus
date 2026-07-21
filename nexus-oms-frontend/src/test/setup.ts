@@ -43,23 +43,29 @@ Object.defineProperty(window, 'ResizeObserver', {
 // Mock scrollTo
 window.scrollTo = vi.fn()
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-Object.defineProperty(window, 'localStorage', { value: localStorageMock })
+const realStore: Record<string, string> = {}
+Object.defineProperty(window, 'localStorage', {
+  value: {
+    getItem: (key: string) => realStore[key] ?? null,
+    setItem: (key: string, val: string) => { realStore[key] = String(val) },
+    removeItem: (key: string) => { delete realStore[key] },
+    clear: () => { Object.keys(realStore).forEach(k => delete realStore[k]) },
+    get length() { return Object.keys(realStore).length },
+    key: (i: number) => Object.keys(realStore)[i] ?? null,
+  },
+})
 
-// Mock sessionStorage
-const sessionStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-Object.defineProperty(window, 'sessionStorage', { value: sessionStorageMock })
+const sessionStore: Record<string, string> = {}
+Object.defineProperty(window, 'sessionStorage', {
+  value: {
+    getItem: (key: string) => sessionStore[key] ?? null,
+    setItem: (key: string, val: string) => { sessionStore[key] = String(val) },
+    removeItem: (key: string) => { delete sessionStore[key] },
+    clear: () => { Object.keys(sessionStore).forEach(k => delete sessionStore[k]) },
+    get length() { return Object.keys(sessionStore).length },
+    key: (i: number) => Object.keys(sessionStore)[i] ?? null,
+  },
+})
 
 // Mock fetch
 global.fetch = vi.fn().mockResolvedValue({

@@ -6,10 +6,10 @@ import * as documentsApi from '../api/documents'
 import PermissionGate from '../components/rbac/PermissionGate'
 
 const typeColors: Record<string, string> = {
-  INVOICE: 'bg-blue-100 text-blue-700',
-  CONTRACT: 'bg-green-100 text-green-700',
-  REPORT: 'bg-purple-100 text-purple-700',
-  OTHER: 'bg-gray-100 text-gray-700',
+  INVOICE: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
+  CONTRACT: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]',
+  REPORT: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)]',
+  OTHER: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
 }
 
 const entityTypes = ['ORDER', 'CUSTOMER', 'SUPPLIER', 'PRODUCT', 'INVOICE']
@@ -154,8 +154,8 @@ export default function DocumentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><FileText className="w-6 h-6" />Documents</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage documents and files across entities</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><FileText className="w-6 h-6" />Documents</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Manage documents and files across entities</p>
         </div>
         <PermissionGate resource="settings" action="create">
           <button onClick={openUpload} className="btn-primary text-sm">
@@ -166,7 +166,7 @@ export default function DocumentsPage() {
 
       <div className="flex items-center gap-3 flex-wrap">
         <Autocomplete value={search} onChange={setSearch} placeholder="Search by title..." minChars={0} className="flex-1 max-w-xs" />
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-6 bg-[var(--surface-muted)]" />
         <select value={entityType} onChange={e => setEntityType(e.target.value)} className="input w-40">
           <option value="">Entity Type</option>
           {entityTypes.map(et => <option key={et} value={et}>{et}</option>)}
@@ -181,7 +181,7 @@ export default function DocumentsPage() {
           <Search className="w-4 h-4" /> Filter
         </button>
         {(entityType || search) && (
-          <button onClick={() => { setEntityType(''); setEntityId(''); setSearch(''); fetchDocs() }} className="btn-ghost text-sm text-gray-500">
+          <button onClick={() => { setEntityType(''); setEntityId(''); setSearch(''); fetchDocs() }} className="btn-ghost text-sm text-[var(--text-secondary)]">
             <X className="w-4 h-4" /> Clear
           </button>
         )}
@@ -189,50 +189,50 @@ export default function DocumentsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 card">
-          <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-gray-500 text-sm">No documents found. Upload your first document.</p>
+          <FileText className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
+          <p className="text-[var(--text-secondary)] text-sm">No documents found. Upload your first document.</p>
         </div>
       ) : (
         <div className="card overflow-hidden">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Doc #</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">File Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Size</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Version</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Entity</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50">
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Doc #</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Title</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">File Name</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Size</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Version</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Entity</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.map(doc => (
                 <Fragment key={doc.id}>
                   <tr
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-[var(--surface-sunken)] cursor-pointer transition-colors"
                     onClick={() => toggleExpand(doc.id)}
                   >
-                    <td className="px-4 py-3 text-sm text-gray-700 font-mono">{doc.id.slice(0, 8)}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{doc.name}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] font-mono">{doc.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{doc.name}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${typeColors[doc.type] || typeColors.OTHER}`}>
                         {doc.type}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{doc.category}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[160px] truncate">{doc.name}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{formatSize(doc.size)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">v{doc.currentVersion}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{doc.entityType}</span>
-                      <span className="text-gray-400 mx-1">/</span>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{doc.category}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] max-w-[160px] truncate">{doc.name}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{formatSize(doc.size)}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">v{doc.currentVersion}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">
+                      <span className="text-xs bg-[var(--surface-muted)] px-1.5 py-0.5 rounded">{doc.entityType}</span>
+                      <span className="text-[var(--text-tertiary)] mx-1">/</span>
                       <span className="font-mono text-xs">{doc.entityId?.slice(0, 8)}</span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -240,7 +240,7 @@ export default function DocumentsPage() {
                         <PermissionGate resource="settings" action="edit">
                           <button
                             onClick={e => { e.stopPropagation(); openVersionUpload(doc.id) }}
-                            className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
+                            className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]"
                             title="Upload new version"
                           >
                             <Upload className="w-4 h-4" />
@@ -249,7 +249,7 @@ export default function DocumentsPage() {
                         <PermissionGate resource="settings" action="delete">
                           <button
                             onClick={e => { e.stopPropagation(); handleDelete(doc.id) }}
-                            className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600"
+                            className="p-1.5 hover:bg-[var(--nexus-error-50)] rounded text-[var(--text-secondary)] hover:text-[var(--nexus-error-600)]"
                             title="Delete"
                           >
                             <X className="w-4 h-4" />
@@ -260,10 +260,10 @@ export default function DocumentsPage() {
                   </tr>
                   {expandedId === doc.id && (
                     <tr key={`${doc.id}-versions`}>
-                      <td colSpan={9} className="px-4 py-3 bg-gray-50/50">
-                        <div className="pl-4 border-l-2 border-primary-200">
+                      <td colSpan={9} className="px-4 py-3 bg-[var(--surface-sunken)]/50">
+                        <div className="pl-4 border-l-2 border-[var(--nexus-primary-200)]">
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
+                            <h4 className="text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
                               <Clock className="w-4 h-4" /> Document Versions
                             </h4>
                             <PermissionGate resource="settings" action="edit">
@@ -277,31 +277,31 @@ export default function DocumentsPage() {
                           </div>
                           {versionsLoading ? (
                             <div className="flex items-center justify-center py-4">
-                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-600" />
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--nexus-primary-600)]" />
                             </div>
                           ) : versions.length === 0 ? (
-                            <p className="text-xs text-gray-500 py-2">No versions yet</p>
+                            <p className="text-xs text-[var(--text-secondary)] py-2">No versions yet</p>
                           ) : (
                             <table className="w-full text-xs">
                               <thead>
-                                <tr className="border-b border-gray-200">
-                                  <th className="px-3 py-2 text-left font-semibold text-gray-500">Version</th>
-                                  <th className="px-3 py-2 text-left font-semibold text-gray-500">File Name</th>
-                                  <th className="px-3 py-2 text-left font-semibold text-gray-500">Size</th>
-                                  <th className="px-3 py-2 text-left font-semibold text-gray-500">Upload Date</th>
-                                  <th className="px-3 py-2 text-left font-semibold text-gray-500">Change Notes</th>
-                                  <th className="px-3 py-2 text-left font-semibold text-gray-500">Uploaded By</th>
+                                <tr className="border-b border-[var(--border-default)]">
+                                  <th className="px-3 py-2 text-left font-semibold text-[var(--text-secondary)]">Version</th>
+                                  <th className="px-3 py-2 text-left font-semibold text-[var(--text-secondary)]">File Name</th>
+                                  <th className="px-3 py-2 text-left font-semibold text-[var(--text-secondary)]">Size</th>
+                                  <th className="px-3 py-2 text-left font-semibold text-[var(--text-secondary)]">Upload Date</th>
+                                  <th className="px-3 py-2 text-left font-semibold text-[var(--text-secondary)]">Change Notes</th>
+                                  <th className="px-3 py-2 text-left font-semibold text-[var(--text-secondary)]">Uploaded By</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-100">
                                 {versions.map(v => (
-                                  <tr key={v.id} className="hover:bg-gray-50">
-                                    <td className="px-3 py-2 text-gray-700 font-mono">v{v.version}</td>
-                                    <td className="px-3 py-2 text-gray-700">{v.url?.split('/').pop() || '-'}</td>
-                                    <td className="px-3 py-2 text-gray-700">{formatSize(v.size)}</td>
-                                    <td className="px-3 py-2 text-gray-700">{new Date(v.createdAt).toLocaleDateString()}</td>
-                                    <td className="px-3 py-2 text-gray-700 max-w-[200px] truncate">{v.notes || '-'}</td>
-                                    <td className="px-3 py-2 text-gray-700">{v.uploadedBy?.slice(0, 8) || '-'}</td>
+                                  <tr key={v.id} className="hover:bg-[var(--surface-sunken)]">
+                                    <td className="px-3 py-2 text-[var(--text-secondary)] font-mono">v{v.version}</td>
+                                    <td className="px-3 py-2 text-[var(--text-secondary)]">{v.url?.split('/').pop() || '-'}</td>
+                                    <td className="px-3 py-2 text-[var(--text-secondary)]">{formatSize(v.size)}</td>
+                                    <td className="px-3 py-2 text-[var(--text-secondary)]">{new Date(v.createdAt).toLocaleDateString()}</td>
+                                    <td className="px-3 py-2 text-[var(--text-secondary)] max-w-[200px] truncate">{v.notes || '-'}</td>
+                                    <td className="px-3 py-2 text-[var(--text-secondary)]">{v.uploadedBy?.slice(0, 8) || '-'}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -319,23 +319,23 @@ export default function DocumentsPage() {
       )}
 
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Upload Document</h2>
-              <button onClick={() => setShowUploadModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Upload Document</h2>
+              <button onClick={() => setShowUploadModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Title *</label>
                 <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="input w-full" placeholder="Document title" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
                 <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="input w-full" rows={2} placeholder="Document description" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Document Type</label>
                 <select value={form.documentType} onChange={e => setForm({ ...form, documentType: e.target.value })} className="input w-full">
                   <option value="INVOICE">Invoice</option>
                   <option value="CONTRACT">Contract</option>
@@ -344,48 +344,48 @@ export default function DocumentsPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Category</label>
                 <input value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="input w-full" placeholder="e.g. Financial, Legal" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">File Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">File Name</label>
                   <input value={form.fileName} onChange={e => setForm({ ...form, fileName: e.target.value })} className="input w-full" placeholder="document.pdf" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">File Size (bytes)</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">File Size (bytes)</label>
                   <input type="number" value={form.fileSize} onChange={e => setForm({ ...form, fileSize: Number(e.target.value) })} className="input w-full" placeholder="0" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">MIME Type</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">MIME Type</label>
                 <input value={form.mimeType} onChange={e => setForm({ ...form, mimeType: e.target.value })} className="input w-full" placeholder="application/pdf" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File URL</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">File URL</label>
                 <input value={form.fileUrl} onChange={e => setForm({ ...form, fileUrl: e.target.value })} className="input w-full" placeholder="https://..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Entity Type</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Entity Type</label>
                   <select value={form.entityType} onChange={e => setForm({ ...form, entityType: e.target.value })} className="input w-full">
                     <option value="">Select</option>
                     {entityTypes.map(et => <option key={et} value={et}>{et}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Entity ID</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Entity ID</label>
                   <input value={form.entityId} onChange={e => setForm({ ...form, entityId: e.target.value })} className="input w-full" placeholder="Entity ID" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">
                   <Tag className="w-3.5 h-3.5 inline mr-1" /> Tags (comma-separated)
                 </label>
                 <input value={form.tags} onChange={e => setForm({ ...form, tags: e.target.value })} className="input w-full" placeholder="urgent, confidential" />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowUploadModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleUpload} disabled={saving} className="btn-primary text-sm">
                 {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Upload className="w-4 h-4" />}
@@ -397,31 +397,31 @@ export default function DocumentsPage() {
       )}
 
       {showVersionModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Upload New Version</h2>
-              <button onClick={() => setShowVersionModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Upload New Version</h2>
+              <button onClick={() => setShowVersionModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File Name</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">File Name</label>
                 <input value={versionForm.fileName} onChange={e => setVersionForm({ ...versionForm, fileName: e.target.value })} className="input w-full" placeholder="v2-document.pdf" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File Size (bytes)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">File Size (bytes)</label>
                 <input type="number" value={versionForm.fileSize} onChange={e => setVersionForm({ ...versionForm, fileSize: Number(e.target.value) })} className="input w-full" placeholder="0" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File URL</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">File URL</label>
                 <input value={versionForm.fileUrl} onChange={e => setVersionForm({ ...versionForm, fileUrl: e.target.value })} className="input w-full" placeholder="https://..." />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Change Notes</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Change Notes</label>
                 <textarea value={versionForm.changeNotes} onChange={e => setVersionForm({ ...versionForm, changeNotes: e.target.value })} className="input w-full" rows={2} placeholder="What changed in this version?" />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowVersionModal(false)} className="btn-secondary text-sm">Cancel</button>
               <button onClick={handleVersionUpload} disabled={saving} className="btn-primary text-sm">
                 {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Upload className="w-4 h-4" />}

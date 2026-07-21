@@ -12,10 +12,10 @@ import PermissionGate from '../components/rbac/PermissionGate'
 
 const PLATFORMS = [
   { value: 'SHOPIFY', label: 'Shopify', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-emerald-500' },
-  { value: 'BIGCOMMERCE', label: 'BigCommerce', icon: <Store className="w-5 h-5" />, color: 'bg-blue-500' },
+  { value: 'BIGCOMMERCE', label: 'BigCommerce', icon: <Store className="w-5 h-5" />, color: 'bg-[var(--nexus-primary-50)]0' },
   { value: 'AMAZON', label: 'Amazon', icon: <Globe className="w-5 h-5" />, color: 'bg-orange-500' },
-  { value: 'WOOCOMMERCE', label: 'WooCommerce', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-purple-500' },
-  { value: 'MANUAL', label: 'Manual', icon: <Store className="w-5 h-5" />, color: 'bg-gray-500' },
+  { value: 'WOOCOMMERCE', label: 'WooCommerce', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-[var(--nexus-ai-50)]0' },
+  { value: 'MANUAL', label: 'Manual', icon: <Store className="w-5 h-5" />, color: 'bg-[var(--surface-muted)]' },
 ]
 
 const currencyOpts = [
@@ -187,8 +187,8 @@ export default function IntegrationStoresPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Store className="w-7 h-7 text-primary-500" /> Sales Channels</h1>
-          <p className="text-sm text-gray-500 mt-1">OFBiz-style integration store management — connect Shopify, BigCommerce, and more</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Store className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Sales Channels</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">OFBiz-style integration store management — connect Shopify, BigCommerce, and more</p>
         </div>
         <PermissionGate resource="integrations" action="create">
           <button onClick={openCreate} className="btn-primary text-sm">
@@ -199,12 +199,12 @@ export default function IntegrationStoresPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
         </div>
       ) : stores.length === 0 ? (
         <div className="text-center py-16 card">
-          <Store className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No connected stores. Add your first sales channel to begin syncing.</p>
+          <Store className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
+          <p className="text-[var(--text-secondary)] text-sm">No connected stores. Add your first sales channel to begin syncing.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -214,16 +214,16 @@ export default function IntegrationStoresPage() {
               return (
                 <button key={st.id} onClick={() => openStore(st)}
                   className={`w-full text-left card p-4 flex items-center gap-3 transition-all ${
-                    selectedStore?.id === st.id ? 'ring-2 ring-primary-500' : ''
+                    selectedStore?.id === st.id ? 'ring-2 ring-[var(--nexus-primary-500)]' : ''
                   }`}>
                   <div className={`w-10 h-10 ${pf.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
                     <div className="text-white">{pf.icon}</div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{st.storeName}</p>
+                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{st.storeName}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-gray-500">{st.storeCode}</span>
-                      <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{st.platform}</span>
+                      <span className="text-xs text-[var(--text-secondary)]">{st.storeCode}</span>
+                      <span className="text-xs bg-[var(--surface-muted)] px-1.5 py-0.5 rounded text-[var(--text-secondary)]">{st.platform}</span>
                       <StatusBadge status={st.isActive ? 'ACTIVE' : 'INACTIVE'} size="sm" />
                     </div>
                   </div>
@@ -242,8 +242,8 @@ export default function IntegrationStoresPage() {
                         <div className="text-white w-4 h-4">{platformInfo(selectedStore.platform).icon}</div>
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-gray-900">{selectedStore.storeName}</h3>
-                        <p className="text-xs text-gray-500">{selectedStore.platform} · {selectedStore.storeCode}</p>
+                        <h3 className="text-sm font-semibold text-[var(--text-primary)]">{selectedStore.storeName}</h3>
+                        <p className="text-xs text-[var(--text-secondary)]">{selectedStore.platform} · {selectedStore.storeCode}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export default function IntegrationStoresPage() {
                           className="btn-ghost text-xs"><ExternalLink className="w-3 h-3" /></a>
                       )}
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleDelete(selectedStore.id)} className="btn-ghost text-xs text-red-500">
+                        <button onClick={() => handleDelete(selectedStore.id)} className="btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -261,21 +261,21 @@ export default function IntegrationStoresPage() {
 
                   {storeStatus && (
                     <div className="px-6 pb-4">
-                      <h4 className="text-xs font-semibold text-gray-500 uppercase mb-3">Sync Actions</h4>
+                      <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase mb-3">Sync Actions</h4>
                       <div className="grid grid-cols-2 gap-3">
                         {storeStatus.syncTypes.map(st => {
                           const def = SYNC_DEFS[st.syncType] || { label: st.syncType, description: '' }
                           return (
-                            <div key={st.syncType} className="border border-gray-200 rounded-lg p-3">
+                            <div key={st.syncType} className="border border-[var(--border-default)] rounded-lg p-3">
                               <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-medium text-gray-700">{def.label}</span>
-                                {st.lastSyncStatus === 'COMPLETED' ? <CheckCircle className="w-3.5 h-3.5 text-green-500" /> :
-                                 st.lastSyncStatus === 'FAILED' ? <XCircle className="w-3.5 h-3.5 text-red-500" /> :
-                                 <Clock className="w-3.5 h-3.5 text-gray-400" />}
+                                <span className="text-xs font-medium text-[var(--text-secondary)]">{def.label}</span>
+                                {st.lastSyncStatus === 'COMPLETED' ? <CheckCircle className="w-3.5 h-3.5 text-[var(--nexus-success-500)]" /> :
+                                 st.lastSyncStatus === 'FAILED' ? <XCircle className="w-3.5 h-3.5 text-[var(--nexus-error-500)]" /> :
+                                 <Clock className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />}
                               </div>
-                              <p className="text-xs text-gray-400 mb-2">{def.description}</p>
+                              <p className="text-xs text-[var(--text-tertiary)] mb-2">{def.description}</p>
                               {st.lastSyncAt && (
-                                <p className="text-xs text-gray-400 mb-2">Last: {new Date(st.lastSyncAt).toLocaleString()}</p>
+                                <p className="text-xs text-[var(--text-tertiary)] mb-2">Last: {new Date(st.lastSyncAt).toLocaleString()}</p>
                               )}
                                <PermissionGate resource="integrations" action="edit">
                                  <button onClick={() => handleSync(st.syncType)} disabled={syncing === st.syncType}
@@ -301,22 +301,22 @@ export default function IntegrationStoresPage() {
                 </div>
 
                 <div className="card">
-                  <div className="card-header"><h3 className="text-sm font-semibold text-gray-900">Connection Settings</h3></div>
+                  <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Connection Settings</h3></div>
                   <div className="card-body space-y-3">
                     {settingFields(selectedStore.platform).map(field => (
                       <div key={field.key}>
-                        <label className="block text-xs font-medium text-gray-600 mb-1">{field.label}</label>
+                        <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{field.label}</label>
                         <Autocomplete className="input w-full text-sm font-mono"
                           value={storeStatus?.settings?.[field.key] || ''} onChange={() => {}} disabled minChars={0} />
                       </div>
                     ))}
-                    <p className="text-xs text-gray-400 mt-2">Manage credentials via the store's configuration in control panel.</p>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-2">Manage credentials via the store's configuration in control panel.</p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="card p-12 text-center text-gray-400">
-                <Store className="w-16 h-16 mx-auto mb-4 text-gray-200" />
+              <div className="card p-12 text-center text-[var(--text-tertiary)]">
+                <Store className="w-16 h-16 mx-auto mb-4 text-[var(--text-tertiary)]" />
                 <p className="text-sm">Select a store to view sync status and actions</p>
               </div>
             )}
@@ -325,33 +325,33 @@ export default function IntegrationStoresPage() {
       )}
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">New Sales Channel</h2>
-              <button onClick={() => setShowCreate(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Sales Channel</h2>
+              <button onClick={() => setShowCreate(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Platform</label>
                 <Autocomplete value={form.platform} onChange={v => setForm({ ...form, platform: v, settings: {} })} suggestions={PLATFORMS} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Store Code</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Store Code</label>
                   <Autocomplete value={form.storeCode} onChange={v => setForm({ ...form, storeCode: v })} className="input w-full font-mono" placeholder="shopify-us" minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Store Name</label>
                   <Autocomplete value={form.storeName} onChange={v => setForm({ ...form, storeName: v })} className="input w-full" placeholder="US Shopify Store" minChars={0} />
                 </div>
               </div>
 
-              <div className="border-t border-gray-100 pt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">API Credentials</h4>
+              <div className="border-t border-[var(--border-subtle)] pt-4">
+                <h4 className="text-sm font-medium text-[var(--text-secondary)] mb-3">API Credentials</h4>
                 {settingFields(form.platform).map(field => (
                   <div key={field.key} className="mb-3">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">{field.label}</label>
+                    <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">{field.label}</label>
                     <Autocomplete value={form.settings[field.key] || ''}
                       onChange={v => setForm({ ...form, settings: { ...form.settings, [field.key]: v } })}
                       className="input w-full font-mono text-sm" minChars={0} />
@@ -361,31 +361,31 @@ export default function IntegrationStoresPage() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Currency</label>
                   <Autocomplete value={form.currency} onChange={v => setForm({ ...form, currency: v })} suggestions={currencyOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Locale</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Locale</label>
                   <Autocomplete value={form.defaultLocale} onChange={v => setForm({ ...form, defaultLocale: v })} suggestions={localeOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Timezone</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Timezone</label>
                   <Autocomplete value={form.timezone} onChange={v => setForm({ ...form, timezone: v })} suggestions={timezoneOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">External Store ID</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">External Store ID</label>
                   <Autocomplete value={form.externalStoreId} onChange={v => setForm({ ...form, externalStoreId: v })} className="input w-full font-mono" placeholder="Shopify location ID" minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">External Domain</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">External Domain</label>
                   <Autocomplete value={form.externalDomain} onChange={v => setForm({ ...form, externalDomain: v })} className="input w-full font-mono" placeholder="mystore.myshopify.com" minChars={0} />
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="integrations" action="create">
                 <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">

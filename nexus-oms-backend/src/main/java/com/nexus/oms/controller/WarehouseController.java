@@ -160,4 +160,10 @@ public class WarehouseController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getWarehouseSummary(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(warehouseService.getWarehouseSummary(id)));
     }
+
+    @Operation(summary = "Get all warehouses summary for dashboard")
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllWarehousesSummary() {
+        return ResponseEntity.ok(ApiResponse.success(warehouseService.getAllWarehousesSummary()));
+    }
 }

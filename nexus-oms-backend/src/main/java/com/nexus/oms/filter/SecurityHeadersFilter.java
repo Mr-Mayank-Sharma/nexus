@@ -18,9 +18,11 @@ public class SecurityHeadersFilter implements Filter {
         res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("X-Frame-Options", "DENY");
         res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-        res.setHeader("X-XSS-Protection", "1; mode=block");
+        // X-XSS-Protection removed — deprecated in modern browsers; CSP is the correct mitigation
         res.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
         res.setHeader("Pragma", "no-cache");
+        res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+        res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
         chain.doFilter(request, response);
     }
 }

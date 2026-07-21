@@ -80,23 +80,23 @@ const VELOCITY_CLASS_BADGE: Record<string, string> = {
 
 const VELOCITY_BG: Record<string, string> = {
   A: 'bg-emerald-50 dark:bg-emerald-900/20',
-  B: 'bg-blue-50 dark:bg-blue-900/20',
-  C: 'bg-amber-50 dark:bg-amber-900/20',
-  D: 'bg-red-50 dark:bg-red-900/20',
+  B: 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
+  C: 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20',
+  D: 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20',
 }
 
 const VELOCITY_TEXT: Record<string, string> = {
   A: 'text-emerald-700 dark:text-emerald-300',
-  B: 'text-blue-700 dark:text-blue-300',
-  C: 'text-amber-700 dark:text-amber-300',
-  D: 'text-red-700 dark:text-red-300',
+  B: 'text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]',
+  C: 'text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)]',
+  D: 'text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-300)]',
 }
 
 const VELOCITY_BAR: Record<string, string> = {
   A: 'bg-emerald-500',
-  B: 'bg-blue-500',
-  C: 'bg-amber-500',
-  D: 'bg-red-500',
+  B: 'bg-[var(--nexus-primary-50)]0',
+  C: 'bg-[var(--nexus-warning-50)]0',
+  D: 'bg-[var(--nexus-error-50)]0',
 }
 
 const WAREHOUSES = [
@@ -108,10 +108,10 @@ const WAREHOUSES = [
 const RULE_TYPES = ['Velocity-Based', 'Size-Based', 'Weight-Based', 'Affinity', 'Seasonal', 'Hazardous']
 
 function ScoreBar({ score }: { score: number }) {
-  const barColor = score > 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-amber-500' : 'bg-red-500'
+  const barColor = score > 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0'
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+      <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all duration-500', barColor)} style={{ width: `${Math.min(100, Math.max(0, score))}%` }} />
       </div>
       <span className="text-xs font-medium text-[var(--text-secondary)] w-8 text-right">{score}</span>
@@ -123,7 +123,7 @@ function SkeletonRows({ count = 5 }: { count?: number }) {
   return (
     <div className="space-y-3">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <div key={i} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-4">
           <div className="enterprise-skeleton h-4 w-3/4 mb-2" />
           <div className="enterprise-skeleton h-3 w-1/2" />
         </div>
@@ -387,7 +387,7 @@ export default function SlottingOptimizationPage() {
               <Icon className="w-4 h-4" />
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">{tab.count}</span>
+                <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold bg-[var(--surface-muted)] text-[var(--text-secondary)] rounded-full">{tab.count}</span>
               )}
             </button>
           )
@@ -401,7 +401,7 @@ export default function SlottingOptimizationPage() {
             <SkeletonRows count={8} />
           ) : filteredAssignments.length === 0 ? (
             <div className="enterprise-empty-state py-16">
-              <Package className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+              <Package className="w-12 h-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
               <h3>No assignments found</h3>
               <p>{search ? 'No assignments match your search criteria' : 'Run an optimization to generate slotting assignments'}</p>
             </div>
@@ -423,17 +423,17 @@ export default function SlottingOptimizationPage() {
                 </thead>
                 <tbody>
                   {filteredAssignments.map((a) => (
-                    <tr key={a.id} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" onClick={() => { setSelectedAssignment(a); setReassignBin(''); setReassignQty(1); setShowReassignModal(true) }}>
+                    <tr key={a.id} className="cursor-pointer hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors" onClick={() => { setSelectedAssignment(a); setReassignBin(''); setReassignQty(1); setShowReassignModal(true) }}>
                       <td><span className="font-medium text-[var(--text-primary)]">{a.sku}</span></td>
                       <td><span className="text-[var(--text-secondary)]">{a.productName}</span></td>
-                      <td><span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{a.currentBin}</span></td>
+                      <td><span className="font-mono text-xs bg-[var(--surface-muted)] px-2 py-1 rounded">{a.currentBin}</span></td>
                       <td><span className="enterprise-badge-neutral">{a.zone}</span></td>
                       <td><span className={VELOCITY_CLASS_BADGE[a.velocityClass]}>{a.velocityClass}</span></td>
                       <td><span className="text-[var(--text-primary)]">{a.pickFrequency.toLocaleString()}/day</span></td>
                       <td className="min-w-[140px]"><ScoreBar score={a.slottingScore} /></td>
                       <td><span className="text-xs text-[var(--text-tertiary)]">{a.lastPicked ? new Date(a.lastPicked).toLocaleDateString() : 'Never'}</span></td>
                       <td>
-                        <button onClick={(e) => { e.stopPropagation(); setSelectedAssignment(a); setReassignBin(''); setReassignQty(1); setShowReassignModal(true) }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors" title="Reassign">
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedAssignment(a); setReassignBin(''); setReassignQty(1); setShowReassignModal(true) }} className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors" title="Reassign">
                           <Edit2 className="w-4 h-4" />
                         </button>
                       </td>
@@ -453,7 +453,7 @@ export default function SlottingOptimizationPage() {
             <SkeletonRows count={4} />
           ) : velocityData.length === 0 ? (
             <div className="enterprise-empty-state py-16">
-              <BarChart3 className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+              <BarChart3 className="w-12 h-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
               <h3>No velocity data</h3>
               <p>Run an analysis to generate velocity class data</p>
             </div>
@@ -461,7 +461,7 @@ export default function SlottingOptimizationPage() {
             <>
               <div className="enterprise-card p-6">
                 <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Velocity Distribution</h3>
-                <div className="flex h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700">
+                <div className="flex h-8 rounded-lg overflow-hidden bg-[var(--surface-muted)]">
                   {velocityData.map((v) => (
                     <div key={v.class} className={clsx('flex items-center justify-center text-xs font-bold text-white transition-all duration-700', VELOCITY_BAR[v.class])} style={{ width: `${v.percentage}%` }} title={`Class ${v.class}: ${v.count} SKUs (${v.percentage}%)`}>
                       {v.percentage >= 10 && `${v.class} ${v.percentage}%`}
@@ -491,8 +491,8 @@ export default function SlottingOptimizationPage() {
                       <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Recommended Bin</span><span className="font-medium text-[var(--text-primary)]">{v.recommendedBinClass}</span></div>
                       <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Share</span><span className="font-medium text-[var(--text-primary)]">{v.percentage}%</span></div>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-600/50">
-                      <div className="h-2 rounded-full bg-gray-200/50 dark:bg-gray-700/50 overflow-hidden">
+                    <div className="mt-3 pt-3 border-t border-[var(--border-default)]/50 border-[var(--border-default)]/50">
+                      <div className="h-2 rounded-full bg-[var(--surface-muted)]/50 bg-[var(--surface-muted)]/50 overflow-hidden">
                         <div className={clsx('h-full rounded-full transition-all duration-700', VELOCITY_BAR[v.class])} style={{ width: `${v.percentage}%` }} />
                       </div>
                     </div>
@@ -519,7 +519,7 @@ export default function SlottingOptimizationPage() {
             <SkeletonRows count={5} />
           ) : filteredRules.length === 0 ? (
             <div className="enterprise-empty-state py-16">
-              <ShieldCheck className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+              <ShieldCheck className="w-12 h-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
               <h3>No rules configured</h3>
               <p>Add slotting rules to automate bin assignments</p>
             </div>
@@ -545,25 +545,25 @@ export default function SlottingOptimizationPage() {
                         <td><span className="font-medium text-[var(--text-primary)]">{rule.name}</span></td>
                         <td><span className="enterprise-badge-info">{rule.type}</span></td>
                         <td><span className="text-[var(--text-secondary)]">{rule.targetZone}</span></td>
-                        <td><span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{rule.targetBinClass || '—'}</span></td>
+                        <td><span className="font-mono text-xs bg-[var(--surface-muted)] px-2 py-1 rounded">{rule.targetBinClass || '—'}</span></td>
                         <td><span className="text-[var(--text-primary)] font-medium">{rule.priority}</span></td>
                         <td>
-                          <button onClick={() => handleToggleRule(rule)} className={clsx('relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2', rule.isActive ? 'bg-violet-600' : 'bg-gray-300 dark:bg-gray-600')}>
+                          <button onClick={() => handleToggleRule(rule)} className={clsx('relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2', rule.isActive ? 'bg-violet-600' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)]')}>
                             <span className={clsx('inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200', rule.isActive ? 'translate-x-6' : 'translate-x-1')} />
                           </button>
                         </td>
                         <td>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden max-w-[80px]">
-                              <div className={clsx('h-full rounded-full', rule.effectiveness > 80 ? 'bg-emerald-500' : rule.effectiveness > 60 ? 'bg-amber-500' : 'bg-red-500')} style={{ width: `${rule.effectiveness}%` }} />
+                            <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden max-w-[80px]">
+                              <div className={clsx('h-full rounded-full', rule.effectiveness > 80 ? 'bg-emerald-500' : rule.effectiveness > 60 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0')} style={{ width: `${rule.effectiveness}%` }} />
                             </div>
                             <span className="text-xs font-medium text-[var(--text-secondary)]">{rule.effectiveness}%</span>
                           </div>
                         </td>
                         <td>
                           <div className="flex items-center gap-1">
-                            <button className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                            <button className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-[var(--text-tertiary)] hover:text-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <button className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                            <button className="p-1.5 rounded-lg hover:bg-[var(--nexus-error-50)] dark:hover:bg-[var(--nexus-error-900)]/20 text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                           </div>
                         </td>
                       </tr>
@@ -583,7 +583,7 @@ export default function SlottingOptimizationPage() {
             <SkeletonRows count={4} />
           ) : !spaceData ? (
             <div className="enterprise-empty-state py-16">
-              <Archive className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+              <Archive className="w-12 h-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
               <h3>No space data available</h3>
               <p>Run an analysis to view space utilization</p>
             </div>
@@ -597,8 +597,8 @@ export default function SlottingOptimizationPage() {
                       <span className="text-sm text-[var(--text-secondary)]">{spaceData.usedBins.toLocaleString()} / {spaceData.totalBins.toLocaleString()} bins used</span>
                       <span className="text-2xl font-bold text-[var(--text-primary)]">{spaceData.overallUtilization}%</span>
                     </div>
-                    <div className="h-4 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                      <div className={clsx('h-full rounded-full transition-all duration-700', spaceData.overallUtilization > 90 ? 'bg-red-500' : spaceData.overallUtilization > 75 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${spaceData.overallUtilization}%` }} />
+                    <div className="h-4 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden">
+                      <div className={clsx('h-full rounded-full transition-all duration-700', spaceData.overallUtilization > 90 ? 'bg-[var(--nexus-error-50)]0' : spaceData.overallUtilization > 75 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-emerald-500')} style={{ width: `${spaceData.overallUtilization}%` }} />
                     </div>
                   </div>
                   <div className="flex-shrink-0 w-20 h-20 relative">
@@ -623,7 +623,7 @@ export default function SlottingOptimizationPage() {
                         </div>
                         <span className="text-sm font-semibold text-[var(--text-primary)]">Zone {zone.name}</span>
                       </div>
-                      <span className={clsx('text-lg font-bold', zone.utilization > 90 ? 'text-red-600 dark:text-red-400' : zone.utilization > 75 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')}>
+                      <span className={clsx('text-lg font-bold', zone.utilization > 90 ? 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]' : zone.utilization > 75 ? 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]' : 'text-emerald-600 dark:text-emerald-400')}>
                         {zone.utilization}%
                       </span>
                     </div>
@@ -632,9 +632,9 @@ export default function SlottingOptimizationPage() {
                       <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Total Bins</span><span className="font-medium text-[var(--text-primary)]">{zone.totalBins.toLocaleString()}</span></div>
                       <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Available</span><span className="font-medium text-[var(--text-primary)]">{(zone.totalBins - zone.usedBins).toLocaleString()}</span></div>
                     </div>
-                    <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                      <div className="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                        <div className={clsx('h-full rounded-full transition-all duration-700', zone.utilization > 90 ? 'bg-red-500' : zone.utilization > 75 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${zone.utilization}%` }} />
+                    <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
+                      <div className="h-2 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden">
+                        <div className={clsx('h-full rounded-full transition-all duration-700', zone.utilization > 90 ? 'bg-[var(--nexus-error-50)]0' : zone.utilization > 75 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-emerald-500')} style={{ width: `${zone.utilization}%` }} />
                       </div>
                     </div>
                   </div>
@@ -669,7 +669,7 @@ export default function SlottingOptimizationPage() {
             <SkeletonRows count={6} />
           ) : auditLog.length === 0 ? (
             <div className="enterprise-empty-state py-16">
-              <ClipboardList className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+              <ClipboardList className="w-12 h-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
               <h3>No audit entries</h3>
               <p>Slotting changes will appear here</p>
             </div>
@@ -695,7 +695,7 @@ export default function SlottingOptimizationPage() {
                         <td><span className="text-xs text-[var(--text-secondary)]">{new Date(entry.date).toLocaleString()}</span></td>
                         <td><span className="font-medium text-[var(--text-primary)]">{entry.sku}</span></td>
                         <td><span className="text-[var(--text-secondary)]">{entry.product}</span></td>
-                        <td><span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">{entry.fromBin}</span></td>
+                        <td><span className="font-mono text-xs bg-[var(--surface-muted)] px-2 py-1 rounded">{entry.fromBin}</span></td>
                         <td>
                           <div className="flex items-center gap-1.5">
                             <ArrowRight className="w-3.5 h-3.5 text-violet-500" />
@@ -719,12 +719,12 @@ export default function SlottingOptimizationPage() {
       {showReassignModal && selectedAssignment && (
         <div className="enterprise-modal-overlay" onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }}>
           <div className="enterprise-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-default)]">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Reassign SKU</h2>
                 <p className="text-sm text-[var(--text-secondary)] mt-0.5">{selectedAssignment.sku} — {selectedAssignment.productName}</p>
               </div>
-              <button onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <button onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }} className="p-2 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors">
                 <X className="w-5 h-5 text-[var(--text-tertiary)]" />
               </button>
             </div>
@@ -732,7 +732,7 @@ export default function SlottingOptimizationPage() {
               <div>
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Current Bin</label>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg text-[var(--text-primary)]">{selectedAssignment.currentBin}</span>
+                  <span className="font-mono text-sm bg-[var(--surface-muted)] px-3 py-2 rounded-lg text-[var(--text-primary)]">{selectedAssignment.currentBin}</span>
                   <ArrowRight className="w-4 h-4 text-[var(--text-tertiary)]" />
                   <span className="text-sm text-[var(--text-secondary)]">Zone {selectedAssignment.zone}</span>
                 </div>
@@ -748,10 +748,10 @@ export default function SlottingOptimizationPage() {
                 <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Quantity</label>
                 <input type="number" min={1} value={reassignQty} onChange={(e) => setReassignQty(Math.max(1, parseInt(e.target.value) || 1))} className="enterprise-input w-full" />
               </div>
-              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+              <div className="p-3 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
                 <div className="flex items-start gap-2">
-                  <Target className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <div className="text-sm text-blue-700 dark:text-blue-300">
+                  <Target className="w-4 h-4 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]">
                     <span className="font-medium">Current score: {selectedAssignment.slottingScore}</span>
                     <span className="mx-1.5">·</span>
                     <span>Velocity Class {selectedAssignment.velocityClass}</span>
@@ -761,7 +761,7 @@ export default function SlottingOptimizationPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-default)]">
               <button onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleReassign} disabled={!reassignBin || reassigning} className="enterprise-btn enterprise-btn-primary">
                 {reassigning ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoveVertical className="w-4 h-4" />}
@@ -776,12 +776,12 @@ export default function SlottingOptimizationPage() {
       {showAddRuleModal && (
         <div className="enterprise-modal-overlay" onClick={() => setShowAddRuleModal(false)}>
           <div className="enterprise-modal max-w-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-default)]">
               <div>
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Slotting Rule</h2>
                 <p className="text-sm text-[var(--text-secondary)] mt-0.5">Define rules for automatic bin assignments</p>
               </div>
-              <button onClick={() => setShowAddRuleModal(false)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <button onClick={() => setShowAddRuleModal(false)} className="p-2 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors">
                 <X className="w-5 h-5 text-[var(--text-tertiary)]" />
               </button>
             </div>
@@ -817,7 +817,7 @@ export default function SlottingOptimizationPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-default)]">
               <button onClick={() => setShowAddRuleModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <button onClick={handleAddRule} disabled={!ruleForm.name || !ruleForm.targetZone || savingRule} className="enterprise-btn enterprise-btn-primary">
                 {savingRule ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}

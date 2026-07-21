@@ -70,3 +70,43 @@ export async function getActivity(): Promise<ApiResponse<any[]>> {
     return { success: false, error: msg } as any
   }
 }
+
+export async function getAlerts(): Promise<ApiResponse<any[]>> {
+  try {
+    const { data } = await client.get('/analytics/alerts')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get alerts'
+    return { success: false, error: msg } as any
+  }
+}
+
+export async function getOrderStatusDistribution(): Promise<ApiResponse<any[]>> {
+  try {
+    const { data } = await client.get('/analytics/order-status-distribution')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get order status distribution'
+    return { success: false, error: msg } as any
+  }
+}
+
+export async function getTaskQueueSummary(): Promise<ApiResponse<Record<string, any>>> {
+  try {
+    const { data } = await client.get('/analytics/task-queue-summary')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get task queue summary'
+    return { success: false, error: msg } as any
+  }
+}
+
+export async function getWarehousesSummary(): Promise<ApiResponse<any[]>> {
+  try {
+    const { data } = await client.get('/warehouses/summary')
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get warehouses summary'
+    return { success: false, error: msg } as any
+  }
+}

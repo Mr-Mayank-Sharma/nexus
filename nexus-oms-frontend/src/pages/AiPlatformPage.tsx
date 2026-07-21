@@ -131,7 +131,7 @@ function AiOverview() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" />
       </div>
     )
   }
@@ -170,55 +170,55 @@ function AiOverview() {
       </div>
 
       {/* Model Health */}
-      <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Model Health</h3>
+      <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Model Health</h3>
         {healthModels.length === 0 ? (
-          <p className="text-gray-400 text-sm">No model health data available</p>
+          <p className="text-[var(--text-tertiary)] text-sm">No model health data available</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {healthModels.map((m: Record<string, unknown>) => {
               const perf = modelPerformance.find((p: Record<string, unknown>) => p.id === m.id)
               return (
-                <div key={m.id as string} className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-100 dark:border-gray-700 p-4">
+                <div key={m.id as string} className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg border border-[var(--border-subtle)] p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-sm text-gray-900 dark:text-white">
+                    <h4 className="font-medium text-sm text-[var(--text-primary)] dark:text-white">
                       {(m.displayName as string) || (m.name as string) || (m.modelType as string)}
                     </h4>
                     <span className={`w-2.5 h-2.5 rounded-full ${
-                      (m.status as string) === 'ACTIVE' ? 'bg-green-500' :
-                      (m.status as string) === 'ERROR' ? 'bg-red-500' :
-                      (m.status as string) === 'TRAINING' ? 'bg-yellow-500' :
-                      'bg-yellow-500'
+                      (m.status as string) === 'ACTIVE' ? 'bg-[var(--nexus-success-50)]0' :
+                      (m.status as string) === 'ERROR' ? 'bg-[var(--nexus-error-50)]0' :
+                      (m.status as string) === 'TRAINING' ? 'bg-[var(--nexus-warning-50)]0' :
+                      'bg-[var(--nexus-warning-50)]0'
                     }`} />
                   </div>
-                  <div className="space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="space-y-1.5 text-xs text-[var(--text-secondary)]">
                     <div className="flex justify-between">
                       <span>Accuracy</span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="font-medium text-[var(--text-secondary)]">
                         {perf?.accuracy != null ? `${(Number(perf.accuracy) * 100).toFixed(1)}%` : 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Latency</span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="font-medium text-[var(--text-secondary)]">
                         {perf?.avgLatencyMs != null ? `${Number(perf.avgLatencyMs).toFixed(0)}ms` : 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Predictions Today</span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="font-medium text-[var(--text-secondary)]">
                         {String(perf?.predictionsToday ?? 0)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Drift</span>
-                      <span className={`font-medium ${perf?.driftDetected ? 'text-red-500' : 'text-green-500'}`}>
+                      <span className={`font-medium ${perf?.driftDetected ? 'text-[var(--nexus-error-500)]' : 'text-[var(--nexus-success-500)]'}`}>
                         {perf?.driftDetected ? 'Detected' : 'Not Detected'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Last Training</span>
-                      <span className="font-medium text-gray-700 dark:text-gray-300">
+                      <span className="font-medium text-[var(--text-secondary)]">
                         {perf?.lastTrainingTime
                           ? new Date(perf.lastTrainingTime as string).toLocaleDateString()
                           : (m.lastTrainingTime as string)
@@ -235,34 +235,34 @@ function AiOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Model Performance</h3>
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Model Performance</h3>
           {modelPerformance.length === 0 ? (
-            <p className="text-gray-400 text-sm">No model data available</p>
+            <p className="text-[var(--text-tertiary)] text-sm">No model data available</p>
           ) : (
             <div className="space-y-3">
               {modelPerformance.slice(0, 6).map((m: Record<string, unknown>) => (
-                <div key={m.id as string} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div key={m.id as string} className="flex items-center justify-between p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${
-                      (m.status as string) === 'ACTIVE' ? 'bg-green-500' :
-                      (m.status as string) === 'TRAINING' ? 'bg-yellow-500' :
-                      (m.status as string) === 'ERROR' ? 'bg-red-500' : 'bg-gray-400'
+                      (m.status as string) === 'ACTIVE' ? 'bg-[var(--nexus-success-50)]0' :
+                      (m.status as string) === 'TRAINING' ? 'bg-[var(--nexus-warning-50)]0' :
+                      (m.status as string) === 'ERROR' ? 'bg-[var(--nexus-error-50)]0' : 'bg-[var(--surface-muted)]'
                     }`} />
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-[var(--text-primary)] dark:text-white">
                         {(m.name as string) || (m.modelType as string)}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-xs text-[var(--text-tertiary)]">
                         v{m.currentVersion as string} &middot; {Number(m.accuracy as number ?? 0).toFixed(1)}% accuracy
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium text-[var(--text-primary)] dark:text-white">
                       {String(m.predictionsToday ?? 0)} predictions
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-[var(--text-tertiary)]">
                       {Number(m.avgLatencyMs as number ?? 0).toFixed(0)}ms latency
                     </p>
                   </div>
@@ -272,22 +272,22 @@ function AiOverview() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost Breakdown (This Month)</h3>
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Cost Breakdown (This Month)</h3>
           <div className="space-y-4">
             {Object.entries(costBreakdown).length === 0 ? (
-              <p className="text-gray-400 text-sm">No cost data available</p>
+              <p className="text-[var(--text-tertiary)] text-sm">No cost data available</p>
             ) : (
               Object.entries(costBreakdown).map(([type, amount]) => {
                 const pct = costTotal > 0 ? (Number(amount) / costTotal * 100) : 0
                 return (
                   <div key={type}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-600 dark:text-gray-300 capitalize">{type}</span>
-                      <span className="font-medium text-gray-900 dark:text-white">${Number(amount).toFixed(2)}</span>
+                      <span className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] capitalize">{type}</span>
+                      <span className="font-medium text-[var(--text-primary)] dark:text-white">${Number(amount).toFixed(2)}</span>
                     </div>
-                    <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2">
-                      <div className="bg-primary-500 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    <div className="w-full bg-[var(--surface-muted)] rounded-full h-2">
+                      <div className="bg-[var(--nexus-primary-50)]0 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
@@ -295,17 +295,17 @@ function AiOverview() {
             )}
           </div>
 
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mt-6 mb-4">Active Deployments</h3>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mt-6 mb-4">Active Deployments</h3>
           <div className="space-y-2">
             {(dashboard?.deployments as Array<Record<string, unknown>>)?.length === 0 ? (
-              <p className="text-gray-400 text-sm">No active deployments</p>
+              <p className="text-[var(--text-tertiary)] text-sm">No active deployments</p>
             ) : (
               (dashboard?.deployments as Array<Record<string, unknown>>)?.slice(0, 4).map((d: Record<string, unknown>) => (
-                <div key={d.id as string} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div key={d.id as string} className="flex items-center justify-between p-2 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Server className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      {d.modelName as string} <span className="text-gray-400">({d.environment as string})</span>
+                    <Server className="w-4 h-4 text-[var(--text-tertiary)]" />
+                    <span className="text-sm text-[var(--text-secondary)]">
+                      {d.modelName as string} <span className="text-[var(--text-tertiary)]">({d.environment as string})</span>
                     </span>
                   </div>
                   <EnterpriseStatusBadge status={d.status as string} />
@@ -317,24 +317,24 @@ function AiOverview() {
       </div>
 
       {/* Inference Activity */}
-      <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Inference Activity</h3>
+      <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Inference Activity</h3>
         {logsLoading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-[var(--text-brand)]" />
           </div>
         ) : inferenceLogs.length === 0 ? (
-          <p className="text-gray-400 text-sm">No recent inference activity</p>
+          <p className="text-[var(--text-tertiary)] text-sm">No recent inference activity</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 dark:border-gray-700">
-                  <th className="text-left py-2 px-3 text-gray-500 font-medium">Timestamp</th>
-                  <th className="text-left py-2 px-3 text-gray-500 font-medium">Model</th>
-                  <th className="text-right py-2 px-3 text-gray-500 font-medium">Confidence</th>
-                  <th className="text-center py-2 px-3 text-gray-500 font-medium">Status</th>
-                  <th className="text-right py-2 px-3 text-gray-500 font-medium">Latency</th>
+                <tr className="border-b border-[var(--border-subtle)]">
+                  <th className="text-left py-2 px-3 text-[var(--text-secondary)] font-medium">Timestamp</th>
+                  <th className="text-left py-2 px-3 text-[var(--text-secondary)] font-medium">Model</th>
+                  <th className="text-right py-2 px-3 text-[var(--text-secondary)] font-medium">Confidence</th>
+                  <th className="text-center py-2 px-3 text-[var(--text-secondary)] font-medium">Status</th>
+                  <th className="text-right py-2 px-3 text-[var(--text-secondary)] font-medium">Latency</th>
                 </tr>
               </thead>
               <tbody>
@@ -342,21 +342,21 @@ function AiOverview() {
                   const modelInfo = modelPerformance.find((p: Record<string, unknown>) => p.id === log.modelId)
                   const logStatus = log.status || (log.fallbackUsed ? 'FALLBACK' : 'SUCCESS')
                   return (
-                    <tr key={log.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                      <td className="py-2.5 px-3 text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                    <tr key={log.id} className="border-b border-[var(--border-subtle)] dark:border-[var(--border-strong)] hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50">
+                      <td className="py-2.5 px-3 text-[var(--text-secondary)] whitespace-nowrap">
                         {new Date(log.createdAt).toLocaleString()}
                       </td>
-                      <td className="py-2.5 px-3 text-gray-900 dark:text-white font-medium">
+                      <td className="py-2.5 px-3 text-[var(--text-primary)] dark:text-white font-medium">
                         {(modelInfo?.name as string) || log.modelId}
                       </td>
-                      <td className="py-2.5 px-3 text-right text-gray-700 dark:text-gray-300">
+                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">
                         {log.confidence != null ? `${(log.confidence * 100).toFixed(1)}%` : '-'}
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                          logStatus === 'SUCCESS' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                          logStatus === 'FALLBACK' ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                          'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          logStatus === 'SUCCESS' ? 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]' :
+                          logStatus === 'FALLBACK' ? 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]' :
+                          'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]'
                         }`}>
                           {logStatus === 'SUCCESS' ? <CheckCircle2 className="w-3 h-3" /> :
                            logStatus === 'FALLBACK' ? <AlertTriangle className="w-3 h-3" /> :
@@ -364,7 +364,7 @@ function AiOverview() {
                           {logStatus}
                         </span>
                       </td>
-                      <td className="py-2.5 px-3 text-right text-gray-600 dark:text-gray-400">
+                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">
                         {log.latencyMs != null ? `${log.latencyMs.toFixed(0)}ms` : '-'}
                       </td>
                     </tr>
@@ -378,27 +378,27 @@ function AiOverview() {
 
       {/* Rule Fallback Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-              <ThumbsDown className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div className="w-10 h-10 rounded-lg bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30 flex items-center justify-center">
+              <ThumbsDown className="w-5 h-5 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Fallbacks Today</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-sm text-[var(--text-secondary)]">Fallbacks Today</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] dark:text-white">
                 {String(dashboard?.fallbacksToday ?? 0)}
               </p>
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <FileWarning className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/30 flex items-center justify-center">
+              <FileWarning className="w-5 h-5 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Rule Engine Usage</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-sm text-[var(--text-secondary)]">Rule Engine Usage</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] dark:text-white">
                 {dashboard?.ruleEngineUsedToday != null
                   ? `${(Number(dashboard.ruleEngineUsedToday) / Math.max(Number(dashboard?.predictionsToday ?? 1), 1) * 100).toFixed(1)}%`
                   : 'N/A'}
@@ -406,14 +406,14 @@ function AiOverview() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="w-10 h-10 rounded-lg bg-[var(--nexus-ai-100)] dark:bg-[var(--nexus-ai-900)]/30 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-[var(--nexus-ai-600)] dark:text-[var(--nexus-ai-400)]" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Most Common Reason</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              <p className="text-sm text-[var(--text-secondary)]">Most Common Reason</p>
+              <p className="text-lg font-semibold text-[var(--text-primary)] dark:text-white truncate">
                 {inferenceLogs
                   .filter(l => l.fallbackReason)
                   .reduce<[string, number][]>((acc, l) => {
@@ -443,12 +443,12 @@ function AiOverview() {
                   const pct = (count / total) * 100
                   return (
                     <div key={reason}>
-                      <div className="flex justify-between text-xs text-gray-500 mb-0.5">
+                      <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-0.5">
                         <span className="truncate">{reason}</span>
                         <span>{pct.toFixed(0)}%</span>
                       </div>
-                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
-                        <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                      <div className="w-full bg-[var(--surface-muted)] rounded-full h-1.5">
+                        <div className="bg-[var(--nexus-warning-50)]0 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   )
@@ -498,7 +498,7 @@ function AiModelRegistry() {
     } catch { addToast({ type: 'error', title: 'Failed to deploy model' }) }
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" /></div>
 
   return (
     <div className="space-y-6">
@@ -519,8 +519,8 @@ function AiModelRegistry() {
             onClick={() => setCategoryFilter(c)}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               categoryFilter === c
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                ? 'bg-[var(--nexus-primary-600)] text-white'
+                : 'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
             }`}
           >
             {c || 'All'}
@@ -530,71 +530,71 @@ function AiModelRegistry() {
 
       <div className="space-y-3">
         {models.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">No models found</div>
+          <div className="text-center py-12 text-[var(--text-tertiary)]">No models found</div>
         ) : (
           models.map((model) => (
-            <div key={model.id} className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700">
+            <div key={model.id} className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)]">
               <button
                 onClick={() => handleModelClick(model.id)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    model.category === 'GLOBAL' ? 'bg-blue-100 text-blue-600' :
-                    model.category === 'TENANT' ? 'bg-purple-100 text-purple-600' :
-                    'bg-amber-100 text-amber-600'
+                    model.category === 'GLOBAL' ? 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-600)]' :
+                    model.category === 'TENANT' ? 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-600)]' :
+                    'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-600)]'
                   }`}>
                     {model.modelType === 'DEMAND_FORECAST' ? <TrendingUp className="w-5 h-5" /> :
                      model.modelType === 'ANOMALY_DETECTOR' ? <Shield className="w-5 h-5" /> :
                      <Brain className="w-5 h-5" />}
                   </div>
                   <div className="text-left">
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="font-medium text-[var(--text-primary)] dark:text-white">
                       {model.displayName || MODEL_TYPE_LABELS[model.modelType] || model.name}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
                       {model.category} &middot; v{model.currentVersion || '-'} &middot; {model.modelType}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <EnterpriseStatusBadge status={model.status} />
-                  <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${selectedModel === model.id ? 'rotate-90' : ''}`} />
+                  <ChevronRight className={`w-4 h-4 text-[var(--text-tertiary)] transition-transform ${selectedModel === model.id ? 'rotate-90' : ''}`} />
                 </div>
               </button>
               {selectedModel === model.id && (
-                <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
+                <div className="px-4 pb-4 border-t border-[var(--border-subtle)]">
                   <div className="pt-3">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{model.description}</p>
+                    <p className="text-sm text-[var(--text-secondary)] mb-3">{model.description}</p>
                     {model.inputSchema && (
                       <div className="mb-3">
-                        <p className="text-xs font-medium text-gray-500 mb-1">Input Schema</p>
-                        <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-2 rounded-lg overflow-x-auto">
+                        <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">Input Schema</p>
+                        <pre className="text-xs bg-[var(--surface-sunken)] p-2 rounded-lg overflow-x-auto">
                           {JSON.stringify(JSON.parse(model.inputSchema), null, 2)}
                         </pre>
                       </div>
                     )}
-                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Versions</h4>
+                    <h4 className="text-sm font-medium text-[var(--text-secondary)] mb-2">Versions</h4>
                     {versionsLoading ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                      <Loader2 className="w-5 h-5 animate-spin text-[var(--text-brand)]" />
                     ) : versions.length === 0 ? (
-                      <p className="text-sm text-gray-400">No versions</p>
+                      <p className="text-sm text-[var(--text-tertiary)]">No versions</p>
                     ) : (
                       <div className="space-y-2">
                         {versions.map(v => (
-                          <div key={v.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          <div key={v.id} className="flex items-center justify-between p-2 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
                             <div className="flex items-center gap-3">
-                              <span className="text-sm font-mono text-gray-700 dark:text-gray-300">{v.version}</span>
+                              <span className="text-sm font-mono text-[var(--text-secondary)]">{v.version}</span>
                               <EnterpriseStatusBadge status={v.status} />
                               {v.accuracy != null && (
-                                <span className="text-xs text-gray-400">{Number(v.accuracy).toFixed(1)}% accuracy</span>
+                                <span className="text-xs text-[var(--text-tertiary)]">{Number(v.accuracy).toFixed(1)}% accuracy</span>
                               )}
                             </div>
                             <div className="flex gap-2">
                               <PermissionGate resource="settings" action="edit">
                                 <button
                                   onClick={() => handleDeploy(model.id, v.id)}
-                                  className="px-2 py-1 text-xs bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                                  className="px-2 py-1 text-xs bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]"
                                 >
                                   Deploy
                                 </button>
@@ -639,7 +639,7 @@ function AiTrainingPipeline() {
   const statusCounts: Record<string, number> = {}
   jobs.forEach(j => { statusCounts[j.status] = (statusCounts[j.status] || 0) + 1 })
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" /></div>
 
   return (
     <div className="space-y-6">
@@ -658,8 +658,8 @@ function AiTrainingPipeline() {
             onClick={() => setStatusFilter(s)}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               statusFilter === s
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                ? 'bg-[var(--nexus-primary-600)] text-white'
+                : 'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
             }`}
           >
             {s || 'All'}
@@ -672,7 +672,7 @@ function AiTrainingPipeline() {
         loading={loading}
         columns={[
           { header: 'Name', accessor: 'name' as never, render: (j: AiTrainingJob) => (
-            <span className="font-medium text-gray-900 dark:text-white">{j.name || 'Training Job'}</span>
+            <span className="font-medium text-[var(--text-primary)] dark:text-white">{j.name || 'Training Job'}</span>
           )},
           { header: 'Status', accessor: 'status' as never, render: (j: AiTrainingJob) => (
             <EnterpriseStatusBadge status={j.status} />
@@ -686,12 +686,12 @@ function AiTrainingPipeline() {
             <span>{j.durationSeconds ? `${Math.round(j.durationSeconds / 60)}m` : '-'}</span>
           )},
           { header: 'Created', accessor: 'createdAt' as never, render: (j: AiTrainingJob) => (
-            <span className="text-sm text-gray-400">{new Date(j.createdAt).toLocaleDateString()}</span>
+            <span className="text-sm text-[var(--text-tertiary)]">{new Date(j.createdAt).toLocaleDateString()}</span>
           )},
           { header: 'Actions', accessor: 'id' as never, render: (j: AiTrainingJob) => (
             j.status === 'PENDING' ? (
               <PermissionGate resource="settings" action="create">
-                <button onClick={() => handleStartJob(j.id)} className="p-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+                <button onClick={() => handleStartJob(j.id)} className="p-1.5 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
                   <Play className="w-3.5 h-3.5" />
                 </button>
               </PermissionGate>
@@ -735,7 +735,7 @@ function AiFeatureStore() {
     promotion: '🏷️',
   }
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" /></div>
 
   return (
     <div className="space-y-6">
@@ -746,20 +746,20 @@ function AiFeatureStore() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {groups.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-gray-400">No feature groups defined</div>
+          <div className="col-span-full text-center py-12 text-[var(--text-tertiary)]">No feature groups defined</div>
         ) : (
           groups.map(g => (
-            <div key={g.group} className="bg-white dark:bg-[#162033] rounded-xl border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
+            <div key={g.group} className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">{FEATURE_ICONS[g.group.toLowerCase()] || '📊'}</span>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white capitalize">{g.group}</p>
-                  <p className="text-xs text-gray-400">{g.count} features</p>
+                  <p className="font-medium text-[var(--text-primary)] dark:text-white capitalize">{g.group}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{g.count} features</p>
                 </div>
               </div>
-              <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+              <div className="w-full bg-[var(--surface-muted)] rounded-full h-1.5">
                 <div
-                  className="bg-primary-500 h-1.5 rounded-full"
+                  className="bg-[var(--nexus-primary-50)]0 h-1.5 rounded-full"
                   style={{ width: `${Math.min(100, (g.count / 20) * 100)}%` }}
                 />
               </div>

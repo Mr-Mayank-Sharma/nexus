@@ -90,19 +90,19 @@ const TYPE_ICONS: Record<string, typeof Bot> = {
 
 const STATUS_STYLES: Record<string, string> = {
   ONLINE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  OFFLINE: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
-  MAINTENANCE: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  ERROR: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  OFFLINE: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
+  MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
+  ERROR: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
   DEGRADED: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
 }
 
 const CMD_STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  SENT: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  ACKNOWLEDGED: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
-  EXECUTING: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  PENDING: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
+  SENT: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  ACKNOWLEDGED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  EXECUTING: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-400)]',
   COMPLETED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-  FAILED: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  FAILED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
   TIMEOUT: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
 }
 
@@ -114,16 +114,16 @@ const LOG_LEVEL_BORDER: Record<string, string> = {
 }
 
 const LOG_LEVEL_BG: Record<string, string> = {
-  INFO: 'bg-blue-500',
-  WARN: 'bg-yellow-500',
-  ERROR: 'bg-red-500',
-  DEBUG: 'bg-gray-400',
+  INFO: 'bg-[var(--nexus-primary-50)]0',
+  WARN: 'bg-[var(--nexus-warning-50)]0',
+  ERROR: 'bg-[var(--nexus-error-50)]0',
+  DEBUG: 'bg-[var(--surface-muted)]',
 }
 
 const ALERT_SEVERITY_BORDER: Record<string, string> = {
-  CRITICAL: 'border-l-red-500 bg-red-50/50 dark:bg-red-900/10',
-  WARNING: 'border-l-yellow-500 bg-yellow-50/50 dark:bg-yellow-900/10',
-  INFO: 'border-l-blue-500 bg-blue-50/50 dark:bg-blue-900/10',
+  CRITICAL: 'border-l-red-500 bg-[var(--nexus-error-50)]/50 dark:bg-[var(--nexus-error-900)]/10',
+  WARNING: 'border-l-yellow-500 bg-[var(--nexus-warning-50)]/50 dark:bg-[var(--nexus-warning-900)]/10',
+  INFO: 'border-l-blue-500 bg-[var(--nexus-primary-50)]/50 dark:bg-[var(--nexus-primary-900)]/10',
 }
 
 const ALERT_SEVERITY_ICON: Record<string, typeof AlertTriangle> = {
@@ -473,27 +473,27 @@ export default function AutomationSystemsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Activity className="w-7 h-7 text-violet-500" />
             Automation & Integration
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Warehouse automation systems monitoring and control</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Warehouse automation systems monitoring and control</p>
         </div>
       </div>
 
       {/* ─── Health Banner ───────────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5">
+      <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2">
             <Activity className="w-4 h-4 text-violet-500" /> System Health Overview
           </h3>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Overall Health</span>
+            <span className="text-xs text-[var(--text-secondary)]">Overall Health</span>
             <span className={clsx(
               'text-lg font-bold',
               healthData.healthScore >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
-              healthData.healthScore >= 50 ? 'text-amber-600 dark:text-amber-400' :
-              'text-red-600 dark:text-red-400',
+              healthData.healthScore >= 50 ? 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]' :
+              'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]',
             )}>
               {healthData.healthScore}%
             </span>
@@ -501,26 +501,26 @@ export default function AutomationSystemsPage() {
         </div>
         <div className="flex items-center gap-6">
           {[
-            { label: 'Total', value: healthData.total, color: 'text-gray-900 dark:text-gray-100' },
+            { label: 'Total', value: healthData.total, color: 'text-[var(--text-primary)]' },
             { label: 'Online', value: healthData.online, color: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
-            { label: 'Offline', value: healthData.offline, color: 'text-gray-500 dark:text-gray-400', dot: 'bg-gray-400' },
-            { label: 'Error', value: healthData.error, color: 'text-red-600 dark:text-red-400', dot: 'bg-red-500' },
-            { label: 'Maintenance', value: healthData.maintenance, color: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500' },
+            { label: 'Offline', value: healthData.offline, color: 'text-[var(--text-secondary)]', dot: 'bg-[var(--surface-muted)]' },
+            { label: 'Error', value: healthData.error, color: 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]', dot: 'bg-[var(--nexus-error-50)]0' },
+            { label: 'Maintenance', value: healthData.maintenance, color: 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]', dot: 'bg-[var(--nexus-warning-50)]0' },
           ].map((s, i) => (
             <div key={i} className="flex items-center gap-2">
               {s.dot && <span className={clsx('w-2.5 h-2.5 rounded-full', s.dot)} />}
-              <span className="text-xs text-gray-500 dark:text-gray-400">{s.label}</span>
+              <span className="text-xs text-[var(--text-secondary)]">{s.label}</span>
               <span className={clsx('text-sm font-bold', s.color)}>{s.value}</span>
             </div>
           ))}
           <div className="ml-auto flex-1 max-w-xs">
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+            <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2.5">
               <div
                 className={clsx(
                   'h-2.5 rounded-full transition-all duration-500',
                   healthData.healthScore >= 80 ? 'bg-emerald-500' :
-                  healthData.healthScore >= 50 ? 'bg-amber-500' :
-                  'bg-red-500',
+                  healthData.healthScore >= 50 ? 'bg-[var(--nexus-warning-50)]0' :
+                  'bg-[var(--nexus-error-50)]0',
                 )}
                 style={{ width: `${healthData.healthScore}%` }}
               />
@@ -591,7 +591,7 @@ export default function AutomationSystemsPage() {
               <option value="WH-002">East Hub — WH-002</option>
               <option value="WH-003">West Hub — WH-003</option>
             </select>
-            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -611,7 +611,7 @@ export default function AutomationSystemsPage() {
       </div>
 
       {/* ─── Tabs ────────────────────────────────────────────────────────── */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
+      <div className="border-b border-[var(--border-default)]">
         <div className="flex gap-0 -mb-px">
           {[
             { id: 'systems', label: 'Systems', icon: <Settings className="w-4 h-4" /> },
@@ -625,7 +625,7 @@ export default function AutomationSystemsPage() {
                 'flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                 activeTab === tab.id
                   ? 'border-violet-500 text-violet-600 dark:text-violet-400'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300',
+                  : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] hover:border-[var(--border-default)]',
               )}
               onClick={() => setActiveTab(tab.id)}
             >
@@ -635,7 +635,7 @@ export default function AutomationSystemsPage() {
                   'ml-1 text-xs px-1.5 py-0.5 rounded-full font-semibold',
                   activeTab === tab.id
                     ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
+                    : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
                 )}>
                   {tab.badge}
                 </span>
@@ -664,7 +664,7 @@ export default function AutomationSystemsPage() {
               <div
                 key={sys.id}
                 className={clsx(
-                  'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 transition-all duration-150 hover:shadow-md',
+                  'bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5 transition-all duration-150 hover:shadow-md',
                   !sys.isActive && 'opacity-60',
                 )}
               >
@@ -674,16 +674,16 @@ export default function AutomationSystemsPage() {
                     <div className={clsx(
                       'w-10 h-10 rounded-xl flex items-center justify-center ring-1',
                       sys.status === 'ONLINE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 ring-emerald-500/20' :
-                      sys.status === 'ERROR' ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 ring-red-500/20' :
-                      sys.status === 'MAINTENANCE' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 ring-amber-500/20' :
+                      sys.status === 'ERROR' ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] ring-red-500/20' :
+                      sys.status === 'MAINTENANCE' ? 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)] ring-amber-500/20' :
                       sys.status === 'DEGRADED' ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 ring-orange-500/20' :
-                      'bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 ring-gray-500/20',
+                      'bg-[var(--surface-sunken)] bg-[var(--surface-muted)] text-[var(--text-secondary)] ring-gray-500/20',
                     )}>
                       <Icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{sys.name}</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{sys.vendor} · {sys.model}</p>
+                      <h4 className="text-sm font-semibold text-[var(--text-primary)]">{sys.name}</h4>
+                      <p className="text-xs text-[var(--text-secondary)]">{sys.vendor} · {sys.model}</p>
                     </div>
                   </div>
                   <span className={clsx('text-xs font-semibold px-2.5 py-1 rounded-full', STATUS_STYLES[sys.status])}>
@@ -694,28 +694,28 @@ export default function AutomationSystemsPage() {
                 {/* Details */}
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   <div>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider">Last Check</p>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-0.5">{timeAgo(sys.lastHealthCheck)}</p>
+                    <p className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider">Last Check</p>
+                    <p className="text-xs font-medium text-[var(--text-secondary)] mt-0.5">{timeAgo(sys.lastHealthCheck)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider">Protocol</p>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-0.5">{sys.connectionProtocol}</p>
+                    <p className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider">Protocol</p>
+                    <p className="text-xs font-medium text-[var(--text-secondary)] mt-0.5">{sys.connectionProtocol}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider">Type</p>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-0.5">{sys.type}</p>
+                    <p className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] uppercase tracking-wider">Type</p>
+                    <p className="text-xs font-medium text-[var(--text-secondary)] mt-0.5">{sys.type}</p>
                   </div>
                 </div>
 
                 {/* Actions Row */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)]/50">
                   <button
                     onClick={() => handleToggleSystem(sys.id, !sys.isActive)}
                     className={clsx(
                       'flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
                       sys.isActive
                         ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
-                        : 'text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600',
+                        : 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] bg-[var(--surface-muted)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
                     {sys.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
@@ -724,7 +724,7 @@ export default function AutomationSystemsPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => handleStatusCheck(sys.id)}
-                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center gap-1"
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-muted)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)] transition-colors flex items-center gap-1"
                     >
                       <Eye className="w-3.5 h-3.5" /> Status
                     </button>
@@ -753,16 +753,16 @@ export default function AutomationSystemsPage() {
           {/* Command Stats */}
           <div className="grid grid-cols-4 gap-4">
             {[
-              { label: 'Total Today', value: commandStats.totalToday, icon: <Terminal className="w-4 h-4" />, color: 'text-blue-600' },
-              { label: 'Avg Exec Time', value: `${commandStats.avgExecutionMs}ms`, icon: <Clock className="w-4 h-4" />, color: 'text-gray-600' },
+              { label: 'Total Today', value: commandStats.totalToday, icon: <Terminal className="w-4 h-4" />, color: 'text-[var(--nexus-primary-600)]' },
+              { label: 'Avg Exec Time', value: `${commandStats.avgExecutionMs}ms`, icon: <Clock className="w-4 h-4" />, color: 'text-[var(--text-secondary)]' },
               { label: 'Success Rate', value: `${commandStats.successRate}%`, icon: <CheckCircle className="w-4 h-4" />, color: 'text-emerald-600' },
-              { label: 'Failed Today', value: commandStats.failedToday, icon: <XCircle className="w-4 h-4" />, color: 'text-red-600' },
+              { label: 'Failed Today', value: commandStats.failedToday, icon: <XCircle className="w-4 h-4" />, color: 'text-[var(--nexus-error-600)]' },
             ].map((s, i) => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 flex items-center gap-3">
+              <div key={i} className="bg-[var(--surface-base)] rounded-lg border border-[var(--border-default)] p-3 flex items-center gap-3">
                 <span className={s.color}>{s.icon}</span>
                 <div>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">{s.label}</p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{s.value}</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">{s.label}</p>
+                  <p className="text-lg font-bold text-[var(--text-primary)]">{s.value}</p>
                 </div>
               </div>
             ))}
@@ -779,29 +779,29 @@ export default function AutomationSystemsPage() {
           </div>
 
           {/* Commands Table */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">System</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Priority</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sent At</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Completed</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Exec Time</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                  <tr className="border-b border-[var(--border-default)]">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">ID</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">System</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Type</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Priority</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Sent At</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Completed</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Exec Time</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
                   {commands.map(cmd => (
-                    <tr key={cmd.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-                      <td className="px-4 py-3 text-sm font-mono font-medium text-gray-900 dark:text-gray-100">{cmd.id}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{cmd.systemName}</td>
+                    <tr key={cmd.id} className="hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors">
+                      <td className="px-4 py-3 text-sm font-mono font-medium text-[var(--text-primary)]">{cmd.id}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{cmd.systemName}</td>
                       <td className="px-4 py-3">
-                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        <span className="text-xs font-medium px-2 py-1 rounded-md bg-[var(--surface-muted)] text-[var(--text-secondary)]">
                           {cmd.commandType}
                         </span>
                       </td>
@@ -813,16 +813,16 @@ export default function AutomationSystemsPage() {
                       <td className="px-4 py-3 text-center">
                         <span className={clsx(
                           'text-xs font-bold',
-                          cmd.priority <= 2 ? 'text-red-500' : cmd.priority <= 3 ? 'text-amber-500' : 'text-gray-400',
+                          cmd.priority <= 2 ? 'text-[var(--nexus-error-500)]' : cmd.priority <= 3 ? 'text-[var(--nexus-warning-500)]' : 'text-[var(--text-tertiary)]',
                         )}>
                           P{cmd.priority}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">{formatDateTime(cmd.sentAt)}</td>
-                      <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
+                      <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">{formatDateTime(cmd.sentAt)}</td>
+                      <td className="px-4 py-3 text-xs text-[var(--text-secondary)]">
                         {cmd.completedAt ? formatDateTime(cmd.completedAt) : '—'}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 text-right text-sm font-medium text-[var(--text-secondary)]">
                         {cmd.executionTimeMs ? `${cmd.executionTimeMs.toLocaleString()}ms` : '—'}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -830,7 +830,7 @@ export default function AutomationSystemsPage() {
                           {(cmd.status === 'PENDING' || cmd.status === 'SENT') && (
                             <button
                               onClick={() => handleCancelCommand(cmd.id)}
-                              className="text-xs font-medium px-2.5 py-1 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                              className="text-xs font-medium px-2.5 py-1 rounded-lg text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] hover:bg-[var(--nexus-error-50)] dark:hover:bg-[var(--nexus-error-900)]/20 transition-colors"
                             >
                               Cancel
                             </button>
@@ -838,7 +838,7 @@ export default function AutomationSystemsPage() {
                           {cmd.status === 'FAILED' && (
                             <button
                               onClick={() => handleRetryCommand(cmd.id)}
-                              className="text-xs font-medium px-2.5 py-1 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center gap-1"
+                              className="text-xs font-medium px-2.5 py-1 rounded-lg text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:bg-[var(--nexus-primary-50)] dark:hover:bg-[var(--nexus-primary-900)]/20 transition-colors flex items-center gap-1"
                             >
                               <RotateCcw className="w-3 h-3" /> Retry
                             </button>
@@ -851,7 +851,7 @@ export default function AutomationSystemsPage() {
               </table>
             </div>
             {commands.length === 0 && (
-              <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+              <div className="text-center py-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                 <Terminal className="w-10 h-10 mx-auto mb-3 opacity-40" />
                 <p className="text-sm">No commands found</p>
               </div>
@@ -868,8 +868,8 @@ export default function AutomationSystemsPage() {
           {/* Filters */}
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Level:</span>
+              <Filter className="w-4 h-4 text-[var(--text-tertiary)]" />
+              <span className="text-xs font-medium text-[var(--text-secondary)]">Level:</span>
               <div className="flex gap-1">
                 {['', ...LOG_LEVELS].map(level => (
                   <button
@@ -879,7 +879,7 @@ export default function AutomationSystemsPage() {
                       'text-xs font-medium px-2.5 py-1 rounded-md transition-colors',
                       logFilter.level === level
                         ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600',
+                        : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
                     {level || 'All'}
@@ -888,11 +888,11 @@ export default function AutomationSystemsPage() {
               </div>
             </div>
 
-            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+            <div className="h-4 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
 
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Range:</span>
+              <Clock className="w-4 h-4 text-[var(--text-tertiary)]" />
+              <span className="text-xs font-medium text-[var(--text-secondary)]">Range:</span>
               <div className="flex gap-1">
                 {TIME_RANGES.map(range => (
                   <button
@@ -902,7 +902,7 @@ export default function AutomationSystemsPage() {
                       'text-xs font-medium px-2.5 py-1 rounded-md transition-colors',
                       logFilter.timeRange === range
                         ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600',
+                        : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
                     {range}
@@ -911,7 +911,7 @@ export default function AutomationSystemsPage() {
               </div>
             </div>
 
-            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+            <div className="h-4 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
 
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
@@ -919,7 +919,7 @@ export default function AutomationSystemsPage() {
                 'flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
                 autoRefresh
                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600',
+                  : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
               )}
             >
               <RefreshCw className={clsx('w-3.5 h-3.5', autoRefresh && 'animate-spin')} />
@@ -935,11 +935,11 @@ export default function AutomationSystemsPage() {
           </div>
 
           {/* Log List */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
             {logLoading ? (
               <div className="p-12 text-center">
-                <Loader2 className="w-8 h-8 mx-auto text-gray-400 animate-spin mb-3" />
-                <p className="text-sm text-gray-500">Loading logs...</p>
+                <Loader2 className="w-8 h-8 mx-auto text-[var(--text-tertiary)] animate-spin mb-3" />
+                <p className="text-sm text-[var(--text-secondary)]">Loading logs...</p>
               </div>
             ) : (
               <div className="max-h-[500px] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700/50">
@@ -947,38 +947,38 @@ export default function AutomationSystemsPage() {
                   <div
                     key={log.id}
                     className={clsx(
-                      'flex items-start gap-4 p-4 border-l-4 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors',
+                      'flex items-start gap-4 p-4 border-l-4 hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors',
                       LOG_LEVEL_BORDER[log.level],
                     )}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
                       <span className={clsx('w-2 h-2 rounded-full flex-shrink-0', LOG_LEVEL_BG[log.level])} />
-                      <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                      <span className="text-[11px] font-mono text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] whitespace-nowrap">
                         {formatTime(log.timestamp)}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{log.systemName}</span>
-                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                        <span className="text-xs font-semibold text-[var(--text-secondary)]">{log.systemName}</span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[var(--surface-muted)] text-[var(--text-secondary)]">
                           {log.event}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{log.message}</p>
+                      <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{log.message}</p>
                     </div>
                     <span className={clsx(
                       'text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded flex-shrink-0',
-                      log.level === 'ERROR' ? 'text-red-600 bg-red-50 dark:bg-red-900/20' :
-                      log.level === 'WARN' ? 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20' :
-                      log.level === 'DEBUG' ? 'text-gray-500 bg-gray-100 dark:bg-gray-700' :
-                      'text-blue-600 bg-blue-50 dark:bg-blue-900/20',
+                      log.level === 'ERROR' ? 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20' :
+                      log.level === 'WARN' ? 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20' :
+                      log.level === 'DEBUG' ? 'text-[var(--text-secondary)] bg-[var(--surface-muted)]' :
+                      'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
                     )}>
                       {log.level}
                     </span>
                   </div>
                 ))}
                 {logs.length === 0 && (
-                  <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                  <div className="text-center py-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                     <Eye className="w-10 h-10 mx-auto mb-3 opacity-40" />
                     <p className="text-sm">No logs found</p>
                   </div>
@@ -1006,7 +1006,7 @@ export default function AutomationSystemsPage() {
                       'text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
                       alertFilter === filter
                         ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600',
+                        : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
                     {filter.charAt(0) + filter.slice(1).toLowerCase()}
@@ -1014,17 +1014,17 @@ export default function AutomationSystemsPage() {
                 ))}
               </div>
             </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
+                <span className="w-2 h-2 rounded-full bg-[var(--nexus-error-50)]0" />
                 Critical: {alertStats.bySeverity.CRITICAL}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                <span className="w-2 h-2 rounded-full bg-[var(--nexus-warning-50)]0" />
                 Warning: {alertStats.bySeverity.WARNING}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <span className="w-2 h-2 rounded-full bg-[var(--nexus-primary-50)]0" />
                 Info: {alertStats.bySeverity.INFO}
               </span>
             </div>
@@ -1033,8 +1033,8 @@ export default function AutomationSystemsPage() {
           {/* Alert Cards */}
           {alertLoading ? (
             <div className="text-center py-12">
-              <Loader2 className="w-8 h-8 mx-auto text-gray-400 animate-spin mb-3" />
-              <p className="text-sm text-gray-500">Loading alerts...</p>
+              <Loader2 className="w-8 h-8 mx-auto text-[var(--text-tertiary)] animate-spin mb-3" />
+              <p className="text-sm text-[var(--text-secondary)]">Loading alerts...</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -1044,7 +1044,7 @@ export default function AutomationSystemsPage() {
                   <div
                     key={alert.id}
                     className={clsx(
-                      'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 border-l-4 p-5 transition-all',
+                      'bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] border-l-4 p-5 transition-all',
                       ALERT_SEVERITY_BORDER[alert.severity],
                       alert.status === 'RESOLVED' && 'opacity-60',
                     )}
@@ -1053,35 +1053,35 @@ export default function AutomationSystemsPage() {
                       <div className="flex items-start gap-3 min-w-0">
                         <div className={clsx(
                           'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-                          alert.severity === 'CRITICAL' ? 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400' :
-                          alert.severity === 'WARNING' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400' :
-                          'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400',
+                          alert.severity === 'CRITICAL' ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]' :
+                          alert.severity === 'WARNING' ? 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]' :
+                          'bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/20 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]',
                         )}>
                           <SevIcon className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{alert.title}</h4>
+                            <h4 className="text-sm font-semibold text-[var(--text-primary)]">{alert.title}</h4>
                             <span className={clsx(
                               'text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
-                              alert.status === 'ACTIVE' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                              alert.status === 'ACKNOWLEDGED' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                              alert.status === 'ACTIVE' ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]' :
+                              alert.status === 'ACKNOWLEDGED' ? 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]' :
                               'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
                             )}>
                               {alert.status}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{alert.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-sm text-[var(--text-secondary)] mb-2">{alert.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
                             <span className="flex items-center gap-1">
                               <Settings className="w-3 h-3" /> {alert.systemName}
                             </span>
                             <span>{alert.type}</span>
                             {alert.threshold && (
                               <span>
-                                Threshold: <span className="font-medium text-gray-700 dark:text-gray-300">{alert.threshold}</span>
+                                Threshold: <span className="font-medium text-[var(--text-secondary)]">{alert.threshold}</span>
                                 {' → '}
-                                Current: <span className="font-medium text-gray-700 dark:text-gray-300">{alert.currentValue}</span>
+                                Current: <span className="font-medium text-[var(--text-secondary)]">{alert.currentValue}</span>
                               </span>
                             )}
                             <span>{timeAgo(alert.createdAt)}</span>
@@ -1095,7 +1095,7 @@ export default function AutomationSystemsPage() {
                           {alert.status === 'ACTIVE' && (
                             <button
                               onClick={() => handleAcknowledgeAlert(alert.id)}
-                              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                              className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-400)] hover:bg-[var(--nexus-warning-100)] dark:hover:bg-[var(--nexus-warning-900)]/30 transition-colors"
                             >
                               Acknowledge
                             </button>
@@ -1113,7 +1113,7 @@ export default function AutomationSystemsPage() {
                 )
               })}
               {filteredAlerts.length === 0 && (
-                <div className="text-center py-12 text-gray-400 dark:text-gray-500">
+                <div className="text-center py-12 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                   <CheckCircle className="w-10 h-10 mx-auto mb-3 opacity-40" />
                   <p className="text-sm">No alerts {alertFilter !== 'ALL' ? `with status "${alertFilter.toLowerCase()}"` : ''}</p>
                 </div>
@@ -1127,17 +1127,17 @@ export default function AutomationSystemsPage() {
       {/* MODAL: Send Command                                                */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {showCommandModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl w-full max-w-lg mx-4">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
                 <Send className="w-5 h-5 text-violet-500" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Send Command</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Send Command</h2>
               </div>
               <button
                 onClick={() => setShowCommandModal(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1147,7 +1147,7 @@ export default function AutomationSystemsPage() {
             <div className="p-6 space-y-4">
               {/* System */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Target System</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Target System</label>
                 <div className="relative">
                   <select
                     className="enterprise-input w-full pr-8 appearance-none"
@@ -1159,13 +1159,13 @@ export default function AutomationSystemsPage() {
                       <option key={s.id} value={s.id}>{s.name} ({s.type})</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
                 </div>
               </div>
 
               {/* Command Type */}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Command Type</label>
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Command Type</label>
                 <div className="relative">
                   <select
                     className="enterprise-input w-full pr-8 appearance-none"
@@ -1176,16 +1176,16 @@ export default function AutomationSystemsPage() {
                       <option key={ct} value={ct}>{ct}</option>
                     ))}
                   </select>
-                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
                 </div>
               </div>
 
               {/* Priority & Timeout */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
                     Priority
-                    <span className="ml-1 text-gray-400 font-normal">(1=highest)</span>
+                    <span className="ml-1 text-[var(--text-tertiary)] font-normal">(1=highest)</span>
                   </label>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map(p => (
@@ -1195,8 +1195,8 @@ export default function AutomationSystemsPage() {
                         className={clsx(
                           'w-10 h-9 rounded-lg text-sm font-bold transition-all',
                           commandForm.priority === p
-                            ? p <= 2 ? 'bg-red-500 text-white shadow-sm' : p === 3 ? 'bg-amber-500 text-white shadow-sm' : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 shadow-sm'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600',
+                            ? p <= 2 ? 'bg-[var(--nexus-error-50)]0 text-white shadow-sm' : p === 3 ? 'bg-[var(--nexus-warning-50)]0 text-white shadow-sm' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)] text-[var(--text-secondary)] shadow-sm'
+                            : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                         )}
                       >
                         {p}
@@ -1205,7 +1205,7 @@ export default function AutomationSystemsPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Timeout (ms)</label>
+                  <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Timeout (ms)</label>
                   <input
                     type="number"
                     className="enterprise-input w-full"
@@ -1220,7 +1220,7 @@ export default function AutomationSystemsPage() {
               {/* Parameters */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-gray-600 dark:text-gray-400">Parameters</label>
+                  <label className="text-xs font-semibold text-[var(--text-secondary)]">Parameters</label>
                   <button
                     onClick={addParameter}
                     className="text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1"
@@ -1248,7 +1248,7 @@ export default function AutomationSystemsPage() {
                       {commandForm.parameters.length > 1 && (
                         <button
                           onClick={() => removeParameter(i)}
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] hover:bg-[var(--nexus-error-50)] dark:hover:bg-[var(--nexus-error-900)]/20 transition-colors"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -1260,7 +1260,7 @@ export default function AutomationSystemsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-default)]">
               <button
                 onClick={() => setShowCommandModal(false)}
                 className="enterprise-btn enterprise-btn-secondary text-sm"
@@ -1287,22 +1287,22 @@ export default function AutomationSystemsPage() {
       {/* MODAL: Resolve Alert                                               */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {showResolveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-2xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-emerald-500" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Resolve Alert</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Resolve Alert</h2>
               </div>
               <button
                 onClick={() => { setShowResolveModal(null); setResolveNotes('') }}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1.5">Resolution Notes</label>
+              <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">Resolution Notes</label>
               <textarea
                 className="enterprise-input w-full h-28 resize-none"
                 placeholder="Describe how the alert was resolved..."
@@ -1310,7 +1310,7 @@ export default function AutomationSystemsPage() {
                 onChange={e => setResolveNotes(e.target.value)}
               />
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-default)]">
               <button
                 onClick={() => { setShowResolveModal(null); setResolveNotes('') }}
                 className="enterprise-btn enterprise-btn-secondary text-sm"

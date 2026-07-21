@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { memo, ReactNode } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -24,7 +24,7 @@ const iconColorMap = {
   ai: 'text-violet-600 bg-violet-50 ring-violet-500/20 dark:text-violet-400 dark:bg-violet-900/30 dark:ring-violet-400/20',
 }
 
-export default function EnterpriseKPICard({ title, value, subtitle, icon, trend, trendValue, color = 'primary', loading, onClick, className }: Props) {
+export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, trend, trendValue, color = 'primary', loading, onClick, className }: Props) {
   return (
     <div
       className={clsx(
@@ -80,4 +80,4 @@ export default function EnterpriseKPICard({ title, value, subtitle, icon, trend,
       )}
     </div>
   )
-}
+})

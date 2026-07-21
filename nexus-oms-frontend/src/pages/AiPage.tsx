@@ -362,25 +362,25 @@ export default function AiPage() {
                 </PermissionGate>
               </div>
               {testResult && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg border">
+                <div className="mt-4 p-4 bg-[var(--surface-sunken)] rounded-lg border">
                   <h4 className="font-semibold text-sm mb-2">Prediction Result</h4>
                   {testResult.error ? (
-                    <p className="text-sm text-red-600">{testResult.error}</p>
+                    <p className="text-sm text-[var(--nexus-error-600)]">{testResult.error}</p>
                   ) : (
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="font-medium">{testResult.prediction ?? 'N/A'}</span>
-                        <span className="text-gray-500">Confidence: {Math.round((testResult.confidence ?? 0) * 100)}%</span>
+                        <span className="text-[var(--text-secondary)]">Confidence: {Math.round((testResult.confidence ?? 0) * 100)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div className="bg-purple-600 h-2.5 rounded-full transition-all duration-500"
+                      <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
+                        <div className="bg-[var(--nexus-ai-600)] h-2.5 rounded-full transition-all duration-500"
                              style={{ width: `${Math.round((testResult.confidence ?? 0) * 100)}%` }} />
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{testResult.explanation}</p>
+                      <p className="text-sm text-[var(--text-secondary)] mt-1">{testResult.explanation}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        <span className="text-xs text-gray-400">Model: {testResult.modelVersion ?? 'N/A'}</span>
+                        <span className="text-xs text-[var(--text-tertiary)]">Model: {testResult.modelVersion ?? 'N/A'}</span>
                         {testResult.featuresUsed && (
-                          <span className="text-xs text-gray-400">• Features: {testResult.featuresUsed.join(', ')}</span>
+                          <span className="text-xs text-[var(--text-tertiary)]">• Features: {testResult.featuresUsed.join(', ')}</span>
                         )}
                       </div>
                     </div>

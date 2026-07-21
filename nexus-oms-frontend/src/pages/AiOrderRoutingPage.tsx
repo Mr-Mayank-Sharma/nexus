@@ -41,33 +41,33 @@ const MOCK_QUEUE: QueueOrder[] = [
 ]
 
 const DECISION_TYPE_STYLES: Record<string, string> = {
-  fraud_check: 'bg-red-100 text-red-700 border-red-200',
-  routing: 'bg-blue-100 text-blue-700 border-blue-200',
-  carrier_select: 'bg-purple-100 text-purple-700 border-purple-200',
-  inventory_alloc: 'bg-green-100 text-green-700 border-green-200',
+  fraud_check: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)]',
+  routing: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] border-[var(--nexus-primary-200)]',
+  carrier_select: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] border-[var(--nexus-ai-200)]',
+  inventory_alloc: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]',
   packaging: 'bg-orange-100 text-orange-700 border-orange-200',
-  picking: 'bg-teal-100 text-teal-700 border-teal-200',
+  picking: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]',
 }
 
 function statusColor(status: AiAgent['status']) {
   switch (status) {
-    case 'active': return 'bg-green-500'
-    case 'training': return 'bg-yellow-500'
-    case 'idle': return 'bg-yellow-400'
-    case 'error': return 'bg-red-500'
+    case 'active': return 'bg-[var(--nexus-success-50)]0'
+    case 'training': return 'bg-[var(--nexus-warning-50)]0'
+    case 'idle': return 'bg-[var(--nexus-warning-400)]'
+    case 'error': return 'bg-[var(--nexus-error-50)]0'
   }
 }
 
 function confidenceColor(value: number) {
-  if (value >= 90) return 'bg-green-500'
-  if (value >= 70) return 'bg-amber-500'
-  return 'bg-red-500'
+  if (value >= 90) return 'bg-[var(--nexus-success-50)]0'
+  if (value >= 70) return 'bg-[var(--nexus-warning-50)]0'
+  return 'bg-[var(--nexus-error-50)]0'
 }
 
 function confidenceTextColor(value: number) {
-  if (value >= 90) return 'text-green-600'
-  if (value >= 70) return 'text-amber-600'
-  return 'text-red-600'
+  if (value >= 90) return 'text-[var(--nexus-success-600)]'
+  if (value >= 70) return 'text-[var(--nexus-warning-600)]'
+  return 'text-[var(--nexus-error-600)]'
 }
 
 function formatTime(ms: number): string {
@@ -122,7 +122,7 @@ export default function AiOrderRoutingPage() {
       <div className="enterprise-page-header">
         <div>
           <h1 className="flex items-center gap-2.5">
-            <GitBranch className="w-7 h-7 text-primary-500" />
+            <GitBranch className="w-7 h-7 text-[var(--nexus-primary-500)]" />
             Order Routing & Brokering
           </h1>
           <p>AI-powered fulfillment decisions</p>
@@ -146,19 +146,19 @@ export default function AiOrderRoutingPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)] mb-1">Auto-approved Today</p>
-          <p className="text-2xl font-bold text-green-600">1,247</p>
+          <p className="text-2xl font-bold text-[var(--nexus-success-600)]">1,247</p>
         </div>
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)] mb-1">Flagged for Review</p>
-          <p className="text-2xl font-bold text-amber-600">34</p>
+          <p className="text-2xl font-bold text-[var(--nexus-warning-600)]">34</p>
         </div>
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)] mb-1">Override Rate</p>
-          <p className="text-2xl font-bold text-purple-600">2.7%</p>
+          <p className="text-2xl font-bold text-[var(--nexus-ai-600)]">2.7%</p>
         </div>
         <div className="enterprise-card p-4">
           <p className="text-xs text-[var(--text-tertiary)] mb-1">Avg Confidence</p>
-          <p className="text-2xl font-bold text-blue-600">95.3%</p>
+          <p className="text-2xl font-bold text-[var(--nexus-primary-600)]">95.3%</p>
         </div>
       </div>
 
@@ -166,18 +166,18 @@ export default function AiOrderRoutingPage() {
       <div className="enterprise-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-600" />
+            <Brain className="w-5 h-5 text-[var(--nexus-ai-600)]" />
             <h2 className="font-semibold text-[var(--text-primary)]">AI Agent Status</h2>
           </div>
           <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-green-500" /> {activeAgents} Active
+              <span className="w-2 h-2 rounded-full bg-[var(--nexus-success-50)]0" /> {activeAgents} Active
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-yellow-500" /> {trainingAgents} Idle/Training
+              <span className="w-2 h-2 rounded-full bg-[var(--nexus-warning-50)]0" /> {trainingAgents} Idle/Training
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-red-500" /> {errorAgents} Error
+              <span className="w-2 h-2 rounded-full bg-[var(--nexus-error-50)]0" /> {errorAgents} Error
             </span>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function AiOrderRoutingPage() {
                         ${order.value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] px-2 py-0.5 rounded-full">
                           <Clock className="w-3 h-3" />
                           {order.slaRemaining}
                         </span>
@@ -310,7 +310,7 @@ export default function AiOrderRoutingPage() {
                         <div className="flex items-center justify-center gap-1">
                           <PermissionGate resource="settings" action="edit">
                             <button
-                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] hover:bg-[var(--nexus-success-100)] border border-[var(--nexus-success-200)] transition-colors"
                               title="Approve"
                               onClick={() => approveMutation.mutate(order.id)}
                             >
@@ -319,7 +319,7 @@ export default function AiOrderRoutingPage() {
                           </PermissionGate>
                           <PermissionGate resource="settings" action="edit">
                             <button
-                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)] hover:bg-[var(--nexus-warning-100)] border border-[var(--nexus-warning-200)] transition-colors"
                               title="Override"
                               onClick={() => {
                                 setOverrideState({
@@ -337,7 +337,7 @@ export default function AiOrderRoutingPage() {
                           </PermissionGate>
                           <PermissionGate resource="settings" action="delete">
                             <button
-                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors"
+                              className="inline-flex items-center gap-1 px-2 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)] border border-[var(--nexus-error-200)] transition-colors"
                               title="Reject"
                               onClick={() => rejectMutation.mutate(order.id)}
                             >
@@ -386,7 +386,7 @@ export default function AiOrderRoutingPage() {
                 <tbody className="divide-y divide-[var(--border-subtle)]">
                   {decisions.map(dec => {
                     const decisionTypeLabel = dec.decisionType.replace(/_/g, ' ')
-                    const badgeColor = DECISION_TYPE_STYLES[dec.decisionType] || 'bg-gray-100 text-gray-700 border-gray-200'
+                    const badgeColor = DECISION_TYPE_STYLES[dec.decisionType] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)] border-[var(--border-default)]'
                     return (
                       <tr key={dec.id} className="enterprise-table-row">
                         <td className="px-4 py-3 text-xs text-[var(--text-tertiary)] whitespace-nowrap">
@@ -416,12 +416,12 @@ export default function AiOrderRoutingPage() {
                         </td>
                         <td className="px-4 py-3">
                           {dec.wasOverridden ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-xs text-[var(--nexus-warning-700)] bg-[var(--nexus-warning-50)] px-2 py-0.5 rounded-full">
                               <AlertTriangle className="w-3 h-3" />
                               {dec.overriddenBy ? `Overridden by ${dec.overriddenBy}` : 'Overridden'}
                             </span>
                           ) : (
-                            <span className="text-xs text-green-600">Auto-approved</span>
+                            <span className="text-xs text-[var(--nexus-success-600)]">Auto-approved</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-right text-xs text-[var(--text-tertiary)]">
@@ -439,33 +439,33 @@ export default function AiOrderRoutingPage() {
 
       {/* Override Modal */}
       {overrideState && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setOverrideState(null)}>
+        <div className="enterprise-modal-overlay" onClick={() => setOverrideState(null)}>
           <div className="enterprise-card p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Override AI Decision</h2>
 
             <div className="space-y-4">
               <div>
                 <label className="enterprise-label">Current AI Recommendation</label>
-                <div className="p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="p-3 rounded-lg bg-[var(--nexus-warning-50)] border border-[var(--nexus-warning-200)]">
                   <div className="flex items-center gap-2 mb-1">
-                    <Brain className="w-4 h-4 text-amber-600" />
-                    <span className="text-sm font-medium text-amber-800">{overrideState.agentName}</span>
+                    <Brain className="w-4 h-4 text-[var(--nexus-warning-600)]" />
+                    <span className="text-sm font-medium text-[var(--nexus-warning-800)]">{overrideState.agentName}</span>
                   </div>
-                  <p className="text-sm text-amber-700">{overrideState.currentDecision}</p>
+                  <p className="text-sm text-[var(--nexus-warning-700)]">{overrideState.currentDecision}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="w-20 h-1.5 bg-amber-200 rounded-full overflow-hidden">
+                    <div className="w-20 h-1.5 bg-[var(--nexus-warning-200)] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-amber-500 rounded-full"
+                        className="h-full bg-[var(--nexus-warning-50)]0 rounded-full"
                         style={{ width: `${overrideState.currentConfidence}%` }}
                       />
                     </div>
-                    <span className="text-xs text-amber-600">{overrideState.currentConfidence}% confidence</span>
+                    <span className="text-xs text-[var(--nexus-warning-600)]">{overrideState.currentConfidence}% confidence</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="enterprise-label">Override Reason <span className="text-red-500">*</span></label>
+                <label className="enterprise-label">Override Reason <span className="text-[var(--nexus-error-500)]">*</span></label>
                 <Autocomplete
                   value={overrideReason}
                   onChange={setOverrideReason}

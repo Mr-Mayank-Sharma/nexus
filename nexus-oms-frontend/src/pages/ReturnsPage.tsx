@@ -15,13 +15,13 @@ import type { Return, ReturnItem } from '../types'
 import { useToast } from '../hooks/useToast'
 
 const STATUS_COLORS: Record<string, string> = {
-  REQUESTED: 'text-amber-600 bg-amber-50 ring-amber-500/20',
-  APPROVED: 'text-blue-600 bg-blue-50 ring-blue-500/20',
-  RECEIVED: 'text-gray-600 bg-gray-50 ring-gray-500/20',
+  REQUESTED: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] ring-amber-500/20',
+  APPROVED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-blue-500/20',
+  RECEIVED: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-gray-500/20',
   INSPECTED: 'text-violet-600 bg-violet-50 ring-violet-500/20',
   REFUNDED: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20',
-  REJECTED: 'text-red-600 bg-red-50 ring-red-500/20',
-  CANCELLED: 'text-gray-400 bg-gray-50 ring-gray-500/20',
+  REJECTED: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] ring-red-500/20',
+  CANCELLED: 'text-[var(--text-tertiary)] bg-[var(--surface-sunken)] ring-gray-500/20',
 }
 
 const STATUS_KPI_COLORS: Record<string, 'warning' | 'info' | 'neutral' | 'ai' | 'success' | 'error'> = {
@@ -297,7 +297,7 @@ export default function ReturnsPage() {
                   {ret.status === 'APPROVED' && (
                     <PermissionGate resource="returns" action="edit">
                       <button onClick={() => handleReceive(ret.id)} disabled={processing === ret.id}
-                        className="enterprise-btn enterprise-btn-sm bg-blue-600 text-white hover:bg-blue-700 border-none disabled:opacity-50">
+                        className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] border-none disabled:opacity-50">
                         {processing === ret.id ? <div className="enterprise-spinner" /> : <PackageCheck className="w-3 h-3" />}
                         Receive
                       </button>
@@ -365,7 +365,7 @@ export default function ReturnsPage() {
                             </div>
                             <div className="flex items-center gap-3">
                               <span className="text-[var(--text-tertiary)]">x{item.quantity}</span>
-                              {item.condition && <span className={clsx('enterprise-tag', (item.condition === 'DAMAGED' || item.condition === 'DEFECTIVE') && '!text-red-600 !bg-red-50')}>{item.condition}</span>}
+                              {item.condition && <span className={clsx('enterprise-tag', (item.condition === 'DAMAGED' || item.condition === 'DEFECTIVE') && '!text-[var(--nexus-error-600)] !bg-[var(--nexus-error-50)]')}>{item.condition}</span>}
                               {item.disposition && <span className="enterprise-tag">{DISPOSITION_LABELS[item.disposition] || item.disposition}</span>}
                             </div>
                           </div>
@@ -377,8 +377,8 @@ export default function ReturnsPage() {
                       <p className="text-sm text-[var(--text-secondary)] bg-[var(--bg-tertiary)] rounded-lg p-3">{ret.reason || 'No reason provided'}</p>
                       {ret.rejectedReason && (
                         <>
-                          <h4 className="font-medium text-red-600 mt-4 mb-2">Rejection Reason</h4>
-                          <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg p-3">{ret.rejectedReason}</p>
+                          <h4 className="font-medium text-[var(--nexus-error-600)] mt-4 mb-2">Rejection Reason</h4>
+                          <p className="text-sm text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 rounded-lg p-3">{ret.rejectedReason}</p>
                         </>
                       )}
                     </div>
@@ -437,7 +437,7 @@ export default function ReturnsPage() {
               <div className="enterprise-form-group">
                 <div className="flex items-center justify-between">
                   <label>Return Items</label>
-                  <button onClick={() => setCreateItems(i => [...i, { sku: '', productName: '', quantity: 1 }])} className="text-xs text-primary-600 hover:underline font-medium">+ Add Item</button>
+                  <button onClick={() => setCreateItems(i => [...i, { sku: '', productName: '', quantity: 1 }])} className="text-xs text-[var(--text-brand)] hover:underline font-medium">+ Add Item</button>
                 </div>
                 <div className="space-y-2 mt-2">
                   {createItems.map((item, i) => (
@@ -446,7 +446,7 @@ export default function ReturnsPage() {
                       <input type="text" placeholder="Product" className="enterprise-input flex-1" value={item.productName} onChange={e => { const items = [...createItems]; items[i] = { ...items[i], productName: e.target.value }; setCreateItems(items) }} />
                       <input type="number" min={1} className="enterprise-input w-16" value={item.quantity} onChange={e => { const items = [...createItems]; items[i] = { ...items[i], quantity: parseInt(e.target.value) || 1 }; setCreateItems(items) }} />
                       {createItems.length > 1 && (
-                        <button onClick={() => setCreateItems(items => items.filter((_, idx) => idx !== i))} className="p-1.5 text-red-400 hover:text-red-600"><X className="w-4 h-4" /></button>
+                        <button onClick={() => setCreateItems(items => items.filter((_, idx) => idx !== i))} className="p-1.5 text-[var(--nexus-error-400)] hover:text-[var(--nexus-error-600)]"><X className="w-4 h-4" /></button>
                       )}
                     </div>
                   ))}
@@ -581,7 +581,7 @@ export default function ReturnsPage() {
             <div className="enterprise-modal-footer">
               <button onClick={() => setRejectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="returns" action="delete">
-                <button onClick={handleReject} disabled={processing === 'reject'} className="enterprise-btn bg-red-600 text-white hover:bg-red-700 border-none disabled:opacity-50">
+                <button onClick={handleReject} disabled={processing === 'reject'} className="enterprise-btn bg-[var(--nexus-error-600)] text-white hover:bg-[var(--nexus-error-700)] border-none disabled:opacity-50">
                   {processing === 'reject' ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                   Reject Return
                 </button>

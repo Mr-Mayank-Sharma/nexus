@@ -28,7 +28,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'BigCommerce',
     description: 'Connect your BigCommerce store to sync orders, products, inventory, shipments, and refunds',
     icon: <ShoppingCart className="w-6 h-6" />,
-    color: 'bg-blue-500',
+    color: 'bg-[var(--nexus-primary-50)]0',
     status: 'connected',
     category: 'E-Commerce',
   },
@@ -46,7 +46,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'eBay',
     description: 'Connect eBay stores to sync orders, map categories, and manage inventory across sites',
     icon: <ShoppingBag className="w-6 h-6" />,
-    color: 'bg-purple-500',
+    color: 'bg-[var(--nexus-ai-50)]0',
     status: 'available',
     category: 'Marketplace',
   },
@@ -73,7 +73,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'WooCommerce',
     description: 'Connect WooCommerce sites to import orders, sync inventory, and manage fulfillment',
     icon: <ShoppingCart className="w-6 h-6" />,
-    color: 'bg-indigo-500',
+    color: 'bg-[var(--nexus-primary-50)]0',
     status: 'coming_soon',
     category: 'E-Commerce',
   },
@@ -91,7 +91,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'Square',
     description: 'Connect Square POS for omnichannel order management and inventory sync',
     icon: <CreditCard className="w-6 h-6" />,
-    color: 'bg-teal-500',
+    color: 'bg-[var(--nexus-success-50)]0',
     status: 'coming_soon',
     category: 'POS',
   },
@@ -100,16 +100,16 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'Lightspeed',
     description: 'Integrate Lightspeed Retail for unified inventory and multi-channel selling',
     icon: <Store className="w-6 h-6" />,
-    color: 'bg-cyan-500',
+    color: 'bg-[var(--nexus-info-50)]0',
     status: 'coming_soon',
     category: 'POS',
   },
 ]
 
 const STATUS_CONFIG = {
-  connected: { label: 'Connected', icon: <CheckCircle className="w-3.5 h-3.5" />, className: 'bg-green-50 text-green-700 border-green-200' },
-  available: { label: 'Available', icon: <Wifi className="w-3.5 h-3.5" />, className: 'bg-blue-50 text-blue-700 border-blue-200' },
-  coming_soon: { label: 'Coming Soon', icon: <Clock className="w-3.5 h-3.5" />, className: 'bg-gray-50 text-gray-500 border-gray-200' },
+  connected: { label: 'Connected', icon: <CheckCircle className="w-3.5 h-3.5" />, className: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]' },
+  available: { label: 'Available', icon: <Wifi className="w-3.5 h-3.5" />, className: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] border-[var(--nexus-primary-200)]' },
+  coming_soon: { label: 'Coming Soon', icon: <Clock className="w-3.5 h-3.5" />, className: 'bg-[var(--surface-sunken)] text-[var(--text-secondary)] border-[var(--border-default)]' },
 }
 
 export default function IntegrationMarketplacePage() {
@@ -196,21 +196,21 @@ export default function IntegrationMarketplacePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><Grid3X3 className="w-7 h-7 text-primary-500" /> Integration Marketplace</h1>
-          <p className="text-sm text-gray-500 mt-1">Browse and connect your sales channels, marketplaces, and commerce platforms</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Grid3X3 className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Integration Marketplace</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Browse and connect your sales channels, marketplaces, and commerce platforms</p>
         </div>
-        <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
           <div className="flex items-center gap-1.5">
-            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-            <span className="font-medium text-gray-700">{statusCounts.connected}</span> Connected
+            <CheckCircle className="w-3.5 h-3.5 text-[var(--nexus-success-500)]" />
+            <span className="font-medium text-[var(--text-secondary)]">{statusCounts.connected}</span> Connected
           </div>
           <div className="flex items-center gap-1.5">
-            <Wifi className="w-3.5 h-3.5 text-blue-500" />
-            <span className="font-medium text-gray-700">{statusCounts.available}</span> Available
+            <Wifi className="w-3.5 h-3.5 text-[var(--nexus-primary-500)]" />
+            <span className="font-medium text-[var(--text-secondary)]">{statusCounts.available}</span> Available
           </div>
           <div className="flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-gray-400" />
-            <span className="font-medium text-gray-700">{statusCounts.coming_soon}</span> Coming Soon
+            <Clock className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
+            <span className="font-medium text-[var(--text-secondary)]">{statusCounts.coming_soon}</span> Coming Soon
           </div>
         </div>
       </div>
@@ -220,7 +220,7 @@ export default function IntegrationMarketplacePage() {
         <div className="flex items-center gap-4">
           <Autocomplete value={searchQuery} onChange={setSearchQuery} placeholder="Search integrations..." minChars={0} className="flex-1 max-w-md" />
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
               <Filter className="w-3.5 h-3.5" /> Status:
             </div>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input text-xs w-32">
@@ -240,39 +240,39 @@ export default function IntegrationMarketplacePage() {
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-4">
         <div className="card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
-            <Plug className="w-5 h-5 text-primary-600" />
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)] flex items-center justify-center">
+            <Plug className="w-5 h-5 text-[var(--text-brand)]" />
           </div>
           <div>
-            <p className="text-lg font-bold text-gray-900">{statusCounts.total}</p>
-            <p className="text-xs text-gray-500">Total Integrations</p>
+            <p className="text-lg font-bold text-[var(--text-primary)]">{statusCounts.total}</p>
+            <p className="text-xs text-[var(--text-secondary)]">Total Integrations</p>
           </div>
         </div>
         <div className="card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-            <CheckCircle className="w-5 h-5 text-green-600" />
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-success-50)] flex items-center justify-center">
+            <CheckCircle className="w-5 h-5 text-[var(--nexus-success-600)]" />
           </div>
           <div>
-            <p className="text-lg font-bold text-gray-900">{statusCounts.connected}</p>
-            <p className="text-xs text-gray-500">Connected</p>
+            <p className="text-lg font-bold text-[var(--text-primary)]">{statusCounts.connected}</p>
+            <p className="text-xs text-[var(--text-secondary)]">Connected</p>
           </div>
         </div>
         <div className="card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-            <Zap className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)] flex items-center justify-center">
+            <Zap className="w-5 h-5 text-[var(--nexus-primary-600)]" />
           </div>
           <div>
-            <p className="text-lg font-bold text-gray-900">{statusCounts.available}</p>
-            <p className="text-xs text-gray-500">Ready to Connect</p>
+            <p className="text-lg font-bold text-[var(--text-primary)]">{statusCounts.available}</p>
+            <p className="text-xs text-[var(--text-secondary)]">Ready to Connect</p>
           </div>
         </div>
         <div className="card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-warning-50)] flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-[var(--nexus-warning-600)]" />
           </div>
           <div>
-            <p className="text-lg font-bold text-gray-900">{statusCounts.coming_soon}</p>
-            <p className="text-xs text-gray-500">In Development</p>
+            <p className="text-lg font-bold text-[var(--text-primary)]">{statusCounts.coming_soon}</p>
+            <p className="text-xs text-[var(--text-secondary)]">In Development</p>
           </div>
         </div>
       </div>
@@ -280,8 +280,8 @@ export default function IntegrationMarketplacePage() {
       {/* Integration Grid */}
       {filteredIntegrations.length === 0 ? (
         <div className="card p-12 text-center">
-          <Search className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">No integrations match your search criteria</p>
+          <Search className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
+          <p className="text-sm text-[var(--text-secondary)]">No integrations match your search criteria</p>
           <button onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); setCategoryFilter('ALL') }}
             className="btn-secondary text-xs mt-3">Clear Filters</button>
         </div>
@@ -304,11 +304,11 @@ export default function IntegrationMarketplacePage() {
                   </span>
                 </div>
 
-                <h3 className="text-sm font-semibold text-gray-900 mb-1">{integration.name}</h3>
-                <p className="text-xs text-gray-500 mb-4 line-clamp-2">{integration.description}</p>
+                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">{integration.name}</h3>
+                <p className="text-xs text-[var(--text-secondary)] mb-4 line-clamp-2">{integration.description}</p>
 
                 <div className="flex items-center gap-1.5 mb-4">
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">{integration.category}</span>
+                  <span className="text-xs bg-[var(--surface-muted)] text-[var(--text-secondary)] px-2 py-0.5 rounded">{integration.category}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -317,7 +317,7 @@ export default function IntegrationMarketplacePage() {
                       <button onClick={() => handleOpen(integration.id)} className="btn-primary text-xs flex-1">
                         <ExternalLink className="w-3.5 h-3.5" /> Open
                       </button>
-                      <button className="btn-ghost text-xs text-green-600">
+                      <button className="btn-ghost text-xs text-[var(--nexus-success-600)]">
                         <CheckCircle className="w-3.5 h-3.5" />
                       </button>
                     </>
@@ -353,8 +353,8 @@ export default function IntegrationMarketplacePage() {
         return (
           <div key={cat} className="space-y-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold text-gray-900">{cat}</h2>
-              <span className="text-xs text-gray-400">{catIntegrations.length} integrations</span>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)]">{cat}</h2>
+              <span className="text-xs text-[var(--text-tertiary)]">{catIntegrations.length} integrations</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {catIntegrations.map(integration => {
@@ -368,11 +368,11 @@ export default function IntegrationMarketplacePage() {
                       <div className="scale-75">{integration.icon}</div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{integration.name}</p>
+                      <p className="text-sm font-medium text-[var(--text-primary)] truncate">{integration.name}</p>
                       <span className={clsx('inline-flex items-center gap-1 text-xs font-medium mt-0.5', {
-                        'text-green-600': integration.status === 'connected',
-                        'text-blue-600': integration.status === 'available',
-                        'text-gray-400': integration.status === 'coming_soon',
+                        'text-[var(--nexus-success-600)]': integration.status === 'connected',
+                        'text-[var(--nexus-primary-600)]': integration.status === 'available',
+                        'text-[var(--text-tertiary)]': integration.status === 'coming_soon',
                       })}>
                         {statusCfg.label}
                       </span>
@@ -382,7 +382,7 @@ export default function IntegrationMarketplacePage() {
                         disabled={connecting === integration.id || integration.status === 'coming_soon'}
                         className={clsx(
                           'btn-ghost p-1.5 rounded-lg transition-colors',
-                          integration.status === 'connected' ? 'text-green-500' : 'text-gray-300 hover:text-primary-500',
+                          integration.status === 'connected' ? 'text-[var(--nexus-success-500)]' : 'text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-500)]',
                           integration.status === 'coming_soon' && 'opacity-30 cursor-not-allowed',
                         )}>
                         {connecting === integration.id ? <Loader2 className="w-4 h-4 animate-spin" /> :

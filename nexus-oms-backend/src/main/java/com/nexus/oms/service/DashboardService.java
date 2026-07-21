@@ -81,6 +81,91 @@ public class DashboardService {
         return exceptions;
     }
 
+    @Cacheable(value = "dashboard", key = "'alerts:' + #tenantId")
+    public List<Map<String, Object>> getAlerts(UUID tenantId) {
+        List<Map<String, Object>> alerts = new ArrayList<>();
+        exceptionRepository.findByTenantIdAndStatus(tenantId, "OPEN", PageRequest.of(0, 20))
+                .forEach(ex -> {
+                    Map<String, Object> alert = new LinkedHashMap<>();
+                    alert.put("id", ex.getId().toString());
+                    alert.put("message", ex.getMessage() != null ? ex.getMessage() : ex.getTitle());
+                    alert.put("severity", mapSeverity(ex.getSeverity()));
+                    alert.put("type", ex.getExceptionType() != null ? ex.getExceptionType() : ex.getType());
+                    alert.put("orderId", ex.getOrderId() != null ? ex.getOrderId().toString() : null);
+                    alert.put("detectedAt", ex.getDetectedAt() != null ? ex.getDetectedAt().toString() : null);
+                    alerts.add(alert);
+                });
+        return alerts;
+    }
+
+    private String mapSeverity(String severity) {
+        if (severity == null) return "info";
+        return switch (severity.toUpperCase()) {
+            case "HIGH", "CRITICAL" -> "error";
+            case "MEDIUM" -> "warning";
+            default -> "info";
+        };
+    }
+
+    @Cacheable(value = "dashboard", key = "'status-dist:' + #tenantId")
+    public List<Map<String, Object>> getOrderStatusDistribution(UUID tenantId) {
+        List<Map<String, Object>> distribution = new ArrayList<>();
+        String[] statuses = {"PENDING", "CONFIRMED", "ALLOCATED", "PICKING", "PACKING", "SHIPPED", "DELIVERED", "CANCELLED"};
+        for (String status : statuses) {
+            long count = orderRepository.countByTenantIdAndStatus(tenantId, status);
+            if (count > 0) {
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("name", formatStatusName(status));
+                entry.put("value", count);
+                distribution.add(entry);
+            }
+        }
+        return distribution;
+    }
+
+    private String formatStatusName(String status) {
+        return switch (status) {
+            case "PENDING" -> "Pending";
+            case "CONFIRMED" -> "Processing";
+            case "ALLOCATED", "PICKING", "PACKING" -> "In Progress";
+            case "SHIPPED" -> "Shipped";
+            case "DELIVERED" -> "Delivered";
+            case "CANCELLED" -> "Cancelled";
+            default -> status.substring(0, 1) + status.substring(1).toLowerCase();
+        };
+    }
+
+    @Cacheable(value = "dashboard", key = "'task-queue:' + #tenantId")
+    public Map<String, Object> getTaskQueueSummary(UUID tenantId) {
+        long onHold = orderRepository.countByTenantIdAndStatus(tenantId, "ON_HOLD");
+        long pending = orderRepository.countByTenantIdAndStatus(tenantId, "PENDING");
+        long allocated = orderRepository.countByTenantIdAndStatus(tenantId, "ALLOCATED");
+        long picking = orderRepository.countByTenantIdAndStatus(tenantId, "PICKING");
+        long packing = orderRepository.countByTenantIdAndStatus(tenantId, "PACKING");
+
+        long openExceptions = exceptionRepository.countByTenantIdAndStatus(tenantId, "OPEN");
+        long substituteItems = exceptionRepository.countByTenantIdAndStatus(tenantId, "SUBSTITUTE_PENDING");
+        long badAddress = exceptionRepository.countByTenantIdAndStatus(tenantId, "BAD_ADDRESS");
+        long fraudRisk = exceptionRepository.countByTenantIdAndStatus(tenantId, "FRAUD_REVIEW");
+
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("holdTasks", Map.of(
+                "substituteItems", substituteItems,
+                "badAddress", badAddress,
+                "fraudRisk", fraudRisk,
+                "onHold", onHold
+        ));
+        summary.put("unbrokered", Map.of(
+                "brokeringQueue", allocated,
+                "unallocated", pending
+        ));
+        summary.put("fulfillmentQueue", Map.of(
+                "picking", picking,
+                "packing", packing
+        ));
+        return summary;
+    }
+
     @Cacheable(value = "dashboard", key = "'activity:' + #tenantId")
     public List<Map<String, Object>> getActivity(UUID tenantId) {
         List<Map<String, Object>> events = new ArrayList<>();

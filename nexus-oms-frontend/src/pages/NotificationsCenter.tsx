@@ -563,8 +563,8 @@ export default function NotificationsCenter() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${
-                        item.type === 'alert' ? 'bg-red-100 text-red-600' :
-                        item.type === 'success' ? 'bg-green-100 text-green-600' :
+                        item.type === 'alert' ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]' :
+                        item.type === 'success' ? 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-600)]' :
                         'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]'
                       }`}>
                         {typeIcons[item.type]}

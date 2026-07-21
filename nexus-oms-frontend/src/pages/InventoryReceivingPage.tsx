@@ -59,8 +59,8 @@ export default function InventoryReceivingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><PackageCheck className="w-7 h-7 text-primary-500" /> Inventory Receiving</h1>
-          <p className="text-sm text-gray-500 mt-1">Receive purchase orders, transfer orders, and returns into inventory</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><PackageCheck className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Inventory Receiving</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Receive purchase orders, transfer orders, and returns into inventory</p>
         </div>
         <PermissionGate resource="inventory" action="create">
           <button onClick={openCreate} className="btn-primary text-sm">
@@ -81,38 +81,38 @@ export default function InventoryReceivingPage() {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--nexus-primary-600)]" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 card">
-          <PackageCheck className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No receipts found. Create a new receipt to receive inventory.</p>
+          <PackageCheck className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
+          <p className="text-[var(--text-secondary)] text-sm">No receipts found. Create a new receipt to receive inventory.</p>
         </div>
       ) : (
         <div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">SKU</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Product</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Qty</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Reference</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">SKU</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Product</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Qty</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Reference</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filtered.map(receipt => (
-                  <tr key={receipt.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3 text-sm font-medium text-gray-900">{receipt.sku}</td>
-                    <td className="px-6 py-3 text-sm text-gray-500">{receipt.productName || '-'}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700 text-center">{receipt.quantity}</td>
-                    <td className="px-6 py-3 text-sm text-gray-700">
-                      <span className="bg-gray-100 px-2 py-0.5 rounded text-xs font-medium">{receipt.receiptType}</span>
+                  <tr key={receipt.id} className="hover:bg-[var(--surface-sunken)]">
+                    <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{receipt.sku}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">{receipt.productName || '-'}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-center">{receipt.quantity}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">
+                      <span className="bg-[var(--surface-muted)] px-2 py-0.5 rounded text-xs font-medium">{receipt.receiptType}</span>
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-500">{receipt.referenceNumber || '-'}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">{receipt.referenceNumber || '-'}</td>
                     <td className="px-6 py-3 text-center"><StatusBadge status={receipt.status} size="sm" /></td>
                     <td className="px-6 py-3 text-right">
                       {receipt.status === 'PENDING' ? (
@@ -122,7 +122,7 @@ export default function InventoryReceivingPage() {
                           </button>
                         </PermissionGate>
                       ) : (
-                        <span className="text-xs text-gray-400">Received by {receipt.receivedBy || 'system'}</span>
+                        <span className="text-xs text-[var(--text-tertiary)]">Received by {receipt.receivedBy || 'system'}</span>
                       )}
                     </td>
                   </tr>
@@ -134,16 +134,16 @@ export default function InventoryReceivingPage() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">New Inventory Receipt</h2>
-              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Inventory Receipt</h2>
+              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Receipt Type</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Receipt Type</label>
                   <select value={form.receiptType} onChange={e => setForm({ ...form, receiptType: e.target.value })} className="input w-full">
                     <option value="PO">Purchase Order</option>
                     <option value="TRANSFER">Transfer Order</option>
@@ -152,46 +152,46 @@ export default function InventoryReceivingPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Node ID</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Node ID</label>
                   <input value={form.nodeId} onChange={e => setForm({ ...form, nodeId: e.target.value })} className="input w-full" placeholder="Warehouse node UUID" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">SKU</label>
                   <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="input w-full" placeholder="e.g. PROD-001" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Product Name</label>
                   <input value={form.productName} onChange={e => setForm({ ...form, productName: e.target.value })} className="input w-full" placeholder="Product name" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Quantity</label>
                   <input type="number" value={form.quantity} onChange={e => setForm({ ...form, quantity: parseInt(e.target.value) || 1 })} className="input w-full" min={1} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Unit Cost</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Unit Cost</label>
                   <input type="number" value={form.unitCost} onChange={e => setForm({ ...form, unitCost: parseFloat(e.target.value) || 0 })} className="input w-full" min={0} step={0.01} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Reference Number</label>
                 <input value={form.referenceNumber} onChange={e => setForm({ ...form, referenceNumber: e.target.value })} className="input w-full" placeholder="PO-12345" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lot Number</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Lot Number</label>
                   <input value={form.lotNumber} onChange={e => setForm({ ...form, lotNumber: e.target.value })} className="input w-full" placeholder="LOT-001" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Expiry Date</label>
                   <input type="date" value={form.expiryDate} onChange={e => setForm({ ...form, expiryDate: e.target.value })} className="input w-full" />
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="inventory" action="create">
                 <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">

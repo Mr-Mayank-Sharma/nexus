@@ -75,6 +75,15 @@ const InvoicingPage = lazy(() => import('./pages/InvoicingPage'))
 const WorkflowsPage = lazy(() => import('./pages/WorkflowsPage'))
 const DocumentsPage = lazy(() => import('./pages/DocumentsPage'))
 const UsersPage = lazy(() => import('./pages/UsersPage'))
+const TransfersPage = lazy(() => import('./pages/TransfersPage'))
+const BrokeringQueuePage = lazy(() => import('./pages/BrokeringQueuePage'))
+const RejectionsPage = lazy(() => import('./pages/RejectionsPage'))
+const PickersPage = lazy(() => import('./pages/PickersPage'))
+const OrderApprovalsPage = lazy(() => import('./pages/OrderApprovalsPage'))
+const FulfillmentLimitsPage = lazy(() => import('./pages/FulfillmentLimitsPage'))
+const BopisAppPage = lazy(() => import('./pages/BopisAppPage'))
+const ReplenishmentPage = lazy(() => import('./pages/ReplenishmentPage'))
+const FreightAuditPage = lazy(() => import('./pages/FreightAuditPage'))
 
 function PageLoader() {
   return (
@@ -163,6 +172,15 @@ export default function App() {
           <Route path="report-builder" element={<ReportBuilderPage />} />
           <Route path="returns-enhanced" element={<ReturnsEnhancedPage />} />
           <Route path="payments" element={<PaymentsPage />} />
+          <Route path="transfers" element={<TransfersPage />} />
+          <Route path="brokering" element={<BrokeringQueuePage />} />
+          <Route path="rejections" element={<RejectionsPage />} />
+          <Route path="pickers" element={<PickersPage />} />
+          <Route path="order-approvals" element={<OrderApprovalsPage />} />
+          <Route path="fulfillment-limits" element={<FulfillmentLimitsPage />} />
+          <Route path="bopis-app" element={<BopisAppPage />} />
+          <Route path="replenishment" element={<ReplenishmentPage />} />
+          <Route path="freight-audit" element={<FreightAuditPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

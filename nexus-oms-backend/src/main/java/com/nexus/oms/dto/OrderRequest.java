@@ -32,6 +32,8 @@ public class OrderRequest {
     @Valid
     private List<OrderItemRequest> items;
 
+    private String currency;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -41,6 +43,7 @@ public class OrderRequest {
         private String city;
         private String state;
         private String pincode;
+        private String country;
         private BigDecimal lat;
         private BigDecimal lon;
     }

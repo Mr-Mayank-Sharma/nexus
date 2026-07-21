@@ -35,10 +35,10 @@ export default function AuditPage() {
   )
 
   const statusIcon: Record<string, React.ReactNode> = {
-    SUCCESS: <CheckCircle className="w-4 h-4 text-green-500" />,
-    FAILED: <XCircle className="w-4 h-4 text-red-500" />,
-    PENDING: <Clock className="w-4 h-4 text-yellow-500" />,
-    ERROR: <AlertTriangle className="w-4 h-4 text-red-500" />,
+    SUCCESS: <CheckCircle className="w-4 h-4 text-[var(--nexus-success-500)]" />,
+    FAILED: <XCircle className="w-4 h-4 text-[var(--nexus-error-500)]" />,
+    PENDING: <Clock className="w-4 h-4 text-[var(--nexus-warning-500)]" />,
+    ERROR: <AlertTriangle className="w-4 h-4 text-[var(--nexus-error-500)]" />,
   }
 
   return (
@@ -110,7 +110,7 @@ export default function AuditPage() {
                       <td className="px-4 py-3 text-sm text-[var(--text-primary)]">{entry.action}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
-                          {statusIcon[entry.status] || <Clock className="w-4 h-4 text-gray-400" />}
+                          {statusIcon[entry.status] || <Clock className="w-4 h-4 text-[var(--text-tertiary)]" />}
                           <EnterpriseStatusBadge status={entry.status === 'SUCCESS' ? 'success' : entry.status === 'FAILED' || entry.status === 'ERROR' ? 'error' : 'pending'} label={entry.status} size="sm" />
                         </div>
                       </td>
@@ -136,8 +136,8 @@ export default function AuditPage() {
                             </div>
                             {entry.errorMessage && (
                               <div>
-                                <p className="font-semibold text-red-500 mb-1">Error</p>
-                                <p className="text-red-400">{entry.errorMessage}</p>
+                                <p className="font-semibold text-[var(--nexus-error-500)] mb-1">Error</p>
+                                <p className="text-[var(--nexus-error-400)]">{entry.errorMessage}</p>
                               </div>
                             )}
                             {entry.requestPayload && (

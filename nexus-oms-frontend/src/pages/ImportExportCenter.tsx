@@ -265,7 +265,7 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
           {' / '}
           <span className="text-emerald-600">{row.successCount?.toLocaleString() || '0'}</span>
           {' / '}
-          <span className={row.errorCount > 0 ? 'text-red-500' : 'text-gray-400'}>{row.errorCount?.toLocaleString() || '0'}</span>
+          <span className={row.errorCount > 0 ? 'text-[var(--nexus-error-500)]' : 'text-[var(--text-tertiary)]'}>{row.errorCount?.toLocaleString() || '0'}</span>
         </span>
       ),
     },
@@ -280,14 +280,14 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
           </button>
           {row.status === 'FAILED' && (
             <PermissionGate resource="import" action="edit">
-              <button onClick={() => handleRetryImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-primary-600" title="Retry">
+              <button onClick={() => handleRetryImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-[var(--text-brand)]" title="Retry">
                 <RefreshCw className="w-4 h-4" />
               </button>
             </PermissionGate>
           )}
           {['PROCESSING', 'VALIDATING', 'PENDING'].includes(row.status) && (
             <PermissionGate resource="import" action="delete">
-              <button onClick={() => handleCancelImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-red-500" title="Cancel">
+              <button onClick={() => handleCancelImport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-[var(--nexus-error-500)]" title="Cancel">
                 <XCircle className="w-4 h-4" />
               </button>
             </PermissionGate>
@@ -320,12 +320,12 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
             <Eye className="w-4 h-4" />
           </button>
           {row.status === 'FAILED' && (
-            <button onClick={() => handleRetryExport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-primary-600" title="Retry">
+            <button onClick={() => handleRetryExport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-[var(--text-brand)]" title="Retry">
               <RefreshCw className="w-4 h-4" />
             </button>
           )}
           {row.status === 'PROCESSING' && (
-            <button onClick={() => handleCancelExport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-red-500" title="Cancel">
+            <button onClick={() => handleCancelExport(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-[var(--nexus-error-500)]" title="Cancel">
               <XCircle className="w-4 h-4" />
             </button>
           )}
@@ -346,7 +346,7 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
       ),
     },
     { key: 'errorMessage', label: 'Error Message', minWidth: '280px', render: (val: string) => (
-      <span className="text-sm text-gray-500 truncate block max-w-[280px]" title={val}>{val}</span>
+      <span className="text-sm text-[var(--text-secondary)] truncate block max-w-[280px]" title={val}>{val}</span>
     )},
     { key: 'retryCount', label: 'Retry Count', sortable: true, align: 'center' as const },
     { key: 'lastRetryAt', label: 'Last Retry', sortable: true, minWidth: '140px', render: (val: string) => val ? new Date(val).toLocaleString() : '-' },
@@ -360,10 +360,10 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
       key: 'actions', label: 'Actions', width: '100px',
       render: (_: any, row: integrationApi.IntegrationDLQ) => (
         <div className="flex items-center gap-1">
-          <button onClick={() => handleReplayDLQ(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-primary-600" title="Replay">
+          <button onClick={() => handleReplayDLQ(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-[var(--text-brand)]" title="Replay">
             <Play className="w-4 h-4" />
           </button>
-          <button onClick={() => handleIgnoreDLQ(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-red-500" title="Ignore">
+          <button onClick={() => handleIgnoreDLQ(row.id)} className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm p-1 text-[var(--nexus-error-500)]" title="Ignore">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -401,7 +401,7 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" />
         </div>
       ) : (
         <>
@@ -427,23 +427,23 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
                 <EnterpriseKPICard title="Pending CDC" value={stats?.pendingCdc || '0'} icon={<FileText className="w-5 h-5" />} color="warning" />
               </div>
 
-              <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Endpoint & Flow Status</h3>
+              <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+                <div className="px-5 py-4 border-b border-[var(--border-default)]">
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)]">Endpoint & Flow Status</h3>
                 </div>
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {endpoints.length === 0 ? (
-                    <div className="px-5 py-8 text-center text-sm text-gray-400">No endpoints configured</div>
+                    <div className="px-5 py-8 text-center text-sm text-[var(--text-tertiary)]">No endpoints configured</div>
                   ) : (
                     endpoints.map((ep, i) => (
                       <div key={ep.id || i} className="flex items-center justify-between px-5 py-3 text-sm">
                         <div className="flex items-center gap-3">
-                          <span className={clsx('w-2 h-2 rounded-full', ep.status === 'connected' ? 'bg-emerald-500' : 'bg-red-500')} />
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{ep.name}</span>
+                          <span className={clsx('w-2 h-2 rounded-full', ep.status === 'connected' ? 'bg-emerald-500' : 'bg-[var(--nexus-error-50)]0')} />
+                          <span className="font-medium text-[var(--text-primary)]">{ep.name}</span>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className="text-xs text-gray-400 uppercase">{ep.type}</span>
-                          <span className={clsx('text-xs font-medium', ep.status === 'connected' ? 'text-emerald-600' : 'text-red-500')}>
+                          <span className="text-xs text-[var(--text-tertiary)] uppercase">{ep.type}</span>
+                          <span className={clsx('text-xs font-medium', ep.status === 'connected' ? 'text-emerald-600' : 'text-[var(--nexus-error-500)]')}>
                             {ep.status === 'connected' ? 'Connected' : 'Disconnected'}
                           </span>
                         </div>
@@ -458,56 +458,56 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300">
+                <div className="p-2 rounded-lg bg-[var(--interactive-selected)] text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]">
                   {modalType === 'import' ? <Upload className="w-5 h-5" /> : <Download className="w-5 h-5" />}
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                   New {modalType === 'import' ? 'Import' : 'Export'} Job
                 </h2>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <X className="w-5 h-5 text-gray-400" />
+              <button onClick={() => setShowModal(false)} className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors">
+                <X className="w-5 h-5 text-[var(--text-tertiary)]" />
               </button>
             </div>
 
             <div className="p-6 space-y-5">
               <EnterpriseFormSection title="Job Details" columns={1}>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Job Name</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Job Name</label>
                   <Autocomplete className="enterprise-input w-full" placeholder={`e.g. ${modalType === 'import' ? 'Shopify Orders Daily Import' : 'Orders CSV Export'}`}
                     value={formData.jobName} onChange={v => setFormData({ ...formData, jobName: v })} minChars={0} />
                 </div>
               </EnterpriseFormSection>
               <EnterpriseFormSection title="Configuration" columns={2}>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">{modalType === 'import' ? 'Source' : 'Export Type'}</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">{modalType === 'import' ? 'Source' : 'Export Type'}</label>
                   <Autocomplete className="enterprise-input w-full" value={formData.sourceOrType} onChange={v => setFormData({ ...formData, sourceOrType: v })} suggestions={modalType === 'import' ? sourceOpts : exportTypeOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Format</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Format</label>
                   <Autocomplete className="enterprise-input w-full" value={formData.format} onChange={v => setFormData({ ...formData, format: v })} suggestions={formatOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
               </EnterpriseFormSection>
               <EnterpriseFormSection title="Advanced" columns={1}>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Configuration (JSON)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Configuration (JSON)</label>
                   <Autocomplete className="enterprise-input w-full font-mono text-xs"
                     placeholder='{"filter": {"dateFrom": "2026-06-01"}, "batchSize": 1000}'
                     value={formData.configuration} onChange={v => setFormData({ ...formData, configuration: v })} minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Schedule (Cron Expression)</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Schedule (Cron Expression)</label>
                   <Autocomplete className="enterprise-input w-full font-mono text-sm" placeholder="0 0 * * * (daily at midnight)"
                     value={formData.schedule} onChange={v => setFormData({ ...formData, schedule: v })} minChars={0} />
                 </div>
               </EnterpriseFormSection>
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-default)]">
               <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="import" action="create">
                 <button onClick={handleCreateJob} disabled={processing || !formData.jobName} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
@@ -521,28 +521,28 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
       )}
 
       {importFileOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300">
+                <div className="p-2 rounded-lg bg-[var(--interactive-selected)] text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]">
                   <FileUp className="w-5 h-5" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Import File</h2>
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Import File</h2>
               </div>
-              <button onClick={resetImportFile} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-                <X className="w-5 h-5 text-gray-400" />
+              <button onClick={resetImportFile} className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors">
+                <X className="w-5 h-5 text-[var(--text-tertiary)]" />
               </button>
             </div>
 
             <div className="p-6 space-y-5">
               <EnterpriseFormSection title="Import Configuration" columns={2}>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">Entity Type</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Entity Type</label>
                   <Autocomplete className="enterprise-input w-full" value={importEntityType} onChange={v => setImportEntityType(v)} suggestions={entityTypes.map(et => ({ value: et, label: et.charAt(0).toUpperCase() + et.slice(1).replace('-', ' ') }))} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1.5">File Format</label>
+                  <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">File Format</label>
                   <Autocomplete className="enterprise-input w-full" value={importFormat} onChange={v => setImportFormat(v)} suggestions={formats.map(f => ({ value: f.id, label: f.label }))} getOptionLabel={o => o.label} getOptionValue={o => o.value} minChars={0} />
                 </div>
               </EnterpriseFormSection>
@@ -550,28 +550,28 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
               <EnterpriseFormSection title="File Upload" columns={1}>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:border-primary-400 transition-colors"
+                  className="border-2 border-dashed border-[var(--border-default)] border-[var(--border-default)] rounded-xl p-8 text-center cursor-pointer hover:border-[var(--nexus-primary-400)] transition-colors"
                 >
                   {importFile ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-center gap-3">
                         {(() => {
                           const FormatIcon = FORMAT_ICONS[importFormat] || FileText
-                          return <FormatIcon className="w-8 h-8 text-primary-500" />
+                          return <FormatIcon className="w-8 h-8 text-[var(--nexus-primary-500)]" />
                         })()}
                         <div className="text-left">
-                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{importFile.name}</p>
-                          <p className="text-xs text-gray-400">{(importFile.size / 1024).toFixed(1)} KB</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{importFile.name}</p>
+                          <p className="text-xs text-[var(--text-tertiary)]">{(importFile.size / 1024).toFixed(1)} KB</p>
                         </div>
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); setImportFile(null) }}
-                        className="text-xs text-red-500 hover:text-red-700 mt-1">Remove</button>
+                        className="text-xs text-[var(--nexus-error-500)] hover:text-[var(--nexus-error-700)] mt-1">Remove</button>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      <FileUp className="w-10 h-10 mx-auto text-gray-400" />
-                      <p className="text-sm text-gray-500">Drop a file here or click to browse</p>
-                      <p className="text-xs text-gray-400">
+                      <FileUp className="w-10 h-10 mx-auto text-[var(--text-tertiary)]" />
+                      <p className="text-sm text-[var(--text-secondary)]">Drop a file here or click to browse</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">
                         {formats.find(f => f.id === importFormat)?.extensions || '.csv, .json, .xml, .edi'} files
                       </p>
                     </div>
@@ -591,45 +591,45 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
 
               {importResult && (
                 <div className={clsx('rounded-xl border p-4 space-y-3',
-                  importResult.errorCount > 0 ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-800' :
+                  importResult.errorCount > 0 ? 'bg-[var(--nexus-error-50)] border-[var(--nexus-error-200)] dark:bg-[var(--nexus-error-900)]/10 dark:border-[var(--nexus-error-800)]' :
                   'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-800')}>
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Import Results</h4>
+                    <h4 className="text-sm font-semibold text-[var(--text-primary)]">Import Results</h4>
                     {importResult.processingTimeMs > 0 && (
-                      <span className="text-xs text-gray-400">{importResult.processingTimeMs}ms</span>
+                      <span className="text-xs text-[var(--text-tertiary)]">{importResult.processingTimeMs}ms</span>
                     )}
                   </div>
                   <div className="grid grid-cols-4 gap-3 text-center">
                     <div>
-                      <p className="text-2xl font-bold text-gray-900">{importResult.totalRecords}</p>
-                      <p className="text-xs text-gray-500">Total</p>
+                      <p className="text-2xl font-bold text-[var(--text-primary)]">{importResult.totalRecords}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Total</p>
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-emerald-600">{importResult.successCount}</p>
-                      <p className="text-xs text-gray-500">Success</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Success</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-red-600">{importResult.errorCount}</p>
-                      <p className="text-xs text-gray-500">Errors</p>
+                      <p className="text-2xl font-bold text-[var(--nexus-error-600)]">{importResult.errorCount}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Errors</p>
                     </div>
                     <div>
-                      <p className="text-2xl font-bold text-amber-600">{importResult.skippedCount}</p>
-                      <p className="text-xs text-gray-500">Skipped</p>
+                      <p className="text-2xl font-bold text-[var(--nexus-warning-600)]">{importResult.skippedCount}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Skipped</p>
                     </div>
                   </div>
                   {importResult.errors.length > 0 && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 max-h-32 overflow-y-auto">
-                      <p className="text-xs font-medium text-red-600 mb-1">Errors:</p>
+                    <div className="bg-[var(--surface-base)] rounded-lg p-3 max-h-32 overflow-y-auto">
+                      <p className="text-xs font-medium text-[var(--nexus-error-600)] mb-1">Errors:</p>
                       {importResult.errors.map((err, i) => (
-                        <p key={i} className="text-xs text-red-500 font-mono">• {err}</p>
+                        <p key={i} className="text-xs text-[var(--nexus-error-500)] font-mono">• {err}</p>
                       ))}
                     </div>
                   )}
                   {importResult.warnings.length > 0 && (
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-3 max-h-24 overflow-y-auto">
-                      <p className="text-xs font-medium text-amber-600 mb-1">Warnings:</p>
+                    <div className="bg-[var(--surface-base)] rounded-lg p-3 max-h-24 overflow-y-auto">
+                      <p className="text-xs font-medium text-[var(--nexus-warning-600)] mb-1">Warnings:</p>
                       {importResult.warnings.map((w, i) => (
-                        <p key={i} className="text-xs text-amber-500">• {w}</p>
+                        <p key={i} className="text-xs text-[var(--nexus-warning-500)]">• {w}</p>
                       ))}
                     </div>
                   )}
@@ -637,7 +637,7 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-default)]">
               <button onClick={resetImportFile} className="enterprise-btn enterprise-btn-secondary">Close</button>
               <PermissionGate resource="import" action="create">
                 <button onClick={handleImportFile} disabled={importProcessing || !importFile}

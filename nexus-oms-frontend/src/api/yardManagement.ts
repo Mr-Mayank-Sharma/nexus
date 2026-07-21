@@ -100,3 +100,40 @@ export async function getAppointmentCalendar(warehouseId: string, date: string) 
 export async function getAppointmentStats(warehouseId: string) {
   return api.get(`/yards/appointments/stats?warehouseId=${warehouseId}`)
 }
+
+export async function getTrailers(warehouseId: string, status?: string) {
+  const params = new URLSearchParams({ warehouseId })
+  if (status) params.set('status', status)
+  return api.get(`/trailers?${params.toString()}`)
+}
+
+export async function getTrailer(id: string) {
+  return api.get(`/trailers/${id}`)
+}
+
+export async function getTrailerEvents(id: string) {
+  return api.get(`/trailers/${id}/events`)
+}
+
+export async function checkInTrailer(data: Record<string, unknown>) {
+  const params = new URLSearchParams()
+  Object.entries(data).forEach(([k, v]) => { if (v !== undefined && v !== null) params.set(k, String(v)) })
+  return api.post(`/trailers/check-in?${params.toString()}`)
+}
+
+export async function dockTrailer(id: string, dockDoorId: string, performedBy?: string) {
+  const params = new URLSearchParams({ dockDoorId })
+  if (performedBy) params.set('performedBy', performedBy)
+  return api.post(`/trailers/${id}/dock?${params.toString()}`)
+}
+
+export async function checkOutTrailer(id: string, loaded: boolean, palletCount: number, sealNumber?: string, performedBy?: string) {
+  const params = new URLSearchParams({ loaded: String(loaded), palletCount: String(palletCount) })
+  if (sealNumber) params.set('sealNumber', sealNumber)
+  if (performedBy) params.set('performedBy', performedBy)
+  return api.post(`/trailers/${id}/check-out?${params.toString()}`)
+}
+
+export async function getTrailerStats(warehouseId: string) {
+  return api.get(`/trailers/stats?warehouseId=${warehouseId}`)
+}

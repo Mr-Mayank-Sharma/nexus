@@ -84,27 +84,27 @@ const calendarSlots: CalendarSlot[] = [
 ]
 
 const statusStyles: Record<string, string> = {
-  Planned: 'bg-blue-100 text-blue-700',
-  'In Progress': 'bg-amber-100 text-amber-700',
-  Completed: 'bg-green-100 text-green-700',
-  Cancelled: 'bg-red-100 text-red-700',
+  Planned: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
+  'In Progress': 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)]',
+  Completed: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]',
+  Cancelled: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]',
 }
 
 const priorityColors: Record<string, string> = {
-  High: 'text-red-600',
-  Medium: 'text-amber-600',
-  Low: 'text-gray-500',
+  High: 'text-[var(--nexus-error-600)]',
+  Medium: 'text-[var(--nexus-warning-600)]',
+  Low: 'text-[var(--text-secondary)]',
 }
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="enterprise-card p-4 flex items-center gap-4">
-      <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center text-primary-600 flex-shrink-0">
+      <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)] flex items-center justify-center text-[var(--text-brand)] flex-shrink-0">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs text-gray-500 font-medium">{label}</p>
-        <p className="text-xl font-bold text-gray-900 mt-0.5">{value}</p>
+        <p className="text-xs text-[var(--text-secondary)] font-medium">{label}</p>
+        <p className="text-xl font-bold text-[var(--text-primary)] mt-0.5">{value}</p>
       </div>
     </div>
   )
@@ -190,10 +190,10 @@ export default function WavePlanningPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5">
-            <Layers className="w-7 h-7 text-primary-500" /> Wave Planning
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
+            <Layers className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Wave Planning
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Create and manage picking waves</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Create and manage picking waves</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -219,23 +219,23 @@ export default function WavePlanningPage() {
 
       {showCalendar && (
         <div className="enterprise-card p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-primary-500" /> Wave Calendar — Today
+          <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-4 flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Wave Calendar — Today
           </h3>
           <div className="grid grid-cols-6 gap-3">
             {calendarSlots.map((slot) => (
-              <div key={slot.time} className="border border-gray-200 rounded-lg p-3 min-h-[100px]">
-                <p className="text-xs font-semibold text-gray-500 mb-1">{slot.time}</p>
-                <p className="text-[10px] text-gray-400 mb-2">{slot.label}</p>
+              <div key={slot.time} className="border border-[var(--border-default)] rounded-lg p-3 min-h-[100px]">
+                <p className="text-xs font-semibold text-[var(--text-secondary)] mb-1">{slot.time}</p>
+                <p className="text-[10px] text-[var(--text-tertiary)] mb-2">{slot.label}</p>
                 {slot.waves.length === 0 ? (
-                  <p className="text-[10px] text-gray-300 italic">Free</p>
+                  <p className="text-[10px] text-[var(--text-tertiary)] italic">Free</p>
                 ) : (
                   slot.waves.map((wv) => (
                     <div
                       key={wv.id}
                       className={clsx(
                         'text-[10px] font-medium px-1.5 py-0.5 rounded mb-1 truncate',
-                        statusStyles[wv.status] || 'bg-gray-100 text-gray-600',
+                        statusStyles[wv.status] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
                       )}
                     >
                       {wv.name}
@@ -253,7 +253,7 @@ export default function WavePlanningPage() {
       <div className="enterprise-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50/50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
               <th className="px-4 py-3 w-8" />
               <th className="px-4 py-3">Wave ID</th>
               <th className="px-4 py-3">Created</th>
@@ -268,17 +268,17 @@ export default function WavePlanningPage() {
             {filtered.map((wave) => {
               const isExpanded = expandedId === wave.id
               return (
-                <tr key={wave.id} className={clsx('group', isExpanded && 'bg-primary-50/30')}>
+                <tr key={wave.id} className={clsx('group', isExpanded && 'bg-[var(--nexus-primary-50)]/30')}>
                   <td className="px-4 py-3">
                     {wave.orders.length > 0 && (
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : wave.id)}
-                        className="p-0.5 hover:bg-gray-100 rounded"
+                        className="p-0.5 hover:bg-[var(--surface-muted)] rounded"
                       >
                         {isExpanded ? (
-                          <ChevronDown className="w-4 h-4 text-gray-500" />
+                          <ChevronDown className="w-4 h-4 text-[var(--text-secondary)]" />
                         ) : (
-                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                          <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" />
                         )}
                       </button>
                     )}
@@ -286,14 +286,14 @@ export default function WavePlanningPage() {
                   <td className="px-4 py-3">
                     <button
                       onClick={() => setSelectedWaveId(wave.id)}
-                      className="font-medium text-primary-600 hover:underline"
+                      className="font-medium text-[var(--text-brand)] hover:underline"
                     >
                       {wave.id}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">{wave.createdAt}</td>
-                  <td className="px-4 py-3 text-gray-700">{wave.orders.length}</td>
-                  <td className="px-4 py-3 text-gray-700">{wave.totalItems || wave.orders.reduce((s, o) => s + o.items, 0)}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)] text-xs">{wave.createdAt}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]">{wave.orders.length}</td>
+                  <td className="px-4 py-3 text-[var(--text-secondary)]">{wave.totalItems || wave.orders.reduce((s, o) => s + o.items, 0)}</td>
                   <td className="px-4 py-3">
                     <span className={clsx('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', statusStyles[wave.status])}>
                       {wave.status}
@@ -308,7 +308,7 @@ export default function WavePlanningPage() {
                         <PermissionGate resource="warehouse" action="edit">
                           <button
                             onClick={() => handleWaveAction(wave.id, { status: 'In Progress' })}
-                            className="p-1.5 hover:bg-blue-50 rounded text-gray-400 hover:text-blue-600"
+                            className="p-1.5 hover:bg-[var(--nexus-primary-50)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)]"
                             title="Start Wave"
                           >
                             <Play className="w-3.5 h-3.5" />
@@ -319,7 +319,7 @@ export default function WavePlanningPage() {
                         <PermissionGate resource="warehouse" action="edit">
                           <button
                             onClick={() => handleWaveAction(wave.id, { status: 'Completed' })}
-                            className="p-1.5 hover:bg-green-50 rounded text-gray-400 hover:text-green-600"
+                            className="p-1.5 hover:bg-[var(--nexus-success-50)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-success-600)]"
                             title="Complete Wave"
                           >
                             <CheckCircle className="w-3.5 h-3.5" />
@@ -330,7 +330,7 @@ export default function WavePlanningPage() {
                         <PermissionGate resource="warehouse" action="edit">
                           <button
                             onClick={() => handleWaveAction(wave.id, { status: 'Cancelled' })}
-                            className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-red-600"
+                            className="p-1.5 hover:bg-[var(--nexus-error-50)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)]"
                             title="Cancel Wave"
                           >
                             <XCircle className="w-3.5 h-3.5" />
@@ -355,21 +355,21 @@ export default function WavePlanningPage() {
             return (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-700">{wave.name} — Orders</h3>
+                  <h3 className="text-sm font-semibold text-[var(--text-secondary)]">{wave.name} — Orders</h3>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-[var(--text-secondary)]">
                       {wave.itemsPicked}/{totalItems} picked
                     </span>
-                    <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary-500 rounded-full" style={{ width: `${progress}%` }} />
+                    <div className="w-20 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                      <div className="h-full bg-[var(--nexus-primary-50)]0 rounded-full" style={{ width: `${progress}%` }} />
                     </div>
                   </div>
                 </div>
                 {wave.orders.length > 0 ? (
-                  <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <div className="overflow-x-auto rounded-lg border border-[var(--border-default)]">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <tr className="bg-[var(--surface-sunken)] text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                           <th className="px-4 py-2">Order</th>
                           <th className="px-4 py-2">Items</th>
                           <th className="px-4 py-2">Zone</th>
@@ -377,20 +377,20 @@ export default function WavePlanningPage() {
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {wave.orders.map((o) => (
-                          <tr key={o.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 font-medium text-gray-900">{o.number}</td>
-                            <td className="px-4 py-2 text-gray-700">{o.items}</td>
-                            <td className="px-4 py-2 text-gray-600 text-xs">{o.zone}</td>
+                          <tr key={o.id} className="hover:bg-[var(--surface-sunken)]">
+                            <td className="px-4 py-2 font-medium text-[var(--text-primary)]">{o.number}</td>
+                            <td className="px-4 py-2 text-[var(--text-secondary)]">{o.items}</td>
+                            <td className="px-4 py-2 text-[var(--text-secondary)] text-xs">{o.zone}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-400 py-4 text-center">No orders assigned</p>
+                  <p className="text-sm text-[var(--text-tertiary)] py-4 text-center">No orders assigned</p>
                 )}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <p className="text-xs text-gray-500">
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--border-subtle)]">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Est. completion: {wave.estimatedCompletion || 'Not set'}
                   </p>
                   <PermissionGate resource="warehouse" action="edit">
@@ -418,18 +418,18 @@ export default function WavePlanningPage() {
       {selectedWaveId && !expandedId && selectedWave && (
         <div className="enterprise-card p-5 border-l-4 border-l-primary-500">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-700">{selectedWave.name}</h3>
-            <button onClick={() => setSelectedWaveId(null)} className="p-1 hover:bg-gray-100 rounded">
-              <X className="w-4 h-4 text-gray-400" />
+            <h3 className="text-sm font-semibold text-[var(--text-secondary)]">{selectedWave.name}</h3>
+            <button onClick={() => setSelectedWaveId(null)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <X className="w-4 h-4 text-[var(--text-tertiary)]" />
             </button>
           </div>
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <p className="text-xs font-medium text-gray-500 mb-2">Orders in Wave</p>
-              <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <p className="text-xs font-medium text-[var(--text-secondary)] mb-2">Orders in Wave</p>
+              <div className="overflow-x-auto rounded-lg border border-[var(--border-default)]">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <tr className="bg-[var(--surface-sunken)] text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                       <th className="px-3 py-2">Order</th>
                       <th className="px-3 py-2">Items</th>
                       <th className="px-3 py-2">Zone</th>
@@ -437,10 +437,10 @@ export default function WavePlanningPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {selectedWave.orders.map((o) => (
-                      <tr key={o.id} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 font-medium text-gray-900">{o.number}</td>
-                        <td className="px-3 py-2 text-gray-700">{o.items}</td>
-                        <td className="px-3 py-2 text-gray-600 text-xs">{o.zone}</td>
+                      <tr key={o.id} className="hover:bg-[var(--surface-sunken)]">
+                        <td className="px-3 py-2 font-medium text-[var(--text-primary)]">{o.number}</td>
+                        <td className="px-3 py-2 text-[var(--text-secondary)]">{o.items}</td>
+                        <td className="px-3 py-2 text-[var(--text-secondary)] text-xs">{o.zone}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -454,17 +454,17 @@ export default function WavePlanningPage() {
                 return (
                   <>
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">Progress</p>
+                      <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">Progress</p>
                       <div className="flex items-center gap-3">
-                        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary-500 rounded-full" style={{ width: `${progress}%` }} />
+                        <div className="flex-1 h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                          <div className="h-full bg-[var(--nexus-primary-50)]0 rounded-full" style={{ width: `${progress}%` }} />
                         </div>
-                        <span className="text-sm font-semibold text-gray-700">{selectedWave.itemsPicked}/{totalItems}</span>
+                        <span className="text-sm font-semibold text-[var(--text-secondary)]">{selectedWave.itemsPicked}/{totalItems}</span>
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">Estimated Completion</p>
-                      <p className="text-sm text-gray-700">{selectedWave.estimatedCompletion || 'Pending'}</p>
+                      <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">Estimated Completion</p>
+                      <p className="text-sm text-[var(--text-secondary)]">{selectedWave.estimatedCompletion || 'Pending'}</p>
                     </div>
                     <PermissionGate resource="warehouse" action="edit">
                       <button
@@ -490,17 +490,17 @@ export default function WavePlanningPage() {
 
       {/* Create Wave Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Create Wave</h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-gray-100 rounded">
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create Wave</h2>
+              <button onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Wave Name</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Wave Name</label>
                 <input
                   value={createForm.name}
                   onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
@@ -510,7 +510,7 @@ export default function WavePlanningPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Priority</label>
                   <select
                     value={createForm.priority}
                     onChange={(e) => setCreateForm({ ...createForm, priority: e.target.value as any })}
@@ -522,7 +522,7 @@ export default function WavePlanningPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Filter by Zone</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Filter by Zone</label>
                   <select
                     value={createForm.zone}
                     onChange={(e) => setCreateForm({ ...createForm, zone: e.target.value })}
@@ -534,7 +534,7 @@ export default function WavePlanningPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Target Completion</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Target Completion</label>
                 <input
                   type="datetime-local"
                   value={createForm.targetCompletion}
@@ -543,34 +543,34 @@ export default function WavePlanningPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
                   Orders to Include ({createForm.selectedOrders.length} selected)
                 </label>
-                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                <div className="max-h-40 overflow-y-auto border border-[var(--border-default)] rounded-lg divide-y divide-gray-100">
                   {allOrderIds.map((oid) => {
                     const selected = createForm.selectedOrders.includes(oid)
                     return (
                       <label
                         key={oid}
                         className={clsx(
-                          'flex items-center gap-3 px-3 py-2 cursor-pointer text-sm hover:bg-gray-50',
-                          selected && 'bg-primary-50',
+                          'flex items-center gap-3 px-3 py-2 cursor-pointer text-sm hover:bg-[var(--surface-sunken)]',
+                          selected && 'bg-[var(--nexus-primary-50)]',
                         )}
                       >
                         <input
                           type="checkbox"
                           checked={selected}
                           onChange={() => toggleOrderSelection(oid)}
-                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          className="rounded border-[var(--border-default)] text-[var(--text-brand)] focus:ring-[var(--nexus-primary-500)]"
                         />
-                        <span className={clsx(selected ? 'font-medium text-gray-900' : 'text-gray-600')}>{oid}</span>
+                        <span className={clsx(selected ? 'font-medium text-[var(--text-primary)]' : 'text-[var(--text-secondary)]')}>{oid}</span>
                       </label>
                     )
                   })}
                 </div>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
                 <button onClick={() => handleCreateWave(createForm)} className="btn-primary text-sm">

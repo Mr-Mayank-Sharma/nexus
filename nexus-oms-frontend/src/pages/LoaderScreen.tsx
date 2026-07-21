@@ -63,11 +63,11 @@ export default function LoaderScreen() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Truck className="w-7 h-7 text-orange-500" />
             Loading Dock
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage loading, dispatch, and carrier coordination</p>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Manage loading, dispatch, and carrier coordination</p>
         </div>
         <button onClick={() => navigate('/shipping')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
           <Ship className="w-4 h-4" /> Full Shipping View
@@ -87,7 +87,7 @@ export default function LoaderScreen() {
             <QrCode className="w-5 h-5 text-orange-600" />
           </div>
           <div className="relative flex-1">
-            <Autocomplete value={scanInput} onChange={setScanInput} placeholder="Scan trailer barcode or shipment ID..." minChars={0} showSearchIcon={false} clearable={false} inputClassName="w-full pl-10 pr-4 py-3 text-sm border-2 border-orange-200 dark:border-orange-800 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+            <Autocomplete value={scanInput} onChange={setScanInput} placeholder="Scan trailer barcode or shipment ID..." minChars={0} showSearchIcon={false} clearable={false} inputClassName="w-full pl-10 pr-4 py-3 text-sm border-2 border-orange-200 dark:border-orange-800 rounded-xl bg-[var(--surface-base)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400 pointer-events-none" />
           </div>
           <button className="enterprise-btn-primary text-sm px-6 py-3 bg-orange-600 hover:bg-orange-700"><Search className="w-4 h-4" /> Find</button>
@@ -98,35 +98,35 @@ export default function LoaderScreen() {
       <div className="grid grid-cols-3 gap-4">
         {dockDoors.map(door => (
           <div key={door.id} className={clsx('enterprise-card p-4 border-l-4 transition-all',
-            door.status === 'loading' ? 'border-l-green-500 bg-green-50/30 dark:bg-green-900/5' :
-            door.status === 'ready' ? 'border-l-blue-500 bg-blue-50/30 dark:bg-blue-900/5' :
-            door.status === 'waiting' ? 'border-l-amber-500 bg-amber-50/30 dark:bg-amber-900/5' :
+            door.status === 'loading' ? 'border-l-green-500 bg-[var(--nexus-success-50)]/30 dark:bg-[var(--nexus-success-900)]/5' :
+            door.status === 'ready' ? 'border-l-blue-500 bg-[var(--nexus-primary-50)]/30 dark:bg-[var(--nexus-primary-900)]/5' :
+            door.status === 'waiting' ? 'border-l-amber-500 bg-[var(--nexus-warning-50)]/30 dark:bg-[var(--nexus-warning-900)]/5' :
             'border-l-gray-300 dark:border-l-gray-600')}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center',
-                  door.status === 'loading' ? 'bg-green-100 dark:bg-green-900/20 text-green-600' :
-                  door.status === 'ready' ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600' :
-                  door.status === 'waiting' ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-600' :
-                  'bg-gray-100 dark:bg-gray-800 text-gray-400')}>
+                  door.status === 'loading' ? 'bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/20 text-[var(--nexus-success-600)]' :
+                  door.status === 'ready' ? 'bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/20 text-[var(--nexus-primary-600)]' :
+                  door.status === 'waiting' ? 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-600)]' :
+                  'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-tertiary)]')}>
                   <Truck className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-base font-bold text-gray-900 dark:text-gray-100">{door.door}</span>
-                  <p className="text-xs text-gray-500">{door.carrier}</p>
+                  <span className="text-base font-bold text-[var(--text-primary)]">{door.door}</span>
+                  <p className="text-xs text-[var(--text-secondary)]">{door.carrier}</p>
                 </div>
               </div>
               <EnterpriseStatusBadge status={door.status === 'loading' ? 'success' : door.status === 'ready' ? 'info' : door.status === 'waiting' ? 'warning' : 'pending'} label={door.status} />
             </div>
 
             {door.status !== 'available' && (
-              <div className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
-                <div className="flex items-center justify-between"><span>Trailer</span><span className="font-medium text-gray-700 dark:text-gray-300">{door.trailer}</span></div>
-                <div className="flex items-center justify-between"><span>Driver</span><span className="font-medium text-gray-700 dark:text-gray-300">{door.driver}</span></div>
-                <div className="flex items-center justify-between"><span>Orders</span><span className="font-medium text-gray-700 dark:text-gray-300">{door.orders}</span></div>
-                <div className="flex items-center justify-between"><span>Pallets</span><span className="font-medium text-gray-700 dark:text-gray-300">{door.pallets}</span></div>
+              <div className="space-y-2 text-xs text-[var(--text-secondary)]">
+                <div className="flex items-center justify-between"><span>Trailer</span><span className="font-medium text-[var(--text-secondary)]">{door.trailer}</span></div>
+                <div className="flex items-center justify-between"><span>Driver</span><span className="font-medium text-[var(--text-secondary)]">{door.driver}</span></div>
+                <div className="flex items-center justify-between"><span>Orders</span><span className="font-medium text-[var(--text-secondary)]">{door.orders}</span></div>
+                <div className="flex items-center justify-between"><span>Pallets</span><span className="font-medium text-[var(--text-secondary)]">{door.pallets}</span></div>
                 {door.status === 'ready' && (
-                  <button onClick={() => confirmLoad.mutate(door.id)} className="w-full mt-2 enterprise-btn-primary text-xs py-2 bg-green-600 hover:bg-green-700 flex items-center justify-center gap-1">
+                  <button onClick={() => confirmLoad.mutate(door.id)} className="w-full mt-2 enterprise-btn-primary text-xs py-2 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)] flex items-center justify-center gap-1">
                     <CheckCircle className="w-3.5 h-3.5" /> Confirm Load Complete
                   </button>
                 )}
@@ -140,7 +140,7 @@ export default function LoaderScreen() {
 
             {door.status === 'available' && (
               <div className="py-4 text-center">
-                <p className="text-xs text-gray-400">Door available for assignment</p>
+                <p className="text-xs text-[var(--text-tertiary)]">Door available for assignment</p>
               </div>
             )}
           </div>

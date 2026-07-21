@@ -17,88 +17,114 @@ export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuT
   const [showNotifications, setShowNotifications] = useState(false)
 
   return (
-    <header className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shrink-0">
-      <button
-        onClick={onMenuToggle}
-        className="lg:hidden p-2 mr-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-        aria-label="Toggle sidebar"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-      <button
-        onClick={onSearchClick}
-        className="flex items-center gap-3 w-full max-w-md h-9 px-3.5 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm text-gray-400 dark:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 transition-colors group"
-      >
-        <Search className="w-4 h-4 shrink-0" />
-        <span className="flex-1 text-left">Search anything...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded">
-          <Command className="w-2.5 h-2.5" />K
-        </kbd>
-      </button>
+    <header className="h-14 bg-[var(--surface-base)] border-b border-[var(--border-default)] flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30 shrink-0">
+      {/* ── Left: Mobile menu + Search ── */}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden p-1.5 -ml-1 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-all duration-150"
+          aria-label="Toggle sidebar"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <button
+          onClick={onSearchClick}
+          className="flex items-center gap-2.5 w-full max-w-md h-9 px-3 rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] text-[13px] text-[var(--text-tertiary)] hover:border-[var(--border-default)] hover:bg-[var(--surface-base)] transition-all duration-150 group"
+        >
+          <Search className="w-4 h-4 shrink-0 text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors" />
+          <span className="flex-1 text-left">Search orders, inventory, customers...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-[var(--surface-base)] border border-[var(--border-default)] rounded text-[var(--text-tertiary)]">
+            <Command className="w-2.5 h-2.5" />K
+          </kbd>
+        </button>
+      </div>
 
-      <div className="flex items-center gap-2">
+      {/* ── Right: Actions ── */}
+      <div className="flex items-center gap-1.5 ml-4">
+        {/* AI Assistant */}
         <button
           onClick={onAiToggle}
-          className={clsx('flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+          className={clsx(
+            'flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all duration-150',
             aiPanelOpen
-              ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300 border border-primary-200 dark:border-primary-800'
-              : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+              ? 'bg-[var(--nexus-ai-50)] text-[var(--nexus-ai-700)] border border-[var(--nexus-ai-200)]'
+              : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)]'
           )}
         >
           <Sparkles className="w-4 h-4" />
           <span className="hidden sm:inline">AI Assistant</span>
         </button>
 
+        {/* Notifications */}
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="relative p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-all duration-150"
           >
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-900" />
+            <Bell className="w-[18px] h-[18px]" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--nexus-error-500)] rounded-full ring-2 ring-[var(--surface-base)]" />
           </button>
           <NotificationsPanel open={showNotifications} onClose={() => setShowNotifications(false)} />
         </div>
 
+        {/* Divider */}
+        <div className="w-px h-5 bg-[var(--border-subtle)] mx-1 hidden md:block" />
+
+        {/* User Menu */}
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[var(--interactive-hover)] transition-all duration-150"
           >
-            <div className="w-8 h-8 bg-primary-600 rounded-xl flex items-center justify-center text-white text-sm font-medium">
+            <div className="w-8 h-8 bg-[var(--nexus-primary-600)] rounded-lg flex items-center justify-center text-white text-sm font-semibold shadow-sm">
               {user?.fullName?.charAt(0) || 'U'}
             </div>
             <div className="text-left hidden md:block">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-tight">{user?.fullName || 'User'}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role || 'Operator'}</p>
+              <p className="text-[13px] font-medium text-[var(--text-primary)] leading-tight">{user?.fullName || 'User'}</p>
+              <p className="text-[11px] text-[var(--text-tertiary)] capitalize">{user?.role?.replace(/_/g, ' ').toLowerCase() || 'Operator'}</p>
             </div>
-            <ChevronDown className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+            <ChevronDown className="w-3.5 h-3.5 text-[var(--text-tertiary)] hidden md:block" />
           </button>
 
           {showUserMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setShowUserMenu(false)} />
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20 animate-[slideUp_200ms_ease-out]">
-                <div className="px-4 py-2.5 border-b border-gray-200 dark:border-gray-700">
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.fullName || 'User'}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || ''}</p>
+              <div className="absolute right-0 top-full mt-1.5 w-60 bg-[var(--surface-base)] rounded-xl shadow-[var(--elevation-4)] border border-[var(--border-default)] py-1.5 z-20 animate-[nexusSlideUp_200ms_var(--ease-default)]">
+                {/* User info */}
+                <div className="px-4 py-3 border-b border-[var(--border-subtle)]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-[var(--nexus-primary-600)] rounded-lg flex items-center justify-center text-white text-sm font-semibold">
+                      {user?.fullName?.charAt(0) || 'U'}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-[var(--text-primary)]">{user?.fullName || 'User'}</p>
+                      <p className="text-xs text-[var(--text-tertiary)]">{user?.email || ''}</p>
+                    </div>
+                  </div>
                 </div>
-                <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <User className="w-4 h-4 text-gray-400" />
-                  Profile
-                </button>
-                <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <Settings className="w-4 h-4 text-gray-400" />
-                  Settings
-                </button>
-                <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                <button
-                  onClick={logout}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Log out
-                </button>
+
+                {/* Menu items */}
+                <div className="py-1.5">
+                  <button className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-colors">
+                    <User className="w-4 h-4 text-[var(--text-tertiary)]" />
+                    Profile
+                  </button>
+                  <button className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-colors">
+                    <Settings className="w-4 h-4 text-[var(--text-tertiary)]" />
+                    Settings
+                  </button>
+                </div>
+
+                {/* Logout */}
+                <div className="border-t border-[var(--border-subtle)] pt-1.5 px-1.5">
+                  <button
+                    onClick={logout}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)] rounded-lg transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
+                </div>
               </div>
             </>
           )}

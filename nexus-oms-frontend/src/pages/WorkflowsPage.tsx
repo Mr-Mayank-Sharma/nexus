@@ -7,25 +7,25 @@ import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
 
 const categoryStyles: Record<string, string> = {
-  ORDER: 'bg-blue-100 text-blue-800',
-  INVENTORY: 'bg-green-100 text-green-800',
-  SHIPPING: 'bg-purple-100 text-purple-800',
+  ORDER: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-800)]',
+  INVENTORY: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-800)]',
+  SHIPPING: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-800)]',
   PROCUREMENT: 'bg-orange-100 text-orange-800',
-  CUSTOM: 'bg-gray-100 text-gray-800',
+  CUSTOM: 'bg-[var(--surface-muted)] text-[var(--text-primary)]',
 }
 
 const statusStyles: Record<string, string> = {
-  DRAFT: 'bg-gray-100 text-gray-700',
-  ACTIVE: 'bg-green-100 text-green-800',
-  INACTIVE: 'bg-gray-100 text-gray-700',
-  ARCHIVED: 'bg-gray-100 text-gray-500',
+  DRAFT: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
+  ACTIVE: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-800)]',
+  INACTIVE: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
+  ARCHIVED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
 }
 
 const executionStatusStyles: Record<string, string> = {
-  RUNNING: 'bg-blue-100 text-blue-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  FAILED: 'bg-red-100 text-red-800',
-  CANCELLED: 'bg-gray-100 text-gray-700',
+  RUNNING: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-800)]',
+  COMPLETED: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-800)]',
+  FAILED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-800)]',
+  CANCELLED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
 }
 
 export default function WorkflowsPage() {
@@ -171,8 +171,8 @@ export default function WorkflowsPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><GitBranch className="w-6 h-6 text-gray-700" />Workflows</h1>
-            <p className="text-sm text-gray-500 mt-1">Automate order processing, inventory, and shipping workflows</p>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><GitBranch className="w-6 h-6 text-[var(--text-secondary)]" />Workflows</h1>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Automate order processing, inventory, and shipping workflows</p>
           </div>
         </div>
         <PermissionGate resource="workflows" action="create">
@@ -185,12 +185,12 @@ export default function WorkflowsPage() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--text-brand)]" />
         </div>
       ) : workflows.length === 0 ? (
         <div className="text-center py-16 card">
-          <GitBranch className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No workflows configured. Create your first automation workflow.</p>
+          <GitBranch className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
+          <p className="text-[var(--text-secondary)] text-sm">No workflows configured. Create your first automation workflow.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -198,31 +198,31 @@ export default function WorkflowsPage() {
             <div key={wf.id} className="card overflow-hidden">
               {/* Main row */}
               <div
-                className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                className="flex items-center gap-4 p-4 hover:bg-[var(--surface-sunken)] cursor-pointer transition-colors"
                 onClick={() => handleExpand(wf.id)}
               >
-                <button className="text-gray-400" onClick={() => handleExpand(wf.id)}>
+                <button className="text-[var(--text-tertiary)]" onClick={() => handleExpand(wf.id)}>
                   {expandedId === wf.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
                 <div className="flex-1 min-w-0 grid grid-cols-6 gap-4 items-center">
                   <div className="col-span-2">
-                    <p className="text-sm font-medium text-gray-900">{wf.name}</p>
-                    {wf.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{wf.description}</p>}
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{wf.name}</p>
+                    {wf.description && <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{wf.description}</p>}
                   </div>
                   <div>
-                    <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', categoryStyles[wf.category] || 'bg-gray-100 text-gray-700')}>
+                    <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', categoryStyles[wf.category] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)]')}>
                       {wf.category}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{wf.triggerType}</span>
+                    <span className="text-xs bg-[var(--surface-muted)] px-2 py-0.5 rounded text-[var(--text-secondary)]">{wf.triggerType}</span>
                   </div>
                   <div>
-                    <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', statusStyles[wf.status] || 'bg-gray-100 text-gray-700')}>
+                    <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', statusStyles[wf.status] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)]')}>
                       {wf.status}
                     </span>
                   </div>
-                  <div className="text-xs text-gray-400">v{wf.version}</div>
+                  <div className="text-xs text-[var(--text-tertiary)]">v{wf.version}</div>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
                   {wf.status !== 'DRAFT' && (
@@ -232,8 +232,8 @@ export default function WorkflowsPage() {
                         className={clsx(
                           'p-1.5 rounded text-xs font-medium transition-colors',
                           wf.status === 'ACTIVE'
-                            ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                            : 'bg-green-50 text-green-600 hover:bg-green-100'
+                            ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)]'
+                            : 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-100)]'
                         )}
                       >
                         {wf.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
@@ -243,7 +243,7 @@ export default function WorkflowsPage() {
                   <PermissionGate resource="workflows" action="create">
                     <button
                       onClick={(e) => { e.stopPropagation(); openExecute(wf.id) }}
-                      className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700"
+                      className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]"
                       title="Execute Now"
                     >
                       <Play className="w-4 h-4" />
@@ -254,48 +254,48 @@ export default function WorkflowsPage() {
 
               {/* Expanded detail */}
               {expandedId === wf.id && (
-                <div className="border-t border-gray-100 bg-gray-50">
+                <div className="border-t border-[var(--border-subtle)] bg-[var(--surface-sunken)]">
                   <div className="p-4 space-y-4">
                     {/* Steps sub-table */}
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <List className="w-4 h-4 text-gray-500" />
-                        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Steps</h4>
+                        <List className="w-4 h-4 text-[var(--text-secondary)]" />
+                        <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Steps</h4>
                       </div>
                       {stepsLoading ? (
                         <div className="flex items-center justify-center py-6">
-                          <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                          <Loader2 className="w-5 h-5 animate-spin text-[var(--text-brand)]" />
                         </div>
                       ) : steps.length === 0 ? (
-                        <p className="text-xs text-gray-400 py-2">No steps configured.</p>
+                        <p className="text-xs text-[var(--text-tertiary)] py-2">No steps configured.</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
-                              <tr className="border-b border-gray-200 bg-gray-100">
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Order</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Type</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Name</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Condition</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">On Failure</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Timeout</th>
+                              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-muted)]">
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Order</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Type</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Name</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Condition</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">On Failure</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Timeout</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                               {steps.map(step => (
                                 <tr key={step.id} className="hover:bg-white transition-colors">
-                                  <td className="px-3 py-1.5 text-gray-500">{step.order}</td>
+                                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">{step.order}</td>
                                   <td className="px-3 py-1.5">
-                                    <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{step.type}</span>
+                                    <span className="bg-[var(--surface-muted)] px-1.5 py-0.5 rounded text-[var(--text-secondary)]">{step.type}</span>
                                   </td>
-                                  <td className="px-3 py-1.5 font-medium text-gray-800">{step.name}</td>
-                                  <td className="px-3 py-1.5 text-gray-500 font-mono max-w-[120px] truncate">
+                                  <td className="px-3 py-1.5 font-medium text-[var(--text-primary)]">{step.name}</td>
+                                  <td className="px-3 py-1.5 text-[var(--text-secondary)] font-mono max-w-[120px] truncate">
                                     {step.config?.condition || '-'}
                                   </td>
-                                  <td className="px-3 py-1.5 text-gray-500">
+                                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">
                                     {step.config?.onFailure || '-'}
                                   </td>
-                                  <td className="px-3 py-1.5 text-gray-500">
+                                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">
                                     {step.config?.timeout ? `${step.config.timeout}s` : '-'}
                                   </td>
                                 </tr>
@@ -310,40 +310,40 @@ export default function WorkflowsPage() {
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-500" />
-                          <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Executions</h4>
+                          <Clock className="w-4 h-4 text-[var(--text-secondary)]" />
+                          <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Executions</h4>
                         </div>
                       </div>
                       {executionsLoading ? (
                         <div className="flex items-center justify-center py-6">
-                          <Loader2 className="w-5 h-5 animate-spin text-primary-600" />
+                          <Loader2 className="w-5 h-5 animate-spin text-[var(--text-brand)]" />
                         </div>
                       ) : executions.length === 0 ? (
-                        <p className="text-xs text-gray-400 py-2">No executions yet.</p>
+                        <p className="text-xs text-[var(--text-tertiary)] py-2">No executions yet.</p>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-xs">
                             <thead>
-                              <tr className="border-b border-gray-200 bg-gray-100">
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Status</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Steps Progress</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Duration</th>
-                                <th className="text-left px-3 py-1.5 font-medium text-gray-600">Started At</th>
+                              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-muted)]">
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Status</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Steps Progress</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Duration</th>
+                                <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Started At</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                               {executions.map(ex => (
                                 <tr key={ex.id} className="hover:bg-white transition-colors">
                                   <td className="px-3 py-1.5">
-                                    <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium', executionStatusStyles[ex.status] || 'bg-gray-100 text-gray-700')}>
+                                    <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium', executionStatusStyles[ex.status] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)]')}>
                                       {ex.status}
                                     </span>
                                   </td>
-                                  <td className="px-3 py-1.5 text-gray-500">-</td>
-                                  <td className="px-3 py-1.5 text-gray-500">
+                                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">-</td>
+                                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">
                                     {ex.duration ? `${ex.duration}ms` : '-'}
                                   </td>
-                                  <td className="px-3 py-1.5 text-gray-500">
+                                  <td className="px-3 py-1.5 text-[var(--text-secondary)]">
                                     {ex.startedAt ? new Date(ex.startedAt).toLocaleString() : '-'}
                                   </td>
                                 </tr>
@@ -363,23 +363,23 @@ export default function WorkflowsPage() {
 
       {/* Create Workflow Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Create Workflow</h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create Workflow</h2>
+              <button onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Workflow Name</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Workflow Name</label>
                 <Autocomplete value={createForm.name} onChange={(value) => setCreateForm({ ...createForm, name: value })} inputClassName="input w-full" placeholder="e.g. Order Fulfillment Pipeline" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Description</label>
                 <Autocomplete value={createForm.description} onChange={(value) => setCreateForm({ ...createForm, description: value })} inputClassName="input w-full" placeholder="Describe the workflow purpose" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Category</label>
                 <Autocomplete
                   value={createForm.category}
                   onChange={(value) => setCreateForm({ ...createForm, category: value })}
@@ -393,7 +393,7 @@ export default function WorkflowsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Type</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Trigger Type</label>
                 <Autocomplete
                   value={createForm.triggerType}
                   onChange={(value) => setCreateForm({ ...createForm, triggerType: value })}
@@ -407,20 +407,20 @@ export default function WorkflowsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Trigger Config (JSON)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Trigger Config (JSON)</label>
                 <Autocomplete value={createForm.triggerConfig} onChange={(value) => setCreateForm({ ...createForm, triggerConfig: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"cron": "0 0 * * *", "eventType": "ORDER_CREATED"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Active</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Active</label>
                 <button
                   onClick={() => setCreateForm({ ...createForm, isActive: !createForm.isActive })}
-                  className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', createForm.isActive ? 'bg-green-500' : 'bg-gray-300')}
+                  className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', createForm.isActive ? 'bg-[var(--nexus-success-50)]0' : 'bg-[var(--surface-muted)]')}
                 >
                   <span className={clsx('inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform', createForm.isActive ? 'translate-x-[18px]' : 'translate-x-[3px]')} />
                 </button>
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="workflows" action="create">
                 <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
@@ -435,27 +435,27 @@ export default function WorkflowsPage() {
 
       {/* Execute Workflow Modal */}
       {showExecuteModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Execute Workflow</h2>
-              <button onClick={() => setShowExecuteModal(false)} className="p-1 hover:bg-gray-100 rounded"><X className="w-5 h-5" /></button>
+        <div className="enterprise-modal-overlay">
+          <div className="enterprise-modal max-w-lg">
+            <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Execute Workflow</h2>
+              <button onClick={() => setShowExecuteModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Entity Type</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Entity Type</label>
                 <Autocomplete value={executeForm.entityType} onChange={(value) => setExecuteForm({ ...executeForm, entityType: value })} inputClassName="input w-full" placeholder="e.g. ORDER, INVENTORY" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Entity ID</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Entity ID</label>
                 <Autocomplete value={executeForm.entityId} onChange={(value) => setExecuteForm({ ...executeForm, entityId: value })} inputClassName="input w-full" placeholder="e.g. order-123" minChars={0} showSearchIcon={false} clearable={false} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Input Data (JSON)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Input Data (JSON)</label>
                 <Autocomplete value={executeForm.inputData} onChange={(value) => setExecuteForm({ ...executeForm, inputData: value })} inputClassName="input w-full font-mono text-xs" placeholder='{"priority": "HIGH", "notes": "Manual trigger"}' minChars={0} showSearchIcon={false} clearable={false} />
               </div>
             </div>
-            <div className="p-6 border-t border-gray-100 flex justify-end gap-3">
+            <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
               <button onClick={() => setShowExecuteModal(false)} className="btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="workflows" action="create">
                 <button onClick={handleExecute} disabled={executing} className="btn-primary text-sm">

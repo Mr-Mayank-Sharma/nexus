@@ -26,9 +26,9 @@ const CARRIERS = ['FedEx', 'UPS', 'USPS', 'DHL'] as const
 const SERVICE_LEVELS = ['Ground', '2Day', 'Overnight', 'International'] as const
 
 const STATUS_STYLES: Record<string, string> = {
-  Generated: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  Printed: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
-  Shipped: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  Generated: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  Printed: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-400)]',
+  Shipped: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
 }
 
 export default function LabelPrintingPage() {
@@ -135,7 +135,7 @@ export default function LabelPrintingPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="enterprise-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white">
+              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
                 <FileText className="w-4 h-4" />
               </div>
               <div>
@@ -195,7 +195,7 @@ export default function LabelPrintingPage() {
             <div className="mt-4 flex justify-end">
               <PermissionGate resource="settings" action="create">
                 <button onClick={handleGenerate}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium">
+                  className="bg-[var(--nexus-primary-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors inline-flex items-center gap-2 text-sm font-medium">
                   <Plus className="w-4 h-4" /> Generate Label
                 </button>
               </PermissionGate>
@@ -250,14 +250,14 @@ export default function LabelPrintingPage() {
                           <div className="flex items-center justify-center gap-1">
                             <PermissionGate resource="settings" action="edit">
                               <button onClick={() => handleReprint(label)}
-                                className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-blue-600 transition-colors"
+                                className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors"
                                 title="Reprint">
                                 <RefreshCw className="w-3.5 h-3.5" />
                               </button>
                             </PermissionGate>
                             <PermissionGate resource="settings" action="delete">
                               <button onClick={() => handleVoid(label)}
-                                className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-red-600 transition-colors"
+                                className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)] transition-colors"
                                 title="Void">
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -274,7 +274,7 @@ export default function LabelPrintingPage() {
 
           <div className="enterprise-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center text-white">
+              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-ai-50)]0 flex items-center justify-center text-white">
                 <Box className="w-4 h-4" />
               </div>
               <div>
@@ -287,11 +287,11 @@ export default function LabelPrintingPage() {
                 <label key={orderId}
                   className={clsx(
                     'flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors text-sm',
-                    bulkOrders.includes(orderId) ? 'bg-blue-50 dark:bg-blue-900/10' : 'hover:bg-[var(--bg-tertiary)]'
+                    bulkOrders.includes(orderId) ? 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10' : 'hover:bg-[var(--bg-tertiary)]'
                   )}>
                   <input type="checkbox" checked={bulkOrders.includes(orderId)}
                     onChange={() => toggleBulkOrder(orderId)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-blue-500" />
                   <span className="text-[var(--text-primary)]">{orderId}</span>
                 </label>
               ))}
@@ -303,7 +303,7 @@ export default function LabelPrintingPage() {
                   <span>{Math.round(bulkProgress)}%</span>
                 </div>
                 <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                  <div className="h-full bg-[var(--nexus-primary-600)] rounded-full transition-all duration-300"
                     style={{ width: `${bulkProgress}%` }} />
                 </div>
               </div>
@@ -312,7 +312,7 @@ export default function LabelPrintingPage() {
               <span className="text-xs text-[var(--text-tertiary)]">{bulkOrders.length} order(s) selected</span>
               <PermissionGate resource="settings" action="create">
                 <button onClick={handleBulkGenerate} disabled={bulkOrders.length === 0 || isBulkGenerating}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
+                  className="bg-[var(--nexus-primary-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors inline-flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                   {isBulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Generate Labels for Selected
                 </button>
@@ -324,7 +324,7 @@ export default function LabelPrintingPage() {
         <div className="space-y-6">
           <div className="enterprise-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center text-white">
+              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-success-50)]0 flex items-center justify-center text-white">
                 <Settings className="w-4 h-4" />
               </div>
               <div>
@@ -366,7 +366,7 @@ export default function LabelPrintingPage() {
           <div className="enterprise-card p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-lg bg-[var(--nexus-warning-50)]0 flex items-center justify-center text-white">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div>

@@ -186,19 +186,19 @@ export default function WalmartIntegrationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-sky-500" /> Walmart Integration</h1>
-          <p className="text-sm text-gray-500 mt-1">Connect Walmart Marketplace to manage orders, fulfillment, and pricing</p>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-sky-500" /> Walmart Integration</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Connect Walmart Marketplace to manage orders, fulfillment, and pricing</p>
         </div>
         <div className="flex items-center gap-3">
           {connected ? (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              <span className="text-xs font-medium text-green-700">Connected</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)] rounded-lg">
+              <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />
+              <span className="text-xs font-medium text-[var(--nexus-success-700)]">Connected</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg">
-              <XCircle className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-medium text-gray-500">Disconnected</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface-sunken)] border border-[var(--border-default)] rounded-lg">
+              <XCircle className="w-4 h-4 text-[var(--text-tertiary)]" />
+              <span className="text-xs font-medium text-[var(--text-secondary)]">Disconnected</span>
             </div>
           )}
         </div>
@@ -207,19 +207,19 @@ export default function WalmartIntegrationPage() {
       {/* Connection Card */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Link className="w-4 h-4 text-sky-500" /> Walmart Marketplace Connection</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Link className="w-4 h-4 text-sky-500" /> Walmart Marketplace Connection</h3>
         </div>
         <div className="card-body">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
-              <p className="text-sm text-gray-700">
-                Status: <span className={clsx('font-semibold', connected ? 'text-green-600' : 'text-gray-500')}>{connected ? 'Connected' : 'Disconnected'}</span>
+              <p className="text-sm text-[var(--text-secondary)]">
+                Status: <span className={clsx('font-semibold', connected ? 'text-[var(--nexus-success-600)]' : 'text-[var(--text-secondary)]')}>{connected ? 'Connected' : 'Disconnected'}</span>
               </p>
-              {connected && <p className="text-xs text-gray-400">{MARKETPLACES.find(m => m.value === form.marketplace)?.label} · Channel: {form.channelType}</p>}
+              {connected && <p className="text-xs text-[var(--text-tertiary)]">{MARKETPLACES.find(m => m.value === form.marketplace)?.label} · Channel: {form.channelType}</p>}
             </div>
             {connected ? (
               <PermissionGate resource="integrations" action="delete">
-                <button onClick={handleDisconnect} className="btn-secondary text-sm text-red-600 border-red-200 hover:bg-red-50">
+                <button onClick={handleDisconnect} className="btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
                 </button>
               </PermissionGate>
@@ -236,11 +236,11 @@ export default function WalmartIntegrationPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-gray-200">
+      <div className="flex items-center gap-1 border-b border-[var(--border-default)]">
         {tabs.map(tab => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.id ? 'border-sky-600 text-sky-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              activeTab === tab.id ? 'border-sky-600 text-sky-600' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
             }`}>
             {tab.icon}{tab.label}
           </button>
@@ -252,30 +252,30 @@ export default function WalmartIntegrationPage() {
           {/* Store Settings */}
           <div className="card">
             <div className="card-header">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Settings className="w-4 h-4 text-sky-500" /> API Credentials & Store Settings</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Settings className="w-4 h-4 text-sky-500" /> API Credentials & Store Settings</h3>
             </div>
             <div className="card-body space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Marketplace</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Marketplace</label>
                   <select value={form.marketplace} onChange={e => setForm({ ...form, marketplace: e.target.value })} className="input w-full text-sm">
                     {MARKETPLACES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Store Name</label>
                   <input value={form.storeName} onChange={e => setForm({ ...form, storeName: e.target.value })} className="input w-full text-sm" placeholder="My Walmart Store" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Client ID</label>
                   <input value={form.clientId} onChange={e => setForm({ ...form, clientId: e.target.value })} className="input w-full font-mono text-sm" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Client Secret</label>
                   <input type="password" value={form.clientSecret} onChange={e => setForm({ ...form, clientSecret: e.target.value })} className="input w-full font-mono text-sm" placeholder="Your client secret" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Channel Type</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Channel Type</label>
                   <select value={form.channelType} onChange={e => setForm({ ...form, channelType: e.target.value })} className="input w-full text-sm">
                     <option value="WALMART_US">Walmart US</option>
                     <option value="WALMART_CA">Walmart Canada</option>
@@ -283,24 +283,24 @@ export default function WalmartIntegrationPage() {
                 </div>
               </div>
 
-              <hr className="border-gray-100" />
-              <h4 className="text-sm font-medium text-gray-700">Auto-Sync Settings</h4>
+              <hr className="border-[var(--border-subtle)]" />
+              <h4 className="text-sm font-medium text-[var(--text-secondary)]">Auto-Sync Settings</h4>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.autoSyncOrders} onChange={e => setForm({ ...form, autoSyncOrders: e.target.checked })} className="rounded border-gray-300" />
+                  <input type="checkbox" checked={form.autoSyncOrders} onChange={e => setForm({ ...form, autoSyncOrders: e.target.checked })} className="rounded border-[var(--border-default)]" />
                   Auto-sync orders
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.syncInventory} onChange={e => setForm({ ...form, syncInventory: e.target.checked })} className="rounded border-gray-300" />
+                  <input type="checkbox" checked={form.syncInventory} onChange={e => setForm({ ...form, syncInventory: e.target.checked })} className="rounded border-[var(--border-default)]" />
                   Sync inventory
                 </label>
                 <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.syncPricing} onChange={e => setForm({ ...form, syncPricing: e.target.checked })} className="rounded border-gray-300" />
+                  <input type="checkbox" checked={form.syncPricing} onChange={e => setForm({ ...form, syncPricing: e.target.checked })} className="rounded border-[var(--border-default)]" />
                   Sync pricing
                 </label>
               </div>
               <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-700">Sync interval (minutes):</label>
+                <label className="text-sm text-[var(--text-secondary)]">Sync interval (minutes):</label>
                 <input type="number" value={form.syncIntervalMinutes} onChange={e => setForm({ ...form, syncIntervalMinutes: parseInt(e.target.value) || 15 })}
                   className="input w-20 text-sm" min={5} max={1440} />
               </div>
@@ -326,32 +326,32 @@ export default function WalmartIntegrationPage() {
           {/* Pricing Rules */}
           <div className="card">
             <div className="card-header">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><DollarSign className="w-4 h-4 text-sky-500" /> Pricing Rules</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><DollarSign className="w-4 h-4 text-sky-500" /> Pricing Rules</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Rule Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Type</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Adjustment</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Min Price</th>
-                    <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Max Price</th>
-                    <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Active</th>
+                  <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50">
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Rule Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Type</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Adjustment</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Min Price</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Max Price</th>
+                    <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Active</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {pricingRules.map(rule => (
-                    <tr key={rule.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-sm font-medium text-gray-900">{rule.name}</td>
-                      <td className="px-6 py-3 text-sm text-gray-500 capitalize">{rule.type}</td>
-                      <td className={clsx('px-6 py-3 text-sm text-right font-mono', rule.value.startsWith('+') ? 'text-green-600' : rule.value.startsWith('-') ? 'text-red-600' : 'text-gray-900')}>{rule.value}</td>
-                      <td className="px-6 py-3 text-sm text-gray-700 text-right">{rule.minPrice}</td>
-                      <td className="px-6 py-3 text-sm text-gray-700 text-right">{rule.maxPrice}</td>
+                    <tr key={rule.id} className="hover:bg-[var(--surface-sunken)]">
+                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{rule.name}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] capitalize">{rule.type}</td>
+                      <td className={clsx('px-6 py-3 text-sm text-right font-mono', rule.value.startsWith('+') ? 'text-[var(--nexus-success-600)]' : rule.value.startsWith('-') ? 'text-[var(--nexus-error-600)]' : 'text-[var(--text-primary)]')}>{rule.value}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{rule.minPrice}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{rule.maxPrice}</td>
                       <td className="px-6 py-3 text-center">
                         <PermissionGate resource="integrations" action="edit">
                           <button onClick={() => togglePricingRule(rule.id)}
-                            className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', rule.active ? 'bg-sky-500' : 'bg-gray-300')}>
+                            className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', rule.active ? 'bg-sky-500' : 'bg-[var(--surface-muted)]')}>
                             <span className={clsx('inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform', rule.active ? 'translate-x-[18px]' : 'translate-x-[3px]')} />
                           </button>
                         </PermissionGate>
@@ -361,7 +361,7 @@ export default function WalmartIntegrationPage() {
                 </tbody>
               </table>
             </div>
-            <div className="px-6 py-3 border-t border-gray-100">
+            <div className="px-6 py-3 border-t border-[var(--border-subtle)]">
               <PermissionGate resource="integrations" action="create">
                 <button className="btn-secondary text-xs"><DollarSign className="w-3.5 h-3.5" /> Add Pricing Rule</button>
               </PermissionGate>
@@ -373,19 +373,19 @@ export default function WalmartIntegrationPage() {
       {activeTab === 'fulfillment' && (
         <div className="card">
           <div className="card-header">
-            <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><Truck className="w-4 h-4 text-sky-500" /> Fulfillment Settings</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Truck className="w-4 h-4 text-sky-500" /> Fulfillment Settings</h3>
           </div>
           <div className="card-body space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fulfillment Method</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Fulfillment Method</label>
                 <select value={fulfillmentForm.fulfillmentMethod} onChange={e => setFulfillmentForm({ ...fulfillmentForm, fulfillmentMethod: e.target.value as 'WFS' | 'SELF' })} className="input w-full text-sm">
                   <option value="SELF">Self-Fulfillment (Seller)</option>
                   <option value="WFS">Walmart Fulfillment Services (WFS)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Carrier (Self-Fulfill)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Preferred Carrier (Self-Fulfill)</label>
                 <select value={fulfillmentForm.selfShipCarrier} onChange={e => setFulfillmentForm({ ...fulfillmentForm, selfShipCarrier: e.target.value })} className="input w-full text-sm" disabled={fulfillmentForm.fulfillmentMethod === 'WFS'}>
                   <option value="FEDEX">FedEx</option>
                   <option value="UPS">UPS</option>
@@ -395,7 +395,7 @@ export default function WalmartIntegrationPage() {
               </div>
               {fulfillmentForm.fulfillmentMethod === 'WFS' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">WFS Shipping Speed</label>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">WFS Shipping Speed</label>
                   <select value={fulfillmentForm.wfsShippingSpeed} onChange={e => setFulfillmentForm({ ...fulfillmentForm, wfsShippingSpeed: e.target.value })} className="input w-full text-sm">
                     <option value="STANDARD">Standard (3-5 days)</option>
                     <option value="EXPEDITED">Expedited (2 days)</option>
@@ -404,25 +404,25 @@ export default function WalmartIntegrationPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Handling Time (days)</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Handling Time (days)</label>
                 <input type="number" value={fulfillmentForm.handlingTimeDays} onChange={e => setFulfillmentForm({ ...fulfillmentForm, handlingTimeDays: parseInt(e.target.value) || 2 })}
                   className="input w-full text-sm" min={0} max={30} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order Cutoff Time</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Order Cutoff Time</label>
                 <input type="time" value={fulfillmentForm.cutoffTime} onChange={e => setFulfillmentForm({ ...fulfillmentForm, cutoffTime: e.target.value })} className="input w-full text-sm" />
               </div>
             </div>
 
-            <hr className="border-gray-100" />
-            <h4 className="text-sm font-medium text-gray-700">Order Processing Rules</h4>
+            <hr className="border-[var(--border-subtle)]" />
+            <h4 className="text-sm font-medium text-[var(--text-secondary)]">Order Processing Rules</h4>
             <div className="flex items-center gap-6">
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={fulfillmentForm.autoAcceptOrders} onChange={e => setFulfillmentForm({ ...fulfillmentForm, autoAcceptOrders: e.target.checked })} className="rounded border-gray-300" />
+                <input type="checkbox" checked={fulfillmentForm.autoAcceptOrders} onChange={e => setFulfillmentForm({ ...fulfillmentForm, autoAcceptOrders: e.target.checked })} className="rounded border-[var(--border-default)]" />
                 Auto-accept orders
               </label>
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={fulfillmentForm.autoShipOrders} onChange={e => setFulfillmentForm({ ...fulfillmentForm, autoShipOrders: e.target.checked })} className="rounded border-gray-300" />
+                <input type="checkbox" checked={fulfillmentForm.autoShipOrders} onChange={e => setFulfillmentForm({ ...fulfillmentForm, autoShipOrders: e.target.checked })} className="rounded border-[var(--border-default)]" />
                 Auto-ship orders (when tracking available)
               </label>
             </div>
@@ -452,7 +452,7 @@ export default function WalmartIntegrationPage() {
         <div className="card">
           <div className="card-header">
             <div className="flex items-center justify-between w-full">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-sky-500" /> Recent Walmart Orders</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-sky-500" /> Recent Walmart Orders</h3>
               <div className="flex items-center gap-3">
                 <Autocomplete value={searchTerm} onChange={setSearchTerm} placeholder="Search PO or customer..." minChars={0} />
                 <select value={filterFulfillment} onChange={e => setFilterFulfillment(e.target.value)} className="input text-xs w-28">
@@ -472,57 +472,57 @@ export default function WalmartIntegrationPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Purchase Order ID</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fulfillment</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Items</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Amount</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Sync</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Placed At</th>
+                <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]/50">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Purchase Order ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Customer</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Fulfillment</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Items</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Amount</th>
+                  <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Sync</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Placed At</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-8 text-center text-sm text-gray-400">No orders found matching your filters</td>
+                    <td colSpan={8} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
                   </tr>
                 ) : filteredOrders.map(order => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3 text-sm font-mono text-gray-900">{order.purchaseOrderId}</td>
-                    <td className="px-6 py-3 text-sm text-gray-600">{order.customerName}</td>
+                  <tr key={order.id} className="hover:bg-[var(--surface-sunken)]">
+                    <td className="px-6 py-3 text-sm font-mono text-[var(--text-primary)]">{order.purchaseOrderId}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)]">{order.customerName}</td>
                     <td className="px-6 py-3">
                       <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', {
-                        'bg-green-50 text-green-700': order.status === 'Shipped',
-                        'bg-blue-50 text-blue-700': order.status === 'Acknowledged',
-                        'bg-yellow-50 text-yellow-700': order.status === 'Created',
-                        'bg-red-50 text-red-700': order.status === 'Cancelled',
+                        'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)]': order.status === 'Shipped',
+                        'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)]': order.status === 'Acknowledged',
+                        'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)]': order.status === 'Created',
+                        'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]': order.status === 'Cancelled',
                       })}>{order.status}</span>
                     </td>
                     <td className="px-6 py-3">
                       <span className={clsx('inline-flex items-center gap-1 text-xs font-medium', {
                         'text-sky-600': order.fulfillmentType === 'WFS',
-                        'text-gray-600': order.fulfillmentType === 'SELF',
+                        'text-[var(--text-secondary)]': order.fulfillmentType === 'SELF',
                       })}>
                         {order.fulfillmentType === 'WFS' ? <Package className="w-3 h-3" /> : <Truck className="w-3 h-3" />}
                         {order.fulfillmentType === 'WFS' ? 'WFS' : 'Self'}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-700 text-right">{order.items}</td>
-                    <td className="px-6 py-3 text-sm text-gray-900 text-right font-medium">{order.amount}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{order.items}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium">{order.amount}</td>
                     <td className="px-6 py-3 text-center">
-                      {order.syncStatus === 'SYNCED' ? <CheckCircle className="w-4 h-4 text-green-500 mx-auto" /> :
-                       order.syncStatus === 'PENDING' ? <Clock className="w-4 h-4 text-amber-400 mx-auto" /> :
-                       <XCircle className="w-4 h-4 text-red-500 mx-auto" />}
+                      {order.syncStatus === 'SYNCED' ? <CheckCircle className="w-4 h-4 text-[var(--nexus-success-500)] mx-auto" /> :
+                       order.syncStatus === 'PENDING' ? <Clock className="w-4 h-4 text-[var(--nexus-warning-400)] mx-auto" /> :
+                       <XCircle className="w-4 h-4 text-[var(--nexus-error-500)] mx-auto" />}
                     </td>
-                    <td className="px-6 py-3 text-sm text-gray-400 text-right">{order.placedAt}</td>
+                    <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] text-right">{order.placedAt}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
+          <div className="px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-tertiary)]">
             <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
             <PermissionGate resource="integrations" action="create">
               <button onClick={handleSync} disabled={syncing || !connected} className="btn-ghost text-xs">

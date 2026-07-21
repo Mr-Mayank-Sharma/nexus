@@ -54,7 +54,9 @@ public class SecurityConfig {
                     "style-src 'self' 'unsafe-inline'; " +
                     "img-src 'self' data: blob:; " +
                     "font-src 'self' data:; " +
-                    "connect-src 'self'"))
+                    "connect-src 'self'; " +
+                    "report-uri /csp-report; " +
+                    "report-to csp-endpoint"))
                 .frameOptions(frame -> frame.sameOrigin())
                 .contentTypeOptions(contentType -> {})
                 .httpStrictTransportSecurity(hsts -> hsts
@@ -102,7 +104,10 @@ public class SecurityConfig {
                 .toList();
         config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of(
+            "Authorization", "Content-Type", "X-Requested-With",
+            "Accept", "Origin", "Cache-Control", "X-CSRF-Token",
+            "X-Idempotency-Key", "Authorization-Import"));
         config.setAllowCredentials(true);
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
