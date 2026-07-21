@@ -169,7 +169,7 @@ export default function FulfillmentLimitsPage() {
         onTabChange={(key) => setActiveTab(key as LimitTab)}
       />
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-[var(--surface-base)] rounded-lg shadow">
         <div className="p-4 border-b">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">

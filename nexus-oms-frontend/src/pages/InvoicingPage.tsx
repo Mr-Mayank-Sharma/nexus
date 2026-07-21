@@ -638,7 +638,7 @@ export default function InvoicingPage() {
                             <select
                               value={inv.status}
                               onChange={e => handleStatusChange(inv.id, e.target.value)}
-                              className="text-xs border border-[var(--border-default)] rounded px-1.5 py-1 bg-white text-[var(--text-secondary)]"
+                              className="text-xs border border-[var(--border-default)] rounded px-1.5 py-1 bg-[var(--surface-base)] text-[var(--text-secondary)]"
                               onClick={e => e.stopPropagation()}
                             >
                               <option value="DRAFT">DRAFT</option>

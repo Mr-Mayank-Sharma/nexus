@@ -164,7 +164,7 @@ export default function BopisAppPage() {
 
   return (
     <div className="min-h-screen bg-[var(--surface-sunken)]">
-      <div className="bg-white shadow-sm border-b px-4 py-3">
+      <div className="bg-[var(--surface-base)] shadow-sm border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Package className="w-6 h-6 text-[var(--nexus-success-600)]" />
@@ -211,7 +211,7 @@ export default function BopisAppPage() {
               { label: 'Ready', value: statusCounts.ready, color: 'text-[var(--nexus-success-600)]' },
               { label: 'Done', value: statusCounts.collected, color: 'text-emerald-600' },
             ].map((s) => (
-              <div key={s.label} className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div key={s.label} className="bg-[var(--surface-base)] rounded-lg p-3 text-center shadow-sm">
                 <div className={clsx('text-2xl font-bold', s.color)}>{s.value}</div>
                 <div className="text-xs text-[var(--text-secondary)]">{s.label}</div>
               </div>
@@ -261,7 +261,7 @@ export default function BopisAppPage() {
                 Pending Orders ({pendingOrders.length})
               </h2>
               {pendingOrders.length === 0 ? (
-                <div className="bg-white rounded-lg p-8 text-center text-[var(--text-secondary)] shadow-sm">
+                <div className="bg-[var(--surface-base)] rounded-lg p-8 text-center text-[var(--text-secondary)] shadow-sm">
                   <Package className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
                   <p>No pending pickup orders</p>
                 </div>
@@ -367,7 +367,7 @@ function OrderCard({ order, onSelect, variant }: {
     <button
       onClick={onSelect}
       className={clsx(
-        'w-full text-left bg-white rounded-lg p-4 shadow-sm border-l-4 hover:shadow-md transition-shadow',
+        'w-full text-left bg-[var(--surface-base)] rounded-lg p-4 shadow-sm border-l-4 hover:shadow-md transition-shadow',
         variant === 'ready' ? 'border-[var(--nexus-success-500)]' : 'border-[var(--nexus-warning-500)]'
       )}
     >
@@ -419,7 +419,7 @@ function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, o
         ← Back to list
       </button>
 
-      <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="bg-[var(--surface-base)] rounded-lg shadow-sm p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="font-bold text-lg">{order.orderNumber}</div>
@@ -452,7 +452,7 @@ function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, o
       </div>
 
       {items.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-4">
+        <div className="bg-[var(--surface-base)] rounded-lg shadow-sm p-4">
           <h3 className="font-semibold mb-3">Items ({items.length})</h3>
           <div className="space-y-2">
             {items.map((item) => (
@@ -502,7 +502,7 @@ function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, o
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm p-4">
+      <div className="bg-[var(--surface-base)] rounded-lg shadow-sm p-4">
         <h3 className="font-semibold mb-3">Actions</h3>
         <div className="space-y-2">
           {order.status === 'PENDING' && (

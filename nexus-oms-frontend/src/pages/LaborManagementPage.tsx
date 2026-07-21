@@ -642,7 +642,7 @@ export default function LaborManagementPage() {
                           </div>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {wb.tasks.map((task, i) => (
-                              <span key={i} className="text-[10px] px-1.5 py-0.5 bg-white rounded border border-[var(--border-default)] text-[var(--text-secondary)]">{task}</span>
+                              <span key={i} className="text-[10px] px-1.5 py-0.5 bg-[var(--surface-base)] rounded border border-[var(--border-default)] text-[var(--text-secondary)]">{task}</span>
                             ))}
                           </div>
                         </div>

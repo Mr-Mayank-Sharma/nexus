@@ -140,7 +140,7 @@ export default function TaskQueuesPage() {
           {(['all', 'high', 'medium', 'low'] as const).map(p => (
             <button key={p} onClick={() => setPriorityFilter(p)}
               className={clsx('px-3 py-1.5 text-xs font-medium rounded-md capitalize',
-                priorityFilter === p ? 'bg-white bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]')}>
+                priorityFilter === p ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]')}>
               {p}
             </button>
           ))}

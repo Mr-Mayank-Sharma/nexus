@@ -60,7 +60,7 @@ export default function ProcurementPage() {
               className={clsx(
                 'px-4 py-2 text-sm font-medium rounded-md transition-colors flex items-center gap-2',
                 activeTab === tab.id
-                  ? 'bg-white text-[var(--text-primary)] shadow-sm'
+                  ? 'bg-[var(--surface-base)] text-[var(--text-primary)] shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)]',
               )}
             >
@@ -453,7 +453,7 @@ function SuppliersTab() {
                                   </thead>
                                   <tbody className="divide-y divide-gray-100">
                                     {contacts[supplier.id]?.map((c) => (
-                                      <tr key={c.id} className="hover:bg-white">
+                                      <tr key={c.id} className="hover:bg-[var(--surface-base)]">
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{c.name}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{c.title}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{c.email}</td>
@@ -471,7 +471,7 @@ function SuppliersTab() {
                                 </table>
                               )}
                               {showContactForm === supplier.id && (
-                                <div className="bg-white rounded-lg border border-[var(--border-default)] p-4 space-y-3">
+                                <div className="bg-[var(--surface-base)] rounded-lg border border-[var(--border-default)] p-4 space-y-3">
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
                                       <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Name</label>
@@ -580,7 +580,7 @@ function SuppliersTab() {
                                   </thead>
                                   <tbody className="divide-y divide-gray-100">
                                     {contracts[supplier.id]?.map((c) => (
-                                      <tr key={c.id} className="hover:bg-white">
+                                      <tr key={c.id} className="hover:bg-[var(--surface-base)]">
                                         <td className="px-3 py-2 text-sm font-medium text-[var(--text-primary)]">{c.title}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{c.terms}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{new Date(c.startDate).toLocaleDateString()}</td>
@@ -599,7 +599,7 @@ function SuppliersTab() {
                                 </table>
                               )}
                               {showContractForm === supplier.id && (
-                                <div className="bg-white rounded-lg border border-[var(--border-default)] p-4 space-y-3">
+                                <div className="bg-[var(--surface-base)] rounded-lg border border-[var(--border-default)] p-4 space-y-3">
                                   <div className="grid grid-cols-2 gap-3">
                                     <div>
                                       <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Contract Number</label>
@@ -1091,7 +1091,7 @@ function RequestsTab() {
                                   </tr>
                                 ) : (
                                   req.items?.map((item) => (
-                                    <tr key={item.id} className="hover:bg-white">
+                                    <tr key={item.id} className="hover:bg-[var(--surface-base)]">
                                       <td className="px-3 py-2 text-sm font-mono text-[var(--text-secondary)]">{item.sku}</td>
                                       <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{item.productName}</td>
                                       <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>
@@ -1445,7 +1445,7 @@ function RfqsTab() {
                                       ? Math.ceil((new Date(resp.deliveryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
                                       : '-'
                                     return (
-                                      <tr key={resp.id} className="hover:bg-white">
+                                      <tr key={resp.id} className="hover:bg-[var(--surface-base)]">
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{resp.supplierName}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right font-medium">${resp.totalAmount.toFixed(2)}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{deliveryDays === '-' ? '-' : `${deliveryDays} days`}</td>
@@ -1835,7 +1835,7 @@ function PurchaseOrdersTab() {
                               </thead>
                               <tbody className="divide-y divide-gray-100">
                                 {po.items.map((item) => (
-                                  <tr key={item.id} className="hover:bg-white">
+                                  <tr key={item.id} className="hover:bg-[var(--surface-base)]">
                                     <td className="px-3 py-2 text-sm font-mono text-[var(--text-secondary)]">{item.sku}</td>
                                     <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{item.productName}</td>
                                     <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>

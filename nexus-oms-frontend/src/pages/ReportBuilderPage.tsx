@@ -324,7 +324,7 @@ export default function ReportBuilderPage() {
                     <MoreHorizontal className="w-4 h-4" />
                   </button>
                   {widget.menuOpen && (
-                    <div className="absolute right-0 top-8 z-10 w-36 bg-white border border-[var(--border-default)] rounded-lg shadow-lg py-1 text-sm">
+                    <div className="absolute right-0 top-8 z-10 w-36 bg-[var(--surface-base)] border border-[var(--border-default)] rounded-lg shadow-lg py-1 text-sm">
                       <PermissionGate resource="reports" action="edit">
                         <button className="w-full px-3 py-1.5 text-left text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] flex items-center gap-2" onClick={() => refreshWidget(widget.id)}>
                           <RefreshCw className="w-3.5 h-3.5" /> Refresh

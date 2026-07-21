@@ -177,7 +177,7 @@ export default function AiExperimentsPage() {
       ) : (
         <div className="space-y-3">
           {experiments.map(exp => (
-            <div key={exp.id} className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)]">
+            <div key={exp.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)]">
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">

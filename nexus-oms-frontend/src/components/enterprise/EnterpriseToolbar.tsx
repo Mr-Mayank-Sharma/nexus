@@ -76,7 +76,7 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
           </div>
         )}
         {actions && actions.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" role="toolbar" aria-label="Actions">
             {actions.map((action, i) => {
               const btn = (
                 <button key={i}
@@ -109,6 +109,10 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
               <input className="enterprise-input w-full pl-9" placeholder={searchPlaceholder}
+                role="combobox"
+                aria-expanded={autocomplete ? open : undefined}
+                aria-controls={autocomplete ? 'toolbar-autocomplete-listbox' : undefined}
+                aria-autocomplete="list"
                 value={currentValue}
                 onChange={e => handleChange(e.target.value)}
                 onFocus={() => autocomplete && options.length > 0 && setOpen(true)}
@@ -130,14 +134,16 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
               />
               {loading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] animate-spin" />}
               {autocomplete && open && options.length > 0 && (
-                <div className="absolute z-50 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-auto max-h-[300px]">
+                <div id="toolbar-autocomplete-listbox" role="listbox" aria-label={searchPlaceholder} className="absolute z-50 top-full mt-1 w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg shadow-xl overflow-auto max-h-[300px]">
                   {options.map((item, i) => {
                     const label = autocomplete.getOptionLabel?.(item) ?? item?.label ?? item?.name ?? item?.id ?? String(item)
                     const highlighted = i === highlightedIndex
                     return (
                       <div key={autocomplete.getOptionValue?.(item) ?? label}
+                        role="option"
+                        aria-selected={highlighted}
                         className={clsx('px-3 py-2 text-sm cursor-pointer',
-                          highlighted ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          highlighted ? 'bg-[var(--color-primary-50)] text-[var(--color-primary-700)]' : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                         )}
                         onMouseDown={() => { updateValue(label); autocomplete.onSelect(item); setOpen(false); setHighlightedIndex(-1) }}
                         onMouseEnter={() => setHighlightedIndex(i)}
@@ -149,7 +155,7 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
                 </div>
               )}
               {autocomplete && open && fetched && options.length === 0 && !loading && currentValue.length >= (autocomplete.minChars ?? 2) && (
-                <div className="absolute z-50 top-full mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 text-center text-sm text-gray-500">
+                <div className="absolute z-50 top-full mt-1 w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg shadow-xl p-3 text-center text-sm text-[var(--text-tertiary)]">
                   No results found
                 </div>
               )}

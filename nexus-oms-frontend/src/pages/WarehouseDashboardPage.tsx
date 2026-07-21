@@ -78,7 +78,7 @@ export default function WarehouseDashboardPage() {
         {(['overview', 'labor', 'dock'] as const).map(t => (
           <button key={t} onClick={() => setSelectedTab(t)}
             className={clsx('px-4 py-2 text-sm font-medium rounded-md capitalize transition-all',
-              selectedTab === t ? 'bg-white bg-[var(--surface-muted)] text-[var(--text-primary)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')}>
+              selectedTab === t ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')}>
             {t === 'overview' ? 'Overview' : t === 'labor' ? 'Labor Tracking' : 'Dock Management'}
           </button>
         ))}

@@ -283,7 +283,7 @@ export default function WorkflowsPage() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                               {steps.map(step => (
-                                <tr key={step.id} className="hover:bg-white transition-colors">
+                                <tr key={step.id} className="hover:bg-[var(--interactive-hover)] transition-colors">
                                   <td className="px-3 py-1.5 text-[var(--text-secondary)]">{step.order}</td>
                                   <td className="px-3 py-1.5">
                                     <span className="bg-[var(--surface-muted)] px-1.5 py-0.5 rounded text-[var(--text-secondary)]">{step.type}</span>
@@ -333,7 +333,7 @@ export default function WorkflowsPage() {
                             </thead>
                             <tbody className="divide-y divide-gray-100">
                               {executions.map(ex => (
-                                <tr key={ex.id} className="hover:bg-white transition-colors">
+                                <tr key={ex.id} className="hover:bg-[var(--interactive-hover)] transition-colors">
                                   <td className="px-3 py-1.5">
                                     <span className={clsx('inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium', executionStatusStyles[ex.status] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)]')}>
                                       {ex.status}

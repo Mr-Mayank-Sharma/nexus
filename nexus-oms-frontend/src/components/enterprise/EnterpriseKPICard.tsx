@@ -27,13 +27,17 @@ const iconColorMap = {
 export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, trend, trendValue, color = 'primary', loading, onClick, className }: Props) {
   return (
     <div
+      role="region"
+      aria-label={`${title}: ${typeof value === 'string' ? value : String(value)}`}
       className={clsx(
-        'bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 transition-all duration-150',
-        onClick && 'cursor-pointer hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600',
+        'bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5 transition-all duration-150',
+        onClick && 'cursor-pointer hover:shadow-md hover:border-[var(--border-default)]',
         loading && 'pointer-events-none',
         className,
       )}
       onClick={onClick}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } } : undefined}
     >
       {loading ? (
         <div className="space-y-3">
@@ -45,9 +49,9 @@ export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, t
         <>
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1 tracking-tight">{value}</p>
-              {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{subtitle}</p>}
+              <p className="text-sm font-medium text-[var(--text-secondary)] truncate">{title}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] mt-1 tracking-tight">{value}</p>
+              {subtitle && <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{subtitle}</p>}
             </div>
             {icon && (
               <div className={clsx(
@@ -59,12 +63,12 @@ export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, t
             )}
           </div>
           {trend && (
-            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[var(--border-subtle)]">
               <div className={clsx(
                 'flex items-center gap-1 text-xs font-medium',
                 trend === 'up' && 'text-emerald-600 dark:text-emerald-400',
                 trend === 'down' && 'text-red-600 dark:text-red-400',
-                trend === 'neutral' && 'text-gray-400 dark:text-gray-500',
+                trend === 'neutral' && 'text-[var(--text-tertiary)]',
               )}>
                 {trend === 'up' && <TrendingUp className="w-3 h-3" />}
                 {trend === 'down' && <TrendingDown className="w-3 h-3" />}
@@ -72,7 +76,7 @@ export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, t
                 {trendValue}
               </div>
               {trend !== 'neutral' && (
-                <span className="text-xs text-gray-400 dark:text-gray-500">vs last period</span>
+                <span className="text-xs text-[var(--text-tertiary)]">vs last period</span>
               )}
             </div>
           )}

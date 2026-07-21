@@ -170,7 +170,7 @@ function AiOverview() {
       </div>
 
       {/* Model Health */}
-      <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+      <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
         <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Model Health</h3>
         {healthModels.length === 0 ? (
           <p className="text-[var(--text-tertiary)] text-sm">No model health data available</p>
@@ -235,7 +235,7 @@ function AiOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
           <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Model Performance</h3>
           {modelPerformance.length === 0 ? (
             <p className="text-[var(--text-tertiary)] text-sm">No model data available</p>
@@ -272,7 +272,7 @@ function AiOverview() {
           )}
         </div>
 
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
           <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Cost Breakdown (This Month)</h3>
           <div className="space-y-4">
             {Object.entries(costBreakdown).length === 0 ? (
@@ -317,7 +317,7 @@ function AiOverview() {
       </div>
 
       {/* Inference Activity */}
-      <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+      <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
         <h3 className="text-lg font-semibold text-[var(--text-primary)] dark:text-white mb-4">Inference Activity</h3>
         {logsLoading ? (
           <div className="flex justify-center py-8">
@@ -378,7 +378,7 @@ function AiOverview() {
 
       {/* Rule Fallback Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30 flex items-center justify-center">
               <ThumbsDown className="w-5 h-5 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
@@ -391,7 +391,7 @@ function AiOverview() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/30 flex items-center justify-center">
               <FileWarning className="w-5 h-5 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
@@ -406,7 +406,7 @@ function AiOverview() {
             </div>
           </div>
         </div>
-        <div className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-5">
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-lg bg-[var(--nexus-ai-100)] dark:bg-[var(--nexus-ai-900)]/30 flex items-center justify-center">
               <Activity className="w-5 h-5 text-[var(--nexus-ai-600)] dark:text-[var(--nexus-ai-400)]" />
@@ -533,7 +533,7 @@ function AiModelRegistry() {
           <div className="text-center py-12 text-[var(--text-tertiary)]">No models found</div>
         ) : (
           models.map((model) => (
-            <div key={model.id} className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)]">
+            <div key={model.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)]">
               <button
                 onClick={() => handleModelClick(model.id)}
                 className="w-full flex items-center justify-between p-4 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors"
@@ -749,7 +749,7 @@ function AiFeatureStore() {
           <div className="col-span-full text-center py-12 text-[var(--text-tertiary)]">No feature groups defined</div>
         ) : (
           groups.map(g => (
-            <div key={g.group} className="bg-white dark:bg-[#162033] rounded-xl border border-[var(--border-default)] p-4 hover:shadow-md transition-shadow">
+            <div key={g.group} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">{FEATURE_ICONS[g.group.toLowerCase()] || '📊'}</span>
                 <div>

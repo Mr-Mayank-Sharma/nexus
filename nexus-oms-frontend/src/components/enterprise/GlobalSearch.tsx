@@ -111,39 +111,49 @@ export default function GlobalSearch({ open, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-[100]" onClick={onClose} />
-      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-2xl z-[101] animate-[slideUp_200ms_ease-out]">
+      <div className="fixed inset-0 bg-black/40 z-[100]" onClick={onClose} aria-hidden="true" />
+      <div className="fixed top-[15%] left-1/2 -translate-x-1/2 w-full max-w-2xl z-[101] animate-[slideUp_200ms_ease-out]"
+        role="dialog" aria-modal="true" aria-label="Global search">
         <div className="bg-[var(--bg-card)] rounded-xl shadow-2xl border border-[var(--border-color)] overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--border-color)]">
             <Search className="w-5 h-5 text-[var(--text-tertiary)] shrink-0" />
             <input ref={inputRef}
+              id="global-search-input"
+              role="combobox"
+              aria-expanded={filtered.length > 0}
+              aria-controls="global-search-listbox"
+              aria-activedescendant={filtered[selectedIndex] ? `global-search-option-${filtered[selectedIndex].id}` : undefined}
+              aria-autocomplete="list"
               className="flex-1 bg-transparent border-none outline-none text-base text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
               placeholder="Search pages, orders, customers, or type a command..."
               value={query}
               onChange={e => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
             />
-            <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+            <button onClick={onClose} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]" aria-label="Close search">
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="max-h-[400px] overflow-y-auto p-2">
+          <div id="global-search-listbox" role="listbox" aria-label="Search results" className="max-h-[400px] overflow-y-auto p-2">
             {!query.trim() && (
-              <div className="px-2 py-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
+              <div role="presentation" className="px-2 py-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
                 Quick Actions
               </div>
             )}
             {Object.entries(grouped).map(([category, items]) => (
-              <div key={category}>
+              <div key={category} role="group" aria-label={category}>
                 {query.trim() && (
-                  <p className="px-2 py-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">{category}</p>
+                  <p role="presentation" className="px-2 py-1.5 text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">{category}</p>
                 )}
                 {items.map(item => {
                   const idx = globalIdx++
                   const isSelected = idx === selectedIndex
                   return (
                     <button key={item.id}
+                      id={`global-search-option-${item.id}`}
+                      role="option"
+                      aria-selected={isSelected}
                       className={clsx('w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
                         isSelected ? 'bg-[var(--color-primary-50)] text-[var(--color-primary-700)]' : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                       )}

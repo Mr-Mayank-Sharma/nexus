@@ -156,7 +156,7 @@ export default function RejectionsPage() {
         onTabChange={(key) => setActiveTab(key as RejectionTab)}
       />
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-[var(--surface-base)] rounded-lg shadow">
         <div className="p-4 border-b">
           <div className="flex items-center gap-4">
             <div className="flex-1 relative">

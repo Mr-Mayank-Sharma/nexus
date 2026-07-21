@@ -51,7 +51,7 @@ export default memo(function EnterpriseStatusBadge({ status, label, children, si
   const className = colorMap[status.toLowerCase()] || 'enterprise-badge-neutral'
 
   return (
-    <span className={clsx(className, size === 'sm' && 'text-[10px] px-1.5 py-0.5')}>
+    <span className={clsx(className, size === 'sm' && 'text-[10px] px-1.5 py-0.5')} role="status" aria-label={`Status: ${content}`}>
       {content}
     </span>
   )

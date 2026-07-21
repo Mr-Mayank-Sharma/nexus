@@ -444,7 +444,7 @@ export default function InventoryEnhancedPage() {
               className={clsx(
                 'px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all',
                 alertTab === tab
-                  ? 'bg-white bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm'
+                  ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]'
               )}
             >

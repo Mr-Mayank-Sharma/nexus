@@ -79,31 +79,31 @@ export default function NotificationsPanel({ open, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-30" onClick={onClose} />
-      <div className="absolute right-0 top-full mt-2 w-[420px] bg-[var(--bg-card)] rounded-xl shadow-xl border border-[var(--border-color)] z-40 animate-[slideUp_200ms_ease-out]">
+      <div className="fixed inset-0 z-30" onClick={onClose} aria-hidden="true" />
+      <div className="absolute right-0 top-full mt-2 w-[420px] bg-[var(--bg-card)] rounded-xl shadow-xl border border-[var(--border-color)] z-40 animate-[slideUp_200ms_ease-out]" role="complementary" aria-label="Notifications">
         <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-[var(--text-primary)]" />
             <span className="font-semibold text-sm text-[var(--text-primary)]">Notifications</span>
             {unreadCount > 0 && (
-              <span className="text-xs bg-[var(--color-primary-100)] text-[var(--color-primary-700)] px-1.5 py-0.5 rounded-full font-semibold">
+              <span className="text-xs bg-[var(--color-primary-100)] text-[var(--color-primary-700)] px-1.5 py-0.5 rounded-full font-semibold" aria-label={`${unreadCount} unread notifications`}>
                 {unreadCount}
               </span>
             )}
           </div>
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (
-              <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-xs" onClick={markAllRead}>
+              <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm text-xs" onClick={markAllRead} aria-label="Mark all notifications as read">
                 Mark all read
               </button>
             )}
-            <button onClick={onClose} className="p-1 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+            <button onClick={onClose} className="p-1 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)]" aria-label="Close notifications">
               <X className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-[400px] overflow-y-auto" aria-live="polite">
           {loadingNotifications ? (
             <div className="flex justify-center py-8">
               <div className="animate-spin w-5 h-5 border-2 border-[var(--color-primary-500)] border-t-transparent rounded-full" />
@@ -118,7 +118,7 @@ export default function NotificationsPanel({ open, onClose }: Props) {
             notifications.map(n => {
               const Icon = typeIcons[n.type]
               return (
-                <div key={n.id} className={clsx(
+                <div key={n.id} role="article" aria-label={n.title} tabIndex={0} className={clsx(
                   'flex gap-3 px-4 py-3 border-b border-[var(--border-color)] last:border-0 transition-colors cursor-pointer',
                   !n.read ? 'bg-[var(--color-primary-50)]' : 'hover:bg-[var(--bg-tertiary)]'
                 )}>

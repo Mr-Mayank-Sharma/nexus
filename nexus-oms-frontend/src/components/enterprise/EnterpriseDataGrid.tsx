@@ -113,6 +113,7 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
           <input
             className="enterprise-input w-full pl-9"
             placeholder="Search..."
+            aria-label="Filter table rows"
             value={globalFilter}
             onChange={e => setGlobalFilter(e.target.value)}
           />
@@ -147,19 +148,23 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
 
       <div className="enterprise-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="enterprise-table">
+          <table className="enterprise-table" role="grid" aria-rowcount={sortedData.length} aria-colcount={columns.length}>
             <thead>
               <tr>
                 {selectable && (
                   <th className="w-10">
                     <input type="checkbox" checked={allSelected} onChange={toggleSelectAll}
+                      aria-label="Select all rows"
                       className="rounded border-[var(--border-color)] text-[var(--color-primary-600)]" />
                   </th>
                 )}
                 {columns.filter(c => visibleColumns.has(c.key)).map(col => (
                   <th key={col.key} className={clsx(col.sortable !== false && sortable && 'cursor-pointer select-none')}
                     style={{ width: col.width, minWidth: col.minWidth }}
+                    aria-sort={col.sortable !== false && sortable ? (sortKey === col.key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
+                    tabIndex={col.sortable !== false && sortable ? 0 : undefined}
                     onClick={() => col.sortable !== false && sortable && handleSort(col.key)}
+                    onKeyDown={(e) => { if (col.sortable !== false && sortable && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleSort(col.key) } }}
                   >
                     <div className={clsx('flex items-center gap-1', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
                       {col.label}
@@ -208,6 +213,8 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
                       <td onClick={e => e.stopPropagation()}>
                         <input type="checkbox" checked={selected.has(row[rowKey])}
                           onChange={() => toggleSelect(row[rowKey])}
+                          aria-label={`Select row ${i + 1}`}
+                          aria-selected={selected.has(row[rowKey])}
                           className="rounded border-[var(--border-color)] text-[var(--color-primary-600)]" />
                       </td>
                     )}
@@ -233,7 +240,8 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
           </span>
           <div className="flex items-center gap-1">
             <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm"
-              disabled={page === 0} onClick={() => onPageChange?.(page - 1)}>Previous</button>
+              disabled={page === 0} onClick={() => onPageChange?.(page - 1)}
+              aria-label="Go to previous page">Previous</button>
             {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
               const start = Math.max(0, Math.min(page - 3, totalPages - 7))
               const p = start + i
@@ -243,11 +251,14 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
                   className={clsx('enterprise-btn enterprise-btn-sm min-w-[32px]',
                     p === page ? 'enterprise-btn-primary' : 'enterprise-btn-ghost')}
                   onClick={() => onPageChange?.(p)}
+                  aria-label={`Go to page ${p + 1}`}
+                  aria-current={p === page ? 'page' : undefined}
                 >{p + 1}</button>
               )
             })}
             <button className="enterprise-btn enterprise-btn-ghost enterprise-btn-sm"
-              disabled={page >= totalPages - 1} onClick={() => onPageChange?.(page + 1)}>Next</button>
+              disabled={page >= totalPages - 1} onClick={() => onPageChange?.(page + 1)}
+              aria-label="Go to next page">Next</button>
           </div>
         </div>
       )}

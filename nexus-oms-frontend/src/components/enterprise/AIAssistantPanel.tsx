@@ -97,25 +97,25 @@ export default function AIAssistantPanel({ open, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/20 z-40 lg:hidden" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/20 z-40 lg:hidden" onClick={onClose} aria-hidden="true" />
       <div className={clsx(
         'fixed right-0 top-0 h-full bg-[var(--bg-card)] border-l border-[var(--border-color)] shadow-xl z-50 flex flex-col',
         'w-[var(--ai-panel-width)] animate-[slideInRight_250ms_ease-out]'
-      )}>
+      )} role="complementary" aria-label="AI Assistant">
         <div className="flex items-center justify-between px-4 h-14 border-b border-[var(--border-color)] shrink-0">
           <div className="flex items-center gap-2">
             <Brain className="w-5 h-5 text-[var(--color-primary-500)]" />
             <span className="font-semibold text-sm text-[var(--text-primary)]">AI Assistant</span>
             <span className="text-[10px] bg-[var(--color-primary-50)] text-[var(--color-primary-700)] px-1.5 py-0.5 rounded-full font-medium">BETA</span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
+          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)]" aria-label="Close AI assistant">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4" role="log" aria-label="Chat messages" aria-live="polite">
           {messages.map(msg => (
-            <div key={msg.id} className={clsx('flex gap-3', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+            <div key={msg.id} role="article" aria-label={msg.role === 'user' ? 'You said' : 'AI responded'} className={clsx('flex gap-3', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
               {msg.role === 'assistant' && (
                 <div className="w-8 h-8 rounded-full bg-[var(--color-primary-100)] flex items-center justify-center shrink-0">
                   <Bot className="w-4 h-4 text-[var(--color-primary-600)]" />
@@ -178,6 +178,7 @@ export default function AIAssistantPanel({ open, onClose }: Props) {
             <input ref={inputRef}
               className="flex-1 bg-transparent border-none outline-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
               placeholder="Ask AI anything..."
+              aria-label="Type your message"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
@@ -188,6 +189,8 @@ export default function AIAssistantPanel({ open, onClose }: Props) {
               )}
               onClick={() => sendMessage(input)}
               disabled={!input.trim() || loading}
+              aria-label="Send message"
+              aria-disabled={!input.trim() || loading}
             >
               <Send className="w-4 h-4" />
             </button>

@@ -96,7 +96,7 @@ export default function BopisOwnerPage() {
         {(['ready', 'customers', 'insights'] as const).map(t => (
           <button key={t} onClick={() => setSelectedTab(t)}
             className={clsx('px-4 py-2 text-sm font-medium rounded-md capitalize transition-all',
-              selectedTab === t ? 'bg-white bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)]')}>
+              selectedTab === t ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)]')}>
             {t === 'ready' ? 'Ready for Pickup' : t === 'customers' ? 'Customers' : 'Insights'}
           </button>
         ))}

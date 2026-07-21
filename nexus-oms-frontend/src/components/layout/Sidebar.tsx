@@ -176,6 +176,8 @@ function SidebarGroup({
     <div>
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="true"
         className={clsx(
           'group flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150',
           collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
@@ -304,7 +306,7 @@ export default function Sidebar() {
       )}
 
       {/* ── Navigation ── */}
-      <nav className="flex-1 px-2.5 py-2 space-y-px overflow-y-auto scrollbar-hide">
+      <nav className="flex-1 px-2.5 py-2 space-y-px overflow-y-auto scrollbar-hide" aria-label="Main navigation">
         {allLinks.map((item) => {
           const isParent = item.children && item.children.length > 0
           const parentActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
@@ -348,6 +350,7 @@ export default function Sidebar() {
         {!collapsed && user && user.role === 'ADMIN' && (
           <div className="px-1 pb-1">
             <select
+              aria-label="Switch user role"
               value={user.role}
               onChange={e => {
                 const newRole = e.target.value as UserRole
@@ -372,6 +375,8 @@ export default function Sidebar() {
             collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
           )}
           title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
           {theme === 'light' ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px]" />}
           {!collapsed && <span className="text-[13px] font-medium">{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>}
@@ -385,6 +390,8 @@ export default function Sidebar() {
             collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
           )}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-[18px] h-[18px]" /> : <ChevronLeft className="w-[18px] h-[18px]" />}
           {!collapsed && <span className="text-[13px] font-medium">Collapse</span>}

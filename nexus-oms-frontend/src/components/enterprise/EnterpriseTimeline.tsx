@@ -45,11 +45,11 @@ const lineColors: Record<TimelineEvent['status'], string> = {
 export default function EnterpriseTimeline({ events, direction = 'vertical' }: Props) {
   if (direction === 'horizontal') {
     return (
-      <div className="flex items-start gap-0 overflow-x-auto pb-4">
+      <div className="flex items-start gap-0 overflow-x-auto pb-4" role="list" aria-label="Timeline">
         {events.map((event, i) => (
-          <div key={event.id} className="flex items-center min-w-0">
+          <div key={event.id} className="flex items-center min-w-0" role="listitem" aria-label={`${event.title} — ${event.status}`}>
             <div className="flex flex-col items-center">
-              <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center shrink-0', statusColors[event.status])}>
+              <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center shrink-0', statusColors[event.status])} aria-hidden="true">
                 {event.icon || statusIcon(event.status)}
               </div>
               <div className="mt-2 text-center px-2">
@@ -68,13 +68,13 @@ export default function EnterpriseTimeline({ events, direction = 'vertical' }: P
   }
 
   return (
-    <div className="relative">
+    <div className="relative" role="list" aria-label="Timeline">
       {events.map((event, i) => (
-        <div key={event.id} className="flex gap-4 pb-6 relative last:pb-0">
+        <div key={event.id} className="flex gap-4 pb-6 relative last:pb-0" role="listitem" aria-label={`${event.title} — ${event.status}`}>
           {i < events.length - 1 && (
-            <div className={clsx('absolute left-[15px] top-8 w-0.5 h-full -translate-x-1/2', lineColors[event.status])} />
+            <div className={clsx('absolute left-[15px] top-8 w-0.5 h-full -translate-x-1/2', lineColors[event.status])} aria-hidden="true" />
           )}
-          <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10', statusColors[event.status])}>
+          <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center shrink-0 z-10', statusColors[event.status])} aria-hidden="true">
             {event.icon || statusIcon(event.status)}
           </div>
           <div className="flex-1 min-w-0 pt-1">

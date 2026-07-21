@@ -186,7 +186,7 @@ export default function BrokeringQueuePage() {
       />
 
       {activeTab === 'queue' && (
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-[var(--surface-base)] rounded-lg shadow">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[var(--surface-sunken)]">
@@ -254,7 +254,7 @@ export default function BrokeringQueuePage() {
       )}
 
       {activeTab === 'runs' && (
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-[var(--surface-base)] rounded-lg shadow">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[var(--surface-sunken)]">
@@ -327,7 +327,7 @@ export default function BrokeringQueuePage() {
 
       {activeTab === 'stats' && stats && (
         <div className="grid grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-[var(--surface-base)] rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4">Queue Distribution</h3>
             <div className="space-y-3">
               {Object.entries(stats).map(([key, value]) => (
@@ -338,7 +338,7 @@ export default function BrokeringQueuePage() {
               ))}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-[var(--surface-base)] rounded-lg shadow p-6">
             <h3 className="text-lg font-semibold mb-4">Processing Info</h3>
             <div className="space-y-3 text-sm">
               <p><strong>Scheduled:</strong> Every 5 minutes</p>

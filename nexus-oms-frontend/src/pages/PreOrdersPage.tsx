@@ -126,7 +126,7 @@ export default function PreOrdersPage() {
               key={f}
               onClick={() => setReasonFilter(f)}
               className={clsx('px-3 py-1.5 text-xs font-medium rounded-md transition-all capitalize',
-                reasonFilter === f ? 'bg-white bg-[var(--surface-muted)] text-[var(--text-primary)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]')}
+                reasonFilter === f ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]')}
             >
               {f === 'all' ? 'All Reasons' : f.replace('_', ' ')}
             </button>
