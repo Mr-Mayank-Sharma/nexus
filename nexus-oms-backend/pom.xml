@@ -21,7 +21,7 @@
         <resilience4j.version>2.2.0</resilience4j.version>
         <logstash.version>7.4</logstash.version>
         <jacoco.version>0.8.11</jacoco.version>
-        <owasp.version>9.0.9</owasp.version>
+        <owasp.version>9.2.0</owasp.version>
         <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
     </properties>
     <dependencies>
