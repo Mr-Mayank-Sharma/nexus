@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: nexus_oms
       POSTGRES_USER: nexus
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?ERROR: DB_PASSWORD not set}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD not set}
     ports:
       - "5433:5432"
     volumes:
@@ -67,10 +67,10 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nexus_oms
       SPRING_DATASOURCE_USERNAME: nexus
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?ERROR: DB_PASSWORD not set}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD not set}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      APP_JWT_SECRET: ${JWT_SECRET:?ERROR: JWT_SECRET not set}
+      APP_JWT_SECRET: ${JWT_SECRET:?JWT_SECRET not set}
       APP_CORS_ALLOWED_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
@@ -150,7 +150,7 @@ services:
       - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?ERROR: GRAFANA_ADMIN_PASSWORD not set}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD not set}
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     restart: unless-stopped
     depends_on:

@@ -2,6 +2,9 @@
 -- This is a defense-in-depth layer: even if an application-level query
 -- misses a tenant_id filter, the database will enforce isolation.
 
+-- Ensure the app schema exists for the helper function.
+CREATE SCHEMA IF NOT EXISTS app;
+
 -- Helper function: extracts tenant_id from a session-level setting.
 -- The Java backend sets this via SET app.current_tenant = '<uuid>' after JWT auth.
 CREATE OR REPLACE FUNCTION app.current_tenant_id()
@@ -70,16 +73,21 @@ BEGIN
             'nx_users'
         ])
     LOOP
-        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
-        EXECUTE format(
-            'DROP POLICY IF EXISTS tenant_isolation ON %I',
-            tbl
-        );
-        EXECUTE format(
-            'CREATE POLICY tenant_isolation ON %I
-             USING (tenant_id = app.current_tenant_id() OR app.current_tenant_id() IS NULL)',
-            tbl
-        );
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'tenant_id'
+        ) THEN
+            EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+            EXECUTE format(
+                'DROP POLICY IF EXISTS tenant_isolation ON %I',
+                tbl
+            );
+            EXECUTE format(
+                'CREATE POLICY tenant_isolation ON %I
+                 USING (tenant_id = app.current_tenant_id() OR app.current_tenant_id() IS NULL)',
+                tbl
+            );
+        END IF;
     END LOOP;
 END;
 $$;

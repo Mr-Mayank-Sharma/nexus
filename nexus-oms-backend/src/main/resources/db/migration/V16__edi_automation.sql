@@ -1,6 +1,6 @@
 -- ============================================================
 -- EDI Automation: 850 PO / 856 ASN / 810 Invoice processing
--- V16 migration
+-- V16 migration (fixed: use existing column names)
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS nx_edi_documents (
@@ -26,10 +26,22 @@ CREATE TABLE IF NOT EXISTS nx_edi_documents (
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now()
 );
-CREATE INDEX idx_nx_edi_documents_tenant ON nx_edi_documents(tenant_id);
-CREATE INDEX idx_nx_edi_documents_type ON nx_edi_documents(doc_type);
-CREATE INDEX idx_nx_edi_documents_status ON nx_edi_documents(parsed_status);
-CREATE INDEX idx_nx_edi_documents_order ON nx_edi_documents(order_id);
+
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='nx_edi_documents' AND column_name='document_type') THEN
+        CREATE INDEX IF NOT EXISTS idx_nx_edi_documents_type ON nx_edi_documents(document_type);
+    ELSE
+        CREATE INDEX IF NOT EXISTS idx_nx_edi_documents_type ON nx_edi_documents(doc_type);
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='nx_edi_documents' AND column_name='parsed_status') THEN
+        CREATE INDEX IF NOT EXISTS idx_nx_edi_documents_status ON nx_edi_documents(parsed_status);
+    ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='nx_edi_documents' AND column_name='status') THEN
+        CREATE INDEX IF NOT EXISTS idx_nx_edi_documents_status ON nx_edi_documents(status);
+    END IF;
+    CREATE INDEX IF NOT EXISTS idx_nx_edi_documents_tenant ON nx_edi_documents(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_nx_edi_documents_order ON nx_edi_documents(order_id);
+END $$;
 
 CREATE TABLE IF NOT EXISTS nx_edi_partners (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
