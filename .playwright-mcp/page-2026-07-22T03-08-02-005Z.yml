@@ -1,0 +1,511 @@
+- generic [active] [ref=f9e1]:
+  - generic [ref=f9e3]:
+    - link "Skip to main content" [ref=f9e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary [ref=f9e6]:
+      - generic [ref=f9e13]:
+        - generic [ref=f9e14]: NexusShip
+        - generic [ref=f9e15]: OMS Platform
+      - generic [ref=f9e16]: admin
+      - navigation "Main navigation" [ref=f9e20]:
+        - link "Launch Pad" [ref=f9e21] [cursor=pointer]:
+          - /url: "#/"
+        - link "Dashboard" [ref=f9e29] [cursor=pointer]:
+          - /url: "#/"
+        - button "Orders" [ref=f9e38] [cursor=pointer]
+        - link "Customers" [ref=f9e47] [cursor=pointer]:
+          - /url: "#/customers"
+        - link "Product Catalog" [ref=f9e55] [cursor=pointer]:
+          - /url: "#/products"
+        - button "Inventory" [ref=f9e63] [cursor=pointer]
+        - link "Fulfillment" [ref=f9e71] [cursor=pointer]:
+          - /url: "#/fulfillment"
+        - link "Picking" [ref=f9e79] [cursor=pointer]:
+          - /url: "#/picking"
+        - link "Packing" [ref=f9e85] [cursor=pointer]:
+          - /url: "#/packing"
+        - link "Shipping" [ref=f9e92] [cursor=pointer]:
+          - /url: "#/shipping"
+        - link "Returns" [ref=f9e100] [cursor=pointer]:
+          - /url: "#/returns"
+        - link "Warehouse Mgmt" [ref=f9e106] [cursor=pointer]:
+          - /url: "#/warehouse"
+        - link "WH Dashboard" [ref=f9e113] [cursor=pointer]:
+          - /url: "#/warehouse-dashboard"
+        - link "Packer View" [ref=f9e118] [cursor=pointer]:
+          - /url: "#/packer"
+        - link "Loader View" [ref=f9e125] [cursor=pointer]:
+          - /url: "#/loader"
+        - link "Store Dashboard" [ref=f9e133] [cursor=pointer]:
+          - /url: "#/store-dashboard"
+        - link "BOPIS" [ref=f9e141] [cursor=pointer]:
+          - /url: "#/bopis"
+        - link "BOPIS Owner" [ref=f9e147] [cursor=pointer]:
+          - /url: "#/bopis-owner"
+        - link "Pre-Orders" [ref=f9e153] [cursor=pointer]:
+          - /url: "#/pre-orders"
+        - link "ATP Rules" [ref=f9e158] [cursor=pointer]:
+          - /url: "#/atp-rules"
+        - link "Task Queues" [ref=f9e164] [cursor=pointer]:
+          - /url: "#/task-queues"
+        - link "Procurement" [ref=f9e169] [cursor=pointer]:
+          - /url: "#/procurement"
+        - link "Invoices" [ref=f9e176] [cursor=pointer]:
+          - /url: "#/invoices"
+        - link "Payments" [ref=f9e182] [cursor=pointer]:
+          - /url: "#/payments"
+        - link "Multi-Node Inventory" [ref=f9e187] [cursor=pointer]:
+          - /url: "#/inventory/enhanced"
+        - link "Wave Planning" [ref=f9e193] [cursor=pointer]:
+          - /url: "#/wave-planning"
+        - link "Labor Management" [ref=f9e200] [cursor=pointer]:
+          - /url: "#/labor-management"
+        - link "Slotting Optimization" [ref=f9e208] [cursor=pointer]:
+          - /url: "#/slotting-optimization"
+        - link "Yard & Dock" [ref=f9e215] [cursor=pointer]:
+          - /url: "#/yard-dock"
+        - link "Automation Systems" [ref=f9e223] [cursor=pointer]:
+          - /url: "#/automation-systems"
+        - link "Label Printing" [ref=f9e229] [cursor=pointer]:
+          - /url: "#/label-printing"
+        - link "Manifests" [ref=f9e236] [cursor=pointer]:
+          - /url: "#/manifest"
+        - link "Report Builder" [ref=f9e242] [cursor=pointer]:
+          - /url: "#/report-builder"
+        - link "Returns Command Center" [ref=f9e247] [cursor=pointer]:
+          - /url: "#/returns-enhanced"
+        - link "Carriers" [ref=f9e253] [cursor=pointer]:
+          - /url: "#/carriers"
+        - link "Rate Shopping" [ref=f9e260] [cursor=pointer]:
+          - /url: "#/rate-shopping"
+        - link "Routing Rules" [ref=f9e266] [cursor=pointer]:
+          - /url: "#/routing-rules"
+        - link "Order Routing" [ref=f9e273] [cursor=pointer]:
+          - /url: "#/order-routing"
+        - link "EDI Automation" [ref=f9e280] [cursor=pointer]:
+          - /url: "#/edi"
+        - link "Email Order Parser" [ref=f9e286] [cursor=pointer]:
+          - /url: "#/email-parser"
+        - link "Import/Export" [ref=f9e292] [cursor=pointer]:
+          - /url: "#/import-export"
+        - link "B2B Portal" [ref=f9e298] [cursor=pointer]:
+          - /url: "#/b2b-portal"
+        - link "Stores" [ref=f9e305] [cursor=pointer]:
+          - /url: "#/stores"
+        - link "AI Experiments" [ref=f9e313] [cursor=pointer]:
+          - /url: "#/experiments"
+        - link "Analytics" [ref=f9e318] [cursor=pointer]:
+          - /url: "#/analytics"
+        - link "AI Control Center" [ref=f9e323] [cursor=pointer]:
+          - /url: "#/ai"
+        - link "AI Platform" [ref=f9e336] [cursor=pointer]:
+          - /url: "#/ai-platform"
+        - link "AI Briefing" [ref=f9e342] [cursor=pointer]:
+          - /url: "#/ai-briefing"
+        - link "AI Routing" [ref=f9e355] [cursor=pointer]:
+          - /url: "#/ai-routing"
+        - link "AI Packing" [ref=f9e362] [cursor=pointer]:
+          - /url: "#/ai-packing"
+        - link "AI Loading" [ref=f9e369] [cursor=pointer]:
+          - /url: "#/ai-loading"
+        - link "AI Audit Trail" [ref=f9e377] [cursor=pointer]:
+          - /url: "#/ai-audit"
+        - link "AI Forecasting" [ref=f9e382] [cursor=pointer]:
+          - /url: "#/ai-forecasting"
+        - link "Notifications" [ref=f9e387] [cursor=pointer]:
+          - /url: "#/notifications"
+        - link "Workflows" [ref=f9e393] [cursor=pointer]:
+          - /url: "#/workflows"
+        - link "Integration Hub" [ref=f9e400] [cursor=pointer]:
+          - /url: "#/integration-hub"
+        - button "Sales Channels" [ref=f9e409] [cursor=pointer]
+        - link "Documents" [ref=f9e419] [cursor=pointer]:
+          - /url: "#/documents"
+        - link "Users & Roles" [ref=f9e425] [cursor=pointer]:
+          - /url: "#/users"
+        - link "Settings" [ref=f9e440] [cursor=pointer]:
+          - /url: "#/settings"
+        - link "Audit & Compliance" [ref=f9e446] [cursor=pointer]:
+          - /url: "#/audit"
+        - link "Promotions" [ref=f9e451] [cursor=pointer]:
+          - /url: "#/promotions"
+        - link "Endless Aisle" [ref=f9e458] [cursor=pointer]:
+          - /url: "#/endless-aisle"
+      - generic [ref=f9e465]:
+        - combobox "Switch user role" [ref=f9e467] [cursor=pointer]:
+          - option "System Administrator" [selected]
+          - option "Executive Dashboard"
+          - option "Operations Manager"
+          - option "Warehouse Manager"
+          - option "Picker"
+          - option "Packer"
+          - option "Loader"
+          - option "Store Manager"
+          - option "BOPIS Owner"
+          - option "Customer Support"
+          - option "Procurement Manager"
+          - option "Finance"
+          - option "Logistics Manager"
+          - option "Read Only"
+        - button "Switch to dark mode" [ref=f9e468] [cursor=pointer]:
+          - generic [ref=f9e471]: Dark mode
+        - button "Collapse sidebar" [ref=f9e472] [cursor=pointer]:
+          - generic [ref=f9e475]: Collapse
+    - generic [ref=f9e476]:
+      - banner [ref=f9e477]:
+        - button "Open search" [ref=f9e479] [cursor=pointer]:
+          - generic [ref=f9e483]: Search orders, inventory, customers...
+          - generic [ref=f9e484]: K
+        - generic [ref=f9e487]:
+          - button "Open AI assistant" [ref=f9e488] [cursor=pointer]: AI Assistant
+          - button "Notifications" [ref=f9e492] [cursor=pointer]
+          - button "User menu" [ref=f9e499] [cursor=pointer]:
+            - generic [ref=f9e500]: a
+            - generic [ref=f9e501]:
+              - paragraph [ref=f9e502]: admin
+              - paragraph [ref=f9e503]: admin
+      - main [ref=f9e506]:
+        - generic [ref=f9e580]:
+          - generic [ref=f9e583]:
+            - generic [ref=f9e584]:
+              - generic [ref=f9e588]:
+                - heading "Welcome back, admin" [level=1] [ref=f9e589]
+                - paragraph [ref=f9e590]: Nexus OMS — Launch Pad
+              - generic [ref=f9e592]:
+                - generic [ref=f9e593]: A
+                - generic [ref=f9e594]:
+                  - paragraph [ref=f9e595]: admin@nexus.com
+                  - paragraph [ref=f9e596]: ADMIN
+            - textbox "Search apps, features, or descriptions..." [ref=f9e599]
+          - generic [ref=f9e600]:
+            - generic [ref=f9e601]:
+              - heading "Favorites" [level=2] [ref=f9e605]
+              - generic [ref=f9e606]:
+                - button "Dashboard" [ref=f9e607] [cursor=pointer]:
+                  - button [ref=f9e615]
+                - button "Orders" [ref=f9e618] [cursor=pointer]:
+                  - button [ref=f9e625]
+                - button "Picking" [ref=f9e628] [cursor=pointer]:
+                  - button [ref=f9e635]
+                - button "Packing" [ref=f9e638] [cursor=pointer]:
+                  - button [ref=f9e645]
+                - button "Shipping" [ref=f9e648] [cursor=pointer]:
+                  - button [ref=f9e655]
+                - button "Inventory" [ref=f9e658] [cursor=pointer]:
+                  - button [ref=f9e664]
+            - generic [ref=f9e667]:
+              - generic [ref=f9e668]:
+                - heading "Overview" [level=2] [ref=f9e675]
+                - generic [ref=f9e676]: 1 apps
+              - button "Dashboard KPIs, charts & metrics" [ref=f9e678] [cursor=pointer]:
+                - generic [ref=f9e685]: Dashboard
+                - generic [ref=f9e686]: KPIs, charts & metrics
+                - button [ref=f9e687]
+            - generic [ref=f9e690]:
+              - generic [ref=f9e691]:
+                - heading "Orders & Customers" [level=2] [ref=f9e697]
+                - generic [ref=f9e698]: 12 apps
+              - generic [ref=f9e699]:
+                - button "Orders Manage sales orders" [ref=f9e700] [cursor=pointer]:
+                  - generic [ref=f9e706]: Orders
+                  - generic [ref=f9e707]: Manage sales orders
+                  - button [ref=f9e708]
+                - button "Fulfillment Track order fulfillment" [ref=f9e711] [cursor=pointer]:
+                  - generic [ref=f9e718]: Fulfillment
+                  - generic [ref=f9e719]: Track order fulfillment
+                  - button [ref=f9e720]
+                - button "BOPIS Buy Online Pickup In Store" [ref=f9e723] [cursor=pointer]:
+                  - generic [ref=f9e728]: BOPIS
+                  - generic [ref=f9e729]: Buy Online Pickup In Store
+                  - button [ref=f9e730]
+                - button "BOPIS Owner BOPIS customer experience" [ref=f9e733] [cursor=pointer]:
+                  - generic [ref=f9e738]: BOPIS Owner
+                  - generic [ref=f9e739]: BOPIS customer experience
+                  - button [ref=f9e740]
+                - button "Store Dashboard Retail store operations" [ref=f9e743] [cursor=pointer]:
+                  - generic [ref=f9e750]: Store Dashboard
+                  - generic [ref=f9e751]: Retail store operations
+                  - button [ref=f9e752]
+                - button "Pre-Orders Pre-order product management" [ref=f9e755] [cursor=pointer]:
+                  - generic [ref=f9e759]: Pre-Orders
+                  - generic [ref=f9e760]: Pre-order product management
+                  - button [ref=f9e761]
+                - button "ATP Rules Available to Promise rules" [ref=f9e764] [cursor=pointer]:
+                  - generic [ref=f9e769]: ATP Rules
+                  - generic [ref=f9e770]: Available to Promise rules
+                  - button [ref=f9e771]
+                - button "Returns Process returns & RMA" [ref=f9e774] [cursor=pointer]:
+                  - generic [ref=f9e779]: Returns
+                  - generic [ref=f9e780]: Process returns & RMA
+                  - button [ref=f9e781]
+                - button "New Returns Command Center RMA lifecycle & disposition AI" [ref=f9e784] [cursor=pointer]:
+                  - generic [ref=f9e785]: New
+                  - generic [ref=f9e790]: Returns Command Center
+                  - generic [ref=f9e791]: RMA lifecycle & disposition AI
+                  - button [ref=f9e792]
+                - button "Customers Customer directory & 360" [ref=f9e795] [cursor=pointer]:
+                  - generic [ref=f9e802]: Customers
+                  - generic [ref=f9e803]: Customer directory & 360
+                  - button [ref=f9e804]
+                - button "New Create Order 4-step order creation wizard" [ref=f9e807] [cursor=pointer]:
+                  - generic [ref=f9e808]: New
+                  - generic [ref=f9e811]: Create Order
+                  - generic [ref=f9e812]: 4-step order creation wizard
+                  - button [ref=f9e813]
+                - button "B2B Portal Business ordering portal" [ref=f9e816] [cursor=pointer]:
+                  - generic [ref=f9e821]: B2B Portal
+                  - generic [ref=f9e822]: Business ordering portal
+                  - button [ref=f9e823]
+            - generic [ref=f9e826]:
+              - generic [ref=f9e827]:
+                - heading "Fulfillment & Warehouse" [level=2] [ref=f9e834]
+                - generic [ref=f9e835]: 13 apps
+              - generic [ref=f9e836]:
+                - button "WH Dashboard Warehouse operations & labor" [ref=f9e837] [cursor=pointer]:
+                  - generic [ref=f9e843]: WH Dashboard
+                  - generic [ref=f9e844]: Warehouse operations & labor
+                  - button [ref=f9e845]
+                - button "Picking Picklist management" [ref=f9e848] [cursor=pointer]:
+                  - generic [ref=f9e854]: Picking
+                  - generic [ref=f9e855]: Picklist management
+                  - button [ref=f9e856]
+                - button "Packer View Packing station experience" [ref=f9e859] [cursor=pointer]:
+                  - generic [ref=f9e865]: Packer View
+                  - generic [ref=f9e866]: Packing station experience
+                  - button [ref=f9e867]
+                - button "Packing Package orders for shipment" [ref=f9e870] [cursor=pointer]:
+                  - generic [ref=f9e876]: Packing
+                  - generic [ref=f9e877]: Package orders for shipment
+                  - button [ref=f9e878]
+                - button "Loader View Loading dock management" [ref=f9e881] [cursor=pointer]:
+                  - generic [ref=f9e888]: Loader View
+                  - generic [ref=f9e889]: Loading dock management
+                  - button [ref=f9e890]
+                - button "Shipping Manage outbound shipments" [ref=f9e893] [cursor=pointer]:
+                  - generic [ref=f9e899]: Shipping
+                  - generic [ref=f9e900]: Manage outbound shipments
+                  - button [ref=f9e901]
+                - button "Carriers Carrier management" [ref=f9e904] [cursor=pointer]:
+                  - generic [ref=f9e911]: Carriers
+                  - generic [ref=f9e912]: Carrier management
+                  - button [ref=f9e913]
+                - button "Rate Shopping Compare carrier rates" [ref=f9e916] [cursor=pointer]:
+                  - generic [ref=f9e921]: Rate Shopping
+                  - generic [ref=f9e922]: Compare carrier rates
+                  - button [ref=f9e923]
+                - button "Warehouse Facilities, zones & bins" [ref=f9e926] [cursor=pointer]:
+                  - generic [ref=f9e932]: Warehouse
+                  - generic [ref=f9e933]: Facilities, zones & bins
+                  - button [ref=f9e934]
+                - button "New Wave Planning Order wave creation & management" [ref=f9e937] [cursor=pointer]:
+                  - generic [ref=f9e938]: New
+                  - generic [ref=f9e944]: Wave Planning
+                  - generic [ref=f9e945]: Order wave creation & management
+                  - button [ref=f9e946]
+                - button "New Labor Management Employee productivity & scheduling" [ref=f9e949] [cursor=pointer]:
+                  - generic [ref=f9e950]: New
+                  - generic [ref=f9e957]: Labor Management
+                  - generic [ref=f9e958]: Employee productivity & scheduling
+                  - button [ref=f9e959]
+                - button "New Label Printing Shipping labels & bulk printing" [ref=f9e962] [cursor=pointer]:
+                  - generic [ref=f9e963]: New
+                  - generic [ref=f9e969]: Label Printing
+                  - generic [ref=f9e970]: Shipping labels & bulk printing
+                  - button [ref=f9e971]
+                - button "New Manifests Carrier manifest close-out" [ref=f9e974] [cursor=pointer]:
+                  - generic [ref=f9e975]: New
+                  - generic [ref=f9e981]: Manifests
+                  - generic [ref=f9e982]: Carrier manifest close-out
+                  - button [ref=f9e983]
+            - generic [ref=f9e986]:
+              - generic [ref=f9e987]:
+                - heading "Inventory" [level=2] [ref=f9e992]
+                - generic [ref=f9e993]: 4 apps
+              - generic [ref=f9e994]:
+                - button "Inventory Stock levels & adjustments" [ref=f9e995] [cursor=pointer]:
+                  - generic [ref=f9e1000]: Inventory
+                  - generic [ref=f9e1001]: Stock levels & adjustments
+                  - button [ref=f9e1002]
+                - button "New Multi-Node Inventory Real-time ATP across all nodes" [ref=f9e1005] [cursor=pointer]:
+                  - generic [ref=f9e1006]: New
+                  - generic [ref=f9e1011]: Multi-Node Inventory
+                  - generic [ref=f9e1012]: Real-time ATP across all nodes
+                  - button [ref=f9e1013]
+                - button "Receiving Receive inbound stock" [ref=f9e1016] [cursor=pointer]:
+                  - generic [ref=f9e1021]: Receiving
+                  - generic [ref=f9e1022]: Receive inbound stock
+                  - button [ref=f9e1023]
+                - button "Cycle Counts Inventory counting" [ref=f9e1026] [cursor=pointer]:
+                  - generic [ref=f9e1032]: Cycle Counts
+                  - generic [ref=f9e1033]: Inventory counting
+                  - button [ref=f9e1034]
+            - generic [ref=f9e1037]:
+              - generic [ref=f9e1038]:
+                - heading "Products & Channels" [level=2] [ref=f9e1045]
+                - generic [ref=f9e1046]: 8 apps
+              - generic [ref=f9e1047]:
+                - button "Products Product catalog & SKUs" [ref=f9e1048] [cursor=pointer]:
+                  - generic [ref=f9e1054]: Products
+                  - generic [ref=f9e1055]: Product catalog & SKUs
+                  - button [ref=f9e1056]
+                - button "Stores Sales channel stores" [ref=f9e1059] [cursor=pointer]:
+                  - generic [ref=f9e1066]: Stores
+                  - generic [ref=f9e1067]: Sales channel stores
+                  - button [ref=f9e1068]
+                - button "Integrations Shopify, BigCommerce & more" [ref=f9e1071] [cursor=pointer]:
+                  - generic [ref=f9e1075]: Integrations
+                  - generic [ref=f9e1076]: Shopify, BigCommerce & more
+                  - button [ref=f9e1077]
+                - button "New Marketplace Hub All marketplace connectors" [ref=f9e1080] [cursor=pointer]:
+                  - generic [ref=f9e1081]: New
+                  - generic [ref=f9e1086]: Marketplace Hub
+                  - generic [ref=f9e1087]: All marketplace connectors
+                  - button [ref=f9e1088]
+                - button "New Amazon Amazon Seller Central" [ref=f9e1091] [cursor=pointer]:
+                  - generic [ref=f9e1092]: New
+                  - generic [ref=f9e1098]: Amazon
+                  - generic [ref=f9e1099]: Amazon Seller Central
+                  - button [ref=f9e1100]
+                - button "New eBay eBay marketplace" [ref=f9e1103] [cursor=pointer]:
+                  - generic [ref=f9e1104]: New
+                  - generic [ref=f9e1109]: eBay
+                  - generic [ref=f9e1110]: eBay marketplace
+                  - button [ref=f9e1111]
+                - button "New Walmart Walmart Marketplace" [ref=f9e1114] [cursor=pointer]:
+                  - generic [ref=f9e1115]: New
+                  - generic [ref=f9e1120]: Walmart
+                  - generic [ref=f9e1121]: Walmart Marketplace
+                  - button [ref=f9e1122]
+                - button "Integration Hub Integration platform" [ref=f9e1125] [cursor=pointer]:
+                  - generic [ref=f9e1130]: Integration Hub
+                  - generic [ref=f9e1131]: Integration platform
+                  - button [ref=f9e1132]
+            - generic [ref=f9e1135]:
+              - generic [ref=f9e1136]:
+                - heading "Operations" [level=2] [ref=f9e1140]
+                - generic [ref=f9e1141]: 10 apps
+              - generic [ref=f9e1142]:
+                - button "Procurement Suppliers, RFQs & POs" [ref=f9e1143] [cursor=pointer]:
+                  - generic [ref=f9e1149]: Procurement
+                  - generic [ref=f9e1150]: Suppliers, RFQs & POs
+                  - button [ref=f9e1151]
+                - button "Invoices Invoicing & payments" [ref=f9e1154] [cursor=pointer]:
+                  - generic [ref=f9e1159]: Invoices
+                  - generic [ref=f9e1160]: Invoicing & payments
+                  - button [ref=f9e1161]
+                - button "New Payments & Invoicing Payments, invoices & reconciliation" [ref=f9e1164] [cursor=pointer]:
+                  - generic [ref=f9e1165]: New
+                  - generic [ref=f9e1169]: Payments & Invoicing
+                  - generic [ref=f9e1170]: Payments, invoices & reconciliation
+                  - button [ref=f9e1171]
+                - button "New Report Builder Custom dashboards & scheduled reports" [ref=f9e1174] [cursor=pointer]:
+                  - generic [ref=f9e1175]: New
+                  - generic [ref=f9e1179]: Report Builder
+                  - generic [ref=f9e1180]: Custom dashboards & scheduled reports
+                  - button [ref=f9e1181]
+                - button "Import/Export Data import & export" [ref=f9e1184] [cursor=pointer]:
+                  - generic [ref=f9e1188]: Import/Export
+                  - generic [ref=f9e1189]: Data import & export
+                  - button [ref=f9e1190]
+                - button "EDI Automation EDI document management" [ref=f9e1193] [cursor=pointer]:
+                  - generic [ref=f9e1198]: EDI Automation
+                  - generic [ref=f9e1199]: EDI document management
+                  - button [ref=f9e1200]
+                - button "Email Orders Parse orders from email" [ref=f9e1203] [cursor=pointer]:
+                  - generic [ref=f9e1208]: Email Orders
+                  - generic [ref=f9e1209]: Parse orders from email
+                  - button [ref=f9e1210]
+                - button "Task Queues Swap, bad address, fraud & hold" [ref=f9e1213] [cursor=pointer]:
+                  - generic [ref=f9e1217]: Task Queues
+                  - generic [ref=f9e1218]: Swap, bad address, fraud & hold
+                  - button [ref=f9e1219]
+                - button "Workflows Automation workflows" [ref=f9e1222] [cursor=pointer]:
+                  - generic [ref=f9e1228]: Workflows
+                  - generic [ref=f9e1229]: Automation workflows
+                  - button [ref=f9e1230]
+                - button "Documents Document management" [ref=f9e1233] [cursor=pointer]:
+                  - generic [ref=f9e1238]: Documents
+                  - generic [ref=f9e1239]: Document management
+                  - button [ref=f9e1240]
+            - generic [ref=f9e1243]:
+              - generic [ref=f9e1244]:
+                - heading "Routing & Intelligence" [level=2] [ref=f9e1256]
+                - generic [ref=f9e1257]: 12 apps
+              - generic [ref=f9e1258]:
+                - button "Routing Rules Order routing rules" [ref=f9e1259] [cursor=pointer]:
+                  - generic [ref=f9e1265]: Routing Rules
+                  - generic [ref=f9e1266]: Order routing rules
+                  - button [ref=f9e1267]
+                - button "Order Routing Intelligent allocation" [ref=f9e1270] [cursor=pointer]:
+                  - generic [ref=f9e1276]: Order Routing
+                  - generic [ref=f9e1277]: Intelligent allocation
+                  - button [ref=f9e1278]
+                - button "Analytics Reports & dashboards" [ref=f9e1281] [cursor=pointer]:
+                  - generic [ref=f9e1285]: Analytics
+                  - generic [ref=f9e1286]: Reports & dashboards
+                  - button [ref=f9e1287]
+                - button "AI Models AI predictions & insights" [ref=f9e1290] [cursor=pointer]:
+                  - generic [ref=f9e1302]: AI Models
+                  - generic [ref=f9e1303]: AI predictions & insights
+                  - button [ref=f9e1304]
+                - button "New AI Platform Model management & training" [ref=f9e1307] [cursor=pointer]:
+                  - generic [ref=f9e1308]: New
+                  - generic [ref=f9e1313]: AI Platform
+                  - generic [ref=f9e1314]: Model management & training
+                  - button [ref=f9e1315]
+                - button "New AI Briefing CEO executive briefing & insights" [ref=f9e1318] [cursor=pointer]:
+                  - generic [ref=f9e1319]: New
+                  - generic [ref=f9e1331]: AI Briefing
+                  - generic [ref=f9e1332]: CEO executive briefing & insights
+                  - button [ref=f9e1333]
+                - button "New AI Routing Intelligent order brokering" [ref=f9e1336] [cursor=pointer]:
+                  - generic [ref=f9e1337]: New
+                  - generic [ref=f9e1343]: AI Routing
+                  - generic [ref=f9e1344]: Intelligent order brokering
+                  - button [ref=f9e1345]
+                - button "New AI Packing Optimized packaging AI" [ref=f9e1348] [cursor=pointer]:
+                  - generic [ref=f9e1349]: New
+                  - generic [ref=f9e1355]: AI Packing
+                  - generic [ref=f9e1356]: Optimized packaging AI
+                  - button [ref=f9e1357]
+                - button "New AI Loading Truck loading optimization" [ref=f9e1360] [cursor=pointer]:
+                  - generic [ref=f9e1361]: New
+                  - generic [ref=f9e1368]: AI Loading
+                  - generic [ref=f9e1369]: Truck loading optimization
+                  - button [ref=f9e1370]
+                - button "New AI Audit AI decision audit trail" [ref=f9e1373] [cursor=pointer]:
+                  - generic [ref=f9e1374]: New
+                  - generic [ref=f9e1378]: AI Audit
+                  - generic [ref=f9e1379]: AI decision audit trail
+                  - button [ref=f9e1380]
+                - button "New AI Forecasting Demand & supplier forecasting" [ref=f9e1383] [cursor=pointer]:
+                  - generic [ref=f9e1384]: New
+                  - generic [ref=f9e1388]: AI Forecasting
+                  - generic [ref=f9e1389]: Demand & supplier forecasting
+                  - button [ref=f9e1390]
+                - button "Experiments A/B testing & experiments" [ref=f9e1393] [cursor=pointer]:
+                  - generic [ref=f9e1397]: Experiments
+                  - generic [ref=f9e1398]: A/B testing & experiments
+                  - button [ref=f9e1399]
+            - generic [ref=f9e1402]:
+              - generic [ref=f9e1403]:
+                - heading "Administration" [level=2] [ref=f9e1408]
+                - generic [ref=f9e1409]: 4 apps
+              - generic [ref=f9e1410]:
+                - button "Users & Roles User & permission management" [ref=f9e1411] [cursor=pointer]:
+                  - generic [ref=f9e1425]: Users & Roles
+                  - generic [ref=f9e1426]: User & permission management
+                  - button [ref=f9e1427]
+                - button "Audit Audit logs & history" [ref=f9e1430] [cursor=pointer]:
+                  - generic [ref=f9e1434]: Audit
+                  - generic [ref=f9e1435]: Audit logs & history
+                  - button [ref=f9e1436]
+                - button "Notifications Alerts & notifications" [ref=f9e1439] [cursor=pointer]:
+                  - generic [ref=f9e1444]: Notifications
+                  - generic [ref=f9e1445]: Alerts & notifications
+                  - button [ref=f9e1446]
+                - button "Settings Company configuration" [ref=f9e1449] [cursor=pointer]:
+                  - generic [ref=f9e1454]: Settings
+                  - generic [ref=f9e1455]: Company configuration
+                  - button [ref=f9e1456]
+  - generic [ref=f9e579]: "0.9"

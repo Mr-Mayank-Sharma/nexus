@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,10 +88,10 @@ public class AiOrderActionService {
             "Order ID: %s\nStatus: %s\nTotal: $%.2f\nCustomer: %s\nItems: %d\nShipping: %s\nPayment: %s",
             orderId,
             order.getStatus(),
-            order.getTotalAmount() != null ? order.getTotalAmount() : 0.0,
+            order.getTotal() != null ? order.getTotal() : BigDecimal.ZERO,
             order.getCustomerName() != null ? order.getCustomerName() : "Unknown",
             order.getItems() != null ? order.getItems().size() : 0,
-            order.getShippingAddress() != null ? order.getShippingAddress() : "N/A",
+            order.getShipTo() != null ? String.valueOf(order.getShipTo()) : "N/A",
             order.getPaymentStatus() != null ? order.getPaymentStatus() : "N/A"
         );
 

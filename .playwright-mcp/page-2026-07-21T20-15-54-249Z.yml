@@ -1,0 +1,305 @@
+- generic [ref=e1]:
+  - generic [ref=e100]:
+    - link "Skip to main content" [ref=e101] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary [ref=e103]:
+      - generic [ref=e110]:
+        - generic [ref=e111]: NexusShip
+        - generic [ref=e112]: OMS Platform
+      - generic [ref=e113]: admin
+      - navigation "Main navigation" [ref=e117]:
+        - link "Launch Pad" [ref=e118] [cursor=pointer]:
+          - /url: "#/"
+        - link "Dashboard" [ref=e126] [cursor=pointer]:
+          - /url: "#/"
+        - button "Orders" [ref=e135] [cursor=pointer]
+        - link "Customers" [ref=e144] [cursor=pointer]:
+          - /url: "#/customers"
+        - link "Product Catalog" [ref=e152] [cursor=pointer]:
+          - /url: "#/products"
+        - button "Inventory" [ref=e160] [cursor=pointer]
+        - link "Fulfillment" [ref=e168] [cursor=pointer]:
+          - /url: "#/fulfillment"
+        - link "Picking" [ref=e176] [cursor=pointer]:
+          - /url: "#/picking"
+        - link "Packing" [ref=e182] [cursor=pointer]:
+          - /url: "#/packing"
+        - link "Shipping" [ref=e189] [cursor=pointer]:
+          - /url: "#/shipping"
+        - link "Returns" [ref=e197] [cursor=pointer]:
+          - /url: "#/returns"
+        - link "Warehouse Mgmt" [ref=e203] [cursor=pointer]:
+          - /url: "#/warehouse"
+        - link "WH Dashboard" [ref=e210] [cursor=pointer]:
+          - /url: "#/warehouse-dashboard"
+        - link "Packer View" [ref=e215] [cursor=pointer]:
+          - /url: "#/packer"
+        - link "Loader View" [ref=e222] [cursor=pointer]:
+          - /url: "#/loader"
+        - link "Store Dashboard" [ref=e230] [cursor=pointer]:
+          - /url: "#/store-dashboard"
+        - link "BOPIS" [ref=e238] [cursor=pointer]:
+          - /url: "#/bopis"
+        - link "BOPIS Owner" [ref=e244] [cursor=pointer]:
+          - /url: "#/bopis-owner"
+        - link "Pre-Orders" [ref=e250] [cursor=pointer]:
+          - /url: "#/pre-orders"
+        - link "ATP Rules" [ref=e255] [cursor=pointer]:
+          - /url: "#/atp-rules"
+        - link "Task Queues" [ref=e261] [cursor=pointer]:
+          - /url: "#/task-queues"
+        - link "Procurement" [ref=e266] [cursor=pointer]:
+          - /url: "#/procurement"
+        - link "Invoices" [ref=e273] [cursor=pointer]:
+          - /url: "#/invoices"
+        - link "Payments" [ref=e279] [cursor=pointer]:
+          - /url: "#/payments"
+        - link "Multi-Node Inventory" [ref=e284] [cursor=pointer]:
+          - /url: "#/inventory/enhanced"
+        - link "Wave Planning" [ref=e290] [cursor=pointer]:
+          - /url: "#/wave-planning"
+        - link "Labor Management" [ref=e297] [cursor=pointer]:
+          - /url: "#/labor-management"
+        - link "Slotting Optimization" [ref=e305] [cursor=pointer]:
+          - /url: "#/slotting-optimization"
+        - link "Yard & Dock" [ref=e312] [cursor=pointer]:
+          - /url: "#/yard-dock"
+        - link "Automation Systems" [ref=e320] [cursor=pointer]:
+          - /url: "#/automation-systems"
+        - link "Label Printing" [ref=e326] [cursor=pointer]:
+          - /url: "#/label-printing"
+        - link "Manifests" [ref=e333] [cursor=pointer]:
+          - /url: "#/manifest"
+        - link "Report Builder" [ref=e339] [cursor=pointer]:
+          - /url: "#/report-builder"
+        - link "Returns Command Center" [ref=e344] [cursor=pointer]:
+          - /url: "#/returns-enhanced"
+        - link "Carriers" [ref=e350] [cursor=pointer]:
+          - /url: "#/carriers"
+        - link "Rate Shopping" [ref=e357] [cursor=pointer]:
+          - /url: "#/rate-shopping"
+        - link "Routing Rules" [ref=e363] [cursor=pointer]:
+          - /url: "#/routing-rules"
+        - link "Order Routing" [ref=e370] [cursor=pointer]:
+          - /url: "#/order-routing"
+        - link "EDI Automation" [ref=e377] [cursor=pointer]:
+          - /url: "#/edi"
+        - link "Email Order Parser" [ref=e383] [cursor=pointer]:
+          - /url: "#/email-parser"
+        - link "Import/Export" [ref=e389] [cursor=pointer]:
+          - /url: "#/import-export"
+        - link "B2B Portal" [ref=e395] [cursor=pointer]:
+          - /url: "#/b2b-portal"
+        - link "Stores" [ref=e402] [cursor=pointer]:
+          - /url: "#/stores"
+        - link "AI Experiments" [ref=e410] [cursor=pointer]:
+          - /url: "#/experiments"
+        - link "Analytics" [ref=e415] [cursor=pointer]:
+          - /url: "#/analytics"
+        - link "AI Control Center" [ref=e420] [cursor=pointer]:
+          - /url: "#/ai"
+        - link "AI Platform" [ref=e433] [cursor=pointer]:
+          - /url: "#/ai-platform"
+        - link "AI Briefing" [ref=e439] [cursor=pointer]:
+          - /url: "#/ai-briefing"
+        - link "AI Routing" [ref=e452] [cursor=pointer]:
+          - /url: "#/ai-routing"
+        - link "AI Packing" [ref=e459] [cursor=pointer]:
+          - /url: "#/ai-packing"
+        - link "AI Loading" [ref=e466] [cursor=pointer]:
+          - /url: "#/ai-loading"
+        - link "AI Audit Trail" [ref=e474] [cursor=pointer]:
+          - /url: "#/ai-audit"
+        - link "AI Forecasting" [ref=e479] [cursor=pointer]:
+          - /url: "#/ai-forecasting"
+        - link "Notifications" [ref=e484] [cursor=pointer]:
+          - /url: "#/notifications"
+        - link "Workflows" [ref=e490] [cursor=pointer]:
+          - /url: "#/workflows"
+        - link "Integration Hub" [ref=e497] [cursor=pointer]:
+          - /url: "#/integration-hub"
+        - button "Sales Channels" [ref=e506] [cursor=pointer]
+        - link "Documents" [ref=e516] [cursor=pointer]:
+          - /url: "#/documents"
+        - link "Users & Roles" [ref=e522] [cursor=pointer]:
+          - /url: "#/users"
+        - link "Settings" [ref=e537] [cursor=pointer]:
+          - /url: "#/settings"
+        - link "Audit & Compliance" [ref=e543] [cursor=pointer]:
+          - /url: "#/audit"
+        - link "Promotions" [ref=e548] [cursor=pointer]:
+          - /url: "#/promotions"
+        - link "Endless Aisle" [ref=e555] [cursor=pointer]:
+          - /url: "#/endless-aisle"
+      - generic [ref=e562]:
+        - combobox "Switch user role" [ref=e564] [cursor=pointer]:
+          - option "System Administrator" [selected]
+          - option "Executive Dashboard"
+          - option "Operations Manager"
+          - option "Warehouse Manager"
+          - option "Picker"
+          - option "Packer"
+          - option "Loader"
+          - option "Store Manager"
+          - option "BOPIS Owner"
+          - option "Customer Support"
+          - option "Procurement Manager"
+          - option "Finance"
+          - option "Logistics Manager"
+          - option "Read Only"
+        - button "Switch to dark mode" [ref=e565] [cursor=pointer]:
+          - generic [ref=e568]: Dark mode
+        - button "Collapse sidebar" [ref=e569] [cursor=pointer]:
+          - generic [ref=e572]: Collapse
+    - generic [ref=e573]:
+      - banner [ref=e574]:
+        - button "Open search" [ref=e576] [cursor=pointer]:
+          - generic [ref=e580]: Search orders, inventory, customers...
+          - generic [ref=e581]: K
+        - generic [ref=e584]:
+          - button "Open AI assistant" [ref=e585] [cursor=pointer]: AI Assistant
+          - button "Notifications" [ref=e589] [cursor=pointer]
+          - button "User menu" [ref=e596] [cursor=pointer]:
+            - generic [ref=e597]: a
+            - generic [ref=e598]:
+              - paragraph [ref=e599]: admin
+              - paragraph [ref=e600]: admin
+      - main [ref=e603]:
+        - generic [ref=e1945]:
+          - navigation "Breadcrumb" [ref=e1946]:
+            - link "Home" [ref=e1947] [cursor=pointer]:
+              - /url: "#/"
+            - list [ref=e1951]:
+              - listitem [ref=e1952]:
+                - generic [ref=e1955]: Orders
+          - generic [ref=e1956]:
+            - 'region "Total Orders: 0" [ref=e1957]':
+              - generic [ref=e1959]:
+                - paragraph [ref=e1960]: Total Orders
+                - paragraph [ref=e1961]: "0"
+            - 'region "Pending: 0" [ref=e1967]':
+              - generic [ref=e1969]:
+                - paragraph [ref=e1970]: Pending
+                - paragraph [ref=e1971]: "0"
+            - 'region "Shipped: 0" [ref=e1976]':
+              - generic [ref=e1978]:
+                - paragraph [ref=e1979]: Shipped
+                - paragraph [ref=e1980]: "0"
+            - 'region "Exceptions: 0" [ref=e1987]':
+              - generic [ref=e1989]:
+                - paragraph [ref=e1990]: Exceptions
+                - paragraph [ref=e1991]: "0"
+          - tablist [ref=e1996]:
+            - tab "All Orders" [selected] [ref=e1997] [cursor=pointer]:
+              - text: All Orders
+              - generic [ref=e2002]: "0"
+            - tab "Pending" [ref=e2003] [cursor=pointer]:
+              - text: Pending
+              - generic [ref=e2007]: "0"
+            - tab "Confirmed" [ref=e2008] [cursor=pointer]:
+              - text: Confirmed
+              - generic [ref=e2012]: "0"
+            - tab "Allocated" [ref=e2013] [cursor=pointer]:
+              - text: Allocated
+              - generic [ref=e2017]: "0"
+            - tab "Shipped" [ref=e2018] [cursor=pointer]:
+              - text: Shipped
+              - generic [ref=e2024]: "0"
+            - tab "Delivered" [ref=e2025] [cursor=pointer]:
+              - text: Delivered
+              - generic [ref=e2031]: "0"
+            - tab "Exception" [ref=e2032] [cursor=pointer]:
+              - text: Exception
+              - generic [ref=e2035]: "0"
+          - generic [ref=e2036]:
+            - toolbar "Actions" [ref=e2038]:
+              - button "FilterFilters" [ref=e2039] [cursor=pointer]
+              - button "DownloadExport" [ref=e2040] [cursor=pointer]
+              - button "PlusNew Order" [active] [ref=e2041] [cursor=pointer]
+            - generic [ref=e2042]:
+              - combobox "Search orders..." [ref=e2044]
+              - combobox [ref=e2045]:
+                - option "All Channels" [selected]
+                - option "Shopify"
+                - option "Amazon"
+                - option "WooCommerce"
+                - option "Manual"
+                - option "API"
+          - generic [ref=e2047]:
+            - table [ref=e2049]:
+              - rowgroup [ref=e2050]:
+                - row [ref=e2051]:
+                  - columnheader [ref=e2052]:
+                    - checkbox [ref=e2053]
+                  - columnheader [ref=e2054] [cursor=pointer]
+                  - columnheader [ref=e2059] [cursor=pointer]
+                  - columnheader [ref=e2064] [cursor=pointer]
+                  - columnheader [ref=e2069] [cursor=pointer]
+                  - columnheader "Items" [ref=e2074]
+                  - columnheader "Destination" [ref=e2076]
+                  - columnheader "Carrier" [ref=e2078]
+                  - columnheader [ref=e2080] [cursor=pointer]
+                  - columnheader [ref=e2085]
+              - rowgroup [ref=e2086]:
+                - row [ref=e2087]:
+                  - cell "No data found" [ref=e2088]
+            - generic [ref=e2089]:
+              - generic [ref=e2090]: 0 total
+              - generic [ref=e2091]:
+                - button [disabled] [ref=e2092]
+                - generic [ref=e2095]: Page 1 of 0
+                - button [disabled] [ref=e2096]
+          - generic [ref=e2115]:
+            - generic [ref=e2116]:
+              - heading "Create Order" [level=2] [ref=e2117]
+              - button [ref=e2118] [cursor=pointer]
+            - generic [ref=e2122]:
+              - generic [ref=e2123]:
+                - generic [ref=e2124]:
+                  - generic [ref=e2125]: Customer Name
+                  - textbox [ref=e2126]
+                - generic [ref=e2127]:
+                  - generic [ref=e2128]: Customer Email
+                  - textbox [ref=e2129]
+                - generic [ref=e2130]:
+                  - generic [ref=e2131]: Street
+                  - textbox [ref=e2132]
+                - generic [ref=e2133]:
+                  - generic [ref=e2134]: City
+                  - textbox [ref=e2135]
+                - generic [ref=e2136]:
+                  - generic [ref=e2137]: State
+                  - textbox [ref=e2138]
+                - generic [ref=e2139]:
+                  - generic [ref=e2140]: ZIP
+                  - textbox [ref=e2141]
+                - generic [ref=e2142]:
+                  - generic [ref=e2143]: Country
+                  - textbox [ref=e2144]: US
+                - generic [ref=e2145]:
+                  - generic [ref=e2146]: Channel
+                  - combobox [ref=e2147]:
+                    - option "Manual" [selected]
+                    - option "Shopify"
+                    - option "Amazon"
+                    - option "WooCommerce"
+                    - option "API"
+              - separator [ref=e2148]
+              - paragraph [ref=e2149]: Item
+              - generic [ref=e2150]:
+                - generic [ref=e2151]:
+                  - generic [ref=e2152]: Product Name
+                  - textbox [ref=e2153]
+                - generic [ref=e2154]:
+                  - generic [ref=e2155]: SKU
+                  - textbox [ref=e2156]
+                - generic [ref=e2157]:
+                  - generic [ref=e2158]: Qty
+                  - spinbutton [ref=e2159]: "1"
+                - generic [ref=e2160]:
+                  - generic [ref=e2161]: Unit Price
+                  - spinbutton [ref=e2162]: "0"
+            - generic [ref=e2163]:
+              - button "Cancel" [ref=e2164] [cursor=pointer]
+              - button "Create Order" [ref=e2165] [cursor=pointer]
+  - generic [ref=e1942]: "100"

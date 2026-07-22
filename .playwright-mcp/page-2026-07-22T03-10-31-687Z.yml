@@ -1,0 +1,364 @@
+- generic [active] [ref=f9e1]:
+  - generic [ref=f9e3]:
+    - link "Skip to main content" [ref=f9e4] [cursor=pointer]:
+      - /url: "#main-content"
+    - complementary [ref=f9e6]:
+      - generic [ref=f9e13]:
+        - generic [ref=f9e14]: NexusShip
+        - generic [ref=f9e15]: OMS Platform
+      - generic [ref=f9e16]: admin
+      - navigation "Main navigation" [ref=f9e20]:
+        - link "Launch Pad" [ref=f9e21] [cursor=pointer]:
+          - /url: "#/"
+        - link "Dashboard" [ref=f9e29] [cursor=pointer]:
+          - /url: "#/"
+        - button "Orders" [ref=f9e38] [cursor=pointer]
+        - link "Customers" [ref=f9e47] [cursor=pointer]:
+          - /url: "#/customers"
+        - link "Product Catalog" [ref=f9e55] [cursor=pointer]:
+          - /url: "#/products"
+        - button "Inventory" [ref=f9e63] [cursor=pointer]
+        - link "Fulfillment" [ref=f9e71] [cursor=pointer]:
+          - /url: "#/fulfillment"
+        - link "Picking" [ref=f9e79] [cursor=pointer]:
+          - /url: "#/picking"
+        - link "Packing" [ref=f9e85] [cursor=pointer]:
+          - /url: "#/packing"
+        - link "Shipping" [ref=f9e92] [cursor=pointer]:
+          - /url: "#/shipping"
+        - link "Returns" [ref=f9e100] [cursor=pointer]:
+          - /url: "#/returns"
+        - link "Warehouse Mgmt" [ref=f9e106] [cursor=pointer]:
+          - /url: "#/warehouse"
+        - link "WH Dashboard" [ref=f9e113] [cursor=pointer]:
+          - /url: "#/warehouse-dashboard"
+        - link "Packer View" [ref=f9e118] [cursor=pointer]:
+          - /url: "#/packer"
+        - link "Loader View" [ref=f9e125] [cursor=pointer]:
+          - /url: "#/loader"
+        - link "Store Dashboard" [ref=f9e133] [cursor=pointer]:
+          - /url: "#/store-dashboard"
+        - link "BOPIS" [ref=f9e141] [cursor=pointer]:
+          - /url: "#/bopis"
+        - link "BOPIS Owner" [ref=f9e147] [cursor=pointer]:
+          - /url: "#/bopis-owner"
+        - link "Pre-Orders" [ref=f9e153] [cursor=pointer]:
+          - /url: "#/pre-orders"
+        - link "ATP Rules" [ref=f9e158] [cursor=pointer]:
+          - /url: "#/atp-rules"
+        - link "Task Queues" [ref=f9e164] [cursor=pointer]:
+          - /url: "#/task-queues"
+        - link "Procurement" [ref=f9e169] [cursor=pointer]:
+          - /url: "#/procurement"
+        - link "Invoices" [ref=f9e176] [cursor=pointer]:
+          - /url: "#/invoices"
+        - link "Payments" [ref=f9e182] [cursor=pointer]:
+          - /url: "#/payments"
+        - link "Multi-Node Inventory" [ref=f9e187] [cursor=pointer]:
+          - /url: "#/inventory/enhanced"
+        - link "Wave Planning" [ref=f9e193] [cursor=pointer]:
+          - /url: "#/wave-planning"
+        - link "Labor Management" [ref=f9e200] [cursor=pointer]:
+          - /url: "#/labor-management"
+        - link "Slotting Optimization" [ref=f9e208] [cursor=pointer]:
+          - /url: "#/slotting-optimization"
+        - link "Yard & Dock" [ref=f9e215] [cursor=pointer]:
+          - /url: "#/yard-dock"
+        - link "Automation Systems" [ref=f9e223] [cursor=pointer]:
+          - /url: "#/automation-systems"
+        - link "Label Printing" [ref=f9e229] [cursor=pointer]:
+          - /url: "#/label-printing"
+        - link "Manifests" [ref=f9e236] [cursor=pointer]:
+          - /url: "#/manifest"
+        - link "Report Builder" [ref=f9e242] [cursor=pointer]:
+          - /url: "#/report-builder"
+        - link "Returns Command Center" [ref=f9e247] [cursor=pointer]:
+          - /url: "#/returns-enhanced"
+        - link "Carriers" [ref=f9e253] [cursor=pointer]:
+          - /url: "#/carriers"
+        - link "Rate Shopping" [ref=f9e260] [cursor=pointer]:
+          - /url: "#/rate-shopping"
+        - link "Routing Rules" [ref=f9e266] [cursor=pointer]:
+          - /url: "#/routing-rules"
+        - link "Order Routing" [ref=f9e273] [cursor=pointer]:
+          - /url: "#/order-routing"
+        - link "EDI Automation" [ref=f9e280] [cursor=pointer]:
+          - /url: "#/edi"
+        - link "Email Order Parser" [ref=f9e286] [cursor=pointer]:
+          - /url: "#/email-parser"
+        - link "Import/Export" [ref=f9e292] [cursor=pointer]:
+          - /url: "#/import-export"
+        - link "B2B Portal" [ref=f9e298] [cursor=pointer]:
+          - /url: "#/b2b-portal"
+        - link "Stores" [ref=f9e305] [cursor=pointer]:
+          - /url: "#/stores"
+        - link "AI Experiments" [ref=f9e313] [cursor=pointer]:
+          - /url: "#/experiments"
+        - link "Analytics" [ref=f9e318] [cursor=pointer]:
+          - /url: "#/analytics"
+        - link "AI Control Center" [ref=f9e323] [cursor=pointer]:
+          - /url: "#/ai"
+        - link "AI Platform" [ref=f9e336] [cursor=pointer]:
+          - /url: "#/ai-platform"
+        - link "AI Briefing" [ref=f9e342] [cursor=pointer]:
+          - /url: "#/ai-briefing"
+        - link "AI Routing" [ref=f9e355] [cursor=pointer]:
+          - /url: "#/ai-routing"
+        - link "AI Packing" [ref=f9e362] [cursor=pointer]:
+          - /url: "#/ai-packing"
+        - link "AI Loading" [ref=f9e369] [cursor=pointer]:
+          - /url: "#/ai-loading"
+        - link "AI Audit Trail" [ref=f9e377] [cursor=pointer]:
+          - /url: "#/ai-audit"
+        - link "AI Forecasting" [ref=f9e382] [cursor=pointer]:
+          - /url: "#/ai-forecasting"
+        - link "Notifications" [ref=f9e387] [cursor=pointer]:
+          - /url: "#/notifications"
+        - link "Workflows" [ref=f9e393] [cursor=pointer]:
+          - /url: "#/workflows"
+        - link "Integration Hub" [ref=f9e400] [cursor=pointer]:
+          - /url: "#/integration-hub"
+        - button "Sales Channels" [ref=f9e409] [cursor=pointer]
+        - link "Documents" [ref=f9e419] [cursor=pointer]:
+          - /url: "#/documents"
+        - link "Users & Roles" [ref=f9e425] [cursor=pointer]:
+          - /url: "#/users"
+        - link "Settings" [ref=f9e440] [cursor=pointer]:
+          - /url: "#/settings"
+        - link "Audit & Compliance" [ref=f9e446] [cursor=pointer]:
+          - /url: "#/audit"
+        - link "Promotions" [ref=f9e451] [cursor=pointer]:
+          - /url: "#/promotions"
+        - link "Endless Aisle" [ref=f9e458] [cursor=pointer]:
+          - /url: "#/endless-aisle"
+      - generic [ref=f9e465]:
+        - combobox "Switch user role" [ref=f9e467] [cursor=pointer]:
+          - option "System Administrator" [selected]
+          - option "Executive Dashboard"
+          - option "Operations Manager"
+          - option "Warehouse Manager"
+          - option "Picker"
+          - option "Packer"
+          - option "Loader"
+          - option "Store Manager"
+          - option "BOPIS Owner"
+          - option "Customer Support"
+          - option "Procurement Manager"
+          - option "Finance"
+          - option "Logistics Manager"
+          - option "Read Only"
+        - button "Switch to dark mode" [ref=f9e468] [cursor=pointer]:
+          - generic [ref=f9e471]: Dark mode
+        - button "Collapse sidebar" [ref=f9e472] [cursor=pointer]:
+          - generic [ref=f9e475]: Collapse
+    - generic [ref=f9e476]:
+      - banner [ref=f9e477]:
+        - button "Open search" [ref=f9e479] [cursor=pointer]:
+          - generic [ref=f9e483]: Search orders, inventory, customers...
+          - generic [ref=f9e484]: K
+        - generic [ref=f9e487]:
+          - button "Open AI assistant" [ref=f9e488] [cursor=pointer]: AI Assistant
+          - button "Notifications" [ref=f9e492] [cursor=pointer]
+          - button "User menu" [ref=f9e499] [cursor=pointer]:
+            - generic [ref=f9e500]: a
+            - generic [ref=f9e501]:
+              - paragraph [ref=f9e502]: admin
+              - paragraph [ref=f9e503]: admin
+      - main [ref=f9e506]:
+        - generic [ref=f9e1459]:
+          - generic [ref=f9e1460]:
+            - generic [ref=f9e1461]:
+              - heading "Dashboard" [level=1] [ref=f9e1462]
+              - paragraph [ref=f9e1468]: Real-time overview of your operations
+            - generic [ref=f9e1469]:
+              - button "Refresh" [disabled]
+          - generic [ref=f9e1470]:
+            - 'region "Orders Today: ..."'
+            - 'region "On-Time Delivery: ..."'
+            - 'region "Active Exceptions: ..."'
+            - 'region "Avg Ship Time: ..."'
+            - 'region "Revenue Today: ..."'
+            - 'region "Active Pickers: ..."'
+          - generic [ref=f9e1471]:
+            - generic [ref=f9e1472]:
+              - generic [ref=f9e1473]:
+                - generic [ref=f9e1474]:
+                  - heading "Fulfillment Progress" [level=3] [ref=f9e1475]
+                  - paragraph [ref=f9e1476]: Pipeline overview across all facilities
+                - generic [ref=f9e1477]: "Total: 0 orders"
+              - generic [ref=f9e1479]:
+                - generic [ref=f9e1480]:
+                  - generic [ref=f9e1481]:
+                    - generic [ref=f9e1482]: Assigned
+                    - generic [ref=f9e1483]:
+                      - generic [ref=f9e1484]: "0"
+                      - generic [ref=f9e1485]: (0%)
+                  - generic [ref=f9e1487]: "Next: Picking"
+                - generic [ref=f9e1491]:
+                  - generic [ref=f9e1492]:
+                    - generic [ref=f9e1493]: In Flight
+                    - generic [ref=f9e1494]:
+                      - generic [ref=f9e1495]: "0"
+                      - generic [ref=f9e1496]: (0%)
+                  - generic [ref=f9e1498]: "Next: Pack & Ship"
+                - generic [ref=f9e1503]:
+                  - generic [ref=f9e1504]: Packed & Shipped
+                  - generic [ref=f9e1505]:
+                    - generic [ref=f9e1506]: "0"
+                    - generic [ref=f9e1507]: (0%)
+            - generic [ref=f9e1509]:
+              - generic [ref=f9e1510]:
+                - heading "Hold Tasks" [level=4] [ref=f9e1511]
+                - generic [ref=f9e1512]:
+                  - button "Substitute Items 0" [ref=f9e1513] [cursor=pointer]:
+                    - generic [ref=f9e1514]: Substitute Items
+                    - generic [ref=f9e1519]: "0"
+                  - button "Bad Address 0" [ref=f9e1520] [cursor=pointer]:
+                    - generic [ref=f9e1521]: Bad Address
+                    - generic [ref=f9e1528]: "0"
+                  - button "Fraud Risk 0" [ref=f9e1529] [cursor=pointer]:
+                    - generic [ref=f9e1530]: Fraud Risk
+                    - generic [ref=f9e1535]: "0"
+                  - button "On Hold 0" [ref=f9e1536] [cursor=pointer]:
+                    - generic [ref=f9e1537]: On Hold
+                    - generic [ref=f9e1543]: "0"
+              - generic [ref=f9e1544]:
+                - heading "Unbrokered" [level=4] [ref=f9e1545]
+                - generic [ref=f9e1546]:
+                  - button "Brokering Queue 0" [ref=f9e1547] [cursor=pointer]:
+                    - generic [ref=f9e1548]: Brokering Queue
+                    - generic [ref=f9e1549]: "0"
+                  - button "Unallocated 0" [ref=f9e1550] [cursor=pointer]:
+                    - generic [ref=f9e1551]: Unallocated
+                    - generic [ref=f9e1552]: "0"
+          - generic [ref=f9e1553]:
+            - generic [ref=f9e1554]:
+              - generic [ref=f9e1555]:
+                - heading "Facilities Performance" [level=3] [ref=f9e1556]
+                - paragraph [ref=f9e1557]: Select a facility to view detailed metrics
+              - generic [ref=f9e1558]:
+                - textbox "Search facilities..." [ref=f9e1561]
+                - generic [ref=f9e1562]:
+                  - button "Order Volume" [ref=f9e1563] [cursor=pointer]
+                  - button "Velocity" [ref=f9e1564] [cursor=pointer]
+                  - button "Partial Fulfillments" [ref=f9e1565] [cursor=pointer]
+            - generic [ref=f9e1566]:
+              - paragraph [ref=f9e1568]: No facilities found
+              - generic [ref=f9e1570]:
+                - paragraph [ref=f9e1575]: Select a facility
+                - paragraph [ref=f9e1576]: Choose a facility from the list to view details
+          - generic [ref=f9e1577]:
+            - generic [ref=f9e1579]:
+              - generic [ref=f9e1580]:
+                - heading "Order Velocity" [level=3] [ref=f9e1581]
+                - paragraph [ref=f9e1582]: Orders and fulfillments over time
+              - generic [ref=f9e1583]:
+                - button "24 Hours" [ref=f9e1584] [cursor=pointer]
+                - button "7 Days" [ref=f9e1585] [cursor=pointer]
+                - button "30 Days" [ref=f9e1586] [cursor=pointer]
+            - generic [ref=f9e1590]:
+              - heading "Order Status" [level=3] [ref=f9e1591]
+              - paragraph [ref=f9e1592]: Current distribution
+          - generic [ref=f9e1595]:
+            - generic [ref=f9e1596]:
+              - heading "Activity Feed" [level=3] [ref=f9e1598]
+              - generic [ref=f9e1599]:
+                - list "Timeline"
+            - generic [ref=f9e1600]:
+              - generic [ref=f9e1601]:
+                - heading "Alerts & Exceptions" [level=3] [ref=f9e1603]
+                - paragraph [ref=f9e1609]: No active alerts
+              - generic [ref=f9e1610]:
+                - heading "Quick Actions" [level=3] [ref=f9e1612]
+                - generic [ref=f9e1614]:
+                  - button [ref=f9e1615] [cursor=pointer]:
+                    - generic [ref=f9e1618]:
+                      - paragraph [ref=f9e1619]: Create Order
+                      - paragraph [ref=f9e1620]: New sales order
+                  - button [ref=f9e1621] [cursor=pointer]:
+                    - generic [ref=f9e1627]:
+                      - paragraph [ref=f9e1628]: View Inventory
+                      - paragraph [ref=f9e1629]: Stock levels
+                  - button [ref=f9e1630] [cursor=pointer]:
+                    - generic [ref=f9e1634]:
+                      - paragraph [ref=f9e1635]: Check Analytics
+                      - paragraph [ref=f9e1636]: Reports & insights
+                  - button [ref=f9e1637] [cursor=pointer]:
+                    - generic [ref=f9e1641]:
+                      - paragraph [ref=f9e1642]: Open AI Assistant
+                      - paragraph [ref=f9e1643]: AI-powered help
+                  - button [ref=f9e1644] [cursor=pointer]:
+                    - generic [ref=f9e1650]:
+                      - paragraph [ref=f9e1651]: AI Order Routing
+                      - paragraph [ref=f9e1652]: Intelligent allocation
+          - generic [ref=f9e1653]:
+            - generic [ref=f9e1654]:
+              - generic [ref=f9e1655]:
+                - generic [ref=f9e1656]:
+                  - heading "Promotions Overview" [level=3] [ref=f9e1657]
+                  - paragraph [ref=f9e1662]: Active campaigns & redemption
+                - button "View All" [ref=f9e1663] [cursor=pointer]
+              - generic [ref=f9e1664]:
+                - generic [ref=f9e1665]:
+                  - generic [ref=f9e1666]:
+                    - paragraph [ref=f9e1667]: Active Promos
+                    - paragraph [ref=f9e1668]: "0"
+                  - generic [ref=f9e1669]:
+                    - paragraph [ref=f9e1670]: Total Redemptions
+                    - paragraph [ref=f9e1671]: "0"
+                  - generic [ref=f9e1672]:
+                    - paragraph [ref=f9e1673]: Discount Given
+                    - paragraph [ref=f9e1674]: $0
+                - generic [ref=f9e1675]:
+                  - paragraph [ref=f9e1680]: No active promotions
+                  - paragraph [ref=f9e1681]: Create a promotion to get started
+            - generic [ref=f9e1682]:
+              - generic [ref=f9e1683]:
+                - generic [ref=f9e1684]:
+                  - heading "Endless Aisle" [level=3] [ref=f9e1685]
+                  - paragraph [ref=f9e1689]: Store-initiated out-of-stock orders
+                - button "View All" [ref=f9e1690] [cursor=pointer]
+              - generic [ref=f9e1691]:
+                - generic [ref=f9e1692]:
+                  - generic [ref=f9e1693]:
+                    - paragraph [ref=f9e1694]: Pending
+                    - paragraph [ref=f9e1695]: "0"
+                  - generic [ref=f9e1696]:
+                    - paragraph [ref=f9e1697]: In Transit
+                    - paragraph [ref=f9e1698]: "0"
+                  - generic [ref=f9e1699]:
+                    - paragraph [ref=f9e1700]: Delivered
+                    - paragraph [ref=f9e1701]: "0"
+                  - generic [ref=f9e1702]:
+                    - paragraph [ref=f9e1703]: Cancelled
+                    - paragraph [ref=f9e1704]: "0"
+                - generic [ref=f9e1705]:
+                  - generic [ref=f9e1706]:
+                    - generic [ref=f9e1707]: Pipeline Revenue
+                    - generic [ref=f9e1711]: $0
+                  - paragraph [ref=f9e1712]: Total value of all endless aisle orders in the system
+          - generic [ref=f9e1713]:
+            - heading "AI Insights" [level=3] [ref=f9e1714]
+            - generic [ref=f9e1725]:
+              - generic [ref=f9e1726]:
+                - heading "Demand Forecast" [level=4] [ref=f9e1731]
+                - paragraph [ref=f9e1732]: ...
+                - generic [ref=f9e1734]:
+                  - generic [ref=f9e1735]: Confidence
+                  - generic [ref=f9e1736]: 0%
+                - paragraph [ref=f9e1738]: Loading...
+              - generic [ref=f9e1739]:
+                - heading "Inventory Alert" [level=4] [ref=f9e1745]
+                - paragraph [ref=f9e1746]: ... items
+                - generic [ref=f9e1748]:
+                  - generic [ref=f9e1749]: Confidence
+                  - generic [ref=f9e1750]: 0%
+                - paragraph [ref=f9e1752]: Loading...
+              - generic [ref=f9e1753]:
+                - heading "Shipping Prediction" [level=4] [ref=f9e1760]
+                - paragraph [ref=f9e1761]: ...
+                - generic [ref=f9e1763]:
+                  - generic [ref=f9e1764]: Confidence
+                  - generic [ref=f9e1765]: 0%
+                - paragraph [ref=f9e1767]: Loading...
+  - generic [ref=f9e579]: "0.9"

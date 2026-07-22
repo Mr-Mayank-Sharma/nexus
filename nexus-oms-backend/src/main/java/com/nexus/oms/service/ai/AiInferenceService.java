@@ -143,16 +143,20 @@ public class AiInferenceService {
                 """;
         };
 
-        String inputJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(input);
-        var messages = List.of(Map.of("role", "user", "content", "Input features:\n" + inputJson));
+        try {
+            String inputJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(input);
+            var messages = List.of(Map.of("role", "user", "content", "Input features:\n" + inputJson));
 
-        JsonNode llmResult = llmChatService.chatJson(systemPrompt, messages);
+            JsonNode llmResult = llmChatService.chatJson(systemPrompt, messages);
 
-        if (llmResult != null && !llmResult.isEmpty()) {
-            // Merge LLM result into the output map
-            llmResult.fields().forEachRemaining(entry ->
-                result.put(entry.getKey(), deserializeJsonNode(entry.getValue()))
-            );
+            if (llmResult != null && !llmResult.isEmpty()) {
+                // Merge LLM result into the output map
+                llmResult.fields().forEachRemaining(entry ->
+                    result.put(entry.getKey(), deserializeJsonNode(entry.getValue()))
+                );
+            }
+        } catch (Exception e) {
+            log.warn("LLM inference failed, using rule-based fallback: {}", e.getMessage());
         }
 
         return result;

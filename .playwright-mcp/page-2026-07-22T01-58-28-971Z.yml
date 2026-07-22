@@ -1,0 +1,10 @@
+- generic [ref=f1e756]:
+  - heading "Something went wrong" [level=1] [ref=f1e760]
+  - paragraph [ref=f1e761]: An unexpected error occurred. You can try again or return to the home page.
+  - generic [ref=f1e762]:
+    - paragraph [ref=f1e764]: "Objects are not valid as a React child (found: object with keys {$$typeof, render}). If you meant to render a collection of children, use an array instead."
+    - button "Show details" [ref=f1e765] [cursor=pointer]
+  - generic [ref=f1e768]:
+    - button "Try Again" [ref=f1e769] [cursor=pointer]
+    - button "Go Home" [ref=f1e773] [cursor=pointer]
+    - button "Copy Error" [ref=f1e777] [cursor=pointer]
