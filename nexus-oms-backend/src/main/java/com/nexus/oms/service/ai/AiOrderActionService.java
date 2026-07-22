@@ -1,5 +1,8 @@
 package com.nexus.oms.service.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.nexus.oms.dto.OrderResponse;
 import com.nexus.oms.dto.ai.AiActionHistoryDto;
 import com.nexus.oms.dto.ai.AiExecuteRequest;
@@ -7,27 +10,113 @@ import com.nexus.oms.dto.ai.AiSuggestionDto;
 import com.nexus.oms.entity.NxAuditLog;
 import com.nexus.oms.repository.AuditLogRepository;
 import com.nexus.oms.service.OrderService;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class AiOrderActionService {
 
+    private static final Logger log = LoggerFactory.getLogger(AiOrderActionService.class);
+
     private final OrderService orderService;
     private final AuditLogRepository auditLogRepository;
+    private final LlmChatService llmChatService;
+    private final ObjectMapper objectMapper;
+    private final MeterRegistry meterRegistry;
 
-    public AiOrderActionService(OrderService orderService, AuditLogRepository auditLogRepository) {
+    public AiOrderActionService(OrderService orderService,
+                                 AuditLogRepository auditLogRepository,
+                                 LlmChatService llmChatService,
+                                 ObjectMapper objectMapper,
+                                 MeterRegistry meterRegistry) {
         this.orderService = orderService;
         this.auditLogRepository = auditLogRepository;
+        this.llmChatService = llmChatService;
+        this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
     }
 
+    /**
+     * Get AI-powered suggestions for an order. Tries LLM first, falls back to rules.
+     */
     public List<AiSuggestionDto> getSuggestions(UUID orderId) {
         OrderResponse order = orderService.getOrder(orderId);
+
+        // Try LLM-enhanced suggestions first
+        if (llmChatService.isEnabled()) {
+            try {
+                List<AiSuggestionDto> llmSuggestions = llmEnhancedSuggestions(orderId, order);
+                if (!llmSuggestions.isEmpty()) {
+                    meterRegistry.counter("nexus.ai.order_action.llm_suggestions").increment();
+                    return llmSuggestions;
+                }
+            } catch (Exception e) {
+                log.warn("LLM suggestion generation failed for order {}: {}", orderId, e.getMessage());
+                meterRegistry.counter("nexus.ai.order_action.llm_fallback").increment();
+            }
+        }
+
+        // Fall back to rule-based suggestions
+        return ruleBasedSuggestions(orderId, order);
+    }
+
+    /**
+     * Use LLM to generate contextual order action suggestions.
+     */
+    private List<AiSuggestionDto> llmEnhancedSuggestions(UUID orderId, OrderResponse order) {
+        String systemPrompt = """
+            You are an order management AI assistant. Given an order's current state and details,
+            suggest the most appropriate actions. Return a JSON array of suggestions, each with:
+            - actionType: CONFIRM, ALLOCATE, SHIP, CANCEL, HOLD, ESCALATE, or REPROCESS_PAYMENT
+            - label: Human-readable action label
+            - description: Why this action is recommended (1 sentence)
+            - confidence: 0.0-1.0 confidence score
+            Consider the order status, value, and any risk signals.
+            """;
+
+        String userPrompt = String.format(
+            "Order ID: %s\nStatus: %s\nTotal: $%.2f\nCustomer: %s\nItems: %d\nShipping: %s\nPayment: %s",
+            orderId,
+            order.getStatus(),
+            order.getTotalAmount() != null ? order.getTotalAmount() : 0.0,
+            order.getCustomerName() != null ? order.getCustomerName() : "Unknown",
+            order.getItems() != null ? order.getItems().size() : 0,
+            order.getShippingAddress() != null ? order.getShippingAddress() : "N/A",
+            order.getPaymentStatus() != null ? order.getPaymentStatus() : "N/A"
+        );
+
+        var messages = List.of(Map.of("role", "user", "content", userPrompt));
+        JsonNode llmResult = llmChatService.chatJson(systemPrompt, messages);
+
+        List<AiSuggestionDto> suggestions = new ArrayList<>();
+        if (llmResult != null && llmResult.isArray()) {
+            for (JsonNode item : llmResult) {
+                suggestions.add(AiSuggestionDto.builder()
+                        .actionType(item.has("actionType") ? item.get("actionType").asText() : "CONFIRM")
+                        .label(item.has("label") ? item.get("label").asText() : "AI Suggestion")
+                        .description(item.has("description") ? item.get("description").asText() : "LLM-recommended action")
+                        .confidence(item.has("confidence") ? item.get("confidence").asDouble() : 0.7)
+                        .orderId(orderId.toString())
+                        .build());
+            }
+        }
+
+        return suggestions;
+    }
+
+    /**
+     * Rule-based suggestions (original logic, preserved as fallback).
+     */
+    private List<AiSuggestionDto> ruleBasedSuggestions(UUID orderId, OrderResponse order) {
         List<AiSuggestionDto> suggestions = new ArrayList<>();
 
         switch (order.getStatus() != null ? order.getStatus().toUpperCase() : "") {
@@ -112,6 +201,9 @@ public class AiOrderActionService {
             result = "FAILED";
             details = e.getMessage() != null ? e.getMessage() : "Execution failed";
         }
+
+        meterRegistry.counter("nexus.ai.order_action.executed",
+                "action", actionType, "result", result).increment();
 
         NxAuditLog auditLog = NxAuditLog.builder()
                 .tenantId(tenantId)
