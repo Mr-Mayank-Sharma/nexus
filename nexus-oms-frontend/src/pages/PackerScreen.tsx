@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import * as packingApi from '../api/packing'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
 
 export default function PackerScreen() {
@@ -48,7 +49,8 @@ export default function PackerScreen() {
   const inProgress = packages.filter((p: any) => p.status === 'IN_PROGRESS')
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="warehouse" action="view">
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
@@ -156,5 +158,6 @@ export default function PackerScreen() {
         </div>
       </div>
     </div>
+    </PermissionGate>
   )
 }

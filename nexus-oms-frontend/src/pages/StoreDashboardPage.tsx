@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import * as ordersApi from '../api/orders'
 import * as productsApi from '../api/products'
 import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 export default function StoreDashboardPage() {
   const navigate = useNavigate()
@@ -47,7 +48,8 @@ export default function StoreDashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="inventory" action="view">
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] text-[var(--text-primary)] flex items-center gap-2.5">
@@ -137,5 +139,6 @@ export default function StoreDashboardPage() {
         </div>
       </div>
     </div>
+    </PermissionGate>
   )
 }

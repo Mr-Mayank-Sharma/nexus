@@ -717,7 +717,7 @@ export default function YardDockPage() {
   function renderYardView() {
     const zones = [...new Set(yardLocations.map((y) => y.zone))].sort()
 
-    return (
+return (
       <div className="space-y-6">
         {zones.map((zone) => {
           const zoneLocs = yardLocations.filter((y) => y.zone === zone)

@@ -163,7 +163,7 @@ export default function BopisAppPage() {
   const allItemsPicked = pickupItems.length > 0 && pickupItems.every(i => i.status === 'PICKED' || i.status === 'SUBSTITUTED')
 
   return (
-    <div className="min-h-screen bg-[var(--surface-sunken)]">
+      <div className="min-h-screen bg-[var(--surface-sunken)]">
       <div className="bg-[var(--surface-base)] shadow-sm border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -559,6 +559,7 @@ function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, o
           )}
         </div>
       </div>
+
     </div>
   )
 }

@@ -11,6 +11,7 @@ import * as pickingApi from '../api/picking'
 import * as packingApi from '../api/packing'
 import * as ordersApi from '../api/orders'
 import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 export default function WarehouseDashboardPage() {
   const navigate = useNavigate()
@@ -52,7 +53,8 @@ export default function WarehouseDashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="warehouse" action="view">
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] text-[var(--text-primary)] flex items-center gap-2.5">
@@ -253,5 +255,6 @@ export default function WarehouseDashboardPage() {
         </div>
       )}
     </div>
+    </PermissionGate>
   )
 }
