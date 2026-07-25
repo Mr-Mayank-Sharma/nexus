@@ -184,7 +184,7 @@ export default function DataTable<T extends Record<string, unknown>>({
           </span>
           <div className="flex items-center gap-2">
             <button
-              className="btn-ghost p-1 disabled:opacity-40"
+              className="enterprise-btn enterprise-btn-ghost p-1 disabled:opacity-40"
               disabled={pagination.page <= 1}
               onClick={() => pagination.onPageChange(pagination.page - 1)}
             >
@@ -194,7 +194,7 @@ export default function DataTable<T extends Record<string, unknown>>({
               Page {pagination.page} of {pagination.totalPages}
             </span>
             <button
-              className="btn-ghost p-1 disabled:opacity-40"
+              className="enterprise-btn enterprise-btn-ghost p-1 disabled:opacity-40"
               disabled={pagination.page >= pagination.totalPages}
               onClick={() => pagination.onPageChange(pagination.page + 1)}
             >

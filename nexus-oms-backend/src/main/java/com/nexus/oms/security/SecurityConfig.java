@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/auth/**")).permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/webhooks/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/import/**").authenticated()

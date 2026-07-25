@@ -16,7 +16,7 @@ interface Props {
 }
 
 const iconColorMap = {
-  primary: 'text-blue-600 bg-blue-50 ring-blue-500/20 dark:text-blue-400 dark:bg-blue-900/30 dark:ring-blue-400/20',
+  primary: 'text-indigo-600 bg-indigo-50 ring-indigo-500/20 dark:text-indigo-400 dark:bg-indigo-900/30 dark:ring-indigo-400/20',
   success: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-900/30 dark:ring-emerald-400/20',
   warning: 'text-amber-600 bg-amber-50 ring-amber-500/20 dark:text-amber-400 dark:bg-amber-900/30 dark:ring-amber-400/20',
   error: 'text-red-600 bg-red-50 ring-red-500/20 dark:text-red-400 dark:bg-red-900/30 dark:ring-red-400/20',

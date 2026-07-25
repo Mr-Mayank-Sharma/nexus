@@ -109,7 +109,6 @@ export type Marketplace = 'amazon' | 'ebay' | 'walmart' | 'bigcommerce'
 
 export interface ConnectorResponse<T> {
   success: boolean
-  mock: boolean
   error?: string
   note?: string
   orders?: T[]

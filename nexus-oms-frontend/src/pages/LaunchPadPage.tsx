@@ -25,6 +25,8 @@ interface AppCard {
 
 const apps: AppCard[] = [
   // Orders & Customers
+  { name: 'Launch Pad', path: '/', icon: <LayoutDashboard className="w-6 h-6" />, description: 'App launcher & navigation', category: 'Overview', color: 'from-blue-500 to-blue-600' },
+  { name: 'Analytics Dashboard', path: '/analytics-dashboard', icon: <BarChart3 className="w-6 h-6" />, description: 'Performance metrics & KPIs', category: 'Overview', color: 'from-indigo-500 to-indigo-600', isNew: true },
   { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="w-6 h-6" />, description: 'KPIs, charts & metrics', category: 'Overview', color: 'from-blue-500 to-blue-600' },
   { name: 'Orders', path: '/orders', icon: <Package className="w-6 h-6" />, description: 'Manage sales orders', category: 'Orders & Customers', color: 'from-indigo-500 to-indigo-600' },
   { name: 'Fulfillment', path: '/fulfillment', icon: <Truck className="w-6 h-6" />, description: 'Track order fulfillment', category: 'Orders & Customers', color: 'from-emerald-500 to-emerald-600' },
@@ -233,12 +235,14 @@ export default function LaunchPadPage() {
                   </div>
                   <span className="text-xs font-medium text-[var(--text-secondary)] text-center leading-tight">{app.name}</span>
                   <PermissionGate resource="settings" action="edit">
-                    <button
+                    <span
+                      role="button"
+                      tabIndex={0}
                       onClick={e => { e.stopPropagation(); toggleFavorite(app.path) }}
-                      className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                     >
                       <Star className="w-3.5 h-3.5 text-[var(--nexus-warning-400)] fill-amber-400" />
-                    </button>
+                    </span>
                   </PermissionGate>
                 </button>
               ))}
@@ -289,10 +293,12 @@ export default function LaunchPadPage() {
                     <span className="text-xs font-semibold text-[var(--text-primary)] text-center leading-tight">{app.name}</span>
                     <span className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] text-center leading-tight line-clamp-2">{app.description}</span>
                     <PermissionGate resource="settings" action="edit">
-                      <button
+                      <span
+                        role="button"
+                        tabIndex={0}
                         onClick={e => { e.stopPropagation(); toggleFavorite(app.path) }}
                         className={clsx(
-                          'absolute top-1.5 right-1.5 transition-all',
+                          'absolute top-1.5 right-1.5 transition-all cursor-pointer',
                           favoriteApps.includes(app.path) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                         )}
                       >
@@ -300,7 +306,7 @@ export default function LaunchPadPage() {
                           'w-3.5 h-3.5',
                           favoriteApps.includes(app.path) ? 'text-[var(--nexus-warning-400)] fill-amber-400' : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]'
                         )} />
-                      </button>
+                      </span>
                     </PermissionGate>
                   </button>
                 ))}

@@ -32,8 +32,9 @@ public class YardController {
     @Operation(summary = "List dock doors for a warehouse")
     @GetMapping("/docks")
     public ResponseEntity<ApiResponse<List<NxDockDoor>>> getDockDoors(
-            @RequestParam UUID warehouseId) {
-        return ResponseEntity.ok(ApiResponse.success(yardService.getDockDoors(warehouseId)));
+            @RequestParam(defaultValue = "") String warehouseId) {
+        UUID whId = yardService.resolveWarehouseId(warehouseId);
+        return ResponseEntity.ok(ApiResponse.success(yardService.getDockDoors(whId)));
     }
 
     @Operation(summary = "Get dock door by ID")
@@ -76,8 +77,9 @@ public class YardController {
     @Operation(summary = "Get dock door utilization stats")
     @GetMapping("/docks/utilization")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDockUtilization(
-            @RequestParam UUID warehouseId) {
-        return ResponseEntity.ok(ApiResponse.success(yardService.getDockUtilization(warehouseId)));
+            @RequestParam(defaultValue = "") String warehouseId) {
+        UUID whId = yardService.resolveWarehouseId(warehouseId);
+        return ResponseEntity.ok(ApiResponse.success(yardService.getDockUtilization(whId)));
     }
 
     // ---- Yard Location Endpoints ----
@@ -85,8 +87,9 @@ public class YardController {
     @Operation(summary = "List yard locations for a warehouse")
     @GetMapping("/locations")
     public ResponseEntity<ApiResponse<List<NxYardLocation>>> getYardLocations(
-            @RequestParam UUID warehouseId) {
-        return ResponseEntity.ok(ApiResponse.success(yardService.getYardLocations(warehouseId)));
+            @RequestParam(defaultValue = "") String warehouseId) {
+        UUID whId = yardService.resolveWarehouseId(warehouseId);
+        return ResponseEntity.ok(ApiResponse.success(yardService.getYardLocations(whId)));
     }
 
     @Operation(summary = "Get yard location by ID")
@@ -125,8 +128,9 @@ public class YardController {
     @Operation(summary = "Get yard utilization stats")
     @GetMapping("/locations/utilization")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getYardUtilization(
-            @RequestParam UUID warehouseId) {
-        return ResponseEntity.ok(ApiResponse.success(yardService.getYardUtilization(warehouseId)));
+            @RequestParam(defaultValue = "") String warehouseId) {
+        UUID whId = yardService.resolveWarehouseId(warehouseId);
+        return ResponseEntity.ok(ApiResponse.success(yardService.getYardUtilization(whId)));
     }
 
     // ---- Appointment Endpoints ----
@@ -134,9 +138,10 @@ public class YardController {
     @Operation(summary = "List appointments with optional status filter")
     @GetMapping("/appointments")
     public ResponseEntity<ApiResponse<List<NxAppointment>>> getAppointments(
-            @RequestParam UUID warehouseId,
+            @RequestParam(defaultValue = "") String warehouseId,
             @RequestParam(required = false) String status) {
-        return ResponseEntity.ok(ApiResponse.success(yardService.getAppointments(warehouseId, status)));
+        UUID whId = yardService.resolveWarehouseId(warehouseId);
+        return ResponseEntity.ok(ApiResponse.success(yardService.getAppointments(whId, status)));
     }
 
     @Operation(summary = "Get appointment by ID")
@@ -198,15 +203,17 @@ public class YardController {
     @Operation(summary = "Get appointment calendar for a date")
     @GetMapping("/appointments/calendar")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAppointmentCalendar(
-            @RequestParam UUID warehouseId,
+            @RequestParam(defaultValue = "") String warehouseId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-        return ResponseEntity.ok(ApiResponse.success(yardService.getAppointmentCalendar(warehouseId, date)));
+        UUID whId = yardService.resolveWarehouseId(warehouseId);
+        return ResponseEntity.ok(ApiResponse.success(yardService.getAppointmentCalendar(whId, date)));
     }
 
     @Operation(summary = "Get appointment statistics for a warehouse")
     @GetMapping("/appointments/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAppointmentStats(
-            @RequestParam UUID warehouseId) {
-        return ResponseEntity.ok(ApiResponse.success(yardService.getAppointmentStats(warehouseId)));
+            @RequestParam(defaultValue = "") String warehouseId) {
+        UUID whId = yardService.resolveWarehouseId(warehouseId);
+        return ResponseEntity.ok(ApiResponse.success(yardService.getAppointmentStats(whId)));
     }
 }

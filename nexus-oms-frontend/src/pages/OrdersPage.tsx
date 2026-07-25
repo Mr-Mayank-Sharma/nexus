@@ -168,9 +168,28 @@ export default function OrdersPage() {
           </select>
         }
         actions={[
-          { id: 'filters', label: 'Filters', icon: 'Filter', onClick: () => {} },
-          { id: 'export', label: 'Export', icon: 'Download', onClick: () => {} },
-          { id: 'new-order', label: 'New Order', icon: 'Plus', onClick: () => setShowCreate(true), primary: true, permission: { resource: 'orders', action: 'create' } },
+          { label: 'Export', icon: <Download className="w-4 h-4" />, onClick: () => {
+            const headers = ['Order Number', 'Channel', 'Customer', 'Status', 'Items', 'City', 'State', 'Carrier', 'Created']
+            const rows = filtered.map(o => [
+              o.orderNumber || o.id,
+              o.channel,
+              o.customerName || '',
+              o.status,
+              String(o.items?.reduce((s, i) => s + i.quantity, 0) || 0),
+              o.shippingAddress?.city || '',
+              o.shippingAddress?.state || '',
+              o.carrier || '',
+              new Date(o.createdAt).toLocaleDateString(),
+            ])
+            const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+            const blob = new Blob([csv], { type: 'text/csv' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url; a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`; a.click()
+            URL.revokeObjectURL(url)
+            addToast({ type: 'success', title: `Exported ${filtered.length} orders` })
+          }},
+          { label: 'New Order', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreate(true), variant: 'primary', permission: { resource: 'orders', action: 'create' } },
         ]}
       />
 

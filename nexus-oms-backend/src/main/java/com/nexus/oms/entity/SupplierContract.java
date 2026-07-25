@@ -8,6 +8,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_supplier_contracts")
 @Data
@@ -42,6 +45,7 @@ public class SupplierContract {
 
     private String terms;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "pricing_terms", columnDefinition = "jsonb")
     private String pricingTerms;
 

@@ -208,17 +208,17 @@ export default function IntegrationHubPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <PermissionGate resource="integrations" action="edit">
-                        <button onClick={() => handleTest(selectedConnector.id)} className="btn-ghost text-xs">
+                        <button onClick={() => handleTest(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs">
                           <TestTube className="w-3.5 h-3.5" /> Test
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="integrations" action="edit">
-                        <button onClick={() => handleRegisterWebhooks(selectedConnector.id)} className="btn-ghost text-xs">
+                        <button onClick={() => handleRegisterWebhooks(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs">
                           <Link className="w-3.5 h-3.5" /> Webhooks
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleDelete(selectedConnector.id)} className="btn-ghost text-xs text-[var(--nexus-error-500)]">
+                        <button onClick={() => handleDelete(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -357,9 +357,9 @@ export default function IntegrationHubPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowCreate(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Connect {selectedPlatform.name}
                 </button>

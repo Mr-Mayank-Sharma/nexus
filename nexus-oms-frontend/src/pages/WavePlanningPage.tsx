@@ -36,52 +36,7 @@ interface CalendarSlot {
   waves: { id: string; name: string; status: string }[]
 }
 
-const mockWaves: Wave[] = [
-  { id: 'W-001', name: 'Morning Express', status: 'In Progress', priority: 'High', orders: [
-    { id: 'ORD-1001', number: 'ORD-1001', items: 3, zone: 'A' },
-    { id: 'ORD-1002', number: 'ORD-1002', items: 5, zone: 'B' },
-    { id: 'ORD-1003', number: 'ORD-1003', items: 2, zone: 'A' },
-  ], createdAt: '2026-07-01 06:00', targetCompletion: '2026-07-01 10:00', estimatedCompletion: '2026-07-01 09:45', itemsPicked: 6, totalItems: 10, zone: 'A' },
-  { id: 'W-002', name: 'Midday Bulk', status: 'Planned', priority: 'Medium', orders: [
-    { id: 'ORD-1004', number: 'ORD-1004', items: 8, zone: 'C' },
-    { id: 'ORD-1005', number: 'ORD-1005', items: 4, zone: 'B' },
-    { id: 'ORD-1006', number: 'ORD-1006', items: 6, zone: 'A' },
-    { id: 'ORD-1007', number: 'ORD-1007', items: 3, zone: 'C' },
-  ], createdAt: '2026-07-01 08:00', targetCompletion: '2026-07-01 14:00', estimatedCompletion: '2026-07-01 13:30', itemsPicked: 0, totalItems: 21, zone: 'B' },
-  { id: 'W-003', name: 'Afternoon Flash', status: 'Planned', priority: 'Low', orders: [
-    { id: 'ORD-1008', number: 'ORD-1008', items: 2, zone: 'A' },
-  ], createdAt: '2026-07-01 09:00', targetCompletion: '2026-07-01 17:00', estimatedCompletion: '2026-07-01 16:15', itemsPicked: 0, totalItems: 2, zone: 'A' },
-  { id: 'W-004', name: 'Rush Priority', status: 'Completed', priority: 'High', orders: [
-    { id: 'ORD-1009', number: 'ORD-1009', items: 1, zone: 'D' },
-    { id: 'ORD-1010', number: 'ORD-1010', items: 7, zone: 'D' },
-  ], createdAt: '2026-06-30 22:00', targetCompletion: '2026-07-01 02:00', estimatedCompletion: '2026-07-01 01:50', itemsPicked: 8, totalItems: 8, zone: 'D' },
-  { id: 'W-005', name: 'Zone C Overflow', status: 'Cancelled', priority: 'Medium', orders: [
-    { id: 'ORD-1011', number: 'ORD-1011', items: 4, zone: 'C' },
-  ], createdAt: '2026-06-30 15:00', targetCompletion: '2026-06-30 20:00', estimatedCompletion: '2026-06-30 19:00', itemsPicked: 0, totalItems: 4, zone: 'C' },
-]
-
-const allOrderIds = [
-  'ORD-1001', 'ORD-1002', 'ORD-1003', 'ORD-1004', 'ORD-1005',
-  'ORD-1006', 'ORD-1007', 'ORD-1008', 'ORD-1009', 'ORD-1010',
-  'ORD-1011', 'ORD-1012', 'ORD-1013', 'ORD-1014', 'ORD-1015',
-]
-
 const zones = ['A', 'B', 'C', 'D']
-
-const calendarSlots: CalendarSlot[] = [
-  { time: '06:00', label: 'Early', waves: [
-    { id: 'W-001', name: 'Morning Express', status: 'In Progress' },
-  ]},
-  { time: '08:00', label: 'Mid-Morning', waves: [
-    { id: 'W-002', name: 'Midday Bulk', status: 'Planned' },
-  ]},
-  { time: '10:00', label: 'Late Morning', waves: []},
-  { time: '12:00', label: 'Noon', waves: []},
-  { time: '14:00', label: 'Afternoon', waves: [
-    { id: 'W-003', name: 'Afternoon Flash', status: 'Planned' },
-  ]},
-  { time: '16:00', label: 'Late', waves: []},
-]
 
 const statusStyles: Record<string, string> = {
   Planned: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
@@ -198,12 +153,12 @@ export default function WavePlanningPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowCalendar(!showCalendar)}
-            className="btn-secondary text-sm flex items-center gap-1.5"
+            className="enterprise-btn enterprise-btn-secondary text-sm flex items-center gap-1.5"
           >
             <Calendar className="w-4 h-4" /> {showCalendar ? 'Hide Calendar' : 'Wave Calendar'}
           </button>
           <PermissionGate resource="warehouse" action="create">
-            <button onClick={() => setShowCreateModal(true)} className="btn-primary text-sm">
+            <button onClick={() => setShowCreateModal(true)} className="enterprise-btn enterprise-btn-primary text-sm">
               <Plus className="w-4 h-4" /> Create Wave
             </button>
           </PermissionGate>
@@ -397,7 +352,7 @@ export default function WavePlanningPage() {
                     <button
                       onClick={() => handleOptimize(wave.id)}
                       disabled={optimizing === wave.id}
-                      className="btn-secondary text-xs flex items-center gap-1.5"
+                      className="enterprise-btn enterprise-btn-secondary text-xs flex items-center gap-1.5"
                     >
                       {optimizing === wave.id ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -470,7 +425,7 @@ export default function WavePlanningPage() {
                       <button
                         onClick={() => handleOptimize(selectedWave.id)}
                         disabled={optimizing === selectedWave.id}
-                        className="btn-primary text-xs flex items-center gap-1.5"
+                        className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5"
                       >
                         {optimizing === selectedWave.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -571,9 +526,9 @@ export default function WavePlanningPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={() => handleCreateWave(createForm)} className="btn-primary text-sm">
+                <button onClick={() => handleCreateWave(createForm)} className="enterprise-btn enterprise-btn-primary text-sm">
                   <Plus className="w-4 h-4" /> Create Wave
                 </button>
               </PermissionGate>

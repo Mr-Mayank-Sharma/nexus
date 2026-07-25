@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -132,6 +133,13 @@ public class OrderController {
     public ResponseEntity<ApiResponse<List<AiActionHistoryDto>>> getAiHistory(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 aiOrderActionService.getActionHistory(id)));
+    }
+
+    @Operation(summary = "Get order statistics")
+    @GetMapping("/stats")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getOrderStats() {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.getOrderStats(TenantContext.getCurrentTenantId())));
     }
 
     @Operation(summary = "Execute an AI-powered action on an order")

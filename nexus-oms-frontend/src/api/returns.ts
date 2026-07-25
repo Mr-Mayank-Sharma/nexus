@@ -118,7 +118,7 @@ export async function getReturnKPIs(): Promise<ApiResponse<{
   rejected: number
 }>> {
   try {
-    const { data } = await client.get('/returns/analytics')
+    const { data } = await client.get('/analytics/returns')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get return KPIs'

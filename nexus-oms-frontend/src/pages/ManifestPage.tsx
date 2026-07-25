@@ -39,13 +39,6 @@ const STATUS_STYLES: Record<string, string> = {
   Submitted: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
 }
 
-function generateManifestId(idx: number) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let suffix = ''
-  for (let i = 0; i < 5; i++) suffix += chars[Math.floor(Math.random() * chars.length)]
-  return `MFT-${String(idx).padStart(4, '0')}-${suffix}`
-}
-
 function generateShipmentForManifest(orderIdx: number): ManifestShipment {
   const carriers = ['FedEx', 'UPS', 'USPS', 'DHL']
   const services = ['Ground', '2Day', 'Overnight', 'International']
@@ -61,30 +54,7 @@ function generateShipmentForManifest(orderIdx: number): ManifestShipment {
   }
 }
 
-const MOCK_MANIFESTS: Manifest[] = [
-  {
-    id: generateManifestId(1), carrier: 'FedEx', date: '2026-06-30',
-    shipments: Array.from({ length: 52 }, (_, i) => generateShipmentForManifest(i)),
-    status: 'Submitted', bolNumber: 'BOL-FX-88291',
-  },
-  {
-    id: generateManifestId(2), carrier: 'UPS', date: '2026-06-30',
-    shipments: Array.from({ length: 48 }, (_, i) => generateShipmentForManifest(i + 52)),
-    status: 'Closed', bolNumber: 'BOL-UPS-45123',
-  },
-  {
-    id: generateManifestId(3), carrier: 'DHL', date: '2026-06-29',
-    shipments: Array.from({ length: 47 }, (_, i) => generateShipmentForManifest(i + 100)),
-    status: 'Draft',
-  },
-]
 
-const TOTALS = {
-  totalManifests: 3,
-  totalShipments: 147,
-  totalCost: 1247.50,
-  avgCost: 8.49,
-}
 
 export default function ManifestPage() {
   const { addToast } = useToast()
@@ -122,6 +92,17 @@ export default function ManifestPage() {
       (m.bolNumber || '').toLowerCase().includes(q)
     )
   }, [manifests, searchManifest])
+
+  const totals = useMemo(() => {
+    const totalShipments = manifests.reduce((sum, m) => sum + (m.shipments?.length || 0), 0)
+    const totalCost = manifests.reduce((sum, m) => sum + (m.totalCost || 0), 0)
+    return {
+      totalManifests: manifests.length,
+      totalShipments,
+      totalCost,
+      avgCost: totalShipments > 0 ? totalCost / totalShipments : 0,
+    }
+  }, [manifests])
 
   function handleFetchShipments() {
     if (!dateFrom || !dateTo) {
@@ -225,7 +206,7 @@ export default function ManifestPage() {
           </div>
           <div>
             <p className="text-xs text-[var(--text-tertiary)]">Total Manifests</p>
-            <p className="text-xl font-bold text-[var(--text-primary)]">{TOTALS.totalManifests}</p>
+            <p className="text-xl font-bold text-[var(--text-primary)]">{totals.totalManifests}</p>
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
@@ -234,7 +215,7 @@ export default function ManifestPage() {
           </div>
           <div>
             <p className="text-xs text-[var(--text-tertiary)]">Total Shipments</p>
-            <p className="text-xl font-bold text-[var(--text-primary)]">{TOTALS.totalShipments.toLocaleString()}</p>
+            <p className="text-xl font-bold text-[var(--text-primary)]">{totals.totalShipments.toLocaleString()}</p>
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
@@ -243,7 +224,7 @@ export default function ManifestPage() {
           </div>
           <div>
             <p className="text-xs text-[var(--text-tertiary)]">Total Cost</p>
-            <p className="text-xl font-bold text-[var(--text-primary)]">${TOTALS.totalCost.toFixed(2)}</p>
+            <p className="text-xl font-bold text-[var(--text-primary)]">${totals.totalCost.toFixed(2)}</p>
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
@@ -252,7 +233,7 @@ export default function ManifestPage() {
           </div>
           <div>
             <p className="text-xs text-[var(--text-tertiary)]">Avg Cost / Shipment</p>
-            <p className="text-xl font-bold text-[var(--text-primary)]">${TOTALS.avgCost.toFixed(2)}</p>
+            <p className="text-xl font-bold text-[var(--text-primary)]">${totals.avgCost.toFixed(2)}</p>
           </div>
         </div>
       </div>
@@ -447,19 +428,19 @@ export default function ManifestPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4">
               <p className="text-xs text-[var(--text-tertiary)]">Total Manifests</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">{TOTALS.totalManifests}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{totals.totalManifests}</p>
             </div>
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4">
               <p className="text-xs text-[var(--text-tertiary)]">Total Shipments</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">{TOTALS.totalShipments.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{totals.totalShipments.toLocaleString()}</p>
             </div>
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4">
               <p className="text-xs text-[var(--text-tertiary)]">Total Cost</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">${TOTALS.totalCost.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">${totals.totalCost.toFixed(2)}</p>
             </div>
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4">
               <p className="text-xs text-[var(--text-tertiary)]">Avg Cost / Shipment</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">${TOTALS.avgCost.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">${totals.avgCost.toFixed(2)}</p>
             </div>
           </div>
         </div>

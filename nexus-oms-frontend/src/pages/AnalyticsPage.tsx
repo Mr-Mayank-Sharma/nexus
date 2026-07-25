@@ -134,7 +134,7 @@ export default function AnalyticsPage() {
           <AlertTriangle className="w-14 h-14 mx-auto text-[var(--nexus-error-500)] mb-4" />
           <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Failed to load analytics</h2>
           <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-md mx-auto">{error}. Check your connection and try again.</p>
-          <button onClick={fetchData} className="btn-primary inline-flex items-center gap-2">
+          <button onClick={fetchData} className="enterprise-btn enterprise-btn-primary inline-flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
             Retry
           </button>
@@ -204,11 +204,11 @@ export default function AnalyticsPage() {
               Last updated: {lastUpdated}
             </span>
           )}
-          <button className="btn-primary text-sm" onClick={() => fetchData()}>
+          <button className="enterprise-btn enterprise-btn-primary text-sm" onClick={() => fetchData()}>
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
           <PermissionGate resource="reports" action="create">
-            <button className="btn-primary text-sm" onClick={() => addToast({ type: 'info', title: 'Export feature coming soon' })}><Download className="w-4 h-4" /> Export Executive Summary</button>
+            <button className="enterprise-btn enterprise-btn-primary text-sm" onClick={() => addToast({ type: 'info', title: 'Export feature coming soon' })}><Download className="w-4 h-4" /> Export Executive Summary</button>
           </PermissionGate>
         </div>
       </div>

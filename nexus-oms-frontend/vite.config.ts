@@ -79,6 +79,9 @@ export default defineConfig({
       },
     }),
   ],
+  define: {
+    global: 'globalThis',
+  },
   base: process.env.VITE_BASE || '/',
   build: {
     rollupOptions: {
@@ -106,6 +109,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        ws: true,
       },
     },
   },

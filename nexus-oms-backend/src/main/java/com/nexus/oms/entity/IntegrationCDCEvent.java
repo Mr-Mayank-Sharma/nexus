@@ -5,6 +5,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_integration_cdc_events")
 @Data
@@ -32,12 +35,15 @@ public class IntegrationCDCEvent {
     @Column(name = "event_type", nullable = false)
     private String eventType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "before_snapshot", columnDefinition = "jsonb")
     private String beforeSnapshot;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "after_snapshot", columnDefinition = "jsonb")
     private String afterSnapshot;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "change_summary", columnDefinition = "jsonb")
     private String changeSummary;
 

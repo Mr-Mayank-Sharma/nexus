@@ -9,6 +9,7 @@ import { useToast } from '../hooks/useToast'
 import promotionsApi from '../api/promotions'
 import type { NxPromotion } from '../api/promotions'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 type PromoTab = 'list' | 'stats'
 
@@ -206,7 +207,8 @@ export default function PromotionsPage() {
   // ─── Render ────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="promotions" action="view">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -541,5 +543,6 @@ export default function PromotionsPage() {
         </div>
       )}
     </div>
+      </PermissionGate>
   )
 }

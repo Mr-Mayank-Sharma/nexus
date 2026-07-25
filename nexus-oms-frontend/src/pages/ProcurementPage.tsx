@@ -359,7 +359,7 @@ function SuppliersTab() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--text-secondary)]">{suppliers.length} suppliers</p>
         <PermissionGate resource="procurement" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> Add Supplier
           </button>
         </PermissionGate>
@@ -428,7 +428,7 @@ function SuppliersTab() {
                                 <PermissionGate resource="procurement" action="create">
                                   <button
                                     onClick={() => setShowContactForm(showContactForm === supplier.id ? null : supplier.id)}
-                                    className="btn-secondary text-xs"
+                                    className="enterprise-btn enterprise-btn-secondary text-xs"
                                   >
                                     <Plus className="w-3 h-3" /> Add Contact
                                   </button>
@@ -532,12 +532,12 @@ function SuppliersTab() {
                                     Set as primary contact
                                   </label>
                                   <div className="flex justify-end gap-2 pt-2">
-                                    <button onClick={() => setShowContactForm(null)} className="btn-secondary text-xs">Cancel</button>
+                                    <button onClick={() => setShowContactForm(null)} className="enterprise-btn enterprise-btn-secondary text-xs">Cancel</button>
                                     <PermissionGate resource="procurement" action="create">
                                       <button
                                         onClick={() => handleAddContact(supplier.id)}
                                         disabled={savingContact}
-                                        className="btn-primary text-xs"
+                                        className="enterprise-btn enterprise-btn-primary text-xs"
                                       >
                                         {savingContact && <Loader2 className="w-3 h-3 animate-spin" />}
                                         Save
@@ -554,7 +554,7 @@ function SuppliersTab() {
                                 <PermissionGate resource="procurement" action="create">
                                   <button
                                     onClick={() => setShowContractForm(showContractForm === supplier.id ? null : supplier.id)}
-                                    className="btn-secondary text-xs"
+                                    className="enterprise-btn enterprise-btn-secondary text-xs"
                                   >
                                     <Plus className="w-3 h-3" /> Add Contract
                                   </button>
@@ -676,12 +676,12 @@ function SuppliersTab() {
                                     Auto-renew
                                   </label>
                                   <div className="flex justify-end gap-2 pt-2">
-                                    <button onClick={() => setShowContractForm(null)} className="btn-secondary text-xs">Cancel</button>
+                                    <button onClick={() => setShowContractForm(null)} className="enterprise-btn enterprise-btn-secondary text-xs">Cancel</button>
                                     <PermissionGate resource="procurement" action="create">
                                       <button
                                         onClick={() => handleAddContract(supplier.id)}
                                         disabled={savingContract}
-                                        className="btn-primary text-xs"
+                                        className="enterprise-btn enterprise-btn-primary text-xs"
                                       >
                                         {savingContract && <Loader2 className="w-3 h-3 animate-spin" />}
                                         Save
@@ -841,9 +841,9 @@ function SuppliersTab() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="procurement" action="create">
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
                   Create Supplier
                 </button>
@@ -981,7 +981,7 @@ function RequestsTab() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--text-secondary)]">{requests.length} requests</p>
         <PermissionGate resource="procurement" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Request
           </button>
         </PermissionGate>
@@ -1047,7 +1047,7 @@ function RequestsTab() {
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleSubmitForApproval(req.id) }}
                                 disabled={submitting === req.id}
-                                className="btn-primary text-xs"
+                                className="enterprise-btn enterprise-btn-primary text-xs"
                               >
                                                                 {submitting === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                                                                 Submit
@@ -1059,7 +1059,7 @@ function RequestsTab() {
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleApprove(req.id) }}
                                 disabled={approving === req.id}
-                                className="btn-primary text-xs"
+                                className="enterprise-btn enterprise-btn-primary text-xs"
                               >
                                 {approving === req.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                                 Approve
@@ -1155,7 +1155,7 @@ function RequestsTab() {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-[var(--text-secondary)]">Items</h4>
                   <PermissionGate resource="procurement" action="create">
-                    <button onClick={addItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                    <button onClick={addItem} className="enterprise-btn enterprise-btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
                   </PermissionGate>
                 </div>
                 {items.length === 0 ? (
@@ -1228,9 +1228,9 @@ function RequestsTab() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="procurement" action="create">
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                   Create Request
                 </button>
@@ -1350,7 +1350,7 @@ function RfqsTab() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--text-secondary)]">{rfqs.length} RFQs</p>
         <PermissionGate resource="procurement" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New RFQ
           </button>
         </PermissionGate>
@@ -1408,7 +1408,7 @@ function RfqsTab() {
                             <button
                               onClick={(e) => { e.stopPropagation(); handleSubmit(rfq.id) }}
                               disabled={submitting === rfq.id}
-                              className="btn-primary text-xs"
+                              className="enterprise-btn enterprise-btn-primary text-xs"
                             >
                               {submitting === rfq.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                               Submit
@@ -1502,7 +1502,7 @@ function RfqsTab() {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-[var(--text-secondary)]">Items</h4>
                   <PermissionGate resource="procurement" action="create">
-                    <button onClick={addRfqItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                    <button onClick={addRfqItem} className="enterprise-btn enterprise-btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
                   </PermissionGate>
                 </div>
                 {rfqItems.length === 0 ? (
@@ -1571,9 +1571,9 @@ function RfqsTab() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="procurement" action="create">
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                   Create RFQ
                 </button>
@@ -1739,7 +1739,7 @@ function PurchaseOrdersTab() {
       <div className="flex items-center justify-between">
         <p className="text-sm text-[var(--text-secondary)]">{orders.length} purchase orders</p>
         <PermissionGate resource="procurement" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Purchase Order
           </button>
         </PermissionGate>
@@ -1796,7 +1796,7 @@ function PurchaseOrdersTab() {
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleApprove(po.id) }}
                                 disabled={approving === po.id}
-                                className="btn-primary text-xs"
+                                className="enterprise-btn enterprise-btn-primary text-xs"
                               >
                                 {approving === po.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                                 Approve
@@ -1807,7 +1807,7 @@ function PurchaseOrdersTab() {
                             <PermissionGate resource="procurement" action="edit">
                               <button
                                 onClick={(e) => { e.stopPropagation(); openReceive(po) }}
-                                                                className="btn-secondary text-xs"
+                                                                className="enterprise-btn enterprise-btn-secondary text-xs"
                                                               >
                                                                 <PackageCheck className="w-3 h-3" /> Receive Items
                               </button>
@@ -1904,7 +1904,7 @@ function PurchaseOrdersTab() {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-semibold text-[var(--text-secondary)]">Items</h4>
                   <PermissionGate resource="procurement" action="create">
-                    <button onClick={addPoItem} className="btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
+                    <button onClick={addPoItem} className="enterprise-btn enterprise-btn-secondary text-xs"><Plus className="w-3 h-3" /> Add Item</button>
                   </PermissionGate>
                 </div>
                 {poItems.length === 0 ? (
@@ -1993,9 +1993,9 @@ function PurchaseOrdersTab() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="procurement" action="create">
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ClipboardList className="w-4 h-4" />}
                   Create Purchase Order
                 </button>
@@ -2046,9 +2046,9 @@ function PurchaseOrdersTab() {
               </table>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowReceiveModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowReceiveModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="procurement" action="edit">
-                <button onClick={handleReceive} disabled={receiving} className="btn-primary text-sm">
+                <button onClick={handleReceive} disabled={receiving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {receiving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
                   Receive Items
                 </button>

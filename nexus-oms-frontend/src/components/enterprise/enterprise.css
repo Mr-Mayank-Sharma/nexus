@@ -46,7 +46,7 @@
   gap: var(--space-2);
 }
 
-/* ===== BUTTONS ===== */
+/* ===== BUTTONS — Unified Design System ===== */
 .enterprise-btn {
   display: inline-flex;
   align-items: center;
@@ -54,43 +54,104 @@
   gap: var(--space-2);
   height: 36px;
   padding: 0 var(--space-4);
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
+  letter-spacing: -0.01em;
   border-radius: var(--radius-lg);
   transition: all var(--duration-fast) var(--ease-default);
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
   line-height: 1;
-  border: 1px solid transparent;
+  border: 1.5px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 .enterprise-btn:active {
-  transform: scale(0.98);
+  transform: translateY(0.5px);
+  transition-duration: 80ms;
+}
+.enterprise-btn:focus-visible {
+  outline: 2px solid var(--nexus-primary-500);
+  outline-offset: 2px;
 }
 .enterprise-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+/* ── Loading spinner ── */
+.enterprise-btn.loading {
+  color: transparent !important;
   pointer-events: none;
 }
+.enterprise-btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: nexusBtnSpin 600ms linear infinite;
+}
+.enterprise-btn-primary.loading::after { border-color: rgba(255,255,255,0.3); border-right-color: transparent; }
+.enterprise-btn-secondary.loading::after,
+.enterprise-btn-outline.loading::after { border-color: var(--nexus-primary-300); border-right-color: transparent; }
+@keyframes nexusBtnSpin { to { transform: rotate(360deg); } }
+
+/* ── Primary ── */
 .enterprise-btn-primary {
   background: var(--nexus-primary-600);
   color: var(--text-on-brand);
   border-color: var(--nexus-primary-600);
-  box-shadow: var(--elevation-1);
+   box-shadow: 0 1px 2px rgba(79, 70, 229, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .enterprise-btn-primary:hover {
   background: var(--nexus-primary-700);
   border-color: var(--nexus-primary-700);
-  box-shadow: var(--elevation-2);
+   box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255,255,255,0.1);
 }
+.enterprise-btn-primary:active {
+  background: var(--nexus-primary-800);
+  border-color: var(--nexus-primary-800);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ── Secondary ── */
 .enterprise-btn-secondary {
   background: var(--surface-base);
   color: var(--text-primary);
   border-color: var(--border-default);
+  box-shadow: var(--elevation-1);
 }
 .enterprise-btn-secondary:hover {
   background: var(--interactive-hover);
   border-color: var(--border-strong);
+  box-shadow: var(--elevation-2);
 }
+.enterprise-btn-secondary:active {
+  background: var(--surface-muted);
+  box-shadow: none;
+}
+
+/* ── Outline (NEW) ── */
+.enterprise-btn-outline {
+  background: transparent;
+  color: var(--nexus-primary-600);
+  border-color: var(--nexus-primary-300);
+}
+.enterprise-btn-outline:hover {
+  background: var(--nexus-primary-50);
+  border-color: var(--nexus-primary-500);
+}
+.enterprise-btn-outline:active {
+  background: var(--nexus-primary-100);
+}
+
+/* ── Ghost ── */
 .enterprise-btn-ghost {
   background: transparent;
   color: var(--text-secondary);
@@ -100,48 +161,81 @@
   background: var(--interactive-hover);
   color: var(--text-primary);
 }
+.enterprise-btn-ghost:active {
+  background: var(--surface-muted);
+}
+
+/* ── Danger ── */
 .enterprise-btn-danger {
   background: var(--nexus-error-600);
   color: var(--text-on-brand);
   border-color: var(--nexus-error-600);
-  box-shadow: var(--elevation-1);
+  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .enterprise-btn-danger:hover {
   background: var(--nexus-error-700);
   border-color: var(--nexus-error-700);
-  box-shadow: var(--elevation-2);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.35), inset 0 1px 0 rgba(255,255,255,0.1);
 }
+.enterprise-btn-danger:active {
+  background: var(--nexus-error-800);
+  border-color: var(--nexus-error-800);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ── AI ── */
 .enterprise-btn-ai {
   background: var(--nexus-ai-600);
   color: var(--text-on-brand);
   border-color: var(--nexus-ai-600);
-  box-shadow: var(--elevation-1);
+  box-shadow: 0 1px 2px rgba(124, 58, 237, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .enterprise-btn-ai:hover {
   background: var(--nexus-ai-700);
   border-color: var(--nexus-ai-700);
-  box-shadow: var(--elevation-2);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35), inset 0 1px 0 rgba(255,255,255,0.1);
 }
+.enterprise-btn-ai:active {
+  background: var(--nexus-ai-800);
+  border-color: var(--nexus-ai-800);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ── Success ── */
 .enterprise-btn-success {
   background: var(--nexus-success-600);
   color: var(--text-on-brand);
   border-color: var(--nexus-success-600);
+  box-shadow: 0 1px 2px rgba(5, 150, 105, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .enterprise-btn-success:hover {
   background: var(--nexus-success-700);
   border-color: var(--nexus-success-700);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.35), inset 0 1px 0 rgba(255,255,255,0.1);
 }
+.enterprise-btn-success:active {
+  background: var(--nexus-success-800);
+  border-color: var(--nexus-success-800);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ── Sizes ── */
 .enterprise-btn-sm {
   height: 28px;
   padding: 0 var(--space-3);
-  font-size: var(--text-xs);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
   border-radius: var(--radius-md);
+  gap: var(--space-1);
 }
 .enterprise-btn-lg {
   height: 44px;
   padding: 0 var(--space-6);
   font-size: var(--text-base);
+  border-radius: var(--radius-xl);
 }
+
+/* ── Icon-only buttons ── */
 .enterprise-btn-icon {
   width: 36px;
   height: 36px;
@@ -154,6 +248,23 @@
 .enterprise-btn-icon.enterprise-btn-sm {
   width: 28px;
   height: 28px;
+}
+
+/* ── Button group ── */
+.enterprise-btn-group {
+  display: inline-flex;
+}
+.enterprise-btn-group .enterprise-btn {
+  border-radius: 0;
+}
+.enterprise-btn-group .enterprise-btn:first-child {
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+.enterprise-btn-group .enterprise-btn:last-child {
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+}
+.enterprise-btn-group .enterprise-btn + .enterprise-btn {
+  margin-left: -1.5px;
 }
 
 /* ===== BADGES ===== */
@@ -1635,4 +1746,63 @@
 .enterprise-chart-tooltip-value {
   font-size: var(--text-xs);
   color: var(--text-secondary);
+}
+
+/* ===== ENHANCED CARD VARIANTS ===== */
+.enterprise-card-accent {
+  border-left: 3px solid var(--nexus-primary-500);
+}
+.enterprise-card-accent-success {
+  border-left: 3px solid var(--nexus-success-500);
+}
+.enterprise-card-accent-warning {
+  border-left: 3px solid var(--nexus-warning-500);
+}
+.enterprise-card-accent-error {
+  border-left: 3px solid var(--nexus-error-500);
+}
+
+/* ===== ENHANCED INPUT GROUP SUFFIX ===== */
+.enterprise-input-group-suffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.enterprise-input-group-suffix .enterprise-input {
+  padding-right: var(--space-9);
+}
+.enterprise-input-group-suffix-icon {
+  position: absolute;
+  right: var(--space-3);
+  color: var(--text-tertiary);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== ENHANCED HOVER EFFECTS ===== */
+.hover-card-lift {
+  transition: transform var(--duration-fast) var(--ease-default),
+              box-shadow var(--duration-fast) var(--ease-default);
+}
+.hover-card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--elevation-3);
+}
+
+/* ===== STAT GRID ===== */
+.enterprise-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+/* ===== FOCUS RING IMPROVEMENT ===== */
+.enterprise-focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color var(--duration-fast) var(--ease-default);
+}
+.enterprise-focus-ring:focus-visible {
+  outline-color: var(--border-focus);
 }

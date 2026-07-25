@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { clsx } from 'clsx'
 import {
   Building2, MapPin, Boxes, Users, Wrench, Plus, Search, X, Check,
-  Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Trash2, Edit3, Thermometer,
+  Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Trash2, Edit3, Thermometer, Download, Upload,
 } from 'lucide-react'
 import * as warehouseApi from '../api/warehouse'
 import type {
@@ -473,7 +473,7 @@ export default function WarehousePage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-[var(--text-secondary)]">{zones.length} zones</p>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddZone} className="btn-primary text-xs">
+                <button onClick={openAddZone} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Zone
                 </button>
               </PermissionGate>
@@ -537,7 +537,7 @@ export default function WarehousePage() {
               <span className="text-xs text-[var(--nexus-primary-600)] font-medium">{occupiedBins} occupied</span>
               <div className="flex-1" />
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddBin} className="btn-primary text-xs">
+                <button onClick={openAddBin} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Bin
                 </button>
               </PermissionGate>
@@ -616,7 +616,7 @@ export default function WarehousePage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-[var(--text-secondary)]">{staff.length} staff</p>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddStaff} className="btn-primary text-xs">
+                <button onClick={openAddStaff} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Staff
                 </button>
               </PermissionGate>
@@ -665,7 +665,7 @@ export default function WarehousePage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-[var(--text-secondary)]">{equipment.length} items</p>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddEquipment} className="btn-primary text-xs">
+                <button onClick={openAddEquipment} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Equipment
                 </button>
               </PermissionGate>
@@ -743,11 +743,24 @@ export default function WarehousePage() {
             {warehouses.length} facilities &middot; {avgUtil}% avg. capacity
           </p>
         </div>
-        <PermissionGate resource="warehouse" action="create">
-          <button onClick={openAddWarehouse} className="btn-primary text-sm">
-            <Plus className="w-4 h-4" /> Add Warehouse
-          </button>
-        </PermissionGate>
+        <div className="flex items-center gap-3">
+          <button className="enterprise-btn enterprise-btn-secondary text-sm" onClick={() => {
+            const headers = ['Code', 'Name', 'Status', 'Capacity', 'Utilized', 'Manager', 'Email', 'Phone', 'Timezone']
+            const rows = warehouses.map(w => [w.code, w.name, w.isActive ? 'ACTIVE' : 'INACTIVE', String(w.capacity ?? 0), String(w.utilizedCapacity ?? 0), w.managerName || '', w.contactEmail || '', w.contactPhone || '', w.timezone || ''])
+            const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+            const blob = new Blob([csv], { type: 'text/csv' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a'); a.href = url; a.download = `warehouses-${new Date().toISOString().split('T')[0]}.csv`; a.click()
+            URL.revokeObjectURL(url)
+            addToast({ type: 'success', title: `Exported ${warehouses.length} warehouses` })
+          }}><Download className="w-4 h-4" /> Export</button>
+          <button className="enterprise-btn enterprise-btn-secondary text-sm" onClick={() => { window.location.href = '/import-export' }}><Upload className="w-4 h-4" /> Import</button>
+          <PermissionGate resource="warehouse" action="create">
+            <button onClick={openAddWarehouse} className="enterprise-btn enterprise-btn-primary text-sm">
+              <Plus className="w-4 h-4" /> Add Warehouse
+            </button>
+          </PermissionGate>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -925,9 +938,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowWhModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowWhModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveWarehouse} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSaveWarehouse} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
                   Create Warehouse
                 </button>
@@ -973,9 +986,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowZoneModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowZoneModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveZone} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSaveZone} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create Zone
                 </button>
@@ -1057,9 +1070,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowBinModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowBinModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveBin} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSaveBin} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create Bin
                 </button>
@@ -1109,9 +1122,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowStaffModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowStaffModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveStaff} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSaveStaff} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Add Staff
                 </button>
@@ -1160,9 +1173,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowEquipModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowEquipModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveEquipment} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSaveEquipment} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
                   Add Equipment
                 </button>

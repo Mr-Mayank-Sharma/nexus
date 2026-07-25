@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_integration_import_jobs")
 @Data
@@ -32,6 +35,7 @@ public class IntegrationImportJob {
     @Column(name = "source_type", nullable = false)
     private String sourceType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "source_config", columnDefinition = "jsonb")
     private String sourceConfig;
 
@@ -39,6 +43,7 @@ public class IntegrationImportJob {
     @Column(name = "target_type", nullable = false)
     private String targetType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "target_config", columnDefinition = "jsonb")
     private String targetConfig;
 

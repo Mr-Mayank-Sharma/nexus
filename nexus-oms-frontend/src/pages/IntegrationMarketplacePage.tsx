@@ -283,7 +283,7 @@ export default function IntegrationMarketplacePage() {
           <Search className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
           <p className="text-sm text-[var(--text-secondary)]">No integrations match your search criteria</p>
           <button onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); setCategoryFilter('ALL') }}
-            className="btn-secondary text-xs mt-3">Clear Filters</button>
+            className="enterprise-btn enterprise-btn-secondary text-xs mt-3">Clear Filters</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -314,28 +314,28 @@ export default function IntegrationMarketplacePage() {
                 <div className="flex items-center gap-2">
                   {integration.status === 'connected' ? (
                     <>
-                      <button onClick={() => handleOpen(integration.id)} className="btn-primary text-xs flex-1">
+                      <button onClick={() => handleOpen(integration.id)} className="enterprise-btn enterprise-btn-primary text-xs flex-1">
                         <ExternalLink className="w-3.5 h-3.5" /> Open
                       </button>
-                      <button className="btn-ghost text-xs text-[var(--nexus-success-600)]">
+                      <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-success-600)]">
                         <CheckCircle className="w-3.5 h-3.5" />
                       </button>
                     </>
                   ) : integration.status === 'available' ? (
                     <PermissionGate resource="integrations" action="create">
                       <button onClick={() => handleConnect(integration.id)} disabled={connecting === integration.id}
-                        className="btn-primary text-xs flex-1">
+                        className="enterprise-btn enterprise-btn-primary text-xs flex-1">
                         {connecting === integration.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                         {connecting === integration.id ? 'Connecting...' : 'Connect'}
                       </button>
                     </PermissionGate>
                   ) : (
-                    <button disabled className="btn-secondary text-xs flex-1 opacity-50 cursor-not-allowed">
+                    <button disabled className="enterprise-btn enterprise-btn-secondary text-xs flex-1 opacity-50 cursor-not-allowed">
                       <Clock className="w-3.5 h-3.5" /> Coming Soon
                     </button>
                   )}
                   {integration.docsUrl && (
-                    <a href={integration.docsUrl} target="_blank" rel="noopener noreferrer" className="btn-ghost text-xs">
+                    <a href={integration.docsUrl} target="_blank" rel="noopener noreferrer" className="enterprise-btn enterprise-btn-ghost text-xs">
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   )}

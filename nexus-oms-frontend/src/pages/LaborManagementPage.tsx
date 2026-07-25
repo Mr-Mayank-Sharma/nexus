@@ -87,32 +87,6 @@ interface ProductivityByTask {
   logCount: number
 }
 
-const mockEmployees: Employee[] = [
-  { id: 'E-001', name: 'Alex M.', role: 'Picker', status: 'Active', currentTask: 'W-001 — Morning Express', efficiency: 98, hoursToday: 6.5, avatar: 'AM' },
-  { id: 'E-002', name: 'Sarah K.', role: 'Picker', status: 'Active', currentTask: 'W-002 — Midday Bulk', efficiency: 104, hoursToday: 7.0, avatar: 'SK' },
-  { id: 'E-003', name: 'James R.', role: 'Packer', status: 'Active', currentTask: 'Order #ORD-1004', efficiency: 95, hoursToday: 6.5, avatar: 'JR' },
-  { id: 'E-004', name: 'Maria G.', role: 'Packer', status: 'Break', currentTask: 'Break (15 min)', efficiency: 88, hoursToday: 4.0, avatar: 'MG' },
-  { id: 'E-005', name: 'Tom W.', role: 'Loader', status: 'Active', currentTask: 'Dock D1 — Loading', efficiency: 100, hoursToday: 6.0, avatar: 'TW' },
-  { id: 'E-006', name: 'Lisa C.', role: 'Picker', status: 'Off', currentTask: '—', efficiency: 50, hoursToday: 0, avatar: 'LC' },
-  { id: 'E-007', name: 'David R.', role: 'Picker', status: 'Active', currentTask: 'W-001 — Morning Express', efficiency: 92, hoursToday: 5.5, avatar: 'DR' },
-  { id: 'E-008', name: 'Emily W.', role: 'Loader', status: 'Active', currentTask: 'Dock D2 — Staging', efficiency: 87, hoursToday: 7.5, avatar: 'EW' },
-]
-
-const mockShifts: Shift[] = [
-  { id: 'S-001', employee: 'Alex M.', role: 'Picker', shiftStart: '06:00', shiftEnd: '14:00', breakTimes: '09:00-09:15, 12:00-12:30', overtime: '0.5h' },
-  { id: 'S-002', employee: 'Sarah K.', role: 'Picker', shiftStart: '06:00', shiftEnd: '14:00', breakTimes: '09:30-09:45, 12:00-12:30', overtime: '1.0h' },
-  { id: 'S-003', employee: 'James R.', role: 'Packer', shiftStart: '07:00', shiftEnd: '15:00', breakTimes: '10:00-10:15, 13:00-13:30', overtime: '0h' },
-  { id: 'S-004', employee: 'Maria G.', role: 'Packer', shiftStart: '07:00', shiftEnd: '15:00', breakTimes: '10:30-10:45, 13:00-13:15', overtime: '0h' },
-  { id: 'S-005', employee: 'Tom W.', role: 'Loader', shiftStart: '06:00', shiftEnd: '14:00', breakTimes: '09:00-09:15, 12:00-12:30', overtime: '1.5h' },
-  { id: 'S-006', employee: 'Lisa C.', role: 'Picker', shiftStart: '—', shiftEnd: '—', breakTimes: '—', overtime: '0h' },
-]
-
-const mockWaves: WaveAssign[] = [
-  { waveId: 'W-001', waveName: 'Morning Express' },
-  { waveId: 'W-002', waveName: 'Midday Bulk' },
-  { waveId: 'W-003', waveName: 'Afternoon Flash' },
-]
-
 const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const barData = [92, 88, 95, 91, 97, 85, 78]
 
@@ -134,56 +108,6 @@ const taskTypeColors: Record<string, string> = {
   LOADING: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)]',
   RECEIVING: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]',
   PUTAWAY: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
-}
-
-function generateMockWorkloadRules(): WorkloadRule[] {
-  return [
-    { id: 'wr-1', warehouseId: 'wh-main', taskType: 'PICKING', maxWorkloadWeight: 100, priorityWeight: 1, skillRequired: 'picker-cert', isActive: true },
-    { id: 'wr-2', warehouseId: 'wh-main', taskType: 'PACKING', maxWorkloadWeight: 80, priorityWeight: 2, skillRequired: 'packer-cert', isActive: true },
-    { id: 'wr-3', warehouseId: 'wh-main', taskType: 'LOADING', maxWorkloadWeight: 60, priorityWeight: 1, skillRequired: 'loader-cert', isActive: true },
-    { id: 'wr-4', warehouseId: 'wh-main', taskType: 'RECEIVING', maxWorkloadWeight: 50, priorityWeight: 3, isActive: true },
-  ]
-}
-
-function generateMockWorkloadBalance(): WorkloadBalance[] {
-  return [
-    { staffId: 'E-001', staffName: 'Alex M.', currentWeight: 85, maxWeight: 100, taskCount: 4, tasks: ['Pick W-001', 'Pick W-002', 'Putaway A-12', 'Stage D1'] },
-    { staffId: 'E-002', staffName: 'Sarah K.', currentWeight: 92, maxWeight: 100, taskCount: 5, tasks: ['Pick W-002', 'Pick W-003', 'Putaway B-05', 'Stage D2', 'QC Check'] },
-    { staffId: 'E-003', staffName: 'James R.', currentWeight: 65, maxWeight: 80, taskCount: 3, tasks: ['Pack ORD-1004', 'Pack ORD-1005', 'Label D3'] },
-    { staffId: 'E-005', staffName: 'Tom W.', currentWeight: 55, maxWeight: 60, taskCount: 2, tasks: ['Load D1', 'Load D2'] },
-    { staffId: 'E-007', staffName: 'David R.', currentWeight: 78, maxWeight: 100, taskCount: 4, tasks: ['Pick W-001', 'Pick W-004', 'Putaway C-08', 'Replenish A3'] },
-    { staffId: 'E-008', staffName: 'Emily W.', currentWeight: 48, maxWeight: 60, taskCount: 2, tasks: ['Stage D2', 'Load D4'] },
-  ]
-}
-
-function generateMockPerformanceVsStandard(): PerformanceVsStandard[] {
-  return [
-    { staffId: 'E-001', staffName: 'Alex M.', taskType: 'PICKING', actualRate: 142, standardRate: 120, variancePercent: 18.3, date: new Date().toISOString().slice(0, 10) },
-    { staffId: 'E-002', staffName: 'Sarah K.', taskType: 'PICKING', actualRate: 156, standardRate: 120, variancePercent: 30.0, date: new Date().toISOString().slice(0, 10) },
-    { staffId: 'E-003', staffName: 'James R.', taskType: 'PACKING', actualRate: 88, standardRate: 90, variancePercent: -2.2, date: new Date().toISOString().slice(0, 10) },
-    { staffId: 'E-005', staffName: 'Tom W.', taskType: 'LOADING', actualRate: 42, standardRate: 40, variancePercent: 5.0, date: new Date().toISOString().slice(0, 10) },
-    { staffId: 'E-007', staffName: 'David R.', taskType: 'PICKING', actualRate: 128, standardRate: 120, variancePercent: 6.7, date: new Date().toISOString().slice(0, 10) },
-  ]
-}
-
-function generateMockProductivityLogs(): ProductivityLog[] {
-  const now = new Date().toISOString()
-  return [
-    { id: 'pl-1', staffId: 'E-001', staffName: 'Alex M.', taskType: 'PICKING', itemsCompleted: 284, timeSpentMinutes: 360, itemsPerHour: 47.3, qualityScore: 98, vsStandardPct: 18.3, loggedAt: now },
-    { id: 'pl-2', staffId: 'E-002', staffName: 'Sarah K.', taskType: 'PICKING', itemsCompleted: 312, timeSpentMinutes: 360, itemsPerHour: 52.0, qualityScore: 96, vsStandardPct: 30.0, loggedAt: now },
-    { id: 'pl-3', staffId: 'E-003', staffName: 'James R.', taskType: 'PACKING', itemsCompleted: 176, timeSpentMinutes: 360, itemsPerHour: 29.3, qualityScore: 94, vsStandardPct: -2.2, loggedAt: now },
-    { id: 'pl-4', staffId: 'E-005', staffName: 'Tom W.', taskType: 'LOADING', itemsCompleted: 84, timeSpentMinutes: 360, itemsPerHour: 14.0, qualityScore: 100, vsStandardPct: 5.0, loggedAt: now },
-    { id: 'pl-5', staffId: 'E-007', staffName: 'David R.', taskType: 'PICKING', itemsCompleted: 256, timeSpentMinutes: 360, itemsPerHour: 42.7, qualityScore: 92, vsStandardPct: 6.7, loggedAt: now },
-    { id: 'pl-6', staffId: 'E-008', staffName: 'Emily W.', taskType: 'LOADING', itemsCompleted: 56, timeSpentMinutes: 360, itemsPerHour: 9.3, qualityScore: 87, vsStandardPct: -12.5, loggedAt: now },
-  ]
-}
-
-function generateMockProductivityByTask(): ProductivityByTask[] {
-  return [
-    { taskType: 'PICKING', totalItems: 852, totalTimeMinutes: 1080, avgItemsPerHour: 47.3, avgQualityScore: 95.3, logCount: 3 },
-    { taskType: 'PACKING', totalItems: 176, totalTimeMinutes: 360, avgItemsPerHour: 29.3, avgQualityScore: 94.0, logCount: 1 },
-    { taskType: 'LOADING', totalItems: 140, totalTimeMinutes: 720, avgItemsPerHour: 11.7, avgQualityScore: 93.5, logCount: 2 },
-  ]
 }
 
 type Tab = 'overview' | 'staff' | 'shifts' | 'performance' | 'workload'
@@ -219,9 +143,6 @@ export default function LaborManagementPage() {
     }).catch(() => {
       setLoading(false)
     })
-    setEmployees(mockEmployees)
-    setShifts(mockShifts)
-    setWaves(mockWaves)
   }, [])
 
   const loadWorkloadData = useCallback(async () => {
@@ -235,17 +156,17 @@ export default function LaborManagementPage() {
         laborApi.getProductivityByTaskType('wh-main', 7),
       ])
 
-      setWorkloadRules(rulesRes.status === 'fulfilled' && rulesRes.value.data?.length > 0 ? rulesRes.value.data : generateMockWorkloadRules())
-      setWorkloadBalance(balanceRes.status === 'fulfilled' && balanceRes.value.data?.length > 0 ? balanceRes.value.data : generateMockWorkloadBalance())
-      setPerformanceVsStandard(perfRes.status === 'fulfilled' && perfRes.value.data?.length > 0 ? perfRes.value.data : generateMockPerformanceVsStandard())
-      setProductivityLogs(prodRes.status === 'fulfilled' && prodRes.value.data?.length > 0 ? prodRes.value.data : generateMockProductivityLogs())
-      setProductivityByTask(prodByTaskRes.status === 'fulfilled' && prodByTaskRes.value.data?.length > 0 ? prodByTaskRes.value.data : generateMockProductivityByTask())
+      setWorkloadRules(rulesRes.status === 'fulfilled' && rulesRes.value.data?.length > 0 ? rulesRes.value.data : [])
+      setWorkloadBalance(balanceRes.status === 'fulfilled' && balanceRes.value.data?.length > 0 ? balanceRes.value.data : [])
+      setPerformanceVsStandard(perfRes.status === 'fulfilled' && perfRes.value.data?.length > 0 ? perfRes.value.data : [])
+      setProductivityLogs(prodRes.status === 'fulfilled' && prodRes.value.data?.length > 0 ? prodRes.value.data : [])
+      setProductivityByTask(prodByTaskRes.status === 'fulfilled' && prodByTaskRes.value.data?.length > 0 ? prodByTaskRes.value.data : [])
     } catch {
-      setWorkloadRules(generateMockWorkloadRules())
-      setWorkloadBalance(generateMockWorkloadBalance())
-      setPerformanceVsStandard(generateMockPerformanceVsStandard())
-      setProductivityLogs(generateMockProductivityLogs())
-      setProductivityByTask(generateMockProductivityByTask())
+      setWorkloadRules([])
+      setWorkloadBalance([])
+      setPerformanceVsStandard([])
+      setProductivityLogs([])
+      setProductivityByTask([])
     } finally {
       setWorkloadLoading(false)
     }
@@ -306,6 +227,7 @@ export default function LaborManagementPage() {
     try {
       await laborApi.createWorkloadRule({
         warehouseId: 'wh-main',
+        ruleName: ruleForm.taskType + ' Rule',
         taskType: ruleForm.taskType,
         maxWorkloadWeight: Number(ruleForm.maxWorkloadWeight),
         priorityWeight: Number(ruleForm.priorityWeight),
@@ -321,7 +243,7 @@ export default function LaborManagementPage() {
     }
   }
 
-  const displayShifts = shifts.length > 0 ? shifts : mockShifts
+  const displayShifts = shifts
   const activeWorkers = employees.filter((e) => e.status === 'Active').length
   const laborUtil = Math.round((activeWorkers / employees.length) * 100)
 
@@ -433,7 +355,7 @@ export default function LaborManagementPage() {
               <Users className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Staff Overview
             </h3>
             <PermissionGate resource="warehouse" action="edit">
-              <button onClick={() => setShowAssignModal(true)} className="btn-primary text-xs flex items-center gap-1.5">
+              <button onClick={() => setShowAssignModal(true)} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Assign to Wave
               </button>
             </PermissionGate>
@@ -459,21 +381,21 @@ export default function LaborManagementPage() {
                 <div className="flex items-center gap-2">
                   {emp.status === 'Active' && (
                     <PermissionGate resource="warehouse" action="edit">
-                      <button onClick={() => handleStartBreak(emp.id)} className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
+                      <button onClick={() => handleStartBreak(emp.id)} className="enterprise-btn enterprise-btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
                         <Pause className="w-3 h-3" /> Break
                       </button>
                     </PermissionGate>
                   )}
                   {emp.status === 'Break' && (
                     <PermissionGate resource="warehouse" action="edit">
-                      <button onClick={() => handleEndBreak(emp.id)} className="btn-primary text-[10px] px-2 py-1 flex items-center gap-1">
+                      <button onClick={() => handleEndBreak(emp.id)} className="enterprise-btn enterprise-btn-primary text-[10px] px-2 py-1 flex items-center gap-1">
                         <Play className="w-3 h-3" /> Resume
                       </button>
                     </PermissionGate>
                   )}
                   {emp.status !== 'Off' && (
                     <PermissionGate resource="warehouse" action="edit">
-                      <button onClick={() => handleEndShift(emp.id)} className="btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
+                      <button onClick={() => handleEndShift(emp.id)} className="enterprise-btn enterprise-btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
                         <LogOut className="w-3 h-3" /> End Shift
                       </button>
                     </PermissionGate>
@@ -573,10 +495,10 @@ export default function LaborManagementPage() {
                     <Settings className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Workload Rules
                   </h3>
                   <div className="flex items-center gap-2">
-                    <button onClick={loadWorkloadData} className="btn-secondary text-xs flex items-center gap-1.5">
+                    <button onClick={loadWorkloadData} className="enterprise-btn enterprise-btn-secondary text-xs flex items-center gap-1.5">
                       <RefreshCw className="w-3.5 h-3.5" /> Refresh
                     </button>
-                    <button onClick={() => setShowRuleModal(true)} className="btn-primary text-xs flex items-center gap-1.5">
+                    <button onClick={() => setShowRuleModal(true)} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
                       <Plus className="w-3.5 h-3.5" /> Add Rule
                     </button>
                   </div>
@@ -620,7 +542,7 @@ export default function LaborManagementPage() {
                   <h3 className="text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2">
                     <Activity className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Current Workload Balance
                   </h3>
-                  <button onClick={handleRebalance} disabled={rebalancing} className="btn-primary text-xs flex items-center gap-1.5">
+                  <button onClick={handleRebalance} disabled={rebalancing} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
                     {rebalancing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />} Rebalance
                   </button>
                 </div>
@@ -797,9 +719,9 @@ export default function LaborManagementPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowAssignModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowAssignModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="edit">
-                <button onClick={handleAssign} className="btn-primary text-sm">
+                <button onClick={handleAssign} className="enterprise-btn enterprise-btn-primary text-sm">
                   <UserCheck className="w-4 h-4" /> Assign
                 </button>
               </PermissionGate>
@@ -844,8 +766,8 @@ export default function LaborManagementPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowRuleModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreateRule} className="btn-primary text-sm">
+              <button onClick={() => setShowRuleModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button onClick={handleCreateRule} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Create Rule
               </button>
             </div>

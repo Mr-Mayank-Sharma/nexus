@@ -30,16 +30,7 @@ const MARKETPLACES = [
   { value: 'DE', label: 'Germany', region: 'Europe' },
 ]
 
-const MOCK_ORDERS: AmazonOrder[] = [
-  { id: '1', orderId: '303-1234567-8901234', status: 'Shipped', items: 3, amount: '$189.99', syncStatus: 'SYNCED', placedAt: '2026-06-29 14:32', marketplace: 'US' },
-  { id: '2', orderId: '303-2345678-9012345', status: 'Unshipped', items: 1, amount: '$45.00', syncStatus: 'PENDING', placedAt: '2026-06-29 16:10', marketplace: 'US' },
-  { id: '3', orderId: '303-3456789-0123456', status: 'Shipped', items: 2, amount: '$112.50', syncStatus: 'SYNCED', placedAt: '2026-06-28 09:45', marketplace: 'CA' },
-  { id: '4', orderId: '303-4567890-1234567', status: 'Pending', items: 5, amount: '$349.20', syncStatus: 'PENDING', placedAt: '2026-06-28 11:22', marketplace: 'UK' },
-  { id: '5', orderId: '303-5678901-2345678', status: 'Cancelled', items: 1, amount: '$29.99', syncStatus: 'ERROR', placedAt: '2026-06-27 08:15', marketplace: 'DE' },
-  { id: '6', orderId: '303-6789012-3456789', status: 'Shipped', items: 4, amount: '$567.80', syncStatus: 'SYNCED', placedAt: '2026-06-27 14:50', marketplace: 'US' },
-  { id: '7', orderId: '303-7890123-4567890', status: 'Unshipped', items: 2, amount: '$78.45', syncStatus: 'PENDING', placedAt: '2026-06-26 10:30', marketplace: 'CA' },
-  { id: '8', orderId: '303-8901234-5678901', status: 'Pending', items: 7, amount: '$892.00', syncStatus: 'SYNCED', placedAt: '2026-06-26 12:05', marketplace: 'DE' },
-]
+
 
 interface ConnectorOrder {
   orderId: string
@@ -156,7 +147,7 @@ export default function AmazonIntegrationPage() {
     }
   }
 
-  const displayOrders = fetchedOrders.length > 0 ? fetchedOrders : MOCK_ORDERS
+  const displayOrders = fetchedOrders
   const filteredOrders = displayOrders.filter(o => {
     const matchesSearch = !searchTerm || o.orderId.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesMarketplace = filterMarketplace === 'ALL' || o.marketplace === filterMarketplace
@@ -203,13 +194,13 @@ export default function AmazonIntegrationPage() {
             </div>
             {connected ? (
               <PermissionGate resource="integrations" action="delete">
-                <button onClick={handleDisconnect} className="btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
+                <button onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
                 </button>
               </PermissionGate>
             ) : (
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
+                <button onClick={handleConnect} disabled={connecting} className="enterprise-btn enterprise-btn-primary text-sm">
                   {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
                   {connecting ? 'Connecting...' : 'Connect'}
                 </button>
@@ -276,13 +267,13 @@ export default function AmazonIntegrationPage() {
         </div>
         <div className="card-footer flex justify-between">
           <PermissionGate resource="integrations" action="create">
-            <button onClick={handleForceSync} disabled={syncing || !connected} className="btn-secondary text-sm">
+            <button onClick={handleForceSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
               {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               {syncing ? 'Syncing...' : 'Force Sync'}
             </button>
           </PermissionGate>
           <PermissionGate resource="integrations" action="edit">
-            <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+            <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Save Settings
             </button>
@@ -374,7 +365,7 @@ export default function AmazonIntegrationPage() {
         </div>
         <div className="px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-tertiary)]">
           <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
-          <button className="btn-ghost text-xs"><Download className="w-3.5 h-3.5" /> Export</button>
+          <button className="enterprise-btn enterprise-btn-ghost text-xs"><Download className="w-3.5 h-3.5" /> Export</button>
         </div>
       </div>
     </div>

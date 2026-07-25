@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_integration_export_jobs")
 @Data
@@ -32,9 +35,11 @@ public class IntegrationExportJob {
     @Column(name = "export_type", nullable = false)
     private String exportType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "export_config", columnDefinition = "jsonb")
     private String exportConfig;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "query_criteria", columnDefinition = "jsonb")
     private String queryCriteria;
 

@@ -1,0 +1,69 @@
+# ============================================================
+# Enterprise AI Architecture — Spring AI Profile
+# Activate with: SPRING_PROFILES_ACTIVE=ai
+# ============================================================
+
+spring:
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+      chat:
+        options:
+          model: ${OPENAI_MODEL:gpt-4o}
+          temperature: 0.3
+          max-tokens: 4096
+      embedding:
+        options:
+          model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+          dimensions: 1536
+
+nexus:
+  ai:
+    enabled: ${NEXUS_AI_ENABLED:false}
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model: ${OPENAI_MODEL:gpt-4o}
+      embedding-model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+      max-tokens: ${NEXUS_AI_MAX_TOKENS:4096}
+      temperature: ${NEXUS_AI_TEMPERATURE:0.3}
+      timeout-ms: ${NEXUS_AI_TIMEOUT_MS:60000}
+    cache:
+      enabled: ${NEXUS_AI_CACHE_ENABLED:true}
+      ttl-minutes: ${NEXUS_AI_CACHE_TTL_MINUTES:30}
+      max-entries: ${NEXUS_AI_CACHE_MAX_ENTRIES:10000}
+    cost:
+      daily-budget-usd: ${NEXUS_AI_DAILY_BUDGET_USD:50.00}
+      alert-threshold-pct: ${NEXUS_AI_ALERT_THRESHOLD_PCT:80}
+    circuit-breaker:
+      failure-rate-threshold: ${NEXUS_AI_CB_FAILURE_THRESHOLD:50}
+      wait-duration-seconds: ${NEXUS_AI_CB_WAIT_SECONDS:30}
+      permitted-calls-in-half-open: ${NEXUS_AI_CB_HALF_OPEN_CALLS:5}
+    rag:
+      enabled: ${NEXUS_AI_RAG_ENABLED:false}
+      chunk-size: ${NEXUS_AI_RAG_CHUNK_SIZE:512}
+      chunk-overlap: ${NEXUS_AI_RAG_CHUNK_OVERLAP:50}
+      top-k: ${NEXUS_AI_RAG_TOP_K:5}
+      similarity-threshold: ${NEXUS_AI_RAG_SIMILARITY_THRESHOLD:0.75}
+
+# Resilience4j circuit breaker for AI services
+resilience4j:
+  circuitbreaker:
+    instances:
+      ai-service:
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: ${NEXUS_AI_CB_HALF_OPEN_CALLS:5}
+        failureRateThreshold: ${NEXUS_AI_CB_FAILURE_THRESHOLD:50}
+        waitDurationInOpenState: ${NEXUS_AI_CB_WAIT_SECONDS:30}s
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 100
+      ai-embedding:
+        slidingWindowSize: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        failureRateThreshold: 60
+        waitDurationInOpenState: 60s
+  timelimiter:
+    instances:
+      ai-service:
+        timeoutDuration: ${NEXUS_AI_TIMEOUT_MS:60000}ms
+        cancelRunningFuture: true

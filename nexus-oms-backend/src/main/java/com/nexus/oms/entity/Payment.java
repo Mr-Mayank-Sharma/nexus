@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_payments")
 @Data
@@ -51,6 +54,7 @@ public class Payment {
     @Column(name = "transaction_id")
     private String transactionId;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "gateway_response", columnDefinition = "jsonb")
     private String gatewayResponse;
 

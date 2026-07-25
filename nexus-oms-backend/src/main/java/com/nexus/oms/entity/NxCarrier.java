@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_carriers")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -49,6 +52,7 @@ public class NxCarrier {
     @Column(name = "damage_rate")
     private BigDecimal damageRate;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String metadata;
 

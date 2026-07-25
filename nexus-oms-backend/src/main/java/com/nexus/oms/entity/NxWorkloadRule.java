@@ -28,8 +28,9 @@ public class NxWorkloadRule {
     @Column(name = "warehouse_id", nullable = false)
     private UUID warehouseId;
 
+    @Builder.Default
     @Column(name = "rule_name", nullable = false, length = 100)
-    private String ruleName;
+    private String ruleName = "Manual Rule";
 
     @Column(name = "task_type", nullable = false, length = 50)
     private String taskType;
@@ -55,6 +56,11 @@ public class NxWorkloadRule {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     @PreUpdate
     protected void onUpdate() {

@@ -13,6 +13,7 @@ import { useToast } from '../hooks/useToast'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface AutomationSystem {
@@ -136,57 +137,7 @@ const COMMAND_TYPES = ['PICK', 'PUTAWAY', 'SORT', 'CONVEY', 'STOP', 'RESET', 'HO
 const LOG_LEVELS = ['INFO', 'WARN', 'ERROR', 'DEBUG']
 const TIME_RANGES = ['1h', '6h', '24h', '7d', '30d']
 
-// ─── Mock Data ───────────────────────────────────────────────────────────────
 
-const MOCK_SYSTEMS: AutomationSystem[] = [
-  { id: 'SYS-001', name: 'ASRS Alpha', type: 'ASRS', vendor: 'AutoStore', model: 'R5-400', status: 'ONLINE', lastHealthCheck: '2026-07-21T14:32:00Z', connectionProtocol: 'OPC-UA', isActive: true, warehouseId: 'WH-001' },
-  { id: 'SYS-002', name: 'Main Conveyor', type: 'CONVEYOR', vendor: 'Dematic', model: 'FlexConv 3000', status: 'ONLINE', lastHealthCheck: '2026-07-21T14:31:00Z', connectionProtocol: 'Modbus TCP', isActive: true, warehouseId: 'WH-001' },
-  { id: 'SYS-003', name: 'Sorter Unit A', type: 'SORTATION', vendor: 'Honeywell', model: 'Intellisort HBS', status: 'DEGRADED', lastHealthCheck: '2026-07-21T14:28:00Z', connectionProtocol: 'EtherNet/IP', isActive: true, warehouseId: 'WH-001' },
-  { id: 'SYS-004', name: 'Pick Robot 1', type: 'ROBOT', vendor: 'Locus Robotics', model: 'LocusBot O50', status: 'ONLINE', lastHealthCheck: '2026-07-21T14:30:00Z', connectionProtocol: 'REST API', isActive: true, warehouseId: 'WH-001' },
-  { id: 'SYS-005', name: 'AMR Fleet Hub', type: 'AMR', vendor: 'MiR', model: 'MiR600', status: 'ONLINE', lastHealthCheck: '2026-07-21T14:29:00Z', connectionProtocol: 'REST API', isActive: true, warehouseId: 'WH-001' },
-  { id: 'SYS-006', name: 'Drone Scout', type: 'DRONE', vendor: 'DJI', model: 'Matrice 30T', status: 'OFFLINE', lastHealthCheck: '2026-07-21T10:15:00Z', connectionProtocol: 'MQTT', isActive: false, warehouseId: 'WH-001' },
-  { id: 'SYS-007', name: 'Voice Pick Zone B', type: 'VOICE_PICK', vendor: 'Voxware', model: 'Voxcloud 4.0', status: 'MAINTENANCE', lastHealthCheck: '2026-07-21T12:00:00Z', connectionProtocol: 'WebSocket', isActive: true, warehouseId: 'WH-001' },
-  { id: 'SYS-008', name: 'Scanner Array', type: 'SCAN_SYSTEM', vendor: 'Zebra', model: 'FX9600', status: 'ONLINE', lastHealthCheck: '2026-07-21T14:33:00Z', connectionProtocol: 'TCP/IP', isActive: true, warehouseId: 'WH-001' },
-]
-
-const MOCK_COMMANDS: Command[] = [
-  { id: 'CMD-001', systemId: 'SYS-001', systemName: 'ASRS Alpha', commandType: 'PICK', status: 'COMPLETED', priority: 2, sentAt: '2026-07-21T14:00:00Z', completedAt: '2026-07-21T14:00:03Z', executionTimeMs: 3200 },
-  { id: 'CMD-002', systemId: 'SYS-002', systemName: 'Main Conveyor', commandType: 'CONVEY', status: 'COMPLETED', priority: 1, sentAt: '2026-07-21T13:55:00Z', completedAt: '2026-07-21T13:55:08Z', executionTimeMs: 8100 },
-  { id: 'CMD-003', systemId: 'SYS-003', systemName: 'Sorter Unit A', commandType: 'SORT', status: 'FAILED', priority: 3, sentAt: '2026-07-21T13:40:00Z', completedAt: '2026-07-21T13:40:12Z', executionTimeMs: 12000 },
-  { id: 'CMD-004', systemId: 'SYS-004', systemName: 'Pick Robot 1', commandType: 'PICK', status: 'EXECUTING', priority: 2, sentAt: '2026-07-21T14:30:00Z' },
-  { id: 'CMD-005', systemId: 'SYS-001', systemName: 'ASRS Alpha', commandType: 'PUTAWAY', status: 'SENT', priority: 4, sentAt: '2026-07-21T14:32:00Z' },
-  { id: 'CMD-006', systemId: 'SYS-005', systemName: 'AMR Fleet Hub', commandType: 'HOME', status: 'PENDING', priority: 1, sentAt: '2026-07-21T14:33:00Z' },
-  { id: 'CMD-007', systemId: 'SYS-008', systemName: 'Scanner Array', commandType: 'STATUS', status: 'COMPLETED', priority: 5, sentAt: '2026-07-21T13:20:00Z', completedAt: '2026-07-21T13:20:01Z', executionTimeMs: 850 },
-  { id: 'CMD-008', systemId: 'SYS-001', systemName: 'ASRS Alpha', commandType: 'CALIBRATE', status: 'ACKNOWLEDGED', priority: 3, sentAt: '2026-07-21T14:25:00Z' },
-  { id: 'CMD-009', systemId: 'SYS-002', systemName: 'Main Conveyor', commandType: 'STOP', status: 'TIMEOUT', priority: 5, sentAt: '2026-07-21T12:10:00Z', completedAt: '2026-07-21T12:10:30Z', executionTimeMs: 30000 },
-]
-
-const MOCK_LOGS: LogEntry[] = [
-  { id: 'LOG-001', systemId: 'SYS-001', systemName: 'ASRS Alpha', level: 'INFO', event: 'HEALTH_CHECK', message: 'System health check passed. All subsystems nominal.', timestamp: '2026-07-21T14:32:00Z' },
-  { id: 'LOG-002', systemId: 'SYS-003', systemName: 'Sorter Unit A', level: 'WARN', event: 'THROUGHPUT_DROP', message: 'Sort throughput dropped below 80% threshold. Current: 72%.', timestamp: '2026-07-21T14:28:15Z' },
-  { id: 'LOG-003', systemId: 'SYS-003', systemName: 'Sorter Unit A', level: 'ERROR', event: 'CHUTE_JAM', message: 'Chute C-07 jam detected. Manual intervention required.', timestamp: '2026-07-21T14:25:00Z' },
-  { id: 'LOG-004', systemId: 'SYS-002', systemName: 'Main Conveyor', level: 'INFO', event: 'COMMAND_ACK', message: 'Conveyor belt speed adjusted to 2.5 m/s per command CMD-002.', timestamp: '2026-07-21T13:55:05Z' },
-  { id: 'LOG-005', systemId: 'SYS-004', systemName: 'Pick Robot 1', level: 'INFO', event: 'NAVIGATION', message: 'Robot navigated to zone A3, bay 12 successfully.', timestamp: '2026-07-21T14:30:10Z' },
-  { id: 'LOG-006', systemId: 'SYS-006', systemName: 'Drone Scout', level: 'ERROR', event: 'CONNECTION_LOST', message: 'MQTT connection lost. Last heartbeat 4h 17m ago.', timestamp: '2026-07-21T10:15:00Z' },
-  { id: 'LOG-007', systemId: 'SYS-007', systemName: 'Voice Pick Zone B', level: 'INFO', event: 'MAINTENANCE_START', message: 'Scheduled maintenance window initiated. Firmware update in progress.', timestamp: '2026-07-21T12:00:00Z' },
-  { id: 'LOG-008', systemId: 'SYS-005', systemName: 'AMR Fleet Hub', level: 'DEBUG', event: 'PATH_PLANNING', message: 'Recomputed optimal path for AMR-03 avoiding congested zone B2.', timestamp: '2026-07-21T14:29:30Z' },
-  { id: 'LOG-009', systemId: 'SYS-008', systemName: 'Scanner Array', level: 'INFO', event: 'SCAN_COMPLETE', message: 'Batch scan completed: 1,247 barcodes decoded. 0 errors.', timestamp: '2026-07-21T14:33:05Z' },
-  { id: 'LOG-010', systemId: 'SYS-001', systemName: 'ASRS Alpha', level: 'WARN', event: 'QUEUE_DEPTH', message: 'Command queue depth at 87%. Consider throttling inbound commands.', timestamp: '2026-07-21T14:31:20Z' },
-]
-
-const MOCK_ALERTS: Alert[] = [
-  { id: 'ALT-001', systemId: 'SYS-003', systemName: 'Sorter Unit A', type: 'THROUGHPUT_DEGRADATION', title: 'Sort Throughput Below Threshold', description: 'Sort throughput has fallen below 80% of expected capacity due to chute jam.', severity: 'CRITICAL', status: 'ACTIVE', threshold: '80%', currentValue: '72%', createdAt: '2026-07-21T14:25:00Z' },
-  { id: 'ALT-002', systemId: 'SYS-006', systemName: 'Drone Scout', type: 'CONNECTION_LOST', title: 'Drone System Offline', description: 'MQTT heartbeat lost. Drone system has been offline for over 4 hours.', severity: 'CRITICAL', status: 'ACTIVE', createdAt: '2026-07-21T10:15:00Z' },
-  { id: 'ALT-003', systemId: 'SYS-001', systemName: 'ASRS Alpha', type: 'QUEUE_WARNING', title: 'Command Queue Depth High', description: 'Command queue approaching capacity. Risk of command timeouts if not addressed.', severity: 'WARNING', status: 'ACKNOWLEDGED', threshold: '50%', currentValue: '87%', createdAt: '2026-07-21T14:31:20Z' },
-  { id: 'ALT-004', systemId: 'SYS-002', systemName: 'Main Conveyor', type: 'SPEED_VARIATION', title: 'Conveyor Speed Variance', description: 'Minor speed variance detected on belt section 3. Self-correcting.', severity: 'INFO', status: 'RESOLVED', threshold: '±5%', currentValue: '±3.2%', createdAt: '2026-07-21T13:10:00Z' },
-  { id: 'ALT-005', systemId: 'SYS-007', systemName: 'Voice Pick Zone B', type: 'MAINTENANCE_SCHEDULED', title: 'Firmware Update in Progress', description: 'Scheduled maintenance for firmware update to Voxcloud 4.1. Expected completion 15:00.', severity: 'INFO', status: 'ACKNOWLEDGED', createdAt: '2026-07-21T12:00:00Z' },
-]
-
-const MOCK_HEALTH: HealthData = { total: 8, online: 4, offline: 1, error: 0, maintenance: 1, healthScore: 87 }
-
-const MOCK_COMMAND_STATS = { totalToday: 342, avgExecutionMs: 4200, successRate: 96.8, failedToday: 8 }
-
-const MOCK_ALERT_STATS = { active: 2, acknowledged: 2, resolved: 1, bySeverity: { CRITICAL: 2, WARNING: 1, INFO: 2 } }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -220,9 +171,9 @@ export default function AutomationSystemsPage() {
   const [commands, setCommands] = useState<Command[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
-  const [healthData, setHealthData] = useState<HealthData>(MOCK_HEALTH)
-  const [commandStats, setCommandStats] = useState(MOCK_COMMAND_STATS)
-  const [alertStats, setAlertStats] = useState(MOCK_ALERT_STATS)
+  const [healthData, setHealthData] = useState<HealthData>({ total: 0, online: 0, offline: 0, error: 0, maintenance: 0, healthScore: 0 })
+  const [commandStats, setCommandStats] = useState({ totalToday: 0, avgExecutionMs: 0, successRate: 0, failedToday: 0 })
+  const [alertStats, setAlertStats] = useState({ active: 0, acknowledged: 0, resolved: 0, bySeverity: { CRITICAL: 0, WARNING: 0, INFO: 0 } })
 
   // Loading
   const [loading, setLoading] = useState(true)
@@ -259,18 +210,18 @@ export default function AutomationSystemsPage() {
   const fetchSystems = useCallback(async () => {
     try {
       const res = await automationApi.getAutomationSystems(selectedWarehouse)
-      setSystems(res.data?.content || res.data || MOCK_SYSTEMS)
+      setSystems(res.data?.content || res.data || [])
     } catch {
-      setSystems(MOCK_SYSTEMS)
+      setSystems([])
     }
   }, [selectedWarehouse])
 
   const fetchCommands = useCallback(async () => {
     try {
       const res = await automationApi.getCommands({})
-      setCommands(res.data?.content || res.data || MOCK_COMMANDS)
+      setCommands(res.data?.content || res.data || [])
     } catch {
-      setCommands(MOCK_COMMANDS)
+      setCommands([])
     }
   }, [])
 
@@ -280,9 +231,9 @@ export default function AutomationSystemsPage() {
       const params: Record<string, string> = {}
       if (logFilter.level) params.level = logFilter.level
       const res = await automationApi.getLogs(params)
-      setLogs(res.data?.content || res.data || MOCK_LOGS)
+      setLogs(res.data?.content || res.data || [])
     } catch {
-      setLogs(MOCK_LOGS)
+      setLogs([])
     } finally {
       setLogLoading(false)
     }
@@ -293,9 +244,9 @@ export default function AutomationSystemsPage() {
     try {
       const statusParam = alertFilter === 'ALL' ? undefined : alertFilter
       const res = await automationApi.getAlerts(selectedWarehouse, statusParam)
-      setAlerts(res.data?.content || res.data || MOCK_ALERTS)
+      setAlerts(res.data?.content || res.data || [])
     } catch {
-      setAlerts(MOCK_ALERTS)
+      setAlerts([])
     } finally {
       setAlertLoading(false)
     }
@@ -304,9 +255,9 @@ export default function AutomationSystemsPage() {
   const fetchHealth = useCallback(async () => {
     try {
       const res = await automationApi.getSystemHealth(selectedWarehouse)
-      setHealthData(res.data || MOCK_HEALTH)
+      if (res.data) setHealthData(res.data)
     } catch {
-      setHealthData(MOCK_HEALTH)
+      setHealthData({ total: 0, online: 0, offline: 0, error: 0, maintenance: 0, healthScore: 0 })
     }
   }, [selectedWarehouse])
 
@@ -463,7 +414,7 @@ export default function AutomationSystemsPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6">
+      <div className="space-y-6">
       {/* Breadcrumbs */}
       <EnterpriseBreadcrumbs crumbs={[
         { label: 'Warehouse', path: '/warehouse' },

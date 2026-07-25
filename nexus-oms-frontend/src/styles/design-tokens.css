@@ -2,17 +2,17 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
-  /* Primary - Professional Blue */
-  --color-primary-50: #EFF6FF;
-  --color-primary-100: #DBEAFE;
-  --color-primary-200: #BFDBFE;
-  --color-primary-300: #93C5FD;
-  --color-primary-400: #60A5FA;
-  --color-primary-500: #3B82F6;
-  --color-primary-600: #2563EB;
-  --color-primary-700: #1D4ED8;
-  --color-primary-800: #1E40AF;
-  --color-primary-900: #1E3A8A;
+  /* Primary - Indigo (aliased to nexus-brand tokens from index.css) */
+  --color-primary-50: var(--nexus-primary-50);
+  --color-primary-100: var(--nexus-primary-100);
+  --color-primary-200: var(--nexus-primary-200);
+  --color-primary-300: var(--nexus-primary-300);
+  --color-primary-400: var(--nexus-primary-400);
+  --color-primary-500: var(--nexus-primary-500);
+  --color-primary-600: var(--nexus-primary-600);
+  --color-primary-700: var(--nexus-primary-700);
+  --color-primary-800: var(--nexus-primary-800);
+  --color-primary-900: var(--nexus-primary-900);
 
   /* Neutral - Gray */
   --color-neutral-50: #F9FAFB;

@@ -4,23 +4,10 @@ import {
   GitBranch, Brain, Loader2, CheckCircle, XCircle, AlertTriangle,
   Clock, RefreshCw,
 } from 'lucide-react'
-import { getAgents, getDecisions, approveRecommendation, rejectRecommendation } from '../api/aiAgents'
+import { getAgents, getDecisions, getRoutingQueue, approveRecommendation, rejectRecommendation } from '../api/aiAgents'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
-import type { AiAgent, AiDecision } from '../api/aiAgents'
-
-interface QueueOrder {
-  id: string
-  orderNumber: string
-  customer: string
-  items: number
-  value: number
-  slaRemaining: string
-  aiDecision: string
-  confidence: number
-  agentName: string
-  agentId: string
-}
+import type { AiAgent, AiDecision, RoutingQueueItem } from '../api/aiAgents'
 
 interface OverrideState {
   orderId: string
@@ -28,17 +15,6 @@ interface OverrideState {
   currentConfidence: number
   agentName: string
 }
-
-const MOCK_QUEUE: QueueOrder[] = [
-  { id: 'q-1', orderNumber: 'ORD-10234', customer: 'Acme Corp', items: 3, value: 1247.50, slaRemaining: '4h 12m', aiDecision: 'Route to WH #2', confidence: 97, agentName: 'Order Routing AI', agentId: 'agent-routing' },
-  { id: 'q-2', orderNumber: 'ORD-10235', customer: 'GlobalTech Inc', items: 1, value: 89.99, slaRemaining: '6h 30m', aiDecision: 'Route to Store #5', confidence: 94, agentName: 'Order Routing AI', agentId: 'agent-routing' },
-  { id: 'q-3', orderNumber: 'ORD-10236', customer: 'Sarah Johnson', items: 5, value: 2340.00, slaRemaining: '2h 05m', aiDecision: 'Flag for Review', confidence: 62, agentName: 'Fraud Detection AI', agentId: 'agent-fraud' },
-  { id: 'q-4', orderNumber: 'ORD-10237', customer: 'BestBuy Wholesale', items: 12, value: 5678.00, slaRemaining: '8h 00m', aiDecision: 'Route to WH #1', confidence: 91, agentName: 'Order Routing AI', agentId: 'agent-routing' },
-  { id: 'q-5', orderNumber: 'ORD-10238', customer: 'John Davis', items: 2, value: 345.50, slaRemaining: '1h 45m', aiDecision: 'Route to Store #3', confidence: 88, agentName: 'Warehouse Selection AI', agentId: 'agent-warehouse' },
-  { id: 'q-6', orderNumber: 'ORD-10239', customer: 'TechSupply Co', items: 8, value: 4230.00, slaRemaining: '3h 20m', aiDecision: 'Route to WH #2', confidence: 95, agentName: 'Order Routing AI', agentId: 'agent-routing' },
-  { id: 'q-7', orderNumber: 'ORD-10240', customer: 'Maria Garcia', items: 1, value: 29.99, slaRemaining: '5h 00m', aiDecision: 'Auto-Route to WH #1', confidence: 98, agentName: 'Order Routing AI', agentId: 'agent-routing' },
-  { id: 'q-8', orderNumber: 'ORD-10241', customer: 'OfficeDepot Inc', items: 15, value: 8920.00, slaRemaining: '12h 00m', aiDecision: 'Route to WH #3', confidence: 87, agentName: 'Inventory Allocation AI', agentId: 'agent-inventory' },
-]
 
 const DECISION_TYPE_STYLES: Record<string, string> = {
   fraud_check: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)]',
@@ -93,6 +69,12 @@ export default function AiOrderRoutingPage() {
     queryKey: ['ai-decisions', 50],
     queryFn: () => getDecisions(50),
     refetchInterval: 15000,
+  })
+
+  const { data: queueItems = [], isLoading: queueLoading } = useQuery({
+    queryKey: ['ai-routing-queue'],
+    queryFn: () => getRoutingQueue(20),
+    refetchInterval: 10000,
   })
 
   const approveMutation = useMutation({
@@ -248,7 +230,7 @@ export default function AiOrderRoutingPage() {
       {/* Queue Tab */}
       {activeTab === 'queue' && (
         <div className="enterprise-card overflow-hidden">
-          {MOCK_QUEUE.length === 0 ? (
+          {queueItems.length === 0 ? (
             <div className="p-12 text-center">
               <CheckCircle className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
               <p className="font-medium text-[var(--text-secondary)]">No pending orders</p>
@@ -270,7 +252,7 @@ export default function AiOrderRoutingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-subtle)]">
-                  {MOCK_QUEUE.map(order => (
+                  {queueItems.map(order => (
                     <tr key={order.id} className="enterprise-table-row">
                       <td className="px-4 py-3 text-sm font-mono font-medium text-[var(--color-primary)]">{order.orderNumber}</td>
                       <td className="px-4 py-3 text-sm text-[var(--text-primary)]">{order.customer}</td>

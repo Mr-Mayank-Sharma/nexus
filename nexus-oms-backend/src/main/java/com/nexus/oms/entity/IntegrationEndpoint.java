@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_integration_endpoints")
 @Data
@@ -44,15 +47,18 @@ public class IntegrationEndpoint {
 
     private String method;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String headers;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "query_params", columnDefinition = "jsonb")
     private String queryParams;
 
     @Column(name = "auth_type")
     private String authType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "auth_config", columnDefinition = "jsonb")
     private String authConfig;
 
@@ -89,6 +95,7 @@ public class IntegrationEndpoint {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String metadata;
 

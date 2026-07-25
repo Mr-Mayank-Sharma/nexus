@@ -1,0 +1,52 @@
+- generic [ref=e3]:
+  - generic [ref=e11]:
+    - generic [ref=e12]: NexusShip
+    - generic [ref=e19]:
+      - heading "Supply Chain Command Center" [level=2] [ref=e20]: Supply ChainCommand Center
+      - paragraph [ref=e21]: Unify orders, inventory, warehouse operations, and carrier management across your entire enterprise in one intelligent platform.
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]: 50K+
+          - generic [ref=e25]: Orders Daily
+        - generic [ref=e26]:
+          - generic [ref=e27]: 99.9%
+          - generic [ref=e28]: Uptime SLA
+        - generic [ref=e29]:
+          - generic [ref=e30]: 150+
+          - generic [ref=e31]: Integrations
+        - generic [ref=e32]:
+          - generic [ref=e33]: 40%
+          - generic [ref=e34]: Cost Reduction
+    - generic [ref=e35]:
+      - link "Documentation" [ref=e36] [cursor=pointer]:
+        - /url: "#"
+      - link "API Status" [ref=e38] [cursor=pointer]:
+        - /url: "#"
+      - link "Support" [ref=e40] [cursor=pointer]:
+        - /url: "#"
+      - generic [ref=e41]: © 2026 Nexus Technologies
+  - generic [ref=e44]:
+    - heading "Sign in" [level=2] [ref=e50]
+    - generic [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: Username
+        - textbox "Enter your username" [active] [ref=e54]
+      - generic [ref=e55]:
+        - generic [ref=e56]: Password
+        - generic [ref=e57]:
+          - textbox "Enter your password" [ref=e58]
+          - button [ref=e59] [cursor=pointer]
+      - generic [ref=e63]:
+        - generic [ref=e64] [cursor=pointer]:
+          - checkbox "Remember me" [ref=e65]
+          - generic [ref=e66]: Remember me
+        - button "Forgot password?" [ref=e67] [cursor=pointer]
+      - button "Sign in" [ref=e68] [cursor=pointer]
+    - generic [ref=e72]: Or continue with
+    - generic [ref=e77]:
+      - button "Google" [ref=e78] [cursor=pointer]
+      - button "Microsoft" [ref=e84] [cursor=pointer]
+      - button "Okta" [ref=e90] [cursor=pointer]
+      - button "Auth0" [ref=e94] [cursor=pointer]
+    - button "Don't have an account? Sign up" [ref=e98] [cursor=pointer]
+    - paragraph [ref=e99]: NexusShip OMS v5.0 · Enterprise Edition

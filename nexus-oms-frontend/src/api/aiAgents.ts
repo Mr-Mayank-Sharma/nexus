@@ -232,3 +232,28 @@ export async function getSupplierRisks(): Promise<ApiResponse<AiSupplierRisk[]>>
     return { success: false, error: msg } as any
   }
 }
+
+export interface RoutingQueueItem {
+  id: string
+  orderNumber: string
+  customer: string
+  items: number
+  value: number
+  slaRemaining: string
+  aiDecision: string
+  confidence: number
+  agentName: string
+  agentId: string
+}
+
+export async function getRoutingQueue(limit?: number): Promise<ApiResponse<RoutingQueueItem[]>> {
+  try {
+    const { data } = await client.get('/ai/routing/queue')
+    const queue: RoutingQueueItem[] = data?.queue ?? []
+    const sliced = limit ? queue.slice(0, limit) : queue
+    return { success: true, data: sliced }
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get routing queue'
+    return { success: false, error: msg } as any
+  }
+}

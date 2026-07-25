@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Search, Bell, ChevronDown, User, Settings, LogOut, Sparkles, Command, Menu } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Search, Bell, ChevronDown, User, Settings, LogOut, Sparkles, Command, Menu, PackageSearch } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import NotificationsPanel from '../enterprise/NotificationsPanel'
 import { clsx } from 'clsx'
@@ -13,6 +14,7 @@ interface Props {
 
 export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuToggle }: Props) {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
 
@@ -37,6 +39,13 @@ export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuT
           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-[var(--surface-base)] border border-[var(--border-default)] rounded text-[var(--text-tertiary)]">
             <Command className="w-2.5 h-2.5" />K
           </kbd>
+        </button>
+        <button
+          onClick={() => navigate('/orders')}
+          className="hidden md:inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] text-[13px] font-semibold text-[var(--text-primary)] hover:border-[var(--nexus-primary-300)] hover:text-[var(--nexus-primary-600)] hover:bg-[#EEF2FF] transition-all duration-150 shrink-0"
+        >
+          <PackageSearch className="w-4 h-4" />
+          Find Order
         </button>
       </div>
 

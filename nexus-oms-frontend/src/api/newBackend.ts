@@ -114,7 +114,7 @@ export async function fetchCarriers(): Promise<any> {
 }
 
 export async function fetchCarrierRates(): Promise<any> {
-  try { const { data } = await client.get('/carriers/rates'); return data } catch { return null }
+  try { const { data } = await client.get('/carriers/kpis'); return data } catch { return null }
 }
 
 export async function generateLabel(labelData: Record<string, any>): Promise<any> {
@@ -154,7 +154,7 @@ export async function updateReturn(id: string, body: Record<string, any>): Promi
 }
 
 export async function fetchReturnAnalytics(): Promise<any> {
-  try { const { data } = await client.get('/returns/analytics'); return data } catch { return null }
+  try { const { data } = await client.get('/analytics/returns'); return data } catch { return null }
 }
 
 export async function fetchPayments(status?: string): Promise<any> {

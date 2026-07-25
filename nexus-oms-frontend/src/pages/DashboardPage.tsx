@@ -25,6 +25,7 @@ import * as packingApi from '../api/packing'
 import promotionsApi from '../api/promotions'
 import endlessAisleApi from '../api/endlessAisle'
 import Autocomplete from '../components/common/Autocomplete'
+import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 
 interface VelocityPoint { hour: string; orders: number; fulfilled: number }
@@ -45,14 +46,6 @@ const QUICK_ACTIONS = [
   { label: 'Open AI Assistant', icon: Activity, path: '/ai', desc: 'AI-powered help' },
   { label: 'AI Order Routing', icon: Route, path: '/order-routing', desc: 'Intelligent allocation' },
 ]
-
-function generateMockVelocity(): VelocityPoint[] {
-  return Array.from({ length: 24 }, (_, i) => ({
-    hour: `${i.toString().padStart(2, '0')}:00`,
-    orders: Math.floor(Math.random() * 80) + 10,
-    fulfilled: Math.floor(Math.random() * 60) + 5,
-  }))
-}
 
 interface AiPrediction { predictedOrders: number; confidence: number; explanation: string }
 
@@ -76,6 +69,10 @@ export default function DashboardPage() {
   const [facilities, setFacilities] = useState<FacilityData[]>([])
   const [taskQueue, setTaskQueue] = useState<any>(null)
   const [promotionStats, setPromotionStats] = useState<{ activeCount: number; totalUses: number; totalDiscount: number; topPromos: any[] }>({ activeCount: 0, totalUses: 0, totalDiscount: 0, topPromos: [] })
+  const [revenueTrend, setRevenueTrend] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [inventoryHealth, setInventoryHealth] = useState({healthy:0,low:0,critical:0,outOfStock:0});
+  const [slaMetrics, setSlaMetrics] = useState({onTime:0,late:0,breached:0,avgFulfillmentTime:"—"});
   const [endlessAisleStats, setEndlessAisleStats] = useState<{ pendingOrders: number; inTransit: number; delivered: number; cancelled: number; totalRevenue: number }>({ pendingOrders: 0, inTransit: 0, delivered: 0, cancelled: 0, totalRevenue: 0 })
 
   // Fetch funnel data
@@ -137,8 +134,8 @@ export default function DashboardPage() {
         const vData = velocityRes.value.data
         if (Array.isArray(vData)) setVelocity(vData as VelocityPoint[])
         else if (vData?.velocity && Array.isArray(vData.velocity)) setVelocity(vData.velocity)
-        else setVelocity(generateMockVelocity())
-      } else setVelocity(generateMockVelocity())
+        else setVelocity([])
+      } else setVelocity([])
       
       if (alertsRes.status === 'fulfilled' && Array.isArray(alertsRes.value.data)) {
         setAlerts(alertsRes.value.data as AlertItem[])
@@ -170,7 +167,7 @@ export default function DashboardPage() {
     } catch {
       addToast({ type: 'error', title: 'Failed to load dashboard data' })
       setError('Failed to load dashboard data')
-      setVelocity(generateMockVelocity())
+      setVelocity([])
     }
     try {
       const activityRes = await analyticsApi.getActivity()
@@ -226,9 +223,13 @@ export default function DashboardPage() {
         explanation: (shippingRes.value.data?.explanation as string) ?? 'Expected 245 packages dispatched by 8 PM',
       } : { predictedOrders: 245, confidence: 0.91, explanation: 'Expected 245 packages dispatched by 8 PM' })
     } catch {
-      setAiDemand({ predictedOrders: 182, confidence: 0.87, explanation: 'Based on historical trends and seasonality' })
-      setAiInventory({ predictedOrders: 12, confidence: 0.76, explanation: 'SKU-PRO-X1, SKU-BASIC-2K running low' })
-      setAiShipping({ predictedOrders: 245, confidence: 0.91, explanation: 'Expected 245 packages dispatched by 8 PM' })
+      setAiDemand(null)
+      setAiInventory(null)
+      setAiShipping(null)
+      setRevenueTrend([])
+      setTopProducts([])
+      setInventoryHealth({ healthy: 0, low: 0, critical: 0, outOfStock: 0 })
+      setSlaMetrics({ onTime: 0, late: 0, breached: 0, avgFulfillmentTime: "—" })
     }
   }, [])
 
@@ -255,7 +256,8 @@ export default function DashboardPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="analytics" action="view">
+      <div className="space-y-6">
       <div className="enterprise-page-header">
         <div>
           <h1 className="flex items-center gap-2.5"><LayoutDashboard className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Dashboard</h1>
@@ -550,7 +552,132 @@ export default function DashboardPage() {
 
       {/* Bottom Row: Activity + Alerts + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+              {/* New Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Trend */}
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border-default)]">
+            <h3 className="font-semibold text-[var(--text-primary)]">Revenue Trend</h3>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Weekly revenue and order volume</p>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={revenueTrend} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                <XAxis dataKey="date" tick={CHART_AXIS_STYLE} />
+                <YAxis tick={CHART_AXIS_STYLE} />
+                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v: number) => [`$${v.toLocaleString()}`, 'Revenue']} />
+                <Bar dataKey="revenue" fill="var(--nexus-primary-500)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Top Products */}
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border-default)]">
+            <h3 className="font-semibold text-[var(--text-primary)]">Top Products</h3>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Best sellers this period</p>
+          </div>
+          <div className="p-6 space-y-3">
+            {topProducts.map((p, i) => (
+              <div key={p.sku} className="flex items-center gap-3">
+                <span className="text-xs font-bold text-[var(--text-tertiary)] w-5 text-center">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{p.name}</p>
+                    <span className="text-xs font-semibold text-[var(--text-secondary)] ml-2">{p.sold} sold</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                    <div className="h-full bg-[var(--nexus-primary-500)] rounded-full" style={{ width: `${(p.sold / topProducts[0].sold) * 100}%` }} />
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-[var(--nexus-success-600)] whitespace-nowrap">${p.revenue.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Inventory Health + SLA Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Inventory Health */}
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border-default)]">
+            <h3 className="font-semibold text-[var(--text-primary)]">Inventory Health</h3>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Stock status across all SKUs</p>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center gap-6 mb-5">
+              <div className="text-center">
+                <p className="text-3xl font-bold text-[var(--nexus-success-600)]">{inventoryHealth.healthy}</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-1">Healthy</p>
+              </div>
+              <div className="flex-1">
+                <div className="flex h-3 rounded-full overflow-hidden gap-1">
+                  <div className="bg-[var(--nexus-success-500)] rounded-l-full" style={{ width: `${inventoryHealth.healthy / (inventoryHealth.healthy + inventoryHealth.low + inventoryHealth.critical + inventoryHealth.outOfStock) * 100}%` }} />
+                  <div className="bg-[var(--nexus-warning-500)]" style={{ width: `${inventoryHealth.low / (inventoryHealth.healthy + inventoryHealth.low + inventoryHealth.critical + inventoryHealth.outOfStock) * 100}%` }} />
+                  <div className="bg-[var(--nexus-error-500)]" style={{ width: `${inventoryHealth.critical / (inventoryHealth.healthy + inventoryHealth.low + inventoryHealth.critical + inventoryHealth.outOfStock) * 100}%` }} />
+                  <div className="bg-neutral-400 rounded-r-full" style={{ width: `${inventoryHealth.outOfStock / (inventoryHealth.healthy + inventoryHealth.low + inventoryHealth.critical + inventoryHealth.outOfStock) * 100}%` }} />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 rounded-lg bg-[var(--nexus-warning-50)] border border-[var(--nexus-warning-200)]">
+                <p className="text-lg font-bold text-[var(--nexus-warning-600)]">{inventoryHealth.low}</p>
+                <p className="text-[11px] font-medium text-[var(--nexus-warning-700)]">Low Stock</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--nexus-error-50)] border border-[var(--nexus-error-200)]">
+                <p className="text-lg font-bold text-[var(--nexus-error-600)]">{inventoryHealth.critical}</p>
+                <p className="text-[11px] font-medium text-[var(--nexus-error-700)]">Critical</p>
+              </div>
+              <div className="p-3 rounded-lg bg-neutral-50 border border-neutral-200">
+                <p className="text-lg font-bold text-neutral-600">{inventoryHealth.outOfStock}</p>
+                <p className="text-[11px] font-medium text-neutral-700">Out of Stock</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SLA Compliance */}
+        <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[var(--border-default)]">
+            <h3 className="font-semibold text-[var(--text-primary)]">SLA Compliance</h3>
+            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Fulfillment time targets</p>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center gap-6 mb-5">
+              <div className="text-center">
+                <p className="text-3xl font-bold text-[var(--nexus-primary-600)]">{slaMetrics.avgFulfillmentTime}</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-1">Avg Fulfillment</p>
+              </div>
+              <div className="flex-1">
+                <div className="flex h-3 rounded-full overflow-hidden gap-1">
+                  <div className="bg-[var(--nexus-success-500)] rounded-l-full" style={{ width: `${slaMetrics.onTime / (slaMetrics.onTime + slaMetrics.late + slaMetrics.breached) * 100}%` }} />
+                  <div className="bg-[var(--nexus-warning-500)]" style={{ width: `${slaMetrics.late / (slaMetrics.onTime + slaMetrics.late + slaMetrics.breached) * 100}%` }} />
+                  <div className="bg-[var(--nexus-error-500)] rounded-r-full" style={{ width: `${slaMetrics.breached / (slaMetrics.onTime + slaMetrics.late + slaMetrics.breached) * 100}%` }} />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="p-3 rounded-lg bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)]">
+                <p className="text-lg font-bold text-[var(--nexus-success-600)]">{slaMetrics.onTime}</p>
+                <p className="text-[11px] font-medium text-[var(--nexus-success-700)]">On Time</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--nexus-warning-50)] border border-[var(--nexus-warning-200)]">
+                <p className="text-lg font-bold text-[var(--nexus-warning-600)]">{slaMetrics.late}</p>
+                <p className="text-[11px] font-medium text-[var(--nexus-warning-700)]">Late</p>
+              </div>
+              <div className="p-3 rounded-lg bg-[var(--nexus-error-50)] border border-[var(--nexus-error-200)]">
+                <p className="text-lg font-bold text-[var(--nexus-error-600)]">{slaMetrics.breached}</p>
+                <p className="text-[11px] font-medium text-[var(--nexus-error-700)]">Breached</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<div className="lg:col-span-2 bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
           <div className="px-6 py-4 border-b border-[var(--border-default)]">
             <h3 className="font-semibold text-[var(--text-primary)]">Activity Feed</h3>
           </div>
@@ -778,5 +905,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+    </PermissionGate>
   )
 }

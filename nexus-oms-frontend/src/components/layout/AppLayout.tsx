@@ -102,12 +102,14 @@ export default function AppLayout() {
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <Topbar
-          onSearchClick={() => setSearchOpen(true)}
-          onAiToggle={() => setAiPanelOpen(!aiPanelOpen)}
-          aiPanelOpen={aiPanelOpen}
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
+        {location.pathname !== '/' && (
+          <Topbar
+            onSearchClick={() => setSearchOpen(true)}
+            onAiToggle={() => setAiPanelOpen(!aiPanelOpen)}
+            aiPanelOpen={aiPanelOpen}
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          />
+        )}
 
         <main
           id="main-content"

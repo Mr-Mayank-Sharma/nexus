@@ -37,16 +37,7 @@ const EBAY_SITES = [
   { value: 'AU', label: 'eBay Australia', locale: 'en_AU', currency: 'AUD' },
 ]
 
-const MOCK_ORDERS: EbayOrder[] = [
-  { id: '1', orderId: '14-12345-67890', buyer: 'john.doe@email.com', status: 'Paid', items: 2, amount: '$145.00', syncStatus: 'SYNCED', placedAt: '2026-06-29 14:32', site: 'US' },
-  { id: '2', orderId: '14-23456-78901', buyer: 'jane.smith@email.com', status: 'Shipped', items: 1, amount: '$89.99', syncStatus: 'SYNCED', placedAt: '2026-06-29 16:10', site: 'US' },
-  { id: '3', orderId: '14-34567-89012', buyer: 'bob.wilson@email.com', status: 'Pending', items: 3, amount: '$234.50', syncStatus: 'PENDING', placedAt: '2026-06-28 09:45', site: 'UK' },
-  { id: '4', orderId: '14-45678-90123', buyer: 'alice.mueller@email.com', status: 'Paid', items: 1, amount: '$67.20', syncStatus: 'SYNCED', placedAt: '2026-06-28 11:22', site: 'DE' },
-  { id: '5', orderId: '14-56789-01234', buyer: 'chris.brown@email.com', status: 'Cancelled', items: 2, amount: '$120.00', syncStatus: 'ERROR', placedAt: '2026-06-27 08:15', site: 'AU' },
-  { id: '6', orderId: '14-67890-12345', buyer: 'sarah.lee@email.com', status: 'Shipped', items: 4, amount: '$412.00', syncStatus: 'SYNCED', placedAt: '2026-06-27 14:50', site: 'US' },
-  { id: '7', orderId: '14-78901-23456', buyer: 'mike.jones@email.com', status: 'Pending', items: 1, amount: '$55.00', syncStatus: 'PENDING', placedAt: '2026-06-26 10:30', site: 'UK' },
-  { id: '8', orderId: '14-89012-34567', buyer: 'emma.davis@email.com', status: 'Paid', items: 5, amount: '$678.00', syncStatus: 'SYNCED', placedAt: '2026-06-26 12:05', site: 'DE' },
-]
+
 
 interface ConnectorOrder {
   orderId: string
@@ -57,13 +48,7 @@ interface ConnectorOrder {
   buyerUsername: string
 }
 
-const MOCK_CATEGORIES: CategoryMapping[] = [
-  { ebayCategory: 'Consumer Electronics', ebayCategoryId: '293', nexusCategory: 'Electronics' },
-  { ebayCategory: 'Clothing, Shoes & Accessories', ebayCategoryId: '11450', nexusCategory: 'Apparel' },
-  { ebayCategory: 'Home & Garden', ebayCategoryId: '11700', nexusCategory: 'Home Goods' },
-  { ebayCategory: 'Sporting Goods', ebayCategoryId: '888', nexusCategory: 'Sports' },
-  { ebayCategory: 'Toys & Hobbies', ebayCategoryId: '220', nexusCategory: 'Toys' },
-]
+
 
 export default function EbayIntegrationPage() {
   const [connected, setConnected] = useState(false)
@@ -101,7 +86,7 @@ export default function EbayIntegrationPage() {
     nexusCategory: '',
   })
 
-  const [categories, setCategories] = useState<CategoryMapping[]>(MOCK_CATEGORIES)
+  const [categories, setCategories] = useState<CategoryMapping[]>([])
   const [showAddCategory, setShowAddCategory] = useState(false)
 
   async function handleConnect() {
@@ -185,7 +170,7 @@ export default function EbayIntegrationPage() {
     addToast({ type: 'info', title: 'Category mapping removed' })
   }
 
-  const displayOrders = fetchedOrders.length > 0 ? fetchedOrders : MOCK_ORDERS
+  const displayOrders = fetchedOrders
   const filteredOrders = displayOrders.filter(o => {
     const matchesSearch = !searchTerm || o.orderId.toLowerCase().includes(searchTerm.toLowerCase()) || o.buyer.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesSite = filterSite === 'ALL' || o.site === filterSite
@@ -236,13 +221,13 @@ export default function EbayIntegrationPage() {
             </div>
             {connected ? (
               <PermissionGate resource="integrations" action="delete">
-                <button onClick={handleDisconnect} className="btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
+                <button onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
                 </button>
               </PermissionGate>
             ) : (
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
+                <button onClick={handleConnect} disabled={connecting} className="enterprise-btn enterprise-btn-primary text-sm">
                   {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingBag className="w-4 h-4" />}
                   {connecting ? 'Connecting...' : 'Connect'}
                 </button>
@@ -317,13 +302,13 @@ export default function EbayIntegrationPage() {
             </div>
             <div className="card-footer flex justify-between">
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleSync} disabled={syncing || !connected} className="btn-secondary text-sm">
+                <button onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
                   {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                   {syncing ? 'Syncing...' : 'Run Sync'}
                 </button>
               </PermissionGate>
               <PermissionGate resource="integrations" action="edit">
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save Settings
                 </button>
@@ -338,7 +323,7 @@ export default function EbayIntegrationPage() {
           <div className="card-header flex justify-between items-center">
             <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Tag className="w-4 h-4 text-[var(--nexus-ai-500)]" /> eBay → Nexus Category Mapping</h3>
             <PermissionGate resource="integrations" action="create">
-              <button onClick={() => setShowAddCategory(true)} className="btn-secondary text-xs">
+              <button onClick={() => setShowAddCategory(true)} className="enterprise-btn enterprise-btn-secondary text-xs">
                 <Tag className="w-3.5 h-3.5" /> Add Mapping
               </button>
             </PermissionGate>
@@ -366,7 +351,7 @@ export default function EbayIntegrationPage() {
                     </td>
                     <td className="px-6 py-3 text-right">
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleRemoveCategory(index)} className="btn-ghost text-xs text-[var(--nexus-error-500)]">
+                        <button onClick={() => handleRemoveCategory(index)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <XCircle className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -411,9 +396,9 @@ export default function EbayIntegrationPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setShowAddCategory(false)} className="btn-secondary text-xs">Cancel</button>
+                <button onClick={() => setShowAddCategory(false)} className="enterprise-btn enterprise-btn-secondary text-xs">Cancel</button>
                 <PermissionGate resource="integrations" action="create">
-                  <button onClick={handleAddCategory} className="btn-primary text-xs">
+                  <button onClick={handleAddCategory} className="enterprise-btn enterprise-btn-primary text-xs">
                     <Tag className="w-3.5 h-3.5" /> Add Mapping
                   </button>
                 </PermissionGate>
@@ -492,7 +477,7 @@ export default function EbayIntegrationPage() {
             <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
             <div className="flex items-center gap-2">
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleSync} disabled={syncing || !connected} className="btn-ghost text-xs">
+                <button onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-ghost text-xs">
                   <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
                 </button>
               </PermissionGate>

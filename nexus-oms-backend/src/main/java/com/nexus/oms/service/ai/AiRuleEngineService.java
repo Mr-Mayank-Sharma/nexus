@@ -1,17 +1,17 @@
 package com.nexus.oms.service.ai;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.ai.*;
 import com.nexus.oms.repository.ai.*;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class AiRuleEngineService {
@@ -20,33 +20,90 @@ public class AiRuleEngineService {
 
     private final AiRuleFallbackRepository fallbackRepository;
     private final AiModelRepository modelRepository;
+    private final LlmChatService llmChatService;
+    private final ObjectMapper objectMapper;
+    private final MeterRegistry meterRegistry;
     private final Random random = new Random();
 
     public AiRuleEngineService(AiRuleFallbackRepository fallbackRepository,
-                                AiModelRepository modelRepository) {
+                                AiModelRepository modelRepository,
+                                LlmChatService llmChatService,
+                                ObjectMapper objectMapper,
+                                MeterRegistry meterRegistry) {
         this.fallbackRepository = fallbackRepository;
         this.modelRepository = modelRepository;
+        this.llmChatService = llmChatService;
+        this.objectMapper = objectMapper;
+        this.meterRegistry = meterRegistry;
     }
 
+    /**
+     * Execute fallback logic. Tries LLM-enhanced fallback first, falls back to DB rules.
+     */
     public Map<String, Object> executeFallback(UUID tenantId, String modelType, Map<String, Object> input) {
-        String modelTypeForLookup = modelType;
-        UUID modelId = modelRepository.findAvailableForTenant(tenantId, modelTypeForLookup,
+        // Try LLM-enhanced fallback first
+        if (llmChatService.isEnabled()) {
+            try {
+                Map<String, Object> llmResult = llmEnhancedFallback(modelType, input);
+                if (llmResult != null && !llmResult.isEmpty()) {
+                    llmResult.put("fallbackUsed", true);
+                    llmResult.put("fallbackSource", "LLM_ENHANCED");
+                    meterRegistry.counter("nexus.ai.rule_engine.llm_fallback_success").increment();
+                    return llmResult;
+                }
+            } catch (Exception e) {
+                log.warn("LLM-enhanced fallback failed for {}: {}", modelType, e.getMessage());
+                meterRegistry.counter("nexus.ai.rule_engine.llm_fallback_error").increment();
+            }
+        }
+
+        // Try DB-configured rules
+        UUID modelId = modelRepository.findAvailableForTenant(tenantId, modelType,
                         org.springframework.data.domain.PageRequest.of(0, 1))
                 .stream().findFirst().map(AiModel::getId).orElse(null);
 
-        if (modelId == null) {
-            return generateGenericFallback(modelType, input);
+        if (modelId != null) {
+            List<AiRuleFallback> fallbacks = fallbackRepository
+                    .findByModelIdAndIsActiveTrueOrderByPriorityAsc(modelId);
+            if (!fallbacks.isEmpty()) {
+                Map<String, Object> ruleResult = executeRule(fallbacks.get(0), input);
+                ruleResult.put("fallbackSource", "DB_RULE");
+                return ruleResult;
+            }
         }
 
-        List<AiRuleFallback> fallbacks = fallbackRepository
-                .findByModelIdAndIsActiveTrueOrderByPriorityAsc(modelId);
+        // Final fallback: hardcoded rules
+        Map<String, Object> genericResult = generateGenericFallback(modelType, input);
+        genericResult.put("fallbackSource", "HARDCODED_RULE");
+        return genericResult;
+    }
 
-        if (!fallbacks.isEmpty()) {
-            AiRuleFallback fallback = fallbacks.get(0);
-            return executeRule(fallback, input);
-        }
+    /**
+     * Use LLM to generate a smarter fallback prediction.
+     */
+    private Map<String, Object> llmEnhancedFallback(String modelType, Map<String, Object> input) {
+        String systemPrompt = """
+            You are a supply chain AI fallback system. The primary ML model is unavailable.
+            Given the input features, provide a reasonable prediction using your knowledge of
+            supply chain operations. Be conservative in your estimates.
+            Return a JSON object with appropriate fields for the model type.
+            """;
 
-        return generateGenericFallback(modelType, input);
+        String userPrompt = String.format(
+            "Model type: %s\nInput features:\n%s\n\nProvide a conservative fallback prediction as JSON:",
+            modelType, formatInput(input));
+
+        var messages = List.of(Map.of("role", "user", "content", userPrompt));
+        JsonNode llmResult = llmChatService.chatJson(systemPrompt, messages);
+
+        if (llmResult == null || llmResult.isEmpty()) return null;
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        llmResult.fields().forEachRemaining(entry -> {
+            result.put(entry.getKey(), convertJsonNode(entry.getValue()));
+        });
+        result.put("confidence", 0.70);
+        return result;
     }
 
     private Map<String, Object> executeRule(AiRuleFallback rule, Map<String, Object> input) {
@@ -111,11 +168,9 @@ public class AiRuleEngineService {
         switch (modelType.toUpperCase()) {
             case "DEMAND_FORECAST":
                 double historicalAvg = input.containsKey("historicalAverage")
-                    ? ((Number) input.get("historicalAverage")).doubleValue()
-                    : 150.0;
+                    ? ((Number) input.get("historicalAverage")).doubleValue() : 150.0;
                 String seasonality = input.containsKey("seasonality")
-                    ? (String) input.get("seasonality")
-                    : "NONE";
+                    ? (String) input.get("seasonality") : "NONE";
                 double seasonalMultiplier = switch (seasonality.toUpperCase()) {
                     case "HIGH" -> 1.3;
                     case "MEDIUM" -> 1.15;
@@ -131,7 +186,6 @@ public class AiRuleEngineService {
 
             case "SMART_ALLOCATOR":
                 String originZip = (String) input.getOrDefault("originZip", "");
-                String region = originZip.length() >= 3 ? "REGION_" + originZip.substring(0, 3) : "REGION_DEFAULT";
                 result.put("warehouseId", "wh-fallback-" + (originZip.isEmpty() ? "default" : originZip.substring(0, 1)));
                 result.put("warehouseName", "Fallback Warehouse " + (originZip.isEmpty() ? "Central" : "Zone " + originZip.substring(0, 1)));
                 result.put("shippingCost", 12.50);
@@ -143,16 +197,9 @@ public class AiRuleEngineService {
                 double weight = input.containsKey("totalWeightKg") ? ((Number) input.get("totalWeightKg")).doubleValue() : 5.0;
                 String carrier;
                 double cost;
-                if (weight < 2.0) {
-                    carrier = "USPS";
-                    cost = 7.50;
-                } else if (weight < 10.0) {
-                    carrier = "UPS";
-                    cost = 12.00;
-                } else {
-                    carrier = "FEDEX";
-                    cost = 22.50;
-                }
+                if (weight < 2.0) { carrier = "USPS"; cost = 7.50; }
+                else if (weight < 10.0) { carrier = "UPS"; cost = 12.00; }
+                else { carrier = "FEDEX"; cost = 22.50; }
                 result.put("carrier", carrier);
                 result.put("serviceLevel", weight < 2.0 ? "PRIORITY" : "GROUND");
                 result.put("cost", cost);
@@ -162,11 +209,9 @@ public class AiRuleEngineService {
 
             case "RETURNS_PREDICTOR":
                 double orderHistoryMonths = input.containsKey("orderHistoryMonths")
-                    ? ((Number) input.get("orderHistoryMonths")).doubleValue()
-                    : 12.0;
+                    ? ((Number) input.get("orderHistoryMonths")).doubleValue() : 12.0;
                 double returnRate = input.containsKey("customerReturnRate")
-                    ? ((Number) input.get("customerReturnRate")).doubleValue()
-                    : 0.05;
+                    ? ((Number) input.get("customerReturnRate")).doubleValue() : 0.05;
                 double predictedProb = Math.min(returnRate * (12.0 / Math.max(orderHistoryMonths, 1)), 0.5);
                 result.put("returnProbability", predictedProb);
                 result.put("expectedReturnDate", "N/A");
@@ -176,11 +221,9 @@ public class AiRuleEngineService {
 
             case "INVENTORY_OPTIMIZER":
                 double avgDailyDemand = input.containsKey("avgDailyDemand")
-                    ? ((Number) input.get("avgDailyDemand")).doubleValue()
-                    : 10.0;
+                    ? ((Number) input.get("avgDailyDemand")).doubleValue() : 10.0;
                 int leadTimeDays = input.containsKey("leadTimeDays")
-                    ? ((Number) input.get("leadTimeDays")).intValue()
-                    : 7;
+                    ? ((Number) input.get("leadTimeDays")).intValue() : 7;
                 int safetyStock = (int) Math.round(avgDailyDemand * leadTimeDays * 0.3);
                 int reorderPoint = (int) Math.round(avgDailyDemand * leadTimeDays) + safetyStock;
                 result.put("reorderPoint", reorderPoint);
@@ -207,5 +250,36 @@ public class AiRuleEngineService {
                 result.put("confidence", 0.50);
         }
         return result;
+    }
+
+    // ============================================================
+    // Helpers
+    // ============================================================
+
+    private Object convertJsonNode(JsonNode node) {
+        if (node.isBoolean()) return node.asBoolean();
+        if (node.isInt()) return node.asInt();
+        if (node.isLong()) return node.asLong();
+        if (node.isDouble()) return node.asDouble();
+        if (node.isNull()) return null;
+        if (node.isArray()) {
+            List<Object> list = new ArrayList<>();
+            node.forEach(e -> list.add(convertJsonNode(e)));
+            return list;
+        }
+        if (node.isObject()) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            node.fields().forEachRemaining(e -> map.put(e.getKey(), convertJsonNode(e.getValue())));
+            return map;
+        }
+        return node.asText();
+    }
+
+    private String formatInput(Map<String, Object> input) {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Object> entry : input.entrySet()) {
+            sb.append(String.format("  - %s: %s%n", entry.getKey(), entry.getValue()));
+        }
+        return sb.toString();
     }
 }

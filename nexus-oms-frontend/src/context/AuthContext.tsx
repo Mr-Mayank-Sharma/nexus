@@ -58,7 +58,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(async (credentials: LoginRequest) => {
     setError(null)
     const response = await authApi.login(credentials)
+
+    if (!response.success) {
+      const msg = response.message || response.error || 'Invalid credentials'
+      setError(msg)
+      throw new Error(msg)
+    }
+
     const authData = response.data
+    if (!authData) {
+      const msg = 'Invalid response from server'
+      setError(msg)
+      throw new Error(msg)
+    }
 
     if (authData.mfaRequired) {
       setMfaRequired(true)

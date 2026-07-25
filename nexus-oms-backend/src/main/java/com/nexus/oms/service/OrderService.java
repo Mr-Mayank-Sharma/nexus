@@ -462,8 +462,31 @@ public class OrderService {
         return toOrderResponse(order);
     }
 
+    public Map<String, Long> getOrderStats(UUID tenantId) {
+        Map<String, Long> stats = new LinkedHashMap<>();
+        stats.put("activePicklists", orderRepository.countByTenantIdAndStatus(tenantId, "PENDING"));
+        stats.put("pendingItems", orderRepository.countByTenantIdAndStatus(tenantId, "CONFIRMED"));
+        stats.put("pickedItems", orderRepository.countByTenantIdAndStatus(tenantId, "ALLOCATED"));
+        stats.put("pendingPack", orderRepository.countByTenantIdAndStatus(tenantId, "ALLOCATED"));
+        stats.put("packing", orderRepository.countByTenantIdAndStatus(tenantId, "PICKING"));
+        stats.put("packed", orderRepository.countByTenantIdAndStatus(tenantId, "PACKED"));
+        stats.put("shipped", orderRepository.countByTenantIdAndStatus(tenantId, "SHIPPED"));
+        long completedToday = orderRepository.countByTenantIdAndCreatedAtAfter(tenantId, LocalDateTime.now().withHour(0).withMinute(0).withSecond(0));
+        stats.put("completedToday", completedToday);
+        return stats;
+    }
+
     private OrderResponse toOrderResponse(NxOrder order) {
         List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
+
+        // Populate customer name from the customer repository
+        String customerName = null;
+        if (order.getCustomerId() != null) {
+            customerName = customerRepository.findById(order.getCustomerId())
+                    .map(NxCustomer::getName)
+                    .orElse(null);
+        }
+
         return OrderResponse.builder()
                 .id(order.getId())
                 .tenantId(order.getTenantId())
@@ -471,6 +494,7 @@ public class OrderService {
                 .channel(order.getChannel())
                 .channelOrderId(order.getChannelOrderId())
                 .customerId(order.getCustomerId())
+                .customerName(customerName)
                 .status(order.getStatus())
                 .subStatus(order.getSubStatus())
                 .fulfillmentType(order.getFulfillmentType())

@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_integration_transform_mappings")
 @Data
@@ -34,6 +37,7 @@ public class IntegrationTransformMapping {
     private String targetFormat;
 
     @NotBlank
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "mapping_definition", columnDefinition = "jsonb", nullable = false)
     private String mappingDefinition;
 

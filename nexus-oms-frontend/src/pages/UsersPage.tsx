@@ -248,7 +248,7 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <Autocomplete value={search} onChange={setSearch} placeholder="Search by user name or ID..." minChars={0} className="flex-1 max-w-xs" />
             <PermissionGate resource="users" action="create">
-              <button onClick={() => { setRoleForm({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true }); setShowAssignModal(true) }} className="btn-primary text-sm">
+              <button onClick={() => { setRoleForm({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true }); setShowAssignModal(true) }} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Assign Role
               </button>
             </PermissionGate>
@@ -319,7 +319,7 @@ export default function UsersPage() {
         <>
           <div className="flex items-center justify-end">
             <PermissionGate resource="users" action="create">
-              <button onClick={() => { setTeamForm({ name: '', description: '', managerId: '' }); setShowCreateTeamModal(true) }} className="btn-primary text-sm">
+              <button onClick={() => { setTeamForm({ name: '', description: '', managerId: '' }); setShowCreateTeamModal(true) }} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Create Team
               </button>
             </PermissionGate>
@@ -379,7 +379,7 @@ export default function UsersPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-[var(--text-secondary)]">OFBiz-style security groups define permissions for users and roles</p>
-            <PermissionGate resource="users" action="create"><button className="btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button></PermissionGate>
+            <PermissionGate resource="users" action="create"><button className="enterprise-btn enterprise-btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button></PermissionGate>
           </div>
 
           {[
@@ -559,7 +559,7 @@ export default function UsersPage() {
                   </label>
                 ))}
                 <PermissionGate resource="users" action="edit">
-                  <button onClick={handleSetPermission} disabled={saving} className="btn-primary text-xs ml-auto">
+                  <button onClick={handleSetPermission} disabled={saving} className="enterprise-btn enterprise-btn-primary text-xs ml-auto">
                     {saving ? <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" /> : <Shield className="w-3.5 h-3.5" />}
                     Set Permission
                   </button>
@@ -607,9 +607,9 @@ export default function UsersPage() {
               </label>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowAssignModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowAssignModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="users" action="create">
-                <button onClick={handleAssignRole} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleAssignRole} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Shield className="w-4 h-4" />}
                   Assign
                 </button>
@@ -641,9 +641,9 @@ export default function UsersPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateTeamModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowCreateTeamModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="users" action="create">
-                <button onClick={handleCreateTeam} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleCreateTeam} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Users className="w-4 h-4" />}
                   Create
                 </button>

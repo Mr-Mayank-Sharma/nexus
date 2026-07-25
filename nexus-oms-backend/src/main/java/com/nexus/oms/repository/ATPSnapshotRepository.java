@@ -18,9 +18,10 @@ public interface ATPSnapshotRepository extends JpaRepository<NxATPSnapshot, UUID
     @Query("SELECT s FROM NxATPSnapshot s WHERE s.tenantId = :tenantId AND s.atpQuantity > 0")
     List<NxATPSnapshot> findAvailableStock(@Param("tenantId") UUID tenantId);
 
-    @Query("SELECT s FROM NxATPSnapshot s WHERE s.nodeId = :nodeId AND s.sku = :sku AND s.atpQuantity >= :quantity")
+    @Query("SELECT s FROM NxATPSnapshot s WHERE s.tenantId = :tenantId AND s.nodeId = :nodeId AND s.sku = :sku AND s.atpQuantity >= :quantity")
     List<NxATPSnapshot> findNodesWithAvailableStock(
         @Param("tenantId") UUID tenantId,
+        @Param("nodeId") UUID nodeId,
         @Param("sku") String sku,
         @Param("quantity") Integer quantity
     );

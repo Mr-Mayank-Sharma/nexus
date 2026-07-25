@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import ErrorBoundary from './components/layout/ErrorBoundary'
 import NotFoundPage from './pages/NotFoundPage'
@@ -86,6 +86,8 @@ const ReplenishmentPage = lazy(() => import('./pages/ReplenishmentPage'))
 const FreightAuditPage = lazy(() => import('./pages/FreightAuditPage'))
 const PromotionsPage = lazy(() => import('./pages/PromotionsPage'))
 const EndlessAislePage = lazy(() => import('./pages/EndlessAislePage'))
+const AnalyticsDashboardPage = lazy(() => import('./pages/AnalyticsDashboardPage'))
+const FindOrderPage = lazy(() => import('./pages/FindOrderPage'))
 
 function PageLoader() {
   return (
@@ -96,16 +98,19 @@ function PageLoader() {
 }
 
 export default function App() {
+  const location = useLocation()
   return (
-    <ErrorBoundary>
+    <ErrorBoundary key={location.pathname + location.search}>
     <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route index element={<LaunchPadPage />} />
+          <Route path="analytics-dashboard" element={<AnalyticsDashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/search" element={<FindOrderPage />} />
           <Route path="orders/new" element={<CreateOrderPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />
           <Route path="inventory" element={<InventoryPage />} />
@@ -115,7 +120,6 @@ export default function App() {
           <Route path="order-routing" element={<OrderRoutingPage />} />
           <Route path="integrations/bigcommerce" element={<BigCommercePage />} />
           <Route path="integrations/stores" element={<IntegrationStoresPage />} />
-          <Route path="integrations" element={<IntegrationStoresPage />} />
           <Route path="integration-hub" element={<IntegrationHubPage />} />
           <Route path="import-export" element={<ImportExportCenter />} />
           <Route path="notifications" element={<NotificationsCenter />} />

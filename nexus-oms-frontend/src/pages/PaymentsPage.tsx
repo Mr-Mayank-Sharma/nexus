@@ -116,7 +116,16 @@ export default function PaymentsPage() {
               <Plus className="w-3.5 h-3.5" /> Create Invoice
             </button>
           </PermissionGate>
-          <button className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+          <button className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" onClick={() => {
+            const headers = ['Transaction ID', 'Order', 'Customer', 'Method', 'Amount', 'Fee', 'Net', 'Status', 'Date']
+            const rows = filteredPayments.map(p => [p.transactionId, p.orderNumber, p.customer, p.method, String(p.amount), String(p.fee), String(p.netAmount), p.status, p.date])
+            const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+            const blob = new Blob([csv], { type: 'text/csv' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a'); a.href = url; a.download = `payments-${new Date().toISOString().split('T')[0]}.csv`; a.click()
+            URL.revokeObjectURL(url)
+            addToast({ type: 'success', title: `Exported ${filteredPayments.length} payments` })
+          }}>
             <Download className="w-3.5 h-3.5" /> Export
           </button>
         </div>

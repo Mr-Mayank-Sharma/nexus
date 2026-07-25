@@ -5,6 +5,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_workflows")
 @Data
@@ -29,6 +32,7 @@ public class Workflow {
     @Column(name = "trigger_type")
     private String triggerType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "trigger_config", columnDefinition = "jsonb")
     private String triggerConfig;
 
