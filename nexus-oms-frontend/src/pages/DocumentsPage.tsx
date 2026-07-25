@@ -158,7 +158,7 @@ export default function DocumentsPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Manage documents and files across entities</p>
         </div>
         <PermissionGate resource="settings" action="create">
-          <button onClick={openUpload} className="btn-primary text-sm">
+          <button onClick={openUpload} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> Upload Document
           </button>
         </PermissionGate>
@@ -177,11 +177,11 @@ export default function DocumentsPage() {
           className="input w-40"
           placeholder="Entity ID"
         />
-        <button onClick={handleFilterByEntity} className="btn-secondary text-sm">
+        <button onClick={handleFilterByEntity} className="enterprise-btn enterprise-btn-secondary text-sm">
           <Search className="w-4 h-4" /> Filter
         </button>
         {(entityType || search) && (
-          <button onClick={() => { setEntityType(''); setEntityId(''); setSearch(''); fetchDocs() }} className="btn-ghost text-sm text-[var(--text-secondary)]">
+          <button onClick={() => { setEntityType(''); setEntityId(''); setSearch(''); fetchDocs() }} className="enterprise-btn enterprise-btn-ghost text-sm text-[var(--text-secondary)]">
             <X className="w-4 h-4" /> Clear
           </button>
         )}
@@ -269,7 +269,7 @@ export default function DocumentsPage() {
                             <PermissionGate resource="settings" action="edit">
                               <button
                                 onClick={e => { e.stopPropagation(); openVersionUpload(doc.id) }}
-                                className="btn-secondary text-xs"
+                                className="enterprise-btn enterprise-btn-secondary text-xs"
                               >
                                 <Upload className="w-3.5 h-3.5" /> Upload New Version
                               </button>
@@ -386,8 +386,8 @@ export default function DocumentsPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowUploadModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleUpload} disabled={saving} className="btn-primary text-sm">
+              <button onClick={() => setShowUploadModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button onClick={handleUpload} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Upload className="w-4 h-4" />}
                 Upload
               </button>
@@ -422,8 +422,8 @@ export default function DocumentsPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowVersionModal(false)} className="btn-secondary text-sm">Cancel</button>
-              <button onClick={handleVersionUpload} disabled={saving} className="btn-primary text-sm">
+              <button onClick={() => setShowVersionModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button onClick={handleVersionUpload} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Upload className="w-4 h-4" />}
                 Upload
               </button>

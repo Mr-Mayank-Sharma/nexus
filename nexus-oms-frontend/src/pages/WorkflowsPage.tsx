@@ -176,7 +176,7 @@ export default function WorkflowsPage() {
           </div>
         </div>
         <PermissionGate resource="workflows" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> Create Workflow
           </button>
         </PermissionGate>
@@ -421,9 +421,9 @@ export default function WorkflowsPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="workflows" action="create">
-                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create
                 </button>
@@ -456,9 +456,9 @@ export default function WorkflowsPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowExecuteModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowExecuteModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="workflows" action="create">
-                <button onClick={handleExecute} disabled={executing} className="btn-primary text-sm">
+                <button onClick={handleExecute} disabled={executing} className="enterprise-btn enterprise-btn-primary text-sm">
                   {executing && <Loader2 className="w-4 h-4 animate-spin" />}
                   <Play className="w-4 h-4" /> Execute
                 </button>

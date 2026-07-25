@@ -3,7 +3,7 @@ import { ApiResponse } from '../types'
 
 export async function getDashboardKpis(): Promise<ApiResponse<Record<string, any>>> {
   try {
-    const { data } = await client.get('/dashboard')
+    const { data } = await client.get('/analytics/dashboard')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get dashboard KPIs'
@@ -13,7 +13,7 @@ export async function getDashboardKpis(): Promise<ApiResponse<Record<string, any
 
 export async function getOrderVelocity(hours: number = 24): Promise<ApiResponse<Record<string, any>>> {
   try {
-    const { data } = await client.get('/orders/stats', { params: { hours } })
+    const { data } = await client.get('/analytics/orders/velocity', { params: { hours } })
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get order velocity'
@@ -23,7 +23,7 @@ export async function getOrderVelocity(hours: number = 24): Promise<ApiResponse<
 
 export async function getCarrierPerformance(): Promise<ApiResponse<Record<string, any>>> {
   try {
-    const { data } = await client.get('/carriers/kpis')
+    const { data } = await client.get('/analytics/carrier-performance')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get carrier performance'
@@ -33,7 +33,7 @@ export async function getCarrierPerformance(): Promise<ApiResponse<Record<string
 
 export async function getCostBreakdown(): Promise<ApiResponse<Record<string, any>>> {
   try {
-    const { data } = await client.get('/shipping/kpis')
+    const { data } = await client.get('/analytics/cost-breakdown')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get cost breakdown'
@@ -43,7 +43,7 @@ export async function getCostBreakdown(): Promise<ApiResponse<Record<string, any
 
 export async function getLanePerformance(): Promise<ApiResponse<Record<string, any>>> {
   try {
-    const { data } = await client.get('/carriers/rates')
+    const { data } = await client.get('/analytics/lanes')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get lane performance'
@@ -53,7 +53,7 @@ export async function getLanePerformance(): Promise<ApiResponse<Record<string, a
 
 export async function getReturnsAnalytics(): Promise<ApiResponse<Record<string, any>>> {
   try {
-    const { data } = await client.get('/returns/analytics')
+    const { data } = await client.get('/analytics/returns')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get returns analytics'
@@ -63,7 +63,7 @@ export async function getReturnsAnalytics(): Promise<ApiResponse<Record<string, 
 
 export async function getActivity(): Promise<ApiResponse<any[]>> {
   try {
-    const { data } = await client.get('/dashboard/activity')
+    const { data } = await client.get('/analytics/activity')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get activity'

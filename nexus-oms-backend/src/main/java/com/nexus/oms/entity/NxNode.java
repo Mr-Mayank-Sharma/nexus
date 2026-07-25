@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_nodes")
 @Data
@@ -27,6 +30,7 @@ public class NxNode {
     @Column(nullable = false, length = 20)
     private String type;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String address;
 
@@ -42,6 +46,7 @@ public class NxNode {
     @Column(name = "cut_off_time")
     private LocalTime cutOffTime;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "carrier_config", columnDefinition = "jsonb")
     private String carrierConfig;
 

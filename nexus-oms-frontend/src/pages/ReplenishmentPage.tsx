@@ -50,25 +50,6 @@ const warehouses = [
   { id: 'wh-west', name: 'West DC' },
 ]
 
-function generateMockRules(): ReplenishmentRule[] {
-  return [
-    { id: 'r-1', ruleName: 'Auto-Reorder Electronics', sku: 'ELEC-001', warehouseId: 'wh-main', reorderPoint: 50, reorderQty: 200, targetQty: 300, priority: 'HIGH', isActive: true },
-    { id: 'r-2', ruleName: 'Bulk Restock Apparel', sku: 'APP-012', warehouseId: 'wh-main', reorderPoint: 100, reorderQty: 500, targetQty: 600, priority: 'MEDIUM', isActive: true },
-    { id: 'r-3', ruleName: 'Low Stock Alert Home', sku: 'HOME-005', warehouseId: 'wh-main', reorderPoint: 25, reorderQty: 100, targetQty: 125, priority: 'LOW', isActive: true },
-    { id: 'r-4', ruleName: 'Seasonal Reorder', sku: 'SEAS-003', warehouseId: 'wh-main', reorderPoint: 30, reorderQty: 150, targetQty: 200, priority: 'HIGH', isActive: false },
-  ]
-}
-
-function generateMockSuggestions(): ReplenishmentSuggestion[] {
-  const now = new Date().toISOString()
-  return [
-    { id: 's-1', sku: 'ELEC-001', warehouseId: 'wh-main', currentQty: 35, suggestedQty: 265, reorderPoint: 50, reorderQty: 200, status: 'PENDING', createdAt: now },
-    { id: 's-2', sku: 'APP-012', warehouseId: 'wh-main', currentQty: 80, suggestedQty: 420, reorderPoint: 100, reorderQty: 500, status: 'APPROVED', approvedBy: 'admin', approvedAt: now, createdAt: now },
-    { id: 's-3', sku: 'HOME-005', warehouseId: 'wh-main', currentQty: 15, suggestedQty: 110, reorderPoint: 25, reorderQty: 100, status: 'PENDING', createdAt: now },
-    { id: 's-4', sku: 'ELEC-002', warehouseId: 'wh-main', currentQty: 200, suggestedQty: 0, reorderPoint: 50, reorderQty: 200, status: 'REJECTED', notes: 'Not needed', createdAt: now },
-  ]
-}
-
 export default function ReplenishmentPage() {
   const { addToast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -96,13 +77,13 @@ export default function ReplenishmentPage() {
       const suggestionsData = suggestionsRes.status === 'fulfilled' ? (suggestionsRes.value.data as ReplenishmentSuggestion[]) : null
       const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data : null
 
-      setRules(rulesData && rulesData.length > 0 ? rulesData : generateMockRules())
-      setSuggestions(suggestionsData && suggestionsData.length > 0 ? suggestionsData : generateMockSuggestions())
-      setStats(statsData || { totalRules: 4, pendingSuggestions: 2, approvedToday: 1, rejectedToday: 1 })
+      setRules(rulesData || [])
+      setSuggestions(suggestionsData || [])
+      setStats(statsData || null)
     } catch {
-      setRules(generateMockRules())
-      setSuggestions(generateMockSuggestions())
-      setStats({ totalRules: 4, pendingSuggestions: 2, approvedToday: 1, rejectedToday: 1 })
+      setRules([])
+      setSuggestions([])
+      setStats(null)
     } finally {
       setLoading(false)
     }
@@ -120,6 +101,7 @@ export default function ReplenishmentPage() {
       await replenishmentApi.createRule({
         warehouseId: selectedWarehouse,
         ruleName: ruleForm.ruleName,
+        ruleType: 'MANUAL',
         sku: ruleForm.sku,
         reorderPoint: Number(ruleForm.reorderPoint),
         reorderQty: Number(ruleForm.reorderQty),

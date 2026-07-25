@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_routing_config")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -43,9 +46,11 @@ public class NxRoutingConfig {
     @Column(name = "accuracy_optimization_weight")
     private BigDecimal accuracyOptimizationWeight;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "preferred_carriers", columnDefinition = "jsonb")
     private String preferredCarriers;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "blacklisted_nodes", columnDefinition = "jsonb")
     private String blacklistedNodes;
 

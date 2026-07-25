@@ -105,7 +105,7 @@ const warehouses = [
 
 const dockStatusColors: Record<string, string> = {
   AVAILABLE: 'bg-emerald-100 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/30 dark:text-emerald-400',
-  OCCUPIED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] ring-blue-600/20 dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
+  OCCUPIED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] ring-[var(--nexus-primary-500)]/30 dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
   MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] ring-amber-600/20 dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
   CLOSED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] ring-gray-500/20 bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
 }
@@ -160,99 +160,6 @@ const defaultAppointmentForm = () => ({
   specialInstructions: '',
 })
 
-// ── Mock data generators (for when API returns empty) ──
-
-function generateMockDoors(): DockDoor[] {
-  const statuses: DockDoor['status'][] = ['AVAILABLE', 'OCCUPIED', 'MAINTENANCE', 'AVAILABLE', 'AVAILABLE', 'OCCUPIED', 'AVAILABLE', 'CLOSED', 'AVAILABLE', 'OCCUPIED', 'AVAILABLE', 'AVAILABLE']
-  const types: DockDoor['type'][] = ['INBOUND', 'OUTBOUND', 'BOTH', 'INBOUND', 'OUTBOUND', 'INBOUND', 'BOTH', 'OUTBOUND', 'INBOUND', 'OUTBOUND', 'INBOUND', 'BOTH']
-  const vehicles = ['TRK-4521', 'TRK-8834', 'TRK-1192', '', '', 'TRK-6671', '', '', 'TRK-3340', '', '', '']
-  const drivers = ['Mike Johnson', 'Sarah Lee', 'Carlos Ruiz', '', '', 'Tom Chen', '', '', 'Anna Kim', '', '', '']
-
-  return Array.from({ length: 12 }, (_, i) => ({
-    id: `door-${i + 1}`,
-    doorNumber: `D-${String(i + 1).padStart(2, '0')}`,
-    type: types[i],
-    status: statuses[i],
-    currentVehicle: vehicles[i] || undefined,
-    driverName: drivers[i] || undefined,
-    driverPhone: drivers[i] ? '555-01' + String(i).padStart(2, '0') : undefined,
-  }))
-}
-
-function generateMockYardLocations(): YardLocation[] {
-  const zones = ['A', 'A', 'A', 'B', 'B', 'B', 'C', 'C', 'D', 'D']
-  const types = ['TRAILER', 'TRAILER', 'STAGING', 'STAGING', 'PARKING', 'PARKING', 'TRAILER', 'STAGING', 'PARKING', 'TRAILER']
-  const statuses: YardLocation['status'][] = ['AVAILABLE', 'OCCUPIED', 'OCCUPIED', 'AVAILABLE', 'RESERVED', 'AVAILABLE', 'OCCUPIED', 'AVAILABLE', 'CLOSED', 'AVAILABLE']
-  const counts = [0, 3, 5, 0, 2, 0, 4, 0, 0, 1]
-  const maxes = [8, 8, 6, 8, 4, 10, 8, 6, 12, 8]
-  const vehicles = ['', 'TRK-4521', 'TRK-8834', '', 'TRK-1192', '', 'TRK-6671', '', '', 'TRK-3340']
-
-  return Array.from({ length: 10 }, (_, i) => ({
-    id: `yard-${i + 1}`,
-    locationCode: `${zones[i]}-${String(i + 1).padStart(2, '0')}`,
-    type: types[i],
-    status: statuses[i],
-    currentCount: counts[i],
-    maxCapacity: maxes[i],
-    zone: zones[i],
-    vehicleInfo: vehicles[i] || undefined,
-  }))
-}
-
-function generateMockAppointments(): Appointment[] {
-  const now = new Date()
-  return [
-    {
-      id: 'apt-1', appointmentNumber: 'APT-2026-001', type: 'INBOUND_DELIVERY',
-      carrierName: 'FastFreight Logistics', carrierCode: 'FFL', driverName: 'Mike Johnson',
-      driverPhone: '555-0101', trailerNumber: 'TRL-9921', licensePlate: 'TRK-4521',
-      status: 'IN_PROGRESS', dockDoor: 'D-03', arrivalStart: `${now.toISOString().slice(0, 10)}T08:00`,
-      arrivalEnd: `${now.toISOString().slice(0, 10)}T09:00`, estimatedArrival: `${now.toISOString().slice(0, 10)}T08:15`,
-      estimatedDeparture: `${now.toISOString().slice(0, 10)}T11:00`, loadCount: 2, palletCount: 18, pieceCount: 340,
-    },
-    {
-      id: 'apt-2', appointmentNumber: 'APT-2026-002', type: 'OUTBOUND_PICKUP',
-      carrierName: 'Swift Transport', carrierCode: 'SWF', driverName: 'Sarah Lee',
-      driverPhone: '555-0102', trailerNumber: 'TRL-4412', licensePlate: 'TRK-8834',
-      status: 'CHECKED_IN', dockDoor: 'D-05', arrivalStart: `${now.toISOString().slice(0, 10)}T09:00`,
-      arrivalEnd: `${now.toISOString().slice(0, 10)}T10:00`, estimatedArrival: `${now.toISOString().slice(0, 10)}T09:30`,
-      loadCount: 3, palletCount: 22, pieceCount: 520,
-    },
-    {
-      id: 'apt-3', appointmentNumber: 'APT-2026-003', type: 'CROSS_DOCK',
-      carrierName: 'Regional Haulers', carrierCode: 'RHL', driverName: 'Carlos Ruiz',
-      driverPhone: '555-0103', trailerNumber: 'TRL-7733', licensePlate: 'TRK-1192',
-      status: 'CONFIRMED', arrivalStart: `${now.toISOString().slice(0, 10)}T10:00`,
-      arrivalEnd: `${now.toISOString().slice(0, 10)}T11:00`, estimatedArrival: `${now.toISOString().slice(0, 10)}T10:30`,
-      loadCount: 1, palletCount: 12, pieceCount: 200,
-    },
-    {
-      id: 'apt-4', appointmentNumber: 'APT-2026-004', type: 'RETURN',
-      carrierName: 'Metro Delivery', carrierCode: 'MTD', driverName: 'Lisa Park',
-      driverPhone: '555-0104', licensePlate: 'TRK-5567',
-      status: 'REQUESTED', arrivalStart: `${now.toISOString().slice(0, 10)}T11:00`,
-      arrivalEnd: `${now.toISOString().slice(0, 10)}T12:00`, estimatedArrival: `${now.toISOString().slice(0, 10)}T11:30`,
-      palletCount: 6, pieceCount: 85,
-    },
-    {
-      id: 'apt-5', appointmentNumber: 'APT-2026-005', type: 'INBOUND_DELIVERY',
-      carrierName: 'Pacific Coast Freight', carrierCode: 'PCF', driverName: 'Tom Chen',
-      driverPhone: '555-0105', trailerNumber: 'TRL-2288', licensePlate: 'TRK-6671',
-      status: 'COMPLETED', dockDoor: 'D-02', arrivalStart: `${now.toISOString().slice(0, 10)}T06:00`,
-      arrivalEnd: `${now.toISOString().slice(0, 10)}T07:00`, estimatedArrival: `${now.toISOString().slice(0, 10)}T06:30`,
-      loadCount: 4, palletCount: 30, pieceCount: 610,
-    },
-    {
-      id: 'apt-6', appointmentNumber: 'APT-2026-006', type: 'OUTBOUND_PICKUP',
-      carrierName: 'National Express', carrierCode: 'NEX', driverName: 'Anna Kim',
-      driverPhone: '555-0106', licensePlate: 'TRK-3340',
-      status: 'CONFIRMED', arrivalStart: `${now.toISOString().slice(0, 10)}T13:00`,
-      arrivalEnd: `${now.toISOString().slice(0, 10)}T14:00`, estimatedArrival: `${now.toISOString().slice(0, 10)}T13:15`,
-      loadCount: 2, palletCount: 14, pieceCount: 280,
-    },
-  ]
-}
-
 const trailerStatusColors: Record<string, string> = {
   IN_YARD: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
   DOCKED: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
@@ -265,39 +172,6 @@ const defaultTrailerForm = () => ({
   carrierId: '',
   licensePlate: '',
 })
-
-function generateMockTrailers(): Trailer[] {
-  const now = new Date().toISOString()
-  const earlier = new Date(Date.now() - 3600000).toISOString()
-  return [
-    { id: 'trl-1', trailerNumber: 'TRL-9921', carrierId: 'FFL', warehouseId: 'wh-main', licensePlate: 'TRK-4521', status: 'DOCKED', currentDockDoor: 'D-03', checkInTime: earlier, dockTime: earlier, loaded: true, palletCount: 18, sealNumber: 'SL-2201' },
-    { id: 'trl-2', trailerNumber: 'TRL-4412', carrierId: 'SWF', warehouseId: 'wh-main', licensePlate: 'TRK-8834', status: 'DOCKED', currentDockDoor: 'D-05', checkInTime: earlier, dockTime: earlier, loaded: false },
-    { id: 'trl-3', trailerNumber: 'TRL-7733', carrierId: 'RHL', warehouseId: 'wh-main', licensePlate: 'TRK-1192', status: 'IN_YARD', checkInTime: earlier, loaded: false },
-    { id: 'trl-4', trailerNumber: 'TRL-2288', carrierId: 'PCF', warehouseId: 'wh-main', licensePlate: 'TRK-6671', status: 'IN_YARD', checkInTime: now, loaded: true, palletCount: 30 },
-    { id: 'trl-5', trailerNumber: 'TRL-5567', carrierId: 'MTD', warehouseId: 'wh-main', licensePlate: 'TRK-5567', status: 'MAINTENANCE', notes: 'Tire replacement needed' },
-    { id: 'trl-6', trailerNumber: 'TRL-1100', carrierId: 'NEX', warehouseId: 'wh-main', status: 'IN_TRANSIT', checkOutTime: now, loaded: true, palletCount: 14, sealNumber: 'SL-2205' },
-  ]
-}
-
-function generateMockTrailerEvents(): TrailerEvent[] {
-  const now = new Date().toISOString()
-  const earlier = new Date(Date.now() - 3600000).toISOString()
-  const earlier2 = new Date(Date.now() - 7200000).toISOString()
-  return [
-    { id: 'te-1', trailerId: 'trl-1', eventType: 'CHECKED_IN', performedBy: 'yard-manager', performedAt: earlier2, details: 'Arrived at gate A' },
-    { id: 'te-2', trailerId: 'trl-1', eventType: 'DOCKED', performedBy: 'yard-manager', performedAt: earlier, details: 'Assigned to D-03' },
-    { id: 'te-3', trailerId: 'trl-3', eventType: 'CHECKED_IN', performedBy: 'gate-guard', performedAt: earlier, details: 'Arrived at gate B' },
-    { id: 'te-4', trailerId: 'trl-5', eventType: 'MAINTENANCE_FLAG', performedBy: 'yard-manager', performedAt: now, details: 'Tire damage reported' },
-  ]
-}
-
-function generateMockTrailerStats() {
-  return { total: 6, inYard: 2, docked: 2, inTransit: 1, maintenance: 1 }
-}
-
-function generateMockStats(): YardStats {
-  return { dockUtilization: 72, appointmentsToday: 12, inProgressNow: 3, completedToday: 7, noShows: 1 }
-}
 
 // ── Helpers ──
 
@@ -328,7 +202,7 @@ export default function YardDockPage() {
   const [yardLocations, setYardLocations] = useState<YardLocation[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [calendarSlots, setCalendarSlots] = useState<CalendarSlot[]>([])
-  const [stats, setStats] = useState<YardStats>(generateMockStats())
+  const [stats, setStats] = useState<YardStats | null>(null)
 
   const [showAppointmentModal, setShowAppointmentModal] = useState(false)
   const [aptForm, setAptForm] = useState(defaultAppointmentForm())
@@ -364,27 +238,24 @@ export default function YardDockPage() {
       const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data : null
       const calData = calRes.status === 'fulfilled' ? calRes.value.data : null
 
-      setDockDoors(doorsData && doorsData.length > 0 ? doorsData : generateMockDoors())
-      setYardLocations(yardData && yardData.length > 0 ? yardData : generateMockYardLocations())
-      setAppointments(aptsData && aptsData.length > 0 ? aptsData : generateMockAppointments())
-      setStats(statsData && typeof statsData.dockUtilization === 'number' ? statsData : generateMockStats())
+      setDockDoors(doorsData || [])
+      setYardLocations(yardData || [])
+      setAppointments(aptsData || [])
+      setStats(statsData || null)
 
       if (calData && Array.isArray(calData)) {
         setCalendarSlots(calData)
-      } else {
-        buildCalendarSlots(aptsData && aptsData.length > 0 ? aptsData : generateMockAppointments())
+      } else if (aptsData && aptsData.length > 0) {
+        buildCalendarSlots(aptsData)
       }
 
-      setTrailers(generateMockTrailers())
-      setTrailerStats(generateMockTrailerStats())
+      setTrailers([])
+      setTrailerStats({ total: 0, inYard: 0, docked: 0, inTransit: 0, maintenance: 0 })
     } catch {
-      setDockDoors(generateMockDoors())
-      setYardLocations(generateMockYardLocations())
-      setAppointments(generateMockAppointments())
-      setStats(generateMockStats())
-      buildCalendarSlots(generateMockAppointments())
-      setTrailers(generateMockTrailers())
-      setTrailerStats(generateMockTrailerStats())
+      setDockDoors([])
+      setYardLocations([])
+      setAppointments([])
+      setStats(null)
     } finally {
       setLoading(false)
     }
@@ -590,7 +461,7 @@ export default function YardDockPage() {
   function handleShowTrailerEvents(trailerId: string) {
     setSelectedTrailerId(trailerId)
     setTrailerEvents(
-      generateMockTrailerEvents().filter((e) => e.trailerId === trailerId),
+      [].filter((e: TrailerEvent) => e.trailerId === trailerId),
     )
     setShowEventsModal(true)
   }
@@ -960,7 +831,7 @@ return (
               slot.appointments.length > 0
                 ? 'border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)] hover:border-[var(--nexus-primary-300)] dark:hover:border-[var(--nexus-primary-700)]'
                 : 'border-[var(--border-default)] hover:border-[var(--border-default)] dark:hover:border-[var(--border-default)]',
-              selectedSlotHour === slot.hour && 'ring-2 ring-blue-500/30 border-[var(--nexus-primary-400)] dark:border-[var(--nexus-primary-600)]',
+              selectedSlotHour === slot.hour && 'ring-2 ring-[var(--nexus-primary-500)]/30 border-[var(--nexus-primary-400)] dark:border-[var(--nexus-primary-600)]',
             )}
           >
             <div className="w-20 flex-shrink-0 flex items-center justify-center bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-l-xl border-r border-[var(--border-default)]">

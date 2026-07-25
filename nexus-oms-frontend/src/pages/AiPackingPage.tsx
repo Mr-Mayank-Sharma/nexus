@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import {
   Package, Box, Search, CheckCircle, AlertTriangle, Clock,
   Layers, Maximize, Minimize, RotateCcw, Shield,
@@ -8,41 +9,30 @@ import {
 import clsx from 'clsx'
 import { getPackagingPlan } from '../api/aiAgents'
 import type { AiPackagingPlan, AiBox } from '../api/aiAgents'
+import { getOrders } from '../api/orders'
+import type { Order } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
 
-interface MockOrder {
-  id: string
-  items: { sku: string; name: string; qty: number }[]
+interface SimpleOrderItem {
+  sku: string
+  name: string
+  qty: number
 }
 
-const MOCK_ORDERS: MockOrder[] = [
-  {
-    id: 'ORD-10230',
-    items: [
-      { sku: 'LAP-001', name: 'Laptop Pro 15"', qty: 2 },
-      { sku: 'KB-001', name: 'Wireless Keyboard', qty: 1 },
-      { sku: 'MOU-001', name: 'Wireless Mouse', qty: 3 },
-    ],
-  },
-  {
-    id: 'ORD-10231',
-    items: [
-      { sku: 'MON-001', name: '27" Monitor', qty: 2 },
-      { sku: 'LAP-002', name: 'Laptop Air 13"', qty: 1 },
-      { sku: 'TAB-001', name: 'Tablet 11"', qty: 1 },
-      { sku: 'KB-002', name: 'Mechanical Keyboard', qty: 1 },
-      { sku: 'MOU-002', name: 'Ergonomic Mouse', qty: 2 },
-    ],
-  },
-  {
-    id: 'ORD-10232',
-    items: [
-      { sku: 'HD-001', name: 'External SSD 1TB', qty: 1 },
-      { sku: 'USB-001', name: 'USB-C Hub', qty: 1 },
-    ],
-  },
-]
+interface SimpleOrder {
+  id: string
+  items: SimpleOrderItem[]
+}
+
+const fromApiOrder = (o: Order): SimpleOrder => ({
+  id: o.id || o.orderNumber || o.orderId || '',
+  items: (o.items ?? o.lineItems ?? []).map((i: any) => ({
+    sku: i.sku ?? i.productSku ?? '',
+    name: i.name ?? i.productName ?? i.description ?? '',
+    qty: i.quantity ?? i.qty ?? 1,
+  })),
+})
 
 const RECENT_PACKS = [
   { order: 'ORD-10228', date: '10 min ago', boxes: 2, weight: '8.2 kg', status: 'accepted' as const },
@@ -76,7 +66,7 @@ const INSIGHTS = [
 
 export default function AiPackingPage() {
   const [search, setSearch] = useState('')
-  const [selectedOrder, setSelectedOrder] = useState<MockOrder | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<SimpleOrder | null>(null)
   const [plan, setPlan] = useState<AiPackagingPlan | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -85,14 +75,24 @@ export default function AiPackingPage() {
   const [adjustedBoxes, setAdjustedBoxes] = useState<AiBox[] | null>(null)
   const [expandedBox, setExpandedBox] = useState<string | null>(null)
 
+  const { data: ordersData } = useQuery({
+    queryKey: ['packing-orders'],
+    queryFn: async () => {
+      const res = await getOrders()
+      return (res?.data ?? []).map(fromApiOrder)
+    },
+  })
+
+  const orders = ordersData ?? []
+
   const orderSuggestions = useMemo(() => {
     if (!search.trim()) return []
-    return MOCK_ORDERS.filter(o =>
+    return orders.filter(o =>
       o.id.toLowerCase().includes(search.toLowerCase())
     )
-  }, [search])
+  }, [search, orders])
 
-  const selectOrder = (order: MockOrder) => {
+  const selectOrder = (order: SimpleOrder) => {
     setSelectedOrder(order)
     setPlan(null)
     setError('')
@@ -215,9 +215,9 @@ export default function AiPackingPage() {
                 ))}
               </div>
             )}
-            {!search.trim() && (
+            {!search.trim() && orders.length > 0 && (
               <div className="mt-2 space-y-1">
-                {MOCK_ORDERS.map(order => (
+                {orders.slice(0, 5).map(order => (
                   <button
                     key={order.id}
                     onClick={() => selectOrder(order)}

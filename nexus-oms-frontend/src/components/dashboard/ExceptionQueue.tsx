@@ -31,7 +31,7 @@ export default function ExceptionQueue() {
           <h3 className="text-sm font-semibold text-gray-900">Exception Queue</h3>
           <p className="text-xs text-gray-500">{exceptions.length} pending exceptions</p>
         </div>
-        <button className="btn-ghost text-xs">View all</button>
+        <button className="enterprise-btn enterprise-btn-ghost text-xs">View all</button>
       </div>
       <div className="divide-y divide-gray-100">
         {exceptions.map((exc) => (
@@ -53,7 +53,7 @@ export default function ExceptionQueue() {
               <p className="text-sm text-gray-700 mt-0.5">{exc.description}</p>
               <p className="text-xs text-gray-400 mt-0.5">Order {exc.orderId}</p>
             </div>
-            <button className="btn-ghost text-xs text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+            <button className="enterprise-btn enterprise-btn-ghost text-xs text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
               <CheckCircle className="w-3.5 h-3.5" />
               Resolve
             </button>

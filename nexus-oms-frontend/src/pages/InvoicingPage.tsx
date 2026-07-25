@@ -476,7 +476,7 @@ export default function InvoicingPage() {
               <Autocomplete value={invoiceSearch} onChange={setInvoiceSearch} placeholder="Search invoices..." minChars={0} />
             </div>
             <PermissionGate resource="invoicing" action="create">
-              <button onClick={() => setShowCreateInvoice(true)} className="btn-primary text-sm">
+              <button onClick={() => setShowCreateInvoice(true)} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Create Invoice
               </button>
             </PermissionGate>
@@ -563,7 +563,7 @@ export default function InvoicingPage() {
               {/* Actions */}
               <div className="flex items-center gap-3 pt-2">
                 <PermissionGate resource="invoicing" action="edit">
-                  <button onClick={() => openRecordPayment(selectedInvoice)} className="btn-primary text-sm">
+                  <button onClick={() => openRecordPayment(selectedInvoice)} className="enterprise-btn enterprise-btn-primary text-sm">
                     <DollarSign className="w-4 h-4" /> Record Payment
                   </button>
                 </PermissionGate>
@@ -675,7 +675,7 @@ export default function InvoicingPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
           <Autocomplete value={paymentSearch} onChange={setPaymentSearch} placeholder="Search payments..." minChars={0} />
           <PermissionGate resource="invoicing" action="edit">
-            <button onClick={() => openRecordPayment()} className="btn-primary text-sm">
+            <button onClick={() => openRecordPayment()} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Record Payment
               </button>
           </PermissionGate>
@@ -748,7 +748,7 @@ export default function InvoicingPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <Autocomplete value={memoSearch} onChange={setMemoSearch} placeholder="Search credit memos..." minChars={0} />
             <PermissionGate resource="invoicing" action="create">
-              <button onClick={() => setShowCreateMemo(true)} className="btn-primary text-sm">
+              <button onClick={() => setShowCreateMemo(true)} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Create Credit Memo
               </button>
             </PermissionGate>
@@ -891,9 +891,9 @@ export default function InvoicingPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => { setShowCreateInvoice(false); resetInvForm() }} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => { setShowCreateInvoice(false); resetInvForm() }} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="create">
-                <button onClick={handleCreateInvoice} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleCreateInvoice} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Create Invoice
                 </button>
@@ -950,9 +950,9 @@ export default function InvoicingPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowRecordPayment(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowRecordPayment(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="edit">
-                <button onClick={handleRecordPayment} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleRecordPayment} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Record Payment
                 </button>
@@ -1004,9 +1004,9 @@ export default function InvoicingPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateMemo(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowCreateMemo(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="create">
-                <button onClick={handleCreateMemo} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleCreateMemo} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Create Memo
                 </button>
@@ -1039,9 +1039,9 @@ export default function InvoicingPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowRefund(null)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowRefund(null)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="invoicing" action="delete">
-                <button onClick={handleRefund} disabled={saving} className="btn-primary text-sm bg-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-700)]">
+                <button onClick={handleRefund} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm bg-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-700)]">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Process Refund
                 </button>

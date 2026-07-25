@@ -110,7 +110,7 @@ export default function RoutingRulesPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Configure order routing logic for fulfillment allocation</p>
         </div>
         <PermissionGate resource="routing" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Rule
           </button>
         </PermissionGate>
@@ -211,9 +211,9 @@ export default function RoutingRulesPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="routing" action={editingRule ? 'edit' : 'create'}>
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingRule ? 'Update' : 'Create'}
                 </button>

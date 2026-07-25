@@ -9,17 +9,17 @@
      ══════════════════════════════════════════════════════════════ */
 
   :root {
-    /* ── Brand Palette ── */
-    --nexus-primary-50:  #EFF6FF;
-    --nexus-primary-100: #DBEAFE;
-    --nexus-primary-200: #BFDBFE;
-    --nexus-primary-300: #93C5FD;
-    --nexus-primary-400: #60A5FA;
-    --nexus-primary-500: #3B82F6;
-    --nexus-primary-600: #2563EB;
-    --nexus-primary-700: #1D4ED8;
-    --nexus-primary-800: #1E40AF;
-    --nexus-primary-900: #1E3A8A;
+    /* ── Brand Palette (Indigo) ── */
+    --nexus-primary-50:  #EEF2FF;
+    --nexus-primary-100: #E0E7FF;
+    --nexus-primary-200: #C7D2FE;
+    --nexus-primary-300: #A5B4FC;
+    --nexus-primary-400: #818CF8;
+    --nexus-primary-500: #6366F1;
+    --nexus-primary-600: #4F46E5;
+    --nexus-primary-700: #4338CA;
+    --nexus-primary-800: #3730A3;
+    --nexus-primary-900: #312E81;
 
     /* ── Neutral Palette (Slate) ── */
     --nexus-gray-25:  #FCFCFD;
@@ -73,14 +73,14 @@
     --surface-overlay:  #FFFFFF;
     --surface-muted:    #F1F5F9;
     --surface-inset:    #F8FAFC;
-    --surface-brand:    #EFF6FF;
+    --surface-brand:    #EEF2FF;
 
     /* ── Text Colors ── */
     --text-primary:    #0F172A;
     --text-secondary:  #475569;
     --text-tertiary:   #94A3B8;
     --text-inverse:    #FFFFFF;
-    --text-brand:      #2563EB;
+    --text-brand:      #4F46E5;
     --text-on-brand:   #FFFFFF;
     --text-success:    #059669;
     --text-warning:    #D97706;
@@ -92,8 +92,8 @@
     --border-default:   #E2E8F0;
     --border-subtle:    #F1F5F9;
     --border-strong:    #CBD5E1;
-    --border-focus:     #2563EB;
-    --border-brand:     #BFDBFE;
+    --border-focus:     #4F46E5;
+    --border-brand:     #C7D2FE;
     --border-success:   #D1FAE5;
     --border-warning:   #FEF3C7;
     --border-error:     #FEE2E2;
@@ -103,7 +103,7 @@
     /* ── Interactive States ── */
     --interactive-hover:      #F1F5F9;
     --interactive-pressed:    #E2E8F0;
-    --interactive-selected:   #EFF6FF;
+    --interactive-selected:   #EEF2FF;
     --interactive-disabled:   #F8FAFC;
 
     /* ── Elevation (Light) ── */
@@ -113,7 +113,7 @@
     --elevation-3: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
     --elevation-4: 0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
     --elevation-5: 0 20px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
-    --elevation-ring: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    --elevation-ring: 0 0 0 3px rgba(79, 70, 229, 0.12);
 
     /* ── Spacing Scale ── */
     --space-0:  0;
@@ -259,14 +259,14 @@
     --surface-overlay:  #1E293B;
     --surface-muted:    #1E293B;
     --surface-inset:    #0F172A;
-    --surface-brand:    rgba(37, 99, 235, 0.12);
+    --surface-brand:    rgba(79, 70, 229, 0.12);
 
     /* ── Text Colors (Dark) ── */
     --text-primary:    #F1F5F9;
     --text-secondary:  #94A3B8;
     --text-tertiary:   #64748B;
     --text-inverse:    #0F172A;
-    --text-brand:      #60A5FA;
+    --text-brand:      #818CF8;
     --text-on-brand:   #FFFFFF;
     --text-success:    #34D399;
     --text-warning:    #FBBF24;
@@ -278,8 +278,8 @@
     --border-default:   #1E293B;
     --border-subtle:    #1E293B;
     --border-strong:    #334155;
-    --border-focus:     #3B82F6;
-    --border-brand:     rgba(59, 130, 246, 0.3);
+    --border-focus:     #6366F1;
+    --border-brand:     rgba(99, 102, 241, 0.3);
     --border-success:   rgba(16, 185, 129, 0.25);
     --border-warning:   rgba(245, 158, 11, 0.25);
     --border-error:     rgba(239, 68, 68, 0.25);
@@ -289,7 +289,7 @@
     /* ── Interactive States (Dark) ── */
     --interactive-hover:      rgba(148, 163, 184, 0.08);
     --interactive-pressed:    rgba(148, 163, 184, 0.12);
-    --interactive-selected:   rgba(37, 99, 235, 0.12);
+    --interactive-selected:   rgba(79, 70, 229, 0.12);
     --interactive-disabled:   rgba(148, 163, 184, 0.04);
 
     /* ── Elevation (Dark — heavier shadows) ── */
@@ -298,7 +298,7 @@
     --elevation-3: 0 4px 6px -1px rgba(0, 0, 0, 0.28), 0 2px 4px -2px rgba(0, 0, 0, 0.16);
     --elevation-4: 0 10px 15px -3px rgba(0, 0, 0, 0.32), 0 4px 6px -4px rgba(0, 0, 0, 0.16);
     --elevation-5: 0 20px 25px -5px rgba(0, 0, 0, 0.36), 0 8px 10px -6px rgba(0, 0, 0, 0.16);
-    --elevation-ring: 0 0 0 3px rgba(59, 130, 246, 0.24);
+    --elevation-ring: 0 0 0 3px rgba(99, 102, 241, 0.24);
 
     /* ── Semantic Colors (Dark) ── */
     --nexus-success-50:  rgba(16, 185, 129, 0.1);

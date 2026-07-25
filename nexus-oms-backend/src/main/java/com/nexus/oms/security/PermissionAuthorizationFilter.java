@@ -24,7 +24,7 @@ public class PermissionAuthorizationFilter extends OncePerRequestFilter {
     private static final int FORBIDDEN = 403;
 
     private static final List<String> PUBLIC_PATHS = List.of(
-        "/auth/", "/swagger-ui/", "/v3/api-docs/", "/actuator/health", "/webhooks/"
+        "/auth/", "/swagger-ui/", "/v3/api-docs/", "/actuator/health", "/webhooks/", "/ws/"
     );
 
     private static final List<String> PERMIT_ALL_PATHS = List.of();

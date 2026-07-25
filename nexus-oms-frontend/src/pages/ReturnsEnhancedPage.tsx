@@ -113,53 +113,7 @@ const CONDITION_DISPOSITION_MAP: Record<ItemCondition, Disposition> = {
 
 const GRADE_ORDER: Record<Grade, number> = { A: 5, B: 4, C: 3, D: 2, F: 1 }
 
-function generateMockRmas(): RmaRecord[] {
-  const statuses: RmaStatus[] = ['PENDING_APPROVAL', 'AUTHORIZED', 'IN_TRANSIT', 'RECEIVED', 'INSPECTED', 'COMPLETED', 'REJECTED']
-  const reasons = ['Defective product', 'Wrong size', 'Damaged in transit', 'Not as described', 'Changed mind', 'Quality issue']
-  const reasonTypes = ['Defective', 'Damaged in Transit', 'Wrong Item', 'Not Needed', 'Quality Issue', 'Other']
-  const customers = ['Alice Johnson', 'Bob Smith', 'Carol Davis', 'David Wilson', 'Eva Martinez', 'Frank Brown', 'Grace Lee', 'Henry Taylor']
-  const products = [
-    { sku: 'TEE-BLK-001', name: 'Classic Black Tee', price: 29.99 },
-    { sku: 'TEE-WHT-002', name: 'Essential White Tee', price: 27.99 },
-    { sku: 'HOD-NAV-003', name: 'Navy Zip Hoodie', price: 69.99 },
-    { sku: 'CAP-RED-004', name: 'Red Baseball Cap', price: 24.99 },
-    { sku: 'JOG-GRY-005', name: 'Grey Joggers', price: 49.99 },
-    { sku: 'JKT-BLK-006', name: 'Black Bomber Jacket', price: 129.99 },
-  ]
 
-  return Array.from({ length: 25 }, (_, i) => {
-    const status = statuses[i % statuses.length]
-    const cust = customers[i % customers.length]
-    const prod = products[i % products.length]
-    const reasonIdx = i % reasons.length
-    return {
-      id: `rma-${1000 + i}`,
-      rmaNumber: `RMA-2024-${String(1000 + i).slice(-4)}`,
-      orderNumber: `ORD-${String(5000 + i).slice(-4)}`,
-      customer: cust,
-      reason: reasons[reasonIdx],
-      reasonType: reasonTypes[reasonIdx],
-      status,
-      date: new Date(2024, 6, 10 + i).toISOString().slice(0, 10),
-      value: prod.price * (1 + (i % 3)),
-      items: [
-        {
-          id: `item-${i}`,
-          sku: prod.sku,
-          productName: prod.name,
-          quantity: 1 + (i % 3),
-          condition: '',
-          grade: '',
-          disposition: '',
-          conditionNotes: '',
-          unitPrice: prod.price,
-        },
-      ],
-    }
-  })
-}
-
-const MOCK_RMAS = generateMockRmas()
 
 const MONTHLY_RETURN_TREND = [
   { month: 'Jan', returns: 42, totalOrders: 2100 },

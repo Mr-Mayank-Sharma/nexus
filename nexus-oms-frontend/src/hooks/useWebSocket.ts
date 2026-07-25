@@ -1,7 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import SockJS from 'sockjs-client';
-import { Client } from 'stompjs';
+import { Client } from '@stomp/stompjs';
 import { useAuth } from '../context/AuthContext';
+
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
 export interface WebSocketMessage {
   type: string;
@@ -23,99 +25,121 @@ export interface UseWebSocketOptions {
 export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const { token } = useAuth();
   const stompClient = useRef<Client | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 5;
-  const [isConnected, setIsConnected] = useState(false);
+  const maxReconnectAttempts = 3;
+  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const subscribe = useCallback((client: Client) => {
+    client.subscribe('/topic/orders', (message) => {
+      const payload = JSON.parse(message.body) as WebSocketMessage;
+      setLastMessage(payload);
+      options.onOrderUpdate?.(payload);
+    });
+
+    client.subscribe('/topic/inventory', (message) => {
+      const payload = JSON.parse(message.body) as WebSocketMessage;
+      setLastMessage(payload);
+      options.onInventoryAlert?.(payload);
+    });
+
+    client.subscribe('/topic/shipments', (message) => {
+      const payload = JSON.parse(message.body) as WebSocketMessage;
+      setLastMessage(payload);
+      options.onShipmentUpdate?.(payload);
+    });
+
+    client.subscribe('/topic/system', (message) => {
+      const payload = JSON.parse(message.body) as WebSocketMessage;
+      setLastMessage(payload);
+      options.onSystemAlert?.(payload);
+    });
+
+    client.subscribe('/topic/dashboard', (message) => {
+      const payload = JSON.parse(message.body) as WebSocketMessage;
+      setLastMessage(payload);
+      options.onDashboardUpdate?.(payload);
+    });
+
+    client.subscribe('/topic/users', (message) => {
+      const payload = JSON.parse(message.body) as WebSocketMessage;
+      setLastMessage(payload);
+      options.onUserStatus?.(payload);
+    });
+
+    client.subscribe('/user/queue/notifications', (message) => {
+      const payload = JSON.parse(message.body) as WebSocketMessage;
+      setLastMessage(payload);
+      options.onNotification?.(payload);
+    });
+  }, [options]);
 
   const connect = useCallback(() => {
     if (!token) return;
 
+    setStatus('connecting');
+    setError(null);
+
     try {
+      // Use relative URL through Vite proxy (which has ws: true configured)
+      // to avoid SockJS connection storms hitting the backend directly.
+      // In production, same-origin through reverse proxy.
       const wsUrl = `${window.location.protocol}//${window.location.host}/api/v1/ws`;
       const socket = new SockJS(wsUrl);
-      const client = new Client();
 
-      client.configure({
-        webSocketFactory: () => socket,
+      const client = new Client({
+        webSocketFactory: () => socket as unknown as WebSocket,
         connectHeaders: {
           Authorization: `Bearer ${token}`,
         },
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
+        heartbeatIncoming: 10000,
+        heartbeatOutgoing: 10000,
         reconnectDelay: 5000,
         onConnect: () => {
-          console.log('WebSocket connected');
-          setIsConnected(true);
+          setStatus('connected');
+          setError(null);
           reconnectAttempts.current = 0;
-
-          // Subscribe to topics
-          client.subscribe('/topic/orders', (message) => {
-            const payload = JSON.parse(message.body) as WebSocketMessage;
-            setLastMessage(payload);
-            options.onOrderUpdate?.(payload);
-          });
-
-          client.subscribe('/topic/inventory', (message) => {
-            const payload = JSON.parse(message.body) as WebSocketMessage;
-            setLastMessage(payload);
-            options.onInventoryAlert?.(payload);
-          });
-
-          client.subscribe('/topic/shipments', (message) => {
-            const payload = JSON.parse(message.body) as WebSocketMessage;
-            setLastMessage(payload);
-            options.onShipmentUpdate?.(payload);
-          });
-
-          client.subscribe('/topic/system', (message) => {
-            const payload = JSON.parse(message.body) as WebSocketMessage;
-            setLastMessage(payload);
-            options.onSystemAlert?.(payload);
-          });
-
-          client.subscribe('/topic/dashboard', (message) => {
-            const payload = JSON.parse(message.body) as WebSocketMessage;
-            setLastMessage(payload);
-            options.onDashboardUpdate?.(payload);
-          });
-
-          client.subscribe('/topic/users', (message) => {
-            const payload = JSON.parse(message.body) as WebSocketMessage;
-            setLastMessage(payload);
-            options.onUserStatus?.(payload);
-          });
-
-          // Subscribe to user-specific notifications
-          client.subscribe('/user/queue/notifications', (message) => {
-            const payload = JSON.parse(message.body) as WebSocketMessage;
-            setLastMessage(payload);
-            options.onNotification?.(payload);
-          });
+          subscribe(client);
         },
         onStompError: (frame) => {
-          console.error('WebSocket error:', frame.headers['message']);
-          setIsConnected(false);
-          
+          const msg = frame.headers['message'] || 'STOMP protocol error';
+          setError(msg);
+          setStatus('error');
+
           if (reconnectAttempts.current < maxReconnectAttempts) {
             reconnectAttempts.current++;
             const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
             reconnectTimeoutRef.current = setTimeout(connect, delay);
           }
         },
+        onWebSocketError: () => {
+          setError('WebSocket transport unavailable');
+          setStatus('error');
+          if (reconnectAttempts.current < maxReconnectAttempts) {
+            reconnectAttempts.current++;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
+            reconnectTimeoutRef.current = setTimeout(connect, delay);
+          }
+        },
+        onWebSocketClose: () => {
+          if (status !== 'error') {
+            setStatus('disconnected');
+          }
+        },
         onDisconnect: () => {
-          console.log('WebSocket disconnected');
-          setIsConnected(false);
+          setStatus('disconnected');
         },
       });
 
       client.activate();
       stompClient.current = client;
-    } catch (error) {
-      console.error('WebSocket connection failed:', error);
+    } catch {
+      setStatus('error');
+      setError('Failed to create connection');
     }
-  }, [token, options]);
+  }, [token, subscribe]);
 
   const disconnect = useCallback(() => {
     if (stompClient.current) {
@@ -125,7 +149,8 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current);
     }
-    setIsConnected(false);
+    setStatus('disconnected');
+    setError(null);
   }, []);
 
   const sendMessage = useCallback((destination: string, message: Record<string, unknown>) => {
@@ -145,7 +170,9 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   }, [token, connect, disconnect, options.autoConnect]);
 
   return {
-    isConnected,
+    status,
+    isConnected: status === 'connected',
+    error,
     lastMessage,
     connect,
     disconnect,

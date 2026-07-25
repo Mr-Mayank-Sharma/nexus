@@ -3,10 +3,13 @@ package com.nexus.oms.service;
 import com.nexus.oms.entity.NxPicklist;
 import com.nexus.oms.entity.NxWave;
 import com.nexus.oms.entity.NxWaveRule;
+import com.nexus.oms.entity.Warehouse;
 import com.nexus.oms.exception.ResourceNotFoundException;
 import com.nexus.oms.repository.PicklistRepository;
+import com.nexus.oms.repository.WarehouseRepository;
 import com.nexus.oms.repository.WaveRepository;
 import com.nexus.oms.repository.WaveRuleRepository;
+import com.nexus.oms.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,13 +33,16 @@ public class WaveService {
     private final WaveRepository waveRepository;
     private final WaveRuleRepository waveRuleRepository;
     private final PicklistRepository picklistRepository;
+    private final WarehouseRepository warehouseRepository;
 
     public WaveService(WaveRepository waveRepository,
                        WaveRuleRepository waveRuleRepository,
-                       PicklistRepository picklistRepository) {
+                       PicklistRepository picklistRepository,
+                       WarehouseRepository warehouseRepository) {
         this.waveRepository = waveRepository;
         this.waveRuleRepository = waveRuleRepository;
         this.picklistRepository = picklistRepository;
+        this.warehouseRepository = warehouseRepository;
     }
 
     public List<NxWave> getWaves(UUID tenantId, String status) {
@@ -53,6 +59,13 @@ public class WaveService {
 
     public NxWave createWave(NxWave wave) {
         wave.setStatus("DRAFT");
+        if (wave.getWarehouseId() == null) {
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            List<Warehouse> warehouses = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE");
+            if (!warehouses.isEmpty()) {
+                wave.setWarehouseId(warehouses.get(0).getId());
+            }
+        }
         return waveRepository.save(wave);
     }
 

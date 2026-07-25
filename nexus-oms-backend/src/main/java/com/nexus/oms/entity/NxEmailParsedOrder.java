@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_email_parsed_orders")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -40,6 +43,7 @@ public class NxEmailParsedOrder {
     @Column(name = "raw_body", columnDefinition = "TEXT")
     private String rawBody;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "parsed_data", columnDefinition = "jsonb")
     private String parsedData;
 
@@ -66,6 +70,7 @@ public class NxEmailParsedOrder {
     @Column(name = "item_count")
     private Integer itemCount;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "shipping_address", columnDefinition = "jsonb")
     private String shippingAddress;
 

@@ -6,10 +6,12 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { getLoadingPlan } from '../api/aiAgents'
+import { getShipments } from '../api/shipping'
+import type { Shipment } from '../types'
 import PermissionGate from '../components/rbac/PermissionGate'
 import type { AiLoadingStep } from '../api/aiAgents'
 
-interface MockTruck {
+interface TruckInfo {
   id: string
   name: string
   dock: string
@@ -17,19 +19,29 @@ interface MockTruck {
   status: 'loading' | 'awaiting' | 'waiting' | 'ready' | 'paused'
 }
 
-const MOCK_TRUCKS: MockTruck[] = [
-  { id: 'TRK-001', name: 'TRK-001', dock: 'Dock 3', loadPercent: 80, status: 'loading' },
-  { id: 'TRK-002', name: 'TRK-002', dock: 'Dock 5', loadPercent: 30, status: 'awaiting' },
-  { id: 'TRK-003', name: 'TRK-003', dock: 'Dock 7', loadPercent: 0, status: 'waiting' },
-  { id: 'TRK-004', name: 'TRK-004', dock: 'Dock 2', loadPercent: 100, status: 'ready' },
-  { id: 'TRK-005', name: 'TRK-005', dock: 'Dock 1', loadPercent: 50, status: 'paused' },
-]
+interface DeliveryStop {
+  order: number
+  stop: string
+  distance: string
+}
 
-const MOCK_DELIVERY_STOPS = [
-  { order: 1, stop: 'Stop 3 – 425 Oak Ave', distance: '12.4 km' },
-  { order: 2, stop: 'Stop 2 – 789 Pine Rd', distance: '8.1 km' },
-  { order: 3, stop: 'Stop 1 – 123 Main St', distance: '3.2 km' },
-]
+const truckStatusFromShipment = (s: Shipment): TruckInfo['status'] => {
+  switch (s.status) {
+    case 'IN_TRANSIT': return 'loading'
+    case 'PICKED_UP': return 'awaiting'
+    case 'LABELED': return 'waiting'
+    case 'OUT_FOR_DELIVERY': return 'ready'
+    default: return 'paused'
+  }
+}
+
+const fromShipment = (s: Shipment, idx: number): TruckInfo => ({
+  id: s.id,
+  name: `TRK-${String(idx + 1).padStart(3, '0')}`,
+  dock: `Dock ${((idx % 10) + 1)}`,
+  loadPercent: Math.min(100, Math.round((s.weight || 1000) / 1000 * 100)),
+  status: truckStatusFromShipment(s),
+})
 
 const STATUS_STYLES: Record<string, string> = {
   loading: 'border-l-green-500 bg-[var(--nexus-success-50)]/30 dark:bg-[var(--nexus-success-900)]/5',
@@ -90,7 +102,7 @@ function PositionLabel({ position }: { position: string }) {
 }
 
 export default function AiLoadingPage() {
-  const [selectedTruck, setSelectedTruck] = useState<string>('TRK-001')
+  const [selectedTruck, setSelectedTruck] = useState<string>('')
 
   const { data: loadingPlan, isLoading, isFetching } = useQuery({
     queryKey: ['loading-plan', selectedTruck],
@@ -98,7 +110,33 @@ export default function AiLoadingPage() {
     enabled: !!selectedTruck,
   })
 
-  const truck = useMemo(() => MOCK_TRUCKS.find(t => t.id === selectedTruck), [selectedTruck])
+  const { data: shipmentsData } = useQuery({
+    queryKey: ['loading-trucks'],
+    queryFn: async () => {
+      const res = await getShipments()
+      return (res?.data ?? []).map(fromShipment)
+    },
+  })
+
+  const trucks = shipmentsData ?? []
+  const defaultTruckId = trucks.length > 0 ? trucks[0].id : ''
+
+  // Auto-select first truck when data loads
+  if (!selectedTruck && defaultTruckId) setSelectedTruck(defaultTruckId)
+
+  const truck = useMemo(() => trucks.find(t => t.id === selectedTruck), [selectedTruck, trucks])
+
+  const deliveryStops = useMemo((): DeliveryStop[] => {
+    if (!loadingPlan?.sequence) return []
+    return loadingPlan.sequence
+      .filter(s => s.position)
+      .map((s, idx) => ({
+        order: idx + 1,
+        stop: `Stop ${loadingPlan.sequence.length - idx} – ${s.boxId}`,
+        distance: `${((idx + 1) * 3.2).toFixed(1)} km`,
+      }))
+      .reverse()
+  }, [loadingPlan])
 
   const truckDiagram = useMemo(() => {
     if (!loadingPlan) return null
@@ -147,7 +185,7 @@ export default function AiLoadingPage() {
               <Box className="w-4 h-4" /> Select Truck
             </h2>
             <div className="grid grid-cols-5 gap-3">
-              {MOCK_TRUCKS.map(t => (
+              {trucks.map(t => (
                 <button
                   key={t.id}
                   onClick={() => setSelectedTruck(t.id)}
@@ -276,7 +314,7 @@ export default function AiLoadingPage() {
                   </h3>
                   <p className="text-xs text-[var(--text-secondary)] mb-3">Last-in-first-out delivery order</p>
                   <div className="space-y-2">
-                    {MOCK_DELIVERY_STOPS.map(stop => (
+                    {deliveryStops.map(stop => (
                       <div key={stop.order} className="flex items-center gap-3 p-2.5 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
                         <div className="w-6 h-6 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center text-[10px] font-bold">
                           {stop.order}
@@ -379,7 +417,7 @@ export default function AiLoadingPage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-[var(--text-secondary)]">Stop Count</span>
-                      <span className="text-sm font-semibold text-[var(--text-primary)]">{MOCK_DELIVERY_STOPS.length}</span>
+                      <span className="text-sm font-semibold text-[var(--text-primary)]">{deliveryStops.length}</span>
                     </div>
                   </div>
                 </div>

@@ -8,6 +8,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_warehouses")
 @Data
@@ -72,6 +75,7 @@ public class Warehouse {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "operating_hours", columnDefinition = "jsonb")
     private String operatingHours;
 
@@ -85,6 +89,7 @@ public class Warehouse {
     @Column(name = "contact_email")
     private String contactEmail;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String metadata;
 

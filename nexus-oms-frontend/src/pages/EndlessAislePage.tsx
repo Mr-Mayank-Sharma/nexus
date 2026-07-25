@@ -9,6 +9,7 @@ import { useToast } from '../hooks/useToast'
 import endlessAisleApi from '../api/endlessAisle'
 import type { NxEndlessAisleOrder, EndlessAisleStats } from '../api/endlessAisle'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 type EATab = 'orders' | 'stats'
 type StatusFilter = 'ALL' | 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
@@ -166,7 +167,8 @@ export default function EndlessAislePage() {
   // ─── Render ────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="inventory" action="view">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -177,7 +179,7 @@ export default function EndlessAislePage() {
         </div>
         <button
           onClick={() => { resetForm(); setShowCreateModal(true) }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors"
         >
           <Plus className="h-4 w-4" /> New Order
         </button>
@@ -206,7 +208,7 @@ export default function EndlessAislePage() {
                 className={clsx(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   statusFilter === s
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--nexus-primary-600)] text-white'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                 )}
               >
@@ -587,5 +589,6 @@ export default function EndlessAislePage() {
         </div>
       )}
     </div>
+    </PermissionGate>
   )
 }

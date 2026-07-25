@@ -29,16 +29,7 @@ const MARKETPLACES = [
   { value: 'CA', label: 'Walmart Canada', currency: 'CAD' },
 ]
 
-const MOCK_ORDERS: WalmartOrder[] = [
-  { id: '1', purchaseOrderId: 'PO-7849321', customerName: 'James Wilson', status: 'Shipped', items: 2, amount: '$156.00', syncStatus: 'SYNCED', placedAt: '2026-06-29 14:32', fulfillmentType: 'WFS' },
-  { id: '2', purchaseOrderId: 'PO-7849322', customerName: 'Maria Garcia', status: 'Acknowledged', items: 1, amount: '$89.99', syncStatus: 'SYNCED', placedAt: '2026-06-29 16:10', fulfillmentType: 'SELF' },
-  { id: '3', purchaseOrderId: 'PO-7849323', customerName: 'David Lee', status: 'Created', items: 4, amount: '$345.00', syncStatus: 'PENDING', placedAt: '2026-06-28 09:45', fulfillmentType: 'WFS' },
-  { id: '4', purchaseOrderId: 'PO-7849324', customerName: 'Sarah Johnson', status: 'Shipped', items: 3, amount: '$278.50', syncStatus: 'SYNCED', placedAt: '2026-06-28 11:22', fulfillmentType: 'SELF' },
-  { id: '5', purchaseOrderId: 'PO-7849325', customerName: 'Robert Chen', status: 'Cancelled', items: 1, amount: '$45.00', syncStatus: 'ERROR', placedAt: '2026-06-27 08:15', fulfillmentType: 'WFS' },
-  { id: '6', purchaseOrderId: 'PO-7849326', customerName: 'Amanda Patel', status: 'Acknowledged', items: 5, amount: '$612.00', syncStatus: 'SYNCED', placedAt: '2026-06-27 14:50', fulfillmentType: 'SELF' },
-  { id: '7', purchaseOrderId: 'PO-7849327', customerName: 'Kevin Brown', status: 'Created', items: 2, amount: '$134.00', syncStatus: 'PENDING', placedAt: '2026-06-26 10:30', fulfillmentType: 'WFS' },
-  { id: '8', purchaseOrderId: 'PO-7849328', customerName: 'Lisa Thompson', status: 'Shipped', items: 6, amount: '$789.00', syncStatus: 'SYNCED', placedAt: '2026-06-26 12:05', fulfillmentType: 'SELF' },
-]
+
 
 interface ConnectorOrder {
   orderId: string
@@ -168,7 +159,7 @@ export default function WalmartIntegrationPage() {
     addToast({ type: 'success', title: 'Pricing rule updated' })
   }
 
-  const displayOrders = fetchedOrders.length > 0 ? fetchedOrders : MOCK_ORDERS
+  const displayOrders = fetchedOrders
   const filteredOrders = displayOrders.filter(o => {
     const matchesSearch = !searchTerm || o.purchaseOrderId.toLowerCase().includes(searchTerm.toLowerCase()) || o.customerName.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesFulfillment = filterFulfillment === 'ALL' || o.fulfillmentType === filterFulfillment
@@ -219,13 +210,13 @@ export default function WalmartIntegrationPage() {
             </div>
             {connected ? (
               <PermissionGate resource="integrations" action="delete">
-                <button onClick={handleDisconnect} className="btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
+                <button onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
                 </button>
               </PermissionGate>
             ) : (
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleConnect} disabled={connecting} className="btn-primary text-sm">
+                <button onClick={handleConnect} disabled={connecting} className="enterprise-btn enterprise-btn-primary text-sm">
                   {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                   {connecting ? 'Connecting...' : 'Connect'}
                 </button>
@@ -308,14 +299,14 @@ export default function WalmartIntegrationPage() {
             <div className="card-footer flex justify-between">
               <div className="flex items-center gap-2">
                 <PermissionGate resource="integrations" action="create">
-                  <button onClick={handleSync} disabled={syncing || !connected} className="btn-secondary text-sm">
+                  <button onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
                     {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                     {syncing ? 'Syncing...' : 'Force Sync'}
                   </button>
                 </PermissionGate>
               </div>
               <PermissionGate resource="integrations" action="edit">
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save Settings
                 </button>
@@ -363,7 +354,7 @@ export default function WalmartIntegrationPage() {
             </div>
             <div className="px-6 py-3 border-t border-[var(--border-subtle)]">
               <PermissionGate resource="integrations" action="create">
-                <button className="btn-secondary text-xs"><DollarSign className="w-3.5 h-3.5" /> Add Pricing Rule</button>
+                <button className="enterprise-btn enterprise-btn-secondary text-xs"><DollarSign className="w-3.5 h-3.5" /> Add Pricing Rule</button>
               </PermissionGate>
             </div>
           </div>
@@ -439,7 +430,7 @@ export default function WalmartIntegrationPage() {
           </div>
           <div className="card-footer">
             <PermissionGate resource="integrations" action="edit">
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+              <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Fulfillment Settings
               </button>
@@ -525,7 +516,7 @@ export default function WalmartIntegrationPage() {
           <div className="px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-tertiary)]">
             <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
             <PermissionGate resource="integrations" action="create">
-              <button onClick={handleSync} disabled={syncing || !connected} className="btn-ghost text-xs">
+              <button onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-ghost text-xs">
                 <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
               </button>
             </PermissionGate>

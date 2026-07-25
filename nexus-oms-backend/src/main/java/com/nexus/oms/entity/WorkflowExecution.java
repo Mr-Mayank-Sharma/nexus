@@ -5,6 +5,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_workflow_executions")
 @Data
@@ -37,9 +40,11 @@ public class WorkflowExecution {
     @Column(name = "total_steps")
     private Integer totalSteps;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "input_data", columnDefinition = "jsonb")
     private String inputData;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "output_data", columnDefinition = "jsonb")
     private String outputData;
 

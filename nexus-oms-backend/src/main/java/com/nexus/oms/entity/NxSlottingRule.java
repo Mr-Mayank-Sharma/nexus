@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_slotting_rules")
 @Data
@@ -33,6 +36,7 @@ public class NxSlottingRule {
     @Column(name = "rule_type", nullable = false)
     private String ruleType;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String criteria;
 
@@ -59,6 +63,7 @@ public class NxSlottingRule {
 
     private String notes;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String metadata;
 

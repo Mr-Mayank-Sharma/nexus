@@ -127,7 +127,7 @@ export default function BigCommercePage() {
         </div>
         {config?.isActive && (
           <a href={`https://store-${config.storeHash}.mybigcommerce.com`} target="_blank" rel="noopener noreferrer"
-            className="btn-secondary text-sm">
+            className="enterprise-btn enterprise-btn-secondary text-sm">
             <ExternalLink className="w-4 h-4" /> Open Store
           </a>
         )}
@@ -199,12 +199,12 @@ export default function BigCommercePage() {
           </div>
           <div className="card-footer flex justify-between">
             <PermissionGate resource="integrations" action="create">
-              <button onClick={handleRegisterWebhooks} className="btn-secondary text-sm">
+              <button onClick={handleRegisterWebhooks} className="enterprise-btn enterprise-btn-secondary text-sm">
                 <Link className="w-4 h-4" /> Register Webhooks
               </button>
             </PermissionGate>
             <PermissionGate resource="integrations" action="edit">
-              <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">
+              <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Configuration
               </button>
@@ -224,7 +224,7 @@ export default function BigCommercePage() {
               <p className="text-xs text-[var(--text-secondary)] mt-1 mb-4">{action.description}</p>
               <PermissionGate resource="integrations" action="create">
                 <button onClick={() => handleSync(action.id)} disabled={syncing === action.id}
-                  className="btn-primary text-xs w-full">
+                  className="enterprise-btn enterprise-btn-primary text-xs w-full">
                   {syncing === action.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                   {syncing === action.id ? 'Running...' : 'Run Now'}
                 </button>
@@ -238,7 +238,7 @@ export default function BigCommercePage() {
         <div className="card">
           <div className="card-header flex justify-between items-center">
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">Sync History</h3>
-            <button onClick={fetchLogs} className="btn-ghost p-1"><RefreshCw className="w-4 h-4" /></button>
+            <button onClick={fetchLogs} className="enterprise-btn enterprise-btn-ghost p-1"><RefreshCw className="w-4 h-4" /></button>
           </div>
           {logsLoading ? (
             <div className="flex items-center justify-center h-32">

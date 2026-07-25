@@ -42,6 +42,18 @@ public class InventoryService {
 
     @Transactional
     @CacheEvict(value = "inventory", allEntries = true)
+    public NxInventory adjustInventoryBySku(UUID tenantId, String sku, int quantityDelta) {
+        NxInventory inv = getBySku(tenantId, sku);
+        int newQty = inv.getQuantityOnHand() + quantityDelta;
+        if (newQty < 0) {
+            throw new BadRequestException("Insufficient inventory to reduce (SKU: " + sku + ")");
+        }
+        inv.setQuantityOnHand(newQty);
+        return inventoryRepository.save(inv);
+    }
+
+    @Transactional
+    @CacheEvict(value = "inventory", allEntries = true)
     public NxInventory adjustInventory(UUID id, int quantityChange) {
         NxInventory inv = inventoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory", id));

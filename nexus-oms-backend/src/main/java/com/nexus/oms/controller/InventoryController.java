@@ -12,11 +12,15 @@ import java.util.Map;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Tag(name = "Inventory", description = "Inventory management APIs")
 @RestController
 @RequestMapping("/inventory")
 public class InventoryController {
+
+    private static final Logger log = LoggerFactory.getLogger(InventoryController.class);
 
     private final InventoryService inventoryService;
 
@@ -36,13 +40,15 @@ public class InventoryController {
         return ResponseEntity.ok(ApiResponse.success(inventoryService.getBySku(TenantContext.getCurrentTenantId(), sku)));
     }
 
-    @Operation(summary = "Adjust inventory quantity")
-    @PutMapping("/adjust")
+    @Operation(summary = "Adjust inventory quantity by SKU")
+    @PostMapping("/adjust")
     public ResponseEntity<ApiResponse<NxInventory>> adjustInventory(@RequestBody Map<String, Object> request) {
-        UUID id = UUID.fromString((String) request.get("id"));
-        int quantityChange = (int) request.get("quantityChange");
+        String sku = (String) request.get("sku");
+        int quantity = ((Number) request.getOrDefault("quantity", 0)).intValue();
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        log.info("Adjusting inventory SKU={} by quantity delta={}", sku, quantity);
         return ResponseEntity.ok(ApiResponse.success(
-                inventoryService.adjustInventory(id, quantityChange), "Inventory adjusted"));
+                inventoryService.adjustInventoryBySku(tenantId, sku, quantity), "Inventory adjusted"));
     }
 
     @Operation(summary = "Get available-to-promise quantity for SKU")

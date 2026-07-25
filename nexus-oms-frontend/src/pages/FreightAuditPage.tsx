@@ -5,6 +5,7 @@ import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumb
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import { useToast } from '../hooks/useToast'
 import * as freightAuditApi from '../api/freightAudit'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 type Tab = 'invoices' | 'audit-log' | 'stats'
 
@@ -53,58 +54,6 @@ const auditStatusColors: Record<string, string> = {
   DISCREPANCY: 'bg-orange-100 text-orange-700',
 }
 
-function generateMockInvoices(): FreightInvoice[] {
-  const now = new Date().toISOString()
-  return [
-    {
-      id: 'fi-1', invoiceNumber: 'INV-2026-001', carrierId: 'carrier-fedex', warehouseId: 'wh-main',
-      invoiceDate: now, totalAmount: 12450.75, auditStatus: 'MATCHED',
-      lines: [
-        { lineNumber: 1, shipmentId: 'shp-001', trackingNumber: 'FX-99881', serviceLevel: 'Ground', weightKg: 24.5, billedAmount: 18.50, expectedAmount: 18.50, varianceAmount: 0 },
-        { lineNumber: 2, shipmentId: 'shp-002', trackingNumber: 'FX-99882', serviceLevel: 'Express', weightKg: 8.2, billedAmount: 42.00, expectedAmount: 40.00, varianceAmount: 2.00 },
-      ],
-    },
-    {
-      id: 'fi-2', invoiceNumber: 'INV-2026-002', carrierId: 'carrier-ups', warehouseId: 'wh-main',
-      invoiceDate: now, totalAmount: 8320.00, auditStatus: 'PENDING',
-      lines: [
-        { lineNumber: 1, shipmentId: 'shp-003', trackingNumber: 'UPS-55412', serviceLevel: 'Next Day Air', weightKg: 15.0, billedAmount: 65.00, expectedAmount: 58.50, varianceAmount: 6.50 },
-        { lineNumber: 2, shipmentId: 'shp-004', trackingNumber: 'UPS-55413', serviceLevel: 'Ground', weightKg: 40.0, billedAmount: 28.00, expectedAmount: 28.00, varianceAmount: 0 },
-      ],
-    },
-    {
-      id: 'fi-3', invoiceNumber: 'INV-2026-003', carrierId: 'carrier-fedex', warehouseId: 'wh-main',
-      invoiceDate: now, totalAmount: 4100.50, auditStatus: 'DISPUTED',
-      disputeReason: 'Carrier charged incorrect zone',
-      lines: [
-        { lineNumber: 1, shipmentId: 'shp-005', trackingNumber: 'FX-77221', serviceLevel: 'Freight', weightKg: 120.0, billedAmount: 285.00, expectedAmount: 210.00, varianceAmount: 75.00 },
-      ],
-    },
-    {
-      id: 'fi-4', invoiceNumber: 'INV-2026-004', carrierId: 'carrier-dhl', warehouseId: 'wh-main',
-      invoiceDate: now, totalAmount: 3200.00, auditStatus: 'PAID', approvedBy: 'admin', approvedAt: now, paidAt: now,
-      lines: [
-        { lineNumber: 1, shipmentId: 'shp-006', trackingNumber: 'DHL-11001', serviceLevel: 'International', weightKg: 55.0, billedAmount: 120.00, expectedAmount: 120.00, varianceAmount: 0 },
-      ],
-    },
-  ]
-}
-
-function generateMockAuditLogs(): AuditLog[] {
-  const now = new Date().toISOString()
-  return [
-    { id: 'al-1', invoiceId: 'fi-1', action: 'CREATED', performedBy: 'system', performedAt: now },
-    { id: 'al-2', invoiceId: 'fi-1', action: 'AUDIT_MATCH', performedBy: 'system', performedAt: now, details: 'All lines matched within tolerance' },
-    { id: 'al-3', invoiceId: 'fi-2', action: 'CREATED', performedBy: 'system', performedAt: now },
-    { id: 'al-4', invoiceId: 'fi-3', action: 'CREATED', performedBy: 'system', performedAt: now },
-    { id: 'al-5', invoiceId: 'fi-3', action: 'AUDIT_MATCH', performedBy: 'system', performedAt: now, details: 'Discrepancy detected: $75.00 variance on line 1' },
-    { id: 'al-6', invoiceId: 'fi-3', action: 'DISPUTED', performedBy: 'admin', performedAt: now, details: 'Carrier charged incorrect zone rate' },
-    { id: 'al-7', invoiceId: 'fi-4', action: 'CREATED', performedBy: 'system', performedAt: now },
-    { id: 'al-8', invoiceId: 'fi-4', action: 'APPROVED', performedBy: 'admin', performedAt: now },
-    { id: 'al-9', invoiceId: 'fi-4', action: 'PAID', performedBy: 'system', performedAt: now },
-  ]
-}
-
 export default function FreightAuditPage() {
   const { addToast } = useToast()
   const [loading, setLoading] = useState(true)
@@ -125,26 +74,21 @@ export default function FreightAuditPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [invoicesRes, logsRes, statsRes] = await Promise.allSettled([
-        freightAuditApi.getInvoices(selectedWarehouse),
-        freightAuditApi.getAuditLog(selectedWarehouse),
-        freightAuditApi.getStats(selectedWarehouse),
+      const [invoicesRes, statsRes] = await Promise.allSettled([
+        freightAuditApi.getInvoices(),
+        freightAuditApi.getStats(),
       ])
 
-      const invoicesData = invoicesRes.status === 'fulfilled' ? (invoicesRes.value.data as FreightInvoice[]) : null
-      const logsData = logsRes.status === 'fulfilled' ? (logsRes.value.data as AuditLog[]) : null
-      const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data : null
+      const invoicesData = invoicesRes.status === 'fulfilled' ? (invoicesRes.value.data?.data as FreightInvoice[]) : null
+      const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data?.data : null
 
-      setInvoices(invoicesData && invoicesData.length > 0 ? invoicesData : generateMockInvoices())
-      setAuditLogs(logsData && logsData.length > 0 ? logsData : generateMockAuditLogs())
-      setStats(statsData || {
-        totalInvoices: 4, pendingAudit: 1, disputed: 1, matched: 1, paid: 1,
-        totalBilled: 28071.25, totalVariance: 83.50, matchRate: 75,
-      })
+      setInvoices(invoicesData || [])
+      setAuditLogs([])
+      setStats(statsData || null)
     } catch {
-      setInvoices(generateMockInvoices())
-      setAuditLogs(generateMockAuditLogs())
-      setStats({ totalInvoices: 4, pendingAudit: 1, disputed: 1, matched: 1, paid: 1, totalBilled: 28071.25, totalVariance: 83.50, matchRate: 75 })
+      setInvoices([])
+      setAuditLogs([])
+      setStats(null)
     } finally {
       setLoading(false)
     }
@@ -201,7 +145,7 @@ export default function FreightAuditPage() {
 
   async function handlePay(invoiceId: string) {
     try {
-      await freightAuditApi.payInvoice(invoiceId)
+      await freightAuditApi.markPaid(invoiceId)
       addToast({ type: 'success', title: 'Invoice marked as paid' })
       await loadData()
     } catch {
@@ -238,7 +182,8 @@ export default function FreightAuditPage() {
   }
 
   return (
-    <div className="enterprise-page space-y-6">
+    <PermissionGate resource="invoices" action="view">
+      <div className="enterprise-page space-y-6">
       <EnterpriseBreadcrumbs crumbs={[
         { label: 'Home', path: '/' },
         { label: 'Warehouse', path: '/warehouse' },
@@ -629,6 +574,7 @@ export default function FreightAuditPage() {
         </div>
       )}
     </div>
+      </PermissionGate>
   )
 }
 

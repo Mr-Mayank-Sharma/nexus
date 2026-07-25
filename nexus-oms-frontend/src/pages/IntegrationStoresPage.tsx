@@ -191,7 +191,7 @@ export default function IntegrationStoresPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">OFBiz-style integration store management — connect Shopify, BigCommerce, and more</p>
         </div>
         <PermissionGate resource="integrations" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Store
           </button>
         </PermissionGate>
@@ -249,10 +249,10 @@ export default function IntegrationStoresPage() {
                     <div className="flex items-center gap-2">
                       {selectedStore.externalDomain && (
                         <a href={`https://${selectedStore.externalDomain}`} target="_blank" rel="noopener noreferrer"
-                          className="btn-ghost text-xs"><ExternalLink className="w-3 h-3" /></a>
+                          className="enterprise-btn enterprise-btn-ghost text-xs"><ExternalLink className="w-3 h-3" /></a>
                       )}
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleDelete(selectedStore.id)} className="btn-ghost text-xs text-[var(--nexus-error-500)]">
+                        <button onClick={() => handleDelete(selectedStore.id)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -279,7 +279,7 @@ export default function IntegrationStoresPage() {
                               )}
                                <PermissionGate resource="integrations" action="edit">
                                  <button onClick={() => handleSync(st.syncType)} disabled={syncing === st.syncType}
-                                   className="btn-primary text-xs w-full">
+                                   className="enterprise-btn enterprise-btn-primary text-xs w-full">
                                    {syncing === st.syncType ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                                    {syncing === st.syncType ? 'Running...' : 'Run Sync'}
                                  </button>
@@ -291,7 +291,7 @@ export default function IntegrationStoresPage() {
 
                       <div className="flex items-center gap-2 mt-4">
                         <PermissionGate resource="integrations" action="create">
-                          <button onClick={handleRegisterWebhooks} className="btn-secondary text-xs">
+                          <button onClick={handleRegisterWebhooks} className="enterprise-btn enterprise-btn-secondary text-xs">
                             <Link className="w-3.5 h-3.5" /> Register Webhooks
                           </button>
                         </PermissionGate>
@@ -386,9 +386,9 @@ export default function IntegrationStoresPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreate(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowCreate(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Store className="w-4 h-4" />}
                   Create Store
                 </button>

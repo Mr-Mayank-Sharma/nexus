@@ -33,6 +33,12 @@ public class PickingController {
                 pickingService.getPicklists(TenantContext.getCurrentTenantId())));
     }
 
+    @Operation(summary = "List all picklists (alias used by frontend)")
+    @GetMapping("/lists")
+    public ResponseEntity<ApiResponse<List<NxPicklist>>> listPicklists(@RequestParam(required = false) String status) {
+        return getPicklists(status);
+    }
+
     @Operation(summary = "List all picklists with optional status filter")
     @GetMapping("/picklists")
     public ResponseEntity<ApiResponse<List<NxPicklist>>> getPicklists(@RequestParam(required = false) String status) {
@@ -44,26 +50,26 @@ public class PickingController {
     }
 
     @Operation(summary = "Get picklist by ID")
-    @GetMapping("/picklists/{id}")
+    @GetMapping({"/picklists/{id}", "/lists/{id}"})
     public ResponseEntity<ApiResponse<NxPicklist>> getPicklist(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(pickingService.getPicklist(id)));
     }
 
     @Operation(summary = "Get picklist items")
-    @GetMapping("/picklists/{id}/items")
+    @GetMapping({"/picklists/{id}/items", "/lists/{id}/items"})
     public ResponseEntity<ApiResponse<List<NxPicklistItem>>> getPicklistItems(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(pickingService.getPicklistItems(id)));
     }
 
     @Operation(summary = "Create a new picklist")
-    @PostMapping("/picklists")
+    @PostMapping({"/picklists", "/lists"})
     public ResponseEntity<ApiResponse<NxPicklist>> createPicklist(@Valid @RequestBody NxPicklist picklist) {
         picklist.setTenantId(TenantContext.getCurrentTenantId());
         return ResponseEntity.ok(ApiResponse.success(pickingService.createPicklist(picklist), "Picklist created"));
     }
 
     @Operation(summary = "Start picking a picklist")
-    @PostMapping("/picklists/{id}/assign")
+    @PostMapping({"/picklists/{id}/assign", "/lists/{id}/assign"})
     public ResponseEntity<ApiResponse<NxPicklist>> assignPicker(@PathVariable UUID id, @RequestParam UUID staffId) {
         return ResponseEntity.ok(ApiResponse.success(pickingService.assignPicker(id, staffId), "Picker assigned"));
     }
@@ -75,13 +81,13 @@ public class PickingController {
     }
 
     @Operation(summary = "Complete a picklist")
-    @PostMapping("/picklists/{id}/complete")
+    @PostMapping({"/picklists/{id}/complete", "/lists/{id}/complete"})
     public ResponseEntity<ApiResponse<NxPicklist>> completePicklist(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(pickingService.completePicklist(id), "Picklist completed"));
     }
 
     @Operation(summary = "Cancel a picklist")
-    @PostMapping("/picklists/{id}/cancel")
+    @PostMapping({"/picklists/{id}/cancel", "/lists/{id}/cancel"})
     public ResponseEntity<ApiResponse<NxPicklist>> cancelPicklist(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(pickingService.cancelPicklist(id), "Picklist cancelled"));
     }

@@ -7,6 +7,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_rfqs")
 @Data
@@ -40,6 +43,7 @@ public class Rfq {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "supplier_ids", columnDefinition = "jsonb")
     private String supplierIds;
 

@@ -1,4 +1,4 @@
-CREATE TABLE nx_routing_rules (
+CREATE TABLE IF NOT EXISTS nx_routing_rules (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID,
     name VARCHAR(255) NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE nx_routing_rules (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE nx_inventory_receipts (
+CREATE TABLE IF NOT EXISTS nx_inventory_receipts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID,
     node_id UUID,
@@ -30,7 +30,7 @@ CREATE TABLE nx_inventory_receipts (
     received_at TIMESTAMP
 );
 
-CREATE TABLE nx_cycle_counts (
+CREATE TABLE IF NOT EXISTS nx_cycle_counts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id UUID,
     node_id UUID,
@@ -46,6 +46,6 @@ CREATE TABLE nx_cycle_counts (
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_routing_rules_tenant ON nx_routing_rules(tenant_id, is_active);
-CREATE INDEX idx_inventory_receipts_tenant ON nx_inventory_receipts(tenant_id, status);
-CREATE INDEX idx_cycle_counts_tenant ON nx_cycle_counts(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_routing_rules_tenant ON nx_routing_rules(tenant_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_inventory_receipts_tenant ON nx_inventory_receipts(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_cycle_counts_tenant ON nx_cycle_counts(tenant_id, status);

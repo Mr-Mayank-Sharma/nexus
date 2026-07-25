@@ -63,7 +63,7 @@ export default function InventoryReceivingPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Receive purchase orders, transfer orders, and returns into inventory</p>
         </div>
         <PermissionGate resource="inventory" action="create">
-          <button onClick={openCreate} className="btn-primary text-sm">
+          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Receipt
           </button>
         </PermissionGate>
@@ -76,7 +76,7 @@ export default function InventoryReceivingPage() {
           <option value="PENDING">Pending</option>
           <option value="RECEIVED">Received</option>
         </select>
-        <button className="btn-secondary text-sm"><Download className="w-4 h-4" /> Export</button>
+        <button className="enterprise-btn enterprise-btn-secondary text-sm"><Download className="w-4 h-4" /> Export</button>
       </div>
 
       {loading ? (
@@ -117,7 +117,7 @@ export default function InventoryReceivingPage() {
                     <td className="px-6 py-3 text-right">
                       {receipt.status === 'PENDING' ? (
                         <PermissionGate resource="inventory" action="edit">
-                          <button onClick={() => handleReceive(receipt.id)} className="btn-primary text-xs py-1.5">
+                          <button onClick={() => handleReceive(receipt.id)} className="enterprise-btn enterprise-btn-primary text-xs py-1.5">
                             <PackageCheck className="w-3.5 h-3.5" /> Receive
                           </button>
                         </PermissionGate>
@@ -192,9 +192,9 @@ export default function InventoryReceivingPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="inventory" action="create">
-                <button onClick={handleCreate} disabled={saving} className="btn-primary text-sm">
+                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
                   Create Receipt
                 </button>

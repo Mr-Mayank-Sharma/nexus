@@ -5,6 +5,7 @@ import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumb
 import { getOrderById } from '../api/orders'
 import { Order } from '../types'
 import clsx from 'clsx'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof Package }> = {
   PENDING: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', icon: Clock },
@@ -63,9 +64,10 @@ export default function FindOrderPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="orders" action="view">
+      <div className="space-y-6">
       <EnterpriseBreadcrumbs
-        items={[
+        crumbs={[
           { label: 'Home', path: '/' },
           { label: 'Orders', path: '/orders' },
           { label: 'Find Order' },
@@ -221,7 +223,8 @@ export default function FindOrderPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </PermissionGate>
   )
 }
 

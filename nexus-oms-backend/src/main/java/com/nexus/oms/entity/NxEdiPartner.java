@@ -7,6 +7,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_edi_partners")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -34,6 +37,7 @@ public class NxEdiPartner {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "supported_docs", columnDefinition = "jsonb")
     private String supportedDocs;
 

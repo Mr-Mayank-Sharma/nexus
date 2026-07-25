@@ -4,6 +4,7 @@ import {
   Filter, CheckCheck, Trash2, Eye, ShoppingBag,
   Info, X, RefreshCw,
 } from 'lucide-react'
+import PermissionGate from '../components/rbac/PermissionGate'
 import {
   EnterpriseToolbar, EnterpriseTabs, EnterpriseDataGrid, EnterpriseKPICard,
   EnterpriseBreadcrumbs, EnterpriseStatusBadge,
@@ -359,7 +360,8 @@ export default function NotificationsCenter() {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <PermissionGate resource="notifications" action="view">
+        <div className="space-y-6">
         <EnterpriseBreadcrumbs crumbs={[
           { label: 'Home', path: '/' },
           { label: 'System', path: '/system' },
@@ -380,14 +382,16 @@ export default function NotificationsCenter() {
             <RefreshCw className="w-4 h-4" />
             Retry
           </button>
-        </div>
       </div>
+      </div>
+      </PermissionGate>
     )
   }
 
   if (loading && notifications.length === 0) {
     return (
-      <div className="space-y-6">
+      <PermissionGate resource="notifications" action="view">
+        <div className="space-y-6">
         <EnterpriseBreadcrumbs crumbs={[
           { label: 'Home', path: '/' },
           { label: 'System', path: '/system' },
@@ -419,11 +423,13 @@ export default function NotificationsCenter() {
           </div>
         </div>
       </div>
+      </PermissionGate>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="notifications" action="view">
+      <div className="space-y-6">
       <EnterpriseBreadcrumbs crumbs={[
         { label: 'Home', path: '/' },
         { label: 'System', path: '/system' },
@@ -642,6 +648,7 @@ export default function NotificationsCenter() {
           </div>
         )}
       </div>
-    </div>
-  )
-}
+      </div>
+      </PermissionGate>
+    )
+  }

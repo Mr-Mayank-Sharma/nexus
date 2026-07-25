@@ -320,14 +320,14 @@ export default function SettingsPage() {
                   />
                   Enabled
                 </label>
-                <button onClick={addFeatureFlag} className="btn-secondary text-sm">
+                <button onClick={addFeatureFlag} className="enterprise-btn enterprise-btn-secondary text-sm">
                   <Plus className="w-3.5 h-3.5" /> Add
                 </button>
               </div>
 
               <div className="pt-4 border-t border-[var(--border-subtle)] flex justify-end">
                 <PermissionGate resource="settings" action="edit">
-                  <button onClick={handleSaveCompany} disabled={saving} className="btn-primary text-sm">
+                  <button onClick={handleSaveCompany} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                     Save Settings
                   </button>
@@ -362,7 +362,7 @@ export default function SettingsPage() {
           />
           <div className="flex justify-end">
             <PermissionGate resource="settings" action="edit">
-              <button onClick={handleSaveSecurity} disabled={saving} className="btn-primary text-sm">
+              <button onClick={handleSaveSecurity} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Security Policy
               </button>

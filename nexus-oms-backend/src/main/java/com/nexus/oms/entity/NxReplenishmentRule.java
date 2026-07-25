@@ -31,8 +31,9 @@ public class NxReplenishmentRule {
     @Column(name = "rule_name", nullable = false, length = 100)
     private String ruleName;
 
+    @Builder.Default
     @Column(name = "rule_type", nullable = false, length = 30)
-    private String ruleType;
+    private String ruleType = "MANUAL";
 
     @Column(name = "item_category", length = 50)
     private String itemCategory;
@@ -73,6 +74,11 @@ public class NxReplenishmentRule {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.updatedAt = LocalDateTime.now();
+    }
 
     @PreUpdate
     protected void onUpdate() {

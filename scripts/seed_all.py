@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
 """Complete Nexus OMS seed script."""
-import json, urllib.request, urllib.error, time, random, sys
+import json, urllib.request, urllib.error, time, random, sys, os
 from urllib.parse import urlencode
 
-BASE = "http://localhost:8080/api/v1"
+BASE = os.getenv("NEXUS_API_BASE", "http://localhost:8080/api/v1")
 TOKEN = None
 TENANT_ID = None
+
+ADMIN_USER = os.getenv("NEXUS_ADMIN_USER", "admin")
+ADMIN_PASSWORD = os.getenv("NEXUS_ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    print("ERROR: NEXUS_ADMIN_PASSWORD environment variable not set")
+    sys.exit(1)
+
+ADMIN_USER = os.getenv("NEXUS_ADMIN_USER", "admin")
+ADMIN_PASSWORD = os.getenv("NEXUS_ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    print("ERROR: NEXUS_ADMIN_PASSWORD environment variable not set")
+    sys.exit(1)
 
 def api(method, path, data=None, params=None, raw=False, retries=3):
     for attempt in range(retries):
@@ -44,10 +56,10 @@ def api(method, path, data=None, params=None, raw=False, retries=3):
 
 def login():
     global TOKEN, TENANT_ID
-    L = api("POST", "/auth/login", {"username":"admin","password":"Test1234!"}, raw=True)
+    L = api("POST", "/auth/login", {"username": ADMIN_USER, "password": ADMIN_PASSWORD}, raw=True)
     if not L.get("success"):
-        api("POST", "/auth/register", {"username":"admin","password":"Test1234!","role":"ADMIN"})
-        L = api("POST", "/auth/login", {"username":"admin","password":"Test1234!"}, raw=True)
+        api("POST", "/auth/register", {"username": ADMIN_USER, "password": ADMIN_PASSWORD, "role": "ADMIN"})
+        L = api("POST", "/auth/login", {"username": ADMIN_USER, "password": ADMIN_PASSWORD}, raw=True)
     TOKEN = L["data"]["accessToken"]
     TENANT_ID = L["data"]["tenantId"]
     print(f"Logged in, tenant={TENANT_ID[:8]}...")

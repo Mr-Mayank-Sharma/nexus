@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_routing_log")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -22,12 +25,15 @@ public class NxRoutingLog {
     @Column(nullable = false)
     private String strategy;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "input_snapshot", columnDefinition = "jsonb")
     private String inputSnapshot;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "rules_evaluated", columnDefinition = "jsonb")
     private String rulesEvaluated;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String candidates;
 
@@ -43,6 +49,7 @@ public class NxRoutingLog {
     @Column(name = "cost_estimate")
     private BigDecimal costEstimate;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "exceptions_detected", columnDefinition = "jsonb")
     private String exceptionsDetected;
 

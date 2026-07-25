@@ -7,6 +7,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_edi_documents")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -30,9 +33,11 @@ public class NxEdiDocument {
     @Column(name = "parsed_status")
     private String parsedStatus;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "parsed_data", columnDefinition = "jsonb")
     private String parsedData;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "validation_errors", columnDefinition = "jsonb")
     private String validationErrors;
 

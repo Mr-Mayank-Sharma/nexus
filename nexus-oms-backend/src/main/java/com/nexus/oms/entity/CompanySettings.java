@@ -7,6 +7,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_company_settings")
 @Data
@@ -55,21 +58,27 @@ public class CompanySettings {
     @Column(name = "fiscal_year_start")
     private String fiscalYearStart;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String countries;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String regions;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String holidays;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "feature_flags", columnDefinition = "jsonb")
     private String featureFlags;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "security_policy", columnDefinition = "jsonb")
     private String securityPolicy;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "backup_config", columnDefinition = "jsonb")
     private String backupConfig;
 

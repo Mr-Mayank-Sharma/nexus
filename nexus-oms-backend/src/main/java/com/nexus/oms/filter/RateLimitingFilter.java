@@ -27,6 +27,7 @@ public class RateLimitingFilter implements Filter {
     private static final int TIER_AUTH = 10;
     private static final int TIER_IMPORT = 5;
     private static final int TIER_AI_CHAT = 20;
+    private static final int TIER_WS = Integer.MAX_VALUE;
 
     private final StringRedisTemplate redisTemplate;
 
@@ -70,6 +71,7 @@ public class RateLimitingFilter implements Filter {
     }
 
     private int resolveTier(String path, String method) {
+        if (path.contains("/ws/")) return TIER_WS;
         if (path.contains("/auth/")) return TIER_AUTH;
         if (path.contains("/import/")) return TIER_IMPORT;
         if (path.contains("/ai/chat")) return TIER_AI_CHAT;

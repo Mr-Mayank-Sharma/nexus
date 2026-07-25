@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Tags, Plus, Search, Loader2, Trash2, Edit3, DollarSign, Package, Weight, Image,
+  Tags, Plus, Search, Loader2, Trash2, Edit3, DollarSign, Package, Weight, Image, Download, Upload,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
@@ -114,6 +114,19 @@ export default function ProductsPage() {
           getOptionValue: (item: Product) => item.sku,
           minChars: 1,
         }}
+        actions={[
+          { label: 'Export', icon: <Download className="w-4 h-4" />, onClick: () => {
+            const headers = ['SKU', 'Name', 'Category', 'Price', 'Cost', 'Weight', 'Active']
+            const rows = filtered.map(p => [p.sku, p.productName, p.category || '', String(p.unitPrice), String(p.costPrice || 0), String(p.weight || 0), String(p.isActive)])
+            const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+            const blob = new Blob([csv], { type: 'text/csv' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a'); a.href = url; a.download = `products-${new Date().toISOString().split('T')[0]}.csv`; a.click()
+            URL.revokeObjectURL(url)
+            addToast({ type: 'success', title: `Exported ${filtered.length} products` })
+          }},
+          { label: 'Import', icon: <Upload className="w-4 h-4" />, onClick: () => { window.location.href = '/import-export' }, variant: 'secondary' },
+        ]}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

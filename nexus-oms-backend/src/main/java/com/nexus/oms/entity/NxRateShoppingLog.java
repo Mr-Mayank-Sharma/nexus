@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_rate_shopping_log")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -37,6 +40,7 @@ public class NxRateShoppingLog {
     @Column(name = "num_packages")
     private Integer numPackages;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String results;
 

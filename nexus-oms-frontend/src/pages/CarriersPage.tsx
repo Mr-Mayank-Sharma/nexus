@@ -41,50 +41,6 @@ interface CarrierFormData {
   isActive: boolean
 }
 
-const MOCK_CARRIERS: Carrier[] = [
-  { id: '1', name: 'FedEx', code: 'FEDEX', status: 'ACTIVE', type: 'SHIPPING', accountNumber: 'FDX-78291', otdRate: 96.2, avgCost: 8.45, totalShipments: 45000, damageRate: 0.8, isActive: true, metadata: {} },
-  { id: '2', name: 'UPS', code: 'UPS', status: 'ACTIVE', type: 'SHIPPING', accountNumber: 'UPS-45312', otdRate: 94.8, avgCost: 9.12, totalShipments: 38000, damageRate: 1.2, isActive: true, metadata: {} },
-  { id: '3', name: 'USPS', code: 'USPS', status: 'ACTIVE', type: 'SHIPPING', accountNumber: 'USPS-90876', otdRate: 91.5, avgCost: 6.78, totalShipments: 28000, damageRate: 1.5, isActive: true, metadata: {} },
-  { id: '4', name: 'DHL', code: 'DHL', status: 'ACTIVE', type: 'COURIER', accountNumber: 'DHL-56432', otdRate: 97.1, avgCost: 11.34, totalShipments: 12000, damageRate: 0.5, isActive: true, metadata: {} },
-  { id: '5', name: 'Regional Freight', code: 'REG-FRT', status: 'INACTIVE', type: 'FREIGHT', accountNumber: 'RF-23109', otdRate: 89.3, avgCost: 7.22, totalShipments: 3000, damageRate: 2.1, isActive: false, metadata: {} },
-]
-
-const MOCK_RATES: Record<string, CarrierRate[]> = {
-  '1': [
-    { serviceType: 'Ground', rate: 7.20, transitTime: '3 days', zone: 'A' },
-    { serviceType: '2-Day', rate: 12.50, transitTime: '2 days', zone: 'B' },
-    { serviceType: 'Overnight', rate: 22.00, transitTime: '1 day', zone: 'C' },
-  ],
-  '2': [
-    { serviceType: 'Ground', rate: 7.85, transitTime: '3 days', zone: 'A' },
-    { serviceType: '2-Day', rate: 13.20, transitTime: '2 days', zone: 'B' },
-    { serviceType: 'Overnight', rate: 23.50, transitTime: '1 day', zone: 'C' },
-  ],
-  '3': [
-    { serviceType: 'Ground', rate: 5.50, transitTime: '5 days', zone: 'A' },
-    { serviceType: '2-Day', rate: 9.75, transitTime: '2 days', zone: 'B' },
-    { serviceType: 'Overnight', rate: 18.00, transitTime: '1 day', zone: 'C' },
-  ],
-  '4': [
-    { serviceType: 'Ground', rate: 9.80, transitTime: '2 days', zone: 'B' },
-    { serviceType: '2-Day', rate: 15.00, transitTime: '2 days', zone: 'B' },
-    { serviceType: 'Overnight', rate: 26.00, transitTime: '1 day', zone: 'C' },
-  ],
-  '5': [
-    { serviceType: 'Ground', rate: 6.50, transitTime: '4 days', zone: 'A' },
-    { serviceType: '2-Day', rate: 11.00, transitTime: '2 days', zone: 'B' },
-    { serviceType: 'Overnight', rate: 20.00, transitTime: '1 day', zone: 'C' },
-  ],
-}
-
-const OTD_HISTORY: Record<string, number[]> = {
-  '1': [95.8, 96.1, 95.9, 96.5, 96.3, 96.2],
-  '2': [94.2, 94.5, 94.0, 94.8, 95.1, 94.8],
-  '3': [90.5, 91.0, 90.8, 91.5, 91.8, 91.5],
-  '4': [96.5, 96.8, 97.0, 97.2, 97.1, 97.1],
-  '5': [88.5, 89.0, 88.8, 89.2, 89.5, 89.3],
-}
-
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
 
 const SERVICE_TYPES = ['Ground', '2-Day', 'Overnight']
@@ -143,8 +99,7 @@ export default function CarriersPage() {
       const data = await fetchCarriers()
       setCarriers(data)
     } catch {
-      setCarriers(MOCK_CARRIERS)
-      addToast({ type: 'error', title: 'Failed to load carriers, using mock data' })
+      setCarriers([])
     } finally {
       setLoading(false)
     }
@@ -231,7 +186,7 @@ export default function CarriersPage() {
   const rateComparison = useMemo(() => {
     return SERVICE_TYPES.map(st => {
       const entries = carriers.map(c => {
-        const rates = MOCK_RATES[c.id] || []
+        const rates: CarrierRate[] = []
         const rate = rates.find(r => r.serviceType === st)
         return { carrier: c, rate }
       })
@@ -423,7 +378,7 @@ export default function CarriersPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {(MOCK_RATES[expandedCarrier.id] || MOCK_RATES['1'] || []).map((rate, i) => (
+                        {([/* rates from API */] as CarrierRate[]).map((rate, i) => (
                           <tr key={i}>
                             <td className="font-medium text-[var(--text-primary)]">{rate.serviceType}</td>
                             <td className="text-right font-mono text-[var(--text-primary)]">{fmtCurrency(rate.rate)}</td>
@@ -440,22 +395,9 @@ export default function CarriersPage() {
                   <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-[var(--text-tertiary)]" /> OTD Performance (Last 6 Months)
                   </h4>
-                  <div className="flex items-end gap-3 h-32 pt-2">
-                    {(OTD_HISTORY[expandedCarrier.id] || OTD_HISTORY['1'] || []).map((val, i) => {
-                      const maxOTD = Math.max(...(OTD_HISTORY[expandedCarrier.id] || OTD_HISTORY['1'] || [100]))
-                      const height = Math.max(4, (val / maxOTD) * 100)
-                      const barColor =
-                        val >= 95 ? 'bg-[var(--nexus-primary-50)]' : val >= 90 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0'
-                      return (
-                        <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1 h-full">
-                          <span className="text-[10px] font-medium text-[var(--text-secondary)]">{val.toFixed(1)}%</span>
-                          <div className="w-full rounded-t-md transition-all duration-300" style={{ height: `${height}%` }}>
-                            <div className={`w-full h-full rounded-t-md ${barColor} opacity-80 hover:opacity-100 transition-opacity`} />
-                          </div>
-                          <span className="text-[10px] text-[var(--text-tertiary)]">{MONTH_LABELS[i]}</span>
-                        </div>
-                      )
-                    })}
+                  <div className="flex flex-col items-center justify-center h-32 text-[var(--text-secondary)]">
+                    <span className="text-3xl font-bold text-[var(--text-primary)]">{expandedCarrier.otdRate.toFixed(1)}%</span>
+                    <span className="text-sm mt-1">Current OTD Rate</span>
                   </div>
                 </div>
               </div>

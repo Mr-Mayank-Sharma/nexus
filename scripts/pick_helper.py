@@ -2,7 +2,7 @@
 """Picklist item seeding service for Nexus OMS.
 Connects directly to PostgreSQL to create picklist items for a picklist + order.
 """
-import json, os, uuid, time
+import json, os, uuid, time, sys
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 import psycopg2
@@ -12,24 +12,34 @@ DB = {
     "port": int(os.environ.get("PG_PORT", "5433")),
     "dbname": os.environ.get("PG_DB", "nexus_oms"),
     "user": os.environ.get("PG_USER", "nexus"),
-    "password": os.environ.get("PG_PASSWORD", "nexus_secret"),
+    "password": os.environ.get("PG_PASSWORD"),
 }
+if not DB["password"]:
+    print("ERROR: PG_PASSWORD environment variable not set")
+    sys.exit(1)
 
-BACKEND = "http://localhost:8080/api/v1"
+BACKEND = os.getenv("NEXUS_API_BASE", "http://localhost:8080/api/v1")
 
 import urllib.request
 TOKEN = None
 
+ADMIN_USER = os.getenv("NEXUS_ADMIN_USER", "admin")
+ADMIN_PASSWORD = os.getenv("NEXUS_ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    print("ERROR: NEXUS_ADMIN_PASSWORD environment variable not set")
+    sys.exit(1)
+
 def _login():
     global TOKEN
     req = urllib.request.Request(f"{BACKEND}/auth/login",
-        data=json.dumps({"username":"admin","password":"Test1234!"}).encode(),
+        data=json.dumps({"username": ADMIN_USER, "password": ADMIN_PASSWORD}).encode(),
         headers={"Content-Type":"application/json"}, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
             body = json.loads(r.read())
             TOKEN = body.get("accessToken") or body.get("data",{}).get("accessToken") or body.get("token")
-    except: pass
+    except Exception as e:
+        print(f"Warning: Login failed: {e}")
 
 _login()
 

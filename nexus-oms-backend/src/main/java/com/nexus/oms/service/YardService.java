@@ -3,9 +3,11 @@ package com.nexus.oms.service;
 import com.nexus.oms.entity.NxAppointment;
 import com.nexus.oms.entity.NxDockDoor;
 import com.nexus.oms.entity.NxYardLocation;
+import com.nexus.oms.entity.Warehouse;
 import com.nexus.oms.exception.ResourceNotFoundException;
 import com.nexus.oms.repository.AppointmentRepository;
 import com.nexus.oms.repository.DockDoorRepository;
+import com.nexus.oms.repository.WarehouseRepository;
 import com.nexus.oms.repository.YardLocationRepository;
 import com.nexus.oms.security.TenantContext;
 import org.springframework.stereotype.Service;
@@ -24,13 +26,35 @@ public class YardService {
     private final DockDoorRepository dockDoorRepository;
     private final YardLocationRepository yardLocationRepository;
     private final AppointmentRepository appointmentRepository;
+    private final WarehouseRepository warehouseRepository;
 
     public YardService(DockDoorRepository dockDoorRepository,
                        YardLocationRepository yardLocationRepository,
-                       AppointmentRepository appointmentRepository) {
+                       AppointmentRepository appointmentRepository,
+                       WarehouseRepository warehouseRepository) {
         this.dockDoorRepository = dockDoorRepository;
         this.yardLocationRepository = yardLocationRepository;
         this.appointmentRepository = appointmentRepository;
+        this.warehouseRepository = warehouseRepository;
+    }
+
+    /**
+     * Resolve a warehouse ID that may be a UUID or a warehouse code (e.g. "wh-main").
+     * Tries parsing as UUID first; if that fails, looks up by tenant + code.
+     */
+    public UUID resolveWarehouseId(String warehouseIdOrCode) {
+        if (warehouseIdOrCode == null || warehouseIdOrCode.isBlank()) {
+            throw new IllegalArgumentException("warehouseId is required");
+        }
+        try {
+            return UUID.fromString(warehouseIdOrCode);
+        } catch (IllegalArgumentException e) {
+            // Not a UUID — look up by code within current tenant
+            UUID tenantId = TenantContext.getCurrentTenantId();
+            return warehouseRepository.findByTenantIdAndCode(tenantId, warehouseIdOrCode)
+                    .map(Warehouse::getId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Warehouse", warehouseIdOrCode));
+        }
     }
 
     // ---- Dock Door Operations ----

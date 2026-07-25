@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 """Fulfill ALL remaining orders via direct ship endpoints."""
-import json, urllib.request, urllib.error, time, random, sys
+import json, urllib.request, urllib.error, time, random, sys, os
 from urllib.parse import urlencode
 
-BASE = "http://localhost:8080/api/v1"
+BASE = os.getenv("NEXUS_API_BASE", "http://localhost:8080/api/v1")
 TOKEN = None
 ORDER_COUNT = 0
 ERROR_COUNT = 0
+
+ADMIN_USER = os.getenv("NEXUS_ADMIN_USER", "admin")
+ADMIN_PASSWORD = os.getenv("NEXUS_ADMIN_PASSWORD")
+if not ADMIN_PASSWORD:
+    print("ERROR: NEXUS_ADMIN_PASSWORD environment variable not set")
+    sys.exit(1)
 
 def api(m, p, d=None, params=None, raw=True):
     url = BASE + p
@@ -59,10 +65,10 @@ def main():
     global TOKEN
     
     print("Logging in...")
-    L = api("POST", "/auth/login", {"username":"admin","password":"Test1234!"})
+    L = api("POST", "/auth/login", {"username": ADMIN_USER, "password": ADMIN_PASSWORD})
     if L.get("error"):
-        api("POST", "/auth/register", {"username":"admin","password":"Test1234!","role":"ADMIN"})
-        L = api("POST", "/auth/login", {"username":"admin","password":"Test1234!"})
+        api("POST", "/auth/register", {"username": ADMIN_USER, "password": ADMIN_PASSWORD, "role": "ADMIN"})
+        L = api("POST", "/auth/login", {"username": ADMIN_USER, "password": ADMIN_PASSWORD})
     TOKEN = L.get("data", {}).get("accessToken", "")
     if not TOKEN: print("Login failed!"); return
     print(f"Token: {TOKEN[:20]}...")

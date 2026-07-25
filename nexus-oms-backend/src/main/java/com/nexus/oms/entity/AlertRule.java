@@ -6,6 +6,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_alert_rules")
 @Data
@@ -35,6 +38,7 @@ public class AlertRule {
 
     private String channel;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "recipient_list", columnDefinition = "jsonb")
     private String recipientList;
 

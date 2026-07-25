@@ -10,6 +10,6 @@ interface PermissionGateProps {
 
 export default function PermissionGate({ resource, action, fallback = null, children }: PermissionGateProps) {
   const { hasPermission } = useAuth()
-  if (hasPermission(resource, action)) return <>{children}</>
-  return <>{fallback}</>
+  if (hasPermission(resource, action)) return <span className="contents">{children}</span>
+  return <span className="contents">{fallback}</span>
 }

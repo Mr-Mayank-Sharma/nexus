@@ -8,6 +8,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
 @Table(name = "nx_carrier_rates")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
@@ -72,6 +75,7 @@ public class NxCarrierRate {
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
     private String metadata;
 

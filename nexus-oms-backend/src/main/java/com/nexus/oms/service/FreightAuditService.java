@@ -61,6 +61,16 @@ public class FreightAuditService {
         if (invoice.getStatus() == null) invoice.setStatus("DRAFT");
         if (invoice.getCurrency() == null) invoice.setCurrency("USD");
         if (invoice.getMatchedPercentage() == null) invoice.setMatchedPercentage(BigDecimal.ZERO);
+        if (invoice.getCarrierCode() == null && invoice.getCarrierName() != null) {
+            invoice.setCarrierCode(invoice.getCarrierName().toUpperCase().replaceAll("\\s+", "_"));
+        }
+        if (invoice.getCarrierCode() == null) invoice.setCarrierCode("UNKNOWN");
+        if (invoice.getInvoiceDate() == null) invoice.setInvoiceDate(java.time.LocalDate.now());
+        if (invoice.getTotalNet() == null) {
+            BigDecimal total = invoice.getTotalAmount() != null ? invoice.getTotalAmount() : BigDecimal.ZERO;
+            BigDecimal discount = invoice.getTotalDiscount() != null ? invoice.getTotalDiscount() : BigDecimal.ZERO;
+            invoice.setTotalNet(total.subtract(discount));
+        }
         return invoiceRepository.save(invoice);
     }
 

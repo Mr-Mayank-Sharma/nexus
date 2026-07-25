@@ -7,7 +7,8 @@ import {
   Bell, FileText, UserCog, Upload, Download, Activity, Cpu, Users, Shield,
   Globe, Route, TrendingDown, Mail, FlaskConical, ShoppingBag, Calendar,
   Gauge, AlertTriangle, Eye, CreditCard, Tags, Award, ClipboardList,
-  Layers, Printer, ChevronDown, Target, Bot, Search,
+  Layers, Printer, ChevronDown, Target, Bot, Search, Plus,
+  RefreshCw, ArrowRightLeft,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useTheme } from '../../context/ThemeContext'
@@ -86,6 +87,16 @@ const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> 
   'returns-enhanced': { resource: 'returns', action: 'view' },
   'promotions': { resource: 'orders', action: 'view' },
   'endless-aisle': { resource: 'orders', action: 'view' },
+  'find-order': { resource: 'orders', action: 'view' },
+  'order-approvals': { resource: 'orders', action: 'approve' },
+  'brokering': { resource: 'orders', action: 'view' },
+  'rejections': { resource: 'orders', action: 'view' },
+  'transfers': { resource: 'orders', action: 'view' },
+  'fulfillment-limits': { resource: 'orders', action: 'view' },
+  'pickers': { resource: 'orders', action: 'view' },
+  'replenishment': { resource: 'inventory', action: 'edit' },
+  'freight-audit': { resource: 'returns', action: 'view' },
+  'bopis-app': { resource: 'orders', action: 'view' },
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -129,17 +140,18 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Tags: <Tags className="w-[18px] h-[18px]" />,
   Award: <Award className="w-[18px] h-[18px]" />,
   ClipboardList: <ClipboardList className="w-[18px] h-[18px]" />,
-  Search: <Package className="w-[18px] h-[18px]" />,
-  Plus: <Package className="w-[18px] h-[18px]" />,
+  Search: <Search className="w-[18px] h-[18px]" />,
+  Plus: <Plus className="w-[18px] h-[18px]" />,
   Layers: <Layers className="w-[18px] h-[18px]" />,
   Printer: <Printer className="w-[18px] h-[18px]" />,
   Target: <Target className="w-[18px] h-[18px]" />,
   Bot: <Bot className="w-[18px] h-[18px]" />,
+  RefreshCw: <RefreshCw className="w-[18px] h-[18px]" />,
+  ArrowRightLeft: <ArrowRightLeft className="w-[18px] h-[18px]" />,
+  Zap: <Zap className="w-[18px] h-[18px]" />,
 }
 
-const STATIC_LINKS = [
-  { label: 'Launch Pad', path: '/', icon: <LayoutDashboard className="w-[18px] h-[18px]" /> },
-]
+const STATIC_LINKS: { label: string; path: string; icon: React.ReactNode }[] = []
 
 import { getModulesForRole } from '../../hooks/useWorkspace'
 
@@ -184,14 +196,14 @@ function SidebarGroup({
           'group flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150',
           collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
           isActive
-            ? 'text-[var(--text-brand)] bg-[var(--interactive-selected)]'
-            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)]',
+            ? 'text-[#818CF8] bg-[rgba(99,102,241,0.15)]'
+            : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
         )}
         title={collapsed ? item.label : undefined}
       >
         <span className={clsx(
           'flex-shrink-0 transition-colors duration-150',
-          isActive ? 'text-[var(--nexus-primary-500)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)]',
+          isActive ? 'text-[#818CF8]' : 'text-[#64748B] group-hover:text-[#94A3B8]',
         )}>
           {item.icon}
         </span>
@@ -201,13 +213,13 @@ function SidebarGroup({
             <ChevronDown className={clsx(
               'w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0',
               open ? 'rotate-180' : '',
-              isActive ? 'text-[var(--nexus-primary-400)]' : 'text-[var(--text-tertiary)]',
+              isActive ? 'text-[#818CF8]' : 'text-[#64748B]',
             )} />
           </>
         )}
       </button>
       {open && !collapsed && item.children && (
-        <div className="ml-[22px] mt-0.5 space-y-px pl-3 border-l border-[var(--border-subtle)]">
+        <div className="ml-[22px] mt-0.5 space-y-px pl-3 border-l border-[rgba(148,163,184,0.12)]">
           {item.children.map((child) => {
             const childActive = child.path === '/' ? location.pathname === '/' : location.pathname.startsWith(child.path)
             return (
@@ -217,13 +229,13 @@ function SidebarGroup({
                 className={clsx(
                   'flex items-center gap-2 px-2.5 py-[5px] rounded-md text-[13px] font-medium transition-all duration-150',
                   childActive
-                    ? 'text-[var(--text-brand)] bg-[var(--interactive-selected)]'
-                    : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)]',
+                    ? 'text-[#818CF8] bg-[rgba(99,102,241,0.15)]'
+                    : 'text-[#64748B] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
                 )}
               >
                 <span className={clsx(
                   'flex-shrink-0 transition-colors duration-150',
-                  childActive ? 'text-[var(--nexus-primary-500)]' : '',
+                  childActive ? 'text-[#818CF8]' : '',
                 )}>
                   {child.icon}
                 </span>
@@ -239,6 +251,7 @@ function SidebarGroup({
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const location = useLocation()
   const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
@@ -269,25 +282,34 @@ export default function Sidebar() {
 
   const allLinks = [...STATIC_LINKS, ...moduleLinks]
 
+  const filteredLinks = searchQuery.trim()
+    ? allLinks.filter(link => {
+        const q = searchQuery.toLowerCase()
+        const labelMatch = link.label.toLowerCase().includes(q)
+        const childMatch = link.children?.some(c => c.label.toLowerCase().includes(q))
+        return labelMatch || childMatch
+      })
+    : allLinks
+
   return (
     <aside
       className={clsx(
-        'bg-[var(--surface-base)] border-r border-[var(--border-default)] flex flex-col transition-all duration-300 ease-[var(--ease-default)] h-screen sticky top-0',
+        'bg-[#0B1120] flex flex-col transition-all duration-300 ease-[var(--ease-default)] h-screen sticky top-0',
         collapsed ? 'w-[56px]' : 'w-[256px]',
       )}
     >
       {/* ── Logo ── */}
       <div className={clsx(
-        'flex items-center h-14 border-b border-[var(--border-subtle)] transition-all duration-300',
+        'flex items-center h-14 border-b border-[#1E293B] transition-all duration-300',
         collapsed ? 'justify-center px-0' : 'px-5 gap-3',
       )}>
-        <div className="w-8 h-8 bg-[var(--nexus-primary-600)] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+        <div className="w-8 h-8 bg-[var(--nexus-primary-500)] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
           <Ship className="w-4 h-4 text-white" />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-bold text-[15px] text-[var(--text-primary)] tracking-[-0.02em] leading-tight">NexusShip</span>
-            <span className="text-[10px] font-medium text-[var(--text-tertiary)] tracking-wide uppercase">OMS Platform</span>
+            <span className="font-bold text-[15px] text-[#F1F5F9] tracking-[-0.02em] leading-tight">NexusShip</span>
+            <span className="text-[10px] font-medium text-[#64748B] tracking-wide uppercase">OMS Platform</span>
           </div>
         )}
       </div>
@@ -295,21 +317,37 @@ export default function Sidebar() {
       {/* ── Role Badge ── */}
       {!collapsed && user && (
         <div className="px-3 pt-3 pb-2">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)]">
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1E293B] border border-[#334155]">
             <div className={clsx(
               'w-2 h-2 rounded-full flex-shrink-0',
               ROLE_COLORS[user.role] || 'bg-gray-400',
             )} />
-            <span className="text-xs font-medium text-[var(--text-secondary)] capitalize truncate">
+            <span className="text-xs font-medium text-[#94A3B8] capitalize truncate">
               {user.role.replace(/_/g, ' ').toLowerCase()}
             </span>
           </div>
         </div>
       )}
 
+      {/* ── Search ── */}
+      {!collapsed && (
+        <div className="px-3 pb-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Filter navigation..."
+              className="w-full h-8 pl-8 pr-2.5 text-[12px] rounded-lg bg-[#1E293B] border border-[#334155] text-[#F1F5F9] placeholder-[#64748B] focus:border-[var(--nexus-primary-500)] focus:ring-1 focus:ring-[var(--nexus-primary-500)] focus:outline-none transition-all duration-150"
+            />
+          </div>
+        </div>
+      )}
+
       {/* ── Navigation ── */}
       <nav className="flex-1 px-2.5 py-2 space-y-px overflow-y-auto scrollbar-hide" aria-label="Main navigation">
-        {allLinks.map((item) => {
+        {filteredLinks.map((item) => {
           const isParent = item.children && item.children.length > 0
           const parentActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
           const hasActiveChild = isParent && item.children!.some(c => location.pathname.startsWith(c.path))
@@ -323,14 +361,14 @@ export default function Sidebar() {
                   'group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150',
                   collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
                   parentActive
-                    ? 'text-[var(--text-brand)] bg-[var(--interactive-selected)]'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)]',
+                    ? 'text-[#818CF8] bg-[rgba(99,102,241,0.15)]'
+                    : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
                 )}
                 title={collapsed ? item.label : undefined}
               >
                 <span className={clsx(
                   'flex-shrink-0 transition-colors duration-150',
-                  parentActive ? 'text-[var(--nexus-primary-500)]' : 'text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)]',
+                  parentActive ? 'text-[#818CF8]' : 'text-[#64748B] group-hover:text-[#94A3B8]',
                 )}>
                   {item.icon}
                 </span>
@@ -345,7 +383,7 @@ export default function Sidebar() {
 
       {/* ── Footer ── */}
       <div className={clsx(
-        'border-t border-[var(--border-subtle)] space-y-1',
+        'border-t border-[#1E293B] space-y-1',
         collapsed ? 'p-1.5' : 'p-2.5',
       )}>
         {/* Admin role switcher */}
@@ -360,7 +398,7 @@ export default function Sidebar() {
                 localStorage.setItem('nexus_user', JSON.stringify(updated))
                 window.location.reload()
               }}
-              className="w-full text-xs bg-[var(--surface-muted)] border border-[var(--border-subtle)] rounded-lg px-2.5 py-1.5 text-[var(--text-secondary)] cursor-pointer focus:ring-1 focus:ring-[var(--border-focus)] focus:border-[var(--border-focus)] appearance-none"
+              className="w-full text-xs h-8 rounded-lg bg-[#1E293B] border border-[#334155] text-[#F1F5F9] px-2 focus:border-[var(--nexus-primary-500)] focus:outline-none"
             >
               {Object.entries(ROLE_WORKSPACES).map(([key, ws]) => (
                 <option key={key} value={key}>{ws.label}</option>
@@ -373,30 +411,28 @@ export default function Sidebar() {
         <button
           onClick={toggleTheme}
           className={clsx(
-            'w-full flex items-center rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-all duration-150',
-            collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
+            'flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
+            collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
           )}
           title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-          aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
           {theme === 'light' ? <Moon className="w-[18px] h-[18px]" /> : <Sun className="w-[18px] h-[18px]" />}
-          {!collapsed && <span className="text-[13px] font-medium">{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>}
+          {!collapsed && <span>{theme === 'light' ? 'Dark mode' : 'Light mode'}</span>}
         </button>
 
         {/* Collapse toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={clsx(
-            'w-full flex items-center rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-all duration-150',
-            collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2',
+            'flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
+            collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
           )}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-[18px] h-[18px]" /> : <ChevronLeft className="w-[18px] h-[18px]" />}
-          {!collapsed && <span className="text-[13px] font-medium">Collapse</span>}
+          {!collapsed && <span>Collapse</span>}
         </button>
       </div>
     </aside>

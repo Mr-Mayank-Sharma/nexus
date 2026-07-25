@@ -10,6 +10,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import Autocomplete from '../components/common/Autocomplete'
 import { fetchEnhancedInventory, adjustInventory } from '../api/newBackend'
+import PermissionGate from '../components/rbac/PermissionGate'
 
 interface WarehouseNode {
   id: string
@@ -53,100 +54,6 @@ interface ReplenishmentSuggestion {
   type: 'reorder' | 'overstock'
   priority: 'high' | 'medium' | 'low'
 }
-
-const mockProducts: ProductATP[] = [
-  { sku: 'SKU-001', productName: 'Wireless Mouse', nodes: [
-    { nodeName: 'Main DC', available: 120, reserved: 30, incoming: 50, onOrder: 0 },
-    { nodeName: 'Warehouse B', available: 45, reserved: 10, incoming: 20, onOrder: 0 },
-    { nodeName: 'Warehouse C', available: 8, reserved: 2, incoming: 0, onOrder: 25 },
-    { nodeName: 'Store #5', available: 3, reserved: 1, incoming: 0, onOrder: 0 },
-    { nodeName: 'Store #3', available: 0, reserved: 0, incoming: 0, onOrder: 0 },
-  ]},
-  { sku: 'SKU-042', productName: 'Mechanical Keyboard', nodes: [
-    { nodeName: 'Main DC', available: 250, reserved: 60, incoming: 100, onOrder: 0 },
-    { nodeName: 'Warehouse B', available: 88, reserved: 22, incoming: 0, onOrder: 50 },
-    { nodeName: 'Warehouse C', available: 34, reserved: 8, incoming: 12, onOrder: 0 },
-    { nodeName: 'Store #5', available: 15, reserved: 3, incoming: 0, onOrder: 0 },
-    { nodeName: 'Store #3', available: 7, reserved: 2, incoming: 5, onOrder: 0 },
-  ]},
-  { sku: 'SKU-107', productName: 'USB-C Hub', nodes: [
-    { nodeName: 'Main DC', available: 600, reserved: 120, incoming: 200, onOrder: 0 },
-    { nodeName: 'Warehouse B', available: 210, reserved: 45, incoming: 80, onOrder: 0 },
-    { nodeName: 'Warehouse C', available: 95, reserved: 20, incoming: 30, onOrder: 100 },
-    { nodeName: 'Store #5', available: 22, reserved: 5, incoming: 10, onOrder: 0 },
-    { nodeName: 'Store #3', available: 11, reserved: 3, incoming: 0, onOrder: 0 },
-  ]},
-  { sku: 'SKU-203', productName: '27" Monitor', nodes: [
-    { nodeName: 'Main DC', available: 89, reserved: 35, incoming: 25, onOrder: 0 },
-    { nodeName: 'Warehouse B', available: 12, reserved: 8, incoming: 0, onOrder: 40 },
-    { nodeName: 'Warehouse C', available: 4, reserved: 1, incoming: 0, onOrder: 0 },
-    { nodeName: 'Store #5', available: 1, reserved: 0, incoming: 0, onOrder: 0 },
-    { nodeName: 'Store #3', available: 0, reserved: 0, incoming: 0, onOrder: 0 },
-  ]},
-  { sku: 'SKU-311', productName: 'Webcam HD', nodes: [
-    { nodeName: 'Main DC', available: 340, reserved: 80, incoming: 120, onOrder: 0 },
-    { nodeName: 'Warehouse B', available: 145, reserved: 30, incoming: 0, onOrder: 60 },
-    { nodeName: 'Warehouse C', available: 72, reserved: 15, incoming: 25, onOrder: 0 },
-    { nodeName: 'Store #5', available: 28, reserved: 5, incoming: 0, onOrder: 0 },
-    { nodeName: 'Store #3', available: 9, reserved: 2, incoming: 0, onOrder: 0 },
-  ]},
-  { sku: 'SKU-089', productName: 'Noise Cancelling Headphones', nodes: [
-    { nodeName: 'Main DC', available: 23, reserved: 10, incoming: 0, onOrder: 0 },
-    { nodeName: 'Warehouse B', available: 5, reserved: 2, incoming: 0, onOrder: 0 },
-    { nodeName: 'Warehouse C', available: 0, reserved: 0, incoming: 0, onOrder: 0 },
-    { nodeName: 'Store #5', available: 0, reserved: 0, incoming: 0, onOrder: 0 },
-    { nodeName: 'Store #3', available: 0, reserved: 0, incoming: 0, onOrder: 0 },
-  ]},
-  { sku: 'SKU-455', productName: 'Bluetooth Speaker', nodes: [
-    { nodeName: 'Main DC', available: 800, reserved: 150, incoming: 300, onOrder: 0 },
-    { nodeName: 'Warehouse B', available: 350, reserved: 70, incoming: 100, onOrder: 200 },
-    { nodeName: 'Warehouse C', available: 180, reserved: 40, incoming: 60, onOrder: 0 },
-    { nodeName: 'Store #5', available: 55, reserved: 10, incoming: 20, onOrder: 0 },
-    { nodeName: 'Store #3', available: 42, reserved: 8, incoming: 15, onOrder: 0 },
-  ]},
-]
-
-const mockTransfers: Transfer[] = [
-  { id: 'TR-001', from: 'Main DC', to: 'Store #5', sku: 'SKU-001', productName: 'Wireless Mouse', qty: 50, status: 'In Transit', date: '2026-06-28' },
-  { id: 'TR-002', from: 'Warehouse B', to: 'Main DC', sku: 'SKU-042', productName: 'Mechanical Keyboard', qty: 100, status: 'Completed', date: '2026-06-27' },
-  { id: 'TR-003', from: 'Main DC', to: 'Store #3', sku: 'SKU-107', productName: 'USB-C Hub', qty: 30, status: 'In Transit', date: '2026-06-29' },
-  { id: 'TR-004', from: 'Warehouse C', to: 'Warehouse B', sku: 'SKU-203', productName: '27" Monitor', qty: 20, status: 'Pending', date: '2026-07-01' },
-  { id: 'TR-005', from: 'Main DC', to: 'Warehouse C', sku: 'SKU-311', productName: 'Webcam HD', qty: 75, status: 'Completed', date: '2026-06-25' },
-  { id: 'TR-006', from: 'Warehouse B', to: 'Store #5', sku: 'SKU-089', productName: 'Noise Cancelling Headphones', qty: 10, status: 'Pending', date: '2026-07-02' },
-]
-
-const lowStockAlerts: StockAlert[] = [
-  { sku: 'SKU-203', productName: '27" Monitor', currentStock: 4, reorderPoint: 25, maxStock: 200, node: 'Warehouse C' },
-  { sku: 'SKU-089', productName: 'Noise Cancelling Headphones', currentStock: 5, reorderPoint: 50, maxStock: 300, node: 'Warehouse B' },
-  { sku: 'SKU-001', productName: 'Wireless Mouse', currentStock: 3, reorderPoint: 20, maxStock: 150, node: 'Store #5' },
-  { sku: 'SKU-042', productName: 'Mechanical Keyboard', currentStock: 7, reorderPoint: 15, maxStock: 120, node: 'Store #3' },
-  { sku: 'SKU-311', productName: 'Webcam HD', currentStock: 9, reorderPoint: 20, maxStock: 180, node: 'Store #3' },
-  { sku: 'SKU-107', productName: 'USB-C Hub', currentStock: 11, reorderPoint: 30, maxStock: 250, node: 'Store #3' },
-]
-
-const overstockAlerts: StockAlert[] = [
-  { sku: 'SKU-455', productName: 'Bluetooth Speaker', currentStock: 800, reorderPoint: 100, maxStock: 400, node: 'Main DC' },
-  { sku: 'SKU-107', productName: 'USB-C Hub', currentStock: 600, reorderPoint: 80, maxStock: 350, node: 'Main DC' },
-  { sku: 'SKU-311', productName: 'Webcam HD', currentStock: 340, reorderPoint: 60, maxStock: 200, node: 'Main DC' },
-  { sku: 'SKU-455', productName: 'Bluetooth Speaker', currentStock: 350, reorderPoint: 80, maxStock: 250, node: 'Warehouse B' },
-  { sku: 'SKU-001', productName: 'Wireless Mouse', currentStock: 120, reorderPoint: 30, maxStock: 100, node: 'Main DC' },
-]
-
-const deadStockAlerts: StockAlert[] = [
-  { sku: 'SKU-089', productName: 'Noise Cancelling Headphones', currentStock: 23, reorderPoint: 50, maxStock: 300, node: 'Main DC' },
-  { sku: 'SKU-203', productName: '27" Monitor', currentStock: 12, reorderPoint: 25, maxStock: 200, node: 'Warehouse B' },
-  { sku: 'SKU-089', productName: 'Noise Cancelling Headphones', currentStock: 5, reorderPoint: 50, maxStock: 300, node: 'Warehouse B' },
-]
-
-const replenishmentSuggestions: ReplenishmentSuggestion[] = [
-  { id: 'RS-001', message: 'Wireless Mouse needs 50 units in Store #5 (current: 3, reorder point: 20)', type: 'reorder', priority: 'high' },
-  { id: 'RS-002', message: 'Noise Cancelling Headphones needs 45 units in Warehouse B (current: 5, reorder point: 50)', type: 'reorder', priority: 'high' },
-  { id: 'RS-003', message: '27" Monitor needs 21 units in Warehouse C (current: 4, reorder point: 25)', type: 'reorder', priority: 'medium' },
-  { id: 'RS-004', message: 'Mechanical Keyboard needs 8 units in Store #3 (current: 7, reorder point: 15)', type: 'reorder', priority: 'medium' },
-  { id: 'RS-005', message: 'Bluetooth Speaker overstocked in Main DC (current: 800, max: 400)', type: 'overstock', priority: 'high' },
-  { id: 'RS-006', message: 'USB-C Hub overstocked in Main DC (current: 600, max: 350)', type: 'overstock', priority: 'medium' },
-  { id: 'RS-007', message: 'Webcam HD overstocked in Main DC (current: 340, max: 200)', type: 'overstock', priority: 'low' },
-]
 
 const nodeIconMap: Record<string, typeof Building2> = {
   DC: Building2,
@@ -192,13 +99,13 @@ export default function InventoryEnhancedPage() {
   const [alertTab, setAlertTab] = useState<'low' | 'overstock' | 'dead'>('low')
   const [transferForm, setTransferForm] = useState({ from: '', to: '', sku: '', qty: 0 })
 
-  const filteredProducts = useMemo(() => {
+  const filteredProducts: ProductATP[] = useMemo(() => {
     if (!atpSearch.trim()) return []
     const q = atpSearch.toLowerCase()
-    return mockProducts.filter(p => p.sku.toLowerCase().includes(q) || p.productName.toLowerCase().includes(q))
+    return [].filter(p => p.sku.toLowerCase().includes(q) || p.productName.toLowerCase().includes(q))
   }, [atpSearch])
 
-  const selectedProduct = mockProducts.find(p => p.sku === selectedSku) || null
+  const selectedProduct: ProductATP | null = null
 
   const totalUnits = warehouseData.reduce((s, w) => s + w.totalUnits, 0)
   const totalValue = 12400000
@@ -218,7 +125,8 @@ export default function InventoryEnhancedPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <PermissionGate resource="inventory" action="view">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -400,7 +308,7 @@ export default function InventoryEnhancedPage() {
               </tr>
             </thead>
             <tbody>
-              {mockTransfers.map(t => (
+              {[].map(t => (
                 <tr key={t.id} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-1.5 text-sm text-[var(--text-primary)]">
@@ -455,7 +363,7 @@ export default function InventoryEnhancedPage() {
                   ? 'bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)] text-[var(--text-secondary)] text-[var(--text-primary)]'
                   : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
               )}>
-                {tab === 'low' ? lowStockAlerts.length : tab === 'overstock' ? overstockAlerts.length : deadStockAlerts.length}
+                {0}
               </span>
             </button>
           ))}
@@ -473,7 +381,7 @@ export default function InventoryEnhancedPage() {
               </tr>
             </thead>
             <tbody>
-              {(alertTab === 'low' ? lowStockAlerts : alertTab === 'overstock' ? overstockAlerts : deadStockAlerts).map((a, i) => {
+              {[].map((a, i) => {
                 const isLow = a.currentStock < a.reorderPoint
                 const isOver = a.currentStock > a.maxStock
                 return (
@@ -516,7 +424,7 @@ export default function InventoryEnhancedPage() {
           </div>
         </div>
         <div className="space-y-2">
-          {replenishmentSuggestions.map(s => (
+          {[].map(s => (
             <div
               key={s.id}
               className={clsx(
@@ -629,5 +537,6 @@ export default function InventoryEnhancedPage() {
         </div>
       )}
     </div>
+      </PermissionGate>
   )
 }
