@@ -1,9 +1,13 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.entity.NxOrder;
+import com.nexus.oms.entity.NxOrderItem;
 import com.nexus.oms.entity.NxPicklist;
 import com.nexus.oms.entity.NxPicklistItem;
 import com.nexus.oms.entity.WarehouseStaff;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.repository.OrderItemRepository;
+import com.nexus.oms.repository.OrderRepository;
 import com.nexus.oms.repository.PicklistItemRepository;
 import com.nexus.oms.repository.PicklistRepository;
 import com.nexus.oms.repository.WarehouseStaffRepository;
@@ -19,13 +23,19 @@ public class PickingService {
     private final PicklistRepository picklistRepository;
     private final PicklistItemRepository picklistItemRepository;
     private final WarehouseStaffRepository warehouseStaffRepository;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public PickingService(PicklistRepository picklistRepository,
                           PicklistItemRepository picklistItemRepository,
-                          WarehouseStaffRepository warehouseStaffRepository) {
+                          WarehouseStaffRepository warehouseStaffRepository,
+                          OrderRepository orderRepository,
+                          OrderItemRepository orderItemRepository) {
         this.picklistRepository = picklistRepository;
         this.picklistItemRepository = picklistItemRepository;
         this.warehouseStaffRepository = warehouseStaffRepository;
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     public List<NxPicklist> getPicklists(UUID tenantId) {
@@ -50,6 +60,57 @@ public class PickingService {
         if (picklist.getTotalItems() == null) picklist.setTotalItems(0);
         if (picklist.getPickedItems() == null) picklist.setPickedItems(0);
         return picklistRepository.save(picklist);
+    }
+
+    @Transactional
+    public NxPicklist createPicklistFromOrder(UUID orderId) {
+        NxOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
+
+        List<NxOrderItem> items = orderItemRepository.findByOrderId(orderId);
+
+        NxPicklist pl = NxPicklist.builder()
+                .tenantId(order.getTenantId())
+                .name("PL-" + order.getExternalId() + "-" + LocalDateTime.now().toLocalDate())
+                .waveType("SINGLE_ORDER")
+                .priority("NORMAL")
+                .status("OPEN")
+                .totalItems(items.stream().mapToInt(NxOrderItem::getQuantity).sum())
+                .pickedItems(0)
+                .orderIds(orderId.toString())
+                .build();
+        pl = picklistRepository.save(pl);
+        seedItemsIntoPicklist(pl, items);
+        return pl;
+    }
+
+    @Transactional
+    public NxPicklist seedPicklistItems(UUID picklistId, UUID orderId) {
+        NxPicklist pl = getPicklist(picklistId);
+        List<NxOrderItem> items = orderItemRepository.findByOrderId(orderId);
+        seedItemsIntoPicklist(pl, items);
+        pl.setTotalItems(picklistItemRepository.findByPicklistId(picklistId).size());
+        pl.setOrderIds(orderId.toString());
+        return picklistRepository.save(pl);
+    }
+
+    private void seedItemsIntoPicklist(NxPicklist pl, List<NxOrderItem> items) {
+        for (NxOrderItem item : items) {
+            boolean exists = picklistItemRepository.findByPicklistId(pl.getId()).stream()
+                    .anyMatch(i -> item.getId() != null && item.getId().equals(i.getOrderItemId()));
+            if (exists) continue;
+            picklistItemRepository.save(NxPicklistItem.builder()
+                    .picklistId(pl.getId())
+                    .tenantId(pl.getTenantId())
+                    .orderId(item.getOrderId())
+                    .orderItemId(item.getId())
+                    .sku(item.getSku())
+                    .productName(item.getProductName())
+                    .quantity(item.getQuantity())
+                    .pickedQuantity(0)
+                    .status("PENDING")
+                    .build());
+        }
     }
 
     @Transactional

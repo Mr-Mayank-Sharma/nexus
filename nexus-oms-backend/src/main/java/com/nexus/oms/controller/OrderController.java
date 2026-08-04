@@ -82,8 +82,11 @@ public class OrderController {
     @PostMapping("/{id}/ship")
     public ResponseEntity<ApiResponse<OrderResponse>> shipOrder(
             @PathVariable UUID id,
-            @RequestParam String carrierId,
-            @RequestParam String trackingNumber) {
+            @RequestParam(required = false) String carrierId,
+            @RequestParam(required = false) String trackingNumber,
+            @RequestBody(required = false) Map<String, String> body) {
+        if (carrierId == null && body != null) carrierId = body.get("carrierId");
+        if (trackingNumber == null && body != null) trackingNumber = body.get("trackingNumber");
         return ResponseEntity.ok(ApiResponse.success(
                 orderService.shipOrder(id, carrierId, trackingNumber), "Order shipped"));
     }

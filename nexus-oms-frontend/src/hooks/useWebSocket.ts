@@ -112,7 +112,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     disconnectingRef.current = false;
 
     try {
-      const useNativeWs = 'WebSocket' in window;
+
       const client = new Client({
         connectHeaders: { Authorization: `Bearer ${tokenRef.current}` },
         heartbeatIncoming: 10000,
@@ -144,13 +144,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         },
       });
 
-      if (useNativeWs && window.location.protocol === 'http:') {
-        client.brokerURL = `ws://${window.location.host}/api/v1/ws`;
-      } else if (useNativeWs) {
-        client.brokerURL = `wss://${window.location.host}/api/v1/ws`;
-      } else {
-        client.webSocketFactory = () => new SockJS(WS_ENDPOINT) as unknown as WebSocket;
-      }
+      client.webSocketFactory = () => new SockJS(WS_ENDPOINT) as unknown as WebSocket;
 
       client.activate();
       stompClient.current = client;

@@ -4,6 +4,14 @@ export type { AiSuggestion, AiActionHistory, AiExecuteRequest }
 
 const aiClient = axios.create({ baseURL: '/api/v1', timeout: 30000 })
 
+aiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('nexus_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 export async function getAiSuggestions(orderId: string): Promise<ApiResponse<AiSuggestion[]>> {
   try {
     const { data } = await aiClient.get(`/orders/${orderId}/ai-suggestions`)

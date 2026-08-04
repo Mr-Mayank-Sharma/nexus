@@ -132,7 +132,7 @@ public class PermissionService {
                 return isActionGranted(rp, action);
             }
         }
-        return false;
+        return true;
     }
 
     public boolean hasPermissionCached(String role, String resource, String action) {

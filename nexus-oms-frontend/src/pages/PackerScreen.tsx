@@ -29,24 +29,26 @@ export default function PackerScreen() {
   })
 
   const startPacking = useMutation({
-    mutationFn: async (id: string) => { await new Promise(r => setTimeout(r, 300)); return id },
+    mutationFn: async (id: string) => await packingApi.startPacking(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['packer-packages'] }); addToast({ type: 'success', title: 'Packing started' }) },
+    onError: (e: any) => addToast({ type: 'error', title: e?.message || 'Failed to start packing' }),
   })
 
   const completePacking = useMutation({
-    mutationFn: async (id: string) => { await new Promise(r => setTimeout(r, 400)); return id },
+    mutationFn: async (id: string) => await packingApi.completePacking(id, 'packer-station-1'),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['packer-packages'] }); addToast({ type: 'success', title: 'Package completed' }) },
+    onError: (e: any) => addToast({ type: 'error', title: e?.message || 'Failed to complete packing' }),
   })
 
-  const kpis = [
-    { title: 'To Pack', value: '18', icon: <Package className="w-5 h-5" />, color: 'warning' as const, trend: null },
-    { title: 'Packed Today', value: '47', icon: <PackagePlus className="w-5 h-5" />, color: 'success' as const, trend: { value: 12, isUp: true } },
-    { title: 'My Station', value: 'Stn #4', icon: <Box className="w-5 h-5" />, color: 'info' as const, trend: null },
-    { title: 'Avg Pack Time', value: '3.2 min', icon: <Clock className="w-5 h-5" />, color: 'primary' as const, trend: { value: 8, isUp: true } },
-  ]
+  const pendingPacks = packages.filter((p: any) => p.status === 'PENDING_PACK' || p.status === 'PENDING')
+  const inProgress = packages.filter((p: any) => p.status === 'PACKING' || p.status === 'IN_PROGRESS')
 
-  const pendingPacks = packages.filter((p: any) => p.status === 'PENDING' || p.status === 'ALLOCATED')
-  const inProgress = packages.filter((p: any) => p.status === 'IN_PROGRESS')
+  const kpis = [
+    { title: 'To Pack', value: String(pendingPacks.length), icon: <Package className="w-5 h-5" />, color: 'warning' as const, trend: null },
+    { title: 'Packed Today', value: String(packages.filter((p: any) => ['PACKED', 'LABELED', 'SHIPPED'].includes(p.status)).length), icon: <PackagePlus className="w-5 h-5" />, color: 'success' as const, trend: null },
+    { title: 'In Progress', value: String(inProgress.length), icon: <Box className="w-5 h-5" />, color: 'info' as const, trend: null },
+    { title: 'Total Packages', value: String(packages.length), icon: <Clock className="w-5 h-5" />, color: 'primary' as const, trend: null },
+  ]
 
   return (
     <PermissionGate resource="warehouse" action="view">

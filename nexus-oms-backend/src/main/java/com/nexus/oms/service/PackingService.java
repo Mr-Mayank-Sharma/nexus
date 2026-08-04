@@ -75,7 +75,13 @@ public class PackingService {
     public NxPackage generateLabel(UUID packageId, String carrierId, String carrierName,
                                     String serviceLevel, String trackingNumber, String labelUrl) {
         NxPackage pkg = getPackage(packageId);
-        pkg.setCarrierId(UUID.fromString(carrierId));
+        if (carrierId != null && !carrierId.isBlank()) {
+            try {
+                pkg.setCarrierId(UUID.fromString(carrierId));
+            } catch (IllegalArgumentException e) {
+                pkg.setCarrierId(UUID.nameUUIDFromBytes(carrierId.getBytes()));
+            }
+        }
         pkg.setCarrierName(carrierName);
         pkg.setServiceLevel(serviceLevel);
         pkg.setTrackingNumber(trackingNumber);

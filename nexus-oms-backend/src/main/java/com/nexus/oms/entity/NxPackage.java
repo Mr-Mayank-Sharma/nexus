@@ -16,7 +16,6 @@ public class NxPackage {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
