@@ -29,6 +29,9 @@ public class NxOrderItem {
     @Column(name = "product_name")
     private String productName;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @NotNull
     @Positive
     @Column(nullable = false)

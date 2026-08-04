@@ -57,6 +57,7 @@ public class OrderResponse {
         private UUID id;
         private String sku;
         private String productName;
+        private String imageUrl;
         private Integer quantity;
         private BigDecimal unitPrice;
         private BigDecimal totalPrice;

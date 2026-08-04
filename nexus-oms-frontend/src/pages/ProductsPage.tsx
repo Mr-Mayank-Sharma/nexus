@@ -42,6 +42,7 @@ export default function ProductsPage() {
           unitPrice: p.price ?? p.unitPrice ?? 0,
           costPrice: p.cost ?? p.costPrice,
           weight: p.weight,
+          imageUrl: p.imageUrl,
           isActive: p.active ?? p.isActive ?? true,
           createdAt: p.createdAt || new Date().toISOString(),
           updatedAt: p.updatedAt || new Date().toISOString(),
@@ -138,7 +139,7 @@ export default function ProductsPage() {
 
       <div className="flex gap-2 flex-wrap">
         {categories.map(cat => (
-          <button key={cat} onClick={() => setActiveCategory(cat)}
+          <button type="button" key={cat} onClick={() => setActiveCategory(cat)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
               activeCategory === cat
                 ? 'bg-[var(--color-primary)] text-white'
@@ -163,9 +164,13 @@ export default function ProductsPage() {
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-tertiary)]">
-                      <Image className="w-5 h-5" />
-                    </div>
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.productName} className="w-10 h-10 rounded-lg object-cover bg-[var(--bg-tertiary)]" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-[var(--bg-tertiary)] flex items-center justify-center text-[var(--text-tertiary)]">
+                        <Image className="w-5 h-5" />
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-[var(--text-primary)] truncate">{p.productName}</p>
                       <p className="text-xs font-mono text-[var(--text-tertiary)]">{p.sku}</p>
@@ -174,10 +179,10 @@ export default function ProductsPage() {
                 </div>
                 <div className="flex gap-1">
                   <PermissionGate resource="products" action="edit">
-                    <button className="enterprise-btn-ghost p-1.5" onClick={() => openEdit(p)}><Edit3 className="w-3.5 h-3.5" /></button>
+                    <button type="button" className="enterprise-btn-ghost p-1.5" onClick={() => openEdit(p)}><Edit3 className="w-3.5 h-3.5" /></button>
                   </PermissionGate>
                   <PermissionGate resource="products" action="delete">
-                    <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]"
+                    <button type="button" className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]"
                       onClick={() => { if (confirm('Delete?')) deleteMutation.mutate(p.id); }}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -238,9 +243,9 @@ export default function ProductsPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <PermissionGate resource="products" action={editingProduct ? 'edit' : 'create'}>
-                <button className="enterprise-btn-primary" onClick={() => saveMutation.mutate()}
+                <button type="button" className="enterprise-btn-primary" onClick={() => saveMutation.mutate()}
                   disabled={!form.productName || !form.sku || saveMutation.isPending}>
                   {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   {editingProduct ? 'Update' : 'Create'}

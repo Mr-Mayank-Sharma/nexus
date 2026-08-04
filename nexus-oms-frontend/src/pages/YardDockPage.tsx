@@ -9,6 +9,7 @@ import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumb
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import { useToast } from '../hooks/useToast'
 import * as yardApi from '../api/yardManagement'
+import { getWarehousesSummary } from '../api/analytics'
 
 // ── Types ──
 
@@ -97,21 +98,15 @@ interface TrailerEvent {
   details?: string
 }
 
-const warehouses = [
-  { id: 'wh-main', name: 'Main Warehouse' },
-  { id: 'wh-east', name: 'East DC' },
-  { id: 'wh-west', name: 'West DC' },
-]
-
 const dockStatusColors: Record<string, string> = {
-  AVAILABLE: 'bg-emerald-100 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/30 dark:text-emerald-400',
+  AVAILABLE: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] ring-[var(--nexus-success-600)]/20 dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
   OCCUPIED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] ring-[var(--nexus-primary-500)]/30 dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
-  MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] ring-amber-600/20 dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
-  CLOSED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] ring-gray-500/20 bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
+  MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] ring-[var(--nexus-warning-600)]/20 dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
+  CLOSED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] ring-[var(--border-default)]/20 bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
 }
 
 const dockStatusBg: Record<string, string> = {
-  AVAILABLE: 'border-emerald-300 bg-emerald-50/50 dark:border-emerald-700 dark:bg-emerald-900/10',
+  AVAILABLE: 'border-[var(--nexus-success-300)] bg-[var(--nexus-success-50)]/50 dark:border-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/10',
   OCCUPIED: 'border-[var(--nexus-primary-300)] bg-[var(--nexus-primary-50)]/50 dark:border-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/10',
   MAINTENANCE: 'border-[var(--nexus-warning-300)] bg-[var(--nexus-warning-50)]/50 dark:border-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/10',
   CLOSED: 'border-[var(--border-default)] bg-[var(--surface-sunken)]/50 border-[var(--border-default)] bg-[var(--surface-base)]/50',
@@ -121,14 +116,14 @@ const appointmentStatusColors: Record<string, string> = {
   REQUESTED: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
   CONFIRMED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
   CHECKED_IN: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-400)]',
-  IN_PROGRESS: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  IN_PROGRESS: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
   COMPLETED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
   CANCELLED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
   NO_SHOW: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
 }
 
 const yardStatusColors: Record<string, string> = {
-  AVAILABLE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  AVAILABLE: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
   OCCUPIED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
   RESERVED: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
   CLOSED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
@@ -194,7 +189,8 @@ export default function YardDockPage() {
   const { addToast } = useToast()
 
   const [loading, setLoading] = useState(true)
-  const [selectedWarehouse, setSelectedWarehouse] = useState('wh-main')
+  const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([])
+  const [selectedWarehouse, setSelectedWarehouse] = useState('')
   const [selectedDate, setSelectedDate] = useState(todayString())
   const [activeView, setActiveView] = useState<ViewMode>('docks')
 
@@ -203,6 +199,19 @@ export default function YardDockPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [calendarSlots, setCalendarSlots] = useState<CalendarSlot[]>([])
   const [stats, setStats] = useState<YardStats | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    getWarehousesSummary()
+      .then(res => {
+        const list = Array.isArray(res?.data) ? res.data : []
+        if (!mounted) return
+        setWarehouses(list.map((w: any) => ({ id: String(w.id), name: w.name || w.code || w.id })))
+        setSelectedWarehouse(prev => prev || String(list[0]?.id) || '')
+      })
+      .catch(() => { if (mounted) setWarehouses([]) })
+    return () => { mounted = false }
+  }, [])
 
   const [showAppointmentModal, setShowAppointmentModal] = useState(false)
   const [aptForm, setAptForm] = useState(defaultAppointmentForm())
@@ -224,6 +233,15 @@ export default function YardDockPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
+      if (!selectedWarehouse) {
+        setDockDoors([])
+        setYardLocations([])
+        setAppointments([])
+        setCalendarSlots([])
+        setStats(null)
+        setLoading(false)
+        return
+      }
       const [doorsRes, yardRes, aptsRes, statsRes, calRes] = await Promise.allSettled([
         yardApi.getDockDoors(selectedWarehouse),
         yardApi.getYardLocations(selectedWarehouse),
@@ -483,11 +501,11 @@ export default function YardDockPage() {
           <div className="flex items-center gap-3">
             <h3 className="text-sm font-semibold text-[var(--text-secondary)]">Dock Doors</h3>
             <span className="text-xs text-[var(--text-secondary)]">{dockDoors.length} doors</span>
-            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+            <span className="text-xs text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] font-medium">
               {dockDoors.filter((d) => d.status === 'AVAILABLE').length} available
             </span>
           </div>
-          <button className="enterprise-btn enterprise-btn-primary text-xs" onClick={() => addToast({ type: 'info', title: 'Add Dock Door' })}>
+          <button type="button" className="enterprise-btn enterprise-btn-primary text-xs" onClick={() => addToast({ type: 'info', title: 'Add Dock Door' })}>
             <Plus className="w-3.5 h-3.5" /> Add Dock Door
           </button>
         </div>
@@ -506,14 +524,14 @@ export default function YardDockPage() {
                 <div className="flex items-center gap-2">
                   <div className={clsx(
                     'w-9 h-9 rounded-lg flex items-center justify-center',
-                    door.status === 'AVAILABLE' && 'bg-emerald-100 dark:bg-emerald-900/40',
+                    door.status === 'AVAILABLE' && 'bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/40',
                     door.status === 'OCCUPIED' && 'bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40',
                     door.status === 'MAINTENANCE' && 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/40',
                     door.status === 'CLOSED' && 'bg-[var(--surface-muted)]',
                   )}>
                     <Truck className={clsx(
                       'w-4.5 h-4.5',
-                      door.status === 'AVAILABLE' && 'text-emerald-600 dark:text-emerald-400',
+                      door.status === 'AVAILABLE' && 'text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]',
                       door.status === 'OCCUPIED' && 'text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]',
                       door.status === 'MAINTENANCE' && 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]',
                       door.status === 'CLOSED' && 'text-[var(--text-tertiary)]',
@@ -569,8 +587,8 @@ export default function YardDockPage() {
               )}
 
               {door.status === 'AVAILABLE' && (
-                <div className="mt-3 pt-3 border-t border-emerald-200/50 dark:border-emerald-700/30">
-                  <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                <div className="mt-3 pt-3 border-t border-[var(--nexus-success-200)]/50 dark:border-[var(--nexus-success-700)]/30">
+                  <div className="flex items-center gap-2 text-xs text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]">
                     <CircleDot className="w-3.5 h-3.5" />
                     Ready for assignment
                   </div>
@@ -613,7 +631,7 @@ return (
                       key={loc.id}
                       className={clsx(
                         'rounded-xl border p-4 transition-all hover:shadow-sm',
-                        loc.status === 'AVAILABLE' && 'border-emerald-200 dark:border-emerald-800',
+                        loc.status === 'AVAILABLE' && 'border-[var(--nexus-success-200)] dark:border-[var(--nexus-success-800)]',
                         loc.status === 'OCCUPIED' && 'border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)] bg-[var(--nexus-primary-50)]/30 dark:bg-[var(--nexus-primary-900)]/10',
                         loc.status === 'RESERVED' && 'border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)] bg-[var(--nexus-warning-50)]/30 dark:bg-[var(--nexus-warning-900)]/10',
                         loc.status === 'CLOSED' && 'border-[var(--border-default)] opacity-60',
@@ -639,11 +657,11 @@ return (
                             {loc.currentCount}/{loc.maxCapacity}
                           </span>
                         </div>
-                        <div className="w-full h-2 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                        <div className="w-full h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                           <div
                             className={clsx(
                               'h-full rounded-full transition-all',
-                              utilPct > 80 ? 'bg-[var(--nexus-error-50)]0' : utilPct > 50 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-emerald-500',
+                              utilPct > 80 ? 'bg-[var(--nexus-error-500)]' : utilPct > 50 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-500)]',
                             )}
                             style={{ width: `${Math.min(utilPct, 100)}%` }}
                           />
@@ -659,7 +677,7 @@ return (
 
                       <div className="mt-3 flex gap-2">
                         {loc.status === 'AVAILABLE' && (
-                          <button className="flex-1 px-2 py-1 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors">
+                          <button type="button" className="flex-1 px-2 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-success-600)] text-white hover:bg-[var(--nexus-success-700)] transition-colors">
                             Assign
                           </button>
                         )}
@@ -699,7 +717,7 @@ return (
         <div className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+              <tr className="bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                 <th className="px-4 py-3">Appointment #</th>
                 <th className="px-4 py-3">Type</th>
                 <th className="px-4 py-3">Carrier</th>
@@ -711,7 +729,7 @@ return (
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
               {appointments.map((apt) => (
                 <tr key={apt.id} className="hover:bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-base)]/30 transition-colors">
                   <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{apt.appointmentNumber}</td>
@@ -770,7 +788,7 @@ return (
                       {apt.status === 'CHECKED_IN' && (
                         <button
                           onClick={() => handleStartAppointment(apt.id)}
-                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-success-600)] text-white hover:bg-[var(--nexus-success-700)] transition-colors"
                         >
                           <Play className="w-3 h-3 inline mr-1" /> Start
                         </button>
@@ -778,7 +796,7 @@ return (
                       {apt.status === 'IN_PROGRESS' && (
                         <button
                           onClick={() => handleCompleteAppointment(apt.id)}
-                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-700 text-white hover:bg-emerald-800 transition-colors"
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--nexus-success-700)] text-white hover:bg-[var(--nexus-success-800)] transition-colors"
                         >
                           <PackageCheck className="w-3 h-3 inline mr-1" /> Complete
                         </button>
@@ -793,7 +811,7 @@ return (
                           </button>
                           <button
                             onClick={() => handleNoShow(apt.id)}
-                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] transition-colors"
+                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] transition-colors"
                           >
                             No Show
                           </button>
@@ -834,7 +852,7 @@ return (
               selectedSlotHour === slot.hour && 'ring-2 ring-[var(--nexus-primary-500)]/30 border-[var(--nexus-primary-400)] dark:border-[var(--nexus-primary-600)]',
             )}
           >
-            <div className="w-20 flex-shrink-0 flex items-center justify-center bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-l-xl border-r border-[var(--border-default)]">
+            <div className="w-20 flex-shrink-0 flex items-center justify-center bg-[var(--surface-sunken)]/50 rounded-l-xl border-r border-[var(--border-default)]">
               <span className="text-sm font-semibold text-[var(--text-secondary)]">
                 {String(slot.hour).padStart(2, '0')}:00
               </span>
@@ -852,10 +870,10 @@ return (
                     >
                       <span className={clsx(
                         'w-1.5 h-1.5 rounded-full flex-shrink-0',
-                        apt.status === 'IN_PROGRESS' && 'bg-emerald-500',
-                        apt.status === 'CONFIRMED' && 'bg-[var(--nexus-primary-50)]0',
-                        apt.status === 'CHECKED_IN' && 'bg-[var(--nexus-ai-50)]0',
-                        apt.status === 'REQUESTED' && 'bg-[var(--nexus-warning-50)]0',
+                        apt.status === 'IN_PROGRESS' && 'bg-[var(--nexus-success-500)]',
+                        apt.status === 'CONFIRMED' && 'bg-[var(--nexus-primary-500)]',
+                        apt.status === 'CHECKED_IN' && 'bg-[var(bg-[var(--nexus-ai-500)])]',
+                        apt.status === 'REQUESTED' && 'bg-[var(--nexus-warning-500)]',
                         apt.status === 'COMPLETED' && 'bg-[var(--surface-muted)]',
                       )} />
                       <span className="text-xs font-medium text-[var(--text-primary)]">{apt.appointmentNumber}</span>
@@ -970,7 +988,7 @@ return (
         <div className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+              <tr className="bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                 <th className="px-4 py-3">Trailer #</th>
                 <th className="px-4 py-3">Carrier</th>
                 <th className="px-4 py-3">License Plate</th>
@@ -981,7 +999,7 @@ return (
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+            <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
               {filtered.map((t) => (
                 <tr key={t.id} className="hover:bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-base)]/30 transition-colors">
                   <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{t.trailerNumber}</td>
@@ -1020,7 +1038,7 @@ return (
                       )}
                       <button
                         onClick={() => handleShowTrailerEvents(t.id)}
-                        className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] transition-colors"
+                        className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)] hover:bg-[var(--interactive-hover)] transition-colors"
                       >
                         <Eye className="w-3 h-3 inline mr-1" /> History
                       </button>
@@ -1067,7 +1085,7 @@ return (
             <Truck className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Yard & Dock Management
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            {warehouses.find((w) => w.id === selectedWarehouse)?.name} &middot; Dock utilization {stats.dockUtilization}%
+            {warehouses.find((w) => w.id === selectedWarehouse)?.name} &middot; Dock utilization {stats?.dockUtilization ?? 0}%
           </p>
         </div>
       </div>
@@ -1076,37 +1094,37 @@ return (
       <div className="enterprise-kpi-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <EnterpriseKPICard
           title="Dock Utilization"
-          value={`${stats.dockUtilization}%`}
+          value={`${stats?.dockUtilization ?? 0}%`}
           icon={<BarChart3 className="w-5 h-5" />}
-          color={stats.dockUtilization > 80 ? 'warning' : stats.dockUtilization > 50 ? 'primary' : 'success'}
-          trend={stats.dockUtilization > 70 ? 'up' : 'down'}
-          trendValue={`${stats.dockUtilization > 70 ? '+5%' : '-3%'}`}
+          color={(stats?.dockUtilization ?? 0) > 80 ? 'warning' : (stats?.dockUtilization ?? 0) > 50 ? 'primary' : 'success'}
+          trend={(stats?.dockUtilization ?? 0) > 70 ? 'up' : 'down'}
+          trendValue={`${(stats?.dockUtilization ?? 0) > 70 ? '+5%' : '-3%'}`}
         />
         <EnterpriseKPICard
           title="Appointments Today"
-          value={stats.appointmentsToday}
+          value={stats?.appointmentsToday ?? 0}
           icon={<Calendar className="w-5 h-5" />}
           color="primary"
         />
         <EnterpriseKPICard
           title="In Progress Now"
-          value={stats.inProgressNow}
+          value={stats?.inProgressNow ?? 0}
           icon={<Clock className="w-5 h-5" />}
           color="info"
         />
         <EnterpriseKPICard
           title="Completed Today"
-          value={stats.completedToday}
+          value={stats?.completedToday ?? 0}
           icon={<Package className="w-5 h-5" />}
           color="success"
         />
         <EnterpriseKPICard
           title="No Shows"
-          value={stats.noShows}
+          value={stats?.noShows ?? 0}
           icon={<AlertTriangle className="w-5 h-5" />}
-          color={stats.noShows > 0 ? 'error' : 'success'}
-          trend={stats.noShows > 0 ? 'up' : 'neutral'}
-          trendValue={stats.noShows > 0 ? '+1' : '0'}
+          color={(stats?.noShows ?? 0) > 0 ? 'error' : 'success'}
+          trend={(stats?.noShows ?? 0) > 0 ? 'up' : 'neutral'}
+          trendValue={(stats?.noShows ?? 0) > 0 ? '+1' : '0'}
         />
       </div>
 
@@ -1125,7 +1143,7 @@ return (
           </select>
         </div>
 
-        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+        <div className="h-6 w-px bg-[var(--surface-muted)]" />
 
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-[var(--text-secondary)]">Date</label>
@@ -1146,7 +1164,7 @@ return (
           <Plus className="w-4 h-4" /> New Appointment
         </button>
 
-        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+        <div className="h-6 w-px bg-[var(--surface-muted)]" />
 
         <div className="flex items-center rounded-lg border border-[var(--border-default)] overflow-hidden">
           {views.map((view) => (
@@ -1456,7 +1474,7 @@ return (
               ) : (
                 <div className="space-y-3">
                   {trailerEvents.map((ev) => (
-                    <div key={ev.id} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 border border-[var(--border-default)]">
+                    <div key={ev.id} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--surface-sunken)]/50 border border-[var(--border-default)]">
                       <div className="w-8 h-8 rounded-full bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Clock className="w-4 h-4 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
                       </div>

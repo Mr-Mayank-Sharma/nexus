@@ -50,8 +50,8 @@ const auditStatusColors: Record<string, string> = {
   MATCHED: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]',
   DISPUTED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]',
   APPROVED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
-  PAID: 'bg-emerald-100 text-emerald-700',
-  DISCREPANCY: 'bg-orange-100 text-orange-700',
+  PAID: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]',
+  DISCREPANCY: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)]',
 }
 
 export default function FreightAuditPage() {
@@ -222,7 +222,7 @@ export default function FreightAuditPage() {
           </select>
         </div>
 
-        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+        <div className="h-6 w-px bg-[var(--surface-muted)]" />
 
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -252,12 +252,12 @@ export default function FreightAuditPage() {
         <div className="flex-1" />
 
         {activeTab === 'invoices' && (
-          <button onClick={() => setShowCreateModal(true)} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={() => setShowCreateModal(true)} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> Add Invoice
           </button>
         )}
 
-        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+        <div className="h-6 w-px bg-[var(--surface-muted)]" />
 
         <div className="flex items-center rounded-lg border border-[var(--border-default)] overflow-hidden">
           {tabs.map((tab) => (
@@ -275,7 +275,7 @@ export default function FreightAuditPage() {
               {tab.count !== undefined && (
                 <span className={clsx(
                   'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold',
-                  activeTab === tab.key ? 'bg-white/20' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)]',
+                  activeTab === tab.key ? 'bg-white/20' : 'bg-[var(--surface-muted)]',
                 )}>{tab.count}</span>
               )}
             </button>
@@ -289,7 +289,7 @@ export default function FreightAuditPage() {
             <div className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <tr className="bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     <th className="px-4 py-3 w-8" />
                     <th className="px-4 py-3">Invoice #</th>
                     <th className="px-4 py-3">Carrier</th>
@@ -299,7 +299,7 @@ export default function FreightAuditPage() {
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
                   {filteredInvoices.map((inv) => {
                     const isExpanded = expandedInvoiceId === inv.id
                     const lineVariance = inv.lines?.reduce((sum, l) => sum + Math.abs(l.varianceAmount), 0) || 0
@@ -432,7 +432,7 @@ export default function FreightAuditPage() {
                     'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold',
                     log.action === 'CREATED' && 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-600)]',
                     log.action === 'AUDIT_MATCH' && 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-600)]',
-                    log.action === 'APPROVED' && 'bg-emerald-100 text-emerald-600',
+                    log.action === 'APPROVED' && 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-600)]',
                     log.action === 'DISPUTED' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]',
                     log.action === 'PAID' && 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-600)]',
                     !['CREATED', 'AUDIT_MATCH', 'APPROVED', 'DISPUTED', 'PAID'].includes(log.action) && 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
@@ -478,7 +478,7 @@ export default function FreightAuditPage() {
                 { label: 'Pending', value: pendingCount, color: 'text-[var(--nexus-warning-600)]' },
                 { label: 'Disputed', value: disputedCount, color: 'text-[var(--nexus-error-600)]' },
                 { label: 'Approved', value: invoices.filter((i) => i.auditStatus === 'APPROVED').length, color: 'text-[var(--nexus-primary-600)]' },
-                { label: 'Paid', value: paidCount, color: 'text-emerald-600' },
+                { label: 'Paid', value: paidCount, color: 'text-[var(--nexus-success-600)]' },
                 { label: 'Total Billed', value: `$${totalBilled.toLocaleString(undefined, { minimumFractionDigits: 2 })}`, color: 'text-[var(--text-primary)]' },
                 { label: 'Total Variance', value: `$${totalVariance.toFixed(2)}`, color: totalVariance > 0 ? 'text-[var(--nexus-error-600)]' : 'text-[var(--nexus-success-600)]' },
               ].map((stat) => (
@@ -513,7 +513,7 @@ export default function FreightAuditPage() {
           >
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Freight Invoice</h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors">
                 <X className="w-5 h-5 text-[var(--text-secondary)]" />
               </button>
             </div>
@@ -565,8 +565,8 @@ export default function FreightAuditPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreateInvoice} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={handleCreateInvoice} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Create Invoice
               </button>
             </div>

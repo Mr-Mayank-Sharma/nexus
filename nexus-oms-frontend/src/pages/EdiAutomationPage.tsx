@@ -147,7 +147,7 @@ export default function EdiAutomationPage() {
         {[
           { label: 'Total Documents', value: kpis ? (kpis.totalDocuments || 0) + (kpis.failed || 0) : 0, icon: FileText, color: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]' },
           { label: 'Pending', value: kpis?.pending ?? 0, icon: Clock, color: 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
-          { label: 'Parsed / Validated', value: (kpis?.parsed ?? 0) + (kpis?.validated ?? 0), icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600' },
+          { label: 'Parsed / Validated', value: (kpis?.parsed ?? 0) + (kpis?.validated ?? 0), icon: CheckCircle, color: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)]' },
           { label: 'Failed', value: kpis?.failed ?? 0, icon: XCircle, color: kpis?.failed ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]' : 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
         ].map(kpi => (
           <div key={kpi.label} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
@@ -181,7 +181,7 @@ export default function EdiAutomationPage() {
           </select>
         </div>
         <div className="enterprise-toolbar-right">
-          <button onClick={() => fetchData()} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">
+          <button type="button" onClick={() => fetchData()} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
@@ -214,7 +214,7 @@ export default function EdiAutomationPage() {
                 <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
                   doc.docType === '850' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]',
                   doc.docType === '856' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)]',
-                  doc.docType === '810' && 'bg-violet-50 text-violet-600')}>
+                  doc.docType === '810' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]')}>
                   <FileText className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -318,7 +318,7 @@ export default function EdiAutomationPage() {
           <div className="enterprise-modal max-w-lg" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Upload EDI Document</h2>
-              <button onClick={() => setUploadOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
+              <button type="button" onClick={() => setUploadOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -335,7 +335,7 @@ export default function EdiAutomationPage() {
                 <label>Upload File (optional)</label>
                 <div
                   onClick={() => fileRef.current?.click()}
-                  className="border-2 border-dashed border-[var(--border-default)] border-[var(--border-default)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--nexus-primary-400)] dark:hover:border-[var(--nexus-primary-500)] transition-colors"
+                  className="border-2 border-dashed border-[var(--border-default)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--nexus-primary-400)] dark:hover:border-[var(--nexus-primary-500)] transition-colors"
                 >
                   {uploadFile ? (
                     <div className="space-y-1">
@@ -371,7 +371,7 @@ export default function EdiAutomationPage() {
               </div>
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setUploadOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setUploadOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="integrations" action="create">
                 <button
                   onClick={handleUpload}
@@ -393,7 +393,7 @@ export default function EdiAutomationPage() {
           <div className="enterprise-modal max-w-2xl" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">EDI Document Details</h2>
-              <button onClick={() => setSelectedDoc(null)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
+              <button type="button" onClick={() => setSelectedDoc(null)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -450,12 +450,12 @@ export default function EdiAutomationPage() {
             <div className="enterprise-modal-footer">
               {selectedDoc.parsedStatus === 'FAILED' && (
                 <PermissionGate resource="integrations" action="edit">
-                  <button onClick={() => { handleReprocess(selectedDoc.id); setSelectedDoc(null) }} className="enterprise-btn enterprise-btn-secondary">
+                  <button type="button" onClick={() => { handleReprocess(selectedDoc.id); setSelectedDoc(null) }} className="enterprise-btn enterprise-btn-secondary">
                     <RefreshCw className="w-4 h-4" /> Retry Processing
                   </button>
                 </PermissionGate>
               )}
-              <button onClick={() => setSelectedDoc(null)} className="enterprise-btn enterprise-btn-primary">Close</button>
+              <button type="button" onClick={() => setSelectedDoc(null)} className="enterprise-btn enterprise-btn-primary">Close</button>
             </div>
           </div>
         </div>

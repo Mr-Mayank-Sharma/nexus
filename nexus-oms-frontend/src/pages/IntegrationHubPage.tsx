@@ -28,10 +28,10 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  'E-Commerce': 'bg-[var(--nexus-primary-50)]0', 'Marketplace': 'bg-[var(--nexus-ai-50)]0', 'ERP': 'bg-orange-500',
-  'CRM': 'bg-[var(--nexus-success-50)]0', 'WMS': 'bg-[var(--nexus-success-50)]0', 'TMS': 'bg-[var(--nexus-info-50)]0',
-  'Shipping': 'bg-[var(--nexus-warning-50)]0', 'Payments': 'bg-emerald-500', 'Accounting': 'bg-violet-500',
-  'POS': 'bg-pink-500', 'Communication': 'bg-[var(--nexus-primary-50)]0', 'Identity & SSO': 'bg-rose-500',
+  'E-Commerce': 'bg-[var(--nexus-primary-500)]', 'Marketplace': 'bg-[var(bg-[var(--nexus-ai-500)])]', 'ERP': 'bg-[var(--nexus-warning-500)]',
+  'CRM': 'bg-[var(--nexus-success-500)]', 'WMS': 'bg-[var(--nexus-success-500)]', 'TMS': 'bg-[var(bg-[var(--nexus-info-500)])]',
+  'Shipping': 'bg-[var(--nexus-warning-500)]', 'Payments': 'bg-[var(--nexus-success-500)]', 'Accounting': 'bg-[var(--nexus-primary-50)]0',
+  'POS': 'bg-[var(--nexus-primary-500)]', 'Communication': 'bg-[var(--nexus-primary-500)]', 'Identity & SSO': 'bg-[var(--nexus-error-50)]0',
   'Analytics': 'bg-sky-500', 'AI Platform': 'bg-fuchsia-500',
 }
 
@@ -170,14 +170,14 @@ export default function IntegrationHubPage() {
                   {platforms.filter(p => p.category === cat).map(p => {
                     const active = connectors.find(c => c.platform === p.platformType)
                     return (
-                      <button key={p.platformType} onClick={() => active ? setSelectedConnector(active) : openCreate(p)}
-                        className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] transition-colors group">
+                      <button type="button" key={p.platformType} onClick={() => active ? setSelectedConnector(active) : openCreate(p)}
+                        className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-[var(--surface-muted)] transition-colors group">
                         <div className={`w-6 h-6 rounded ${CATEGORY_COLORS[p.category] || 'bg-[var(--surface-muted)]'} flex items-center justify-center text-white`}>
                           {CATEGORY_ICONS[p.category] || <Plug className="w-3 h-3" />}
                         </div>
                         <span className="flex-1 text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">{p.name}</span>
                         {active ? (
-                          <span className={`w-2 h-2 rounded-full ${active.health?.status === 'UP' ? 'bg-[var(--nexus-success-50)]0' : 'bg-[var(--nexus-error-50)]0'}`} />
+                          <span className={`w-2 h-2 rounded-full ${active.health?.status === 'UP' ? 'bg-[var(--nexus-success-500)]' : 'bg-[var(--nexus-error-500)]'}`} />
                         ) : (
                           <Plus className="w-3.5 h-3.5 text-[var(--text-tertiary)] group-hover:text-[var(--nexus-primary-500)]" />
                         )}
@@ -208,17 +208,17 @@ export default function IntegrationHubPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <PermissionGate resource="integrations" action="edit">
-                        <button onClick={() => handleTest(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs">
+                        <button type="button" onClick={() => handleTest(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs">
                           <TestTube className="w-3.5 h-3.5" /> Test
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="integrations" action="edit">
-                        <button onClick={() => handleRegisterWebhooks(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs">
+                        <button type="button" onClick={() => handleRegisterWebhooks(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs">
                           <Link className="w-3.5 h-3.5" /> Webhooks
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleDelete(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
+                        <button type="button" onClick={() => handleDelete(selectedConnector.id)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -227,19 +227,19 @@ export default function IntegrationHubPage() {
 
                   <div className="card-body">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] rounded-lg">
                         <p className="text-lg font-bold text-[var(--text-primary)]">{selectedConnector.health?.consecutiveFailures || 0}</p>
                         <p className="text-xs text-[var(--text-secondary)]">Failures</p>
                       </div>
-                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] rounded-lg">
                         <p className="text-lg font-bold text-[var(--nexus-success-600)]">{selectedConnector.health?.lastSuccessAt ? 'OK' : '-'}</p>
                         <p className="text-xs text-[var(--text-secondary)]">Last Success</p>
                       </div>
-                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] rounded-lg">
                         <p className="text-lg font-bold text-[var(--text-primary)]">{selectedConnector.supportedSyncTypes?.length || 0}</p>
                         <p className="text-xs text-[var(--text-secondary)]">Sync Types</p>
                       </div>
-                      <div className="text-center p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg">
+                      <div className="text-center p-3 bg-[var(--surface-sunken)] rounded-lg">
                         <p className="text-lg font-bold text-[var(--text-primary)]">
                           {jobs.filter(j => j.connectorId === selectedConnector.id).length}
                         </p>
@@ -251,7 +251,7 @@ export default function IntegrationHubPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {selectedConnector.supportedSyncTypes?.map(st => (
                         <PermissionGate key={st} resource="integrations" action="edit">
-                          <button onClick={() => handleSync(selectedConnector.id, st)}
+                          <button type="button" onClick={() => handleSync(selectedConnector.id, st)}
                             disabled={syncing === `${selectedConnector.id}:${st}`}
                             className="border border-[var(--border-default)] rounded-lg p-3 text-left hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)] transition-colors">
                             <div className="flex items-center justify-between mb-1">
@@ -276,7 +276,7 @@ export default function IntegrationHubPage() {
                     ) : (
                       <div className="space-y-2">
                         {jobs.filter(j => j.connectorId === selectedConnector.id).slice(0, 10).map(j => (
-                          <div key={j.jobId} className="flex items-center justify-between p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)] rounded-lg text-sm">
+                          <div key={j.jobId} className="flex items-center justify-between p-3 bg-[var(--surface-sunken)] rounded-lg text-sm">
                             <div className="flex items-center gap-3">
                               <StatusBadge status={j.status} size="sm" />
                               <span className="text-[var(--text-secondary)] font-medium">{j.syncType}</span>
@@ -313,7 +313,7 @@ export default function IntegrationHubPage() {
                 </div>
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Connect {selectedPlatform.name}</h2>
               </div>
-              <button onClick={() => setShowCreate(false)} className="p-1 hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] rounded">
+              <button type="button" onClick={() => setShowCreate(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -322,7 +322,7 @@ export default function IntegrationHubPage() {
 
               <div className="flex gap-2 text-xs text-[var(--text-secondary)] mb-3">
                 {selectedPlatform.supportedProtocols.map(p => (
-                  <span key={p} className="bg-[var(--surface-muted)] bg-[var(--surface-base)] px-2 py-1 rounded">{p}</span>
+                  <span key={p} className="bg-[var(--surface-muted)] px-2 py-1 rounded">{p}</span>
                 ))}
                 {selectedPlatform.supportedAuthTypes.map(a => (
                   <span key={a} className="bg-[var(--interactive-selected)] text-[var(--text-brand)] px-2 py-1 rounded">{a}</span>
@@ -357,9 +357,9 @@ export default function IntegrationHubPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreate(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowCreate(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Connect {selectedPlatform.name}
                 </button>

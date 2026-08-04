@@ -159,7 +159,7 @@ export default function AmazonIntegrationPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Globe className="w-7 h-7 text-orange-500" /> Amazon Integration</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Globe className="w-7 h-7 text-[var(--nexus-warning-500)]" /> Amazon Integration</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect Amazon Seller Central to sync orders, inventory, and fulfillment data</p>
         </div>
         <div className="flex items-center gap-3">
@@ -180,7 +180,7 @@ export default function AmazonIntegrationPage() {
       {/* Connection Card */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Link className="w-4 h-4 text-orange-500" /> Connection</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Link className="w-4 h-4 text-[var(--nexus-warning-500)]" /> Connection</h3>
         </div>
         <div className="card-body">
           <div className="flex items-center justify-between">
@@ -194,13 +194,13 @@ export default function AmazonIntegrationPage() {
             </div>
             {connected ? (
               <PermissionGate resource="integrations" action="delete">
-                <button onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
+                <button type="button" onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
                 </button>
               </PermissionGate>
             ) : (
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleConnect} disabled={connecting} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleConnect} disabled={connecting} className="enterprise-btn enterprise-btn-primary text-sm">
                   {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
                   {connecting ? 'Connecting...' : 'Connect'}
                 </button>
@@ -213,7 +213,7 @@ export default function AmazonIntegrationPage() {
       {/* Store Settings */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Settings className="w-4 h-4 text-orange-500" /> Store Settings</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Settings className="w-4 h-4 text-[var(--nexus-warning-500)]" /> Store Settings</h3>
         </div>
         <div className="card-body space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -242,7 +242,7 @@ export default function AmazonIntegrationPage() {
       {/* Sync Settings */}
       <div className="card">
         <div className="card-header">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><RefreshCw className="w-4 h-4 text-orange-500" /> Sync Settings</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><RefreshCw className="w-4 h-4 text-[var(--nexus-warning-500)]" /> Sync Settings</h3>
         </div>
         <div className="card-body space-y-4">
           <div className="flex items-center gap-6">
@@ -267,13 +267,13 @@ export default function AmazonIntegrationPage() {
         </div>
         <div className="card-footer flex justify-between">
           <PermissionGate resource="integrations" action="create">
-            <button onClick={handleForceSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
+            <button type="button" onClick={handleForceSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
               {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               {syncing ? 'Syncing...' : 'Force Sync'}
             </button>
           </PermissionGate>
           <PermissionGate resource="integrations" action="edit">
-            <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+            <button type="button" onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Save Settings
             </button>
@@ -304,7 +304,7 @@ export default function AmazonIntegrationPage() {
       <div className="card">
         <div className="card-header">
           <div className="flex items-center justify-between w-full">
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-orange-500" /> Recent Amazon Orders</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-[var(--nexus-warning-500)]" /> Recent Amazon Orders</h3>
             <div className="flex items-center gap-3">
               <Autocomplete value={searchTerm} onChange={setSearchTerm} placeholder="Search orders..." minChars={0} />
               <select value={filterMarketplace} onChange={e => setFilterMarketplace(e.target.value)} className="input text-xs w-28">
@@ -333,7 +333,7 @@ export default function AmazonIntegrationPage() {
                 <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Placed At</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[var(--surface-sunken)]">
               {filteredOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
@@ -365,7 +365,7 @@ export default function AmazonIntegrationPage() {
         </div>
         <div className="px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-tertiary)]">
           <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs"><Download className="w-3.5 h-3.5" /> Export</button>
+          <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs"><Download className="w-3.5 h-3.5" /> Export</button>
         </div>
       </div>
     </div>

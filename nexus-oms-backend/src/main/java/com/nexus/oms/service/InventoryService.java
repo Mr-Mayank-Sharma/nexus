@@ -21,6 +21,12 @@ public class InventoryService {
         this.inventoryRepository = inventoryRepository;
     }
 
+    @Transactional
+    @CacheEvict(value = "inventory", allEntries = true)
+    public NxInventory createInventory(NxInventory inventory) {
+        return inventoryRepository.save(inventory);
+    }
+
     @Cacheable(value = "inventory", key = "#tenantId")
     public List<NxInventory> getInventoryByTenant(UUID tenantId) {
         return inventoryRepository.findByTenantId(tenantId);

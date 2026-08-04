@@ -42,7 +42,7 @@ export default function ATPRulesPage() {
     queryKey: ['atp-rules'],
     queryFn: async () => {
       const res = await atpApi.getRules()
-      return res.data as NxATPRule[]
+      return Array.isArray(res.data) ? (res.data as NxATPRule[]) : []
     },
   })
 
@@ -50,7 +50,7 @@ export default function ATPRulesPage() {
     queryKey: ['atp-snapshots'],
     queryFn: async () => {
       const res = await atpApi.getSnapshots()
-      return res.data as NxATPSnapshot[]
+      return Array.isArray(res.data) ? (res.data as NxATPSnapshot[]) : []
     },
     enabled: activeTab === 'snapshots',
   })
@@ -260,11 +260,11 @@ export default function ATPRulesPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 pt-2">
-            <button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}
+            <button type="button" onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}
               className="enterprise-btn-primary px-4 py-2 text-sm">
               {editingRule ? 'Update Rule' : 'Create Rule'}
             </button>
-            <button onClick={() => { setShowCreateRule(false); setEditingRule(null); resetForm() }}
+            <button type="button" onClick={() => { setShowCreateRule(false); setEditingRule(null); resetForm() }}
               className="enterprise-btn-secondary px-4 py-2 text-sm">
               Cancel
             </button>
@@ -308,17 +308,17 @@ export default function ATPRulesPage() {
                         <div>Lead: {rule.leadTimeDays || 0}d</div>
                       </div>
                       <PermissionGate resource="inventory" action="edit">
-                        <button onClick={() => toggleMutation.mutate(rule)} className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded transition-colors">
+                        <button type="button" onClick={() => toggleMutation.mutate(rule)} className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded transition-colors">
                           {rule.enabled ? <ToggleRight className="w-6 h-6 text-[var(--text-brand)]" /> : <ToggleLeft className="w-6 h-6 text-[var(--text-tertiary)]" />}
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="inventory" action="edit">
-                        <button onClick={() => startEdit(rule)} className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-500)] transition-colors">
+                        <button type="button" onClick={() => startEdit(rule)} className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-500)] transition-colors">
                           <Edit className="w-4 h-4" />
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="inventory" action="delete">
-                        <button onClick={() => rule.id && deleteMutation.mutate(rule.id)}
+                        <button type="button" onClick={() => rule.id && deleteMutation.mutate(rule.id)}
                           className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -360,7 +360,7 @@ export default function ATPRulesPage() {
                       <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Calculated</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-800">
                     {filteredSnapshots.map(snapshot => (
                       <tr key={snapshot.id} className="enterprise-table-row">
                         <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{snapshot.nodeName || snapshot.nodeId}</td>

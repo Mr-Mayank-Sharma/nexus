@@ -57,13 +57,13 @@ export default function WarehouseDashboardPage() {
       <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] text-[var(--text-primary)] flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Building2 className="w-7 h-7 text-[var(--nexus-warning-500)]" />
             Warehouse Dashboard
           </h1>
           <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">Main Distribution Center · Operations overview</p>
         </div>
-        <button onClick={() => navigate('/warehouse')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
+        <button type="button" onClick={() => navigate('/warehouse')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
           <Building2 className="w-4 h-4" /> Full Warehouse
         </button>
       </div>
@@ -76,9 +76,9 @@ export default function WarehouseDashboardPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-lg p-0.5 w-fit">
+      <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-0.5 w-fit">
         {(['overview', 'labor', 'dock'] as const).map(t => (
-          <button key={t} onClick={() => setSelectedTab(t)}
+          <button type="button" key={t} onClick={() => setSelectedTab(t)}
             className={clsx('px-4 py-2 text-sm font-medium rounded-md capitalize transition-all',
               selectedTab === t ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')}>
             {t === 'overview' ? 'Overview' : t === 'labor' ? 'Labor Tracking' : 'Dock Management'}
@@ -91,7 +91,7 @@ export default function WarehouseDashboardPage() {
         <div className="grid grid-cols-3 gap-6">
           <div className="col-span-2 space-y-4">
             <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] text-[var(--text-primary)] mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                 <Target className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Fulfillment Pipeline
               </h3>
               <div className="relative">
@@ -99,28 +99,28 @@ export default function WarehouseDashboardPage() {
                   <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Picked Today</span>
                   <span className="text-xs font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">1,247 / 1,500</span>
                 </div>
-                <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2.5">
+                <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
                   <div className="bg-[var(--nexus-primary-600)] h-2.5 rounded-full" style={{ width: '83%' }} />
                 </div>
                 <div className="flex items-center justify-between mt-4 mb-2">
                   <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Packed Today</span>
                   <span className="text-xs font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">892 / 1,200</span>
                 </div>
-                <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2.5">
-                  <div className="bg-emerald-500 h-2.5 rounded-full" style={{ width: '74%' }} />
+                <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
+                  <div className="bg-[var(--nexus-success-500)] h-2.5 rounded-full" style={{ width: '74%' }} />
                 </div>
                 <div className="flex items-center justify-between mt-4 mb-2">
                   <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Shipped Today</span>
                   <span className="text-xs font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">756 / 1,000</span>
                 </div>
-                <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2.5">
+                <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
                   <div className="bg-[var(--nexus-primary-600)] h-2.5 rounded-full" style={{ width: '76%' }} />
                 </div>
               </div>
             </div>
 
             <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] text-[var(--text-primary)] mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-[var(--nexus-warning-500)]" /> Active Alerts
               </h3>
               <div className="space-y-2">
@@ -143,7 +143,7 @@ export default function WarehouseDashboardPage() {
 
           <div className="space-y-4">
             <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] text-[var(--text-primary)] mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4 text-[var(--text-tertiary)]" /> Quick Actions
               </h3>
               <div className="space-y-2">
@@ -154,8 +154,8 @@ export default function WarehouseDashboardPage() {
                   { label: 'Inventory Check', path: '/inventory', icon: <Package className="w-4 h-4" /> },
                   { label: 'Task Queues', path: '/task-queues', icon: <AlertTriangle className="w-4 h-4" /> },
                 ].map((a, i) => (
-                  <button key={i} onClick={() => navigate(a.path)}
-                    className="w-full flex items-center justify-between p-2.5 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] transition-colors text-left">
+                  <button type="button" key={i} onClick={() => navigate(a.path)}
+                    className="w-full flex items-center justify-between p-2.5 rounded-lg bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-muted)] transition-colors text-left">
                     <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
                       {a.icon} {a.label}
                     </span>
@@ -166,17 +166,17 @@ export default function WarehouseDashboardPage() {
             </div>
 
             <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] text-[var(--text-primary)] mb-3">Today's Summary</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Today's Summary</h3>
               <div className="space-y-3">
                 {[
                   { label: 'Orders Fulfilled', value: '756', icon: <Package className="w-4 h-4 text-[var(--nexus-success-500)]" /> },
                   { label: 'Active Workers', value: '14', icon: <Users className="w-4 h-4 text-[var(--nexus-primary-500)]" /> },
-                  { label: 'On-Time Rate', value: '96.2%', icon: <TrendingUp className="w-4 h-4 text-emerald-500" /> },
+                  { label: 'On-Time Rate', value: '96.2%', icon: <TrendingUp className="w-4 h-4 text-[var(--nexus-success-500)]" /> },
                   { label: 'Avg Pick Time', value: '4.2 min', icon: <Clock className="w-4 h-4 text-[var(--nexus-warning-500)]" /> },
                 ].map((s, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <span className="flex items-center gap-2 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{s.icon} {s.label}</span>
-                    <span className="text-sm font-semibold text-[var(--text-primary)] text-[var(--text-primary)]">{s.value}</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)]">{s.value}</span>
                   </div>
                 ))}
               </div>
@@ -200,10 +200,10 @@ export default function WarehouseDashboardPage() {
                   <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Efficiency</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-800">
                 {laborData.map((w, i) => (
                   <tr key={i} className="enterprise-table-row">
-                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)] text-[var(--text-primary)]">{w.name}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{w.name}</td>
                     <td className="px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{w.role}</td>
                     <td className="px-4 py-3 text-center">
                       <EnterpriseStatusBadge status={w.status === 'active' ? 'success' : w.status === 'break' ? 'warning' : 'error'} label={w.status} />
@@ -241,7 +241,7 @@ export default function WarehouseDashboardPage() {
                     d.status === 'arrived' ? 'text-[var(--nexus-primary-500)]' :
                     d.status === 'scheduled' ? 'text-[var(--nexus-warning-500)]' :
                     'text-[var(--text-tertiary)]')} />
-                  <span className="text-sm font-semibold text-[var(--text-primary)] text-[var(--text-primary)]">Door {d.door}</span>
+                  <span className="text-sm font-semibold text-[var(--text-primary)]">Door {d.door}</span>
                 </div>
                 <EnterpriseStatusBadge status={d.status === 'loading' ? 'success' : d.status === 'arrived' ? 'info' : d.status === 'scheduled' ? 'warning' : 'pending'} label={d.status} />
               </div>

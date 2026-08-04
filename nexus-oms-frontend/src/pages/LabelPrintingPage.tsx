@@ -135,7 +135,7 @@ export default function LabelPrintingPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="enterprise-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
+              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-500)] flex items-center justify-center text-white">
                 <FileText className="w-4 h-4" />
               </div>
               <div>
@@ -194,7 +194,7 @@ export default function LabelPrintingPage() {
             </div>
             <div className="mt-4 flex justify-end">
               <PermissionGate resource="settings" action="create">
-                <button onClick={handleGenerate}
+                <button type="button" onClick={handleGenerate}
                   className="bg-[var(--nexus-primary-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors inline-flex items-center gap-2 text-sm font-medium">
                   <Plus className="w-4 h-4" /> Generate Label
                 </button>
@@ -249,14 +249,14 @@ export default function LabelPrintingPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center justify-center gap-1">
                             <PermissionGate resource="settings" action="edit">
-                              <button onClick={() => handleReprint(label)}
+                              <button type="button" onClick={() => handleReprint(label)}
                                 className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors"
                                 title="Reprint">
                                 <RefreshCw className="w-3.5 h-3.5" />
                               </button>
                             </PermissionGate>
                             <PermissionGate resource="settings" action="delete">
-                              <button onClick={() => handleVoid(label)}
+                              <button type="button" onClick={() => handleVoid(label)}
                                 className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)] transition-colors"
                                 title="Void">
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -274,7 +274,7 @@ export default function LabelPrintingPage() {
 
           <div className="enterprise-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-ai-50)]0 flex items-center justify-center text-white">
+              <div className="w-8 h-8 rounded-lg bg-[var(bg-[var(--nexus-ai-500)])] flex items-center justify-center text-white">
                 <Box className="w-4 h-4" />
               </div>
               <div>
@@ -291,7 +291,7 @@ export default function LabelPrintingPage() {
                   )}>
                   <input type="checkbox" checked={bulkOrders.includes(orderId)}
                     onChange={() => toggleBulkOrder(orderId)}
-                    className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-blue-500" />
+                    className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-[var(--nexus-primary-500)]" />
                   <span className="text-[var(--text-primary)]">{orderId}</span>
                 </label>
               ))}
@@ -311,7 +311,7 @@ export default function LabelPrintingPage() {
             <div className="flex items-center justify-between">
               <span className="text-xs text-[var(--text-tertiary)]">{bulkOrders.length} order(s) selected</span>
               <PermissionGate resource="settings" action="create">
-                <button onClick={handleBulkGenerate} disabled={bulkOrders.length === 0 || isBulkGenerating}
+                <button type="button" onClick={handleBulkGenerate} disabled={bulkOrders.length === 0 || isBulkGenerating}
                   className="bg-[var(--nexus-primary-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors inline-flex items-center gap-2 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed">
                   {isBulkGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Generate Labels for Selected
@@ -324,7 +324,7 @@ export default function LabelPrintingPage() {
         <div className="space-y-6">
           <div className="enterprise-card p-5">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-success-50)]0 flex items-center justify-center text-white">
+              <div className="w-8 h-8 rounded-lg bg-[var(--nexus-success-500)] flex items-center justify-center text-white">
                 <Settings className="w-4 h-4" />
               </div>
               <div>
@@ -356,7 +356,7 @@ export default function LabelPrintingPage() {
                 <input type="number" min="1" max="10" value={copies}
                   onChange={e => setCopies(e.target.value)} className="enterprise-input w-full" />
               </div>
-              <button onClick={handleTestPrint}
+              <button type="button" onClick={handleTestPrint}
                 className="enterprise-btn enterprise-btn-secondary w-full justify-center">
                 <Printer className="w-4 h-4" /> Test Print
               </button>
@@ -366,7 +366,7 @@ export default function LabelPrintingPage() {
           <div className="enterprise-card p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[var(--nexus-warning-50)]0 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-lg bg-[var(--nexus-warning-500)] flex items-center justify-center text-white">
                   <FileText className="w-4 h-4" />
                 </div>
                 <div>
@@ -374,7 +374,7 @@ export default function LabelPrintingPage() {
                   <p className="text-xs text-[var(--text-tertiary)]">Last 10 generated today</p>
                 </div>
               </div>
-              <button onClick={() => setShowRecent(!showRecent)}
+              <button type="button" onClick={() => setShowRecent(!showRecent)}
                 className="p-1 rounded hover:bg-[var(--bg-tertiary)] transition-colors">
                 <ChevronRight className={clsx('w-4 h-4 text-[var(--text-tertiary)] transition-transform', showRecent && 'rotate-90')} />
               </button>

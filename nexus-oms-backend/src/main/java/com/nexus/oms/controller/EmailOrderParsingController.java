@@ -58,6 +58,15 @@ public class EmailOrderParsingController {
         return ResponseEntity.ok(ApiResponse.success(parsed, "CSV attachment parsed"));
     }
 
+    @PostMapping("/parse-pdf")
+    public ResponseEntity<ApiResponse<NxEmailParsedOrder>> parsePdf(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "subject", required = false) String subject,
+            @RequestParam(value = "from", required = false) String from) {
+        NxEmailParsedOrder parsed = emailOrderParsingService.parsePdfAttachment(file, subject, from);
+        return ResponseEntity.ok(ApiResponse.success(parsed, "PDF attachment parsed"));
+    }
+
     @PostMapping("/{id}/approve")
     public ResponseEntity<ApiResponse<NxEmailParsedOrder>> approveOrder(@PathVariable UUID id) {
         NxEmailParsedOrder parsed = emailOrderParsingService.approveOrder(id);

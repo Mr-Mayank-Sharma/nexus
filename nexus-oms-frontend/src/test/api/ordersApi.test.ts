@@ -105,14 +105,14 @@ describe('Orders API', () => {
   })
 
   describe('confirmOrder', () => {
-    it('should PATCH /orders/:id/confirm', async () => {
+    it('should POST /orders/:id/confirm', async () => {
       const result = await confirmOrder('ORD-001')
-      expect(mockPatch).toHaveBeenCalledWith('/orders/ORD-001/confirm')
+      expect(mockPost).toHaveBeenCalledWith('/orders/ORD-001/confirm')
       expect(result.success).toBe(true)
     })
 
     it('should return error on failure', async () => {
-      mockPatch.mockRejectedValueOnce(new Error('Confirm failed'))
+      mockPost.mockRejectedValueOnce(new Error('Confirm failed'))
       const result = await confirmOrder('ORD-001')
       expect(result.success).toBe(false)
       expect(result.error).toBe('Confirm failed')
@@ -120,14 +120,14 @@ describe('Orders API', () => {
   })
 
   describe('allocateOrder', () => {
-    it('should PATCH /orders/:id/allocate', async () => {
+    it('should POST /orders/:id/allocate', async () => {
       const result = await allocateOrder('ORD-001')
-      expect(mockPatch).toHaveBeenCalledWith('/orders/ORD-001/allocate')
+      expect(mockPost).toHaveBeenCalledWith('/orders/ORD-001/allocate')
       expect(result.success).toBe(true)
     })
 
     it('should return error on failure', async () => {
-      mockPatch.mockRejectedValueOnce(new Error('Allocate failed'))
+      mockPost.mockRejectedValueOnce(new Error('Allocate failed'))
       const result = await allocateOrder('ORD-001')
       expect(result.success).toBe(false)
       expect(result.error).toBe('Allocate failed')
@@ -135,9 +135,9 @@ describe('Orders API', () => {
   })
 
   describe('shipOrder', () => {
-    it('should PATCH /orders/:id/ship with carrierId and trackingNumber', async () => {
+    it('should POST /orders/:id/ship with carrierId and trackingNumber', async () => {
       const result = await shipOrder('ORD-001', 'FEDEX', 'TRACK-123')
-      expect(mockPatch).toHaveBeenCalledWith('/orders/ORD-001/ship', {
+      expect(mockPost).toHaveBeenCalledWith('/orders/ORD-001/ship', {
         carrierId: 'FEDEX',
         trackingNumber: 'TRACK-123',
       })
@@ -145,7 +145,7 @@ describe('Orders API', () => {
     })
 
     it('should return error on failure', async () => {
-      mockPatch.mockRejectedValueOnce(new Error('Ship failed'))
+      mockPost.mockRejectedValueOnce(new Error('Ship failed'))
       const result = await shipOrder('ORD-001', 'UPS', 'TRACK-456')
       expect(result.success).toBe(false)
       expect(result.error).toBe('Ship failed')
@@ -153,14 +153,14 @@ describe('Orders API', () => {
   })
 
   describe('cancelOrder', () => {
-    it('should PATCH /orders/:id/cancel', async () => {
+    it('should POST /orders/:id/cancel', async () => {
       const result = await cancelOrder('ORD-001')
-      expect(mockPatch).toHaveBeenCalledWith('/orders/ORD-001/cancel')
+      expect(mockPost).toHaveBeenCalledWith('/orders/ORD-001/cancel')
       expect(result.success).toBe(true)
     })
 
     it('should return error on failure', async () => {
-      mockPatch.mockRejectedValueOnce(new Error('Cancel failed'))
+      mockPost.mockRejectedValueOnce(new Error('Cancel failed'))
       const result = await cancelOrder('ORD-001')
       expect(result.success).toBe(false)
       expect(result.error).toBe('Cancel failed')

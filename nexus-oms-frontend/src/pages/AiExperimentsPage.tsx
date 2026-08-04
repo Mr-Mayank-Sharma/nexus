@@ -131,7 +131,7 @@ export default function AiExperimentsPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-0.5">A/B test and champion/challenger experiments for AI models</p>
         </div>
         <PermissionGate resource="settings" action="create">
-          <button onClick={() => setShowCreate(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
+          <button type="button" onClick={() => setShowCreate(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Experiment
           </button>
         </PermissionGate>
@@ -154,12 +154,12 @@ export default function AiExperimentsPage() {
           inputClassName="enterprise-input text-sm w-auto"
         />
         {['', ...STATUS_OPTIONS].map(s => (
-          <button key={s}
+          <button type="button" key={s}
             onClick={() => { setStatusFilter(s); setPage(0) }}
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               statusFilter === s
                 ? 'bg-[var(--nexus-primary-600)] text-white'
-                : 'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
+                : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
             }`}
           >
             {s || 'All'}
@@ -198,12 +198,12 @@ export default function AiExperimentsPage() {
                     {exp.status === 'DRAFT' && (
                       <>
                         <PermissionGate resource="settings" action="edit">
-                          <button onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)] flex items-center gap-1">
+                          <button type="button" onClick={() => setEditing(exp)} className="px-3 py-1.5 text-xs bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)] flex items-center gap-1">
                             <Edit className="w-3 h-3" /> Edit
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="settings" action="create">
-                          <button onClick={() => handleStart(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--nexus-warning-600)] text-white rounded-lg hover:bg-[var(--nexus-warning-700)] flex items-center gap-1">
+                          <button type="button" onClick={() => handleStart(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--nexus-warning-600)] text-white rounded-lg hover:bg-[var(--nexus-warning-700)] flex items-center gap-1">
                             <Play className="w-3 h-3" /> Start
                           </button>
                         </PermissionGate>
@@ -212,19 +212,19 @@ export default function AiExperimentsPage() {
                     {exp.status === 'RUNNING' && (
                       <>
                         <PermissionGate resource="settings" action="edit">
-                          <button onClick={() => handleComplete(exp.id)} disabled={completingId === exp.id}
+                          <button type="button" onClick={() => handleComplete(exp.id)} disabled={completingId === exp.id}
                             className="px-3 py-1.5 text-xs bg-[var(--nexus-success-600)] text-white rounded-lg hover:bg-[var(--nexus-success-700)] flex items-center gap-1">
                             {completingId === exp.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                             Complete
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="settings" action="edit">
-                          <button onClick={() => handleFail(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--nexus-error-600)] text-white rounded-lg hover:bg-[var(--nexus-error-700)] flex items-center gap-1">
+                          <button type="button" onClick={() => handleFail(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--nexus-error-600)] text-white rounded-lg hover:bg-[var(--nexus-error-700)] flex items-center gap-1">
                             <XCircle className="w-3 h-3" /> Fail
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="settings" action="edit">
-                          <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--surface-muted)] text-white rounded-lg hover:bg-[var(--surface-muted)] flex items-center gap-1">
+                          <button type="button" onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--surface-muted)] text-white rounded-lg hover:bg-[var(--surface-muted)] flex items-center gap-1">
                             <RotateCcw className="w-3 h-3" /> Rollback
                           </button>
                         </PermissionGate>
@@ -232,7 +232,7 @@ export default function AiExperimentsPage() {
                     )}
                     {(exp.status === 'COMPLETED' || exp.status === 'ROLLED_BACK' || exp.status === 'FAILED') && (
                       <PermissionGate resource="settings" action="edit">
-                        <button onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--surface-muted)] text-white rounded-lg hover:bg-[var(--surface-muted)] flex items-center gap-1">
+                        <button type="button" onClick={() => handleRollback(exp.id)} className="px-3 py-1.5 text-xs bg-[var(--surface-muted)] text-white rounded-lg hover:bg-[var(--surface-muted)] flex items-center gap-1">
                           <RotateCcw className="w-3 h-3" /> Rollback
                         </button>
                       </PermissionGate>
@@ -365,7 +365,7 @@ function ExperimentFormModal({ models, experiment, saving, onSave, onClose }: {
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
             <PermissionGate resource="settings" action={experiment ? 'edit' : 'create'}>
-              <button type="submit" disabled={saving || !name.trim() || !modelId}
+              <button type="button" type="submit" disabled={saving || !name.trim() || !modelId}
                 className="enterprise-btn enterprise-btn-primary flex items-center gap-2">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 {experiment ? 'Update' : 'Create'}

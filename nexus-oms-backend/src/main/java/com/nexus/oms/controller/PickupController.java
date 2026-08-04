@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1/pickup")
+@RequestMapping("/pickup")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class PickupController {
 

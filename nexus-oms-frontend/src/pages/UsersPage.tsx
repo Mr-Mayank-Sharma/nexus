@@ -248,7 +248,7 @@ export default function UsersPage() {
           <div className="flex items-center justify-between">
             <Autocomplete value={search} onChange={setSearch} placeholder="Search by user name or ID..." minChars={0} className="flex-1 max-w-xs" />
             <PermissionGate resource="users" action="create">
-              <button onClick={() => { setRoleForm({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true }); setShowAssignModal(true) }} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={() => { setRoleForm({ userId: '', role: 'VIEWER', team: '', department: '', isActive: true }); setShowAssignModal(true) }} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Assign Role
               </button>
             </PermissionGate>
@@ -277,7 +277,7 @@ export default function UsersPage() {
                     <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[var(--surface-sunken)]">
                   {filteredRoles.map(r => (
                     <tr key={r.id} className="hover:bg-[var(--surface-sunken)]">
                       <td className="px-4 py-3">
@@ -319,7 +319,7 @@ export default function UsersPage() {
         <>
           <div className="flex items-center justify-end">
             <PermissionGate resource="users" action="create">
-              <button onClick={() => { setTeamForm({ name: '', description: '', managerId: '' }); setShowCreateTeamModal(true) }} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={() => { setTeamForm({ name: '', description: '', managerId: '' }); setShowCreateTeamModal(true) }} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Create Team
               </button>
             </PermissionGate>
@@ -347,7 +347,7 @@ export default function UsersPage() {
                     <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[var(--surface-sunken)]">
                   {teams.map(t => (
                     <tr key={t.id} className="hover:bg-[var(--surface-sunken)]">
                       <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{t.name}</td>
@@ -360,7 +360,7 @@ export default function UsersPage() {
                       <td className="px-4 py-3 text-right">
                         <button
                           onClick={() => handleToggleTeam(t)}
-                          className={`p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)] ${t.isActive ? 'hover:bg-orange-50' : 'hover:bg-[var(--nexus-success-50)]'}`}
+                          className={`p-1.5 rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)] ${t.isActive ? 'hover:bg-[var(--nexus-warning-50)]' : 'hover:bg-[var(--nexus-success-50)]'}`}
                           title={t.isActive ? 'Deactivate' : 'Activate'}
                         >
                           {t.isActive ? <X className="w-4 h-4" /> : <Check className="w-4 h-4 text-[var(--nexus-success-600)]" />}
@@ -379,7 +379,7 @@ export default function UsersPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-[var(--text-secondary)]">OFBiz-style security groups define permissions for users and roles</p>
-            <PermissionGate resource="users" action="create"><button className="enterprise-btn enterprise-btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button></PermissionGate>
+            <PermissionGate resource="users" action="create"><button type="button" className="enterprise-btn enterprise-btn-primary text-sm"><Plus className="w-4 h-4" /> Create Group</button></PermissionGate>
           </div>
 
           {[
@@ -462,7 +462,7 @@ export default function UsersPage() {
                             <p className="text-xs text-[var(--text-secondary)]">{child.description} · {child.memberCount} members</p>
                           </div>
                         </div>
-                        <button className="text-xs text-[var(--text-brand)] hover:text-[var(--nexus-primary-800)] font-medium">Assign</button>
+                        <button type="button" className="text-xs text-[var(--text-brand)] hover:text-[var(--nexus-primary-800)] font-medium">Assign</button>
                       </div>
                       <div className="flex flex-wrap gap-1.5 mt-2 ml-5">
                         {child.permissions.map(p => (
@@ -509,7 +509,7 @@ export default function UsersPage() {
                       <th className="px-3 py-2 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Approve</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[var(--surface-sunken)]">
                     {permissions.map(p => (
                       <tr key={p.id} className="hover:bg-[var(--surface-sunken)]">
                         <td className="px-3 py-2 text-[var(--text-secondary)] font-medium">{p.role}</td>
@@ -559,7 +559,7 @@ export default function UsersPage() {
                   </label>
                 ))}
                 <PermissionGate resource="users" action="edit">
-                  <button onClick={handleSetPermission} disabled={saving} className="enterprise-btn enterprise-btn-primary text-xs ml-auto">
+                  <button type="button" onClick={handleSetPermission} disabled={saving} className="enterprise-btn enterprise-btn-primary text-xs ml-auto">
                     {saving ? <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-white" /> : <Shield className="w-3.5 h-3.5" />}
                     Set Permission
                   </button>
@@ -575,7 +575,7 @@ export default function UsersPage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Assign Role</h2>
-              <button onClick={() => setShowAssignModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowAssignModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -607,9 +607,9 @@ export default function UsersPage() {
               </label>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowAssignModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowAssignModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="users" action="create">
-                <button onClick={handleAssignRole} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleAssignRole} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Shield className="w-4 h-4" />}
                   Assign
                 </button>
@@ -624,7 +624,7 @@ export default function UsersPage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create Team</h2>
-              <button onClick={() => setShowCreateTeamModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowCreateTeamModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -641,9 +641,9 @@ export default function UsersPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateTeamModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowCreateTeamModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="users" action="create">
-                <button onClick={handleCreateTeam} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleCreateTeam} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Users className="w-4 h-4" />}
                   Create
                 </button>

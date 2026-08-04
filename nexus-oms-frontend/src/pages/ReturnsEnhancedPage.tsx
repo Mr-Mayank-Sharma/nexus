@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { clsx } from 'clsx'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  RotateCcw, Plus, Search, X, Check, ChevronDown, ChevronRight,
-  Eye, PackageCheck, DollarSign, ThumbsUp, RefreshCw, AlertTriangle, Loader2,
-  ClipboardList, ShieldCheck, BarChart3, Settings, Truck, TrendingUp,
-  TrendingDown, ArrowUpRight, ArrowDownRight, Box, Recycle, Heart,
-  Wrench, Trash2, Sparkles, Filter, Calendar,
+  RotateCcw, Plus, X, Check, ChevronDown, ChevronRight,
+  Eye, PackageCheck, DollarSign, ThumbsUp, AlertTriangle, Loader2,
+  ClipboardList, ShieldCheck, BarChart3, Settings, TrendingUp,
+  TrendingDown, Box, Recycle, Heart, Wrench, Trash2, Sparkles, Filter,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
@@ -13,10 +13,13 @@ import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadg
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
-import { fetchReturns, fetchReturnAnalytics, createReturn, updateReturn } from '../api/newBackend'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { useAuth } from '../context/AuthContext'
+import {
+  getReturns, getReturnKPIs, createReturn, approveReturn, rejectReturn, inspectReturn,
+} from '../api/returns'
+import { fetchReturnAnalytics } from '../api/newBackend'
 
-type RmaStatus = 'PENDING_APPROVAL' | 'AUTHORIZED' | 'IN_TRANSIT' | 'RECEIVED' | 'INSPECTED' | 'COMPLETED' | 'REJECTED'
 type ItemCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'DAMAGED'
 type Disposition = 'RESTOCK' | 'REFURBISH' | 'DONATE' | 'RECYCLE' | 'SCRAP'
 type Grade = 'A' | 'B' | 'C' | 'D' | 'F'
@@ -36,49 +39,51 @@ interface RmaItem {
 interface RmaRecord {
   id: string
   rmaNumber: string
+  orderId: string
   orderNumber: string
   customer: string
   reason: string
-  reasonType: string
-  status: RmaStatus
+  status: string
   date: string
   value: number
   items: RmaItem[]
 }
 
-interface DispoCategory {
-  key: Disposition
-  label: string
-  icon: typeof Box
-  count: number
-  value: number
-  color: string
+const STATUS_STEPS = ['REQUESTED', 'APPROVED', 'RECEIVED', 'INSPECTED', 'REFUNDED']
+
+const STATUS_LABELS: Record<string, string> = {
+  REQUESTED: 'Pending Approval',
+  APPROVED: 'Authorized',
+  RECEIVED: 'Received',
+  INSPECTED: 'Inspected',
+  REFUNDED: 'Refunded',
+  REJECTED: 'Rejected',
+  CANCELLED: 'Cancelled',
 }
 
-const RMA_STATUS_COLORS: Record<RmaStatus, string> = {
-  PENDING_APPROVAL: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] ring-amber-500/20',
-  AUTHORIZED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-blue-500/20',
-  IN_TRANSIT: 'text-[var(--nexus-info-600)] bg-[var(--nexus-info-50)] ring-cyan-500/20',
-  RECEIVED: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-gray-500/20',
-  INSPECTED: 'text-violet-600 bg-violet-50 ring-violet-500/20',
-  COMPLETED: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20',
-  REJECTED: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] ring-red-500/20',
-}
-
-const RMA_STATUS_BADGE: Record<RmaStatus, string> = {
-  PENDING_APPROVAL: 'pending_approval',
-  AUTHORIZED: 'approved',
-  IN_TRANSIT: 'info',
+const STATUS_BADGE: Record<string, string> = {
+  REQUESTED: 'pending_approval',
+  APPROVED: 'approved',
   RECEIVED: 'received',
   INSPECTED: 'inspected',
-  COMPLETED: 'completed',
+  REFUNDED: 'completed',
   REJECTED: 'rejected',
+  CANCELLED: 'rejected',
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  REQUESTED: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] ring-[var(--nexus-warning-500)]/20',
+  APPROVED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-[var(--nexus-primary-500)]/20',
+  RECEIVED: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-[var(--border-default)]/20',
+  INSPECTED: 'text-[var(--nexus-info-600)] bg-[var(--nexus-info-50)] ring-[var(--nexus-info-500)]/20',
+  REFUNDED: 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] ring-[var(--nexus-success-500)]/20',
+  REJECTED: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] ring-[var(--nexus-error-500)]/20',
+  CANCELLED: 'text-[var(--text-tertiary)] bg-[var(--surface-sunken)] ring-[var(--border-default)]/20',
 }
 
 const CONDITION_OPTIONS: ItemCondition[] = ['EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'DAMAGED']
 const DISPOSITION_OPTIONS: Disposition[] = ['RESTOCK', 'REFURBISH', 'DONATE', 'RECYCLE', 'SCRAP']
 const GRADE_OPTIONS: Grade[] = ['A', 'B', 'C', 'D', 'F']
-const REASON_TYPES = ['Defective', 'Damaged in Transit', 'Wrong Item', 'Not Needed', 'Quality Issue', 'Other']
 
 const TABS = [
   { id: 'RMA_QUEUE', label: 'RMA Queue', icon: <ClipboardList className="w-4 h-4" /> },
@@ -87,12 +92,12 @@ const TABS = [
   { id: 'ANALYTICS', label: 'Analytics', icon: <BarChart3 className="w-4 h-4" /> },
 ]
 
-const DISPOSITION_CATEGORIES: DispoCategory[] = [
-  { key: 'RESTOCK', label: 'Restock', icon: PackageCheck, count: 234, value: 12450, color: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20' },
-  { key: 'REFURBISH', label: 'Refurbish', icon: Wrench, count: 67, value: 3210, color: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-blue-500/20' },
-  { key: 'DONATE', label: 'Donate', icon: Heart, count: 12, value: 0, color: 'text-pink-600 bg-pink-50 ring-pink-500/20' },
-  { key: 'RECYCLE', label: 'Recycle', icon: Recycle, count: 8, value: 0, color: 'text-[var(--nexus-info-600)] bg-[var(--nexus-info-50)] ring-cyan-500/20' },
-  { key: 'SCRAP', label: 'Scrap', icon: Trash2, count: 3, value: 0, color: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-gray-500/20' },
+const DISPOSITION_META: { key: Disposition; label: string; icon: typeof Box; color: string }[] = [
+  { key: 'RESTOCK', label: 'Restock', icon: PackageCheck, color: 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] ring-[var(--nexus-success-500)]/20' },
+  { key: 'REFURBISH', label: 'Refurbish', icon: Wrench, color: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-[var(--nexus-primary-500)]/20' },
+  { key: 'DONATE', label: 'Donate', icon: Heart, color: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-[var(--nexus-primary-500)]/20' },
+  { key: 'RECYCLE', label: 'Recycle', icon: Recycle, color: 'text-[var(--nexus-info-600)] bg-[var(--nexus-info-50)] ring-[var(--nexus-info-500)]/20' },
+  { key: 'SCRAP', label: 'Scrap', icon: Trash2, color: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-[var(--border-default)]/20' },
 ]
 
 const DISPOSITION_LABELS: Record<Disposition, string> = {
@@ -111,58 +116,6 @@ const CONDITION_DISPOSITION_MAP: Record<ItemCondition, Disposition> = {
   DAMAGED: 'SCRAP',
 }
 
-const GRADE_ORDER: Record<Grade, number> = { A: 5, B: 4, C: 3, D: 2, F: 1 }
-
-
-
-const MONTHLY_RETURN_TREND = [
-  { month: 'Jan', returns: 42, totalOrders: 2100 },
-  { month: 'Feb', returns: 38, totalOrders: 1950 },
-  { month: 'Mar', returns: 55, totalOrders: 2400 },
-  { month: 'Apr', returns: 48, totalOrders: 2300 },
-  { month: 'May', returns: 62, totalOrders: 2600 },
-  { month: 'Jun', returns: 58, totalOrders: 2500 },
-  { month: 'Jul', returns: 71, totalOrders: 2800 },
-  { month: 'Aug', returns: 65, totalOrders: 2700 },
-  { month: 'Sep', returns: 52, totalOrders: 2550 },
-  { month: 'Oct', returns: 47, totalOrders: 2400 },
-  { month: 'Nov', returns: 82, totalOrders: 3200 },
-  { month: 'Dec', returns: 95, totalOrders: 3600 },
-]
-
-const RETURN_REASONS_BREAKDOWN = [
-  { reason: 'Defective', count: 145, percentage: 28 },
-  { reason: 'Wrong Item', count: 98, percentage: 19 },
-  { reason: 'Not Needed', count: 87, percentage: 17 },
-  { reason: 'Damaged Transit', count: 76, percentage: 15 },
-  { reason: 'Quality Issue', count: 64, percentage: 12 },
-  { reason: 'Other', count: 47, percentage: 9 },
-]
-
-const TOP_RETURNED_PRODUCTS = [
-  { sku: 'TEE-BLK-001', name: 'Classic Black Tee', returns: 42, returnRate: 3.8, revenueLost: 1259.58 },
-  { sku: 'HOD-NAV-003', name: 'Navy Zip Hoodie', returns: 31, returnRate: 4.2, revenueLost: 2169.69 },
-  { sku: 'JOG-GRY-005', name: 'Grey Joggers', returns: 27, returnRate: 3.5, revenueLost: 1349.73 },
-  { sku: 'JKT-BLK-006', name: 'Black Bomber Jacket', returns: 18, returnRate: 5.1, revenueLost: 2339.82 },
-  { sku: 'CAP-RED-004', name: 'Red Baseball Cap', returns: 15, returnRate: 2.9, revenueLost: 374.85 },
-]
-
-const RECOVERY_BY_DISPOSITION = [
-  { disposition: 'Restock', items: 234, recoveryValue: 12450, recoveryRate: 85 },
-  { disposition: 'Refurbish', items: 67, recoveryValue: 3210, recoveryRate: 55 },
-  { disposition: 'Donate', items: 12, recoveryValue: 0, recoveryRate: 0 },
-  { disposition: 'Recycle', items: 8, recoveryValue: 160, recoveryRate: 10 },
-  { disposition: 'Scrap', items: 3, recoveryValue: 0, recoveryRate: 0 },
-]
-
-const RETURN_RATE_BY_CHANNEL = [
-  { channel: 'Online Store', orders: 12500, returns: 320, rate: 2.56 },
-  { channel: 'Marketplace', orders: 8400, returns: 210, rate: 2.50 },
-  { channel: 'Mobile App', orders: 5600, returns: 98, rate: 1.75 },
-  { channel: 'Wholesale', orders: 3200, returns: 24, rate: 0.75 },
-  { channel: 'In-Store', orders: 9800, returns: 147, rate: 1.50 },
-]
-
 function suggestDisposition(condition: ItemCondition, grade: Grade): Disposition {
   if (condition === 'EXCELLENT' && (grade === 'A' || grade === 'B')) return 'RESTOCK'
   if (condition === 'GOOD' && grade === 'A') return 'RESTOCK'
@@ -172,7 +125,37 @@ function suggestDisposition(condition: ItemCondition, grade: Grade): Disposition
   return 'SCRAP'
 }
 
+function mapReturn(raw: any): RmaRecord {
+  const items: RmaItem[] = Array.isArray(raw.items)
+    ? raw.items.map((it: any, i: number) => ({
+        id: it.id || `${raw.id}-item-${i}`,
+        sku: it.sku || '—',
+        productName: it.productName || '',
+        quantity: it.quantity ?? 1,
+        condition: it.condition || '',
+        grade: it.grade || '',
+        disposition: it.disposition || '',
+        conditionNotes: it.conditionNotes || '',
+        unitPrice: Number(it.unitPrice) || 0,
+      }))
+    : []
+  const itemValue = items.reduce((s, it) => s + it.unitPrice * it.quantity, 0)
+  return {
+    id: raw.id,
+    rmaNumber: raw.rmaNumber || `RMA-${String(raw.id).slice(0, 8).toUpperCase()}`,
+    orderId: raw.orderId || '',
+    orderNumber: raw.orderNumber || '—',
+    customer: raw.customerName || '—',
+    reason: raw.reason || '',
+    status: raw.status || 'REQUESTED',
+    date: raw.createdAt || new Date().toISOString(),
+    value: raw.refundAmount != null ? Number(raw.refundAmount) : itemValue,
+    items,
+  }
+}
+
 function SparklineChart({ data, height = 32 }: { data: number[]; height?: number }) {
+  if (!data.length) return null
   const max = Math.max(...data)
   const min = Math.min(...data)
   const range = max - min || 1
@@ -202,90 +185,222 @@ function HorizontalBar({ label, value, max, color }: { label: string; value: num
 }
 
 export default function ReturnsEnhancedPage() {
-  const [activeTab, setActiveTab] = useState('RMA_QUEUE')
-  const [search, setSearch] = useState('')
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
   const { addToast } = useToast()
 
-  const [returns, setReturns] = useState<any[]>([])
-  const [analytics, setAnalytics] = useState<any>(null)
-
-  useEffect(() => {
-    Promise.all([fetchReturns(), fetchReturnAnalytics()]).then(([r, a]) => {
-      if (r?.returns) setReturns(r.returns)
-      if (a?.analytics) setAnalytics(a.analytics)
-    }).catch(() => {})
-  }, [])
-
-  const [statusFilter, setStatusFilter] = useState<string>('ALL')
-  const [reasonFilter, setReasonFilter] = useState<string>('ALL')
-
+  const [activeTab, setActiveTab] = useState('RMA_QUEUE')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [reasonFilter, setReasonFilter] = useState('ALL')
   const [expandedRma, setExpandedRma] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState<{ type: 'approve' | 'reject'; rma: RmaRecord } | null>(null)
-  const [processing, setProcessing] = useState<string | null>(null)
-
-  const [createForm, setCreateForm] = useState({ customer: '', orderNumber: '', reason: '', reasonType: 'Defective', value: 0 })
   const [rejectReason, setRejectReason] = useState('')
-
-  const [rmas, setRmas] = useState<RmaRecord[]>([])
   const [inspectionRma, setInspectionRma] = useState<RmaRecord | null>(null)
-
   const [inspectForm, setInspectForm] = useState<{ condition: ItemCondition; grade: Grade; disposition: Disposition; notes: string }>({
     condition: 'GOOD', grade: 'B', disposition: 'RESTOCK', notes: '',
+  })
+  const [createForm, setCreateForm] = useState<{
+    orderId: string
+    customerId: string
+    reason: string
+    items: { sku: string; productName: string; quantity: number; unitPrice: number }[]
+  }>({ orderId: '', customerId: '', reason: '', items: [{ sku: '', productName: '', quantity: 1, unitPrice: 0 }] })
+
+  const actorId = user?.id
+
+  const { data: rawReturns = [], isLoading } = useQuery({
+    queryKey: ['returns'],
+    queryFn: async () => {
+      const res = await getReturns()
+      return Array.isArray(res?.data) ? res.data : []
+    },
+    refetchInterval: 60_000,
+  })
+
+  const { data: rawKpis = {} } = useQuery({
+    queryKey: ['returns-kpis'],
+    queryFn: async () => {
+      const res = await getReturnKPIs()
+      return (res?.data as Record<string, number>) ?? {}
+    },
+    refetchInterval: 60_000,
+  })
+
+  const { data: analytics = {} } = useQuery({
+    queryKey: ['return-analytics'],
+    queryFn: async () => {
+      const res = await fetchReturnAnalytics()
+      return (res?.data ?? res) || {}
+    },
+    refetchInterval: 60_000,
+  })
+
+  const rmas = useMemo<RmaRecord[]>(() => rawReturns.map(mapReturn), [rawReturns])
+
+  const invalidateQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['returns'] })
+    queryClient.invalidateQueries({ queryKey: ['returns-kpis'] })
+    queryClient.invalidateQueries({ queryKey: ['return-analytics'] })
+  }
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => approveReturn(id, actorId),
+    onSuccess: (res) => {
+      if (res?.success) {
+        addToast({ type: 'success', title: 'RMA approved' })
+        invalidateQueries()
+      } else {
+        addToast({ type: 'error', title: res?.error || 'Failed to approve return' })
+      }
+    },
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => rejectReturn(id, reason),
+    onSuccess: (res) => {
+      if (res?.success) {
+        addToast({ type: 'success', title: 'RMA rejected' })
+        invalidateQueries()
+      } else {
+        addToast({ type: 'error', title: res?.error || 'Failed to reject return' })
+      }
+    },
+  })
+
+  const inspectMutation = useMutation({
+    mutationFn: ({ id, items }: { id: string; items: RmaItem[] }) =>
+      inspectReturn(id, items.map(it => ({
+        sku: it.sku, productName: it.productName, quantity: it.quantity, unitPrice: it.unitPrice,
+        condition: it.condition, grade: it.grade, disposition: it.disposition, conditionNotes: it.conditionNotes,
+      })), actorId),
+    onSuccess: (res) => {
+      if (res?.success) {
+        addToast({ type: 'success', title: 'Return inspected' })
+        setInspectionRma(null)
+        invalidateQueries()
+      } else {
+        addToast({ type: 'error', title: res?.error || 'Failed to inspect return' })
+      }
+    },
+  })
+
+  const createMutation = useMutation({
+    mutationFn: () => createReturn({
+      orderId: createForm.orderId,
+      customerId: createForm.customerId,
+      reason: createForm.reason,
+      returnChannel: 'MANUAL',
+      rmaType: 'RETURN',
+      items: createForm.items.filter(it => it.sku),
+    }),
+    onSuccess: (res) => {
+      if (res?.success) {
+        addToast({ type: 'success', title: 'RMA created' })
+        setCreateOpen(false)
+        setCreateForm({ orderId: '', customerId: '', reason: '', items: [{ sku: '', productName: '', quantity: 1, unitPrice: 0 }] })
+        invalidateQueries()
+      } else {
+        addToast({ type: 'error', title: res?.error || 'Failed to create return' })
+      }
+    },
   })
 
   const filteredRmas = useMemo(() => {
     let list = rmas
     if (search) {
       const q = search.toLowerCase()
-      list = list.filter(r => r.rmaNumber.toLowerCase().includes(q) || r.customer.toLowerCase().includes(q) || r.orderNumber.toLowerCase().includes(q) || r.reason.toLowerCase().includes(q))
+      list = list.filter(r =>
+        r.rmaNumber.toLowerCase().includes(q) ||
+        r.customer.toLowerCase().includes(q) ||
+        r.orderNumber.toLowerCase().includes(q) ||
+        r.orderId.toLowerCase().includes(q) ||
+        r.reason.toLowerCase().includes(q),
+      )
     }
     if (statusFilter !== 'ALL') list = list.filter(r => r.status === statusFilter)
-    if (reasonFilter !== 'ALL') list = list.filter(r => r.reasonType === reasonFilter)
+    if (reasonFilter !== 'ALL') list = list.filter(r => r.reason === reasonFilter)
     return list
   }, [rmas, search, statusFilter, reasonFilter])
 
-  const pendingInspection = useMemo(() => rmas.filter(r => r.status === 'RECEIVED'), [rmas])
+  const receivedRmas = useMemo(() => rmas.filter(r => r.status === 'RECEIVED'), [rmas])
 
-  const receivedRmas = pendingInspection
+  const reasonOptions = useMemo(() =>
+    Array.from(new Set(rmas.map(r => r.reason).filter(Boolean))),
+  [rmas])
 
-  async function handleCreateReturn(data: any) {
-    const res = await createReturn(data)
-    if (res?.return) {
-      setReturns(prev => [res.return, ...prev])
-      addToast({ type: 'success', title: 'RMA created' })
+  const reasonBreakdown = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const r of rmas) if (r.reason) counts.set(r.reason, (counts.get(r.reason) || 0) + 1)
+    return Array.from(counts.entries())
+      .map(([reason, count]) => ({ reason, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [rmas])
+
+  const monthlyTrend = useMemo(() => {
+    const counts = new Map<string, { key: string; month: string; returns: number }>()
+    for (const r of rmas) {
+      const d = new Date(r.date)
+      if (isNaN(d.getTime())) continue
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      const cur = counts.get(key) || { key, month: d.toLocaleString('en-US', { month: 'short' }), returns: 0 }
+      cur.returns += 1
+      counts.set(key, cur)
     }
-  }
+    return Array.from(counts.values()).sort((a, b) => a.key.localeCompare(b.key))
+  }, [rmas])
 
-  async function handleUpdateReturn(id: string, updates: any) {
-    const res = await updateReturn(id, updates)
-    if (res?.return) {
-      setReturns(prev => prev.map(r => r.id === id ? res.return : r))
-      addToast({ type: 'success', title: 'Return updated' })
+  const topProducts = useMemo(() => {
+    const agg = new Map<string, { sku: string; name: string; returns: number; revenue: number }>()
+    for (const r of rmas) {
+      for (const it of r.items) {
+        if (!it.sku || it.sku === '—') continue
+        const cur = agg.get(it.sku) || { sku: it.sku, name: it.productName || it.sku, returns: 0, revenue: 0 }
+        cur.returns += it.quantity || 1
+        cur.revenue += it.unitPrice * (it.quantity || 1)
+        agg.set(it.sku, cur)
+      }
     }
-  }
+    return Array.from(agg.values()).sort((a, b) => b.returns - a.returns).slice(0, 5)
+  }, [rmas])
 
-  const handleApproveRma = (rma: RmaRecord) => {
-    handleUpdateReturn(rma.id, { status: 'AUTHORIZED' })
-    setConfirmAction(null)
-  }
+  const recoveryByDisposition = useMemo(() => {
+    const agg = new Map<string, { items: number; value: number }>()
+    for (const r of rmas) {
+      const dispo = (r.items.find(it => it.disposition)?.disposition || '') as Disposition | ''
+      if (!dispo) continue
+      const cur = agg.get(dispo) || { items: 0, value: 0 }
+      cur.items += r.items.reduce((s, it) => s + (it.quantity || 1), 0)
+      cur.value += r.value || 0
+      agg.set(dispo, cur)
+    }
+    return Array.from(agg.entries()).map(([key, v]) => ({ key: key as Disposition, items: v.items, value: v.value }))
+  }, [rmas])
 
-  const handleRejectRma = (rma: RmaRecord) => {
-    handleUpdateReturn(rma.id, { status: 'REJECTED', reason: rejectReason })
-    setConfirmAction(null)
-  }
+  const dispositionCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const r of rmas) {
+      const dispo = r.items.find(it => it.disposition)?.disposition
+      if (dispo) counts.set(dispo, (counts.get(dispo) || 0) + 1)
+    }
+    return counts
+  }, [rmas])
+
+  const totalRecovery = useMemo(() => recoveryByDisposition.reduce((s, d) => s + d.value, 0), [recoveryByDisposition])
 
   const openInspection = (rma: RmaRecord) => {
     setInspectionRma(rma)
-    const item = rma.items[0]
     setInspectForm({ condition: 'GOOD', grade: 'B', disposition: 'RESTOCK', notes: '' })
   }
 
   const handleInspectSubmit = () => {
     if (!inspectionRma) return
     const { condition, grade, disposition, notes } = inspectForm
-    handleUpdateReturn(inspectionRma.id, { status: 'INSPECTED', items: inspectionRma.items.map(item => ({ ...item, condition, grade, disposition, conditionNotes: notes })) })
-    setInspectionRma(null)
+    inspectMutation.mutate({
+      id: inspectionRma.id,
+      items: inspectionRma.items.map(item => ({ ...item, condition, grade, disposition, conditionNotes: notes })),
+    })
   }
 
   const handleConditionChange = (condition: ItemCondition) => {
@@ -299,11 +414,6 @@ export default function ReturnsEnhancedPage() {
     setInspectForm({ ...inspectForm, grade, disposition: suggested })
   }
 
-  const handleProcessDisposition = (disposition: Disposition) => {
-    const cat = DISPOSITION_CATEGORIES.find(c => c.key === disposition)
-    addToast({ type: 'success', title: `Processing ${cat?.count} items for ${cat?.label}` })
-  }
-
   const renderRmaQueueTab = () => (
     <div className="space-y-4">
       {/* Filters */}
@@ -312,29 +422,21 @@ export default function ReturnsEnhancedPage() {
           <Filter className="w-4 h-4 text-[var(--text-tertiary)]" />
           <select className="text-sm bg-transparent border-none outline-none text-[var(--text-secondary)]" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
             <option value="ALL">All Statuses</option>
-            <option value="PENDING_APPROVAL">Pending Approval</option>
-            <option value="AUTHORIZED">Authorized</option>
-            <option value="IN_TRANSIT">In Transit</option>
-            <option value="RECEIVED">Received</option>
-            <option value="INSPECTED">Inspected</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="REJECTED">Rejected</option>
+            {STATUS_STEPS.concat(['REJECTED', 'CANCELLED']).map(s => (
+              <option key={s} value={s}>{STATUS_LABELS[s] || s.replace(/_/g, ' ')}</option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-2 bg-[var(--surface-base)] border border-[var(--border-default)] rounded-lg px-3 py-2">
           <Filter className="w-4 h-4 text-[var(--text-tertiary)]" />
           <select className="text-sm bg-transparent border-none outline-none text-[var(--text-secondary)]" value={reasonFilter} onChange={e => setReasonFilter(e.target.value)}>
             <option value="ALL">All Reasons</option>
-            {REASON_TYPES.map(rt => <option key={rt} value={rt}>{rt}</option>)}
+            {reasonOptions.map(rt => <option key={rt} value={rt}>{rt}</option>)}
           </select>
-        </div>
-        <div className="flex items-center gap-2 bg-[var(--surface-base)] border border-[var(--border-default)] rounded-lg px-3 py-2">
-          <Calendar className="w-4 h-4 text-[var(--text-tertiary)]" />
-          <span className="text-sm text-[var(--text-secondary)]">Last 30 days</span>
         </div>
         <div className="ml-auto">
           <PermissionGate resource="orders" action="create">
-            <button onClick={() => setCreateOpen(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-1.5">
+            <button type="button" onClick={() => setCreateOpen(true)} className="enterprise-btn enterprise-btn-primary flex items-center gap-1.5">
               <Plus className="w-4 h-4" /> Create RMA
             </button>
           </PermissionGate>
@@ -346,7 +448,7 @@ export default function ReturnsEnhancedPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+              <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50">
                 <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">RMA#</th>
                 <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Order#</th>
                 <th className="text-left px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Customer</th>
@@ -357,70 +459,67 @@ export default function ReturnsEnhancedPage() {
                 <th className="text-right px-4 py-3 font-semibold text-[var(--text-secondary)] text-xs uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-              {filteredRmas.length === 0 ? (
+            <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
+              {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-[var(--text-tertiary)]">No RMAs match the current filters</td>
+                  <td colSpan={8} className="px-4 py-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-[var(--text-tertiary)]" />
+                  </td>
+                </tr>
+              ) : filteredRmas.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-[var(--text-tertiary)]">
+                    {rmas.length === 0 ? 'No returns found' : 'No RMAs match the current filters'}
+                  </td>
                 </tr>
               ) : (
                 filteredRmas.map(rma => (
-                  <tr key={rma.id} className={clsx('group hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/30 transition-colors', expandedRma === rma.id && 'bg-[var(--surface-sunken)] bg-[var(--surface-base)]/30')}>
+                  <tr key={rma.id} className={clsx('group hover:bg-[var(--surface-sunken)] transition-colors', expandedRma === rma.id && 'bg-[var(--surface-sunken)]/30')}>
                     <td className="px-4 py-3">
-                      <button onClick={() => setExpandedRma(expandedRma === rma.id ? null : rma.id)} className="flex items-center gap-1.5 font-mono text-sm font-medium text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:underline">
+                      <button type="button" onClick={() => setExpandedRma(expandedRma === rma.id ? null : rma.id)} className="flex items-center gap-1.5 font-mono text-sm font-medium text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:underline">
                         {expandedRma === rma.id ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                         {rma.rmaNumber}
                       </button>
                     </td>
                     <td className="px-4 py-3 font-mono text-sm text-[var(--text-secondary)]">{rma.orderNumber}</td>
                     <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{rma.customer}</td>
-                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] max-w-[180px] truncate">{rma.reason}</td>
+                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] max-w-[180px] truncate">{rma.reason || '—'}</td>
                     <td className="px-4 py-3">
-                      <EnterpriseStatusBadge status={RMA_STATUS_BADGE[rma.status]} label={rma.status.replace(/_/g, ' ')} />
+                      <EnterpriseStatusBadge status={STATUS_BADGE[rma.status] || 'neutral'} label={STATUS_LABELS[rma.status] || rma.status.replace(/_/g, ' ')} />
                     </td>
                     <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{new Date(rma.date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)] text-right">${rma.value.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)] text-right">{rma.value > 0 ? `$${rma.value.toFixed(2)}` : '—'}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {rma.status === 'PENDING_APPROVAL' && (
+                        {rma.status === 'REQUESTED' && (
                           <>
                             <PermissionGate resource="orders" action="edit">
-                              <button onClick={() => setConfirmAction({ type: 'approve', rma })}
-                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors"
+                              <button type="button" onClick={() => setConfirmAction({ type: 'approve', rma })}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-400)] dark:hover:bg-[var(--nexus-success-900)]/30 transition-colors"
                                 title="Approve"><Check className="w-4 h-4" /></button>
                             </PermissionGate>
                             <PermissionGate resource="orders" action="edit">
-                              <button onClick={() => setConfirmAction({ type: 'reject', rma })}
-                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)] dark:hover:bg-[var(--nexus-error-900)]/30 transition-colors"
+                              <button type="button" onClick={() => setConfirmAction({ type: 'reject', rma })}
+                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-100)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)] dark:hover:bg-[var(--nexus-error-900)]/30 transition-colors"
                                 title="Reject"><X className="w-4 h-4" /></button>
                             </PermissionGate>
                           </>
                         )}
-                        {rma.status === 'AUTHORIZED' && (
+                        {rma.status === 'APPROVED' && (
                           <span className="text-xs text-[var(--text-tertiary)] italic">Awaiting receipt</span>
-                        )}
-                        {rma.status === 'IN_TRANSIT' && (
-                          <span className="text-xs text-[var(--nexus-info-500)] italic"><Truck className="w-3.5 h-3.5 inline mr-1" />In transit</span>
                         )}
                         {rma.status === 'RECEIVED' && (
                           <PermissionGate resource="orders" action="edit">
-                            <button onClick={() => openInspection(rma)}
-                              className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none">
+                            <button type="button" onClick={() => openInspection(rma)}
+                              className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] border-none">
                               <Eye className="w-3 h-3" /> Inspect
                             </button>
                           </PermissionGate>
                         )}
-                        {rma.status === 'INSPECTED' && (
-                          <PermissionGate resource="orders" action="edit">
-                            <button onClick={() => addToast({ type: 'info', title: `Processing completion for ${rma.rmaNumber}` })}
-                              className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none">
-                              <DollarSign className="w-3 h-3" /> Complete
-                            </button>
-                          </PermissionGate>
+                        {(rma.status === 'INSPECTED' || rma.status === 'REFUNDED') && (
+                          <span className="text-xs text-[var(--nexus-success-600)] font-medium">Done</span>
                         )}
-                        {rma.status === 'COMPLETED' && (
-                          <span className="text-xs text-emerald-600 font-medium">Done</span>
-                        )}
-                        {rma.status === 'REJECTED' && (
+                        {(rma.status === 'REJECTED' || rma.status === 'CANCELLED') && (
                           <span className="text-xs text-[var(--nexus-error-400)]">Rejected</span>
                         )}
                       </div>
@@ -448,11 +547,10 @@ export default function ReturnsEnhancedPage() {
                     ['Order Number', rma.orderNumber],
                     ['Customer', rma.customer],
                     ['Reason', rma.reason],
-                    ['Reason Type', rma.reasonType],
                     ['Date Created', new Date(rma.date).toLocaleDateString()],
-                    ['Total Value', `$${rma.value.toFixed(2)}`],
+                    ['Total Value', rma.value > 0 ? `$${rma.value.toFixed(2)}` : '—'],
                   ].map(([k, v]) => (
-                    <div key={k} className="flex justify-between py-1.5 px-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
+                    <div key={k} className="flex justify-between py-1.5 px-3 bg-[var(--surface-sunken)]/50 rounded-lg">
                       <span className="text-[var(--text-secondary)]">{k}</span>
                       <span className="font-medium text-[var(--text-primary)]">{v}</span>
                     </div>
@@ -462,8 +560,9 @@ export default function ReturnsEnhancedPage() {
               <div>
                 <h4 className="font-semibold text-[var(--text-primary)] mb-3">Items ({rma.items.length})</h4>
                 <div className="space-y-2">
+                  {rma.items.length === 0 && <p className="text-sm text-[var(--text-tertiary)]">No line items recorded</p>}
                   {rma.items.map((item, i) => (
-                    <div key={item.id || i} className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg p-3 space-y-1.5">
+                    <div key={item.id || i} className="bg-[var(--surface-sunken)]/50 rounded-lg p-3 space-y-1.5">
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-sm font-medium text-[var(--text-secondary)]">{item.sku}</span>
                         <span className="text-xs text-[var(--text-tertiary)]">x{item.quantity}</span>
@@ -479,15 +578,15 @@ export default function ReturnsEnhancedPage() {
               <div>
                 <h4 className="font-semibold text-[var(--text-primary)] mb-3">Status Timeline</h4>
                 <div className="space-y-3">
-                  {['PENDING_APPROVAL', 'AUTHORIZED', 'IN_TRANSIT', 'RECEIVED', 'INSPECTED', 'COMPLETED'].map((s, i) => {
-                    const statusIdx = ['PENDING_APPROVAL', 'AUTHORIZED', 'IN_TRANSIT', 'RECEIVED', 'INSPECTED', 'COMPLETED'].indexOf(rma.status)
-                    const done = i <= statusIdx
-                    const current = i === statusIdx
+                  {STATUS_STEPS.map((s, i) => {
+                    const statusIdx = STATUS_STEPS.indexOf(rma.status)
+                    const done = statusIdx >= 0 && i <= statusIdx
+                    const current = statusIdx === i
                     return (
                       <div key={s} className="flex items-center gap-3">
-                        <div className={clsx('w-2.5 h-2.5 rounded-full ring-2 shrink-0', done ? 'bg-emerald-500 ring-emerald-200 dark:ring-emerald-800' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)] ring-gray-100 dark:ring-gray-700')} />
+                        <div className={clsx('w-2.5 h-2.5 rounded-full ring-2 shrink-0', done ? 'bg-[var(--nexus-success-500)] ring-[var(--nexus-success-200)] dark:ring-[var(--nexus-success-800)]' : 'bg-[var(--surface-muted)] ring-[var(--surface-sunken)] dark:ring-[var(--border-default)]')} />
                         <span className={clsx('text-xs', current ? 'font-semibold text-[var(--text-primary)]' : done ? 'text-[var(--text-secondary)]' : 'text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]')}>
-                          {s.replace(/_/g, ' ')}
+                          {STATUS_LABELS[s] || s.replace(/_/g, ' ')}
                         </span>
                       </div>
                     )
@@ -507,7 +606,7 @@ export default function ReturnsEnhancedPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <button onClick={() => setInspectionRma(null)} className="text-sm text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:underline flex items-center gap-1 mb-2">
+              <button type="button" onClick={() => setInspectionRma(null)} className="text-sm text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:underline flex items-center gap-1 mb-2">
                 <ChevronDown className="w-4 h-4 rotate-90" /> Back to queue
               </button>
               <h3 className="text-lg font-bold text-[var(--text-primary)]">Inspect: {inspectionRma.rmaNumber}</h3>
@@ -518,12 +617,18 @@ export default function ReturnsEnhancedPage() {
           <div className="enterprise-card p-5">
             <div className="space-y-5">
               {/* Item Info */}
-              <div className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-mono font-semibold text-[var(--text-primary)]">{inspectionRma.items[0].sku}</span>
-                  <span className="text-sm text-[var(--text-secondary)]">x{inspectionRma.items[0].quantity}</span>
-                </div>
-                <p className="text-sm text-[var(--text-secondary)]">{inspectionRma.items[0].productName}</p>
+              <div className="bg-[var(--surface-sunken)]/50 rounded-xl p-4">
+                {inspectionRma.items.length === 0 ? (
+                  <p className="text-sm text-[var(--text-tertiary)]">No line items recorded for this return</p>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-mono font-semibold text-[var(--text-primary)]">{inspectionRma.items[0].sku}</span>
+                      <span className="text-sm text-[var(--text-secondary)]">x{inspectionRma.items[0].quantity}</span>
+                    </div>
+                    <p className="text-sm text-[var(--text-secondary)]">{inspectionRma.items[0].productName}</p>
+                  </>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -545,7 +650,7 @@ export default function ReturnsEnhancedPage() {
                   </label>
                   <div className="flex gap-2 mt-1">
                     {GRADE_OPTIONS.map(g => (
-                      <button key={g} onClick={() => handleGradeChange(g)}
+                      <button type="button" key={g} onClick={() => handleGradeChange(g)}
                         className={clsx('w-10 h-10 rounded-lg text-sm font-bold border transition-all',
                           inspectForm.grade === g
                             ? 'bg-[var(--nexus-primary-600)] text-white border-[var(--nexus-primary-600)]'
@@ -559,24 +664,24 @@ export default function ReturnsEnhancedPage() {
               </div>
 
               {/* AI Disposition Suggestion */}
-              <div className="bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-violet-200 dark:border-violet-800">
+              <div className="bg-gradient-to-r from-[var(--nexus-primary-50)] to-[var(--nexus-info-50)] dark:from-[var(--nexus-primary-900)]/20 dark:to-[var(--nexus-primary-900)]/20 rounded-xl p-4 border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
                 <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                  <span className="text-sm font-semibold text-violet-700 dark:text-violet-300">AI Disposition Suggestion</span>
+                  <Sparkles className="w-4 h-4 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
+                  <span className="text-sm font-semibold text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]">AI Disposition Suggestion</span>
                 </div>
                 <div className="flex items-center gap-3">
                   {DISPOSITION_OPTIONS.map(d => (
-                    <button key={d} onClick={() => setInspectForm(f => ({ ...f, disposition: d }))}
+                    <button type="button" key={d} onClick={() => setInspectForm(f => ({ ...f, disposition: d }))}
                       className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium border transition-all',
                         inspectForm.disposition === d
-                          ? 'bg-violet-600 text-white border-violet-600'
-                          : 'bg-[var(--surface-base)] text-[var(--text-secondary)] border-[var(--border-default)] hover:border-violet-300'
+                          ? 'bg-[var(--nexus-primary-600)] text-white border-[var(--nexus-primary-600)]'
+                          : 'bg-[var(--surface-base)] text-[var(--text-secondary)] border-[var(--border-default)] hover:border-[var(--nexus-primary-300)]'
                       )}>
                       {d}
                     </button>
                   ))}
                 </div>
-                <p className="text-xs text-violet-500 dark:text-violet-400 mt-2">
+                <p className="text-xs text-[var(--nexus-primary-500)] dark:text-[var(--nexus-primary-400)] mt-2">
                   Based on condition ({inspectForm.condition}) and grade ({inspectForm.grade}), we recommend: <strong>{inspectForm.disposition}</strong>
                 </p>
               </div>
@@ -590,11 +695,13 @@ export default function ReturnsEnhancedPage() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2 border-t border-[var(--border-subtle)]">
-                <button onClick={() => setInspectionRma(null)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+                <button type="button" onClick={() => setInspectionRma(null)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
                 <PermissionGate resource="orders" action="edit">
-                  <button onClick={handleInspectSubmit}
-                    className="enterprise-btn bg-violet-600 text-white hover:bg-violet-700 border-none flex items-center gap-1.5">
-                    <Eye className="w-4 h-4" /> Inspect & Submit
+                  <button type="button" onClick={handleInspectSubmit} disabled={inspectMutation.isPending || inspectionRma.items.length === 0}
+                    className="enterprise-btn bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] border-none flex items-center gap-1.5 disabled:opacity-50">
+                    {inspectMutation.isPending
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Eye className="w-4 h-4" />} Inspect & Submit
                   </button>
                 </PermissionGate>
               </div>
@@ -626,13 +733,13 @@ export default function ReturnsEnhancedPage() {
                         <span className="font-semibold text-[var(--text-primary)]">{rma.rmaNumber}</span>
                         <EnterpriseStatusBadge status="received" />
                       </div>
-                      <p className="text-sm text-[var(--text-secondary)] mt-0.5">{rma.customer} &middot; {rma.orderNumber} &middot; {rma.items[0].productName}</p>
+                      <p className="text-sm text-[var(--text-secondary)] mt-0.5">{rma.customer} &middot; {rma.orderNumber} &middot; {rma.items[0]?.productName || '—'}</p>
                       <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Reason: {rma.reason}</p>
                     </div>
                   </div>
                   <PermissionGate resource="orders" action="edit">
-                    <button onClick={() => openInspection(rma)}
-                      className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none shrink-0 ml-4">
+                    <button type="button" onClick={() => openInspection(rma)}
+                      className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] border-none shrink-0 ml-4">
                       <Eye className="w-3.5 h-3.5" /> Inspect
                     </button>
                   </PermissionGate>
@@ -645,139 +752,158 @@ export default function ReturnsEnhancedPage() {
     </div>
   )
 
-  const renderDispositionTab = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {DISPOSITION_CATEGORIES.map(cat => (
-          <div key={cat.key} className="enterprise-card p-5 hover:shadow-md transition-shadow">
-            <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center ring-1 mb-4', cat.color)}>
-              <cat.icon className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-[var(--text-primary)]">{cat.count}</h3>
-            <p className="text-sm text-[var(--text-secondary)]">{cat.label}</p>
-            {cat.value > 0 && <p className="text-xs text-[var(--text-tertiary)] mt-1">${cat.value.toLocaleString()} recovery value</p>}
-            <PermissionGate resource="orders" action="edit">
-              <button onClick={() => handleProcessDisposition(cat.key)}
-                className="mt-4 w-full enterprise-btn enterprise-btn-sm border border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]">
-                Process Disposition
-              </button>
-            </PermissionGate>
-          </div>
-        ))}
-      </div>
-
-      <div className="enterprise-card p-5">
-        <h3 className="font-semibold text-[var(--text-primary)] mb-4">Disposition Summary</h3>
-        <div className="space-y-3">
-          {DISPOSITION_CATEGORIES.map(cat => {
-            const total = DISPOSITION_CATEGORIES.reduce((s, c) => s + c.count, 0)
-            const pct = total > 0 ? Math.round((cat.count / total) * 100) : 0
+  const renderDispositionTab = () => {
+    const totalItems = rmas.length
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          {DISPOSITION_META.map(cat => {
+            const count = dispositionCounts.get(cat.key) || 0
+            const value = recoveryByDisposition.find(d => d.key === cat.key)?.value || 0
             return (
-              <div key={cat.key} className="flex items-center gap-4">
-                <div className={clsx('w-2 h-2 rounded-full shrink-0', cat.key === 'RESTOCK' ? 'bg-emerald-500' : cat.key === 'REFURBISH' ? 'bg-[var(--nexus-primary-50)]0' : cat.key === 'DONATE' ? 'bg-pink-500' : cat.key === 'RECYCLE' ? 'bg-[var(--nexus-info-50)]0' : 'bg-[var(--surface-muted)]')} />
-                <span className="text-sm text-[var(--text-secondary)] w-20">{cat.label}</span>
-                <div className="flex-1 h-6 bg-[var(--surface-muted)] rounded-full overflow-hidden">
-                  <div className={clsx('h-full rounded-full transition-all', cat.key === 'RESTOCK' ? 'bg-emerald-500' : cat.key === 'REFURBISH' ? 'bg-[var(--nexus-primary-50)]0' : cat.key === 'DONATE' ? 'bg-pink-500' : cat.key === 'RECYCLE' ? 'bg-[var(--nexus-info-50)]0' : 'bg-[var(--surface-muted)]')}
-                    style={{ width: `${pct}%` }} />
+              <div key={cat.key} className="enterprise-card p-5 hover:shadow-md transition-shadow">
+                <div className={clsx('w-12 h-12 rounded-xl flex items-center justify-center ring-1 mb-4', cat.color)}>
+                  <cat.icon className="w-6 h-6" />
                 </div>
-                <span className="text-sm font-medium text-[var(--text-secondary)] w-12 text-right">{pct}%</span>
-                <span className="text-sm text-[var(--text-secondary)] w-20 text-right">{cat.count} items</span>
+                <h3 className="text-lg font-bold text-[var(--text-primary)]">{count}</h3>
+                <p className="text-sm text-[var(--text-secondary)]">{cat.label}</p>
+                {value > 0 && <p className="text-xs text-[var(--text-tertiary)] mt-1">${value.toLocaleString()} recovery value</p>}
+                <p className="text-xs text-[var(--text-tertiary)] mt-1">assigned via inspection</p>
               </div>
             )
           })}
         </div>
-      </div>
 
-      {/* Refund Rules Section */}
-      <div className="enterprise-card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Settings className="w-5 h-5 text-[var(--text-secondary)]" />
-          <h3 className="font-semibold text-[var(--text-primary)]">Refund Rules Configuration</h3>
+        <div className="enterprise-card p-5">
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Disposition Summary</h3>
+          <div className="space-y-3">
+            {DISPOSITION_META.map(cat => {
+              const count = dispositionCounts.get(cat.key) || 0
+              const pct = totalItems > 0 ? Math.round((count / totalItems) * 100) : 0
+              return (
+                <div key={cat.key} className="flex items-center gap-4">
+                  <div className={clsx('w-2 h-2 rounded-full shrink-0', cat.key === 'RESTOCK' ? 'bg-[var(--nexus-success-500)]' : cat.key === 'REFURBISH' ? 'bg-[var(--nexus-primary-500)]' : cat.key === 'DONATE' ? 'bg-[var(--nexus-primary-500)]' : cat.key === 'RECYCLE' ? 'bg-[var(--nexus-info-500)]' : 'bg-[var(--surface-muted)]')} />
+                  <span className="text-sm text-[var(--text-secondary)] w-20">{cat.label}</span>
+                  <div className="flex-1 h-6 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                    <div className={clsx('h-full rounded-full transition-all', cat.key === 'RESTOCK' ? 'bg-[var(--nexus-success-500)]' : cat.key === 'REFURBISH' ? 'bg-[var(--nexus-primary-500)]' : cat.key === 'DONATE' ? 'bg-[var(--nexus-primary-500)]' : cat.key === 'RECYCLE' ? 'bg-[var(--nexus-info-500)]' : 'bg-[var(--surface-muted)]')}
+                      style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-sm font-medium text-[var(--text-secondary)] w-12 text-right">{pct}%</span>
+                  <span className="text-sm text-[var(--text-secondary)] w-20 text-right">{count} returns</span>
+                </div>
+              )
+            })}
+          </div>
+          {totalItems === 0 && (
+            <p className="text-sm text-[var(--text-tertiary)] mt-4">No returns have been dispositioned yet. Inspect received returns to assign dispositions.</p>
+          )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-4 border border-emerald-200 dark:border-emerald-800">
-            <div className="flex items-center gap-2 mb-2">
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h4 className="font-medium text-emerald-800 dark:text-emerald-200 text-sm">Automatic Refund</h4>
-            </div>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400">Triggered on RMA approval + item receipt</p>
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-emerald-700 dark:text-emerald-300">Status</span>
-              <span className="font-semibold text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded text-xs">Active</span>
-            </div>
-          </div>
 
-          <div className="bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 rounded-xl p-4 border border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]">
-            <div className="flex items-center gap-2 mb-2">
-              <TrendingDown className="w-4 h-4 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
-              <h4 className="font-medium text-[var(--nexus-warning-800)] dark:text-[var(--nexus-warning-200)] text-sm">Partial Refund Rules</h4>
-            </div>
-            <p className="text-xs text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]">Grade-based: A=100%, B=85%, C=70%, D=50%, F=25%</p>
-            <div className="mt-2 flex gap-1.5 flex-wrap">
-              {[['A', '100%'], ['B', '85%'], ['C', '70%'], ['D', '50%'], ['F', '25%']].map(([g, p]) => (
-                <span key={g} className="text-xs bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/40 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)] px-1.5 py-0.5 rounded font-medium">{g}: {p}</span>
-              ))}
-            </div>
+        {/* Refund Rules Section */}
+        <div className="enterprise-card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Settings className="w-5 h-5 text-[var(--text-secondary)]" />
+            <h3 className="font-semibold text-[var(--text-primary)]">Refund Rules Configuration</h3>
           </div>
-
-          <div className="bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 rounded-xl p-4 border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-4 h-4 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
-              <h4 className="font-medium text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)] text-sm">Restocking Fee</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 rounded-xl p-4 border border-[var(--nexus-success-200)] dark:border-[var(--nexus-success-800)]">
+              <div className="flex items-center gap-2 mb-2">
+                <Check className="w-4 h-4 text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]" />
+                <h4 className="font-medium text-[var(--nexus-success-800)] dark:text-[var(--nexus-success-200)] text-sm">Automatic Refund</h4>
+              </div>
+              <p className="text-xs text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]">Triggered on RMA approval + item receipt</p>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-300)]">Status</span>
+                <span className="font-semibold text-[var(--nexus-success-800)] dark:text-[var(--nexus-success-200)] bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/40 px-2 py-0.5 rounded text-xs">Active</span>
+              </div>
             </div>
-            <p className="text-xs text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]">15% fee for non-defective returns within 30 days</p>
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]">Fee Rate</span>
-              <span className="font-semibold text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)] bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40 px-2 py-0.5 rounded text-xs">15%</span>
+
+            <div className="bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 rounded-xl p-4 border border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingDown className="w-4 h-4 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
+                <h4 className="font-medium text-[var(--nexus-warning-800)] dark:text-[var(--nexus-warning-200)] text-sm">Partial Refund Rules</h4>
+              </div>
+              <p className="text-xs text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]">Grade-based: A=100%, B=85%, C=70%, D=50%, F=25%</p>
+              <div className="mt-2 flex gap-1.5 flex-wrap">
+                {[['A', '100%'], ['B', '85%'], ['C', '70%'], ['D', '50%'], ['F', '25%']].map(([g, p]) => (
+                  <span key={g} className="text-xs bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/40 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)] px-1.5 py-0.5 rounded font-medium">{g}: {p}</span>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 rounded-xl p-4 border border-[var(--nexus-primary-200)] dark:border-[var(--nexus-primary-800)]">
+              <div className="flex items-center gap-2 mb-2">
+                <DollarSign className="w-4 h-4 text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]" />
+                <h4 className="font-medium text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)] text-sm">Restocking Fee</h4>
+              </div>
+              <p className="text-xs text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]">15% fee for non-defective returns within 30 days</p>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]">Fee Rate</span>
+                <span className="font-semibold text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)] bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/40 px-2 py-0.5 rounded text-xs">15%</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const renderAnalyticsTab = () => (
     <div className="space-y-6">
       {/* Return Reasons Breakdown */}
       <div className="enterprise-card p-5">
         <h3 className="font-semibold text-[var(--text-primary)] mb-4">Return Reasons Breakdown</h3>
-        <div className="space-y-3">
-          {RETURN_REASONS_BREAKDOWN.map(item => (
-            <HorizontalBar key={item.reason} label={item.reason} value={item.count} max={RETURN_REASONS_BREAKDOWN[0].count}
-              color="bg-[var(--nexus-primary-50)]0" />
-          ))}
-        </div>
+        {reasonBreakdown.length === 0 ? (
+          <p className="text-sm text-[var(--text-tertiary)]">No return reasons recorded yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {reasonBreakdown.map(item => (
+              <HorizontalBar key={item.reason} label={item.reason} value={item.count} max={reasonBreakdown[0].count}
+                color="bg-[var(--nexus-primary-500)]" />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Return Trend */}
       <div className="enterprise-card p-5">
         <h3 className="font-semibold text-[var(--text-primary)] mb-4">Monthly Return Trend</h3>
-        <div className="overflow-x-auto">
-          <div className="flex items-end gap-2 min-w-[600px] h-40">
-            {MONTHLY_RETURN_TREND.map(m => {
-              const maxReturns = Math.max(...MONTHLY_RETURN_TREND.map(x => x.returns))
-              const h = maxReturns > 0 ? (m.returns / maxReturns) * 100 : 0
-              const rate = (m.returns / m.totalOrders) * 100
-              return (
-                <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-[var(--text-tertiary)]">{rate.toFixed(1)}%</span>
-                  <div className="w-full bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/30 rounded-t relative" style={{ height: `${h}%` }}>
-                    <div className="absolute inset-x-0 bottom-0 bg-[var(--nexus-primary-50)]0 dark:bg-[var(--nexus-primary-400)] rounded-t transition-all"
-                      style={{ height: `${h}%` }} />
-                  </div>
-                  <span className="text-[10px] text-[var(--text-secondary)] mt-1">{m.month}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-        <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--border-subtle)]">
-          <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
-            <span className="flex items-center gap-1"><TrendingUp className="w-3 h-3 text-emerald-500" /> Trend: +12.3% YoY</span>
-            <span>Avg Return Rate: <strong className="text-[var(--text-secondary)]">2.4%</strong></span>
-          </div>
-          <SparklineChart data={MONTHLY_RETURN_TREND.map(m => m.returns)} />
-        </div>
+        {monthlyTrend.length === 0 ? (
+          <p className="text-sm text-[var(--text-tertiary)]">No return data to chart yet.</p>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <div className="flex items-end gap-2 min-w-[600px] h-40">
+                {monthlyTrend.map(m => {
+                  const maxReturns = Math.max(...monthlyTrend.map(x => x.returns))
+                  const h = maxReturns > 0 ? (m.returns / maxReturns) * 100 : 0
+                  return (
+                    <div key={m.key} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] text-[var(--text-tertiary)]">{m.returns}</span>
+                      <div className="w-full bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/30 rounded-t relative" style={{ height: `${h}%` }}>
+                        <div className="absolute inset-x-0 bottom-0 bg-[var(--nexus-primary-500)] dark:bg-[var(--nexus-primary-400)] rounded-t transition-all"
+                          style={{ height: `${h}%` }} />
+                      </div>
+                      <span className="text-[10px] text-[var(--text-secondary)] mt-1">{m.month}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-[var(--border-subtle)]">
+              <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
+                <span>Total Returns: <strong className="text-[var(--text-primary)]">{analytics.totalReturns != null ? analytics.totalReturns : rmas.length}</strong></span>
+                {analytics.avgRefundAmount != null && (
+                  <span>Avg Refund: <strong className="text-[var(--text-primary)]">${Number(analytics.avgRefundAmount).toFixed(2)}</strong></span>
+                )}
+                {analytics.returnRate != null && (
+                  <span>Return Rate: <strong className="text-[var(--text-primary)]">{(Number(analytics.returnRate) * 100).toFixed(1)}%</strong></span>
+                )}
+              </div>
+              <SparklineChart data={monthlyTrend.map(m => m.returns)} />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Top Returned Products & Recovery Value */}
@@ -785,90 +911,82 @@ export default function ReturnsEnhancedPage() {
         {/* Top Returned Products */}
         <div className="enterprise-card p-5">
           <h3 className="font-semibold text-[var(--text-primary)] mb-4">Top Returned Products</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--border-subtle)]">
-                  <th className="text-left pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Product</th>
-                  <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Returns</th>
-                  <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Rate</th>
-                  <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Lost Revenue</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
-                {TOP_RETURNED_PRODUCTS.map(p => (
-                  <tr key={p.sku} className="text-sm">
-                    <td className="py-2.5">
-                      <div className="flex flex-col">
-                        <span className="font-medium text-[var(--text-primary)]">{p.name}</span>
-                        <span className="text-xs text-[var(--text-tertiary)] font-mono">{p.sku}</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 text-right font-medium text-[var(--text-primary)]">{p.returns}</td>
-                    <td className="py-2.5 text-right">
-                      <span className="text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] font-medium">{p.returnRate}%</span>
-                    </td>
-                    <td className="py-2.5 text-right font-medium text-[var(--text-primary)]">${p.revenueLost.toFixed(2)}</td>
+          {topProducts.length === 0 ? (
+            <p className="text-sm text-[var(--text-tertiary)]">No returned products recorded yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--border-subtle)]">
+                    <th className="text-left pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Product</th>
+                    <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Units</th>
+                    <th className="text-right pb-2 font-semibold text-xs text-[var(--text-secondary)] uppercase tracking-wider">Est. Value</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
+                  {topProducts.map(p => (
+                    <tr key={p.sku} className="text-sm">
+                      <td className="py-2.5">
+                        <div className="flex flex-col">
+                          <span className="font-medium text-[var(--text-primary)]">{p.name}</span>
+                          <span className="text-xs text-[var(--text-tertiary)] font-mono">{p.sku}</span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 text-right font-medium text-[var(--text-primary)]">{p.returns}</td>
+                      <td className="py-2.5 text-right font-medium text-[var(--text-primary)]">${p.revenue.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Recovery Value by Disposition */}
         <div className="enterprise-card p-5">
           <h3 className="font-semibold text-[var(--text-primary)] mb-4">Recovery Value by Disposition</h3>
-          <div className="space-y-4">
-            {RECOVERY_BY_DISPOSITION.map(d => (
-              <div key={d.disposition}>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-[var(--text-secondary)] font-medium">{d.disposition}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[var(--text-secondary)]">{d.items} items</span>
-                    {d.recoveryValue > 0 && <span className="font-semibold text-[var(--text-primary)]">${d.recoveryValue.toLocaleString()}</span>}
-                    <span className={clsx('text-xs font-medium', d.recoveryRate >= 50 ? 'text-emerald-600' : 'text-[var(--text-tertiary)]')}>{d.recoveryRate}%</span>
-                  </div>
-                </div>
-                <div className="h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
-                  <div className={clsx('h-full rounded-full', d.disposition === 'Restock' ? 'bg-emerald-500' : d.disposition === 'Refurbish' ? 'bg-[var(--nexus-primary-50)]0' : d.disposition === 'Donate' ? 'bg-pink-500' : d.disposition === 'Recycle' ? 'bg-[var(--nexus-info-50)]0' : 'bg-[var(--surface-muted)]')}
-                    style={{ width: `${d.recoveryRate}%` }} />
-                </div>
+          {recoveryByDisposition.length === 0 ? (
+            <p className="text-sm text-[var(--text-tertiary)]">No dispositioned returns to chart yet.</p>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {recoveryByDisposition.map(d => {
+                  const totalItems = recoveryByDisposition.reduce((s, x) => s + x.items, 0)
+                  const pct = totalItems > 0 ? Math.round((d.items / totalItems) * 100) : 0
+                  return (
+                    <div key={d.key}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="text-[var(--text-secondary)] font-medium">{DISPOSITION_LABELS[d.key] || d.key}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[var(--text-secondary)]">{d.items} items</span>
+                          {d.value > 0 && <span className="font-semibold text-[var(--text-primary)]">${d.value.toLocaleString()}</span>}
+                          <span className={clsx('text-xs font-medium', pct > 0 ? 'text-[var(--nexus-primary-600)]' : 'text-[var(--text-tertiary)]')}>{pct}%</span>
+                        </div>
+                      </div>
+                      <div className="h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                        <div className={clsx('h-full rounded-full', d.key === 'RESTOCK' ? 'bg-[var(--nexus-success-500)]' : d.key === 'REFURBISH' ? 'bg-[var(--nexus-primary-500)]' : d.key === 'RECYCLE' ? 'bg-[var(--nexus-info-500)]' : 'bg-[var(--surface-muted)]')}
+                          style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
-            ))}
-          </div>
-          <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-sm">
-            <span className="text-[var(--text-secondary)]">Total Recovery Value</span>
-            <span className="font-bold text-lg text-[var(--text-primary)]">$15,820</span>
-          </div>
+              <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-sm">
+                <span className="text-[var(--text-secondary)]">Total Recovery Value</span>
+                <span className="font-bold text-lg text-[var(--text-primary)]">${totalRecovery.toLocaleString()}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* Return Rate by Channel */}
       <div className="enterprise-card p-5">
         <h3 className="font-semibold text-[var(--text-primary)] mb-4">Return Rate by Channel</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {RETURN_RATE_BY_CHANNEL.map(ch => {
-            const avg = RETURN_RATE_BY_CHANNEL.reduce((s, c) => s + c.rate, 0) / RETURN_RATE_BY_CHANNEL.length
-            const aboveAvg = ch.rate > avg
-            return (
-              <div key={ch.channel} className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-xl p-4 text-center">
-                <p className="text-sm text-[var(--text-secondary)] mb-1">{ch.channel}</p>
-                <p className={clsx('text-2xl font-bold', aboveAvg ? 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]' : 'text-emerald-600 dark:text-emerald-400')}>
-                  {ch.rate}%
-                </p>
-                <div className="flex items-center justify-center gap-1 mt-1">
-                  {aboveAvg
-                    ? <ArrowUpRight className="w-3 h-3 text-[var(--nexus-error-500)]" />
-                    : <ArrowDownRight className="w-3 h-3 text-emerald-500" />}
-                  <span className={clsx('text-xs', aboveAvg ? 'text-[var(--nexus-error-500)]' : 'text-emerald-500')}>
-                    {aboveAvg ? '+' : ''}{(ch.rate - avg).toFixed(2)}% vs avg
-                  </span>
-                </div>
-                <p className="text-xs text-[var(--text-tertiary)] mt-1">{ch.returns} returns / {ch.orders.toLocaleString()} orders</p>
-              </div>
-            )
-          })}
+        <div className="enterprise-empty-state">
+          <AlertTriangle className="w-10 h-10" />
+          <h3>Channel-level return rates unavailable</h3>
+          <p>Returns are not tracked by sales channel yet. Once channel data is attached to returns, per-channel rates will appear here.</p>
         </div>
       </div>
     </div>
@@ -880,7 +998,7 @@ export default function ReturnsEnhancedPage() {
 
       {/* Header */}
       <div className="flex items-center gap-4 py-2">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-600 flex items-center justify-center ring-4 ring-violet-100 dark:ring-violet-900/30">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[var(--nexus-primary-500)] to-[var(--nexus-primary-600)] flex items-center justify-center ring-4 ring-[var(--nexus-primary-100)] dark:ring-[var(--nexus-primary-900)]/30">
           <RotateCcw className="w-6 h-6 text-white" />
         </div>
         <div>
@@ -891,12 +1009,12 @@ export default function ReturnsEnhancedPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <EnterpriseKPICard title="Return Rate" value="2.1%" subtitle="vs 1.8% target" icon={<TrendingUp className="w-5 h-5" />} color="warning" trend="up" trendValue="+0.3%" />
-        <EnterpriseKPICard title="Pending RMA" value="23" icon={<ClipboardList className="w-5 h-5" />} color="warning" />
-        <EnterpriseKPICard title="In Transit" value="12" icon={<Truck className="w-5 h-5" />} color="info" />
-        <EnterpriseKPICard title="Inspected Today" value="47" icon={<Eye className="w-5 h-5" />} color="ai" />
-        <EnterpriseKPICard title="Refund Amount Today" value="$3,240" icon={<DollarSign className="w-5 h-5" />} color="success" />
-        <EnterpriseKPICard title="Recovery Rate" value="68%" subtitle="of return value" icon={<RefreshCw className="w-5 h-5" />} color="primary" trend="up" trendValue="+5%" />
+        <EnterpriseKPICard title="Return Rate" value={analytics.returnRate != null ? `${(Number(analytics.returnRate) * 100).toFixed(1)}%` : '—'} subtitle="from analytics" icon={<TrendingUp className="w-5 h-5" />} color="warning" />
+        <EnterpriseKPICard title="Pending RMA" value={String(rawKpis.pending ?? 0)} icon={<ClipboardList className="w-5 h-5" />} color="warning" />
+        <EnterpriseKPICard title="Approved" value={String(rawKpis.approved ?? 0)} icon={<ThumbsUp className="w-5 h-5" />} color="primary" />
+        <EnterpriseKPICard title="Received" value={String(rawKpis.received ?? 0)} icon={<PackageCheck className="w-5 h-5" />} color="info" />
+        <EnterpriseKPICard title="Refunded" value={String(rawKpis.refunded ?? 0)} icon={<DollarSign className="w-5 h-5" />} color="success" />
+        <EnterpriseKPICard title="Rejected" value={String(rawKpis.rejected ?? 0)} icon={<X className="w-5 h-5" />} color="error" />
       </div>
 
       {/* Tabs */}
@@ -919,38 +1037,51 @@ export default function ReturnsEnhancedPage() {
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Create RMA</h2>
-              <button onClick={() => setCreateOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)]"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setCreateOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Customer</label>
-                <input type="text" className="enterprise-input" placeholder="Customer name" value={createForm.customer} onChange={e => setCreateForm(f => ({ ...f, customer: e.target.value }))} />
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Order ID (UUID)</label>
+                <input type="text" className="enterprise-input" placeholder="Order UUID" value={createForm.orderId} onChange={e => setCreateForm(f => ({ ...f, orderId: e.target.value }))} />
               </div>
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Order Number</label>
-                <input type="text" className="enterprise-input" placeholder="ORD-XXXX" value={createForm.orderNumber} onChange={e => setCreateForm(f => ({ ...f, orderNumber: e.target.value }))} />
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Customer ID (UUID)</label>
+                <input type="text" className="enterprise-input" placeholder="Customer UUID" value={createForm.customerId} onChange={e => setCreateForm(f => ({ ...f, customerId: e.target.value }))} />
               </div>
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Reason Type</label>
-                <select className="enterprise-select" value={createForm.reasonType} onChange={e => setCreateForm(f => ({ ...f, reasonType: e.target.value }))}>
-                  {REASON_TYPES.map(rt => <option key={rt} value={rt}>{rt}</option>)}
-                </select>
-              </div>
-              <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Reason Details</label>
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Reason</label>
                 <textarea className="enterprise-textarea" rows={2} placeholder="Describe the return reason..." value={createForm.reason} onChange={e => setCreateForm(f => ({ ...f, reason: e.target.value }))} />
               </div>
-              <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Estimated Value ($)</label>
-                <input type="number" step="0.01" className="enterprise-input" placeholder="0.00" value={createForm.value || ''} onChange={e => setCreateForm(f => ({ ...f, value: parseFloat(e.target.value) || 0 }))} />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Items</label>
+                {createForm.items.map((item, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input type="text" className="enterprise-input" placeholder="SKU" value={item.sku} onChange={e => {
+                      const items = createForm.items.map((it, idx) => idx === i ? { ...it, sku: e.target.value } : it)
+                      setCreateForm(f => ({ ...f, items }))
+                    }} />
+                    <input type="number" min="1" className="enterprise-input w-20" placeholder="Qty" value={item.quantity || ''} onChange={e => {
+                      const items = createForm.items.map((it, idx) => idx === i ? { ...it, quantity: parseInt(e.target.value) || 0 } : it)
+                      setCreateForm(f => ({ ...f, items }))
+                    }} />
+                    <input type="number" min="0" step="0.01" className="enterprise-input w-24" placeholder="Price" value={item.unitPrice || ''} onChange={e => {
+                      const items = createForm.items.map((it, idx) => idx === i ? { ...it, unitPrice: parseFloat(e.target.value) || 0 } : it)
+                      setCreateForm(f => ({ ...f, items }))
+                    }} />
+                  </div>
+                ))}
+                <button type="button" onClick={() => setCreateForm(f => ({ ...f, items: [...f.items, { sku: '', productName: '', quantity: 1, unitPrice: 0 }] }))}
+                  className="text-sm text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:underline">
+                  + Add item
+                </button>
               </div>
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setCreateOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setCreateOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="orders" action="create">
-                <button onClick={async () => { await handleCreateReturn(createForm); setCreateOpen(false); setCreateForm({ customer: '', orderNumber: '', reason: '', reasonType: 'Defective', value: 0 }) }} disabled={!createForm.customer && !createForm.orderNumber}
+                <button type="button" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || !createForm.customerId || !createForm.reason || !createForm.items.some(it => it.sku) || createMutation.isPending}
                   className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
-                  <Plus className="w-4 h-4" /> Create RMA
+                  {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Create RMA
                 </button>
               </PermissionGate>
             </div>
@@ -966,7 +1097,7 @@ export default function ReturnsEnhancedPage() {
               <h2 className="text-lg font-bold text-[var(--text-primary)]">
                 {confirmAction.type === 'approve' ? 'Approve RMA' : 'Reject RMA'}
               </h2>
-              <button onClick={() => setConfirmAction(null)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)]"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setConfirmAction(null)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
               <p className="text-sm text-[var(--text-secondary)]">
@@ -982,17 +1113,17 @@ export default function ReturnsEnhancedPage() {
               )}
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setConfirmAction(null)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setConfirmAction(null)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               {confirmAction.type === 'approve' ? (
                 <PermissionGate resource="orders" action="edit">
-                  <button onClick={() => handleApproveRma(confirmAction.rma)}
-                    className="enterprise-btn bg-emerald-600 text-white hover:bg-emerald-700 border-none">
+                  <button type="button" onClick={() => { approveMutation.mutate(confirmAction.rma.id); setConfirmAction(null) }}
+                    className="enterprise-btn bg-[var(--nexus-success-600)] text-white hover:bg-[var(--nexus-success-700)] border-none">
                     <Check className="w-4 h-4" /> Approve
                   </button>
                 </PermissionGate>
               ) : (
                 <PermissionGate resource="orders" action="edit">
-                  <button onClick={() => handleRejectRma(confirmAction.rma)}
+                  <button type="button" onClick={() => { rejectMutation.mutate({ id: confirmAction.rma.id, reason: rejectReason || 'No reason provided' }); setConfirmAction(null) }}
                     className="enterprise-btn bg-[var(--nexus-error-600)] text-white hover:bg-[var(--nexus-error-700)] border-none">
                     <X className="w-4 h-4" /> Reject
                   </button>

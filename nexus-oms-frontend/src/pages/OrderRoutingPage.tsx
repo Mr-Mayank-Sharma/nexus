@@ -30,7 +30,7 @@ const EXCEPTION_SEVERITY_CLASSES: Record<string, string> = {
   LOW: 'enterprise-badge-info',
   MEDIUM: 'enterprise-badge-warning',
   HIGH: 'enterprise-badge-error',
-  CRITICAL: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-300)] ring-1 ring-red-200 dark:ring-red-800',
+  CRITICAL: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-300)] ring-1 ring-[var(--nexus-error-200)] dark:ring-[var(--nexus-error-800)]',
 }
 
 const EXCEPTION_STATUS_CLASSES: Record<string, string> = {
@@ -133,8 +133,8 @@ export default function OrderRoutingPage() {
       {/* Page Header */}
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
-            <Route className="w-6 h-6 text-violet-600" />
+          <div className="w-12 h-12 rounded-2xl bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 flex items-center justify-center">
+            <Route className="w-6 h-6 text-[var(--nexus-primary-600)]" />
           </div>
           <div>
             <h1>AI Order Routing</h1>
@@ -157,7 +157,7 @@ export default function OrderRoutingPage() {
       <div className="enterprise-kpi-grid">
         {[
           { label: 'Allocations Today', value: kpis?.totalAllocationsToday ?? 0, icon: TrendingUp, color: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]', trend: kpis?.totalAllocationsToday ? `${kpis.totalAllocationsToday} total` : 'No data' },
-          { label: 'Active Allocations', value: kpis?.activeAllocations ?? 0, icon: Zap, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400', trend: 'Currently allocated' },
+          { label: 'Active Allocations', value: kpis?.activeAllocations ?? 0, icon: Zap, color: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-400)]', trend: 'Currently allocated' },
           { label: 'Open Exceptions', value: kpis?.openExceptions ?? 0, icon: AlertTriangle, color: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]', trend: 'Requiring attention' },
           { label: 'Critical Exceptions', value: kpis?.criticalExceptions ?? 0, icon: XCircle, color: kpis?.criticalExceptions ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]' : 'bg-[var(--surface-sunken)] text-[var(--text-secondary)] bg-[var(--surface-base)] dark:text-[var(--text-tertiary)]', trend: kpis?.criticalExceptions ? 'Requires immediate action' : 'All clear' },
         ].map(kpi => (
@@ -232,7 +232,7 @@ export default function OrderRoutingPage() {
             </div>
           ) : exceptions.length === 0 ? (
             <div className="enterprise-empty-state py-16">
-              <CheckCircle2 className="w-12 h-12 text-emerald-400" />
+              <CheckCircle2 className="w-12 h-12 text-[var(--nexus-success-400)]" />
               <h3>No exceptions found</h3>
               <p>All orders are routing smoothly</p>
             </div>
@@ -246,7 +246,7 @@ export default function OrderRoutingPage() {
                     <div className="flex items-start gap-4">
                       <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5',
                         exception.severity === 'CRITICAL' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]',
-                        exception.severity === 'HIGH' && 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400',
+                        exception.severity === 'HIGH' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
                         exception.severity === 'MEDIUM' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
                         exception.severity === 'LOW' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]',
                       )}>
@@ -272,8 +272,8 @@ export default function OrderRoutingPage() {
                             <span className={clsx(
                               'inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md',
                               exception.autoResolvable
-                                ? 'text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20'
-                                : 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]'
+                                ? 'text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20'
+                                : 'text-[var(--text-secondary)] bg-[var(--surface-sunken)]'
                             )}>
                               <Brain className="w-3 h-3" />
                               {exception.autoResolvable ? 'Auto-resolve available' : 'Needs manual review'}
@@ -307,7 +307,7 @@ export default function OrderRoutingPage() {
                             </span>
                           )}
                           {exception.suggestedAction && (
-                            <span className="text-violet-600 dark:text-violet-400">{exception.suggestedAction}</span>
+                            <span className="text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]">{exception.suggestedAction}</span>
                           )}
                         </div>
                       </div>
@@ -337,7 +337,7 @@ export default function OrderRoutingPage() {
             <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <tr className="border-b border-[var(--border-default)] bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     <th className="px-4 py-3">Order</th>
                     <th className="px-4 py-3">Source</th>
                     <th className="px-4 py-3">Destination</th>
@@ -346,7 +346,7 @@ export default function OrderRoutingPage() {
                     <th className="px-4 py-3">Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700">
                   {(allocations as any[]).map((a: any, i: number) => (
                     <tr key={a.id || i} className="hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30">
                       <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{a.orderId || a.orderNumber || '-'}</td>
@@ -374,7 +374,7 @@ export default function OrderRoutingPage() {
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Resolve Exception</h2>
-              <button onClick={() => setResolveOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
+              <button type="button" onClick={() => setResolveOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -414,7 +414,7 @@ export default function OrderRoutingPage() {
               </div>
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setResolveOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setResolveOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="orders" action="edit">
                 <button
                   onClick={handleResolve}

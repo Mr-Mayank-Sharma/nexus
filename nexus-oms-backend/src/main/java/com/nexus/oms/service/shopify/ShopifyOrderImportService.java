@@ -18,6 +18,7 @@ public class ShopifyOrderImportService {
 
     private final ShopifyClient shopifyClient;
     private final IntegrationStoreService storeService;
+    private final ShopifyTokenService tokenService;
     private final NxIntegrationStoreRepository storeRepository;
     private final NxIntegrationSyncConfigRepository syncConfigRepository;
     private final NxSyncLogRepository syncLogRepository;
@@ -25,10 +26,12 @@ public class ShopifyOrderImportService {
     private final OrderItemRepository orderItemRepository;
     private final CustomerRepository customerRepository;
     private final AddressRepository addressRepository;
+    private final NxProductMappingRepository productMappingRepository;
     private final ObjectMapper objectMapper;
 
     public ShopifyOrderImportService(ShopifyClient shopifyClient,
                                       IntegrationStoreService storeService,
+                                      ShopifyTokenService tokenService,
                                       NxIntegrationStoreRepository storeRepository,
                                       NxIntegrationSyncConfigRepository syncConfigRepository,
                                       NxSyncLogRepository syncLogRepository,
@@ -36,9 +39,11 @@ public class ShopifyOrderImportService {
                                       OrderItemRepository orderItemRepository,
                                       CustomerRepository customerRepository,
                                       AddressRepository addressRepository,
+                                      NxProductMappingRepository productMappingRepository,
                                       ObjectMapper objectMapper) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
+        this.tokenService = tokenService;
         this.storeRepository = storeRepository;
         this.syncConfigRepository = syncConfigRepository;
         this.syncLogRepository = syncLogRepository;
@@ -46,6 +51,7 @@ public class ShopifyOrderImportService {
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
         this.addressRepository = addressRepository;
+        this.productMappingRepository = productMappingRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -57,7 +63,7 @@ public class ShopifyOrderImportService {
         }
 
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
-        String accessToken = storeService.getSetting(storeId, "access_token");
+        String accessToken = tokenService.getAccessToken(storeId);
         if (shopDomain == null || accessToken == null) {
             throw new IllegalStateException("Shopify credentials not configured");
         }
@@ -134,18 +140,21 @@ public class ShopifyOrderImportService {
         UUID tenantId = store.getTenantId();
         long shopifyOrderId = shopifyOrder.get("id").asLong();
         String orderNumber = shopifyOrder.has("order_number") ? String.valueOf(shopifyOrder.get("order_number").asInt()) : String.valueOf(shopifyOrderId);
+        if (orderRepository.findByTenantIdAndChannelOrderId(tenantId, orderNumber).isPresent()) {
+            return;
+        }
         String status = mapStatus(shopifyOrder.has("financial_status") ? shopifyOrder.get("financial_status").asText() : "pending");
 
         NxCustomer customer = findOrCreateCustomer(tenantId, shopifyOrder);
 
-        BigDecimal subtotal = new BigDecimal(shopifyOrder.has("subtotal_price") ? shopifyOrder.get("subtotal_price").decimalValue().toPlainString() : "0");
+        BigDecimal subtotal = money(shopifyOrder.get("subtotal_price"));
         BigDecimal shippingCost = BigDecimal.ZERO;
         JsonNode shippingLines = shopifyOrder.get("shipping_lines");
         if (shippingLines != null && shippingLines.isArray() && shippingLines.size() > 0) {
-            shippingCost = new BigDecimal(shippingLines.get(0).get("price").decimalValue().toPlainString());
+            shippingCost = money(shippingLines.get(0).get("price"));
         }
-        BigDecimal totalTax = new BigDecimal(shopifyOrder.has("total_tax") ? shopifyOrder.get("total_tax").decimalValue().toPlainString() : "0");
-        BigDecimal totalPrice = new BigDecimal(shopifyOrder.has("total_price") ? shopifyOrder.get("total_price").decimalValue().toPlainString() : "0");
+        BigDecimal totalTax = money(shopifyOrder.get("total_tax"));
+        BigDecimal totalPrice = money(shopifyOrder.get("total_price"));
 
         JsonNode shipping = shopifyOrder.get("shipping_address");
         String street = "";
@@ -194,13 +203,18 @@ public class ShopifyOrderImportService {
                 String sku = item.has("sku") ? item.get("sku").asText() : ("SPF-" + item.get("product_id").asText());
                 String productName = item.has("title") ? item.get("title").asText() : sku;
                 int qty = item.has("quantity") ? item.get("quantity").asInt() : 1;
-                BigDecimal unitPrice = new BigDecimal(item.has("price") ? item.get("price").decimalValue().toPlainString() : "0");
+                BigDecimal unitPrice = money(item.get("price"));
                 BigDecimal totalItemPrice = unitPrice.multiply(BigDecimal.valueOf(qty));
+                String imageUrl = productMappingRepository
+                        .findByTenantIdAndBcSku(tenantId, sku)
+                        .map(NxProductMapping::getImageUrl)
+                        .orElse(null);
 
                 NxOrderItem orderItem = NxOrderItem.builder()
                         .orderId(order.getId())
                         .sku(sku)
                         .productName(productName)
+                        .imageUrl(imageUrl)
                         .quantity(qty)
                         .unitPrice(unitPrice)
                         .totalPrice(totalItemPrice)
@@ -208,6 +222,17 @@ public class ShopifyOrderImportService {
                         .build();
                 orderItemRepository.save(orderItem);
             }
+        }
+    }
+
+    private BigDecimal money(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) return BigDecimal.ZERO;
+        String text = node.asText();
+        if (text == null || text.isBlank()) return BigDecimal.ZERO;
+        try {
+            return new BigDecimal(text.trim());
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
         }
     }
 

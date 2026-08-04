@@ -63,7 +63,7 @@ export default function InventoryReceivingPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Receive purchase orders, transfer orders, and returns into inventory</p>
         </div>
         <PermissionGate resource="inventory" action="create">
-          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Receipt
           </button>
         </PermissionGate>
@@ -76,7 +76,7 @@ export default function InventoryReceivingPage() {
           <option value="PENDING">Pending</option>
           <option value="RECEIVED">Received</option>
         </select>
-        <button className="enterprise-btn enterprise-btn-secondary text-sm"><Download className="w-4 h-4" /> Export</button>
+        <button type="button" className="enterprise-btn enterprise-btn-secondary text-sm"><Download className="w-4 h-4" /> Export</button>
       </div>
 
       {loading ? (
@@ -103,7 +103,7 @@ export default function InventoryReceivingPage() {
                   <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--surface-sunken)]">
                 {filtered.map(receipt => (
                   <tr key={receipt.id} className="hover:bg-[var(--surface-sunken)]">
                     <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{receipt.sku}</td>
@@ -117,7 +117,7 @@ export default function InventoryReceivingPage() {
                     <td className="px-6 py-3 text-right">
                       {receipt.status === 'PENDING' ? (
                         <PermissionGate resource="inventory" action="edit">
-                          <button onClick={() => handleReceive(receipt.id)} className="enterprise-btn enterprise-btn-primary text-xs py-1.5">
+                          <button type="button" onClick={() => handleReceive(receipt.id)} className="enterprise-btn enterprise-btn-primary text-xs py-1.5">
                             <PackageCheck className="w-3.5 h-3.5" /> Receive
                           </button>
                         </PermissionGate>
@@ -138,7 +138,7 @@ export default function InventoryReceivingPage() {
           <div className="enterprise-modal max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Inventory Receipt</h2>
-              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -192,9 +192,9 @@ export default function InventoryReceivingPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="inventory" action="create">
-                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <PackageCheck className="w-4 h-4" />}
                   Create Receipt
                 </button>

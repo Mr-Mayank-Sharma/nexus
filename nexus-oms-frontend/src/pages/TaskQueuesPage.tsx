@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  AlertTriangle, Search, Eye, ArrowRight, CheckCircle, XCircle,
-  RefreshCw, MapPin, CreditCard, PauseCircle, User, Package, Clock,
-  Ban, Shield, ClipboardList,
+  AlertTriangle, Search, Eye, RefreshCw, CheckCircle,
+  MapPin, PauseCircle, User, Clock,
+  Shield, ClipboardList, ArrowUpCircle,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
+import { getExceptions, resolveException, escalateException } from '../api/orderRouting'
+import type { FulfillmentException } from '../types'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -18,6 +20,7 @@ type QueueTab = 'swap' | 'bad-address' | 'fraud' | 'hold'
 
 interface QueueItem {
   id: string
+  orderId: string
   orderNumber: string
   customerName: string
   customerEmail: string
@@ -28,6 +31,8 @@ interface QueueItem {
   details: string
   priority: 'high' | 'medium' | 'low'
   assignee?: string
+  type: string
+  suggestedAction?: string
 }
 
 const queueTabs: Tab[] = [
@@ -37,23 +42,21 @@ const queueTabs: Tab[] = [
   { id: 'hold', label: 'On Hold', icon: <PauseCircle className="w-4 h-4" /> },
 ]
 
-const reasonMap: Record<QueueTab, { reasons: string[]; details: string[] }> = {
-  swap: {
-    reasons: ['Out of Stock', 'Damaged Inventory', 'Supplier Backorder'],
-    details: ['Item XYZ-123 out of stock, needs substitute', 'Item ABC-456 damaged in warehouse', 'Supplier delayed on item DEF-789'],
-  },
-  'bad-address': {
-    reasons: ['Invalid ZIP', 'Missing Unit/Apt', 'Undeliverable', 'Address Verification Failed'],
-    details: ['ZIP code does not match city/state', 'Apartment number missing from address', 'Address flagged by USPS as undeliverable', 'Address verification service returned low confidence'],
-  },
-  fraud: {
-    reasons: ['High Risk Score', 'AVS Mismatch', 'CVV Failure', 'Unusual Order Pattern', 'Shipping/Billing Mismatch'],
-    details: ['Risk score of 87 (threshold: 80)', 'Billing address does not match card on file', 'CVV verification failed on second attempt', 'Order velocity exceeds normal pattern for this customer', 'Shipping address differs from billing in high-risk zone'],
-  },
-  hold: {
-    reasons: ['Payment Pending', 'Customer Verification', 'Terms Review', 'Credit Limit Exceeded'],
-    details: ['Payment authorization pending for 24+ hours', 'Customer flagged for identity verification', 'Order requires manual terms approval', 'Order exceeds credit limit by $500'],
-  },
+const tabTypes: Record<QueueTab, string[]> = {
+  swap: ['INVENTORY_SHORTAGE'],
+  'bad-address': ['SHIPPING_ADDRESS_ISSUE'],
+  fraud: ['FRAUD_FLAG'],
+  hold: ['PAYMENT_HOLD', 'CREDIT_HOLD', 'CUSTOMER_REQUEST'],
+}
+
+const activeStatuses = ['OPEN', 'IN_PROGRESS']
+
+const asArray = (d: unknown): any[] => (Array.isArray(d) ? d : Array.isArray((d as any)?.content) ? (d as any).content : [])
+
+function toPriority(severity: string): 'high' | 'medium' | 'low' {
+  if (severity === 'CRITICAL' || severity === 'HIGH') return 'high'
+  if (severity === 'MEDIUM') return 'medium'
+  return 'low'
 }
 
 export default function TaskQueuesPage() {
@@ -64,38 +67,76 @@ export default function TaskQueuesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all')
 
-  const { data: items = [], isLoading } = useQuery({
-    queryKey: ['task-queue', activeTab],
+  const { data: orders = [] } = useQuery({
+    queryKey: ['task-queue-orders'],
     queryFn: async () => {
-      const res = await ordersApi.getOrders({})
-      const d = res.data
-      const list = Array.isArray(d) ? d : (d?.content ?? [])
-      const reasons = reasonMap[activeTab]
-      return list.slice(0, 12).map((o: any, i: number) => ({
-        id: o.id,
-        orderNumber: o.orderNumber || `ORD-${String(i + 1).padStart(4, '0')}`,
-        customerName: o.customerName || `Customer ${i + 1}`,
-        customerEmail: o.customerEmail || `customer${i + 1}@example.com`,
-        orderDate: o.orderDate || new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString(),
-        total: o.total || Math.floor(Math.random() * 500) + 20,
-        status: o.status || 'PENDING',
-        reason: reasons.reasons[i % reasons.reasons.length],
-        details: reasons.details[i % reasons.details.length],
-        priority: (['high', 'medium', 'low'] as const)[i % 3],
-        assignee: i % 4 === 0 ? 'Jane Cooper' : undefined,
-      })) as QueueItem[]
+      const res = await ordersApi.getOrders({}).catch(() => null)
+      return asArray(res?.data)
     },
   })
 
+  const orderMap = useMemo(() => {
+    const m = new Map<string, any>()
+    for (const o of orders) m.set(o.id, o)
+    return m
+  }, [orders])
+
+  const { data: rawExceptions = [], isLoading } = useQuery({
+    queryKey: ['task-queue-exceptions'],
+    queryFn: async () => {
+      const res = await getExceptions({ page: 0, size: 100 }).catch(() => null)
+      return asArray(res?.data?.content ?? res?.data)
+    },
+    refetchInterval: 60000,
+  })
+
+  const items: QueueItem[] = useMemo(() => {
+    return rawExceptions
+      .filter((e: FulfillmentException) => tabTypes[activeTab].includes(e.type) && activeStatuses.includes(e.status))
+      .map((e: FulfillmentException) => {
+        const order = orderMap.get(e.orderId)
+        return {
+          id: e.id,
+          orderId: e.orderId,
+          orderNumber: order?.orderNumber || e.orderId,
+          customerName: order?.customerName || '—',
+          customerEmail: order?.customerEmail || '—',
+          orderDate: order?.createdAt || e.detectedAt,
+          total: order?.total ?? 0,
+          status: e.status,
+          reason: e.title,
+          details: e.description || e.suggestedAction || 'No additional details',
+          priority: toPriority(e.severity),
+          assignee: e.assignedTo,
+          type: e.type,
+          suggestedAction: e.suggestedAction,
+        }
+      })
+  }, [rawExceptions, activeTab, orderMap])
+
   const resolveMutation = useMutation({
-    mutationFn: async ({ id, action }: { id: string; action: 'resolve' | 'reject' }) => {
-      await new Promise(r => setTimeout(r, 400))
-      return { id, action }
+    mutationFn: async ({ id, suggestedAction }: { id: string; suggestedAction?: string }) => {
+      return resolveException(id, {
+        resolution: 'Reviewed and resolved by agent',
+        resolutionStrategy: suggestedAction,
+      })
     },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['task-queue'] })
-      addToast({ type: vars.action === 'resolve' ? 'success' : 'error', title: vars.action === 'resolve' ? 'Task resolved' : 'Task rejected' })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-queue-exceptions'] })
+      addToast({ type: 'success', title: 'Exception resolved' })
     },
+    onError: () => addToast({ type: 'error', title: 'Failed to resolve exception' }),
+  })
+
+  const escalateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return escalateException(id)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['task-queue-exceptions'] })
+      addToast({ type: 'info', title: 'Exception escalated' })
+    },
+    onError: () => addToast({ type: 'error', title: 'Failed to escalate exception' }),
   })
 
   const filteredItems = items.filter(item => {
@@ -115,7 +156,7 @@ export default function TaskQueuesPage() {
       case 'high': return 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]'
       case 'medium': return 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-400)]'
       case 'low': return 'bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/20 text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-400)]'
-      default: return 'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)]'
+      default: return 'bg-[var(--surface-muted)] text-[var(--text-secondary)]'
     }
   }
 
@@ -138,7 +179,7 @@ export default function TaskQueuesPage() {
         <Autocomplete value={searchTerm} onChange={setSearchTerm} placeholder="Search by order, customer, or reason..." minChars={0} className="flex-1 max-w-md" />
         <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-0.5">
           {(['all', 'high', 'medium', 'low'] as const).map(p => (
-            <button key={p} onClick={() => setPriorityFilter(p)}
+            <button type="button" key={p} onClick={() => setPriorityFilter(p)}
               className={clsx('px-3 py-1.5 text-xs font-medium rounded-md capitalize',
                 priorityFilter === p ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]')}>
               {p}
@@ -177,13 +218,14 @@ export default function TaskQueuesPage() {
                       <span className={clsx('text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase', getPriorityColor(item.priority))}>
                         {item.priority}
                       </span>
-                      <EnterpriseStatusBadge status={item.status === 'PENDING' ? 'pending' : item.status === 'CONFIRMED' ? 'info' : item.status === 'ALLOCATED' ? 'warning' : 'info'} label={item.status} />
+                      <EnterpriseStatusBadge status={item.status === 'OPEN' ? 'warning' : item.status === 'IN_PROGRESS' ? 'info' : 'success'} label={item.status.replace('_', ' ')} />
                     </div>
                     <p className="text-xs text-[var(--text-secondary)] mb-1">
                       <User className="w-3 h-3 inline mr-1" />
                       {item.customerName}
+                      {item.assignee ? <span className="ml-2 text-[var(--text-tertiary)]">· Assigned: {item.assignee}</span> : null}
                     </p>
-                    <div className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg p-2.5 mt-1.5">
+                    <div className="bg-[var(--surface-sunken)]/50 rounded-lg p-2.5 mt-1.5">
                       <p className="text-xs font-medium text-[var(--text-secondary)] flex items-center gap-1">
                         <AlertTriangle className="w-3 h-3 text-[var(--nexus-warning-500)]" />
                         {item.reason}
@@ -193,17 +235,17 @@ export default function TaskQueuesPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                  <button onClick={() => navigate(`/orders/${item.id}`)} className="enterprise-btn-secondary text-xs px-2.5 py-1.5 flex items-center gap-1">
+                  <button type="button" onClick={() => navigate(`/orders/${item.orderId}`)} className="enterprise-btn-secondary text-xs px-2.5 py-1.5 flex items-center gap-1">
                     <Eye className="w-3.5 h-3.5" /> View
                   </button>
                   <PermissionGate resource="warehouse" action="edit">
-                    <button onClick={() => resolveMutation.mutate({ id: item.id, action: 'resolve' })} className="enterprise-btn-primary text-xs px-2.5 py-1.5 flex items-center gap-1 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
-                      <CheckCircle className="w-3.5 h-3.5" /> Resolve
+                    <button type="button" onClick={() => escalateMutation.mutate(item.id)} disabled={escalateMutation.isPending} className="enterprise-btn-secondary text-xs px-2.5 py-1.5 flex items-center gap-1">
+                      <ArrowUpCircle className="w-3.5 h-3.5" /> Escalate
                     </button>
                   </PermissionGate>
-                  <PermissionGate resource="warehouse" action="delete">
-                    <button onClick={() => resolveMutation.mutate({ id: item.id, action: 'reject' })} className="enterprise-btn-secondary text-xs px-2.5 py-1.5 flex items-center gap-1 border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)] text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] hover:bg-[var(--nexus-error-50)] dark:hover:bg-[var(--nexus-error-900)]/20">
-                      <XCircle className="w-3.5 h-3.5" /> Reject
+                  <PermissionGate resource="warehouse" action="edit">
+                    <button type="button" onClick={() => resolveMutation.mutate({ id: item.id, suggestedAction: item.suggestedAction })} disabled={resolveMutation.isPending} className="enterprise-btn-primary text-xs px-2.5 py-1.5 flex items-center gap-1 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
+                      <CheckCircle className="w-3.5 h-3.5" /> Resolve
                     </button>
                   </PermissionGate>
                 </div>

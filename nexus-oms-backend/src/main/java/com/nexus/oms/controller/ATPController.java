@@ -3,15 +3,17 @@ package com.nexus.oms.controller;
 import com.nexus.oms.entity.NxATPRule;
 import com.nexus.oms.entity.NxATPSnapshot;
 import com.nexus.oms.service.ATPCalculationEngine;
+import com.nexus.oms.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/atp")
+@RequestMapping("/atp")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ATPController {
 
@@ -19,6 +21,11 @@ public class ATPController {
 
     public ATPController(ATPCalculationEngine atpCalculationEngine) {
         this.atpCalculationEngine = atpCalculationEngine;
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NxATPRule>>> getATPRules() {
+        return ResponseEntity.ok(ApiResponse.success(atpCalculationEngine.getRules()));
     }
 
     // ─── ATP Rules ─────────────────────────────────────────────────────────

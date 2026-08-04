@@ -61,6 +61,17 @@ public class InvoicingController {
                 invoicingService.updateInvoiceStatus(id, status), "Invoice status updated"));
     }
 
+    @PatchMapping("/invoices/{id}")
+    public ResponseEntity<ApiResponse<Invoice>> patchInvoice(
+            @PathVariable UUID id, @Valid @RequestBody Map<String, Object> body) {
+        String status = (String) body.getOrDefault("status", "");
+        if (!status.isEmpty()) {
+            return ResponseEntity.ok(ApiResponse.success(
+                    invoicingService.updateInvoiceStatus(id, status), "Invoice updated"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(invoicingService.getInvoice(id), "Invoice retrieved"));
+    }
+
     @PostMapping("/invoices/{id}/payments")
     public ResponseEntity<ApiResponse<Payment>> recordPayment(
             @PathVariable UUID id, @Valid @RequestBody Payment payment) {

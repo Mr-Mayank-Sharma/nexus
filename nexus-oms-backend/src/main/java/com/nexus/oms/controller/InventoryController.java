@@ -34,6 +34,13 @@ public class InventoryController {
         return ResponseEntity.ok(ApiResponse.success(inventoryService.getInventoryByTenant(TenantContext.getCurrentTenantId())));
     }
 
+    @Operation(summary = "Create a new inventory record")
+    @PostMapping
+    public ResponseEntity<ApiResponse<NxInventory>> createInventory(@RequestBody NxInventory inventory) {
+        inventory.setTenantId(TenantContext.getCurrentTenantId());
+        return ResponseEntity.ok(ApiResponse.success(inventoryService.createInventory(inventory), "Inventory created"));
+    }
+
     @Operation(summary = "Get inventory by SKU")
     @GetMapping("/{sku}")
     public ResponseEntity<ApiResponse<NxInventory>> getBySku(@PathVariable String sku) {

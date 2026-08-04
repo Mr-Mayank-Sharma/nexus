@@ -65,8 +65,4 @@ public class ModuleController {
         return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
     }
 
-    @GetMapping("/ai")
-    public ResponseEntity<ApiResponse<Map<String, String>>> getAi() {
-        return ResponseEntity.ok(ApiResponse.success(Map.of("status", "ok")));
-    }
 }

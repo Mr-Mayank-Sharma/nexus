@@ -2,7 +2,7 @@ import axios from 'axios'
 import { ApiResponse, AiSuggestion, AiActionHistory, AiExecuteRequest } from '../types'
 export type { AiSuggestion, AiActionHistory, AiExecuteRequest }
 
-const aiClient = axios.create({ baseURL: 'http://localhost:8081/api/v1', timeout: 30000 })
+const aiClient = axios.create({ baseURL: '/api/v1', timeout: 30000 })
 
 export async function getAiSuggestions(orderId: string): Promise<ApiResponse<AiSuggestion[]>> {
   try {

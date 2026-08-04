@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.repository.*;
+import com.nexus.oms.service.WebhookDedupLedgerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,21 +15,26 @@ import java.util.*;
 @Service
 public class BigCommerceWebhookService {
 
+    private static final Logger log = LoggerFactory.getLogger(BigCommerceWebhookService.class);
+
     private final BigCommerceClient bcClient;
     private final NxBigCommerceConfigRepository configRepository;
     private final NxBigCommerceWebhookRepository webhookRepository;
     private final BigCommerceOrderImportService orderImportService;
+    private final WebhookDedupLedgerService dedupLedger;
     private final ObjectMapper objectMapper;
 
     public BigCommerceWebhookService(BigCommerceClient bcClient,
                                       NxBigCommerceConfigRepository configRepository,
                                       NxBigCommerceWebhookRepository webhookRepository,
                                       BigCommerceOrderImportService orderImportService,
+                                      WebhookDedupLedgerService dedupLedger,
                                       ObjectMapper objectMapper) {
         this.bcClient = bcClient;
         this.configRepository = configRepository;
         this.webhookRepository = webhookRepository;
         this.orderImportService = orderImportService;
+        this.dedupLedger = dedupLedger;
         this.objectMapper = objectMapper;
     }
 
@@ -76,8 +84,26 @@ public class BigCommerceWebhookService {
         if (tenantId == null) return;
 
         if (scope != null && scope.contains("order")) {
+            // Deduplication: extract external order ID and check ledger
+            String externalOrderId = extractBigCommerceOrderId(data);
+            if (externalOrderId != null) {
+                if (!dedupLedger.tryClaimProcessing(tenantId, "BIGCOMMERCE", externalOrderId, null)) {
+                    log.info("Skipping duplicate BigCommerce order webhook: bc_order_id={}", externalOrderId);
+                    return;
+                }
+            }
             orderImportService.importOrders(tenantId);
         }
+    }
+
+    private String extractBigCommerceOrderId(Map<String, Object> data) {
+        try {
+            Object id = data.get("id");
+            if (id != null) return String.valueOf(id);
+            Object orderId = data.get("order_id");
+            if (orderId != null) return String.valueOf(orderId);
+        } catch (Exception ignored) {}
+        return null;
     }
 
     private UUID extractTenantFromPayload(Map<String, Object> payload) {

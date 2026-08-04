@@ -28,19 +28,24 @@ public class SemanticCacheService {
 
     private static final Logger log = LoggerFactory.getLogger(SemanticCacheService.class);
     private static final String REDIS_PREFIX = "nexus:ai:cache:";
-    private static final long TTL_SECONDS = 300; // 5 minutes
 
     private final StringRedisTemplate redisTemplate;
     private final JdbcTemplate jdbcTemplate;
     private final boolean enabled;
+    private final long ttlSeconds;
+    private final int maxEntries;
 
     public SemanticCacheService(
             StringRedisTemplate redisTemplate,
             JdbcTemplate jdbcTemplate,
-            @Value("${nexus.ai.cache.enabled:false}") boolean enabled) {
+            @Value("${nexus.ai.cache.enabled:false}") boolean enabled,
+            @Value("${nexus.ai.cache.ttl-minutes:30}") long ttlMinutes,
+            @Value("${nexus.ai.cache.max-entries:10000}") int maxEntries) {
         this.redisTemplate = redisTemplate;
         this.jdbcTemplate = jdbcTemplate;
         this.enabled = enabled;
+        this.ttlSeconds = ttlMinutes * 60;
+        this.maxEntries = maxEntries;
     }
 
     /**
@@ -70,7 +75,7 @@ public class SemanticCacheService {
             if (!rows.isEmpty()) {
                 String dbResponse = (String) rows.get(0).get("response_text");
                 // Promote to Redis
-                redisTemplate.opsForValue().set(redisKey, dbResponse, TTL_SECONDS, TimeUnit.SECONDS);
+                redisTemplate.opsForValue().set(redisKey, dbResponse, ttlSeconds, TimeUnit.SECONDS);
                 log.debug("Cache HIT (DB->Redis) for hash={}", hash);
                 updateHitCount(hash);
                 return Optional.of(dbResponse);
@@ -95,7 +100,7 @@ public class SemanticCacheService {
             String redisKey = REDIS_PREFIX + hash;
 
             // L1: Redis
-            redisTemplate.opsForValue().set(redisKey, response, TTL_SECONDS, TimeUnit.SECONDS);
+            redisTemplate.opsForValue().set(redisKey, response, ttlSeconds, TimeUnit.SECONDS);
 
             // L2: PostgreSQL
             jdbcTemplate.update(
@@ -105,7 +110,7 @@ public class SemanticCacheService {
                 "response_text = EXCLUDED.response_text, hit_count = ai_semantic_cache.hit_count + 1, " +
                 "last_hit_at = NOW(), expires_at = EXCLUDED.expires_at",
                 tenantId, hash, truncate(prompt, 2000), response, modelName,
-                LocalDateTime.now().plusSeconds(TTL_SECONDS));
+                LocalDateTime.now().plusSeconds(ttlSeconds));
 
             log.debug("Cache STORE for hash={}", hash);
         } catch (Exception e) {
@@ -150,6 +155,33 @@ public class SemanticCacheService {
             }
         } catch (Exception e) {
             log.warn("Cache eviction failed: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Enforce soft cap by evicting least-recently-used entries beyond the limit.
+     * Runs daily at 3 AM. Removes the oldest 10% of entries when over cap.
+     */
+    @Scheduled(cron = "0 0 3 * * ?")
+    public void enforceLruCap() {
+        if (!enabled) return;
+        try {
+            var row = jdbcTemplate.queryForMap(
+                "SELECT COUNT(*) as cnt FROM ai_semantic_cache WHERE expires_at > NOW()");
+            long currentCount = ((Number) row.get("cnt")).longValue();
+
+            if (currentCount > maxEntries) {
+                long purgeCount = Math.max(100, (long) (currentCount * 0.1));
+                int evicted = jdbcTemplate.update(
+                    "DELETE FROM ai_semantic_cache WHERE id IN (" +
+                    "  SELECT id FROM ai_semantic_cache WHERE expires_at > NOW()" +
+                    "  ORDER BY last_hit_at ASC NULLS FIRST, hit_count ASC" +
+                    "  LIMIT ?" +
+                    ")");
+                log.info("LRU cap enforcement: purged {} entries (current={}, max={})", evicted, currentCount, maxEntries);
+            }
+        } catch (Exception e) {
+            log.warn("LRU cap enforcement failed: {}", e.getMessage());
         }
     }
 

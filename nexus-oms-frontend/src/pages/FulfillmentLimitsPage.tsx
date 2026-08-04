@@ -31,9 +31,9 @@ export default function FulfillmentLimitsPage() {
   const [capacityData, setCapacityData] = useState<Record<string, CapacityCheck>>({})
 
   const tabs: Tab[] = [
-    { key: 'limits', label: 'Limits', icon: Gauge },
-    { key: 'alerts', label: 'Alerts', icon: AlertTriangle },
-    { key: 'history', label: 'History', icon: Activity },
+    { key: 'limits', label: 'Limits', icon: <Gauge className="w-4 h-4" /> },
+    { key: 'alerts', label: 'Alerts', icon: <AlertTriangle className="w-4 h-4" /> },
+    { key: 'history', label: 'History', icon: <Activity className="w-4 h-4" /> },
   ]
 
   const { data: limits = [], isLoading: loadingLimits } = useQuery({
@@ -222,7 +222,7 @@ export default function FulfillmentLimitsPage() {
                         <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{limit.currentItemsToday}</td>
                         <td className="px-4 py-3 text-center">
                           <PermissionGate permission="fulfillment.edit">
-                            <button onClick={() => toggleMutation.mutate({ nodeId: limit.nodeId, enabled: !limit.fulfillmentEnabled })}>
+                            <button type="button" onClick={() => toggleMutation.mutate({ nodeId: limit.nodeId, enabled: !limit.fulfillmentEnabled })}>
                               {limit.fulfillmentEnabled ? <ToggleRight className="w-6 h-6 text-[var(--nexus-success-600)] mx-auto" /> : <ToggleLeft className="w-6 h-6 text-[var(--text-tertiary)] mx-auto" />}
                             </button>
                           </PermissionGate>
@@ -231,7 +231,7 @@ export default function FulfillmentLimitsPage() {
                           {limit.maxOrdersPerDay ? (
                             <div className="w-full bg-[var(--surface-muted)] rounded-full h-2 mx-auto" style={{ maxWidth: 80 }}>
                               <div
-                                className={clsx('h-2 rounded-full', dayPct >= 90 ? 'bg-[var(--nexus-error-50)]0' : dayPct >= 70 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-success-50)]0')}
+                                className={clsx('h-2 rounded-full', dayPct >= 90 ? 'bg-[var(--nexus-error-500)]' : dayPct >= 70 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-500)]')}
                                 style={{ width: `${Math.min(dayPct, 100)}%` }}
                               />
                             </div>
@@ -345,7 +345,7 @@ export default function FulfillmentLimitsPage() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">Fulfillment Limit Details</h2>
-                <button onClick={() => setSelectedLimit(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                <button type="button" onClick={() => setSelectedLimit(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
                   <span className="sr-only">Close</span>×
                 </button>
               </div>

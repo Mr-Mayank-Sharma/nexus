@@ -65,7 +65,7 @@ export default function OrdersPage() {
       const params: Record<string, string> = {}
       if (activeTab !== 'ALL') params.status = activeTab
       if (search) params.search = search
-      params.size = '5000'
+      params.size = '200'
       const res: ApiResponse<Order[]> = await ordersApi.getOrders(params as any)
       const d = res.data
       if (Array.isArray(d)) return d
@@ -197,13 +197,13 @@ export default function OrdersPage() {
         <div className="flex items-center gap-2 px-4 py-2 bg-[var(--interactive-selected)] rounded-lg border border-[var(--nexus-primary-200)]">
           <span className="text-sm text-[var(--nexus-primary-700)] font-medium">{selectedIds.length} selected</span>
           <div className="w-px h-4 bg-[var(--nexus-primary-200)]" />
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
+          <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
             const ready = selectedIds.filter(id => orders.find(o => o.id === id)?.status === 'ALLOCATED')
             ready.forEach(id => ordersApi.shipOrder(id, 'auto', 'TN-BATCH-' + Date.now()))
             addToast({ type: 'success', title: `Shipment booked for ${ready.length} orders` })
             setTimeout(() => queryClient.invalidateQueries({ queryKey: ['orders'] }), 1000)
           }}><Ship className="w-3.5 h-3.5" /> Book Shipment</button>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
+          <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
             const tnList = selectedIds.map(id => {
               const o = orders.find(o2 => o2.id === id)
               return `${o?.orderNumber || id}: ${o?.trackingNumber || 'N/A'}`
@@ -215,13 +215,13 @@ export default function OrdersPage() {
             }
             addToast({ type: 'success', title: `${selectedIds.length} label(s) opened` })
           }}><Printer className="w-3.5 h-3.5" /> Print Labels</button>
-          <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
+          <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--text-brand)]" onClick={() => {
             selectedIds.forEach(id => ordersApi.allocateOrder(id))
             addToast({ type: 'success', title: `Reallocating ${selectedIds.length} orders` })
             setTimeout(() => queryClient.invalidateQueries({ queryKey: ['orders'] }), 1000)
           }}><RotateCcw className="w-3.5 h-3.5" /> Reassign</button>
           <PermissionGate resource="orders" action="delete">
-            <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-600)]" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
+            <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-600)]" onClick={() => { selectedIds.forEach(id => cancelMutation.mutate(id)) }}>
               {cancelMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
               Cancel
             </button>
@@ -255,9 +255,9 @@ export default function OrdersPage() {
           <div className="enterprise-modal w-full max-w-lg" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2>Create Order</h2>
-              <button onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-[var(--interactive-hover)] rounded-lg transition-colors"><X className="w-5 h-5 text-[var(--text-tertiary)]" /></button>
+              <button type="button" onClick={() => setShowCreate(false)} className="p-1.5 hover:bg-[var(--interactive-hover)] rounded-lg transition-colors"><X className="w-5 h-5 text-[var(--text-tertiary)]" /></button>
             </div>
-            <div className="enterprise-modal-body space-y-4">
+            <form className="enterprise-modal-body space-y-4" onSubmit={(e) => { e.preventDefault(); createMutation.mutate() }}>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Customer Name</label>
@@ -318,11 +318,11 @@ export default function OrdersPage() {
                   <input className="enterprise-input w-full" type="number" min={0} step={0.01} value={createForm.unitPrice} onChange={e => setCreateForm(f => ({ ...f, unitPrice: Number(e.target.value) }))} />
                 </div>
               </div>
-            </div>
+            </form>
             <div className="enterprise-modal-footer bg-[var(--surface-muted)]">
-              <button className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
+              <button type="button" className="enterprise-btn enterprise-btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
               <PermissionGate resource="orders" action="create">
-                <button className="enterprise-btn enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+                <button type="submit" className="enterprise-btn enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
                   {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   {createMutation.isPending ? 'Creating...' : 'Create Order'}
                 </button>

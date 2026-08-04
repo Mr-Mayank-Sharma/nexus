@@ -62,22 +62,22 @@ const nodeIconMap: Record<string, typeof Building2> = {
 }
 
 function capacityColor(cap: number): string {
-  if (cap >= 80) return 'bg-[var(--nexus-error-50)]0'
-  if (cap >= 60) return 'bg-[var(--nexus-warning-50)]0'
-  if (cap >= 35) return 'bg-emerald-500'
-  return 'bg-[var(--nexus-primary-50)]0'
+  if (cap >= 80) return 'bg-[var(--nexus-error-500)]'
+  if (cap >= 60) return 'bg-[var(--nexus-warning-500)]'
+  if (cap >= 35) return 'bg-[var(--nexus-success-500)]'
+  return 'bg-[var(--nexus-primary-500)]'
 }
 
 function atpColor(atp: number): string {
-  if (atp > 50) return 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'
+  if (atp > 50) return 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] dark:text-[var(--nexus-success-400)] dark:bg-[var(--nexus-success-900)]/20'
   if (atp >= 10) return 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] dark:text-[var(--nexus-warning-400)] dark:bg-[var(--nexus-warning-900)]/20'
   return 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:text-[var(--nexus-error-400)] dark:bg-[var(--nexus-error-900)]/20'
 }
 
 function atpBgBar(atp: number): string {
-  if (atp > 50) return 'bg-emerald-500'
-  if (atp >= 10) return 'bg-[var(--nexus-warning-50)]0'
-  return 'bg-[var(--nexus-error-50)]0'
+  if (atp > 50) return 'bg-[var(--nexus-success-500)]'
+  if (atp >= 10) return 'bg-[var(--nexus-warning-500)]'
+  return 'bg-[var(--nexus-error-500)]'
 }
 
 export default function InventoryEnhancedPage() {
@@ -178,7 +178,7 @@ export default function InventoryEnhancedPage() {
                       <span className="text-[var(--text-secondary)]">Capacity</span>
                       <span className="font-semibold text-[var(--text-secondary)]">{w.capacity}%</span>
                     </div>
-                    <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2">
+                    <div className="w-full bg-[var(--surface-muted)] rounded-full h-2">
                       <div className={clsx(capacityColor(w.capacity), 'h-2 rounded-full transition-all')} style={{ width: `${w.capacity}%` }} />
                     </div>
                   </div>
@@ -206,7 +206,7 @@ export default function InventoryEnhancedPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-emerald-500" />
+              <RefreshCw className="w-4 h-4 text-[var(--nexus-success-500)]" />
               ATP Simulator
             </h3>
             <p className="text-xs text-[var(--text-secondary)] mt-0.5">Available-to-Promise across all fulfillment nodes</p>
@@ -255,7 +255,7 @@ export default function InventoryEnhancedPage() {
                       <td className="py-2.5 px-3 text-[var(--text-primary)] font-medium">{n.nodeName}</td>
                       <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.available.toLocaleString()}</td>
                       <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.reserved.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-emerald-600 dark:text-emerald-400 font-medium">+{n.incoming.toLocaleString()}</td>
+                      <td className="py-2.5 px-3 text-right text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] font-medium">+{n.incoming.toLocaleString()}</td>
                       <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.onOrder.toLocaleString()}</td>
                       <td className="py-2.5 px-3 text-right">
                         <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold', atpColor(atp))}>
@@ -361,7 +361,7 @@ export default function InventoryEnhancedPage() {
                 'ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full',
                 alertTab === tab
                   ? 'bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)] text-[var(--text-secondary)] text-[var(--text-primary)]'
-                  : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)] text-[var(--text-secondary)]'
+                  : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]'
               )}>
                 {0}
               </span>
@@ -417,7 +417,7 @@ export default function InventoryEnhancedPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-violet-500" />
+              <Sparkles className="w-4 h-4 text-[var(--nexus-primary-500)]" />
               AI Replenishment Suggestions
             </h3>
             <p className="text-xs text-[var(--text-secondary)] mt-0.5">Intelligent recommendations based on stock levels and demand</p>
@@ -474,7 +474,7 @@ export default function InventoryEnhancedPage() {
                 <Truck className="w-4 h-4 text-[var(--nexus-primary-500)]" />
                 Create Transfer
               </h3>
-              <button onClick={() => setShowTransferModal(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]">
+              <button type="button" onClick={() => setShowTransferModal(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -522,8 +522,8 @@ export default function InventoryEnhancedPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
-              <button className="enterprise-btn-secondary text-sm px-4 py-2" onClick={() => setShowTransferModal(false)}>Cancel</button>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--surface-sunken)]/50">
+              <button type="button" className="enterprise-btn-secondary text-sm px-4 py-2" onClick={() => setShowTransferModal(false)}>Cancel</button>
               <button
                 className="enterprise-btn-primary text-sm px-4 py-2"
                 disabled={!transferForm.from || !transferForm.to || !transferForm.sku || transferForm.qty <= 0}

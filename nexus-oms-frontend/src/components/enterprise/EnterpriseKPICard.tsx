@@ -1,4 +1,4 @@
-import { memo, ReactNode } from 'react'
+import { memo, ReactNode, isValidElement, createElement } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -6,7 +6,7 @@ interface Props {
   title: string
   value: string | number
   subtitle?: string
-  icon?: ReactNode
+  icon?: ReactNode | React.ComponentType<{ className?: string }>
   trend?: 'up' | 'down' | 'neutral'
   trendValue?: string
   color?: 'primary' | 'success' | 'warning' | 'error' | 'info' | 'ai'
@@ -15,13 +15,20 @@ interface Props {
   className?: string
 }
 
+function renderIcon(icon: Props['icon']): ReactNode {
+  if (!icon) return null
+  if (isValidElement(icon)) return icon
+  if (typeof icon === 'function') return createElement(icon as React.ComponentType<{ className?: string }>)
+  return null
+}
+
 const iconColorMap = {
-  primary: 'text-indigo-600 bg-indigo-50 ring-indigo-500/20 dark:text-indigo-400 dark:bg-indigo-900/30 dark:ring-indigo-400/20',
-  success: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20 dark:text-emerald-400 dark:bg-emerald-900/30 dark:ring-emerald-400/20',
-  warning: 'text-amber-600 bg-amber-50 ring-amber-500/20 dark:text-amber-400 dark:bg-amber-900/30 dark:ring-amber-400/20',
-  error: 'text-red-600 bg-red-50 ring-red-500/20 dark:text-red-400 dark:bg-red-900/30 dark:ring-red-400/20',
-  info: 'text-cyan-600 bg-cyan-50 ring-cyan-500/20 dark:text-cyan-400 dark:bg-cyan-900/30 dark:ring-cyan-400/20',
-  ai: 'text-violet-600 bg-violet-50 ring-violet-500/20 dark:text-violet-400 dark:bg-violet-900/30 dark:ring-violet-400/20',
+  primary: 'text-[var(--text-brand)] bg-[var(--surface-brand)] ring-[var(--border-brand)]',
+  success: 'text-[var(--text-success)] bg-[var(--nexus-success-50)] ring-[var(--border-success)]',
+  warning: 'text-[var(--text-warning)] bg-[var(--nexus-warning-50)] ring-[var(--border-warning)]',
+  error: 'text-[var(--text-error)] bg-[var(--nexus-error-50)] ring-[var(--border-error)]',
+  info: 'text-[var(--text-info)] bg-[var(--nexus-info-50)] ring-[var(--border-info)]',
+  ai: 'text-[var(--text-ai)] bg-[var(--nexus-ai-50)] ring-[var(--border-ai)]',
 }
 
 export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, trend, trendValue, color = 'primary', loading, onClick, className }: Props) {
@@ -50,7 +57,7 @@ export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, t
           <div className="flex items-start justify-between">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-[var(--text-secondary)] truncate">{title}</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)] mt-1 tracking-tight">{value}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)] mt-1 tracking-tight tabular-nums">{value}</p>
               {subtitle && <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{subtitle}</p>}
             </div>
             {icon && (
@@ -58,7 +65,7 @@ export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, t
                 'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ring-1',
                 iconColorMap[color],
               )}>
-                {icon}
+                {renderIcon(icon)}
               </div>
             )}
           </div>
@@ -66,8 +73,8 @@ export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, t
             <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[var(--border-subtle)]">
               <div className={clsx(
                 'flex items-center gap-1 text-xs font-medium',
-                trend === 'up' && 'text-emerald-600 dark:text-emerald-400',
-                trend === 'down' && 'text-red-600 dark:text-red-400',
+                trend === 'up' && 'text-[var(--text-success)]',
+                trend === 'down' && 'text-[var(--text-error)]',
                 trend === 'neutral' && 'text-[var(--text-tertiary)]',
               )}>
                 {trend === 'up' && <TrendingUp className="w-3 h-3" />}

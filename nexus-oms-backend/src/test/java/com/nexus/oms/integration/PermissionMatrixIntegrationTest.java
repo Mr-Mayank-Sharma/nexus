@@ -147,7 +147,7 @@ class PermissionMatrixIntegrationTest extends AbstractIntegrationTest {
                 "/routing", "/order-routing", "/rbac", "/cycle-counts",
                 "/inventory-receipts", "/rate-shopping", "/routing-rules",
                 "/audit", "/integration", "/shopify", "/integration-platform",
-                "/api/ai", "/fulfillment");
+                "/ai", "/fulfillment");
 
         for (String endpoint : endpoints) {
             ResponseEntity<String> resp = restTemplate.exchange(

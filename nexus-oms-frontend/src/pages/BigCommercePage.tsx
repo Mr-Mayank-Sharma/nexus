@@ -111,11 +111,11 @@ export default function BigCommercePage() {
   ]
 
   const syncActions = [
-    { id: 'orders', label: 'Import Orders', description: 'Pull new/updated orders from BigCommerce', icon: <ShoppingCart className="w-5 h-5" />, color: 'bg-[var(--nexus-primary-50)]0' },
-    { id: 'products', label: 'Sync Products', description: 'Sync product catalog and create mappings', icon: <Package className="w-5 h-5" />, color: 'bg-[var(--nexus-ai-50)]0' },
-    { id: 'inventory', label: 'Push Inventory', description: 'Push NexusShip inventory levels to BigCommerce', icon: <Database className="w-5 h-5" />, color: 'bg-[var(--nexus-success-50)]0' },
-    { id: 'shipments', label: 'Push Shipments', description: 'Push tracking info to BigCommerce orders', icon: <Truck className="w-5 h-5" />, color: 'bg-[var(--nexus-warning-50)]0' },
-    { id: 'refunds', label: 'Push Refunds', description: 'Push NexusShip return refunds to BigCommerce', icon: <RotateCcw className="w-5 h-5" />, color: 'bg-[var(--nexus-error-50)]0' },
+    { id: 'orders', label: 'Import Orders', description: 'Pull new/updated orders from BigCommerce', icon: <ShoppingCart className="w-5 h-5" />, color: 'bg-[var(--nexus-primary-500)]' },
+    { id: 'products', label: 'Sync Products', description: 'Sync product catalog and create mappings', icon: <Package className="w-5 h-5" />, color: 'bg-[var(bg-[var(--nexus-ai-500)])]' },
+    { id: 'inventory', label: 'Push Inventory', description: 'Push NexusShip inventory levels to BigCommerce', icon: <Database className="w-5 h-5" />, color: 'bg-[var(--nexus-success-500)]' },
+    { id: 'shipments', label: 'Push Shipments', description: 'Push tracking info to BigCommerce orders', icon: <Truck className="w-5 h-5" />, color: 'bg-[var(--nexus-warning-500)]' },
+    { id: 'refunds', label: 'Push Refunds', description: 'Push NexusShip return refunds to BigCommerce', icon: <RotateCcw className="w-5 h-5" />, color: 'bg-[var(--nexus-error-500)]' },
   ]
 
   return (
@@ -135,7 +135,7 @@ export default function BigCommercePage() {
 
       <div className="flex items-center gap-1 border-b border-[var(--border-default)]">
         {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+          <button type="button" key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id ? 'border-[var(--nexus-primary-600)] text-[var(--text-brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
             }`}>
@@ -199,12 +199,12 @@ export default function BigCommercePage() {
           </div>
           <div className="card-footer flex justify-between">
             <PermissionGate resource="integrations" action="create">
-              <button onClick={handleRegisterWebhooks} className="enterprise-btn enterprise-btn-secondary text-sm">
+              <button type="button" onClick={handleRegisterWebhooks} className="enterprise-btn enterprise-btn-secondary text-sm">
                 <Link className="w-4 h-4" /> Register Webhooks
               </button>
             </PermissionGate>
             <PermissionGate resource="integrations" action="edit">
-              <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                 Save Configuration
               </button>
@@ -223,7 +223,7 @@ export default function BigCommercePage() {
               <h3 className="text-sm font-semibold text-[var(--text-primary)]">{action.label}</h3>
               <p className="text-xs text-[var(--text-secondary)] mt-1 mb-4">{action.description}</p>
               <PermissionGate resource="integrations" action="create">
-                <button onClick={() => handleSync(action.id)} disabled={syncing === action.id}
+                <button type="button" onClick={() => handleSync(action.id)} disabled={syncing === action.id}
                   className="enterprise-btn enterprise-btn-primary text-xs w-full">
                   {syncing === action.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                   {syncing === action.id ? 'Running...' : 'Run Now'}
@@ -238,7 +238,7 @@ export default function BigCommercePage() {
         <div className="card">
           <div className="card-header flex justify-between items-center">
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">Sync History</h3>
-            <button onClick={fetchLogs} className="enterprise-btn enterprise-btn-ghost p-1"><RefreshCw className="w-4 h-4" /></button>
+            <button type="button" onClick={fetchLogs} className="enterprise-btn enterprise-btn-ghost p-1"><RefreshCw className="w-4 h-4" /></button>
           </div>
           {logsLoading ? (
             <div className="flex items-center justify-center h-32">
@@ -262,7 +262,7 @@ export default function BigCommercePage() {
                     <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Started</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[var(--surface-sunken)]">
                   {syncLogs.map(log => (
                     <tr key={log.id} className="hover:bg-[var(--surface-sunken)]">
                       <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{log.syncType.replace(/_/g, ' ')}</td>

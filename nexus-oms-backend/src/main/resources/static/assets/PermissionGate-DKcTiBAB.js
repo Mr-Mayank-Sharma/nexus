@@ -1,0 +1,1 @@
+import{j as s}from"./vendor-react-BtGDFm_V.js";import{u as a}from"./index-DOjk0D_p.js";function u({resource:n,action:t,fallback:e=null,children:r}){const{hasPermission:o}=a();return o(n,t)?s.jsx("span",{className:"contents",children:r}):s.jsx("span",{className:"contents",children:e})}export{u as P};

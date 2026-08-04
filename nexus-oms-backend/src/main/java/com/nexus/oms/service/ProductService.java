@@ -33,6 +33,10 @@ public class ProductService {
     }
 
     @CacheEvict(value = "products", allEntries = true)
+    public void evictProductsCache() {
+    }
+
+    @CacheEvict(value = "products", allEntries = true)
     public Product createProduct(Product product) {
         product.setId(null);
         product.setTenantId(TenantContext.getCurrentTenantId());
@@ -44,6 +48,7 @@ public class ProductService {
         Product product = getProduct(id);
         if (updates.getSku() != null) product.setSku(updates.getSku());
         if (updates.getProductName() != null) product.setProductName(updates.getProductName());
+        if (updates.getImageUrl() != null) product.setImageUrl(updates.getImageUrl());
         if (updates.getDescription() != null) product.setDescription(updates.getDescription());
         if (updates.getCategory() != null) product.setCategory(updates.getCategory());
         if (updates.getUnitPrice() != null) product.setUnitPrice(updates.getUnitPrice());

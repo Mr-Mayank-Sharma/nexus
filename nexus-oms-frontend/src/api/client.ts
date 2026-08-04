@@ -4,6 +4,7 @@ const API_BASE_URL = '/api/v1'
 
 const client = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -37,39 +38,65 @@ client.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-/** Map backend field names to frontend-expected names per entity type */
-const FIELD_MAPS: Record<string, Record<string, string>> = {
-  products: { name: 'productName', price: 'unitPrice', cost: 'costPrice', active: 'isActive' },
-  product: { name: 'productName', price: 'unitPrice', cost: 'costPrice', active: 'isActive' },
-  inventory: { name: 'productName', cost: 'unitCost', qty: 'quantityOnHand', price: 'unitPrice', active: 'isActive' },
-  orders: { shipping: 'shippingCost', shippingMethod: 'fulfillmentType', shipBy: 'estimatedShipDate', tax: 'taxAmount' },
-  order: { shipping: 'shippingCost', shippingMethod: 'fulfillmentType', shipBy: 'estimatedShipDate', tax: 'taxAmount' },
-  returns: { id: 'rmaNumber', orderId: 'orderNumber', qty: 'quantity', createdAt: 'date', refund: 'refundAmount' },
-  return: { id: 'rmaNumber', orderId: 'orderNumber', qty: 'quantity', createdAt: 'date', refund: 'refundAmount' },
-  payments: { net: 'netAmount', createdAt: 'date' },
-  invoices: { number: 'invoiceNumber', customerName: 'customer', dueAt: 'dueDate', paidAt: 'paidDate', issuedAt: 'date' },
-  warehouses: { used: 'utilizedCapacity' },
-  lists: { pickerId: 'assigneeId', waveId: 'name' },
+// ── Automatic snake_case ↔ camelCase conversion ──────────────────────────────
+
+function snakeToCamel(str: string): string {
+  return str.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase())
 }
 
-/** Nested array maps — for items arrays inside entities */
-const NESTED_FIELD_MAPS: Record<string, Record<string, Record<string, string>>> = {
-  orders: { items: { name: 'productName', qty: 'quantity', price: 'unitPrice' } },
-  order: { items: { name: 'productName', qty: 'quantity', price: 'unitPrice' } },
-  lists: { items: { name: 'productName', qty: 'quantity', location: 'fromLocation' } },
+function camelToSnake(str: string): string {
+  return str.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
 }
 
-function pluralToSingular(key: string): string {
-  if (key.endsWith('ies')) return key.slice(0, -3) + 'y'
-  if (key.endsWith('ses')) return key.slice(0, -2)
-  if (key.endsWith('s')) return key.slice(0, -1)
-  return key
+/** Keys that should NOT be converted (pagination/meta fields) */
+const SKIP_CONVERT = new Set([
+  'success', 'message', 'error', 'errors',
+  'page', 'limit', 'total', 'totalPages', 'totalElements', 'number', 'size',
+  'content', 'data', 'pagination',
+])
+
+function convertKeys<T>(obj: T, converter: (key: string) => string): T {
+  if (obj === null || obj === undefined || typeof obj !== 'object') return obj
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertKeys(item, converter)) as T
+  }
+
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(obj as Record<string, any>)) {
+    const newKey = converter(key)
+    result[newKey] = convertKeys(value, converter)
+  }
+  return result as T
 }
 
-function applyFieldMapping(body: Record<string, any>): Record<string, any> {
+/** Convert response keys: snake_case → camelCase (handles raw SQL results) */
+function responseToCamel(obj: any): any {
+  if (obj === null || obj === undefined || typeof obj !== 'object') return obj
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => responseToCamel(item))
+  }
+
+  const result: Record<string, any> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    // Convert the key but preserve known top-level meta keys
+    const camelKey = SKIP_CONVERT.has(key) ? key : snakeToCamel(key)
+    result[camelKey] = responseToCamel(value)
+  }
+  return result
+}
+
+// ── Pagination normalization ─────────────────────────────────────────────────
+
+function normalizePagination(body: Record<string, any>): Record<string, any> {
   if (!body || typeof body !== 'object') return body
 
-  const { success, message, error, errors, page, limit, total, totalPages, totalElements, number, size, pagination: pg, content, ...rest } = body
+  const {
+    success, message, error, errors,
+    page, limit, total, totalPages, totalElements, number, size,
+    pagination: pg, content, ...rest
+  } = body
 
   const pagination = (total != null || totalElements != null)
     ? {
@@ -81,7 +108,6 @@ function applyFieldMapping(body: Record<string, any>): Record<string, any> {
     : undefined
 
   let data: any
-  let entityType: string | null = null
 
   if (content !== undefined) {
     data = content
@@ -90,12 +116,10 @@ function applyFieldMapping(body: Record<string, any>): Record<string, any> {
   } else {
     const arrKey = Object.keys(rest).find(k => Array.isArray(rest[k]))
     if (arrKey) {
-      entityType = arrKey
       data = rest[arrKey]
     } else {
       const objKeys = Object.keys(rest).filter(k => rest[k] !== null && typeof rest[k] === 'object')
       if (objKeys.length === 1) {
-        entityType = objKeys[0]
         data = rest[objKeys[0]]
       } else if (Object.keys(rest).length > 0) {
         data = rest
@@ -105,69 +129,43 @@ function applyFieldMapping(body: Record<string, any>): Record<string, any> {
     }
   }
 
-  // Apply field mapping
-  if (data != null && entityType) {
-    const map = FIELD_MAPS[entityType] || FIELD_MAPS[pluralToSingular(entityType)]
-    const nestedMap = NESTED_FIELD_MAPS[entityType] || NESTED_FIELD_MAPS[pluralToSingular(entityType)]
-
-    const mapItem = (item: any): any => {
-      if (!item || typeof item !== 'object' || Array.isArray(item)) return item
-      const result: Record<string, any> = { ...item }
-
-      if (map) {
-        for (const [bk, fk] of Object.entries(map)) {
-          if (bk in result && bk !== fk) {
-            result[fk] = result[bk]
-          }
-        }
-      }
-
-      if (nestedMap) {
-        for (const [nestedField, itemMap] of Object.entries(nestedMap)) {
-          if (Array.isArray(result[nestedField])) {
-            result[nestedField] = result[nestedField].map((ni: any) => {
-              if (!ni || typeof ni !== 'object') return ni
-              const nm: Record<string, any> = { ...ni }
-              for (const [bk, fk] of Object.entries(itemMap)) {
-                if (bk in nm && bk !== fk) {
-                  nm[fk] = nm[bk]
-                }
-              }
-              return nm
-            })
-          }
-        }
-      }
-
-      return result
-    }
-
-    if (Array.isArray(data)) {
-      data = data.map(mapItem)
-    } else {
-      data = mapItem(data)
-    }
-  }
-
   const result: Record<string, any> = { success, data, message, error, errors, pagination }
-  if (entityType && entityType !== 'data' && !(entityType in result)) {
-    result[entityType] = data
-  }
   return result
 }
 
+// ── Response interceptor ─────────────────────────────────────────────────────
+
 client.interceptors.response.use(
   (response) => {
+    window.dispatchEvent(new CustomEvent('nexus:backend-reachable'))
     if (response.data && typeof response.data === 'object') {
-      response.data = applyFieldMapping(response.data)
+      response.data = normalizePagination(responseToCamel(response.data))
     }
     return response
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean; _retries?: number }
     
     if (error.response?.data && typeof error.response.data === 'object') {
-      error.response.data = applyFieldMapping(error.response.data)
+      error.response.data = normalizePagination(responseToCamel(error.response.data))
+    }
+
+    // Detect backend connection failures (no response at all)
+    const isNetworkError = !error.response && (
+      error.code === 'ECONNABORTED' ||
+      error.code === 'ERR_NETWORK' ||
+      error.message?.includes('Network Error') ||
+      error.message?.includes('timeout')
+    )
+    if (isNetworkError) {
+      window.dispatchEvent(new CustomEvent('nexus:backend-unreachable', { detail: { error } }))
+      // Auto-retry once for transient network errors — but NOT if already retried or during refresh
+      if (!originalRequest._retries && !originalRequest._retry) {
+        originalRequest._retries = 1
+        await new Promise(r => setTimeout(r, 2000))
+        return client(originalRequest)
+      }
+      // If we already retried and still failing, fall through to reject
     }
     
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -196,7 +194,7 @@ client.interceptors.response.use(
       isRefreshing = true
       
       try {
-        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken })
+        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken }, { timeout: 8000 })
         const newToken = data.data?.accessToken || data.accessToken
         if (newToken) {
           localStorage.setItem('nexus_token', newToken)
@@ -206,6 +204,8 @@ client.interceptors.response.use(
           processQueue(null, newToken)
           return client(originalRequest)
         }
+        // No token in response — treat as auth failure
+        throw new Error('Refresh response missing access token')
       } catch (refreshError) {
         processQueue(refreshError, null)
         localStorage.removeItem('nexus_token')

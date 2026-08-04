@@ -112,13 +112,13 @@ export default function FulfillmentPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">End-to-end order fulfillment pipeline</p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="enterprise-btn-secondary text-sm" onClick={() => navigate('/picking')}>
+          <button type="button" className="enterprise-btn-secondary text-sm" onClick={() => navigate('/picking')}>
             <ClipboardList className="w-4 h-4" /> Picklists
           </button>
-          <button className="enterprise-btn-secondary text-sm" onClick={() => navigate('/packing')}>
+          <button type="button" className="enterprise-btn-secondary text-sm" onClick={() => navigate('/packing')}>
             <Package className="w-4 h-4" /> Packing
           </button>
-          <button className="enterprise-btn-secondary text-sm" onClick={() => navigate('/shipping')}>
+          <button type="button" className="enterprise-btn-secondary text-sm" onClick={() => navigate('/shipping')}>
             <Truck className="w-4 h-4" /> Shipping
           </button>
         </div>
@@ -205,11 +205,11 @@ export default function FulfillmentPage() {
                   <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-800">
                 {orders.map((order) => (
                   <tr key={order.id} className="enterprise-table-row">
                     <td className="px-4 py-3">
-                      <button className="text-sm font-medium text-[var(--text-brand)] hover:underline" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <button type="button" className="text-sm font-medium text-[var(--text-brand)] hover:underline" onClick={() => navigate(`/orders/${order.id}`)}>
                         {order.orderNumber || order.id.slice(0, 8)}
                       </button>
                     </td>
@@ -223,13 +223,13 @@ export default function FulfillmentPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button className="enterprise-btn-secondary text-xs px-2 py-1" onClick={() => navigate(`/orders/${order.id}`)} title="View Details">
+                        <button type="button" className="enterprise-btn-secondary text-xs px-2 py-1" onClick={() => navigate(`/orders/${order.id}`)} title="View Details">
                           <Eye className="w-3.5 h-3.5" />
                         </button>
                         {activeTab === 'open' && (
                           <>
                             <PermissionGate resource="orders" action="edit">
-                              <button className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => shipMutation.mutate(order.id)} disabled={shipMutation.isPending}>
+                              <button type="button" className="enterprise-btn-primary text-xs px-2 py-1" onClick={() => shipMutation.mutate(order.id)} disabled={shipMutation.isPending}>
                                 <Truck className="w-3.5 h-3.5" /> Ship
                               </button>
                             </PermissionGate>

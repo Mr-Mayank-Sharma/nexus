@@ -12,7 +12,7 @@ export default function NotFoundPage() {
       <p className="text-[var(--text-secondary)] mb-8 max-w-md">
         The page you're looking for doesn't exist or has been moved.
       </p>
-      <button onClick={() => navigate('/')} className="enterprise-btn enterprise-btn-primary">
+      <button type="button" onClick={() => navigate('/')} className="enterprise-btn enterprise-btn-primary">
         <Home className="w-4 h-4" /> Go Home
       </button>
     </div>

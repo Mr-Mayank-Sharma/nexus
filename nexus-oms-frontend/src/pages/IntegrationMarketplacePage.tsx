@@ -28,7 +28,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'BigCommerce',
     description: 'Connect your BigCommerce store to sync orders, products, inventory, shipments, and refunds',
     icon: <ShoppingCart className="w-6 h-6" />,
-    color: 'bg-[var(--nexus-primary-50)]0',
+    color: 'bg-[var(--nexus-primary-500)]',
     status: 'connected',
     category: 'E-Commerce',
   },
@@ -37,7 +37,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'Amazon Seller Central',
     description: 'Integrate Amazon marketplace to import orders, manage inventory, and sync fulfillment',
     icon: <Globe className="w-6 h-6" />,
-    color: 'bg-orange-500',
+    color: 'bg-[var(--nexus-warning-50)]0',
     status: 'available',
     category: 'Marketplace',
   },
@@ -46,7 +46,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'eBay',
     description: 'Connect eBay stores to sync orders, map categories, and manage inventory across sites',
     icon: <ShoppingBag className="w-6 h-6" />,
-    color: 'bg-[var(--nexus-ai-50)]0',
+    color: 'bg-[var(bg-[var(--nexus-ai-500)])]',
     status: 'available',
     category: 'Marketplace',
   },
@@ -64,7 +64,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'Shopify',
     description: 'Sync orders, products, and inventory from your Shopify stores in real-time',
     icon: <ShoppingBag className="w-6 h-6" />,
-    color: 'bg-emerald-500',
+    color: 'bg-[var(--nexus-success-500)]',
     status: 'coming_soon',
     category: 'E-Commerce',
   },
@@ -73,7 +73,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'WooCommerce',
     description: 'Connect WooCommerce sites to import orders, sync inventory, and manage fulfillment',
     icon: <ShoppingCart className="w-6 h-6" />,
-    color: 'bg-[var(--nexus-primary-50)]0',
+    color: 'bg-[var(--nexus-primary-500)]',
     status: 'coming_soon',
     category: 'E-Commerce',
   },
@@ -82,7 +82,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'Magento (Adobe Commerce)',
     description: 'Integrate Adobe Commerce / Magento 2.x for order and catalog synchronization',
     icon: <Package className="w-6 h-6" />,
-    color: 'bg-rose-500',
+    color: 'bg-[var(--nexus-error-50)]0',
     status: 'coming_soon',
     category: 'E-Commerce',
   },
@@ -91,7 +91,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'Square',
     description: 'Connect Square POS for omnichannel order management and inventory sync',
     icon: <CreditCard className="w-6 h-6" />,
-    color: 'bg-[var(--nexus-success-50)]0',
+    color: 'bg-[var(--nexus-success-500)]',
     status: 'coming_soon',
     category: 'POS',
   },
@@ -100,7 +100,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     name: 'Lightspeed',
     description: 'Integrate Lightspeed Retail for unified inventory and multi-channel selling',
     icon: <Store className="w-6 h-6" />,
-    color: 'bg-[var(--nexus-info-50)]0',
+    color: 'bg-[var(bg-[var(--nexus-info-500)])]',
     status: 'coming_soon',
     category: 'POS',
   },
@@ -282,7 +282,7 @@ export default function IntegrationMarketplacePage() {
         <div className="card p-12 text-center">
           <Search className="w-12 h-12 text-[var(--text-tertiary)] mx-auto mb-3" />
           <p className="text-sm text-[var(--text-secondary)]">No integrations match your search criteria</p>
-          <button onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); setCategoryFilter('ALL') }}
+          <button type="button" onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); setCategoryFilter('ALL') }}
             className="enterprise-btn enterprise-btn-secondary text-xs mt-3">Clear Filters</button>
         </div>
       ) : (
@@ -314,23 +314,23 @@ export default function IntegrationMarketplacePage() {
                 <div className="flex items-center gap-2">
                   {integration.status === 'connected' ? (
                     <>
-                      <button onClick={() => handleOpen(integration.id)} className="enterprise-btn enterprise-btn-primary text-xs flex-1">
+                      <button type="button" onClick={() => handleOpen(integration.id)} className="enterprise-btn enterprise-btn-primary text-xs flex-1">
                         <ExternalLink className="w-3.5 h-3.5" /> Open
                       </button>
-                      <button className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-success-600)]">
+                      <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-success-600)]">
                         <CheckCircle className="w-3.5 h-3.5" />
                       </button>
                     </>
                   ) : integration.status === 'available' ? (
                     <PermissionGate resource="integrations" action="create">
-                      <button onClick={() => handleConnect(integration.id)} disabled={connecting === integration.id}
+                      <button type="button" onClick={() => handleConnect(integration.id)} disabled={connecting === integration.id}
                         className="enterprise-btn enterprise-btn-primary text-xs flex-1">
                         {connecting === integration.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
                         {connecting === integration.id ? 'Connecting...' : 'Connect'}
                       </button>
                     </PermissionGate>
                   ) : (
-                    <button disabled className="enterprise-btn enterprise-btn-secondary text-xs flex-1 opacity-50 cursor-not-allowed">
+                    <button type="button" disabled className="enterprise-btn enterprise-btn-secondary text-xs flex-1 opacity-50 cursor-not-allowed">
                       <Clock className="w-3.5 h-3.5" /> Coming Soon
                     </button>
                   )}
@@ -378,7 +378,7 @@ export default function IntegrationMarketplacePage() {
                       </span>
                     </div>
                     <PermissionGate resource="integrations" action="create">
-                      <button onClick={() => integration.status === 'connected' ? handleOpen(integration.id) : handleConnect(integration.id)}
+                      <button type="button" onClick={() => integration.status === 'connected' ? handleOpen(integration.id) : handleConnect(integration.id)}
                         disabled={connecting === integration.id || integration.status === 'coming_soon'}
                         className={clsx(
                           'btn-ghost p-1.5 rounded-lg transition-colors',

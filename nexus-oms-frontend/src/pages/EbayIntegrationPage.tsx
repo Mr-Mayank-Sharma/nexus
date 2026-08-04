@@ -221,13 +221,13 @@ export default function EbayIntegrationPage() {
             </div>
             {connected ? (
               <PermissionGate resource="integrations" action="delete">
-                <button onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
+                <button type="button" onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
                 </button>
               </PermissionGate>
             ) : (
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleConnect} disabled={connecting} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleConnect} disabled={connecting} className="enterprise-btn enterprise-btn-primary text-sm">
                   {connecting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingBag className="w-4 h-4" />}
                   {connecting ? 'Connecting...' : 'Connect'}
                 </button>
@@ -240,7 +240,7 @@ export default function EbayIntegrationPage() {
       {/* Tabs */}
       <div className="flex items-center gap-1 border-b border-[var(--border-default)]">
         {tabs.map(tab => (
-          <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+          <button type="button" key={tab.id} onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab.id ? 'border-[var(--nexus-ai-600)] text-[var(--nexus-ai-600)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)]'
             }`}>
@@ -302,13 +302,13 @@ export default function EbayIntegrationPage() {
             </div>
             <div className="card-footer flex justify-between">
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
+                <button type="button" onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
                   {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                   {syncing ? 'Syncing...' : 'Run Sync'}
                 </button>
               </PermissionGate>
               <PermissionGate resource="integrations" action="edit">
-                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save Settings
                 </button>
@@ -323,7 +323,7 @@ export default function EbayIntegrationPage() {
           <div className="card-header flex justify-between items-center">
             <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Tag className="w-4 h-4 text-[var(--nexus-ai-500)]" /> eBay → Nexus Category Mapping</h3>
             <PermissionGate resource="integrations" action="create">
-              <button onClick={() => setShowAddCategory(true)} className="enterprise-btn enterprise-btn-secondary text-xs">
+              <button type="button" onClick={() => setShowAddCategory(true)} className="enterprise-btn enterprise-btn-secondary text-xs">
                 <Tag className="w-3.5 h-3.5" /> Add Mapping
               </button>
             </PermissionGate>
@@ -338,7 +338,7 @@ export default function EbayIntegrationPage() {
                   <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--surface-sunken)]">
                 {categories.map((cat, index) => (
                   <tr key={index} className="hover:bg-[var(--surface-sunken)]">
                     <td className="px-6 py-3 text-sm font-mono text-[var(--text-secondary)]">{cat.ebayCategoryId}</td>
@@ -351,7 +351,7 @@ export default function EbayIntegrationPage() {
                     </td>
                     <td className="px-6 py-3 text-right">
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleRemoveCategory(index)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
+                        <button type="button" onClick={() => handleRemoveCategory(index)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <XCircle className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -396,9 +396,9 @@ export default function EbayIntegrationPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => setShowAddCategory(false)} className="enterprise-btn enterprise-btn-secondary text-xs">Cancel</button>
+                <button type="button" onClick={() => setShowAddCategory(false)} className="enterprise-btn enterprise-btn-secondary text-xs">Cancel</button>
                 <PermissionGate resource="integrations" action="create">
-                  <button onClick={handleAddCategory} className="enterprise-btn enterprise-btn-primary text-xs">
+                  <button type="button" onClick={handleAddCategory} className="enterprise-btn enterprise-btn-primary text-xs">
                     <Tag className="w-3.5 h-3.5" /> Add Mapping
                   </button>
                 </PermissionGate>
@@ -442,7 +442,7 @@ export default function EbayIntegrationPage() {
                   <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Placed At</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--surface-sunken)]">
                 {filteredOrders.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
@@ -477,7 +477,7 @@ export default function EbayIntegrationPage() {
             <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
             <div className="flex items-center gap-2">
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-ghost text-xs">
+                <button type="button" onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-ghost text-xs">
                   <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
                 </button>
               </PermissionGate>

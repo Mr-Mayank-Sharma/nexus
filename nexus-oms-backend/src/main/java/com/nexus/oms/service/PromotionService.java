@@ -45,8 +45,10 @@ public class PromotionService {
             promotion.setCouponCode(promotion.getCouponCode().toUpperCase());
         }
 
-        if (promotion.getEndDate().isBefore(promotion.getStartDate())) {
-            throw new BadRequestException("End date must be after start date");
+        if (promotion.getStartDate() != null && promotion.getEndDate() != null) {
+            if (promotion.getEndDate().isBefore(promotion.getStartDate())) {
+                throw new BadRequestException("End date must be after start date");
+            }
         }
 
         return promotionRepository.save(promotion);

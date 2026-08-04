@@ -21,11 +21,12 @@ export default function AuditPage() {
   const { data: response, isLoading } = useQuery({
     queryKey: ['audit-logs', page],
     queryFn: () => auditApi.getAuditLogs(page, pageSize),
+    select: (res) => res.data,
   })
 
-  const entries = (response?.data as auditApi.AuditPage | undefined)?.content || []
-  const totalElements = (response?.data as auditApi.AuditPage | undefined)?.totalElements || 0
-  const totalPages = (response?.data as auditApi.AuditPage | undefined)?.totalPages || 0
+  const entries = (response?.content as auditApi.AuditEntry[] | undefined) || []
+  const totalElements = response?.totalElements || 0
+  const totalPages = response?.totalPages || 0
 
   const filtered = entries.filter(e =>
     !searchTerm || e.entityType?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -169,10 +170,10 @@ export default function AuditPage() {
           Page {page + 1} of {Math.max(totalPages, 1)} ({totalElements} total)
         </p>
         <div className="flex items-center gap-2">
-          <button className="enterprise-btn-secondary text-xs" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
+          <button type="button" className="enterprise-btn-secondary text-xs" disabled={page === 0} onClick={() => setPage(p => p - 1)}>
             <ChevronLeft className="w-4 h-4" /> Previous
           </button>
-          <button className="enterprise-btn-secondary text-xs" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
+          <button type="button" className="enterprise-btn-secondary text-xs" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}>
             Next <ChevronRight className="w-4 h-4" />
           </button>
         </div>

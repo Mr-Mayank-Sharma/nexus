@@ -194,6 +194,7 @@ export interface User {
 
 export interface AuthResponse {
   accessToken: string
+  refreshToken?: string
   tokenType: string
   expiresIn: number
   role: string
@@ -340,6 +341,7 @@ export interface ReturnItem {
   refundAmount?: number
   status?: string
   orderItemId?: string
+  unitPrice?: number
 }
 
 export interface Return {

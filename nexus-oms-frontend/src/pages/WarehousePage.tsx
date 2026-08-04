@@ -473,7 +473,7 @@ export default function WarehousePage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-[var(--text-secondary)]">{zones.length} zones</p>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddZone} className="enterprise-btn enterprise-btn-primary text-xs">
+                <button type="button" onClick={openAddZone} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Zone
                 </button>
               </PermissionGate>
@@ -493,7 +493,7 @@ export default function WarehousePage() {
                       <th className="px-4 py-2.5">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[var(--surface-sunken)]">
                     {zones.map((z) => (
                       <tr key={z.id} className="hover:bg-[var(--surface-sunken)]">
                         <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{z.code}</td>
@@ -506,7 +506,7 @@ export default function WarehousePage() {
                           <div className="flex items-center gap-2">
                             <div className="w-20 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-[var(--nexus-primary-50)]0 rounded-full"
+                                className="h-full bg-[var(--nexus-primary-500)] rounded-full"
                                 style={{
                                   width: `${(z.capacity || 0) > 0 ? Math.min(Math.round(((z.utilizedCapacity || 0) / (z.capacity || 0)) * 100), 100) : 0}%`,
                                 }}
@@ -537,7 +537,7 @@ export default function WarehousePage() {
               <span className="text-xs text-[var(--nexus-primary-600)] font-medium">{occupiedBins} occupied</span>
               <div className="flex-1" />
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddBin} className="enterprise-btn enterprise-btn-primary text-xs">
+                <button type="button" onClick={openAddBin} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Bin
                 </button>
               </PermissionGate>
@@ -557,7 +557,7 @@ export default function WarehousePage() {
                       <th className="px-4 py-2.5">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[var(--surface-sunken)]">
                     {bins.map((b) => (
                       <tr key={b.id} className="hover:bg-[var(--surface-sunken)]">
                         <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{b.code}</td>
@@ -616,7 +616,7 @@ export default function WarehousePage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-[var(--text-secondary)]">{staff.length} staff</p>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddStaff} className="enterprise-btn enterprise-btn-primary text-xs">
+                <button type="button" onClick={openAddStaff} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Staff
                 </button>
               </PermissionGate>
@@ -636,7 +636,7 @@ export default function WarehousePage() {
                       <th className="px-4 py-2.5">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[var(--surface-sunken)]">
                     {staff.map((s) => (
                       <tr key={s.id} className="hover:bg-[var(--surface-sunken)]">
                         <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{s.name}</td>
@@ -665,7 +665,7 @@ export default function WarehousePage() {
             <div className="flex items-center justify-between">
               <p className="text-sm text-[var(--text-secondary)]">{equipment.length} items</p>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={openAddEquipment} className="enterprise-btn enterprise-btn-primary text-xs">
+                <button type="button" onClick={openAddEquipment} className="enterprise-btn enterprise-btn-primary text-xs">
                   <Plus className="w-3.5 h-3.5" /> Add Equipment
                 </button>
               </PermissionGate>
@@ -686,7 +686,7 @@ export default function WarehousePage() {
                       <th className="px-4 py-2.5">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[var(--surface-sunken)]">
                     {equipment.map((e) => (
                       <tr key={e.id} className="hover:bg-[var(--surface-sunken)]">
                         <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{e.name}</td>
@@ -744,7 +744,7 @@ export default function WarehousePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="enterprise-btn enterprise-btn-secondary text-sm" onClick={() => {
+          <button type="button" className="enterprise-btn enterprise-btn-secondary text-sm" onClick={() => {
             const headers = ['Code', 'Name', 'Status', 'Capacity', 'Utilized', 'Manager', 'Email', 'Phone', 'Timezone']
             const rows = warehouses.map(w => [w.code, w.name, w.isActive ? 'ACTIVE' : 'INACTIVE', String(w.capacity ?? 0), String(w.utilizedCapacity ?? 0), w.managerName || '', w.contactEmail || '', w.contactPhone || '', w.timezone || ''])
             const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -754,9 +754,9 @@ export default function WarehousePage() {
             URL.revokeObjectURL(url)
             addToast({ type: 'success', title: `Exported ${warehouses.length} warehouses` })
           }}><Download className="w-4 h-4" /> Export</button>
-          <button className="enterprise-btn enterprise-btn-secondary text-sm" onClick={() => { window.location.href = '/import-export' }}><Upload className="w-4 h-4" /> Import</button>
+          <button type="button" className="enterprise-btn enterprise-btn-secondary text-sm" onClick={() => { window.location.href = '/import-export' }}><Upload className="w-4 h-4" /> Import</button>
           <PermissionGate resource="warehouse" action="create">
-            <button onClick={openAddWarehouse} className="enterprise-btn enterprise-btn-primary text-sm">
+            <button type="button" onClick={openAddWarehouse} className="enterprise-btn enterprise-btn-primary text-sm">
               <Plus className="w-4 h-4" /> Add Warehouse
             </button>
           </PermissionGate>
@@ -812,7 +812,7 @@ export default function WarehousePage() {
                 <th className="px-4 py-3">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[var(--surface-sunken)]">
               {filtered.map((wh) => {
                 const isExpanded = expandedId === wh.id
                 const util = capacityUtil(wh)
@@ -840,7 +840,7 @@ export default function WarehousePage() {
                       <div className="flex items-center gap-2">
                         <div className="w-16 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                           <div
-                            className={clsx('h-full rounded-full', util > 80 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-success-50)]0')}
+                            className={clsx('h-full rounded-full', util > 80 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-500)]')}
                             style={{ width: `${Math.min(util, 100)}%` }}
                           />
                         </div>
@@ -868,7 +868,7 @@ export default function WarehousePage() {
       )}
 
       {expandedId && filtered.find((w) => w.id === expandedId) && (
-        <div className="card p-5 border-l-4 border-l-primary-500">
+        <div className="card p-5 border-l-4 border-l-[var(--nexus-primary-500)]">
           {renderDetailPanel(filtered.find((w) => w.id === expandedId)! as Warehouse)}
         </div>
       )}
@@ -878,7 +878,7 @@ export default function WarehousePage() {
           <div className="enterprise-modal max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Warehouse</h2>
-              <button onClick={() => setShowWhModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <button type="button" onClick={() => setShowWhModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -938,9 +938,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowWhModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowWhModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveWarehouse} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleSaveWarehouse} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Building2 className="w-4 h-4" />}
                   Create Warehouse
                 </button>
@@ -955,7 +955,7 @@ export default function WarehousePage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Zone</h2>
-              <button onClick={() => setShowZoneModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <button type="button" onClick={() => setShowZoneModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -986,9 +986,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowZoneModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowZoneModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveZone} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleSaveZone} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create Zone
                 </button>
@@ -1003,7 +1003,7 @@ export default function WarehousePage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Bin</h2>
-              <button onClick={() => setShowBinModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <button type="button" onClick={() => setShowBinModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1070,9 +1070,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowBinModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowBinModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveBin} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleSaveBin} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create Bin
                 </button>
@@ -1087,7 +1087,7 @@ export default function WarehousePage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Staff</h2>
-              <button onClick={() => setShowStaffModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <button type="button" onClick={() => setShowStaffModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1122,9 +1122,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowStaffModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowStaffModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveStaff} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleSaveStaff} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Add Staff
                 </button>
@@ -1139,7 +1139,7 @@ export default function WarehousePage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Equipment</h2>
-              <button onClick={() => setShowEquipModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <button type="button" onClick={() => setShowEquipModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1173,9 +1173,9 @@ export default function WarehousePage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowEquipModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowEquipModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button onClick={handleSaveEquipment} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleSaveEquipment} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wrench className="w-4 h-4" />}
                   Add Equipment
                 </button>

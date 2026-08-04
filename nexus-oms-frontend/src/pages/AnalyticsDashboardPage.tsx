@@ -1,113 +1,95 @@
-import { useState, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  BarChart3, TrendingUp, TrendingDown, Package, DollarSign, Truck, Warehouse,
-  Users, ShoppingCart, ArrowUpRight, ArrowDownRight, Calendar, Filter,
-  RefreshCw, Download, Eye,
+  Package, DollarSign, Truck, AlertTriangle, Warehouse, Users,
+  ShoppingCart, ArrowRight, RefreshCw, CheckCircle, Activity, Shield, XCircle, Clock,
 } from 'lucide-react'
-import { clsx } from 'clsx'
-import { useAuth } from '../context/AuthContext'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import clsx from 'clsx'
+import {
+  EnterpriseKPICard,
+  EnterpriseStatusBadge,
+  EnterpriseTimeline,
+} from '../components/enterprise'
+import type { TimelineEvent } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
+import * as analyticsApi from '../api/analytics'
 
-interface MetricCard {
-  title: string
-  value: string
-  change: number
-  changeLabel: string
-  icon: React.ReactNode
-  color: string
-  bgColor: string
-}
-
-interface ChartData {
-  label: string
-  value: number
-  color?: string
+const PIE_COLORS = [
+  'var(--nexus-primary-500)', 'var(--nexus-warning-500)', 'var(--nexus-success-500)',
+  'var(--nexus-error-500)', 'var(--nexus-ai-500)', '#EC4899', 'var(--nexus-info-500)',
+  'var(--text-tertiary)',
+]
+const TOOLTIP_STYLE: React.CSSProperties = {
+  backgroundColor: 'var(--chart-tooltip-bg)', border: '1px solid var(--chart-tooltip-border)',
+  borderRadius: 'var(--radius-lg)', fontSize: 'var(--text-xs)', boxShadow: 'var(--elevation-3)',
 }
 
 export default function AnalyticsDashboardPage() {
-  const { user } = useAuth()
-  const [timeRange, setTimeRange] = useState<'today' | '7d' | '30d' | '90d'>('30d')
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800)
-    return () => clearTimeout(timer)
-  }, [])
+  const { data: kpis = {}, isLoading: kpisLoading } = useQuery({
+    queryKey: ['analytics', 'kpis'],
+    queryFn: analyticsApi.getDashboardKpis,
+    select: (res) => res.data ?? {},
+    refetchInterval: 60000,
+  })
 
-  const metrics: MetricCard[] = [
-    {
-      title: 'Total Orders',
-      value: '12,847',
-      change: 12.5,
-      changeLabel: 'vs last period',
-      icon: <Package className="w-5 h-5" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50 dark:bg-blue-950/30',
-    },
-    {
-      title: 'Revenue',
-      value: '$2.4M',
-      change: 8.3,
-      changeLabel: 'vs last period',
-      icon: <DollarSign className="w-5 h-5" />,
-      color: 'text-emerald-600',
-      bgColor: 'bg-emerald-50 dark:bg-emerald-950/30',
-    },
-    {
-      title: 'Fulfillment Rate',
-      value: '94.2%',
-      change: 2.1,
-      changeLabel: 'vs last period',
-      icon: <Truck className="w-5 h-5" />,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50 dark:bg-purple-950/30',
-    },
-    {
-      title: 'Inventory Value',
-      value: '$8.7M',
-      change: -1.2,
-      changeLabel: 'vs last period',
-      icon: <Warehouse className="w-5 h-5" />,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50 dark:bg-amber-950/30',
-    },
+  const { data: statusDist = [] } = useQuery({
+    queryKey: ['analytics', 'status-dist'],
+    queryFn: analyticsApi.getOrderStatusDistribution,
+    select: (res) => res.data ?? [],
+    refetchInterval: 60000,
+  })
+
+  const { data: warehouses = [], isLoading: warehousesLoading } = useQuery({
+    queryKey: ['analytics', 'warehouses'],
+    queryFn: analyticsApi.getWarehousesSummary,
+    select: (res) => res.data ?? [],
+    refetchInterval: 60000,
+  })
+
+  const { data: taskQueue = null } = useQuery({
+    queryKey: ['analytics', 'task-queue'],
+    queryFn: analyticsApi.getTaskQueueSummary,
+    select: (res) => res.data ?? null,
+    refetchInterval: 60000,
+  })
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ['analytics', 'activity'],
+    queryFn: analyticsApi.getActivity,
+    select: (res) => res.data ?? [],
+    refetchInterval: 60000,
+  })
+
+  const { data: alerts = [] } = useQuery({
+    queryKey: ['analytics', 'alerts'],
+    queryFn: analyticsApi.getAlerts,
+    select: (res) => res.data ?? [],
+    refetchInterval: 60000,
+  })
+
+  const pieChartData = statusDist.map((item: any, i: number) => ({
+    name: item.name,
+    value: item.value,
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }))
+
+  const holdTasks = (taskQueue?.holdTasks ?? {}) as Record<string, number>
+
+  const kpiCards = [
+    { title: 'Orders Today', value: (kpis.ordersToday ?? 0).toLocaleString(), subtitle: 'Orders created today', icon: ShoppingCart, color: 'primary' as const },
+    { title: 'Revenue Today', value: `$${(kpis.revenueToday ?? 0).toLocaleString()}`, subtitle: 'Sales value today', icon: DollarSign, color: 'success' as const },
+    { title: 'On-Time Delivery', value: kpis.onTimeDelivery ?? '—', subtitle: 'Share delivered on time', icon: Truck, color: 'warning' as const },
+    { title: 'Active Exceptions', value: (kpis.activeExceptions ?? 0).toLocaleString(), subtitle: 'Open fulfillment exceptions', icon: AlertTriangle, color: 'error' as const },
   ]
 
-  const ordersOverTime: ChartData[] = [
-    { label: 'Jan', value: 8200 },
-    { label: 'Feb', value: 9100 },
-    { label: 'Mar', value: 8800 },
-    { label: 'Apr', value: 10200 },
-    { label: 'May', value: 11500 },
-    { label: 'Jun', value: 12100 },
-    { label: 'Jul', value: 12847 },
+  const holdTaskCards = [
+    { label: 'Substitute Items', key: 'substituteItems', color: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)]', icon: Package },
+    { label: 'Bad Address', key: 'badAddress', color: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)]', icon: XCircle },
+    { label: 'Fraud Risk', key: 'fraudRisk', color: 'text-[var(--nexus-ai-600)] bg-[var(--nexus-ai-50)]', icon: Shield },
+    { label: 'On Hold', key: 'onHold', color: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)]', icon: Clock },
   ]
-
-  const revenueByCategory: ChartData[] = [
-    { label: 'Electronics', value: 890000, color: 'bg-blue-500' },
-    { label: 'Apparel', value: 620000, color: 'bg-purple-500' },
-    { label: 'Home & Garden', value: 410000, color: 'bg-emerald-500' },
-    { label: 'Sports', value: 280000, color: 'bg-amber-500' },
-    { label: 'Other', value: 200000, color: 'bg-gray-400' },
-  ]
-
-  const topProducts = [
-    { name: 'Wireless Headphones Pro', sku: 'WHP-001', orders: 1247, revenue: '$186,450' },
-    { name: 'Smart Watch Series X', sku: 'SWX-002', orders: 983, revenue: '$294,900' },
-    { name: 'USB-C Hub 7-in-1', sku: 'UCH-003', orders: 876, revenue: '$43,800' },
-    { name: 'Ergonomic Keyboard', sku: 'EKB-004', orders: 654, revenue: '$78,480' },
-    { name: '4K Webcam Ultra', sku: 'WC4-005', orders: 543, revenue: '$108,600' },
-  ]
-
-  const warehousePerformance = [
-    { warehouse: 'East Coast DC', efficiency: 96, throughput: '2,340/day', status: 'optimal' },
-    { warehouse: 'West Coast DC', efficiency: 89, throughput: '1,890/day', status: 'good' },
-    { warehouse: 'Central Hub', efficiency: 78, throughput: '1,200/day', status: 'attention' },
-    { warehouse: 'Southeast FC', efficiency: 92, throughput: '1,650/day', status: 'optimal' },
-  ]
-
-  const maxValue = Math.max(...ordersOverTime.map(d => d.value))
-  const maxRevenue = Math.max(...revenueByCategory.map(d => d.value))
 
   return (
     <PermissionGate resource="analytics" action="view">
@@ -117,103 +99,119 @@ export default function AnalyticsDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Analytics Dashboard</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Performance overview and key metrics
+            Live performance overview and key metrics
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as any)}
-            className="enterprise-select h-9 text-sm"
+          <button
+            type="button"
+            className="enterprise-btn enterprise-btn-secondary h-9 gap-2"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['analytics'] })}
           >
-            <option value="today">Today</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-          </select>
-          <button className="enterprise-btn enterprise-btn-ghost h-9 gap-2">
             <RefreshCw className="w-4 h-4" />
             Refresh
-          </button>
-          <button className="enterprise-btn enterprise-btn-primary h-9 gap-2">
-            <Download className="w-4 h-4" />
-            Export
           </button>
         </div>
       </div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((metric) => (
-          <div
-            key={metric.title}
-            className="enterprise-card p-4 hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between">
-              <div className={clsx('p-2 rounded-lg', metric.bgColor)}>
-                <span className={metric.color}>{metric.icon}</span>
-              </div>
-              <span className={clsx(
-                'flex items-center gap-1 text-sm font-medium',
-                metric.change >= 0 ? 'text-emerald-600' : 'text-red-600'
-              )}>
-                {metric.change >= 0 ? (
-                  <ArrowUpRight className="w-4 h-4" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4" />
-                )}
-                {Math.abs(metric.change)}%
-              </span>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl font-bold text-[var(--text-primary)]">{metric.value}</p>
-              <p className="text-sm text-[var(--text-secondary)] mt-1">{metric.title}</p>
-            </div>
-            <p className="text-xs text-[var(--text-tertiary)] mt-2">{metric.changeLabel}</p>
-          </div>
+        {kpiCards.map((kpi) => (
+          <EnterpriseKPICard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            subtitle={kpi.subtitle}
+            icon={kpi.icon}
+            color={kpi.color}
+            loading={kpisLoading}
+          />
         ))}
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Orders Over Time */}
+        {/* Order Status Distribution */}
         <div className="enterprise-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-[var(--text-primary)]">Orders Over Time</h3>
-            <span className="text-sm text-[var(--text-secondary)]">Monthly</span>
+            <div>
+              <h3 className="font-semibold text-[var(--text-primary)]">Order Status</h3>
+              <p className="text-xs text-[var(--text-secondary)] mt-0.5">Current distribution</p>
+            </div>
           </div>
-          <div className="flex items-end gap-2 h-48">
-            {ordersOverTime.map((item) => (
-              <div key={item.label} className="flex-1 flex flex-col items-center gap-1">
-                <div
-                  className="w-full bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-sm transition-all duration-500 hover:from-blue-700 hover:to-blue-500"
-                  style={{ height: `${(item.value / maxValue) * 100}%` }}
-                />
-                <span className="text-xs text-[var(--text-tertiary)]">{item.label}</span>
+          {pieChartData.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-[var(--text-tertiary)]">
+              <CheckCircle className="w-8 h-8 mb-2" />
+              <p className="text-sm">No order data available</p>
+            </div>
+          ) : (
+            <>
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={pieChartData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={2} dataKey="value">
+                    {pieChartData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap justify-center gap-4 mt-2">
+                {pieChartData.map((entry, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                    <span className="text-xs text-[var(--text-secondary)]">{entry.name}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
 
-        {/* Revenue by Category */}
-        <div className="enterprise-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-[var(--text-primary)]">Revenue by Category</h3>
-            <span className="text-sm text-[var(--text-secondary)]">Top 5</span>
+        {/* Warehouse Performance */}
+        <div className="enterprise-card">
+          <div className="px-5 py-4 border-b border-[var(--border-subtle)]">
+            <div className="flex items-center gap-2">
+              <Warehouse className="w-4 h-4 text-[var(--nexus-primary-500)]" />
+              <h3 className="font-semibold text-[var(--text-primary)]">Warehouse Utilization</h3>
+            </div>
           </div>
-          <div className="space-y-3">
-            {revenueByCategory.map((item) => (
-              <div key={item.label}>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-[var(--text-primary)]">{item.label}</span>
-                  <span className="text-sm font-medium text-[var(--text-secondary)]">
-                    ${(item.value / 1000).toFixed(0)}K
-                  </span>
+          <div className="divide-y divide-[var(--border-subtle)]">
+            {warehousesLoading ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => <div key={i} className="enterprise-skeleton h-10 w-full" />)}
+              </div>
+            ) : warehouses.length === 0 ? (
+              <div className="flex flex-col items-center py-10 text-[var(--text-tertiary)]">
+                <Warehouse className="w-8 h-8 mb-2" />
+                <p className="text-sm">No warehouses configured</p>
+              </div>
+            ) : warehouses.map((wh: any) => (
+              <div key={wh.id} className="px-5 py-3 hover:bg-[var(--interactive-hover)] transition-colors">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{wh.name}</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">
+                      {wh.code} · {wh.city ?? '—'}{wh.country ? `, ${wh.country}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{wh.capacityUtilization ?? 0}%</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">{wh.totalBins ?? 0} bins</p>
+                    </div>
+                    <EnterpriseStatusBadge
+                      status={(wh.status ?? 'UNKNOWN') === 'ACTIVE' ? 'ACTIVE' : (wh.status ?? 'UNKNOWN')}
+                      size="sm"
+                    />
+                  </div>
                 </div>
-                <div className="h-2 bg-[var(--surface-sunken)] rounded-full overflow-hidden">
+                <div className="mt-2 w-full h-1.5 bg-[var(--surface-sunken)] rounded-full overflow-hidden">
                   <div
-                    className={clsx('h-full rounded-full transition-all duration-500', item.color)}
-                    style={{ width: `${(item.value / maxRevenue) * 100}%` }}
+                    className={clsx(
+                      'h-full rounded-full transition-all duration-500',
+                      (wh.capacityUtilization ?? 0) >= 90 ? 'bg-[var(--nexus-error-500)]' :
+                      (wh.capacityUtilization ?? 0) >= 75 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-500)]'
+                    )}
+                    style={{ width: `${Math.min(100, wh.capacityUtilization ?? 0)}%` }}
                   />
                 </div>
               </div>
@@ -222,88 +220,70 @@ export default function AnalyticsDashboardPage() {
         </div>
       </div>
 
-      {/* Tables Row */}
+      {/* Task Queue + Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Products */}
-        <div className="enterprise-card">
-          <div className="px-5 py-4 border-b border-[var(--border-subtle)]">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-[var(--text-primary)]">Top Products</h3>
-              <button className="text-sm text-[var(--nexus-primary-600)] hover:underline">
-                View All
-              </button>
-            </div>
-          </div>
-          <div className="divide-y divide-[var(--border-subtle)]">
-            {topProducts.map((product, idx) => (
-              <div key={product.sku} className="px-5 py-3 hover:bg-[var(--interactive-hover)] transition-colors">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-[var(--text-tertiary)] w-6">
-                    #{idx + 1}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">
-                      {product.name}
-                    </p>
-                    <p className="text-xs text-[var(--text-tertiary)]">{product.sku}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{product.revenue}</p>
-                    <p className="text-xs text-[var(--text-tertiary)]">{product.orders} orders</p>
-                  </div>
+        <div className="enterprise-card p-5">
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Hold Tasks</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {holdTaskCards.map((task) => (
+              <div key={task.key} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface-muted)]">
+                <div className={clsx('w-8 h-8 rounded-lg flex items-center justify-center', task.color)}>
+                  <task.icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold text-[var(--text-primary)] leading-tight tabular-nums">
+                    {holdTasks[task.key] ?? 0}
+                  </p>
+                  <p className="text-xs text-[var(--text-secondary)] truncate">{task.label}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Warehouse Performance */}
-        <div className="enterprise-card">
-          <div className="px-5 py-4 border-b border-[var(--border-subtle)]">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-[var(--text-primary)]">Warehouse Performance</h3>
-              <button className="text-sm text-[var(--nexus-primary-600)] hover:underline">
-                View All
-              </button>
+        <div className="enterprise-card p-5">
+          <h3 className="font-semibold text-[var(--text-primary)] mb-4">Alerts & Exceptions</h3>
+          {alerts.length === 0 ? (
+            <div className="flex flex-col items-center py-10 text-[var(--text-tertiary)]">
+              <CheckCircle className="w-8 h-8 mb-2" />
+              <p className="text-sm">No active alerts</p>
             </div>
-          </div>
-          <div className="divide-y divide-[var(--border-subtle)]">
-            {warehousePerformance.map((wh) => (
-              <div key={wh.warehouse} className="px-5 py-3 hover:bg-[var(--interactive-hover)] transition-colors">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{wh.warehouse}</p>
-                    <p className="text-xs text-[var(--text-tertiary)]">{wh.throughput}</p>
+          ) : (
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {alerts.map((alert: any) => (
+                <div key={alert.id} className="flex items-start gap-3 p-3 rounded-lg bg-[var(--surface-muted)]">
+                  <div className={clsx('w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
+                    alert.severity === 'warning' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)]',
+                    alert.severity === 'error' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]',
+                    alert.severity === 'info' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]')}>
+                    <AlertTriangle className="w-3.5 h-3.5" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-24">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-xs text-[var(--text-tertiary)]">{wh.efficiency}%</span>
-                      </div>
-                      <div className="h-1.5 bg-[var(--surface-sunken)] rounded-full overflow-hidden">
-                        <div
-                          className={clsx(
-                            'h-full rounded-full transition-all duration-500',
-                            wh.efficiency >= 90 ? 'bg-emerald-500' :
-                            wh.efficiency >= 80 ? 'bg-amber-500' : 'bg-red-500'
-                          )}
-                          style={{ width: `${wh.efficiency}%` }}
-                        />
-                      </div>
-                    </div>
-                    <span className={clsx(
-                      'px-2 py-0.5 rounded-full text-xs font-medium',
-                      wh.status === 'optimal' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
-                      wh.status === 'good' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
-                      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                    )}>
-                      {wh.status}
-                    </span>
+                  <div className="min-w-0">
+                    <p className="text-sm text-[var(--text-secondary)]">{alert.message}</p>
+                    <p className="text-xs text-[var(--text-tertiary)] mt-0.5 capitalize">{alert.severity}</p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Activity Feed */}
+      <div className="enterprise-card">
+        <div className="px-5 py-4 border-b border-[var(--border-subtle)] flex items-center gap-2">
+          <Activity className="w-4 h-4 text-[var(--nexus-primary-500)]" />
+          <h3 className="font-semibold text-[var(--text-primary)]">Activity Feed</h3>
+        </div>
+        <div className="p-5">
+          {activities.length === 0 ? (
+            <div className="flex flex-col items-center py-10 text-[var(--text-tertiary)]">
+              <Activity className="w-8 h-8 mb-2" />
+              <p className="text-sm">No recent activity</p>
+            </div>
+          ) : (
+            <EnterpriseTimeline events={activities as TimelineEvent[]} />
+          )}
         </div>
       </div>
     </div>

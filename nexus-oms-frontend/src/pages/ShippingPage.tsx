@@ -171,7 +171,7 @@ export default function ShippingPage() {
                         <div className="flex items-center justify-end gap-1">
                           {s.status === 'PENDING' && (
                             <PermissionGate resource="logistics" action="edit">
-                              <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-primary-500)]" title="Mark Shipped"
+                              <button type="button" className="enterprise-btn-ghost p-1.5 text-[var(--nexus-primary-500)]" title="Mark Shipped"
                                 onClick={e => { e.stopPropagation(); markShippedMutation.mutate(s.id); }}>
                                 <Truck className="w-4 h-4" />
                               </button>
@@ -179,21 +179,21 @@ export default function ShippingPage() {
                           )}
                           {(s.status === 'SHIPPED' || s.status === 'IN_TRANSIT') && (
                             <PermissionGate resource="logistics" action="edit">
-                              <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-success-500)]" title="Mark Delivered"
+                              <button type="button" className="enterprise-btn-ghost p-1.5 text-[var(--nexus-success-500)]" title="Mark Delivered"
                                 onClick={e => { e.stopPropagation(); markDeliveredMutation.mutate(s.id); }}>
                                 <CheckCircle className="w-4 h-4" />
                               </button>
                             </PermissionGate>
                           )}
                           {s.trackingNumber && (
-                            <button className="enterprise-btn-ghost p-1.5 text-[var(--text-tertiary)]" title="Track"
+                            <button type="button" className="enterprise-btn-ghost p-1.5 text-[var(--text-tertiary)]" title="Track"
                               onClick={e => { e.stopPropagation(); window.open(`https://track.example.com/${s.trackingNumber}`, '_blank'); }}>
                               <ExternalLink className="w-4 h-4" />
                             </button>
                           )}
                           {s.status !== 'DELIVERED' && s.status !== 'VOIDED' && (
                             <PermissionGate resource="logistics" action="delete">
-                              <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]" title="Void"
+                              <button type="button" className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]" title="Void"
                                 onClick={e => { e.stopPropagation(); if (confirm('Void this shipment?')) voidMutation.mutate(s.id); }}>
                                 <XCircle className="w-4 h-4" />
                               </button>
@@ -281,9 +281,9 @@ export default function ShippingPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <PermissionGate resource="logistics" action="create">
-                <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
+                <button type="button" className="enterprise-btn-primary" onClick={() => createMutation.mutate()} disabled={!createForm.orderId || createMutation.isPending}>
                   {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create
                 </button>

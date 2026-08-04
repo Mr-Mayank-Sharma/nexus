@@ -2,13 +2,14 @@ package com.nexus.oms.controller;
 
 import com.nexus.oms.entity.NxShippingLabel;
 import com.nexus.oms.service.ShippingLabelService;
+import com.nexus.oms.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1/labels")
+@RequestMapping("/labels")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ShippingLabelController {
 
@@ -16,6 +17,11 @@ public class ShippingLabelController {
 
     public ShippingLabelController(ShippingLabelService shippingLabelService) {
         this.shippingLabelService = shippingLabelService;
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NxShippingLabel>>> getAllLabels() {
+        return ResponseEntity.ok(ApiResponse.success(Collections.emptyList()));
     }
 
     @PostMapping

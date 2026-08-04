@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/parked-orders")
+@RequestMapping("/parked-orders")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class ParkedOrderController {
 

@@ -378,7 +378,7 @@ export default function NotificationsCenter() {
           <AlertTriangle className="w-14 h-14 mx-auto text-[var(--color-error)] mb-4" />
           <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Failed to load notifications</h2>
           <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-md mx-auto">{error}. Check your connection and try again.</p>
-          <button onClick={fetchData} className="enterprise-btn enterprise-btn-primary inline-flex items-center gap-2">
+          <button type="button" onClick={fetchData} className="enterprise-btn enterprise-btn-primary inline-flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
             Retry
           </button>
@@ -636,7 +636,7 @@ export default function NotificationsCenter() {
                   {actions.length > 0 && (
                     <div className="border-t border-[var(--border-color)] pt-4 flex items-center gap-2">
                       {actions.map((action, i) => (
-                        <button key={i} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" onClick={() => action.onClick?.(item)}>
+                        <button type="button" key={i} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" onClick={() => action.onClick?.(item)}>
                           {action.icon} {action.label}
                         </button>
                       ))}

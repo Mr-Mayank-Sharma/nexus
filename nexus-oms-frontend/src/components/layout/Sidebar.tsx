@@ -172,6 +172,9 @@ const ROLE_COLORS: Record<string, string> = {
   VIEWER: 'bg-gray-400',
 }
 
+const ACTIVE_INDICATOR =
+  'relative before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[2.5px] before:rounded-full before:bg-[var(--sidebar-active-text)]'
+
 function SidebarGroup({
   item,
   location,
@@ -196,14 +199,15 @@ function SidebarGroup({
           'group flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150',
           collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
           isActive
-            ? 'text-[#818CF8] bg-[rgba(99,102,241,0.15)]'
-            : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
+            ? 'text-[var(--sidebar-active-text)] bg-[var(--sidebar-active-bg)]'
+            : 'text-[var(--sidebar-text-secondary)] hover:text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover-bg)]',
+          isActive && !collapsed && ACTIVE_INDICATOR,
         )}
         title={collapsed ? item.label : undefined}
       >
         <span className={clsx(
           'flex-shrink-0 transition-colors duration-150',
-          isActive ? 'text-[#818CF8]' : 'text-[#64748B] group-hover:text-[#94A3B8]',
+          isActive ? 'text-[var(--sidebar-active-text)]' : 'text-[var(--sidebar-text-muted)] group-hover:text-[var(--sidebar-text-secondary)]',
         )}>
           {item.icon}
         </span>
@@ -213,13 +217,13 @@ function SidebarGroup({
             <ChevronDown className={clsx(
               'w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0',
               open ? 'rotate-180' : '',
-              isActive ? 'text-[#818CF8]' : 'text-[#64748B]',
+              isActive ? 'text-[var(--sidebar-active-text)]' : 'text-[var(--sidebar-text-muted)]',
             )} />
           </>
         )}
       </button>
       {open && !collapsed && item.children && (
-        <div className="ml-[22px] mt-0.5 space-y-px pl-3 border-l border-[rgba(148,163,184,0.12)]">
+        <div className="ml-[22px] mt-0.5 space-y-px pl-3 border-l border-[var(--sidebar-border-subtle)]">
           {item.children.map((child) => {
             const childActive = child.path === '/' ? location.pathname === '/' : location.pathname.startsWith(child.path)
             return (
@@ -229,13 +233,13 @@ function SidebarGroup({
                 className={clsx(
                   'flex items-center gap-2 px-2.5 py-[5px] rounded-md text-[13px] font-medium transition-all duration-150',
                   childActive
-                    ? 'text-[#818CF8] bg-[rgba(99,102,241,0.15)]'
-                    : 'text-[#64748B] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
+                    ? 'text-[var(--sidebar-active-text)] bg-[var(--sidebar-active-bg)]'
+                    : 'text-[var(--sidebar-text-muted)] hover:text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover-bg)]',
                 )}
               >
                 <span className={clsx(
                   'flex-shrink-0 transition-colors duration-150',
-                  childActive ? 'text-[#818CF8]' : '',
+                  childActive ? 'text-[var(--sidebar-active-text)]' : '',
                 )}>
                   {child.icon}
                 </span>
@@ -294,13 +298,14 @@ export default function Sidebar() {
   return (
     <aside
       className={clsx(
-        'bg-[#0B1120] flex flex-col transition-all duration-300 ease-[var(--ease-default)] h-screen sticky top-0',
+        'bg-[var(--sidebar-bg)] flex flex-col transition-all duration-300 h-screen sticky top-0',
         collapsed ? 'w-[56px]' : 'w-[256px]',
       )}
+      style={{ transitionTimingFunction: 'var(--ease-default)' }}
     >
       {/* ── Logo ── */}
       <div className={clsx(
-        'flex items-center h-14 border-b border-[#1E293B] transition-all duration-300',
+        'flex items-center h-14 border-b border-[var(--sidebar-border)] transition-all duration-300',
         collapsed ? 'justify-center px-0' : 'px-5 gap-3',
       )}>
         <div className="w-8 h-8 bg-[var(--nexus-primary-500)] rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
@@ -308,8 +313,8 @@ export default function Sidebar() {
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-bold text-[15px] text-[#F1F5F9] tracking-[-0.02em] leading-tight">NexusShip</span>
-            <span className="text-[10px] font-medium text-[#64748B] tracking-wide uppercase">OMS Platform</span>
+            <span className="font-bold text-[15px] text-[var(--sidebar-text)] tracking-[-0.02em] leading-tight">NexusShip</span>
+            <span className="text-[10px] font-medium text-[var(--sidebar-text-muted)] tracking-wide uppercase">OMS Platform</span>
           </div>
         )}
       </div>
@@ -317,12 +322,12 @@ export default function Sidebar() {
       {/* ── Role Badge ── */}
       {!collapsed && user && (
         <div className="px-3 pt-3 pb-2">
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[#1E293B] border border-[#334155]">
+          <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-[var(--sidebar-surface)] border border-[var(--sidebar-strong)]">
             <div className={clsx(
               'w-2 h-2 rounded-full flex-shrink-0',
               ROLE_COLORS[user.role] || 'bg-gray-400',
             )} />
-            <span className="text-xs font-medium text-[#94A3B8] capitalize truncate">
+            <span className="text-xs font-medium text-[var(--sidebar-text-secondary)] capitalize truncate">
               {user.role.replace(/_/g, ' ').toLowerCase()}
             </span>
           </div>
@@ -333,13 +338,13 @@ export default function Sidebar() {
       {!collapsed && (
         <div className="px-3 pb-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#64748B] pointer-events-none" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--sidebar-text-muted)] pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Filter navigation..."
-              className="w-full h-8 pl-8 pr-2.5 text-[12px] rounded-lg bg-[#1E293B] border border-[#334155] text-[#F1F5F9] placeholder-[#64748B] focus:border-[var(--nexus-primary-500)] focus:ring-1 focus:ring-[var(--nexus-primary-500)] focus:outline-none transition-all duration-150"
+              className="w-full h-8 pl-8 pr-2.5 text-[12px] rounded-lg bg-[var(--sidebar-surface)] border border-[var(--sidebar-strong)] text-[var(--sidebar-text)] placeholder-[var(--sidebar-text-muted)] focus:border-[var(--nexus-primary-500)] focus:ring-1 focus:ring-[var(--nexus-primary-500)] focus:outline-none transition-all duration-150"
             />
           </div>
         </div>
@@ -361,14 +366,15 @@ export default function Sidebar() {
                   'group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150',
                   collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
                   parentActive
-                    ? 'text-[#818CF8] bg-[rgba(99,102,241,0.15)]'
-                    : 'text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
+                    ? 'text-[var(--sidebar-active-text)] bg-[var(--sidebar-active-bg)]'
+                    : 'text-[var(--sidebar-text-secondary)] hover:text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover-bg)]',
+                  parentActive && !collapsed && ACTIVE_INDICATOR,
                 )}
                 title={collapsed ? item.label : undefined}
               >
                 <span className={clsx(
                   'flex-shrink-0 transition-colors duration-150',
-                  parentActive ? 'text-[#818CF8]' : 'text-[#64748B] group-hover:text-[#94A3B8]',
+                  parentActive ? 'text-[var(--sidebar-active-text)]' : 'text-[var(--sidebar-text-muted)] group-hover:text-[var(--sidebar-text-secondary)]',
                 )}>
                   {item.icon}
                 </span>
@@ -383,7 +389,7 @@ export default function Sidebar() {
 
       {/* ── Footer ── */}
       <div className={clsx(
-        'border-t border-[#1E293B] space-y-1',
+        'border-t border-[var(--sidebar-border)] space-y-1',
         collapsed ? 'p-1.5' : 'p-2.5',
       )}>
         {/* Admin role switcher */}
@@ -398,7 +404,7 @@ export default function Sidebar() {
                 localStorage.setItem('nexus_user', JSON.stringify(updated))
                 window.location.reload()
               }}
-              className="w-full text-xs h-8 rounded-lg bg-[#1E293B] border border-[#334155] text-[#F1F5F9] px-2 focus:border-[var(--nexus-primary-500)] focus:outline-none"
+              className="w-full text-xs h-8 rounded-lg bg-[var(--sidebar-surface)] border border-[var(--sidebar-strong)] text-[var(--sidebar-text)] px-2 focus:border-[var(--nexus-primary-500)] focus:outline-none"
             >
               {Object.entries(ROLE_WORKSPACES).map(([key, ws]) => (
                 <option key={key} value={key}>{ws.label}</option>
@@ -411,7 +417,7 @@ export default function Sidebar() {
         <button
           onClick={toggleTheme}
           className={clsx(
-            'flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
+            'flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150 text-[var(--sidebar-text-secondary)] hover:text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover-bg)]',
             collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
           )}
           title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
@@ -425,7 +431,7 @@ export default function Sidebar() {
         <button
           onClick={() => setCollapsed(!collapsed)}
           className={clsx(
-            'flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150 text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[rgba(148,163,184,0.08)]',
+            'flex items-center w-full rounded-lg text-[13px] font-medium transition-all duration-150 text-[var(--sidebar-text-secondary)] hover:text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover-bg)]',
             collapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-[7px]',
           )}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}

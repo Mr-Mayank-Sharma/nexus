@@ -1,5 +1,6 @@
 package com.nexus.oms.filter;
 
+import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.IdempotencyService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,9 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,9 +16,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 
-@Component
-@Order(2)
 public class IdempotencyFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(IdempotencyFilter.class);
@@ -51,7 +48,15 @@ public class IdempotencyFilter implements Filter {
             return;
         }
 
-        String redisKey = idempotencyService.hashKey(idempotencyKey);
+        // Scope the idempotency key to the current tenant to prevent cross-tenant collisions
+        UUID tenantId = null;
+        try {
+            tenantId = TenantContext.getCurrentTenantId();
+        } catch (IllegalStateException e) {
+            // No tenant context — proceed with unsoped key (e.g. webhook endpoints)
+        }
+        String scopedKey = (tenantId != null) ? tenantId + ":" + idempotencyKey : idempotencyKey;
+        String redisKey = idempotencyService.hashKey(scopedKey);
 
         IdempotencyService.CachedResponse cached = idempotencyService.getCompleted(redisKey);
         if (cached != null) {

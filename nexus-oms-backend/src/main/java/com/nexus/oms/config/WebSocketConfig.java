@@ -52,7 +52,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .filter(s -> !s.isEmpty())
                 .toList();
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(origins.toArray(new String[0]))
+                .setAllowedOriginPatterns(origins.toArray(new String[0]))
                 .withSockJS();
     }
 

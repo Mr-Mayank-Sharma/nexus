@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1/rejections")
+@RequestMapping("/rejections")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class RejectionController {
 

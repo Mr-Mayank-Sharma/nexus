@@ -1,16 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Brain, X, CheckCircle, XCircle, ChevronDown, ChevronUp,
-  Sparkles, AlertTriangle,
+  Brain, X, CheckCircle, XCircle,
+  Sparkles,
 } from 'lucide-react'
 import clsx from 'clsx'
-import { getRecommendations, approveRecommendation, rejectRecommendation } from '../api/aiAgents'
-import type { AiRecommendation } from '../api/aiAgents'
+import { getRecommendations, approveRecommendation, rejectRecommendation } from '../../api/aiAgents'
+import type { AiRecommendation } from '../../api/aiAgents'
 
 interface Props {
-  context?: string
-  orderId?: string
-  role?: string
   className?: string
 }
 
@@ -20,7 +17,7 @@ const PRIORITY_STYLES: Record<string, string> = {
   low: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-600',
 }
 
-export default function AiRecommendationPanel({ context, orderId, role, className }: Props) {
+export default function AiRecommendationPanel({ className }: Props) {
   const [open, setOpen] = useState(false)
   const [recommendations, setRecommendations] = useState<AiRecommendation[]>([])
   const [loading, setLoading] = useState(false)
@@ -29,14 +26,14 @@ export default function AiRecommendationPanel({ context, orderId, role, classNam
   const fetchRecs = useCallback(async () => {
     setLoading(true)
     try {
-      const recs = await getRecommendations(role, 5)
-      setRecommendations(recs)
+      const recs = await getRecommendations(5)
+      setRecommendations(recs.data ?? [])
     } catch {
       // silent
     } finally {
       setLoading(false)
     }
-  }, [role])
+  }, [])
 
   useEffect(() => {
     if (open) fetchRecs()

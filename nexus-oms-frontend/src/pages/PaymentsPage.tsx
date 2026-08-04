@@ -112,11 +112,11 @@ export default function PaymentsPage() {
         </div>
         <div className="flex items-center gap-3">
           <PermissionGate resource="payments" action="create">
-            <button onClick={() => setCreateInvoiceOpen(true)} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
+            <button type="button" onClick={() => setCreateInvoiceOpen(true)} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
               <Plus className="w-3.5 h-3.5" /> Create Invoice
             </button>
           </PermissionGate>
-          <button className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" onClick={() => {
+          <button type="button" className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" onClick={() => {
             const headers = ['Transaction ID', 'Order', 'Customer', 'Method', 'Amount', 'Fee', 'Net', 'Status', 'Date']
             const rows = filteredPayments.map(p => [p.transactionId, p.orderNumber, p.customer, p.method, String(p.amount), String(p.fee), String(p.netAmount), p.status, p.date])
             const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -157,7 +157,7 @@ export default function PaymentsPage() {
 
       <div className="flex items-center gap-1 border-b border-[var(--border-subtle)]">
         {(['payments', 'invoices', 'reconciliation'] as const).map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)} className={clsx('px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize', activeTab === tab ? 'border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')}>
+          <button type="button" key={tab} onClick={() => setActiveTab(tab)} className={clsx('px-4 py-2.5 text-sm font-medium border-b-2 transition-colors capitalize', activeTab === tab ? 'border-[var(--color-primary)] text-[var(--color-primary)]' : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')}>
             {tab} {tab === 'payments' ? `(${payments.length})` : tab === 'invoices' ? `(${invoices.length})` : ''}
           </button>
         ))}
@@ -274,7 +274,7 @@ export default function PaymentsPage() {
                     <td className="px-4 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">${tx.amt.toFixed(2)}</td>
                     <td className="px-4 py-2 text-center">
                       <PermissionGate resource="payments" action="edit">
-                        <button onClick={() => addToast({ type: 'success', title: `Matched ${tx.ref}` })} className="text-xs px-3 py-1 bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] rounded-lg border border-[var(--nexus-primary-200)] hover:bg-[var(--nexus-primary-100)]">Match</button>
+                        <button type="button" onClick={() => addToast({ type: 'success', title: `Matched ${tx.ref}` })} className="text-xs px-3 py-1 bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] rounded-lg border border-[var(--nexus-primary-200)] hover:bg-[var(--nexus-primary-100)]">Match</button>
                       </PermissionGate>
                     </td>
                   </tr>
@@ -290,7 +290,7 @@ export default function PaymentsPage() {
           <div className="enterprise-card p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Transaction Detail</h2>
-              <button onClick={() => setShowTransactionDetail(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">✕</button>
+              <button type="button" onClick={() => setShowTransactionDetail(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">✕</button>
             </div>
             <div className="space-y-3 text-sm">
               {Object.entries({ 'Transaction ID': showTransactionDetail.transactionId, Order: showTransactionDetail.orderNumber, Customer: showTransactionDetail.customer, Method: showTransactionDetail.method, Amount: `$${showTransactionDetail.amount.toFixed(2)}`, Fee: `$${showTransactionDetail.fee.toFixed(2)}`, Net: `$${showTransactionDetail.netAmount.toFixed(2)}`, Status: showTransactionDetail.status, Date: showTransactionDetail.date }).map(([k, v]) => (
@@ -309,7 +309,7 @@ export default function PaymentsPage() {
           <div className="enterprise-card p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Invoice Detail</h2>
-              <button onClick={() => setShowInvoiceDetail(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">✕</button>
+              <button type="button" onClick={() => setShowInvoiceDetail(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">✕</button>
             </div>
             <div className="space-y-3 text-sm">
               {Object.entries({ 'Invoice #': showInvoiceDetail.invoiceNumber, Order: showInvoiceDetail.orderNumber, Customer: showInvoiceDetail.customer, Amount: `$${showInvoiceDetail.amount.toFixed(2)}`, Status: showInvoiceDetail.status, 'Due Date': showInvoiceDetail.dueDate, 'Paid Date': showInvoiceDetail.paidDate || '—' }).map(([k, v]) => (
@@ -320,10 +320,10 @@ export default function PaymentsPage() {
               ))}
               <div className="flex gap-2 pt-3">
                 <PermissionGate resource="payments" action="edit">
-                  <button className="enterprise-btn-primary text-sm flex-1 py-2" onClick={() => handleUpdateInvoice(showInvoiceDetail.id, { status: 'paid' })}>Mark as Paid</button>
+                  <button type="button" className="enterprise-btn-primary text-sm flex-1 py-2" onClick={() => handleUpdateInvoice(showInvoiceDetail.id, { status: 'paid' })}>Mark as Paid</button>
                 </PermissionGate>
                 <PermissionGate resource="payments" action="edit">
-                  <button className="enterprise-btn-secondary text-sm flex-1 py-2">Send Reminder</button>
+                  <button type="button" className="enterprise-btn-secondary text-sm flex-1 py-2">Send Reminder</button>
                 </PermissionGate>
               </div>
             </div>
@@ -342,9 +342,9 @@ export default function PaymentsPage() {
               <div><label className="enterprise-label">Due Date</label><input value={invoiceForm.dueDate} onChange={e => setInvoiceForm(f => ({ ...f, dueDate: e.target.value }))} className="enterprise-input w-full" type="date" /></div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button className="enterprise-btn-secondary" onClick={() => setCreateInvoiceOpen(false)}>Cancel</button>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => setCreateInvoiceOpen(false)}>Cancel</button>
               <PermissionGate resource="payments" action="create">
-                <button className="enterprise-btn-primary" onClick={() => handleCreateInvoice(invoiceForm)} disabled={!invoiceForm.orderNumber || !invoiceForm.customerName || !invoiceForm.amount}>Create Invoice</button>
+                <button type="button" className="enterprise-btn-primary" onClick={() => handleCreateInvoice(invoiceForm)} disabled={!invoiceForm.orderNumber || !invoiceForm.customerName || !invoiceForm.amount}>Create Invoice</button>
               </PermissionGate>
             </div>
           </div>

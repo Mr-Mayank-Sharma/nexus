@@ -11,10 +11,10 @@ import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
 
 const PLATFORMS = [
-  { value: 'SHOPIFY', label: 'Shopify', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-emerald-500' },
-  { value: 'BIGCOMMERCE', label: 'BigCommerce', icon: <Store className="w-5 h-5" />, color: 'bg-[var(--nexus-primary-50)]0' },
-  { value: 'AMAZON', label: 'Amazon', icon: <Globe className="w-5 h-5" />, color: 'bg-orange-500' },
-  { value: 'WOOCOMMERCE', label: 'WooCommerce', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-[var(--nexus-ai-50)]0' },
+  { value: 'SHOPIFY', label: 'Shopify', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-[var(--nexus-success-500)]' },
+  { value: 'BIGCOMMERCE', label: 'BigCommerce', icon: <Store className="w-5 h-5" />, color: 'bg-[var(--nexus-primary-500)]' },
+  { value: 'AMAZON', label: 'Amazon', icon: <Globe className="w-5 h-5" />, color: 'bg-[var(--nexus-warning-50)]0' },
+  { value: 'WOOCOMMERCE', label: 'WooCommerce', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-[var(bg-[var(--nexus-ai-500)])]' },
   { value: 'MANUAL', label: 'Manual', icon: <Store className="w-5 h-5" />, color: 'bg-[var(--surface-muted)]' },
 ]
 
@@ -191,7 +191,7 @@ export default function IntegrationStoresPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">OFBiz-style integration store management — connect Shopify, BigCommerce, and more</p>
         </div>
         <PermissionGate resource="integrations" action="create">
-          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Store
           </button>
         </PermissionGate>
@@ -212,7 +212,7 @@ export default function IntegrationStoresPage() {
             {stores.map(st => {
               const pf = platformInfo(st.platform)
               return (
-                <button key={st.id} onClick={() => openStore(st)}
+                <button type="button" key={st.id} onClick={() => openStore(st)}
                   className={`w-full text-left card p-4 flex items-center gap-3 transition-all ${
                     selectedStore?.id === st.id ? 'ring-2 ring-[var(--nexus-primary-500)]' : ''
                   }`}>
@@ -252,7 +252,7 @@ export default function IntegrationStoresPage() {
                           className="enterprise-btn enterprise-btn-ghost text-xs"><ExternalLink className="w-3 h-3" /></a>
                       )}
                       <PermissionGate resource="integrations" action="delete">
-                        <button onClick={() => handleDelete(selectedStore.id)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
+                        <button type="button" onClick={() => handleDelete(selectedStore.id)} className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-error-500)]">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </PermissionGate>
@@ -278,7 +278,7 @@ export default function IntegrationStoresPage() {
                                 <p className="text-xs text-[var(--text-tertiary)] mb-2">Last: {new Date(st.lastSyncAt).toLocaleString()}</p>
                               )}
                                <PermissionGate resource="integrations" action="edit">
-                                 <button onClick={() => handleSync(st.syncType)} disabled={syncing === st.syncType}
+                                 <button type="button" onClick={() => handleSync(st.syncType)} disabled={syncing === st.syncType}
                                    className="enterprise-btn enterprise-btn-primary text-xs w-full">
                                    {syncing === st.syncType ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                                    {syncing === st.syncType ? 'Running...' : 'Run Sync'}
@@ -291,7 +291,7 @@ export default function IntegrationStoresPage() {
 
                       <div className="flex items-center gap-2 mt-4">
                         <PermissionGate resource="integrations" action="create">
-                          <button onClick={handleRegisterWebhooks} className="enterprise-btn enterprise-btn-secondary text-xs">
+                          <button type="button" onClick={handleRegisterWebhooks} className="enterprise-btn enterprise-btn-secondary text-xs">
                             <Link className="w-3.5 h-3.5" /> Register Webhooks
                           </button>
                         </PermissionGate>
@@ -329,7 +329,7 @@ export default function IntegrationStoresPage() {
           <div className="enterprise-modal max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Sales Channel</h2>
-              <button onClick={() => setShowCreate(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowCreate(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -386,9 +386,9 @@ export default function IntegrationStoresPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreate(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowCreate(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Store className="w-4 h-4" />}
                   Create Store
                 </button>

@@ -39,9 +39,9 @@ export default function PickersPage() {
   const [nodeId] = useState(DEFAULT_NODE_ID)
 
   const tabs: Tab[] = [
-    { key: 'pickers', label: 'Pickers', icon: Users },
-    { key: 'assignments', label: 'Assignments', icon: ArrowRight },
-    { key: 'stats', label: 'Stats', icon: BarChart3 },
+    { key: 'pickers', label: 'Pickers', icon: <Users className="w-4 h-4" /> },
+    { key: 'assignments', label: 'Assignments', icon: <ArrowRight className="w-4 h-4" /> },
+    { key: 'stats', label: 'Stats', icon: <BarChart3 className="w-4 h-4" /> },
   ]
 
   const { data: pickers = [], isLoading: loadingPickers } = useQuery({
@@ -111,7 +111,7 @@ export default function PickersPage() {
           <p className="text-[var(--text-secondary)] mt-1">Assign and track picker workload</p>
         </div>
         <PermissionGate permission="pickers.create">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
+          <button type="button" className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
             <Plus className="w-4 h-4" />
             Add Picker
           </button>
@@ -161,7 +161,7 @@ export default function PickersPage() {
                 placeholder={activeTab === 'pickers' ? 'Search pickers...' : 'Search assignments...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-[var(--nexus-primary-500)]"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--nexus-primary-500)] focus:border-[var(--nexus-primary-500)]"
               />
             </div>
           </div>
@@ -323,7 +323,7 @@ export default function PickersPage() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">{selectedPicker.name}</h2>
-                <button onClick={() => setSelectedPicker(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                <button type="button" onClick={() => setSelectedPicker(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
                   <span className="sr-only">Close</span>×
                 </button>
               </div>

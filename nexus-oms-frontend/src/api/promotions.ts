@@ -57,9 +57,9 @@ export interface PromotionStats {
 
 const promotionsApi = {
   // CRUD
-  getPromotions: () => api.get('/'),
+  getPromotions: () => api.get(''),
   getPromotion: (id: string) => api.get(`/${id}`),
-  createPromotion: (data: NxPromotion) => api.post('/', data),
+  createPromotion: (data: NxPromotion) => api.post('', data),
   updatePromotion: (id: string, data: Partial<NxPromotion>) => api.put(`/${id}`, data),
   deletePromotion: (id: string) => api.delete(`/${id}`),
 

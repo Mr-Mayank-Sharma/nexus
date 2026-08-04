@@ -19,7 +19,7 @@ import java.util.UUID;
 
 
 @RestController
-@RequestMapping("/api/ai")
+@RequestMapping("/ai")
 public class AiPlatformController {
 
     private final AiGatewayService gatewayService;

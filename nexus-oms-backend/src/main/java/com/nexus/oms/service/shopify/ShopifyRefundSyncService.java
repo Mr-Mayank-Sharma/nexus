@@ -17,6 +17,7 @@ public class ShopifyRefundSyncService {
 
     private final ShopifyClient shopifyClient;
     private final IntegrationStoreService storeService;
+    private final ShopifyTokenService tokenService;
     private final NxIntegrationSyncConfigRepository syncConfigRepository;
     private final NxSyncLogRepository syncLogRepository;
     private final ReturnRepository returnRepository;
@@ -24,12 +25,14 @@ public class ShopifyRefundSyncService {
 
     public ShopifyRefundSyncService(ShopifyClient shopifyClient,
                                      IntegrationStoreService storeService,
+                                     ShopifyTokenService tokenService,
                                      NxIntegrationSyncConfigRepository syncConfigRepository,
                                      NxSyncLogRepository syncLogRepository,
                                      ReturnRepository returnRepository,
                                      OrderRepository orderRepository) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
+        this.tokenService = tokenService;
         this.syncConfigRepository = syncConfigRepository;
         this.syncLogRepository = syncLogRepository;
         this.returnRepository = returnRepository;
@@ -40,7 +43,7 @@ public class ShopifyRefundSyncService {
     public SyncResult pushRefunds(UUID storeId) {
         NxIntegrationStore store = storeService.getStore(storeId);
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
-        String accessToken = storeService.getSetting(storeId, "access_token");
+        String accessToken = tokenService.getAccessToken(storeId);
 
         NxSyncLog syncLog = NxSyncLog.builder()
                 .tenantId(store.getTenantId())

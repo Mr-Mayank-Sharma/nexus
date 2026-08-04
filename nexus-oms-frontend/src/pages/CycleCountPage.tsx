@@ -69,7 +69,7 @@ export default function CycleCountPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Regular inventory reconciliation to ensure stock accuracy</p>
         </div>
         <PermissionGate resource="inventory" action="create">
-          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Count
           </button>
         </PermissionGate>
@@ -100,7 +100,7 @@ export default function CycleCountPage() {
             const isPending = count.status === 'PENDING'
             const isMatch = count.status === 'MATCH'
             return (
-              <div key={count.id} className={`card p-5 ${!isPending ? (isMatch ? 'ring-1 ring-green-200' : 'ring-1 ring-red-200') : ''}`}>
+              <div key={count.id} className={`card p-5 ${!isPending ? (isMatch ? 'ring-1 ring-[var(--nexus-success-200)]' : 'ring-1 ring-[var(--nexus-error-200)]') : ''}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="text-sm font-semibold text-[var(--text-primary)]">{count.sku}</h3>
@@ -123,7 +123,7 @@ export default function CycleCountPage() {
                 )}
                 {isPending && (
                   <PermissionGate resource="inventory" action="edit">
-                    <button onClick={() => { setShowCountModal(count); setCountValue(count.expectedQty) }} className="enterprise-btn enterprise-btn-primary text-xs w-full mt-4">
+                    <button type="button" onClick={() => { setShowCountModal(count); setCountValue(count.expectedQty) }} className="enterprise-btn enterprise-btn-primary text-xs w-full mt-4">
                       <ClipboardCheck className="w-3.5 h-3.5" /> Record Count
                     </button>
                   </PermissionGate>
@@ -147,7 +147,7 @@ export default function CycleCountPage() {
           <div className="enterprise-modal max-w-md" role="dialog" aria-modal="true" aria-labelledby="cycle-count-create-title">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 id="cycle-count-create-title" className="text-lg font-semibold text-[var(--text-primary)]">New Cycle Count</h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded" aria-label="Close dialog"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded" aria-label="Close dialog"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -174,9 +174,9 @@ export default function CycleCountPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="inventory" action="create">
-                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create
                 </button>
@@ -191,7 +191,7 @@ export default function CycleCountPage() {
           <div className="enterprise-modal max-w-md" role="dialog" aria-modal="true" aria-labelledby="cycle-count-record-title">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 id="cycle-count-record-title" className="text-lg font-semibold text-[var(--text-primary)]">Record Count: {showCountModal.sku}</h2>
-              <button onClick={() => setShowCountModal(null)} className="p-1 hover:bg-[var(--surface-muted)] rounded" aria-label="Close dialog"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowCountModal(null)} className="p-1 hover:bg-[var(--surface-muted)] rounded" aria-label="Close dialog"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <p className="text-sm text-[var(--text-secondary)]">Expected quantity: <strong>{showCountModal.expectedQty}</strong></p>
@@ -207,9 +207,9 @@ export default function CycleCountPage() {
               )}
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCountModal(null)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowCountModal(null)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="inventory" action="edit">
-                <button onClick={handlePerformCount} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handlePerformCount} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                   Submit Count
                 </button>

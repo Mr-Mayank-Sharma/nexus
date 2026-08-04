@@ -102,7 +102,13 @@ public class SyncSchedulerService {
         syncConfig.setLastSyncStatus("RUNNING");
         syncConfig = syncConfigRepository.save(syncConfig);
 
-        SyncResult result = dispatchSync(store, syncConfig.getSyncType());
+        SyncResult result = null;
+        try {
+            com.nexus.oms.security.TenantContext.setCurrentTenantId(store.getTenantId());
+            result = dispatchSync(store, syncConfig.getSyncType());
+        } finally {
+            com.nexus.oms.security.TenantContext.clear();
+        }
 
         syncConfig.setLastSyncStatus(result != null ? result.getStatus() : "FAILED");
         syncConfig.setLastSyncMessage(result != null ? result.getStatus() : "No result returned");

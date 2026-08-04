@@ -8,7 +8,9 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.nexus.oms.security.TenantContext;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -37,10 +39,14 @@ public class LlmChatService {
     public LlmChatService(
             @Value("${nexus.ai.openai.api-key:}") String apiKey,
             @Value("${nexus.ai.openai.model:gpt-4o}") String model,
+            @Value("${nexus.ai.timeout-ms:60000}") int timeoutMs,
             SemanticCacheService cacheService,
             AiCostTrackingService costTrackingService,
             MeterRegistry meterRegistry) {
-        this.restTemplate = new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(timeoutMs);
+        this.restTemplate = new RestTemplate(factory);
         this.objectMapper = new ObjectMapper();
         this.cacheService = cacheService;
         this.costTrackingService = costTrackingService;
@@ -102,7 +108,9 @@ public class LlmChatService {
                         UUID.randomUUID().toString(), "LlmChatService.chat", (int) latencyMs, false, null);
 
                 // Cache the response
-                cacheService.put(fullPrompt, model, content, null);
+                UUID tenantId = null;
+                try { tenantId = TenantContext.getCurrentTenantId(); } catch (IllegalStateException ignored) {}
+                cacheService.put(fullPrompt, model, content, tenantId);
 
                 meterRegistry.counter("nexus.ai.llm.success").increment();
                 return content;
@@ -229,7 +237,9 @@ public class LlmChatService {
                 BigDecimal cost = costTrackingService.recordCost(model, "CHAT_USAGE", inputTokens, outputTokens,
                         UUID.randomUUID().toString(), "LlmChatService.chatWithUsage", (int) latencyMs, false, null);
 
-                cacheService.put(fullPrompt, model, content, null);
+                UUID tenantId2 = null;
+                try { tenantId2 = TenantContext.getCurrentTenantId(); } catch (IllegalStateException ignored) {}
+                cacheService.put(fullPrompt, model, content, tenantId2);
 
                 result.put("content", content);
                 result.put("inputTokens", inputTokens);

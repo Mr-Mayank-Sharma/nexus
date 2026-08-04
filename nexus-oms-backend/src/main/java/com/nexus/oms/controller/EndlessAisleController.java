@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/endless-aisle")
+@RequestMapping("/endless-aisle")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class EndlessAisleController {
 

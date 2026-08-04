@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
 import GlobalSearch from '../enterprise/GlobalSearch'
 import AIAssistantPanel from '../enterprise/AIAssistantPanel'
+import ErrorBoundary from './ErrorBoundary'
 import clsx from 'clsx'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import { useWebSocket } from '../../hooks/useWebSocket'
@@ -114,12 +115,21 @@ export default function AppLayout() {
         <main
           id="main-content"
           className={clsx(
-            'flex-1 overflow-y-auto transition-all duration-300 ease-[var(--ease-default)]',
+            'flex-1 overflow-y-auto transition-all duration-300',
             aiPanelOpen ? 'lg:mr-[var(--ai-panel-width)]' : ''
           )}
+          style={{ transitionTimingFunction: 'var(--ease-default)' }}
         >
           <div className="p-6 lg:p-8 max-w-[1440px] mx-auto w-full">
-            <Outlet />
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
+              </div>
+            }>
+              <ErrorBoundary key={location.pathname}>
+                <Outlet />
+              </ErrorBoundary>
+            </Suspense>
           </div>
         </main>
       </div>

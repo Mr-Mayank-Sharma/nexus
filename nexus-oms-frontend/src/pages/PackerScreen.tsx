@@ -54,12 +54,12 @@ export default function PackerScreen() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
-            <PackagePlus className="w-7 h-7 text-emerald-500" />
+            <PackagePlus className="w-7 h-7 text-[var(--nexus-success-500)]" />
             Packing Station
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Scan, pack, and label orders for shipment</p>
         </div>
-        <button onClick={() => navigate('/packing')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
+        <button type="button" onClick={() => navigate('/packing')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
           <Box className="w-4 h-4" /> Full Packing View
         </button>
       </div>
@@ -73,8 +73,8 @@ export default function PackerScreen() {
       {/* Scan Bar */}
       <div className="enterprise-card p-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-            <Scan className="w-5 h-5 text-emerald-600" />
+          <div className="w-10 h-10 rounded-xl bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 flex items-center justify-center">
+            <Scan className="w-5 h-5 text-[var(--nexus-success-600)]" />
           </div>
           <div className="relative flex-1">
             <Autocomplete
@@ -82,11 +82,11 @@ export default function PackerScreen() {
               onChange={setScanInput}
               placeholder="Scan or enter order / package ID..."
               minChars={0}
-              inputClassName="w-full pl-10 pr-4 py-3 text-sm border-2 border-emerald-200 dark:border-emerald-800 rounded-xl bg-[var(--surface-base)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              inputClassName="w-full pl-10 pr-4 py-3 text-sm border-2 border-[var(--nexus-success-200)] dark:border-[var(--nexus-success-800)] rounded-xl bg-[var(--surface-base)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--nexus-success-500)] focus:border-[var(--nexus-success-500)]"
             />
-            <QrCode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+            <QrCode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--nexus-success-400)]" />
           </div>
-          <button className="enterprise-btn-primary text-sm px-6 py-3 bg-emerald-600 hover:bg-emerald-700">
+          <button type="button" className="enterprise-btn-primary text-sm px-6 py-3 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
             <Search className="w-4 h-4" /> Find
           </button>
         </div>
@@ -107,7 +107,7 @@ export default function PackerScreen() {
           ) : (
             <div className="space-y-2">
               {pendingPacks.slice(0, 8).map((pkg: any, i: number) => (
-                <div key={pkg.id || i} className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)] transition-colors">
+                <div key={pkg.id || i} className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-muted)] transition-colors">
                   <div className="flex items-center gap-3">
                     <Package className="w-4 h-4 text-[var(--text-tertiary)]" />
                     <div>
@@ -115,7 +115,7 @@ export default function PackerScreen() {
                       <p className="text-xs text-[var(--text-secondary)]">{pkg.orderNumber || `ORD-${i + 1}`}</p>
                     </div>
                   </div>
-                  <button onClick={() => startPacking.mutate(pkg.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700">
+                  <button type="button" onClick={() => startPacking.mutate(pkg.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
                     Start Packing
                   </button>
                 </div>
@@ -146,8 +146,8 @@ export default function PackerScreen() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="enterprise-btn-secondary text-xs px-2 py-1"><Printer className="w-3 h-3" /></button>
-                    <button onClick={() => completePacking.mutate(pkg.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
+                    <button type="button" className="enterprise-btn-secondary text-xs px-2 py-1"><Printer className="w-3 h-3" /></button>
+                    <button type="button" onClick={() => completePacking.mutate(pkg.id)} className="enterprise-btn-primary text-xs px-3 py-1.5 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
                       <CheckCircle className="w-3 h-3" /> Complete
                     </button>
                   </div>

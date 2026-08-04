@@ -315,7 +315,7 @@ export default function B2BPortalPage() {
                     <div className="flex items-center gap-4 mt-1.5 text-sm text-[var(--text-secondary)] flex-wrap">
                       <span>Order: <span className="font-mono text-[var(--text-secondary)]">{ret.orderId?.slice(0, 8)}</span></span>
                       <span>Reason: <span className="font-medium text-[var(--text-secondary)]">{ret.reason}</span></span>
-                      {ret.refundAmount > 0 && <span className="font-medium text-emerald-600 dark:text-emerald-400">${ret.refundAmount.toFixed(2)} refunded</span>}
+                      {ret.refundAmount > 0 && <span className="font-medium text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]">${ret.refundAmount.toFixed(2)} refunded</span>}
                       <span>{new Date(ret.createdAt).toLocaleDateString()}</span>
                     </div>
                     {ret.items && ret.items.length > 0 && (
@@ -337,7 +337,7 @@ export default function B2BPortalPage() {
                     )}
                     <span className={clsx('text-xs font-medium px-2.5 py-1 rounded-lg',
                       ret.status === 'REQUESTED' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
-                      ret.status === 'REFUNDED' && 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400',
+                      ret.status === 'REFUNDED' && 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-400)]',
                       ret.status === 'REJECTED' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]',
                       (ret.status === 'APPROVED' || ret.status === 'RECEIVED' || ret.status === 'INSPECTED') && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]',
                     )}>
@@ -396,7 +396,7 @@ export default function B2BPortalPage() {
               <div className="space-y-3 bg-[var(--surface-muted)] rounded-xl p-4">
                 {[
                   { label: 'Price List', value: 'Wholesale 2026' },
-                  { label: 'Discount', value: '15% off MSRP', valueClass: 'text-emerald-600 dark:text-emerald-400' },
+                  { label: 'Discount', value: '15% off MSRP', valueClass: 'text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]' },
                   { label: 'Shipping', value: 'Free over $500' },
                 ].map(({ label, value, valueClass }) => (
                   <div key={label} className="flex justify-between">
@@ -416,7 +416,7 @@ export default function B2BPortalPage() {
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Request Return</h2>
-              <button onClick={() => setReturnRequestOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]"><XCircle className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setReturnRequestOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-5">
               <div className="enterprise-form-group">
@@ -433,9 +433,9 @@ export default function B2BPortalPage() {
               </div>
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setReturnRequestOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setReturnRequestOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleReturnRequest} disabled={processing || !returnForm.orderId || !returnForm.reason} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                <button type="button" onClick={handleReturnRequest} disabled={processing || !returnForm.orderId || !returnForm.reason} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
                   {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                   Submit Request
                 </button>

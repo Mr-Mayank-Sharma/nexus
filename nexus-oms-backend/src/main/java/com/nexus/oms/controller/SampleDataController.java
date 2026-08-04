@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
-@RequestMapping("/api/sample-data")
+@RequestMapping("/sample-data")
 public class SampleDataController {
 
     private static final Set<String> VALID_ENTITY_TYPES = Set.of(

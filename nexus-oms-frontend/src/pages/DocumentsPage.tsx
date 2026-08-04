@@ -158,7 +158,7 @@ export default function DocumentsPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Manage documents and files across entities</p>
         </div>
         <PermissionGate resource="settings" action="create">
-          <button onClick={openUpload} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={openUpload} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> Upload Document
           </button>
         </PermissionGate>
@@ -177,11 +177,11 @@ export default function DocumentsPage() {
           className="input w-40"
           placeholder="Entity ID"
         />
-        <button onClick={handleFilterByEntity} className="enterprise-btn enterprise-btn-secondary text-sm">
+        <button type="button" onClick={handleFilterByEntity} className="enterprise-btn enterprise-btn-secondary text-sm">
           <Search className="w-4 h-4" /> Filter
         </button>
         {(entityType || search) && (
-          <button onClick={() => { setEntityType(''); setEntityId(''); setSearch(''); fetchDocs() }} className="enterprise-btn enterprise-btn-ghost text-sm text-[var(--text-secondary)]">
+          <button type="button" onClick={() => { setEntityType(''); setEntityId(''); setSearch(''); fetchDocs() }} className="enterprise-btn enterprise-btn-ghost text-sm text-[var(--text-secondary)]">
             <X className="w-4 h-4" /> Clear
           </button>
         )}
@@ -212,7 +212,7 @@ export default function DocumentsPage() {
                 <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[var(--surface-sunken)]">
               {filtered.map(doc => (
                 <Fragment key={doc.id}>
                   <tr
@@ -293,7 +293,7 @@ export default function DocumentsPage() {
                                   <th className="px-3 py-2 text-left font-semibold text-[var(--text-secondary)]">Uploaded By</th>
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-gray-100">
+                              <tbody className="divide-y divide-[var(--surface-sunken)]">
                                 {versions.map(v => (
                                   <tr key={v.id} className="hover:bg-[var(--surface-sunken)]">
                                     <td className="px-3 py-2 text-[var(--text-secondary)] font-mono">v{v.version}</td>
@@ -323,7 +323,7 @@ export default function DocumentsPage() {
           <div className="enterprise-modal max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Upload Document</h2>
-              <button onClick={() => setShowUploadModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowUploadModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -386,8 +386,8 @@ export default function DocumentsPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowUploadModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
-              <button onClick={handleUpload} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={() => setShowUploadModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={handleUpload} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Upload className="w-4 h-4" />}
                 Upload
               </button>
@@ -401,7 +401,7 @@ export default function DocumentsPage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Upload New Version</h2>
-              <button onClick={() => setShowVersionModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowVersionModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -422,8 +422,8 @@ export default function DocumentsPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowVersionModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
-              <button onClick={handleVersionUpload} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={() => setShowVersionModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={handleVersionUpload} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> : <Upload className="w-4 h-4" />}
                 Upload
               </button>

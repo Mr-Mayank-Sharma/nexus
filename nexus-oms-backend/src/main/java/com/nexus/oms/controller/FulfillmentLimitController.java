@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/fulfillment-limits")
+@RequestMapping("/fulfillment-limits")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class FulfillmentLimitController {
 

@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/ai/chat")
+@RequestMapping("/ai/chat")
 public class AiChatController {
 
     private final LlmChatService chatService;

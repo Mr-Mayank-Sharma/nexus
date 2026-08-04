@@ -8,13 +8,13 @@ import clsx from 'clsx'
 import PermissionGate from '../components/rbac/PermissionGate'
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; icon: typeof Package }> = {
-  PENDING: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-400', icon: Clock },
-  CONFIRMED: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', icon: CheckCircle },
+  PENDING: { bg: 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30', text: 'text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-400)]', icon: Clock },
+  CONFIRMED: { bg: 'bg-[var(--nexus-primary-100)] dark:bg-[var(--nexus-primary-900)]/30', text: 'text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-400)]', icon: CheckCircle },
   ALLOCATED: { bg: 'bg-indigo-100 dark:bg-indigo-900/30', text: 'text-indigo-700 dark:text-indigo-400', icon: Package },
   SHIPPED: { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-700 dark:text-purple-400', icon: Truck },
-  DELIVERED: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', icon: CheckCircle },
-  EXCEPTION: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-400', icon: AlertCircle },
-  CANCELLED: { bg: 'bg-gray-100 dark:bg-gray-800', text: 'text-gray-600 dark:text-gray-400', icon: XCircle },
+  DELIVERED: { bg: 'bg-[var(--nexus-success-100)] dark:bg-[var(--nexus-success-900)]/30', text: 'text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-400)]', icon: CheckCircle },
+  EXCEPTION: { bg: 'bg-[var(--nexus-error-100)] dark:bg-[var(--nexus-error-900)]/30', text: 'text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]', icon: AlertCircle },
+  CANCELLED: { bg: 'bg-[var(--surface-muted)] dark:bg-[var(--surface-base)]', text: 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]', icon: XCircle },
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -133,9 +133,9 @@ export default function FindOrderPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 border border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)]">
+          <AlertCircle className="w-5 h-5 text-[var(--nexus-error-text-[var(--nexus-error-500)])] shrink-0" />
+          <p className="text-sm text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]">{error}</p>
         </div>
       )}
 

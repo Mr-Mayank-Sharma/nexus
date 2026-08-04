@@ -46,11 +46,11 @@ export async function fetchEnhancedInventory(): Promise<any> {
 }
 
 export async function fetchReceiving(): Promise<any> {
-  try { const { data } = await client.get('/inventory/receiving'); return data } catch { return null }
+  try { const { data } = await client.get('/inventory-receipts'); return data } catch { return null }
 }
 
 export async function fetchCycleCounts(): Promise<any> {
-  try { const { data } = await client.get('/inventory/cycle-counts'); return data } catch { return null }
+  try { const { data } = await client.get('/cycle-counts'); return data } catch { return null }
 }
 
 export async function adjustInventory(sku: string, warehouseId: string, qty: number, reason: string): Promise<any> {
@@ -58,23 +58,47 @@ export async function adjustInventory(sku: string, warehouseId: string, qty: num
 }
 
 export async function fetchWarehouses(): Promise<any> {
-  try { const { data } = await client.get('/warehouse'); return data } catch { return null }
+  try { const { data } = await client.get('/warehouses'); return data } catch { return null }
 }
 
 export async function fetchWarehouseZones(): Promise<any> {
-  try { const { data } = await client.get('/warehouse/zones'); return data } catch { return null }
+  try { const { data } = await client.get('/warehouses/zones'); return data } catch { return null }
 }
 
 export async function fetchWavePlans(): Promise<any> {
-  try { const { data } = await client.get('/wave-plans'); return data } catch { return null }
+  try { const { data } = await client.get('/waves'); return data } catch { return null }
+}
+
+export async function fetchWaveStats(): Promise<any> {
+  try { const { data } = await client.get('/waves/stats'); return data } catch { return null }
 }
 
 export async function createWavePlan(waveData: Record<string, any>): Promise<any> {
-  try { const { data } = await client.post('/wave-plans', waveData); return data } catch { return null }
+  try { const { data } = await client.post('/waves', waveData); return data } catch { return null }
 }
 
 export async function updateWavePlan(id: string, body: Record<string, any>): Promise<any> {
-  try { const { data } = await client.patch(`/wave-plans/${id}`, body); return data } catch { return null }
+  try { const { data } = await client.put(`/waves/${id}`, body); return data } catch { return null }
+}
+
+export async function planWave(id: string): Promise<any> {
+  try { const { data } = await client.post(`/waves/${id}/plan`); return data } catch { return null }
+}
+
+export async function releaseWave(id: string): Promise<any> {
+  try { const { data } = await client.post(`/waves/${id}/release`); return data } catch { return null }
+}
+
+export async function completeWave(id: string): Promise<any> {
+  try { const { data } = await client.post(`/waves/${id}/complete`); return data } catch { return null }
+}
+
+export async function cancelWave(id: string): Promise<any> {
+  try { const { data } = await client.post(`/waves/${id}/cancel`); return data } catch { return null }
+}
+
+export async function optimizeWave(id: string): Promise<any> {
+  try { const { data } = await client.post(`/waves/${id}/optimize`); return data } catch { return null }
 }
 
 export async function fetchEmployees(): Promise<any> {
@@ -158,19 +182,19 @@ export async function fetchReturnAnalytics(): Promise<any> {
 }
 
 export async function fetchPayments(status?: string): Promise<any> {
-  try { const { data } = await client.get('/payments', { params: { status } }); return data } catch { return null }
+  try { const { data } = await client.get('/invoicing/payments', { params: { status } }); return data } catch { return null }
 }
 
 export async function fetchInvoices(status?: string): Promise<any> {
-  try { const { data } = await client.get('/invoices', { params: { status } }); return data } catch { return null }
+  try { const { data } = await client.get('/invoicing/invoices', { params: { status } }); return data } catch { return null }
 }
 
 export async function createInvoice(invoiceData: Record<string, any>): Promise<any> {
-  try { const { data } = await client.post('/invoices', invoiceData); return data } catch { return null }
+  try { const { data } = await client.post('/invoicing/invoices', invoiceData); return data } catch { return null }
 }
 
 export async function updateInvoice(id: string, body: Record<string, any>): Promise<any> {
-  try { const { data } = await client.patch(`/invoices/${id}`, body); return data } catch { return null }
+  try { const { data } = await client.put(`/invoicing/invoices/${id}/status`, body); return data } catch { return null }
 }
 
 export async function fetchReconciliation(): Promise<any> {

@@ -3,6 +3,7 @@ package com.nexus.oms.controller;
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.DashboardService;
+import com.nexus.oms.service.ReturnService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,11 @@ import java.util.Map;
 public class AnalyticsController {
 
     private final DashboardService dashboardService;
+    private final ReturnService returnService;
 
-    public AnalyticsController(DashboardService dashboardService) {
+    public AnalyticsController(DashboardService dashboardService, ReturnService returnService) {
         this.dashboardService = dashboardService;
+        this.returnService = returnService;
     }
 
     @GetMapping
@@ -36,8 +39,10 @@ public class AnalyticsController {
     }
 
     @GetMapping("/orders/velocity")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getOrderVelocity() {
-        return ResponseEntity.ok(ApiResponse.success(dashboardService.getOrderVelocity()));
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getOrderVelocity(
+            @RequestParam(defaultValue = "24") int hours) {
+        return ResponseEntity.ok(ApiResponse.success(
+                dashboardService.getOrderVelocity(TenantContext.getCurrentTenantId(), hours)));
     }
 
     @GetMapping("/alerts")
@@ -93,15 +98,7 @@ public class AnalyticsController {
 
     @GetMapping("/returns")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getReturnsAnalytics() {
-        return ResponseEntity.ok(ApiResponse.success(Map.of(
-                "totalReturns", 45,
-                "returnRate", 0.032,
-                "avgRefundAmount", 89.50,
-                "topReasons", List.of(
-                        Map.of("reason", "Defective", "count", 18),
-                        Map.of("reason", "Wrong item", "count", 12),
-                        Map.of("reason", "Not as described", "count", 8)
-                )
-        )));
+        return ResponseEntity.ok(ApiResponse.success(
+                returnService.getReturnsAnalytics(TenantContext.getCurrentTenantId())));
     }
 }

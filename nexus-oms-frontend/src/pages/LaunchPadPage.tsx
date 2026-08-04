@@ -130,7 +130,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 const CATEGORY_BG: Record<string, string> = {
   'Overview': 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
   'Orders & Customers': 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
-  'Fulfillment & Warehouse': 'bg-emerald-50 dark:bg-emerald-950/20',
+  'Fulfillment & Warehouse': 'bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-950)]/20',
   'Inventory': 'bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20',
   'Products & Channels': 'bg-sky-50 dark:bg-sky-950/20',
   'Operations': 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20',
@@ -175,7 +175,7 @@ export default function LaunchPadPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-[var(--surface-sunken)] dark:from-gray-950 dark:to-gray-900">
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-primary-600 via-primary-700 to-indigo-800 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyek0zNiAyNHYySDI0di0yaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-40" />
@@ -255,7 +255,7 @@ export default function LaunchPadPage() {
           <div className="text-center py-20">
             <Search className="w-12 h-12 mx-auto mb-4 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]" />
             <p className="text-lg font-medium text-[var(--text-secondary)]">No apps match "{searchQuery}"</p>
-            <button onClick={() => setSearchQuery('')} className="mt-3 text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] text-[var(--nexus-primary-400)]">
+            <button type="button" onClick={() => setSearchQuery('')} className="mt-3 text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] text-[var(--nexus-primary-400)]">
               Clear search
             </button>
           </div>

@@ -4,6 +4,8 @@ import com.nexus.oms.security.WebhookSecurityService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 @Component
 @Order(2)
 public class WebhookAuthenticationFilter implements Filter {
+
+    private static final Logger log = LoggerFactory.getLogger(WebhookAuthenticationFilter.class);
 
     private final WebhookSecurityService webhookSecurityService;
 
@@ -47,16 +51,25 @@ public class WebhookAuthenticationFilter implements Filter {
                 source = "bigcommerce";
             }
 
-            if (!valid && (path.contains("shopify") || path.contains("bigcommerce"))) {
+            // Always check for duplicate events (for both valid and invalid signatures)
+            if (eventId != null && (path.contains("shopify") || path.contains("bigcommerce"))) {
                 boolean duplicate = webhookSecurityService.isDuplicateEvent(eventId);
                 webhookSecurityService.logWebhookAttempt(source, eventId, valid, "hmac=" + valid + " duplicate=" + duplicate);
 
-                if (!valid) {
-                    res.setStatus(401);
+                if (duplicate) {
+                    log.info("Duplicate webhook event rejected: source={} eventId={}", source, eventId);
+                    res.setStatus(200);
                     res.setContentType("application/json");
-                    res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Invalid webhook signature\"}");
+                    res.getWriter().write("{\"status\":\"ok\",\"message\":\"duplicate event ignored\"}");
                     return;
                 }
+            }
+
+            if (!valid && (path.contains("shopify") || path.contains("bigcommerce"))) {
+                res.setStatus(401);
+                res.setContentType("application/json");
+                res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Invalid webhook signature\"}");
+                return;
             }
         }
 

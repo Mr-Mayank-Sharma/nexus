@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.service.IntegrationStoreService;
+import com.nexus.oms.service.WebhookDedupLedgerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,24 +16,32 @@ import java.util.*;
 @Service
 public class ShopifyWebhookService {
 
+    private static final Logger log = LoggerFactory.getLogger(ShopifyWebhookService.class);
+
     private final ShopifyClient shopifyClient;
     private final IntegrationStoreService storeService;
+    private final ShopifyTokenService tokenService;
     private final NxIntegrationStoreRepository storeRepository;
     private final NxShopifyWebhookRepository webhookRepository;
     private final ShopifyOrderImportService orderImportService;
+    private final WebhookDedupLedgerService dedupLedger;
     private final ObjectMapper objectMapper;
 
     public ShopifyWebhookService(ShopifyClient shopifyClient,
                                   IntegrationStoreService storeService,
+                                  ShopifyTokenService tokenService,
                                   NxIntegrationStoreRepository storeRepository,
                                   NxShopifyWebhookRepository webhookRepository,
                                   ShopifyOrderImportService orderImportService,
+                                  WebhookDedupLedgerService dedupLedger,
                                   ObjectMapper objectMapper) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
+        this.tokenService = tokenService;
         this.storeRepository = storeRepository;
         this.webhookRepository = webhookRepository;
         this.orderImportService = orderImportService;
+        this.dedupLedger = dedupLedger;
         this.objectMapper = objectMapper;
     }
 
@@ -38,7 +49,7 @@ public class ShopifyWebhookService {
     public void registerWebhooks(UUID storeId, String baseUrl) {
         NxIntegrationStore store = storeService.getStore(storeId);
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
-        String accessToken = storeService.getSetting(storeId, "access_token");
+        String accessToken = tokenService.getAccessToken(storeId);
 
         String webhookBase = baseUrl + "/api/v1/shopify/webhooks";
 
@@ -81,7 +92,26 @@ public class ShopifyWebhookService {
         String topic = (String) payload.get("topic");
 
         if (topic != null && topic.startsWith("orders/")) {
+            // Deduplication: extract external order ID and check ledger
+            String externalOrderId = extractShopifyOrderId(payload);
+            if (externalOrderId != null) {
+                NxIntegrationStore store = storeService.getStore(storeId);
+                if (!dedupLedger.tryClaimProcessing(store.getTenantId(), "SHOPIFY", externalOrderId, null)) {
+                    log.info("Skipping duplicate Shopify order webhook: shopify_order_id={}", externalOrderId);
+                    return;
+                }
+            }
             orderImportService.importOrders(storeId);
         }
+    }
+
+    private String extractShopifyOrderId(Map<String, Object> payload) {
+        try {
+            Object id = payload.get("id");
+            if (id != null) return String.valueOf(id);
+            Object orderId = payload.get("order_id");
+            if (orderId != null) return String.valueOf(orderId);
+        } catch (Exception ignored) {}
+        return null;
     }
 }

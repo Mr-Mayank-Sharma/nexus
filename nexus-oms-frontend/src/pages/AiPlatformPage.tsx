@@ -179,16 +179,16 @@ function AiOverview() {
             {healthModels.map((m: Record<string, unknown>) => {
               const perf = modelPerformance.find((p: Record<string, unknown>) => p.id === m.id)
               return (
-                <div key={m.id as string} className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg border border-[var(--border-subtle)] p-4">
+                <div key={m.id as string} className="bg-[var(--surface-sunken)]/50 rounded-lg border border-[var(--border-subtle)] p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="font-medium text-sm text-[var(--text-primary)] dark:text-white">
                       {(m.displayName as string) || (m.name as string) || (m.modelType as string)}
                     </h4>
                     <span className={`w-2.5 h-2.5 rounded-full ${
-                      (m.status as string) === 'ACTIVE' ? 'bg-[var(--nexus-success-50)]0' :
-                      (m.status as string) === 'ERROR' ? 'bg-[var(--nexus-error-50)]0' :
-                      (m.status as string) === 'TRAINING' ? 'bg-[var(--nexus-warning-50)]0' :
-                      'bg-[var(--nexus-warning-50)]0'
+                      (m.status as string) === 'ACTIVE' ? 'bg-[var(--nexus-success-500)]' :
+                      (m.status as string) === 'ERROR' ? 'bg-[var(--nexus-error-500)]' :
+                      (m.status as string) === 'TRAINING' ? 'bg-[var(--nexus-warning-500)]' :
+                      'bg-[var(--nexus-warning-500)]'
                     }`} />
                   </div>
                   <div className="space-y-1.5 text-xs text-[var(--text-secondary)]">
@@ -242,12 +242,12 @@ function AiOverview() {
           ) : (
             <div className="space-y-3">
               {modelPerformance.slice(0, 6).map((m: Record<string, unknown>) => (
-                <div key={m.id as string} className="flex items-center justify-between p-3 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
+                <div key={m.id as string} className="flex items-center justify-between p-3 bg-[var(--surface-sunken)]/50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className={`w-2 h-2 rounded-full ${
-                      (m.status as string) === 'ACTIVE' ? 'bg-[var(--nexus-success-50)]0' :
-                      (m.status as string) === 'TRAINING' ? 'bg-[var(--nexus-warning-50)]0' :
-                      (m.status as string) === 'ERROR' ? 'bg-[var(--nexus-error-50)]0' : 'bg-[var(--surface-muted)]'
+                      (m.status as string) === 'ACTIVE' ? 'bg-[var(--nexus-success-500)]' :
+                      (m.status as string) === 'TRAINING' ? 'bg-[var(--nexus-warning-500)]' :
+                      (m.status as string) === 'ERROR' ? 'bg-[var(--nexus-error-500)]' : 'bg-[var(--surface-muted)]'
                     }`} />
                     <div>
                       <p className="text-sm font-medium text-[var(--text-primary)] dark:text-white">
@@ -287,7 +287,7 @@ function AiOverview() {
                       <span className="font-medium text-[var(--text-primary)] dark:text-white">${Number(amount).toFixed(2)}</span>
                     </div>
                     <div className="w-full bg-[var(--surface-muted)] rounded-full h-2">
-                      <div className="bg-[var(--nexus-primary-50)]0 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="bg-[var(--nexus-primary-500)] h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
@@ -301,7 +301,7 @@ function AiOverview() {
               <p className="text-[var(--text-tertiary)] text-sm">No active deployments</p>
             ) : (
               (dashboard?.deployments as Array<Record<string, unknown>>)?.slice(0, 4).map((d: Record<string, unknown>) => (
-                <div key={d.id as string} className="flex items-center justify-between p-2 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
+                <div key={d.id as string} className="flex items-center justify-between p-2 bg-[var(--surface-sunken)]/50 rounded-lg">
                   <div className="flex items-center gap-2">
                     <Server className="w-4 h-4 text-[var(--text-tertiary)]" />
                     <span className="text-sm text-[var(--text-secondary)]">
@@ -448,7 +448,7 @@ function AiOverview() {
                         <span>{pct.toFixed(0)}%</span>
                       </div>
                       <div className="w-full bg-[var(--surface-muted)] rounded-full h-1.5">
-                        <div className="bg-[var(--nexus-warning-50)]0 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                        <div className="bg-[var(--nexus-warning-500)] h-1.5 rounded-full" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   )
@@ -520,7 +520,7 @@ function AiModelRegistry() {
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               categoryFilter === c
                 ? 'bg-[var(--nexus-primary-600)] text-white'
-                : 'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
+                : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
             }`}
           >
             {c || 'All'}
@@ -582,7 +582,7 @@ function AiModelRegistry() {
                     ) : (
                       <div className="space-y-2">
                         {versions.map(v => (
-                          <div key={v.id} className="flex items-center justify-between p-2 bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 rounded-lg">
+                          <div key={v.id} className="flex items-center justify-between p-2 bg-[var(--surface-sunken)]/50 rounded-lg">
                             <div className="flex items-center gap-3">
                               <span className="text-sm font-mono text-[var(--text-secondary)]">{v.version}</span>
                               <EnterpriseStatusBadge status={v.status} />
@@ -659,7 +659,7 @@ function AiTrainingPipeline() {
             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
               statusFilter === s
                 ? 'bg-[var(--nexus-primary-600)] text-white'
-                : 'bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
+                : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:bg-[var(--surface-muted)]'
             }`}
           >
             {s || 'All'}
@@ -691,7 +691,7 @@ function AiTrainingPipeline() {
           { header: 'Actions', accessor: 'id' as never, render: (j: AiTrainingJob) => (
             j.status === 'PENDING' ? (
               <PermissionGate resource="settings" action="create">
-                <button onClick={() => handleStartJob(j.id)} className="p-1.5 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
+                <button type="button" onClick={() => handleStartJob(j.id)} className="p-1.5 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
                   <Play className="w-3.5 h-3.5" />
                 </button>
               </PermissionGate>
@@ -759,7 +759,7 @@ function AiFeatureStore() {
               </div>
               <div className="w-full bg-[var(--surface-muted)] rounded-full h-1.5">
                 <div
-                  className="bg-[var(--nexus-primary-50)]0 h-1.5 rounded-full"
+                  className="bg-[var(--nexus-primary-500)] h-1.5 rounded-full"
                   style={{ width: `${Math.min(100, (g.count / 20) * 100)}%` }}
                 />
               </div>

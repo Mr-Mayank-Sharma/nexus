@@ -239,17 +239,17 @@ export default function InventoryPage() {
 
       {showAdjustModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAdjustModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+          <div className="enterprise-card p-6 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Adjust Inventory</h2>
-              <button onClick={() => setShowAdjustModal(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-                <X className="w-5 h-5 text-gray-500" />
+              <h2 className="text-lg font-semibold text-[var(--text-primary)]">Adjust Inventory</h2>
+              <button type="button" onClick={() => setShowAdjustModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded-lg transition-colors">
+                <X className="w-5 h-5 text-[var(--text-secondary)]" />
               </button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">SKU</label>
                 <input
                   type="text"
                   list="sku-suggestions"
@@ -265,7 +265,7 @@ export default function InventoryPage() {
                 </datalist>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Quantity Change</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Quantity Change</label>
                 <input
                   type="number"
                   className="enterprise-input w-full"
@@ -273,10 +273,10 @@ export default function InventoryPage() {
                   value={adjustQty}
                   onChange={(e) => setAdjustQty(parseInt(e.target.value) || 0)}
                 />
-                <p className="text-xs text-gray-500 mt-1">Use positive values to add stock, negative to remove.</p>
+                <p className="text-xs text-[var(--text-tertiary)] mt-1">Use positive values to add stock, negative to remove.</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Reason</label>
                 <input
                   type="text"
                   className="enterprise-input w-full"
@@ -288,7 +288,7 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <button onClick={() => setShowAdjustModal(false)} className="enterprise-btn enterprise-btn-secondary">
+              <button type="button" onClick={() => setShowAdjustModal(false)} className="enterprise-btn enterprise-btn-secondary">
                 Cancel
               </button>
               <button

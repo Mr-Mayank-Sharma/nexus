@@ -25,7 +25,7 @@ const STATUS_COLORS: Record<string, string> = {
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
   NORMAL: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-600)]',
-  HIGH: 'bg-orange-100 text-orange-600',
+  HIGH: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-600)]',
   URGENT: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]',
 }
 
@@ -43,10 +43,10 @@ export default function TransfersPage() {
   const [selectedTransfer, setSelectedTransfer] = useState<TransferOrder | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'active', label: 'Active', icon: Clock },
-    { key: 'in-transit', label: 'In Transit', icon: Truck },
-    { key: 'received', label: 'Received', icon: CheckCircle },
-    { key: 'all', label: 'All', icon: Package },
+    { key: 'active', label: 'Active', icon: <Clock className="w-4 h-4" /> },
+    { key: 'in-transit', label: 'In Transit', icon: <Truck className="w-4 h-4" /> },
+    { key: 'received', label: 'Received', icon: <CheckCircle className="w-4 h-4" /> },
+    { key: 'all', label: 'All', icon: <Package className="w-4 h-4" /> },
   ]
 
   const { data: transfers = [], isLoading: loadingTransfers } = useQuery({
@@ -130,7 +130,7 @@ export default function TransfersPage() {
           <p className="text-[var(--text-secondary)] mt-1">Manage inventory transfers between locations</p>
         </div>
         <PermissionGate permission="transfers.create">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
+          <button type="button" className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
             <Plus className="w-4 h-4" />
             New Transfer
           </button>
@@ -180,7 +180,7 @@ export default function TransfersPage() {
                 placeholder="Search transfers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-[var(--nexus-primary-500)]"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--nexus-primary-500)] focus:border-[var(--nexus-primary-500)]"
               />
             </div>
           </div>

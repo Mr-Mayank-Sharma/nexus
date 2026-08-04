@@ -1,14 +1,13 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  BarChart3, TrendingUp, TrendingDown, AlertTriangle,
-  Brain, RefreshCw, Search, Calendar, ArrowUp, ArrowDown,
+  BarChart3, TrendingUp, AlertTriangle,
+  Brain, ArrowUp, ArrowDown,
 } from 'lucide-react'
 import clsx from 'clsx'
-import { getForecasts, getSupplierRisks, getRecommendations } from '../api/aiAgents'
+import { getForecasts, getSupplierRisks, getRecommendations, getBriefing } from '../api/aiAgents'
 import Autocomplete from '../components/common/Autocomplete'
-import PermissionGate from '../components/rbac/PermissionGate'
-import type { AiForecast, AiSupplierRisk, AiRecommendation } from '../api/aiAgents'
+import type { AiForecast, AiSupplierRisk } from '../api/aiAgents'
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
   const max = Math.max(...data)
@@ -50,7 +49,7 @@ function ForecastCard({ forecast }: { forecast: AiForecast }) {
         </div>
       </div>
       <div className="flex items-end gap-2">
-        <MiniSparkline data={forecast.predicted} color={trend ? '#10B981' : '#EF4444'} />
+        <MiniSparkline data={forecast.predicted} color={trend ? 'var(--nexus-success-500)' : 'var(--nexus-error-500)'} />
         <div className="text-right">
           <p className="text-[10px] text-[var(--text-tertiary)]">{forecast.period}</p>
           <p className="text-xs font-medium text-[var(--text-brand)]">{forecast.confidence}% confidence</p>
@@ -79,7 +78,7 @@ function SupplierRiskCard({ risk }: { risk: AiSupplierRisk }) {
   return (
     <div className={clsx(
       'enterprise-card p-4 border-l-4',
-      risk.riskScore >= 70 ? 'border-l-red-500' : risk.riskScore >= 40 ? 'border-l-amber-500' : 'border-l-green-500'
+      risk.riskScore >= 70 ? 'border-l-[var(--nexus-error-500)]' : risk.riskScore >= 40 ? 'border-l-[var(--nexus-warning-500)]' : 'border-l-[var(--nexus-success-500)]'
     )}>
       <div className="flex items-center justify-between mb-2">
         <h4 className="text-sm font-semibold text-[var(--text-primary)]">{risk.supplierName}</h4>
@@ -119,20 +118,32 @@ export default function AiForecastingPage() {
   const { data: forecasts = [], isLoading: fcLoading } = useQuery({
     queryKey: ['ai-forecasts'],
     queryFn: getForecasts,
+    select: (res) => res.data ?? [],
     refetchInterval: 60000,
   })
 
   const { data: suppliers = [], isLoading: supLoading } = useQuery({
     queryKey: ['ai-suppliers'],
     queryFn: getSupplierRisks,
+    select: (res) => res.data ?? [],
     refetchInterval: 60000,
   })
 
   const { data: recommendations = [], isLoading: recLoading } = useQuery({
     queryKey: ['ai-recs-forecast'],
     queryFn: () => getRecommendations(),
+    select: (res) => res.data ?? [],
     refetchInterval: 60000,
   })
+
+  const { data: briefing = null } = useQuery({
+    queryKey: ['ai-briefing-insights'],
+    queryFn: getBriefing,
+    select: (res) => res.data ?? null,
+    refetchInterval: 60000,
+  })
+
+  const insights = briefing?.insights ?? []
 
   const filteredSuppliers = useMemo(() => {
     if (!searchTerm.trim()) return suppliers
@@ -170,7 +181,7 @@ export default function AiForecastingPage() {
             )}
           >
             {tab.label}
-            <span className="text-[10px] bg-[var(--surface-muted)] bg-[var(--surface-base)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded-full">{tab.count}</span>
+            <span className="text-[10px] bg-[var(--surface-muted)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded-full">{tab.count}</span>
           </button>
         ))}
       </div>
@@ -179,7 +190,7 @@ export default function AiForecastingPage() {
         <>
           {fcLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-24 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" /></div>)}
+              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-24 bg-[var(--surface-muted)] rounded" /></div>)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -192,27 +203,41 @@ export default function AiForecastingPage() {
               <h3 className="font-semibold text-[var(--text-primary)]">AI Insights</h3>
             </div>
             <div className="space-y-3 text-sm">
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10 border border-[var(--nexus-primary-100)] dark:border-[var(--nexus-primary-900)]/20">
-                <TrendingUp className="w-5 h-5 text-[var(--nexus-primary-500)] mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-medium text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)]">Order volume expected to increase 22% next week</p>
-                  <p className="text-xs text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] mt-0.5">Peak predicted on Thursday with ~15,200 orders. Ensure adequate staffing.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/10 border border-[var(--nexus-warning-100)] dark:border-[var(--nexus-warning-900)]/20">
-                <AlertTriangle className="w-5 h-5 text-[var(--nexus-warning-500)] mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-medium text-[var(--nexus-warning-800)] dark:text-[var(--nexus-warning-200)]">Warehouse capacity at 83%, projected to hit 91%</p>
-                  <p className="text-xs text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)] mt-0.5">Consider opening secondary warehouse or extending receiving hours.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 p-3 rounded-lg bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/10 border border-[var(--nexus-success-100)] dark:border-[var(--nexus-success-900)]/20">
-                <TrendingUp className="w-5 h-5 text-[var(--nexus-success-500)] mt-0.5 shrink-0" />
-                <div>
-                  <p className="font-medium text-[var(--nexus-success-800)] dark:text-[var(--nexus-success-200)]">Carrier SLA predicted to recover to 97.5% by Sunday</p>
-                  <p className="text-xs text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] mt-0.5">FedEx performance remains strongest at 98.3% in North Zone.</p>
-                </div>
-              </div>
+              {insights.length === 0 ? (
+                <p className="text-sm text-[var(--text-tertiary)]">No insights available yet</p>
+              ) : (
+                insights.map((insight, i) => {
+                  const isNegative = insight.type === 'negative'
+                  const isPositive = insight.type === 'positive'
+                  return (
+                    <div
+                      key={i}
+                      className={clsx(
+                        'flex items-start gap-3 p-3 rounded-lg border',
+                        isPositive
+                          ? 'bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/10 border-[var(--nexus-success-100)] dark:border-[var(--nexus-success-900)]/20'
+                          : isNegative
+                            ? 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/10 border-[var(--nexus-warning-100)] dark:border-[var(--nexus-warning-900)]/20'
+                            : 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10 border-[var(--nexus-primary-100)] dark:border-[var(--nexus-primary-900)]/20'
+                      )}
+                    >
+                      {isNegative ? (
+                        <AlertTriangle className="w-5 h-5 text-[var(--nexus-warning-500)] mt-0.5 shrink-0" />
+                      ) : (
+                        <TrendingUp className={clsx('w-5 h-5 mt-0.5 shrink-0', isPositive ? 'text-[var(--nexus-success-500)]' : 'text-[var(--nexus-primary-500)]')} />
+                      )}
+                      <div>
+                        <p className={clsx(
+                          'font-medium',
+                          isPositive ? 'text-[var(--nexus-success-800)] dark:text-[var(--nexus-success-200)]' : isNegative ? 'text-[var(--nexus-warning-800)] dark:text-[var(--nexus-warning-200)]' : 'text-[var(--nexus-primary-800)] dark:text-[var(--nexus-primary-200)]'
+                        )}>
+                          {insight.text}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
             </div>
           </div>
         </>
@@ -225,7 +250,7 @@ export default function AiForecastingPage() {
           </div>
           {supLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-20 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" /></div>)}
+              {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-20 bg-[var(--surface-muted)] rounded" /></div>)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -239,7 +264,7 @@ export default function AiForecastingPage() {
         <>
           {recLoading ? (
             <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-16 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" /></div>)}
+              {[1, 2, 3].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-16 bg-[var(--surface-muted)] rounded" /></div>)}
             </div>
           ) : recommendations.length === 0 ? (
             <div className="enterprise-card p-12 text-center">
@@ -249,7 +274,7 @@ export default function AiForecastingPage() {
           ) : (
             <div className="space-y-3">
               {recommendations.map(rec => (
-                <div key={rec.id} className="enterprise-card p-5 border-l-4 border-l-primary-500">
+                <div key={rec.id} className="enterprise-card p-5 border-l-4 border-l-[var(--nexus-primary-500)]">
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -270,11 +295,11 @@ export default function AiForecastingPage() {
                         <span className="text-xs font-medium">{rec.confidence}%</span>
                       </div>
                       <div className="w-20 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden ml-auto">
-                        <div className={clsx('h-full rounded-full', rec.confidence >= 90 ? 'bg-[var(--nexus-success-50)]0' : rec.confidence >= 80 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0')} style={{ width: `${rec.confidence}%` }} />
+                        <div className={clsx('h-full rounded-full', rec.confidence >= 90 ? 'bg-[var(--nexus-success-500)]' : rec.confidence >= 80 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-error-500)]')} style={{ width: `${rec.confidence}%` }} />
                       </div>
-                      {rec.reasoning.length > 0 && (
+                      {(rec.reasoning?.length ?? 0) > 0 && (
                         <div className="mt-2 text-[10px] text-[var(--text-tertiary)]">
-                          {rec.reasoning.map((r, i) => <p key={i}>• {r}</p>)}
+                          {rec.reasoning?.map((r, i) => <p key={i}>• {r}</p>)}
                         </div>
                       )}
                     </div>

@@ -323,6 +323,21 @@ public class AuthService {
         }
     }
 
+    public AuthResponse refreshToken(String refreshToken) {
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new BadRequestException("Invalid or expired refresh token");
+        }
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new BadRequestException("Token is not a refresh token");
+        }
+
+        String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
+        NxUser user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+        return buildAuthResponse(user);
+    }
+
     private NxUser findOrCreateSsoUser(String email, String provider, String tenantId) {
         String username = email.split("@")[0];
         NxUser user = userRepository.findByUsername(username).orElse(null);
@@ -364,8 +379,11 @@ public class AuthService {
             log.warn("Failed to fetch permissions for user {} role {}: {}", user.getUsername(), user.getRole(), e.getMessage());
         }
 
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername(), user.getRole(), user.getTenantId());
+
         return AuthResponse.builder()
                 .accessToken(token)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .expiresIn(86400000L)
                 .role(user.getRole())

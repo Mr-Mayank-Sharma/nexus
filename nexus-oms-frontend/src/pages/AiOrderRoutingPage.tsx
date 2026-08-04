@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  GitBranch, Brain, Loader2, CheckCircle, XCircle, AlertTriangle,
+  GitBranch, Brain, CheckCircle, XCircle, AlertTriangle,
   Clock, RefreshCw,
 } from 'lucide-react'
-import { getAgents, getDecisions, getRoutingQueue, approveRecommendation, rejectRecommendation } from '../api/aiAgents'
+import { getAgents, getRoutingQueue, approveRecommendation, rejectRecommendation } from '../api/aiAgents'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
-import type { AiAgent, AiDecision, RoutingQueueItem } from '../api/aiAgents'
+import type { AiAgent } from '../api/aiAgents'
 
 interface OverrideState {
   orderId: string
@@ -16,28 +16,19 @@ interface OverrideState {
   agentName: string
 }
 
-const DECISION_TYPE_STYLES: Record<string, string> = {
-  fraud_check: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] border-[var(--nexus-error-200)]',
-  routing: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] border-[var(--nexus-primary-200)]',
-  carrier_select: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] border-[var(--nexus-ai-200)]',
-  inventory_alloc: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]',
-  packaging: 'bg-orange-100 text-orange-700 border-orange-200',
-  picking: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]',
-}
-
 function statusColor(status: AiAgent['status']) {
   switch (status) {
-    case 'active': return 'bg-[var(--nexus-success-50)]0'
-    case 'training': return 'bg-[var(--nexus-warning-50)]0'
+    case 'active': return 'bg-[var(--nexus-success-500)]'
+    case 'training': return 'bg-[var(--nexus-warning-500)]'
     case 'idle': return 'bg-[var(--nexus-warning-400)]'
-    case 'error': return 'bg-[var(--nexus-error-50)]0'
+    case 'error': return 'bg-[var(--nexus-error-500)]'
   }
 }
 
 function confidenceColor(value: number) {
-  if (value >= 90) return 'bg-[var(--nexus-success-50)]0'
-  if (value >= 70) return 'bg-[var(--nexus-warning-50)]0'
-  return 'bg-[var(--nexus-error-50)]0'
+  if (value >= 90) return 'bg-[var(--nexus-success-500)]'
+  if (value >= 70) return 'bg-[var(--nexus-warning-500)]'
+  return 'bg-[var(--nexus-error-500)]'
 }
 
 function confidenceTextColor(value: number) {
@@ -46,14 +37,8 @@ function confidenceTextColor(value: number) {
   return 'text-[var(--nexus-error-600)]'
 }
 
-function formatTime(ms: number): string {
-  if (ms < 1000) return `${ms}ms`
-  return `${(ms / 1000).toFixed(1)}s`
-}
-
 export default function AiOrderRoutingPage() {
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'queue' | 'log'>('queue')
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
   const [overrideState, setOverrideState] = useState<OverrideState | null>(null)
   const [overrideReason, setOverrideReason] = useState('')
@@ -62,18 +47,14 @@ export default function AiOrderRoutingPage() {
   const { data: agents = [], isLoading: agentsLoading } = useQuery({
     queryKey: ['ai-agents'],
     queryFn: getAgents,
+    select: (res) => res.data ?? [],
     refetchInterval: 30000,
   })
 
-  const { data: decisions = [], isLoading: decisionsLoading } = useQuery({
-    queryKey: ['ai-decisions', 50],
-    queryFn: () => getDecisions(50),
-    refetchInterval: 15000,
-  })
-
-  const { data: queueItems = [], isLoading: queueLoading } = useQuery({
+  const { data: queueItems = [] } = useQuery({
     queryKey: ['ai-routing-queue'],
     queryFn: () => getRoutingQueue(20),
+    select: (res) => res.data ?? [],
     refetchInterval: 10000,
   })
 
@@ -114,7 +95,6 @@ export default function AiOrderRoutingPage() {
             <button
               onClick={() => {
                 queryClient.invalidateQueries({ queryKey: ['ai-agents'] })
-                queryClient.invalidateQueries({ queryKey: ['ai-decisions'] })
               }}
               className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm"
             >
@@ -153,13 +133,13 @@ export default function AiOrderRoutingPage() {
           </div>
           <div className="flex items-center gap-3 text-xs text-[var(--text-secondary)]">
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[var(--nexus-success-50)]0" /> {activeAgents} Active
+              <span className="w-2 h-2 rounded-full bg-[var(--nexus-success-500)]" /> {activeAgents} Active
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[var(--nexus-warning-50)]0" /> {trainingAgents} Idle/Training
+              <span className="w-2 h-2 rounded-full bg-[var(--nexus-warning-500)]" /> {trainingAgents} Idle/Training
             </span>
             <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[var(--nexus-error-50)]0" /> {errorAgents} Error
+              <span className="w-2 h-2 rounded-full bg-[var(--nexus-error-500)]" /> {errorAgents} Error
             </span>
           </div>
         </div>
@@ -193,7 +173,7 @@ export default function AiOrderRoutingPage() {
                 {expandedAgent === agent.id && (
                   <div className="mt-2 pt-2 border-t border-[var(--border-subtle)] text-[10px] space-y-1">
                     <p className="text-[var(--text-tertiary)]">Model: <span className="text-[var(--text-secondary)]">{agent.model}</span></p>
-                    <p className="text-[var(--text-tertiary)]">Last run: <span className="text-[var(--text-secondary)]">{agent.lastRun}</span></p>
+                    <p className="text-[var(--text-tertiary)]">Version: <span className="text-[var(--text-secondary)]">{agent.modelVersion}</span></p>
                     <p className="text-[var(--text-tertiary)]">Status: <span className="capitalize text-[var(--text-secondary)]">{agent.status}</span></p>
                   </div>
                 )}
@@ -203,33 +183,8 @@ export default function AiOrderRoutingPage() {
         )}
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-[var(--border-subtle)]">
-        <button
-          onClick={() => setActiveTab('queue')}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'queue'
-              ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
-              : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-          }`}
-        >
-          Pending Brokering Queue
-        </button>
-        <button
-          onClick={() => setActiveTab('log')}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'log'
-              ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
-              : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-          }`}
-        >
-          Routing Decision Log
-        </button>
-      </div>
-
       {/* Queue Tab */}
-      {activeTab === 'queue' && (
-        <div className="enterprise-card overflow-hidden">
+      <div className="enterprise-card overflow-hidden">
           {queueItems.length === 0 ? (
             <div className="p-12 text-center">
               <CheckCircle className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
@@ -335,89 +290,6 @@ export default function AiOrderRoutingPage() {
             </div>
           )}
         </div>
-      )}
-
-      {/* Decision Log Tab */}
-      {activeTab === 'log' && (
-        <div className="enterprise-card overflow-hidden">
-          {decisionsLoading ? (
-            <div className="p-12 text-center">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-[var(--text-tertiary)]" />
-              <p className="text-sm text-[var(--text-secondary)]">Loading decisions...</p>
-            </div>
-          ) : decisions.length === 0 ? (
-            <div className="p-12 text-center">
-              <Brain className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
-              <p className="font-medium text-[var(--text-secondary)]">No decisions recorded</p>
-              <p className="text-sm text-[var(--text-tertiary)] mt-1">Decisions will appear here as the AI processes orders</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="enterprise-table w-full">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Timestamp</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Order #</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Decision Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Agent</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Confidence</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Override</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Processing</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border-subtle)]">
-                  {decisions.map(dec => {
-                    const decisionTypeLabel = dec.decisionType.replace(/_/g, ' ')
-                    const badgeColor = DECISION_TYPE_STYLES[dec.decisionType] || 'bg-[var(--surface-muted)] text-[var(--text-secondary)] border-[var(--border-default)]'
-                    return (
-                      <tr key={dec.id} className="enterprise-table-row">
-                        <td className="px-4 py-3 text-xs text-[var(--text-tertiary)] whitespace-nowrap">
-                          {new Date(dec.createdAt).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-mono font-medium text-[var(--color-primary)]">
-                          {dec.orderNumber || '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border capitalize ${badgeColor}`}>
-                            {decisionTypeLabel}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{dec.agentName}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${confidenceColor(dec.confidence)}`}
-                                style={{ width: `${Math.round(dec.confidence)}%` }}
-                              />
-                            </div>
-                            <span className={`text-xs font-medium ${confidenceTextColor(dec.confidence)}`}>
-                              {Math.round(dec.confidence)}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {dec.wasOverridden ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-[var(--nexus-warning-700)] bg-[var(--nexus-warning-50)] px-2 py-0.5 rounded-full">
-                              <AlertTriangle className="w-3 h-3" />
-                              {dec.overriddenBy ? `Overridden by ${dec.overriddenBy}` : 'Overridden'}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-[var(--nexus-success-600)]">Auto-approved</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right text-xs text-[var(--text-tertiary)]">
-                          {formatTime(dec.processingTimeMs)}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Override Modal */}
       {overrideState && (
@@ -437,7 +309,7 @@ export default function AiOrderRoutingPage() {
                   <div className="flex items-center gap-2 mt-1">
                     <div className="w-20 h-1.5 bg-[var(--nexus-warning-200)] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[var(--nexus-warning-50)]0 rounded-full"
+                        className="h-full bg-[var(--nexus-warning-500)] rounded-full"
                         style={{ width: `${overrideState.currentConfidence}%` }}
                       />
                     </div>
@@ -470,7 +342,7 @@ export default function AiOrderRoutingPage() {
             </div>
 
             <div className="flex justify-end gap-2 mt-6">
-              <button className="enterprise-btn-secondary" onClick={() => setOverrideState(null)}>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => setOverrideState(null)}>
                 Cancel
               </button>
               <PermissionGate resource="settings" action="edit">

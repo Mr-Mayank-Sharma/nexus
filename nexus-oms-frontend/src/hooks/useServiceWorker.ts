@@ -38,6 +38,17 @@ export function useServiceWorker() {
     if (!('serviceWorker' in navigator)) return
 
     const onLoad = async () => {
+      if (import.meta.env.DEV) {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        for (const reg of registrations) {
+          await reg.unregister()
+        }
+        if (registrations.length > 0) {
+          window.location.reload()
+        }
+        return
+      }
+
       const reg = await navigator.serviceWorker.register('/sw.js')
 
       reg.addEventListener('updatefound', () => {

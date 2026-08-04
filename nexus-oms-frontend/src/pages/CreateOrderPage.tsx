@@ -108,11 +108,11 @@ export default function CreateOrderPage() {
       <div className="flex items-center gap-2">
         {['customer', 'items', 'shipping', 'review'].map((s, i) => (
           <div key={s} className="flex items-center gap-2">
-            <button onClick={() => setStep(s as any)} className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors', step === s ? 'bg-[var(--nexus-primary-600)] text-white' : (['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-[var(--nexus-success-50)]0 text-white' : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]'))}>
+            <button type="button" onClick={() => setStep(s as any)} className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors', step === s ? 'bg-[var(--nexus-primary-600)] text-white' : (['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-[var(--nexus-success-500)] text-white' : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]'))}>
               {['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? <CheckCircle className="w-4 h-4" /> : i + 1}
             </button>
             <span className={clsx('text-xs font-medium capitalize', step === s ? 'text-[var(--text-brand)]' : 'text-[var(--text-tertiary)]')}>{s}</span>
-            {i < 3 && <div className={clsx('w-8 h-0.5', ['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-[var(--nexus-success-50)]0' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)]')} />}
+            {i < 3 && <div className={clsx('w-8 h-0.5', ['customer', 'items', 'shipping', 'review'].indexOf(step) > i ? 'bg-[var(--nexus-success-500)]' : 'bg-[var(--surface-muted)]')} />}
           </div>
         ))}
       </div>
@@ -131,9 +131,9 @@ export default function CreateOrderPage() {
             minChars={0}
             className="mb-4"
           />
-          <div className="mt-4 p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50">
+          <div className="mt-4 p-3 rounded-lg bg-[var(--surface-sunken)]/50">
             <p className="text-xs text-[var(--text-tertiary)] mb-2">Or create as guest</p>
-            <button onClick={() => { setSelectedCustomer({ id: 'guest', name: 'Guest Customer', email: '' }); setStep('items') }} className="text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] font-medium">Continue as Guest →</button>
+            <button type="button" onClick={() => { setSelectedCustomer({ id: 'guest', name: 'Guest Customer', email: '' }); setStep('items') }} className="text-sm text-[var(--text-brand)] hover:text-[var(--nexus-primary-700)] font-medium">Continue as Guest →</button>
           </div>
         </div>
       )}
@@ -157,15 +157,15 @@ export default function CreateOrderPage() {
               <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Selected Items ({lineItems.length})</h3>
               <div className="space-y-2">
                 {lineItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 border border-[var(--border-subtle)]">
+                  <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface-sunken)]/50 border border-[var(--border-subtle)]">
                     <div className="flex-1 min-w-0"><p className="text-sm font-medium text-[var(--text-primary)]">{item.productName}</p><p className="text-xs text-[var(--text-tertiary)]">{item.sku} — ${item.price.toFixed(2)} each</p></div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => updateQty(item.id, item.qty - 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">−</button>
+                      <button type="button" onClick={() => updateQty(item.id, item.qty - 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">−</button>
                       <span className="w-8 text-center text-sm font-semibold text-[var(--text-primary)]">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, item.qty + 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">+</button>
+                      <button type="button" onClick={() => updateQty(item.id, item.qty + 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">+</button>
                     </div>
                     <span className="text-sm font-semibold text-[var(--text-primary)] w-20 text-right">${(item.price * item.qty).toFixed(2)}</span>
-                    <button onClick={() => removeItem(item.id)} className="p-1.5 rounded-lg hover:bg-[var(--nexus-error-50)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)]"><Trash2 className="w-4 h-4" /></button>
+                    <button type="button" onClick={() => removeItem(item.id)} className="p-1.5 rounded-lg hover:bg-[var(--nexus-error-50)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)]"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
               </div>
@@ -173,7 +173,7 @@ export default function CreateOrderPage() {
             </div>
           )}
           <div className="flex justify-end mt-4">
-            <button onClick={() => setStep('shipping')} disabled={lineItems.length === 0} className="enterprise-btn-primary disabled:opacity-50">Continue to Shipping →</button>
+            <button type="button" onClick={() => setStep('shipping')} disabled={lineItems.length === 0} className="enterprise-btn-primary disabled:opacity-50">Continue to Shipping →</button>
           </div>
         </div>
       )}
@@ -191,7 +191,7 @@ export default function CreateOrderPage() {
               <label className="enterprise-label">Shipping Method</label>
               <div className="flex gap-3">
                 {[{ id: 'ground', label: 'Ground', price: '$9.99', eta: '5-7 days' }, { id: 'express', label: 'Express', price: '$24.99', eta: '2-3 days' }, { id: 'overnight', label: 'Overnight', price: '$49.99', eta: '1 day' }].map(m => (
-                  <button key={m.id} onClick={() => setShippingInfo(f => ({ ...f, method: m.id }))} className={clsx('flex-1 p-3 rounded-lg border text-center transition-colors', shippingInfo.method === m.id ? 'border-[var(--nexus-primary-500)] bg-[var(--interactive-selected)]' : 'border-[var(--border-default)] hover:border-[var(--border-default)]')}>
+                  <button type="button" key={m.id} onClick={() => setShippingInfo(f => ({ ...f, method: m.id }))} className={clsx('flex-1 p-3 rounded-lg border text-center transition-colors', shippingInfo.method === m.id ? 'border-[var(--nexus-primary-500)] bg-[var(--interactive-selected)]' : 'border-[var(--border-default)] hover:border-[var(--border-default)]')}>
                     <p className="text-sm font-semibold text-[var(--text-primary)]">{m.label}</p>
                     <p className="text-xs text-[var(--text-tertiary)]">{m.price} · {m.eta}</p>
                   </button>
@@ -201,8 +201,8 @@ export default function CreateOrderPage() {
             <div className="col-span-2"><label className="enterprise-label">Order Notes</label><textarea value={shippingInfo.notes} onChange={e => setShippingInfo(f => ({ ...f, notes: e.target.value }))} className="enterprise-input w-full" rows={2} placeholder="Optional notes for this order..." /></div>
           </div>
           <div className="flex justify-between mt-4">
-            <button onClick={() => setStep('items')} className="enterprise-btn-secondary">← Back to Items</button>
-            <button onClick={() => setStep('review')} className="enterprise-btn-primary">Review Order →</button>
+            <button type="button" onClick={() => setStep('items')} className="enterprise-btn-secondary">← Back to Items</button>
+            <button type="button" onClick={() => setStep('review')} className="enterprise-btn-primary">Review Order →</button>
           </div>
         </div>
       )}
@@ -228,9 +228,9 @@ export default function CreateOrderPage() {
               <label htmlFor="createAnother" className="text-sm text-[var(--text-secondary)]">Create another order after submission</label>
             </div>
             <div className="flex justify-between mt-4">
-              <button onClick={() => setStep('shipping')} className="enterprise-btn-secondary">← Back</button>
+              <button type="button" onClick={() => setStep('shipping')} className="enterprise-btn-secondary">← Back</button>
               <PermissionGate resource="orders" action="create">
-                <button onClick={handleSubmitOrder} className="enterprise-btn-primary bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]"><CheckCircle className="w-4 h-4" /> Submit Order</button>
+                <button type="button" onClick={handleSubmitOrder} className="enterprise-btn-primary bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]"><CheckCircle className="w-4 h-4" /> Submit Order</button>
               </PermissionGate>
             </div>
           </div>

@@ -21,4 +21,7 @@ public interface PickerRepository extends JpaRepository<NxPicker, UUID> {
 
     @Query("SELECT p FROM NxPicker p WHERE p.nodeId = :nodeId AND p.active = true AND p.status != 'OFFLINE' ORDER BY p.itemsPickedToday DESC")
     List<NxPicker> findActivePickers(@Param("nodeId") UUID nodeId);
+
+    @Query("SELECT COUNT(p) FROM NxPicker p WHERE p.tenantId = :tenantId AND p.active = true AND p.status != 'OFFLINE'")
+    long countActiveByTenantId(@Param("tenantId") UUID tenantId);
 }

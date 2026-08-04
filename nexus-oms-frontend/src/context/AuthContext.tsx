@@ -10,7 +10,7 @@ interface AuthContextType {
   isLoading: boolean
   mfaRequired: boolean
   mfaToken: string | null
-  login: (credentials: LoginRequest) => Promise<void>
+  login: (credentials: LoginRequest) => Promise<boolean>
   verifyMfa: (code: string) => Promise<void>
   ssoLogin: (provider: string, idToken: string, tenantId?: string) => Promise<void>
   logout: () => void
@@ -42,8 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(storedToken)
       try {
         const parsed = JSON.parse(storedUser)
-        if (storedPermissions) parsed.permissions = JSON.parse(storedPermissions)
-        if (storedSecurityGroups) parsed.securityGroups = JSON.parse(storedSecurityGroups)
+        parsed.permissions = storedPermissions ? JSON.parse(storedPermissions) : []
+        parsed.securityGroups = storedSecurityGroups ? JSON.parse(storedSecurityGroups) : []
         setUser(parsed)
       } catch {
         localStorage.removeItem('nexus_token')
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  const login = useCallback(async (credentials: LoginRequest) => {
+  const login = useCallback(async (credentials: LoginRequest): Promise<boolean> => {
     setError(null)
     const response = await authApi.login(credentials)
 
@@ -75,10 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (authData.mfaRequired) {
       setMfaRequired(true)
       setMfaToken(authData.mfaToken ?? null)
-      return
+      return true
     }
 
     storeAuth(authData)
+    return false
   }, [])
 
   const verifyMfa = useCallback(async (code: string) => {

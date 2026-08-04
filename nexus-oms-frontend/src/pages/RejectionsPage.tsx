@@ -23,12 +23,12 @@ const INVENTORY_ACTION_COLORS: Record<string, string> = {
   RESTOCK: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-800)]',
   DAMAGE_WRITE_OFF: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-800)]',
   RETURN_TO_VENDOR: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-800)]',
-  QUARANTINE: 'bg-orange-100 text-orange-800',
+  QUARANTINE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-800)]',
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
   QUALITY: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-800)]',
-  DAMAGED: 'bg-orange-100 text-orange-800',
+  DAMAGED: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-800)]',
   WRONG_ITEM: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-800)]',
   CUSTOMER: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-800)]',
   INVENTORY: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-800)]',
@@ -43,10 +43,10 @@ export default function RejectionsPage() {
   const [selectedRejection, setSelectedRejection] = useState<OrderRejection | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'pending', label: 'Pending', icon: Clock },
-    { key: 'processed', label: 'Processed', icon: CheckCircle },
-    { key: 'reasons', label: 'Reasons', icon: Shield },
-    { key: 'all', label: 'All', icon: Package },
+    { key: 'pending', label: 'Pending', icon: <Clock className="w-4 h-4" /> },
+    { key: 'processed', label: 'Processed', icon: <CheckCircle className="w-4 h-4" /> },
+    { key: 'reasons', label: 'Reasons', icon: <Shield className="w-4 h-4" /> },
+    { key: 'all', label: 'All', icon: <Package className="w-4 h-4" /> },
   ]
 
   const { data: pendingRejections = [], isLoading: loadingPending } = useQuery({
@@ -166,7 +166,7 @@ export default function RejectionsPage() {
                 placeholder={activeTab === 'reasons' ? 'Search reasons...' : 'Search rejections...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-[var(--nexus-primary-500)]"
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--nexus-primary-500)] focus:border-[var(--nexus-primary-500)]"
               />
             </div>
           </div>
@@ -296,7 +296,7 @@ export default function RejectionsPage() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">Rejection Details</h2>
-                <button onClick={() => setSelectedRejection(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                <button type="button" onClick={() => setSelectedRejection(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
                   <XCircle className="w-6 h-6" />
                 </button>
               </div>

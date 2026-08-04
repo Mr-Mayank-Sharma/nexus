@@ -4,15 +4,17 @@ import com.nexus.oms.entity.NxBrokeringQueue;
 import com.nexus.oms.entity.NxBrokeringRun;
 import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.BrokeringService;
+import com.nexus.oms.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/brokering")
+@RequestMapping("/brokering")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class BrokeringController {
 
@@ -20,6 +22,13 @@ public class BrokeringController {
 
     public BrokeringController(BrokeringService brokeringService) {
         this.brokeringService = brokeringService;
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NxBrokeringRun>>> getAllRuns() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<NxBrokeringRun> runs = brokeringService.getRunHistory(tenantId);
+        return ResponseEntity.ok(ApiResponse.success(runs));
     }
 
     @PostMapping("/enqueue")

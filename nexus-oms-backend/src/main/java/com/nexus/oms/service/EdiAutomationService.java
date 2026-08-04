@@ -144,6 +144,27 @@ public class EdiAutomationService {
         return ediPartnerRepository.save(partner);
     }
 
+    /**
+     * Dry-run parse: returns parsed EDI data without persisting.
+     * Validates structure, extracts fields, returns errors — no DB write.
+     */
+    public Map<String, Object> dryRun(String content, String docType) {
+        if (content == null || content.isBlank()) {
+            throw new BadRequestException("EDI content cannot be empty");
+        }
+
+        Map<String, Object> parsedData = parseEdiContent(content, docType);
+        List<String> errors = validateParsedData(parsedData, docType);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("docType", docType);
+        result.put("parsedData", parsedData);
+        result.put("valid", errors.isEmpty());
+        result.put("errors", errors);
+        result.put("segmentCount", content.split("~").length);
+        return result;
+    }
+
     // ---- Private EDI parsing ----
 
     private Map<String, Object> parseEdiContent(String content, String docType) {

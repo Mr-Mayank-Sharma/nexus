@@ -252,7 +252,7 @@ export default function PickingPage() {
       td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px}
       .no-print{text-align:center;margin-bottom:12px}
       </style></head><body>
-      <button class="no-print" onclick="window.print()" style="padding:8px 24px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:14px">Print Picklist</button>
+      <button type="button" class="no-print" onclick="window.print()" style="padding:8px 24px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:14px">Print Picklist</button>
       <h1>${pl.name}</h1>
       <div class="meta">Status: ${pl.status} | Wave: ${pl.waveType} | Priority: ${pl.priority} | ${pl.totalItems} items</div>
       ${pl.assigneeId ? `<div class="meta">Picker: ${pl.assigneeId}</div>` : ''}
@@ -347,8 +347,8 @@ export default function PickingPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
-                          <div className="w-24 h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                            <div className="h-full bg-[var(--color-primary)] rounded-full transition-all"
+                          <div className="w-24 h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
+                            <div className="h-full bg-[var(--nexus-primary-500)] rounded-full transition-all"
                               style={{ width: `${pl.totalItems > 0 ? Math.round(pl.pickedItems / pl.totalItems * 100) : 0}%` }} />
                           </div>
                           <span className="text-xs text-[var(--text-tertiary)]">{pl.pickedItems}/{pl.totalItems}</span>
@@ -367,13 +367,13 @@ export default function PickingPage() {
                                     <span className="text-xs font-medium text-[var(--nexus-primary-700)] truncate max-w-[90px]">{pickerNameMap[pl.assigneeId] || pl.assigneeId.slice(0, 8)}</span>
                                   </div>
                                   <PermissionGate resource="warehouse" action="edit">
-                                    <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] hover:bg-[var(--nexus-success-100)] border border-[var(--nexus-success-200)] transition-colors" title="Start Picking"
+                                    <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] hover:bg-[var(--nexus-success-100)] border border-[var(--nexus-success-200)] transition-colors" title="Start Picking"
                                       onClick={e => { e.stopPropagation(); startPickingMutation.mutate(pl.id); }}>
                                       <Play className="w-3.5 h-3.5" /> Start
                                     </button>
                                   </PermissionGate>
                                   <PermissionGate resource="warehouse" action="edit">
-                                    <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)] hover:bg-[var(--nexus-warning-100)] border border-[var(--nexus-warning-200)] transition-colors" title="Change Picker"
+                                    <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-700)] hover:bg-[var(--nexus-warning-100)] border border-[var(--nexus-warning-200)] transition-colors" title="Change Picker"
                                       onClick={e => { e.stopPropagation(); setAssignTarget({ picklistId: pl.id }); }}>
                                       <UserCheck className="w-3.5 h-3.5" /> Change
                                     </button>
@@ -381,20 +381,20 @@ export default function PickingPage() {
                                 </>
                               ) : (
                                 <PermissionGate resource="warehouse" action="edit">
-                                  <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] hover:bg-[var(--nexus-primary-100)] border border-[var(--nexus-primary-200)] transition-colors" title="Assign Picker"
+                                  <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] hover:bg-[var(--nexus-primary-100)] border border-[var(--nexus-primary-200)] transition-colors" title="Assign Picker"
                                     onClick={e => { e.stopPropagation(); setAssignTarget({ picklistId: pl.id }); }}>
                                     <UserCheck className="w-3.5 h-3.5" /> Assign
                                   </button>
                                 </PermissionGate>
                               )}
                               <PermissionGate resource="warehouse" action="read">
-                                <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--surface-sunken)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] border border-[var(--border-default)] transition-colors" title="Print Picklist"
+                                <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--surface-sunken)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] border border-[var(--border-default)] transition-colors" title="Print Picklist"
                                   onClick={e => { e.stopPropagation(); handlePrintPicklist(pl); }}>
                                   <Printer className="w-3.5 h-3.5" /> Print
                                 </button>
                               </PermissionGate>
                               <PermissionGate resource="warehouse" action="delete">
-                                <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)] border border-[var(--nexus-error-200)] transition-colors" title="Cancel Picklist"
+                                <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] hover:bg-[var(--nexus-error-50)] border border-[var(--nexus-error-200)] transition-colors" title="Cancel Picklist"
                                   onClick={e => { e.stopPropagation(); cancelMutation.mutate(pl.id); }}>
                                   <XCircle className="w-3.5 h-3.5" /> Cancel
                                 </button>
@@ -404,13 +404,13 @@ export default function PickingPage() {
                           {pl.status === 'IN_PROGRESS' && (
                             pl.pickedItems >= pl.totalItems && pl.totalItems > 0 ? (
                               <PermissionGate resource="warehouse" action="edit">
-                                <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)] hover:bg-[var(--nexus-success-100)] cursor-pointer transition-colors" title="Complete Picklist"
+                                <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)] hover:bg-[var(--nexus-success-100)] cursor-pointer transition-colors" title="Complete Picklist"
                                   onClick={e => { e.stopPropagation(); completeMutation.mutate(pl.id); }}>
                                   <CheckCircle className="w-3.5 h-3.5" /> Complete
                                 </button>
                               </PermissionGate>
                             ) : (
-                              <button className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-[var(--surface-sunken)] text-[var(--text-tertiary)] border-[var(--border-default)] cursor-not-allowed transition-colors" title="Pick all items first" disabled>
+                              <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-[var(--surface-sunken)] text-[var(--text-tertiary)] border-[var(--border-default)] cursor-not-allowed transition-colors" title="Pick all items first" disabled>
                                 <CheckCircle className="w-3.5 h-3.5" /> Complete
                               </button>
                             )
@@ -420,8 +420,8 @@ export default function PickingPage() {
                     </tr>
                     {expandedPicklist === pl.id && (
                       <tr key={`${pl.id}-items`}>
-                        <td colSpan={6} className="px-4 py-3 bg-[var(--bg-tertiary)]/30">
-                          <div className="pl-4 border-l-2 border-[var(--color-primary)]/30 space-y-1">
+                        <td colSpan={6} className="px-4 py-3 bg-[var(--surface-muted)]/30">
+                          <div className="pl-4 border-l-2 border-[var(--nexus-primary-500)]/30 space-y-1">
                             <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase mb-2">Picklist Items</p>
                             {itemsMap[pl.id]?.length ? (
                               <table className="w-full text-xs">
@@ -452,7 +452,7 @@ export default function PickingPage() {
                                       <td className="py-1.5 text-right">
                                         {item.status === 'PENDING' && pl.startedAt && (
                                           <PermissionGate resource="warehouse" action="edit">
-                                            <button className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] hover:bg-[var(--nexus-primary-100)] border border-[var(--nexus-primary-200)] transition-colors"
+                                            <button type="button" className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium rounded-md bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] hover:bg-[var(--nexus-primary-100)] border border-[var(--nexus-primary-200)] transition-colors"
                                               onClick={() => { setPickTarget({ itemId: item.id }); }}>
                                               <Play className="w-3 h-3" /> Pick Now
                                             </button>
@@ -504,7 +504,7 @@ export default function PickingPage() {
                     const shift = ss.shift || '-'
                     return (
                       <PermissionGate resource="warehouse" action="edit">
-                        <button key={s.id} type="button"
+                        <button type="button" key={s.id} type="button"
                           className="w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-3"
                           onClick={() => {
                             assignMutation.mutate({ id: assignTarget.picklistId, staffId: s.id })
@@ -533,7 +533,7 @@ export default function PickingPage() {
               )}
             </div>
             <div className="flex justify-end gap-2 mt-4">
-              <button className="enterprise-btn-secondary" onClick={() => { setAssignTarget(null); setStaffSearch(''); setStaffSearchOpen(null); }}>Cancel</button>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => { setAssignTarget(null); setStaffSearch(''); setStaffSearchOpen(null); }}>Cancel</button>
             </div>
           </div>
         </div>
@@ -560,7 +560,7 @@ export default function PickingPage() {
                     const shift = ss.shift || '-'
                     return (
                       <PermissionGate resource="warehouse" action="edit">
-                        <button key={s.id} type="button"
+                        <button type="button" key={s.id} type="button"
                           className="w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-3"
                           onClick={() => {
                             pickItemMutation.mutate({ itemId: pickTarget.itemId, staffId: s.id })
@@ -589,7 +589,7 @@ export default function PickingPage() {
               )}
             </div>
             <div className="flex justify-end gap-2 mt-4">
-              <button className="enterprise-btn-secondary" onClick={() => { setPickTarget(null); setStaffSearch(''); setStaffSearchOpen(null); }}>Cancel</button>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => { setPickTarget(null); setStaffSearch(''); setStaffSearchOpen(null); }}>Cancel</button>
             </div>
           </div>
         </div>
@@ -627,7 +627,7 @@ export default function PickingPage() {
                   <div className="flex items-center justify-between">
                     <label className="enterprise-label">Orders ({selectedOrders.length})</label>
                     {isMultiOrder && (
-                      <button type="button" className="text-xs text-[var(--color-primary)] hover:underline"
+                      <button type="button" className="text-xs text-[var(--nexus-primary-600)] hover:underline"
                         onClick={() => setSelectedOrders(p => [...p, { id: '', display: '' }])}>
                         + Add Order
                       </button>
@@ -656,7 +656,7 @@ export default function PickingPage() {
                           {filteredOrders.length === 0 ? (
                             <p className="p-3 text-sm text-[var(--text-tertiary)]">No open orders found</p>
                           ) : filteredOrders.slice(0, 50).map(o => (
-                            <button key={o.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-2"
+                            <button type="button" key={o.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-2"
                               onClick={() => {
                                 const display = `${o.orderNumber || o.id.slice(0, 8)} — ${o.customerName || '?'} [${o.status}]`
                                 if (isMultiOrder) {
@@ -669,12 +669,12 @@ export default function PickingPage() {
                                 setOrderSearchIdx(null)
                                 setOrderSearch('')
                               }}>
-                              <span className="w-6 h-6 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] flex items-center justify-center text-[10px] font-bold">{o.channel?.charAt(0) || '?'}</span>
+                              <span className="w-6 h-6 rounded-full bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] flex items-center justify-center text-[10px] font-bold">{o.channel?.charAt(0) || '?'}</span>
                               <div className="flex-1 min-w-0">
                                 <div className="font-medium truncate">{o.orderNumber || o.id.slice(0, 8)}</div>
                                 <div className="text-[10px] text-[var(--text-tertiary)] truncate">{o.customerName || '?'}</div>
                               </div>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-primary)]/10 text-[var(--color-primary)] whitespace-nowrap">{o.status}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] whitespace-nowrap">{o.status}</span>
                             </button>
                           ))}
                         </div>
@@ -697,9 +697,9 @@ export default function PickingPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <PermissionGate resource="warehouse" action="create">
-                <button className="enterprise-btn-primary" onClick={() => createMutation.mutate()}
+                <button type="button" className="enterprise-btn-primary" onClick={() => createMutation.mutate()}
                   disabled={!createForm.name || selectedOrders.length === 0 || selectedOrders.some(s => !s.id) || createMutation.isPending}>
                   {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create

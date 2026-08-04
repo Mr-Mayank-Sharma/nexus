@@ -77,7 +77,7 @@ export default function OrderDetailPage() {
         channel: res.data.channel || 'MANUAL',
         status: res.data.status || 'PENDING',
         items: (res.data.items || []).map((i: any) => ({
-          id: i.id, sku: i.sku || '', productName: i.productName || i.sku || '',
+          id: i.id, sku: i.sku || '', productName: i.productName || i.sku || '', imageUrl: i.imageUrl || '',
           quantity: i.quantity || 0, unitPrice: i.unitPrice || 0, totalPrice: (i.totalPrice || i.unitPrice * i.quantity || 0),
         })),
         total: res.data.total || 0, subtotal: res.data.subtotal || 0,
@@ -160,7 +160,7 @@ export default function OrderDetailPage() {
       .track{font-size:18px;font-weight:bold;margin:12px 0;padding:8px;background:#f5f5f5;text-align:center;border-radius:4px}
       .no-print{display:none}@media print{body{padding:10px}.no-print{display:block;text-align:center;margin-bottom:10px;font-size:10px;color:#999}}
       </style></head><body>
-      <button class="no-print" onclick="window.print()" style="padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff">Print This Label</button>
+      <button type="button" class="no-print" onclick="window.print()" style="padding:8px 16px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff">Print This Label</button>
       <h1>${order.orderNumber || 'Order'}</h1>
       <div class="track">${order.trackingNumber || 'No Tracking'}</div>
       <div class="addr"><strong>Ship To:</strong><br/>${order.customerName || ''}<br/>${order.shippingAddress?.street || ''}<br/>${order.shippingAddress?.city || ''}, ${order.shippingAddress?.state || ''} ${order.shippingAddress?.zip || ''}</div>
@@ -190,7 +190,7 @@ export default function OrderDetailPage() {
       .addr{font-size:12px;line-height:1.6;margin:12px 0;padding:12px;border:1px solid #ddd;border-radius:4px}
       .no-print{text-align:center;margin-bottom:16px}
       </style></head><body>
-      <button class="no-print" onclick="window.print()" style="padding:8px 24px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:14px">Print Invoice</button>
+      <button type="button" class="no-print" onclick="window.print()" style="padding:8px 24px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-size:14px">Print Invoice</button>
       <h1>INVOICE</h1>
       <div class="header"><span><strong>Order:</strong> ${order.orderNumber || order.id}</span><span><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</span></div>
       <div class="header"><span><strong>Channel:</strong> ${order.channel || 'N/A'}</span><span><strong>Status:</strong> ${order.status}</span></div>
@@ -318,7 +318,7 @@ export default function OrderDetailPage() {
 
   if (!order) return (
     <div className="space-y-6">
-      <button onClick={() => navigate('/orders')} className="enterprise-btn enterprise-btn-ghost text-sm"><ArrowLeft className="w-4 h-4" /> Back to Orders</button>
+      <button type="button" onClick={() => navigate('/orders')} className="enterprise-btn enterprise-btn-ghost text-sm"><ArrowLeft className="w-4 h-4" /> Back to Orders</button>
       <div className="text-center py-12">
         <AlertTriangle className="w-12 h-12 mx-auto mb-3 text-[var(--text-tertiary)]" />
         <p className="text-[var(--text-tertiary)]">Order not found</p>
@@ -351,14 +351,14 @@ export default function OrderDetailPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {isModifiable && (<PermissionGate resource="orders" action="edit"><button onClick={openModify} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Edit3 className="w-4 h-4" /> Modify</button></PermissionGate>)}
-          {isModifiable && (<PermissionGate resource="orders" action="edit"><button onClick={openSplit} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button></PermissionGate>)}
-          {order.status === 'PENDING' && (<PermissionGate resource="orders" action="edit"><button onClick={openMerge} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button></PermissionGate>)}
-          <button onClick={handlePrintLabel} className="enterprise-btn enterprise-btn-secondary text-sm"><Printer className="w-4 h-4" /> Print Label</button>
-          <button onClick={handlePrintInvoice} className="enterprise-btn enterprise-btn-secondary text-sm"><Receipt className="w-4 h-4" /> Invoice</button>
+          {isModifiable && (<PermissionGate resource="orders" action="edit"><button type="button" onClick={openModify} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Edit3 className="w-4 h-4" /> Modify</button></PermissionGate>)}
+          {isModifiable && (<PermissionGate resource="orders" action="edit"><button type="button" onClick={openSplit} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Split className="w-4 h-4" /> Split</button></PermissionGate>)}
+          {order.status === 'PENDING' && (<PermissionGate resource="orders" action="edit"><button type="button" onClick={openMerge} className="enterprise-btn enterprise-btn-secondary text-sm" disabled={actionLoading !== null}><Merge className="w-4 h-4" /> Merge</button></PermissionGate>)}
+          <button type="button" onClick={handlePrintLabel} className="enterprise-btn enterprise-btn-secondary text-sm"><Printer className="w-4 h-4" /> Print Label</button>
+          <button type="button" onClick={handlePrintInvoice} className="enterprise-btn enterprise-btn-secondary text-sm"><Receipt className="w-4 h-4" /> Invoice</button>
           {statusActions.map(a => (
             <PermissionGate key={a.label} resource="orders" action="edit">
-              <button onClick={a.onClick} disabled={a.disabled}
+              <button type="button" onClick={a.onClick} disabled={a.disabled}
                 className={a.variant === 'primary' ? 'enterprise-btn enterprise-btn-primary text-sm' : 'enterprise-btn enterprise-btn-danger text-sm'}>
                 {a.icon}{a.label}
               </button>
@@ -387,7 +387,14 @@ export default function OrderDetailPage() {
                 <tbody className="divide-y divide-[var(--border-subtle)]">
                   {order.items.map((item) => (
                     <tr key={item.sku} className="enterprise-table-row">
-                      <td className="px-6 py-3 text-sm text-[var(--text-primary)]">{item.productName}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-primary)]">
+                        <div className="flex items-center gap-3">
+                          {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.productName} className="w-9 h-9 rounded-lg object-cover bg-[var(--bg-tertiary)]" />
+                          ) : null}
+                          {item.productName}
+                        </div>
+                      </td>
                       <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] font-mono">{item.sku}</td>
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{order.currency} {item.unitPrice.toFixed(2)}</td>
@@ -470,7 +477,7 @@ export default function OrderDetailPage() {
                     </div>
                     <div className="flex gap-1.5 shrink-0">
                       <PermissionGate resource="orders" action="edit">
-                        <button onClick={() => handleAiAction(s.actionType)} disabled={aiExecuting !== null}
+                        <button type="button" onClick={() => handleAiAction(s.actionType)} disabled={aiExecuting !== null}
                           className="enterprise-btn enterprise-btn-ai enterprise-btn-sm">
                           {aiExecuting === s.actionType ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                           Apply
@@ -503,8 +510,8 @@ export default function OrderDetailPage() {
                         </div>
                       </div>
                       <div className="flex gap-1">
-                        <button onClick={() => addToast({ type: 'info', title: 'Download not yet implemented' })} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" title="Download"><Download className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => addToast({ type: 'info', title: 'View not yet implemented' })} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" title="View"><ExternalLink className="w-3.5 h-3.5" /></button>
+                        <button type="button" onClick={() => addToast({ type: 'info', title: 'Download not yet implemented' })} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" title="Download"><Download className="w-3.5 h-3.5" /></button>
+                        <button type="button" onClick={() => addToast({ type: 'info', title: 'View not yet implemented' })} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" title="View"><ExternalLink className="w-3.5 h-3.5" /></button>
                       </div>
                     </div>
                   ))}
@@ -614,7 +621,7 @@ export default function OrderDetailPage() {
           <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Modify Order</h2>
-              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close modify dialog"><XCircle className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close modify dialog"><XCircle className="w-5 h-5" /></button>
             </div>
             <div className="space-y-6">
               <div>
@@ -628,7 +635,7 @@ export default function OrderDetailPage() {
                 </div>
               </div>
               <div>
-                <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Items</h3><button onClick={addModifyRow} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">+ Add Item</button></div>
+                <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Items</h3><button type="button" onClick={addModifyRow} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">+ Add Item</button></div>
                 <div className="space-y-2">
                   {modifyItems.map((item, idx) => (
                     <div key={idx} className="flex items-center gap-2 bg-[var(--bg-tertiary)] p-2 rounded-lg">
@@ -636,16 +643,16 @@ export default function OrderDetailPage() {
                       <input value={item.productName} onChange={e => updateModifyItem(idx, 'productName', e.target.value)} className="enterprise-input flex-[2] text-xs" placeholder="Product" />
                       <input type="number" value={item.quantity} onChange={e => updateModifyItem(idx, 'quantity', parseInt(e.target.value) || 1)} className="enterprise-input w-16 text-xs" min={1} />
                       <input type="number" value={item.unitPrice} onChange={e => updateModifyItem(idx, 'unitPrice', parseFloat(e.target.value) || 0)} className="enterprise-input w-20 text-xs" min={0} step={0.01} />
-                      <button onClick={() => removeModifyItem(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost hover:text-[var(--nexus-error-500)]" aria-label="Remove item"><XCircle className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => removeModifyItem(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost hover:text-[var(--nexus-error-500)]" aria-label="Remove item"><XCircle className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setShowModifyModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="orders" action="edit">
-                <button onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn enterprise-btn-primary">
+                <button type="button" onClick={handleModify} disabled={actionLoading === 'modify'} className="enterprise-btn enterprise-btn-primary">
                   {actionLoading === 'modify' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                   Save Changes
                 </button>
@@ -661,7 +668,7 @@ export default function OrderDetailPage() {
           <div className="enterprise-card p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Split Order</h2>
-              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close split dialog"><XCircle className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close split dialog"><XCircle className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-4">Assign each item to a shipment group. Each group becomes a new order.</p>
             {order && <div className="flex flex-wrap gap-2 mb-4">
@@ -676,14 +683,14 @@ export default function OrderDetailPage() {
                 <div key={gIdx} className="border border-[var(--border-subtle)] rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="text-sm font-medium text-[var(--text-primary)]">Group {gIdx + 1} ({group.itemIds.length} items)</h4>
-                    {splitGroups.length > 1 && <button onClick={() => removeSplitGroup(gIdx)} className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-[var(--nexus-error-500)]">Remove</button>}
+                    {splitGroups.length > 1 && <button type="button" onClick={() => removeSplitGroup(gIdx)} className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost text-[var(--nexus-error-500)]">Remove</button>}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {order?.items.map(item => {
                       const selected = group.itemIds.includes(item.id || item.sku)
                       const inOtherGroup = splitGroups.some((g, i) => i !== gIdx && g.itemIds.includes(item.id || item.sku))
                       return (
-                        <button key={item.id || item.sku} onClick={() => { if (!inOtherGroup) toggleSplitItem(gIdx, item.id || item.sku) }}
+                        <button type="button" key={item.id || item.sku} onClick={() => { if (!inOtherGroup) toggleSplitItem(gIdx, item.id || item.sku) }}
                           className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                             selected ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 text-[var(--color-primary)]' :
                             inOtherGroup ? 'border-[var(--border-subtle)] text-[var(--text-tertiary)] cursor-not-allowed' :
@@ -697,11 +704,11 @@ export default function OrderDetailPage() {
                 </div>
               ))}
             </div>
-            <button onClick={addSplitGroup} className="enterprise-btn enterprise-btn-secondary text-sm mt-4">+ Add Group</button>
+            <button type="button" onClick={addSplitGroup} className="enterprise-btn enterprise-btn-secondary text-sm mt-4">+ Add Group</button>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setShowSplitModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="orders" action="edit">
-                <button onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn enterprise-btn-primary">
+                <button type="button" onClick={handleSplit} disabled={actionLoading === 'split'} className="enterprise-btn enterprise-btn-primary">
                   {actionLoading === 'split' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Split className="w-4 h-4" />}
                   Split Order
                 </button>
@@ -717,18 +724,18 @@ export default function OrderDetailPage() {
           <div className="enterprise-card p-6 w-full max-w-lg">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Merge Orders</h2>
-              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close merge dialog"><XCircle className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost" aria-label="Close merge dialog"><XCircle className="w-5 h-5" /></button>
             </div>
             <p className="text-sm text-[var(--text-secondary)] mb-4">Current: <strong>{order?.orderNumber}</strong></p>
             <div className="space-y-2">
               {mergeOrderIds.map((oid, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <input value={oid} onChange={e => updateMergeId(idx, e.target.value)} className="enterprise-input flex-1 text-sm font-mono" placeholder="Order UUID" />
-                  {mergeOrderIds.length > 1 && <button onClick={() => removeMergeId(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-4 h-4" /></button>}
+                  {mergeOrderIds.length > 1 && <button type="button" onClick={() => removeMergeId(idx)} className="enterprise-btn enterprise-btn-icon enterprise-btn-ghost"><XCircle className="w-4 h-4" /></button>}
                 </div>
               ))}
             </div>
-            <button onClick={addMergeId} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary mt-2">+ Add Another</button>
+            <button type="button" onClick={addMergeId} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary mt-2">+ Add Another</button>
             <hr className="border-[var(--border-subtle)] my-4" />
             <div>
               <label className="enterprise-label">Search Orders</label>
@@ -743,12 +750,12 @@ export default function OrderDetailPage() {
                   clearable={false}
                   minChars={2}
                 />
-                <button onClick={searchOrders} disabled={searchingMerge} className="enterprise-btn enterprise-btn-secondary text-sm">{searchingMerge ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}</button>
+                <button type="button" onClick={searchOrders} disabled={searchingMerge} className="enterprise-btn enterprise-btn-secondary text-sm">{searchingMerge ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}</button>
               </div>
               {mergeResults.length > 0 && (
                 <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
                   {mergeResults.filter((o: any) => o.id !== id).map((o: any) => (
-                    <button key={o.id} onClick={() => { const idx = mergeOrderIds.findIndex(v => !v); if (idx >= 0) updateMergeId(idx, o.id) }}
+                    <button type="button" key={o.id} onClick={() => { const idx = mergeOrderIds.findIndex(v => !v); if (idx >= 0) updateMergeId(idx, o.id) }}
                       className="w-full text-left p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-sm flex justify-between">
                       <span className="font-medium">{o.orderNumber || o.id}</span>
                       <span className="text-[var(--text-tertiary)]">{o.customerName} - {o.status}</span>
@@ -758,9 +765,9 @@ export default function OrderDetailPage() {
               )}
             </div>
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-subtle)]">
-              <button onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setShowMergeModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="orders" action="edit">
-                <button onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn enterprise-btn-primary">
+                <button type="button" onClick={handleMerge} disabled={actionLoading === 'merge'} className="enterprise-btn enterprise-btn-primary">
                   {actionLoading === 'merge' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Merge className="w-4 h-4" />}
                   Merge Orders
                 </button>

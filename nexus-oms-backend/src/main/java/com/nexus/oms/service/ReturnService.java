@@ -223,6 +223,27 @@ public class ReturnService {
                 .collect(Collectors.toList());
     }
 
+    public Map<String, Object> getReturnsAnalytics(UUID tenantId) {
+        List<NxReturn> all = returnRepository.findByTenantId(tenantId);
+        long total = all.size();
+        long totalOrders = orderRepository.countByTenantIdAndStatusNot(tenantId, "CANCELLED");
+        double returnRate = totalOrders > 0 ? (double) total / totalOrders : 0.0;
+
+        BigDecimal refundSum = all.stream()
+                .filter(r -> r.getRefundAmount() != null)
+                .map(NxReturn::getRefundAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long refundedCount = all.stream().filter(r -> r.getRefundAmount() != null).count();
+        double avgRefund = refundedCount > 0 ? refundSum.doubleValue() / refundedCount : 0.0;
+
+        Map<String, Object> m = new HashMap<>();
+        m.put("totalReturns", total);
+        m.put("returnRate", Math.round(returnRate * 1000) / 1000.0);
+        m.put("avgRefundAmount", Math.round(avgRefund * 100) / 100.0);
+        m.put("topReasons", getReturnReasons(tenantId));
+        return m;
+    }
+
     private ReturnResponse toResponse(NxReturn nxReturn) {
         NxCustomer customer = nxReturn.getCustomerId() != null
                 ? customerRepository.findById(nxReturn.getCustomerId()).orElse(null)

@@ -42,7 +42,7 @@ public class ProductController {
 
     @Operation(summary = "Update product details")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Product>> updateProduct(@PathVariable UUID id, @Valid @RequestBody Product product) {
+    public ResponseEntity<ApiResponse<Product>> updateProduct(@PathVariable UUID id, @RequestBody Product product) {
         return ResponseEntity.ok(ApiResponse.success(productService.updateProduct(id, product), "Product updated"));
     }
 

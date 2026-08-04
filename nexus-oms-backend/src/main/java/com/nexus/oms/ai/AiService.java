@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+
 import java.math.BigDecimal;
 import java.util.Map;
 
@@ -26,8 +28,12 @@ public class AiService {
     private final String baseUrlIntel;
 
     public AiService(@Value("${nexus.ai.base-url-ops}") String baseUrlOps,
-                     @Value("${nexus.ai.base-url-intel}") String baseUrlIntel) {
-        this.restTemplate = new RestTemplate();
+                     @Value("${nexus.ai.base-url-intel}") String baseUrlIntel,
+                     @Value("${nexus.ai.timeout-ms:30000}") int timeoutMs) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(timeoutMs);
+        factory.setReadTimeout(timeoutMs);
+        this.restTemplate = new RestTemplate(factory);
         this.objectMapper = new ObjectMapper();
         this.baseUrlOps = baseUrlOps;
         this.baseUrlIntel = baseUrlIntel;
@@ -37,7 +43,7 @@ public class AiService {
     public AllocationResponse callRoutingAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
-                    baseUrlOps + "/routing", input, String.class);
+                    baseUrlOps + "/api/predict/route", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return AllocationResponse.builder()
                     .warehouse(json.path("warehouse").asText("DEFAULT"))
@@ -57,7 +63,7 @@ public class AiService {
     public AllocationResponse callCarrierAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
-                    baseUrlOps + "/carrier", input, String.class);
+                    baseUrlOps + "/api/predict/carrier", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return AllocationResponse.builder()
                     .carrier(json.path("carrier").asText("STANDARD"))
@@ -72,7 +78,7 @@ public class AiService {
     public AllocationResponse callBoxAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
-                    baseUrlOps + "/box", input, String.class);
+                    baseUrlOps + "/api/predict/box", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return AllocationResponse.builder()
                     .boxSize(json.path("box_size").asText("STANDARD"))
@@ -87,7 +93,7 @@ public class AiService {
     public AllocationResponse callPickPackAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
-                    baseUrlOps + "/pickpack", input, String.class);
+                    baseUrlOps + "/api/predict/pickpack", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return AllocationResponse.builder()
                     .pickPackDetails(json.path("instructions").asText("Standard pick-pack"))
@@ -102,7 +108,7 @@ public class AiService {
     public DemandForecastResponse callDemandAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
-                    baseUrlIntel + "/demand", input, String.class);
+                    baseUrlIntel + "/api/predict/demand", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return DemandForecastResponse.builder()
                     .next7Days(objectMapper.convertValue(json.path("next_7_days"), Map.class))
@@ -122,7 +128,7 @@ public class AiService {
     public InventoryRecommendation callInventoryAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
-                    baseUrlIntel + "/inventory", input, String.class);
+                    baseUrlIntel + "/api/predict/inventory", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return InventoryRecommendation.builder()
                     .needsReorder(json.path("needs_reorder").asBoolean(false))

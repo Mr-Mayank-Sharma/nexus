@@ -33,12 +33,19 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origins:http://localhost:5173}")
     private String allowedOrigins;
 
+    private final com.nexus.oms.filter.RateLimitingFilter rateLimitingFilter;
+    private final com.nexus.oms.filter.IdempotencyFilter idempotencyFilter;
+
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           PermissionAuthorizationFilter permissionAuthorizationFilter,
-                          ImportTokenAuthenticationFilter importTokenAuthenticationFilter) {
+                          ImportTokenAuthenticationFilter importTokenAuthenticationFilter,
+                          org.springframework.data.redis.core.StringRedisTemplate redisTemplate,
+                          com.nexus.oms.service.IdempotencyService idempotencyService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.permissionAuthorizationFilter = permissionAuthorizationFilter;
         this.importTokenAuthenticationFilter = importTokenAuthenticationFilter;
+        this.rateLimitingFilter = new com.nexus.oms.filter.RateLimitingFilter(redisTemplate);
+        this.idempotencyFilter = new com.nexus.oms.filter.IdempotencyFilter(idempotencyService);
     }
 
     @Bean
@@ -50,11 +57,14 @@ public class SecurityConfig {
             .headers(headers -> headers
                 .contentSecurityPolicy(csp -> csp.policyDirectives(
                     "default-src 'self'; " +
-                    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                    "script-src 'self'; " +
                     "style-src 'self' 'unsafe-inline'; " +
                     "img-src 'self' data: blob:; " +
                     "font-src 'self' data:; " +
                     "connect-src 'self'; " +
+                    "frame-ancestors 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'; " +
                     "report-uri /csp-report; " +
                     "report-to csp-endpoint"))
                 .frameOptions(frame -> frame.sameOrigin())
@@ -91,6 +101,8 @@ public class SecurityConfig {
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(importTokenAuthenticationFilter, JwtAuthenticationFilter.class)
+            .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class)
+            .addFilterAfter(idempotencyFilter, JwtAuthenticationFilter.class)
             .addFilterAfter(permissionAuthorizationFilter, JwtAuthenticationFilter.class);
 
         return http.build();

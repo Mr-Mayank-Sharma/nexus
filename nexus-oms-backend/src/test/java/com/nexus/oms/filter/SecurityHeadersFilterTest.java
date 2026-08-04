@@ -28,15 +28,16 @@ class SecurityHeadersFilterTest {
     }
 
     @Test
-    void doFilter_setsAllSixSecurityHeaders() throws IOException, ServletException {
+    void doFilter_setsAllSevenSecurityHeaders() throws IOException, ServletException {
         filter.doFilter(request, response, filterChain);
 
         verify(response).setHeader("X-Content-Type-Options", "nosniff");
         verify(response).setHeader("X-Frame-Options", "DENY");
         verify(response).setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-        verify(response).setHeader("X-XSS-Protection", "1; mode=block");
         verify(response).setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
         verify(response).setHeader("Pragma", "no-cache");
+        verify(response).setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+        verify(response).setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
     }
 
     @Test
@@ -46,9 +47,10 @@ class SecurityHeadersFilterTest {
         verify(response).setHeader("X-Content-Type-Options", "nosniff");
         verify(response).setHeader("X-Frame-Options", "DENY");
         verify(response).setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-        verify(response).setHeader("X-XSS-Protection", "1; mode=block");
         verify(response).setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
         verify(response).setHeader("Pragma", "no-cache");
+        verify(response).setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+        verify(response).setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
     }
 
     @Test
@@ -59,9 +61,9 @@ class SecurityHeadersFilterTest {
     }
 
     @Test
-    void doFilter_exactlySixHeadersSet() throws IOException, ServletException {
+    void doFilter_exactlySevenHeadersSet() throws IOException, ServletException {
         filter.doFilter(request, response, filterChain);
 
-        verify(response, times(6)).setHeader(anyString(), anyString());
+        verify(response, times(7)).setHeader(anyString(), anyString());
     }
 }

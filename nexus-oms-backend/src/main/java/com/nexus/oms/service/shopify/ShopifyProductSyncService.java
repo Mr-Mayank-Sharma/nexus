@@ -5,9 +5,11 @@ import com.nexus.oms.dto.SyncResult;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.service.IntegrationStoreService;
+import com.nexus.oms.service.ProductService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -16,36 +18,45 @@ public class ShopifyProductSyncService {
 
     private final ShopifyClient shopifyClient;
     private final IntegrationStoreService storeService;
+    private final ShopifyTokenService tokenService;
     private final NxIntegrationStoreRepository storeRepository;
     private final NxIntegrationSyncConfigRepository syncConfigRepository;
     private final NxSyncLogRepository syncLogRepository;
     private final NxProductMappingRepository productMappingRepository;
     private final InventoryRepository inventoryRepository;
     private final NodeRepository nodeRepository;
+    private final ProductRepository productRepository;
+    private final ProductService productService;
 
     public ShopifyProductSyncService(ShopifyClient shopifyClient,
                                       IntegrationStoreService storeService,
+                                      ShopifyTokenService tokenService,
                                       NxIntegrationStoreRepository storeRepository,
                                       NxIntegrationSyncConfigRepository syncConfigRepository,
                                       NxSyncLogRepository syncLogRepository,
                                       NxProductMappingRepository productMappingRepository,
                                       InventoryRepository inventoryRepository,
-                                      NodeRepository nodeRepository) {
+                                      NodeRepository nodeRepository,
+                                      ProductRepository productRepository,
+                                      ProductService productService) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
+        this.tokenService = tokenService;
         this.storeRepository = storeRepository;
         this.syncConfigRepository = syncConfigRepository;
         this.syncLogRepository = syncLogRepository;
         this.productMappingRepository = productMappingRepository;
         this.inventoryRepository = inventoryRepository;
         this.nodeRepository = nodeRepository;
+        this.productRepository = productRepository;
+        this.productService = productService;
     }
 
     @Transactional
     public SyncResult syncProducts(UUID storeId) {
         NxIntegrationStore store = storeService.getStore(storeId);
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
-        String accessToken = storeService.getSetting(storeId, "access_token");
+        String accessToken = tokenService.getAccessToken(storeId);
 
         NxSyncLog syncLog = NxSyncLog.builder()
                 .tenantId(store.getTenantId())
@@ -59,7 +70,7 @@ public class ShopifyProductSyncService {
         try {
             Map<String, String> params = new HashMap<>();
             params.put("limit", "250");
-            params.put("fields", "id,title,sku,variants");
+            params.put("fields", "id,title,sku,variants,image,images");
 
             JsonNode response = shopifyClient.getProducts(shopDomain, accessToken, params);
             JsonNode products = response != null ? response.get("products") : null;
@@ -71,6 +82,8 @@ public class ShopifyProductSyncService {
                     try {
                         long productId = product.get("id").asLong();
                         String title = product.has("title") ? product.get("title").asText() : "";
+                        String imageUrl = product.has("image") && product.get("image").has("src")
+                                ? product.get("image").get("src").asText() : null;
 
                         JsonNode variants = product.get("variants");
                         if (variants != null && variants.isArray()) {
@@ -88,9 +101,22 @@ public class ShopifyProductSyncService {
                                                 .bcSku(sku)
                                                 .nexusSku(sku)
                                                 .nexusProductName(title)
+                                                .imageUrl(imageUrl)
                                                 .build());
                                 mapping.setLastSyncedAt(LocalDateTime.now());
+                                mapping.setImageUrl(imageUrl);
                                 productMappingRepository.save(mapping);
+
+                                Product productRow = productRepository
+                                        .findByTenantIdAndSku(store.getTenantId(), sku)
+                                        .orElse(new Product());
+                                productRow.setTenantId(store.getTenantId());
+                                productRow.setSku(sku);
+                                productRow.setProductName(title);
+                                productRow.setUnitPrice(priceOf(variant));
+                                productRow.setIsActive(true);
+                                productRow.setImageUrl(imageUrl);
+                                productRepository.save(productRow);
 
                                 if (!nodes.isEmpty()) {
                                     NxNode node = nodes.get(0);
@@ -118,6 +144,8 @@ public class ShopifyProductSyncService {
                 }
             }
 
+            productService.evictProductsCache();
+
             updateSyncConfig(storeId, "PRODUCT_SYNC", "COMPLETED", processed, succeeded, failed, null);
             syncLog.setStatus("COMPLETED");
             syncLog.setCompletedAt(LocalDateTime.now());
@@ -144,6 +172,18 @@ public class ShopifyProductSyncService {
                 .itemsSucceeded(succeeded)
                 .itemsFailed(failed)
                 .build();
+    }
+
+    private BigDecimal priceOf(JsonNode variant) {
+        JsonNode price = variant.get("price");
+        if (price == null || price.isNull()) return BigDecimal.ZERO;
+        String text = price.asText();
+        if (text == null || text.isBlank()) return BigDecimal.ZERO;
+        try {
+            return new BigDecimal(text.trim());
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
     }
 
     private void updateSyncConfig(UUID storeId, String syncType, String status, int processed, int succeeded, int failed, List<String> errors) {

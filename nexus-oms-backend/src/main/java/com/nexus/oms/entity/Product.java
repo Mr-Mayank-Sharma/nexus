@@ -24,6 +24,9 @@ public class Product {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @NotBlank
     @Column(nullable = false)
     private String sku;

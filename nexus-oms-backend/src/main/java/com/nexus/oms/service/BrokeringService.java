@@ -83,7 +83,7 @@ public class BrokeringService {
         run = brokeringRunRepository.save(run);
 
         List<NxBrokeringQueue> waitingOrders = brokeringQueueRepository
-                .findByStatusAndNextRunAtBefore("WAITING", LocalDateTime.now());
+                .findByTenantIdAndStatusAndNextRunAtBefore(tenantId, "WAITING", LocalDateTime.now());
 
         waitingOrders.sort(Comparator.comparing(NxBrokeringQueue::getPriority).reversed());
 
@@ -163,7 +163,7 @@ public class BrokeringService {
         run = brokeringRunRepository.save(run);
 
         List<NxBrokeringQueue> priorityOrders = brokeringQueueRepository
-                .findByStatusAndPriorityIn("WAITING", List.of("HIGH", "URGENT"));
+                .findByTenantIdAndStatusAndPriorityIn(tenantId, "WAITING", List.of("HIGH", "URGENT"));
 
         int processed = 0;
         int allocated = 0;
@@ -319,7 +319,7 @@ public class BrokeringService {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
 
         List<NxBrokeringQueue> staleOrders = brokeringQueueRepository
-                .findByStatusAndNextRunAtBefore("WAITING", cutoff);
+                .findByTenantIdAndStatusAndNextRunAtBefore(tenantId, "WAITING", cutoff);
 
         List<NxBrokeringQueue> expired = new ArrayList<>();
         for (NxBrokeringQueue order : staleOrders) {

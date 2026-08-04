@@ -16,11 +16,15 @@ export interface AiModel {
 }
 
 export interface AiAgent {
+  id: string
   name: string
+  description: string
   status: string
   accuracy: number
   decisions24h: number
+  model: string
   modelVersion: string
+  category?: string
 }
 
 export interface AiRecommendation {
@@ -29,19 +33,11 @@ export interface AiRecommendation {
   description: string
   impact: string
   confidence: number
-  type: string
+  type?: string
   status: string
-}
-
-export interface AiDecision {
-  id: string
-  orderId: string
-  agent: string
-  decision: string
-  confidence: number
-  timestamp: string
-  overriddenBy: string | null
-  processingTime: string
+  suggestedAction?: string
+  reasoning?: string[]
+  agentName?: string
 }
 
 export interface AiPackagingPlan {
@@ -53,45 +49,67 @@ export interface AiPackagingPlan {
   confidence: number
 }
 
+export interface AiLoadingStep {
+  step: number
+  boxId: string
+  position: string
+  itemCount: number
+  weight: number
+  fragile: boolean
+}
+
+export interface AiWeightDistribution {
+  front: number
+  center: number
+  rear: number
+}
+
+export interface AiLoadingCheck {
+  label: string
+  passed: boolean
+}
+
 export interface AiLoadingPlan {
   id: string
   type: string
-  capacity: number
-  used: number
-  stops: number
   status: string
-  departure: string
-}
-
-export interface AiPickRoute {
-  id: string
-  waveId: string
-  route: string
-  estimatedTime: string
-  distance: number
+  departure?: string
+  sequence: AiLoadingStep[]
+  weightDistribution: AiWeightDistribution
+  checks: AiLoadingCheck[]
+  totalWeight: number
+  stops?: number
 }
 
 export interface AiBriefing {
-  kpis: Record<string, string>
-  insights: { type: string; title: string; description: string; icon: string }[]
+  revenue: { today: number; yesterday: number }
+  orders: { today: number; pending: number; late: number }
+  profit: { today: number; margin: number }
+  inventory: { total: number; lowStock: number; deadStock: number }
+  insights: { type: string; icon: string; text: string }[]
   risks: { title: string; description: string; severity: string; probability: number }[]
+  opportunities: { title: string; potential: string; action: string }[]
   recommendations: AiRecommendation[]
   forecast: { month: string; revenue: number }[]
 }
 
 export interface AiForecast {
-  month: string
-  orders: number
-  revenue: number
-  growth: number
+  metric: string
+  current: number
+  unit: string
+  predicted: number[]
+  period: string
+  confidence: number
 }
 
 export interface AiSupplierRisk {
-  supplier: string
+  supplierName: string
   riskScore: number
-  status: string
-  leadTime: number
-  onTime: number
+  delayProbability: number
+  qualityScore: number
+  onTimeRate: number
+  trend: string
+  recommendation: string
 }
 
 export async function getAgents(): Promise<ApiResponse<AiAgent[]>> {
@@ -116,7 +134,7 @@ export async function getAgent(id: string): Promise<ApiResponse<AiAgent | undefi
   }
 }
 
-export async function getRecommendations(role?: string, limit?: number): Promise<ApiResponse<AiRecommendation[]>> {
+export async function getRecommendations(limit?: number): Promise<ApiResponse<AiRecommendation[]>> {
   try {
     const { data } = await client.get('/ai/briefing')
     const recs: AiRecommendation[] = data?.recommendations ?? []
@@ -148,18 +166,6 @@ export async function rejectRecommendation(id: string): Promise<ApiResponse<any>
   }
 }
 
-export async function getDecisions(limit?: number): Promise<ApiResponse<AiDecision[]>> {
-  try {
-    const { data } = await client.get('/ai/audit')
-    const decisions: AiDecision[] = data?.decisions ?? []
-    const sliced = limit ? decisions.slice(0, limit) : decisions
-    return { success: true, data: sliced }
-  } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || 'Failed to get decisions'
-    return { success: false, error: msg } as any
-  }
-}
-
 export async function getPackagingPlan(orderId: string): Promise<ApiResponse<AiPackagingPlan | undefined>> {
   try {
     const { data } = await client.get('/ai/packing')
@@ -178,25 +184,6 @@ export async function getLoadingPlan(truckId: string): Promise<ApiResponse<AiLoa
     return { success: true, data: truck }
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get loading plan'
-    return { success: false, error: msg } as any
-  }
-}
-
-export async function getPickRoute(waveId: string): Promise<ApiResponse<AiPickRoute>> {
-  try {
-    const { data } = await client.get('/ai/routing')
-    const queue = data?.queue ?? []
-    const first = queue[0]
-    const route: AiPickRoute = {
-      id: `route-${waveId}`,
-      waveId,
-      route: first?.orderId ? `Pick for ${first.orderId}` : 'No route data',
-      estimatedTime: '45 min',
-      distance: 320,
-    }
-    return { success: true, data: route }
-  } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || 'Failed to get pick route'
     return { success: false, error: msg } as any
   }
 }
@@ -243,7 +230,7 @@ export interface RoutingQueueItem {
   aiDecision: string
   confidence: number
   agentName: string
-  agentId: string
+  agentId?: string
 }
 
 export async function getRoutingQueue(limit?: number): Promise<ApiResponse<RoutingQueueItem[]>> {

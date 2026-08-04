@@ -239,9 +239,9 @@ describe('New Backend API', () => {
   })
 
   describe('fetchReceiving', () => {
-    it('should GET /inventory/receiving', async () => {
+    it('should GET /inventory-receipts', async () => {
       await fetchReceiving()
-      expect(mockGet).toHaveBeenCalledWith('/inventory/receiving')
+      expect(mockGet).toHaveBeenCalledWith('/inventory-receipts')
     })
 
     it('should return null on error', async () => {
@@ -251,9 +251,9 @@ describe('New Backend API', () => {
   })
 
   describe('fetchCycleCounts', () => {
-    it('should GET /inventory/cycle-counts', async () => {
+    it('should GET /cycle-counts', async () => {
       await fetchCycleCounts()
-      expect(mockGet).toHaveBeenCalledWith('/inventory/cycle-counts')
+      expect(mockGet).toHaveBeenCalledWith('/cycle-counts')
     })
 
     it('should return null on error', async () => {
@@ -281,9 +281,9 @@ describe('New Backend API', () => {
 
   // ─── Warehouse ───────────────────────────────────────────────
   describe('fetchWarehouses', () => {
-    it('should GET /warehouse', async () => {
+    it('should GET /warehouses', async () => {
       await fetchWarehouses()
-      expect(mockGet).toHaveBeenCalledWith('/warehouse')
+      expect(mockGet).toHaveBeenCalledWith('/warehouses')
     })
 
     it('should return null on error', async () => {
@@ -293,9 +293,9 @@ describe('New Backend API', () => {
   })
 
   describe('fetchWarehouseZones', () => {
-    it('should GET /warehouse/zones', async () => {
+    it('should GET /warehouses/zones', async () => {
       await fetchWarehouseZones()
-      expect(mockGet).toHaveBeenCalledWith('/warehouse/zones')
+      expect(mockGet).toHaveBeenCalledWith('/warehouses/zones')
     })
 
     it('should return null on error', async () => {
@@ -306,9 +306,9 @@ describe('New Backend API', () => {
 
   // ─── Wave Planning ──────────────────────────────────────────
   describe('fetchWavePlans', () => {
-    it('should GET /wave-plans', async () => {
+    it('should GET /waves', async () => {
       await fetchWavePlans()
-      expect(mockGet).toHaveBeenCalledWith('/wave-plans')
+      expect(mockGet).toHaveBeenCalledWith('/waves')
     })
 
     it('should return null on error', async () => {
@@ -318,10 +318,10 @@ describe('New Backend API', () => {
   })
 
   describe('createWavePlan', () => {
-    it('should POST /wave-plans', async () => {
+    it('should POST /waves', async () => {
       const data = { name: 'Wave-1', items: [] }
       await createWavePlan(data)
-      expect(mockPost).toHaveBeenCalledWith('/wave-plans', data)
+      expect(mockPost).toHaveBeenCalledWith('/waves', data)
     })
 
     it('should return null on error', async () => {
@@ -331,14 +331,14 @@ describe('New Backend API', () => {
   })
 
   describe('updateWavePlan', () => {
-    it('should PATCH /wave-plans/:id', async () => {
+    it('should PUT /waves/:id', async () => {
       const body = { status: 'ACTIVE' }
       await updateWavePlan('WP-001', body)
-      expect(mockPatch).toHaveBeenCalledWith('/wave-plans/WP-001', body)
+      expect(mockPut).toHaveBeenCalledWith('/waves/WP-001', body)
     })
 
     it('should return null on error', async () => {
-      mockPatch.mockRejectedValueOnce(new Error('fail'))
+      mockPut.mockRejectedValueOnce(new Error('fail'))
       expect(await updateWavePlan('X', {})).toBeNull()
     })
   })
@@ -464,9 +464,9 @@ describe('New Backend API', () => {
   })
 
   describe('fetchCarrierRates', () => {
-    it('should GET /carriers/rates', async () => {
+    it('should GET /carriers/kpis', async () => {
       await fetchCarrierRates()
-      expect(mockGet).toHaveBeenCalledWith('/carriers/rates')
+      expect(mockGet).toHaveBeenCalledWith('/carriers/kpis')
     })
 
     it('should return null on error', async () => {
@@ -591,9 +591,9 @@ describe('New Backend API', () => {
   })
 
   describe('fetchReturnAnalytics', () => {
-    it('should GET /returns/analytics', async () => {
+    it('should GET /analytics/returns', async () => {
       await fetchReturnAnalytics()
-      expect(mockGet).toHaveBeenCalledWith('/returns/analytics')
+      expect(mockGet).toHaveBeenCalledWith('/analytics/returns')
     })
 
     it('should return null on error', async () => {
@@ -604,14 +604,14 @@ describe('New Backend API', () => {
 
   // ─── Payments & Invoices ────────────────────────────────────
   describe('fetchPayments', () => {
-    it('should GET /payments without status', async () => {
+    it('should GET /invoicing/payments without status', async () => {
       await fetchPayments()
-      expect(mockGet).toHaveBeenCalledWith('/payments', { params: { status: undefined } })
+      expect(mockGet).toHaveBeenCalledWith('/invoicing/payments', { params: { status: undefined } })
     })
 
-    it('should GET /payments with status', async () => {
+    it('should GET /invoicing/payments with status', async () => {
       await fetchPayments('PENDING')
-      expect(mockGet).toHaveBeenCalledWith('/payments', { params: { status: 'PENDING' } })
+      expect(mockGet).toHaveBeenCalledWith('/invoicing/payments', { params: { status: 'PENDING' } })
     })
 
     it('should return null on error', async () => {
@@ -621,14 +621,14 @@ describe('New Backend API', () => {
   })
 
   describe('fetchInvoices', () => {
-    it('should GET /invoices without status', async () => {
+    it('should GET /invoicing/invoices without status', async () => {
       await fetchInvoices()
-      expect(mockGet).toHaveBeenCalledWith('/invoices', { params: { status: undefined } })
+      expect(mockGet).toHaveBeenCalledWith('/invoicing/invoices', { params: { status: undefined } })
     })
 
-    it('should GET /invoices with status', async () => {
+    it('should GET /invoicing/invoices with status', async () => {
       await fetchInvoices('PAID')
-      expect(mockGet).toHaveBeenCalledWith('/invoices', { params: { status: 'PAID' } })
+      expect(mockGet).toHaveBeenCalledWith('/invoicing/invoices', { params: { status: 'PAID' } })
     })
 
     it('should return null on error', async () => {
@@ -638,10 +638,10 @@ describe('New Backend API', () => {
   })
 
   describe('createInvoice', () => {
-    it('should POST /invoices', async () => {
+    it('should POST /invoicing/invoices', async () => {
       const data = { orderId: 'ORD-1', amount: 99.99 }
       await createInvoice(data)
-      expect(mockPost).toHaveBeenCalledWith('/invoices', data)
+      expect(mockPost).toHaveBeenCalledWith('/invoicing/invoices', data)
     })
 
     it('should return null on error', async () => {
@@ -651,14 +651,14 @@ describe('New Backend API', () => {
   })
 
   describe('updateInvoice', () => {
-    it('should PATCH /invoices/:id', async () => {
+    it('should PUT /invoicing/invoices/:id/status', async () => {
       const body = { status: 'PAID' }
       await updateInvoice('INV-001', body)
-      expect(mockPatch).toHaveBeenCalledWith('/invoices/INV-001', body)
+      expect(mockPut).toHaveBeenCalledWith('/invoicing/invoices/INV-001/status', body)
     })
 
     it('should return null on error', async () => {
-      mockPatch.mockRejectedValueOnce(new Error('fail'))
+      mockPut.mockRejectedValueOnce(new Error('fail'))
       expect(await updateInvoice('X', {})).toBeNull()
     })
   })

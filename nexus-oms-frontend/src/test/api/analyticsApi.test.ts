@@ -28,9 +28,9 @@ describe('Analytics API', () => {
   })
 
   describe('getDashboardKpis', () => {
-    it('should GET /dashboard', async () => {
+    it('should GET /analytics/dashboard', async () => {
       const result = await getDashboardKpis()
-      expect(mockGet).toHaveBeenCalledWith('/dashboard')
+      expect(mockGet).toHaveBeenCalledWith('/analytics/dashboard')
       expect(result.success).toBe(true)
     })
 
@@ -43,15 +43,15 @@ describe('Analytics API', () => {
   })
 
   describe('getOrderVelocity', () => {
-    it('should GET /orders/stats with default hours=24', async () => {
+    it('should GET /analytics/orders/velocity with default hours=24', async () => {
       const result = await getOrderVelocity()
-      expect(mockGet).toHaveBeenCalledWith('/orders/stats', { params: { hours: 24 } })
+      expect(mockGet).toHaveBeenCalledWith('/analytics/orders/velocity', { params: { hours: 24 } })
       expect(result.success).toBe(true)
     })
 
-    it('should GET /orders/stats with custom hours', async () => {
+    it('should GET /analytics/orders/velocity with custom hours', async () => {
       const result = await getOrderVelocity(48)
-      expect(mockGet).toHaveBeenCalledWith('/orders/stats', { params: { hours: 48 } })
+      expect(mockGet).toHaveBeenCalledWith('/analytics/orders/velocity', { params: { hours: 48 } })
       expect(result.success).toBe(true)
     })
 
@@ -64,9 +64,9 @@ describe('Analytics API', () => {
   })
 
   describe('getCarrierPerformance', () => {
-    it('should GET /carriers/kpis', async () => {
+    it('should GET /analytics/carrier-performance', async () => {
       const result = await getCarrierPerformance()
-      expect(mockGet).toHaveBeenCalledWith('/carriers/kpis')
+      expect(mockGet).toHaveBeenCalledWith('/analytics/carrier-performance')
       expect(result.success).toBe(true)
     })
 
@@ -79,9 +79,9 @@ describe('Analytics API', () => {
   })
 
   describe('getCostBreakdown', () => {
-    it('should GET /shipping/kpis', async () => {
+    it('should GET /analytics/cost-breakdown', async () => {
       const result = await getCostBreakdown()
-      expect(mockGet).toHaveBeenCalledWith('/shipping/kpis')
+      expect(mockGet).toHaveBeenCalledWith('/analytics/cost-breakdown')
       expect(result.success).toBe(true)
     })
 
@@ -94,9 +94,9 @@ describe('Analytics API', () => {
   })
 
   describe('getLanePerformance', () => {
-    it('should GET /carriers/rates', async () => {
+    it('should GET /analytics/lanes', async () => {
       const result = await getLanePerformance()
-      expect(mockGet).toHaveBeenCalledWith('/carriers/rates')
+      expect(mockGet).toHaveBeenCalledWith('/analytics/lanes')
       expect(result.success).toBe(true)
     })
 
@@ -109,9 +109,9 @@ describe('Analytics API', () => {
   })
 
   describe('getReturnsAnalytics', () => {
-    it('should GET /returns/analytics', async () => {
+    it('should GET /analytics/returns', async () => {
       const result = await getReturnsAnalytics()
-      expect(mockGet).toHaveBeenCalledWith('/returns/analytics')
+      expect(mockGet).toHaveBeenCalledWith('/analytics/returns')
       expect(result.success).toBe(true)
     })
 
@@ -124,9 +124,9 @@ describe('Analytics API', () => {
   })
 
   describe('getActivity', () => {
-    it('should GET /dashboard/activity', async () => {
+    it('should GET /analytics/activity', async () => {
       const result = await getActivity()
-      expect(mockGet).toHaveBeenCalledWith('/dashboard/activity')
+      expect(mockGet).toHaveBeenCalledWith('/analytics/activity')
       expect(result.success).toBe(true)
     })
 

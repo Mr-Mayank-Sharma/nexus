@@ -306,7 +306,7 @@ export default function LaborManagementPage() {
                   <div key={dayLabels[i]} className="flex-1 flex flex-col items-center gap-1">
                     <span className="text-[10px] font-medium text-[var(--text-secondary)]">{val}%</span>
                     <div className="w-full bg-[var(--nexus-primary-100)] rounded-t-md relative" style={{ height: `${val}%` }}>
-                      <div className="absolute bottom-0 w-full bg-[var(--nexus-primary-50)]0 rounded-t-md transition-all" style={{ height: '100%' }} />
+                      <div className="absolute bottom-0 w-full bg-[var(--nexus-primary-500)] rounded-t-md transition-all" style={{ height: '100%' }} />
                     </div>
                     <span className="text-[10px] text-[var(--text-secondary)] font-medium">{dayLabels[i]}</span>
                   </div>
@@ -355,7 +355,7 @@ export default function LaborManagementPage() {
               <Users className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Staff Overview
             </h3>
             <PermissionGate resource="warehouse" action="edit">
-              <button onClick={() => setShowAssignModal(true)} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
+              <button type="button" onClick={() => setShowAssignModal(true)} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
                 <Plus className="w-3.5 h-3.5" /> Assign to Wave
               </button>
             </PermissionGate>
@@ -381,21 +381,21 @@ export default function LaborManagementPage() {
                 <div className="flex items-center gap-2">
                   {emp.status === 'Active' && (
                     <PermissionGate resource="warehouse" action="edit">
-                      <button onClick={() => handleStartBreak(emp.id)} className="enterprise-btn enterprise-btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
+                      <button type="button" onClick={() => handleStartBreak(emp.id)} className="enterprise-btn enterprise-btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
                         <Pause className="w-3 h-3" /> Break
                       </button>
                     </PermissionGate>
                   )}
                   {emp.status === 'Break' && (
                     <PermissionGate resource="warehouse" action="edit">
-                      <button onClick={() => handleEndBreak(emp.id)} className="enterprise-btn enterprise-btn-primary text-[10px] px-2 py-1 flex items-center gap-1">
+                      <button type="button" onClick={() => handleEndBreak(emp.id)} className="enterprise-btn enterprise-btn-primary text-[10px] px-2 py-1 flex items-center gap-1">
                         <Play className="w-3 h-3" /> Resume
                       </button>
                     </PermissionGate>
                   )}
                   {emp.status !== 'Off' && (
                     <PermissionGate resource="warehouse" action="edit">
-                      <button onClick={() => handleEndShift(emp.id)} className="enterprise-btn enterprise-btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
+                      <button type="button" onClick={() => handleEndShift(emp.id)} className="enterprise-btn enterprise-btn-secondary text-[10px] px-2 py-1 flex items-center gap-1">
                         <LogOut className="w-3 h-3" /> End Shift
                       </button>
                     </PermissionGate>
@@ -424,7 +424,7 @@ export default function LaborManagementPage() {
                   <th className="px-4 py-2.5">Overtime</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[var(--surface-sunken)]">
                 {displayShifts.map((s) => (
                   <tr key={s.id} className="hover:bg-[var(--surface-sunken)]">
                     <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{s.employee}</td>
@@ -470,7 +470,7 @@ export default function LaborManagementPage() {
                   <div key={dayLabels[i]} className="flex-1 flex flex-col items-center gap-1">
                     <span className="text-[10px] font-medium text-[var(--text-secondary)]">{val}%</span>
                     <div className="w-full bg-[var(--nexus-primary-100)] rounded-t-md relative" style={{ height: `${val}%` }}>
-                      <div className="absolute bottom-0 w-full bg-[var(--nexus-primary-50)]0 rounded-t-md transition-all" style={{ height: '100%' }} />
+                      <div className="absolute bottom-0 w-full bg-[var(--nexus-primary-500)] rounded-t-md transition-all" style={{ height: '100%' }} />
                     </div>
                     <span className="text-[10px] text-[var(--text-secondary)] font-medium">{dayLabels[i]}</span>
                   </div>
@@ -495,10 +495,10 @@ export default function LaborManagementPage() {
                     <Settings className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Workload Rules
                   </h3>
                   <div className="flex items-center gap-2">
-                    <button onClick={loadWorkloadData} className="enterprise-btn enterprise-btn-secondary text-xs flex items-center gap-1.5">
+                    <button type="button" onClick={loadWorkloadData} className="enterprise-btn enterprise-btn-secondary text-xs flex items-center gap-1.5">
                       <RefreshCw className="w-3.5 h-3.5" /> Refresh
                     </button>
-                    <button onClick={() => setShowRuleModal(true)} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
+                    <button type="button" onClick={() => setShowRuleModal(true)} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
                       <Plus className="w-3.5 h-3.5" /> Add Rule
                     </button>
                   </div>
@@ -514,7 +514,7 @@ export default function LaborManagementPage() {
                         <th className="px-4 py-2.5">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-[var(--surface-sunken)]">
                       {workloadRules.map((rule) => (
                         <tr key={rule.id} className="hover:bg-[var(--surface-sunken)]">
                           <td className="px-4 py-2.5">
@@ -542,7 +542,7 @@ export default function LaborManagementPage() {
                   <h3 className="text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2">
                     <Activity className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Current Workload Balance
                   </h3>
-                  <button onClick={handleRebalance} disabled={rebalancing} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
+                  <button type="button" onClick={handleRebalance} disabled={rebalancing} className="enterprise-btn enterprise-btn-primary text-xs flex items-center gap-1.5">
                     {rebalancing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />} Rebalance
                   </button>
                 </div>
@@ -560,7 +560,7 @@ export default function LaborManagementPage() {
                             <span className="text-xs text-[var(--text-secondary)]">{wb.currentWeight}/{wb.maxWeight} ({pct}%)</span>
                           </div>
                           <div className="w-full h-2 bg-[var(--surface-muted)] rounded-full overflow-hidden">
-                            <div className={clsx('h-full rounded-full transition-all', pct > 90 ? 'bg-[var(--nexus-error-50)]0' : pct > 70 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-success-50)]0')} style={{ width: `${Math.min(pct, 100)}%` }} />
+                            <div className={clsx('h-full rounded-full transition-all', pct > 90 ? 'bg-[var(--nexus-error-500)]' : pct > 70 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-500)]')} style={{ width: `${Math.min(pct, 100)}%` }} />
                           </div>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {wb.tasks.map((task, i) => (
@@ -589,7 +589,7 @@ export default function LaborManagementPage() {
                         <th className="px-4 py-2.5 text-right">Variance</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-[var(--surface-sunken)]">
                       {performanceVsStandard.map((pvs) => (
                         <tr key={pvs.staffId} className="hover:bg-[var(--surface-sunken)]">
                           <td className="px-4 py-2.5 font-medium text-[var(--text-primary)]">{pvs.staffName}</td>
@@ -661,7 +661,7 @@ export default function LaborManagementPage() {
                           <th className="px-3 py-2 text-right">Quality</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-[var(--surface-sunken)]">
                         {productivityLogs.map((log) => (
                           <tr key={log.id} className="hover:bg-[var(--surface-sunken)]">
                             <td className="px-3 py-2 font-medium text-[var(--text-primary)] text-xs">{log.staffName}</td>
@@ -694,7 +694,7 @@ export default function LaborManagementPage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Assign Picker to Wave</h2>
-              <button onClick={() => setShowAssignModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <button type="button" onClick={() => setShowAssignModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -719,9 +719,9 @@ export default function LaborManagementPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowAssignModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowAssignModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="warehouse" action="edit">
-                <button onClick={handleAssign} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleAssign} className="enterprise-btn enterprise-btn-primary text-sm">
                   <UserCheck className="w-4 h-4" /> Assign
                 </button>
               </PermissionGate>
@@ -735,7 +735,7 @@ export default function LaborManagementPage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Workload Rule</h2>
-              <button onClick={() => setShowRuleModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
+              <button type="button" onClick={() => setShowRuleModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -766,8 +766,8 @@ export default function LaborManagementPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowRuleModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreateRule} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={() => setShowRuleModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={handleCreateRule} className="enterprise-btn enterprise-btn-primary text-sm">
                 <Plus className="w-4 h-4" /> Create Rule
               </button>
             </div>

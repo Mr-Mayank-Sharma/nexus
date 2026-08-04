@@ -1,7 +1,6 @@
-import { lazy, Suspense } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { lazy } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
-import ErrorBoundary from './components/layout/ErrorBoundary'
 import NotFoundPage from './pages/NotFoundPage'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
@@ -98,10 +97,7 @@ function PageLoader() {
 }
 
 export default function App() {
-  const location = useLocation()
   return (
-    <ErrorBoundary key={location.pathname + location.search}>
-    <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
@@ -193,7 +189,5 @@ export default function App() {
         </Route>
       </Route>
     </Routes>
-    </Suspense>
-    </ErrorBoundary>
   )
 }

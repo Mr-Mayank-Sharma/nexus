@@ -1,10 +1,10 @@
-import { ReactNode, useCallback, KeyboardEvent } from 'react'
+import { ReactNode, isValidElement, createElement, useCallback, KeyboardEvent } from 'react'
 import { clsx } from 'clsx'
 
 export interface Tab {
   id: string
   label: string
-  icon?: ReactNode
+  icon?: ReactNode | React.ComponentType<any>
   badge?: number | string
   disabled?: boolean
 }
@@ -14,6 +14,13 @@ interface Props {
   activeTab: string
   onChange: (tabId: string) => void
   variant?: 'underline' | 'pills' | 'cards'
+}
+
+function renderIcon(icon: Tab['icon']): ReactNode {
+  if (!icon) return null
+  if (isValidElement(icon)) return icon
+  if (typeof icon === 'function') return createElement(icon)
+  return null
 }
 
 export default function EnterpriseTabs({ tabs, activeTab, onChange, variant = 'underline' }: Props) {
@@ -73,7 +80,7 @@ export default function EnterpriseTabs({ tabs, activeTab, onChange, variant = 'u
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
             )}
           >
-            {tab.icon}
+            {renderIcon(tab.icon)}
             {tab.label}
             {tab.badge != null && (
               <span className="ml-1 text-[10px] bg-[var(--color-primary-100)] text-[var(--color-primary-700)] px-1.5 py-0.5 rounded-full font-semibold" aria-hidden="true">
@@ -99,7 +106,7 @@ export default function EnterpriseTabs({ tabs, activeTab, onChange, variant = 'u
                 : 'border-[var(--border-color)] hover:border-[var(--border-color-hover)] text-[var(--text-secondary)]'
             )}
           >
-            {tab.icon && <div className="text-2xl" aria-hidden="true">{tab.icon}</div>}
+            {tab.icon && <div className="text-2xl" aria-hidden="true">{renderIcon(tab.icon)}</div>}
             <span className="text-sm font-medium">{tab.label}</span>
           </button>
         ))}
@@ -120,7 +127,7 @@ export default function EnterpriseTabs({ tabs, activeTab, onChange, variant = 'u
                 : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-color)]'
             )}
           >
-            {tab.icon}
+            {renderIcon(tab.icon)}
             {tab.label}
             {tab.badge != null && (
               <span className={clsx('ml-1 text-xs px-1.5 py-0.5 rounded-full',

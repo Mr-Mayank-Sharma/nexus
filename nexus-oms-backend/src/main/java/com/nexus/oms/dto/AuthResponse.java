@@ -26,4 +26,5 @@ public class AuthResponse {
     private boolean passwordResetRequired;
     private String ssoProvider;
     private List<String> permissions;
+    private String refreshToken;
 }

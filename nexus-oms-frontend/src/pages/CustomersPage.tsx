@@ -124,12 +124,12 @@ export default function CustomersPage() {
                 </div>
                 <div className="flex gap-1">
                   <PermissionGate resource="customers" action="edit">
-                    <button className="enterprise-btn-ghost p-1.5" title="Edit" onClick={() => openEdit(c)}>
+                    <button type="button" className="enterprise-btn-ghost p-1.5" title="Edit" onClick={() => openEdit(c)}>
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
                   </PermissionGate>
                   <PermissionGate resource="customers" action="delete">
-                    <button className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]" title="Delete"
+                    <button type="button" className="enterprise-btn-ghost p-1.5 text-[var(--nexus-error-500)]" title="Delete"
                       onClick={() => { if (confirm('Delete this customer?')) deleteMutation.mutate(c.id); }}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -189,9 +189,9 @@ export default function CustomersPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
-              <button className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button type="button" className="enterprise-btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
               <PermissionGate resource="customers" action={editingCustomer ? 'edit' : 'create'}>
-                <button className="enterprise-btn-primary"
+                <button type="button" className="enterprise-btn-primary"
                   onClick={() => editingCustomer ? updateMutation.mutate() : createMutation.mutate()}
                   disabled={!form.name || (editingCustomer ? updateMutation.isPending : createMutation.isPending)}>
                   {(editingCustomer ? updateMutation.isPending : createMutation.isPending) ? (

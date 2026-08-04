@@ -16,6 +16,7 @@ public class ShopifyFulfillmentPushService {
 
     private final ShopifyClient shopifyClient;
     private final IntegrationStoreService storeService;
+    private final ShopifyTokenService tokenService;
     private final NxIntegrationStoreRepository storeRepository;
     private final NxIntegrationSyncConfigRepository syncConfigRepository;
     private final NxSyncLogRepository syncLogRepository;
@@ -25,6 +26,7 @@ public class ShopifyFulfillmentPushService {
 
     public ShopifyFulfillmentPushService(ShopifyClient shopifyClient,
                                           IntegrationStoreService storeService,
+                                          ShopifyTokenService tokenService,
                                           NxIntegrationStoreRepository storeRepository,
                                           NxIntegrationSyncConfigRepository syncConfigRepository,
                                           NxSyncLogRepository syncLogRepository,
@@ -33,6 +35,7 @@ public class ShopifyFulfillmentPushService {
                                           ShipmentRepository shipmentRepository) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
+        this.tokenService = tokenService;
         this.storeRepository = storeRepository;
         this.syncConfigRepository = syncConfigRepository;
         this.syncLogRepository = syncLogRepository;
@@ -45,7 +48,7 @@ public class ShopifyFulfillmentPushService {
     public SyncResult pushFulfillments(UUID storeId) {
         NxIntegrationStore store = storeService.getStore(storeId);
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
-        String accessToken = storeService.getSetting(storeId, "access_token");
+        String accessToken = tokenService.getAccessToken(storeId);
 
         NxSyncLog syncLog = NxSyncLog.builder()
                 .tenantId(store.getTenantId())

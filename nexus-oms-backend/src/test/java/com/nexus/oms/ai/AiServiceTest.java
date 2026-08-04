@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AiServiceTest {
 
-    private final AiService aiService = new AiService("http://localhost:8000", "http://localhost:8001");
+    private final AiService aiService = new AiService("http://localhost:8000", "http://localhost:8001", 30000);
 
     @Test
     void fallbackRouting_returnsDefaultResponse() {

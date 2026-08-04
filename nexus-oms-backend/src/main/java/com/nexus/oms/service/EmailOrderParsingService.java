@@ -13,12 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -167,6 +170,61 @@ public class EmailOrderParsingService {
             parsed.setParsedData(MAPPER.writeValueAsString(parsedData));
         } catch (JsonProcessingException e) {
             log.warn("Failed to serialize parsed CSV data: {}", e.getMessage());
+        }
+
+        return emailParsedOrderRepository.save(parsed);
+    }
+
+    @Transactional
+    public NxEmailParsedOrder parsePdfAttachment(MultipartFile file, String subject, String from) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        String extractedText;
+
+        try (InputStream is = file.getInputStream();
+             PDDocument document = PDDocument.load(is)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            extractedText = stripper.getText(document);
+        } catch (Exception e) {
+            throw new BadRequestException("Failed to extract text from PDF: " + e.getMessage());
+        }
+
+        if (extractedText == null || extractedText.isBlank()) {
+            throw new BadRequestException("PDF contained no extractable text");
+        }
+
+        Map<String, Object> parsedData = textParser.extractOrderFromText(extractedText);
+        BigDecimal confidence = textParser.calculateConfidence(parsedData);
+        parsedData.put("source", "PDF_ATTACHMENT");
+        parsedData.put("pdfPageCount", -1);
+
+        try (InputStream is = file.getInputStream();
+             PDDocument document = PDDocument.load(is)) {
+            parsedData.put("pdfPageCount", document.getNumberOfPages());
+        } catch (Exception ignored) {}
+
+        NxEmailParsedOrder parsed = NxEmailParsedOrder.builder()
+                .tenantId(tenantId)
+                .emailSubject(subject != null ? subject : file.getOriginalFilename())
+                .emailFrom(from)
+                .attachmentFilename(file.getOriginalFilename())
+                .attachmentType("PDF")
+                .emailReceivedAt(LocalDateTime.now())
+                .status(confidence.compareTo(new BigDecimal("0.7")) >= 0 ? "PARSED" : "PENDING_REVIEW")
+                .confidenceScore(confidence)
+                .customerName((String) parsedData.get("customerName"))
+                .customerEmail((String) parsedData.get("customerEmail"))
+                .itemCount((Integer) parsedData.getOrDefault("itemCount", 0))
+                .rawBody(extractedText.length() > 5000 ? extractedText.substring(0, 5000) : extractedText)
+                .build();
+
+        if (parsedData.containsKey("orderTotal")) {
+            parsed.setOrderTotal(new BigDecimal(parsedData.get("orderTotal").toString()));
+        }
+
+        try {
+            parsed.setParsedData(MAPPER.writeValueAsString(parsedData));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize parsed PDF data: {}", e.getMessage());
         }
 
         return emailParsedOrderRepository.save(parsed);

@@ -15,13 +15,13 @@ import type { Return, ReturnItem } from '../types'
 import { useToast } from '../hooks/useToast'
 
 const STATUS_COLORS: Record<string, string> = {
-  REQUESTED: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] ring-amber-500/20',
-  APPROVED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-blue-500/20',
-  RECEIVED: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-gray-500/20',
-  INSPECTED: 'text-violet-600 bg-violet-50 ring-violet-500/20',
-  REFUNDED: 'text-emerald-600 bg-emerald-50 ring-emerald-500/20',
-  REJECTED: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] ring-red-500/20',
-  CANCELLED: 'text-[var(--text-tertiary)] bg-[var(--surface-sunken)] ring-gray-500/20',
+  REQUESTED: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] ring-[var(--nexus-warning-500)]/20',
+  APPROVED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-[var(--nexus-primary-500)]/20',
+  RECEIVED: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-[var(--border-default)]/20',
+  INSPECTED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-[var(--nexus-primary-500)]/20',
+  REFUNDED: 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] ring-[var(--nexus-success-500)]/20',
+  REJECTED: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] ring-[var(--nexus-error-500)]/20',
+  CANCELLED: 'text-[var(--text-tertiary)] bg-[var(--surface-sunken)] ring-[var(--border-default)]/20',
 }
 
 const STATUS_KPI_COLORS: Record<string, 'warning' | 'info' | 'neutral' | 'ai' | 'success' | 'error'> = {
@@ -241,7 +241,7 @@ export default function ReturnsPage() {
           <AlertTriangle />
           <h3>Failed to load returns</h3>
           <p>{error}</p>
-          <button onClick={fetchData} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm mt-4">Try again</button>
+          <button type="button" onClick={fetchData} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm mt-4">Try again</button>
         </div>
       ) : filteredReturns.length === 0 ? (
         <div className="enterprise-empty-state">
@@ -287,8 +287,8 @@ export default function ReturnsPage() {
                 <div className="flex items-center gap-1.5 ml-4">
                   {ret.status === 'REQUESTED' && (
                     <PermissionGate resource="returns" action="edit">
-                      <button onClick={() => handleApprove(ret.id)} disabled={processing === ret.id}
-                        className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                      <button type="button" onClick={() => handleApprove(ret.id)} disabled={processing === ret.id}
+                        className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-success-600)] text-white hover:bg-[var(--nexus-success-700)] border-none disabled:opacity-50">
                         {processing === ret.id ? <div className="enterprise-spinner" /> : <Check className="w-3 h-3" />}
                         Approve
                       </button>
@@ -296,7 +296,7 @@ export default function ReturnsPage() {
                   )}
                   {ret.status === 'APPROVED' && (
                     <PermissionGate resource="returns" action="edit">
-                      <button onClick={() => handleReceive(ret.id)} disabled={processing === ret.id}
+                      <button type="button" onClick={() => handleReceive(ret.id)} disabled={processing === ret.id}
                         className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] border-none disabled:opacity-50">
                         {processing === ret.id ? <div className="enterprise-spinner" /> : <PackageCheck className="w-3 h-3" />}
                         Receive
@@ -305,29 +305,29 @@ export default function ReturnsPage() {
                   )}
                   {ret.status === 'RECEIVED' && (
                     <PermissionGate resource="returns" action="edit">
-                      <button onClick={() => openInspect(ret)} disabled={processing === 'inspect'}
-                        className="enterprise-btn enterprise-btn-sm bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
+                      <button type="button" onClick={() => openInspect(ret)} disabled={processing === 'inspect'}
+                        className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] border-none disabled:opacity-50">
                         <Eye className="w-3 h-3" /> Inspect
                       </button>
                     </PermissionGate>
                   )}
                   {ret.status === 'INSPECTED' && (
                     <PermissionGate resource="returns" action="edit">
-                      <button onClick={() => openRefund(ret)} disabled={processing === 'refund'}
-                        className="enterprise-btn enterprise-btn-sm bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                      <button type="button" onClick={() => openRefund(ret)} disabled={processing === 'refund'}
+                        className="enterprise-btn enterprise-btn-sm bg-[var(--nexus-success-600)] text-white hover:bg-[var(--nexus-success-700)] border-none disabled:opacity-50">
                         <DollarSign className="w-3 h-3" /> Refund
                       </button>
                     </PermissionGate>
                   )}
                   {!['REFUNDED', 'REJECTED', 'CANCELLED'].includes(ret.status) && (
                     <PermissionGate resource="returns" action="delete">
-                      <button onClick={() => { setSelectedReturn(ret); setRejectReason(''); setRejectOpen(true) }}
+                      <button type="button" onClick={() => { setSelectedReturn(ret); setRejectReason(''); setRejectOpen(true) }}
                         className="enterprise-btn enterprise-btn-sm enterprise-btn-ghost">
                         <X className="w-3 h-3" />
                       </button>
                     </PermissionGate>
                   )}
-                  <button onClick={() => setExpandedId(expandedId === ret.id ? null : ret.id)}
+                  <button type="button" onClick={() => setExpandedId(expandedId === ret.id ? null : ret.id)}
                     className="w-7 h-7 flex items-center justify-center text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]">
                     {expandedId === ret.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </button>
@@ -396,7 +396,7 @@ export default function ReturnsPage() {
           <div className="enterprise-modal max-w-lg" onClick={e => e.stopPropagation()}>
               <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Create Return</h2>
-              <button onClick={() => setCreateOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setCreateOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-5">
               <div className="enterprise-form-row">
@@ -437,7 +437,7 @@ export default function ReturnsPage() {
               <div className="enterprise-form-group">
                 <div className="flex items-center justify-between">
                   <label>Return Items</label>
-                  <button onClick={() => setCreateItems(i => [...i, { sku: '', productName: '', quantity: 1 }])} className="text-xs text-[var(--text-brand)] hover:underline font-medium">+ Add Item</button>
+                  <button type="button" onClick={() => setCreateItems(i => [...i, { sku: '', productName: '', quantity: 1 }])} className="text-xs text-[var(--text-brand)] hover:underline font-medium">+ Add Item</button>
                 </div>
                 <div className="space-y-2 mt-2">
                   {createItems.map((item, i) => (
@@ -446,7 +446,7 @@ export default function ReturnsPage() {
                       <input type="text" placeholder="Product" className="enterprise-input flex-1" value={item.productName} onChange={e => { const items = [...createItems]; items[i] = { ...items[i], productName: e.target.value }; setCreateItems(items) }} />
                       <input type="number" min={1} className="enterprise-input w-16" value={item.quantity} onChange={e => { const items = [...createItems]; items[i] = { ...items[i], quantity: parseInt(e.target.value) || 1 }; setCreateItems(items) }} />
                       {createItems.length > 1 && (
-                        <button onClick={() => setCreateItems(items => items.filter((_, idx) => idx !== i))} className="p-1.5 text-[var(--nexus-error-400)] hover:text-[var(--nexus-error-600)]"><X className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => setCreateItems(items => items.filter((_, idx) => idx !== i))} className="p-1.5 text-[var(--nexus-error-400)] hover:text-[var(--nexus-error-600)]"><X className="w-4 h-4" /></button>
                       )}
                     </div>
                   ))}
@@ -454,9 +454,9 @@ export default function ReturnsPage() {
               </div>
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setCreateOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setCreateOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="returns" action="create">
-                <button onClick={handleCreate} disabled={processing === 'create' || !createForm.orderId} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
+                <button type="button" onClick={handleCreate} disabled={processing === 'create' || !createForm.orderId} className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
                   {processing === 'create' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create Return
                 </button>
@@ -472,7 +472,7 @@ export default function ReturnsPage() {
           <div className="enterprise-modal max-w-xl" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Inspect Return: {selectedReturn.rmaNumber}</h2>
-              <button onClick={() => setInspectOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setInspectOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4 max-h-[60vh] overflow-y-auto">
               {inspectItems.map((item, i) => (
@@ -516,9 +516,9 @@ export default function ReturnsPage() {
               ))}
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setInspectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setInspectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="returns" action="edit">
-                <button onClick={handleInspect} disabled={processing === 'inspect'} className="enterprise-btn bg-violet-600 text-white hover:bg-violet-700 border-none disabled:opacity-50">
+                <button type="button" onClick={handleInspect} disabled={processing === 'inspect'} className="enterprise-btn bg-[var(--nexus-primary-600)] text-white hover:bg-[var(--nexus-primary-700)] border-none disabled:opacity-50">
                   {processing === 'inspect' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Eye className="w-4 h-4" />}
                   Complete Inspection
                 </button>
@@ -534,7 +534,7 @@ export default function ReturnsPage() {
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Process Refund</h2>
-              <button onClick={() => setRefundOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setRefundOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
               <div className="enterprise-form-group">
@@ -551,9 +551,9 @@ export default function ReturnsPage() {
               </div>
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setRefundOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setRefundOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="returns" action="edit">
-                <button onClick={handleRefund} disabled={processing === 'refund' || refundAmount <= 0} className="enterprise-btn bg-emerald-600 text-white hover:bg-emerald-700 border-none disabled:opacity-50">
+                <button type="button" onClick={handleRefund} disabled={processing === 'refund' || refundAmount <= 0} className="enterprise-btn bg-[var(--nexus-success-600)] text-white hover:bg-[var(--nexus-success-700)] border-none disabled:opacity-50">
                   {processing === 'refund' ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
                   Process Refund
                 </button>
@@ -569,7 +569,7 @@ export default function ReturnsPage() {
           <div className="enterprise-modal max-w-md" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Reject Return</h2>
-              <button onClick={() => setRejectOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setRejectOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--bg-tertiary)]"><X className="w-5 h-5" /></button>
             </div>
             <div className="enterprise-modal-body space-y-4">
               <p className="text-sm text-[var(--text-tertiary)]">Rejecting <strong className="text-[var(--text-primary)]">{selectedReturn.rmaNumber}</strong></p>
@@ -579,9 +579,9 @@ export default function ReturnsPage() {
               </div>
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setRejectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setRejectOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="returns" action="delete">
-                <button onClick={handleReject} disabled={processing === 'reject'} className="enterprise-btn bg-[var(--nexus-error-600)] text-white hover:bg-[var(--nexus-error-700)] border-none disabled:opacity-50">
+                <button type="button" onClick={handleReject} disabled={processing === 'reject'} className="enterprise-btn bg-[var(--nexus-error-600)] text-white hover:bg-[var(--nexus-error-700)] border-none disabled:opacity-50">
                   {processing === 'reject' ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
                   Reject Return
                 </button>

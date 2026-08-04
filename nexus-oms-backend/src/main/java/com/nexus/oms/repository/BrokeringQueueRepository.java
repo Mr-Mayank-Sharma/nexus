@@ -14,5 +14,7 @@ public interface BrokeringQueueRepository extends JpaRepository<NxBrokeringQueue
     List<NxBrokeringQueue> findByOrderId(UUID orderId);
     List<NxBrokeringQueue> findByStatusAndNextRunAtBefore(String status, java.time.LocalDateTime nextRunAt);
     List<NxBrokeringQueue> findByStatusAndPriorityIn(String status, List<String> priorities);
+    List<NxBrokeringQueue> findByTenantIdAndStatusAndNextRunAtBefore(UUID tenantId, String status, java.time.LocalDateTime nextRunAt);
+    List<NxBrokeringQueue> findByTenantIdAndStatusAndPriorityIn(UUID tenantId, String status, List<String> priorities);
     long countByTenantIdAndStatus(UUID tenantId, String status);
 }

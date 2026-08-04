@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+import time
+import threading
 import numpy as np
 import pandas as pd
 import joblib
@@ -15,6 +17,19 @@ MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "models")
 models = {}
 scalers = {}
 loaded = False
+
+_model_mtimes = {}
+
+MODEL_CONFIGS = {
+    "demand_forecast": {
+        "model": "demand_forecast_model.pkl",
+        "scaler": "demand_forecast_scaler.pkl",
+    },
+    "inventory_optimization": {
+        "model": "inventory_optimization_model.pkl",
+        "scaler": "inventory_optimization_scaler.pkl",
+    },
+}
 
 
 def load_models():
@@ -35,11 +50,106 @@ def load_models():
 
     loaded = True
     print(f"Loaded {len(models)} models")
+    _track_mtimes()
+
+
+def _track_mtimes():
+    for name, config in MODEL_CONFIGS.items():
+        for artifact_key in ["model", "scaler"]:
+            filename = config.get(artifact_key)
+            if filename:
+                path = os.path.join(MODEL_DIR, filename)
+                if os.path.exists(path):
+                    _model_mtimes[path] = os.path.getmtime(path)
+
+
+def _reload_changed_models():
+    changed = []
+    for path, old_mtime in list(_model_mtimes.items()):
+        try:
+            new_mtime = os.path.getmtime(path)
+            if new_mtime > old_mtime:
+                changed.append(path)
+        except OSError:
+            pass
+
+    if not changed:
+        return
+
+    print(f"[HOT-RELOAD] Detected changes in: {[os.path.basename(p) for p in changed]}")
+
+    reload_models = set()
+    for path in changed:
+        basename = os.path.basename(path)
+        for name, config in MODEL_CONFIGS.items():
+            for artifact_key in ["model", "scaler"]:
+                if config.get(artifact_key) == basename:
+                    reload_models.add(name)
+
+    for name in reload_models:
+        try:
+            config = MODEL_CONFIGS[name]
+            models[name] = joblib.load(os.path.join(MODEL_DIR, config["model"]))
+            if "scaler" in config:
+                scalers[name] = joblib.load(os.path.join(MODEL_DIR, config["scaler"]))
+            print(f"[HOT-RELOAD] Successfully reloaded model: {name}")
+        except Exception as e:
+            print(f"[HOT-RELOAD] Failed to reload model {name}: {e}")
+
+    _track_mtimes()
+
+
+def _model_watcher(interval_seconds=30):
+    while True:
+        time.sleep(interval_seconds)
+        try:
+            _reload_changed_models()
+        except Exception as e:
+            print(f"[HOT-RELOAD] Watcher error: {e}")
 
 
 @app.route("/api/health-extended", methods=["GET"])
 def health():
     return jsonify({"status": "healthy", "models_loaded": len(models) == 2})
+
+
+@app.route("/api/warmup", methods=["POST"])
+def warmup():
+    """Pre-warm models with synthetic input to avoid cold-start timeouts."""
+    warmed = []
+    for name, model in models.items():
+        try:
+            if name == "demand_forecast":
+                test = pd.DataFrame([{
+                    "day_of_week": 2, "month": 6, "day_of_month": 15, "weekend": 0,
+                    "days_to_event": 0, "is_festive_season": 0,
+                    "lag_1": 20, "lag_2": 20, "lag_3": 20, "lag_4": 20,
+                    "lag_5": 20, "lag_6": 20, "lag_7": 20
+                }])
+                for col in test.columns:
+                    test[col] = pd.to_numeric(test[col], errors="coerce").fillna(0).astype(float)
+                sc = scalers.get("demand_forecast")
+                if sc:
+                    X = sc.transform(test)
+                    model.predict(X)
+                    warmed.append(name)
+            elif name == "inventory_optimization":
+                test = pd.DataFrame([{
+                    "current_stock": 50, "demand_forecast_next_7": 100,
+                    "demand_forecast_next_30": 400, "lead_time_days": 7,
+                    "avg_daily_sales": 10, "safety_stock": 30, "seasonality_factor": 1.0
+                }])
+                for col in test.columns:
+                    test[col] = pd.to_numeric(test[col], errors="coerce").fillna(0).astype(float)
+                sc = scalers.get("inventory_optimization")
+                if sc:
+                    X = sc.transform(test)
+                    model.predict_proba(X)
+                    warmed.append(name)
+        except Exception as e:
+            print(f"[WARMUP] Failed to warm {name}: {e}")
+
+    return jsonify({"warmed": warmed, "total": len(models)})
 
 
 @app.route("/api/predict/demand", methods=["POST"])
@@ -135,5 +245,8 @@ if __name__ == "__main__":
     load_models()
     print("\nSample test requests:")
     print(json.dumps(generate_sample_requests(), indent=2))
+    print("\nStarting model file watcher (30s interval)...")
+    watcher = threading.Thread(target=_model_watcher, args=(30,), daemon=True)
+    watcher.start()
     print("\nStarting API server on port 5001...")
     app.run(host="0.0.0.0", port=5001, debug=True)

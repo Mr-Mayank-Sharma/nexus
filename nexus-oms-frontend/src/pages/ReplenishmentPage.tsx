@@ -219,22 +219,22 @@ export default function ReplenishmentPage() {
           </select>
         </div>
 
-        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+        <div className="h-6 w-px bg-[var(--surface-muted)]" />
 
         <div className="flex-1" />
 
         {activeTab === 'rules' && (
-          <button onClick={() => setShowRuleModal(true)} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={() => setShowRuleModal(true)} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> Add Rule
           </button>
         )}
         {activeTab === 'suggestions' && (
-          <button onClick={handleGenerate} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={handleGenerate} className="enterprise-btn enterprise-btn-primary text-sm">
             <RefreshCw className="w-4 h-4" /> Generate Suggestions
           </button>
         )}
 
-        <div className="h-6 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+        <div className="h-6 w-px bg-[var(--surface-muted)]" />
 
         <div className="flex items-center rounded-lg border border-[var(--border-default)] overflow-hidden">
           {tabs.map((tab) => (
@@ -264,7 +264,7 @@ export default function ReplenishmentPage() {
             <div className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <tr className="bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     <th className="px-4 py-3">Rule Name</th>
                     <th className="px-4 py-3">SKU</th>
                     <th className="px-4 py-3">Reorder Point</th>
@@ -275,7 +275,7 @@ export default function ReplenishmentPage() {
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
                   {rules.map((rule) => (
                     <tr key={rule.id} className="hover:bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-base)]/30 transition-colors">
                       <td className="px-4 py-3 font-medium text-[var(--text-primary)]">{rule.ruleName}</td>
@@ -334,7 +334,7 @@ export default function ReplenishmentPage() {
             <div className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-[var(--surface-sunken)] bg-[var(--surface-base)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
+                  <tr className="bg-[var(--surface-sunken)]/50 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
                     <th className="px-4 py-3">SKU</th>
                     <th className="px-4 py-3">Current Qty</th>
                     <th className="px-4 py-3">Suggested Qty</th>
@@ -344,7 +344,7 @@ export default function ReplenishmentPage() {
                     <th className="px-4 py-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
                   {suggestions.map((s) => (
                     <tr key={s.id} className="hover:bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-base)]/30 transition-colors">
                       <td className="px-4 py-3 font-medium text-[var(--text-primary)] font-mono text-xs">{s.sku}</td>
@@ -438,7 +438,7 @@ export default function ReplenishmentPage() {
           >
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">New Replenishment Rule</h2>
-              <button onClick={() => setShowRuleModal(false)} className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors">
+              <button type="button" onClick={() => setShowRuleModal(false)} className="p-1.5 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded-lg transition-colors">
                 <X className="w-5 h-5 text-[var(--text-secondary)]" />
               </button>
             </div>
@@ -520,8 +520,8 @@ export default function ReplenishmentPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowRuleModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
-              <button onClick={handleCreateRule} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+              <button type="button" onClick={() => setShowRuleModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={handleCreateRule} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} Create Rule
               </button>
             </div>

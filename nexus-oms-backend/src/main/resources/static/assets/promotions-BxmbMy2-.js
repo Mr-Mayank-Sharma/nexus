@@ -1,0 +1,6 @@
+import{O as c,Q as i}from"./index-DOjk0D_p.js";/**
+ * @license lucide-react v0.428.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const l=c("Percent",[["line",{x1:"19",x2:"5",y1:"5",y2:"19",key:"1x9vlm"}],["circle",{cx:"6.5",cy:"6.5",r:"2.5",key:"4mh3h7"}],["circle",{cx:"17.5",cy:"17.5",r:"2.5",key:"1mdrzq"}]]),o=i.create({baseURL:"/api/v1/promotions",headers:{"Content-Type":"application/json"}});o.interceptors.request.use(e=>{const t=localStorage.getItem("nexus_token");return t&&(e.headers.Authorization=`Bearer ${t}`),e});const m={getPromotions:()=>o.get("/"),getPromotion:e=>o.get(`/${e}`),createPromotion:e=>o.post("/",e),updatePromotion:(e,t)=>o.put(`/${e}`,t),deletePromotion:e=>o.delete(`/${e}`),validateCoupon:(e,t,r)=>o.post("/validate",null,{params:{couponCode:e,orderTotal:t,customerId:r}}),calculateDiscount:(e,t,r=1,a)=>o.post("/calculate",null,{params:{couponCode:e,orderTotal:t,quantity:r,customerId:a}}),recordUsage:(e,t,r,a,s,n)=>o.post(`/${e}/record`,null,{params:{discountAmount:t,orderTotal:r,orderId:a,customerId:s,couponCode:n}}),getPromotionStats:e=>o.get(`/${e}/stats`),getActivePromotions:(e,t=1,r)=>o.get("/active-for-order",{params:{orderTotal:e,quantity:t,channel:r}})};export{l as P,m as p};

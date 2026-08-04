@@ -1,7 +1,7 @@
 package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -20,7 +20,7 @@ public class NxBrokeringQueue {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @NotBlank
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

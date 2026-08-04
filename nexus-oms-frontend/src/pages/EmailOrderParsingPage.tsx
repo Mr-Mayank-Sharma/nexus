@@ -22,7 +22,7 @@ const STATUS_BADGES: Record<string, string> = {
 }
 
 const CONFIDENCE_COLORS: Record<string, string> = {
-  high: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400',
+  high: 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-400)]',
   medium: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]',
   low: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]',
 }
@@ -130,7 +130,7 @@ export default function EmailOrderParsingPage() {
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="flex items-center gap-2.5"><Mail className="w-6 h-6 text-rose-600" />Email Order Parsing</h1>
+            <h1 className="flex items-center gap-2.5"><Mail className="w-6 h-6 text-[var(--nexus-error-600)]" />Email Order Parsing</h1>
             <p>Parse orders from email content, PDFs, and CSV attachments</p>
           </div>
         </div>
@@ -147,9 +147,9 @@ export default function EmailOrderParsingPage() {
       {/* KPI Cards */}
       <div className="enterprise-kpi-grid">
         {[
-          { label: 'Total Parsed', value: kpis ? (kpis.total || 0) : 0, icon: Mail, color: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400' },
+          { label: 'Total Parsed', value: kpis ? (kpis.total || 0) : 0, icon: Mail, color: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]' },
           { label: 'Pending Review', value: kpis?.pendingReview ?? 0, icon: AlertTriangle, color: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]' },
-          { label: 'Approved', value: kpis?.approved ?? 0, icon: CheckCircle, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' },
+          { label: 'Approved', value: kpis?.approved ?? 0, icon: CheckCircle, color: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-400)]' },
           { label: 'Rejected', value: kpis?.rejected ?? 0, icon: XCircle, color: kpis?.rejected ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] dark:bg-[var(--nexus-error-900)]/20 dark:text-[var(--nexus-error-400)]' : 'bg-[var(--surface-sunken)] text-[var(--text-secondary)]' },
         ].map(kpi => (
           <div key={kpi.label} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
@@ -179,7 +179,7 @@ export default function EmailOrderParsingPage() {
           </select>
         </div>
         <div className="enterprise-toolbar-right">
-          <button onClick={() => fetchData()} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">
+          <button type="button" onClick={() => fetchData()} className="enterprise-btn enterprise-btn-sm enterprise-btn-secondary">
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
@@ -211,7 +211,7 @@ export default function EmailOrderParsingPage() {
                 className="w-full flex items-center gap-4 p-4 hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors text-left"
               >
                 <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
-                  order.status === 'APPROVED' && 'bg-emerald-50 text-emerald-600',
+                  order.status === 'APPROVED' && 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)]',
                   order.status === 'REJECTED' && 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]',
                   ['NEW', 'PARSED'].includes(order.status) && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]',
                   order.status === 'PENDING_REVIEW' && 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)]',
@@ -247,13 +247,13 @@ export default function EmailOrderParsingPage() {
                   {order.status === 'PARSED' && (
                     <>
                       <PermissionGate resource="integrations" action="edit">
-                        <button onClick={e => { e.stopPropagation(); handleApprove(order.id) }}
-                          className="enterprise-btn enterprise-btn-xs bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100">
+                        <button type="button" onClick={e => { e.stopPropagation(); handleApprove(order.id) }}
+                          className="enterprise-btn enterprise-btn-xs bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)] border border-[var(--nexus-success-200)] hover:bg-[var(--nexus-success-100)]">
                           <CheckCircle className="w-3 h-3" /> Approve
                         </button>
                       </PermissionGate>
                       <PermissionGate resource="integrations" action="edit">
-                        <button onClick={e => { e.stopPropagation(); handleReject(order.id) }}
+                        <button type="button" onClick={e => { e.stopPropagation(); handleReject(order.id) }}
                           className="enterprise-btn enterprise-btn-xs bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)] border border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                           <XCircle className="w-3 h-3" /> Reject
                         </button>
@@ -305,9 +305,9 @@ export default function EmailOrderParsingPage() {
             <div className="flex items-center justify-between pt-2">
               <p className="text-xs text-[var(--text-tertiary)]">Page {page + 1} of {totalPages}</p>
               <div className="flex items-center gap-1">
-                <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
+                <button type="button" disabled={page === 0} onClick={() => setPage(p => p - 1)}
                   className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary disabled:opacity-30">Previous</button>
-                <button disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
+                <button type="button" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)}
                   className="enterprise-btn enterprise-btn-xs enterprise-btn-secondary disabled:opacity-30">Next</button>
               </div>
             </div>
@@ -321,14 +321,14 @@ export default function EmailOrderParsingPage() {
           <div className="enterprise-modal max-w-lg" onClick={e => e.stopPropagation()}>
             <div className="enterprise-modal-header">
               <h2 className="text-lg font-bold text-[var(--text-primary)]">Parse Email Content</h2>
-              <button onClick={() => setParseOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
+              <button type="button" onClick={() => setParseOpen(false)} className="p-1 text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
             <div className="enterprise-modal-body space-y-5">
               <div className="flex gap-2">
                 {(['text', 'csv'] as const).map(t => (
-                  <button key={t} onClick={() => setParseTab(t)}
+                  <button type="button" key={t} onClick={() => setParseTab(t)}
                     className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                       parseTab === t ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]')}>
                     {t === 'text' ? 'Email Text' : 'CSV File'}
@@ -359,7 +359,7 @@ export default function EmailOrderParsingPage() {
                 <div className="enterprise-form-group">
                   <label>CSV File</label>
                   <div onClick={() => fileRef.current?.click()}
-                    className="border-2 border-dashed border-[var(--border-default)] border-[var(--border-default)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--nexus-primary-400)] transition-colors">
+                    className="border-2 border-dashed border-[var(--border-default)] rounded-xl p-6 text-center cursor-pointer hover:border-[var(--nexus-primary-400)] transition-colors">
                     {csvFile ? (
                       <div className="space-y-1">
                         <FileText className="w-8 h-8 mx-auto text-[var(--nexus-primary-500)]" />
@@ -380,9 +380,9 @@ export default function EmailOrderParsingPage() {
               )}
             </div>
             <div className="enterprise-modal-footer">
-              <button onClick={() => setParseOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={() => setParseOpen(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
               <PermissionGate resource="integrations" action="create">
-                <button onClick={handleParse} disabled={processing || (parseTab === 'text' ? !textForm.body : !csvFile)}
+                <button type="button" onClick={handleParse} disabled={processing || (parseTab === 'text' ? !textForm.body : !csvFile)}
                   className="enterprise-btn enterprise-btn-primary disabled:opacity-50">
                   {processing && <Loader2 className="w-4 h-4 animate-spin" />}
                   {parseTab === 'text' ? 'Parse Email' : 'Parse CSV'}

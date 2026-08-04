@@ -35,6 +35,9 @@ public class NxProductMapping {
     @Column(name = "nexus_product_name")
     private String nexusProductName;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @Column(name = "last_synced_at")
     private LocalDateTime lastSyncedAt;
 

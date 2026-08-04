@@ -10,7 +10,7 @@ const categoryStyles: Record<string, string> = {
   ORDER: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-800)]',
   INVENTORY: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-800)]',
   SHIPPING: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-800)]',
-  PROCUREMENT: 'bg-orange-100 text-orange-800',
+  PROCUREMENT: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-800)]',
   CUSTOM: 'bg-[var(--surface-muted)] text-[var(--text-primary)]',
 }
 
@@ -176,7 +176,7 @@ export default function WorkflowsPage() {
           </div>
         </div>
         <PermissionGate resource="workflows" action="create">
-          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> Create Workflow
           </button>
         </PermissionGate>
@@ -201,7 +201,7 @@ export default function WorkflowsPage() {
                 className="flex items-center gap-4 p-4 hover:bg-[var(--surface-sunken)] cursor-pointer transition-colors"
                 onClick={() => handleExpand(wf.id)}
               >
-                <button className="text-[var(--text-tertiary)]" onClick={() => handleExpand(wf.id)}>
+                <button type="button" className="text-[var(--text-tertiary)]" onClick={() => handleExpand(wf.id)}>
                   {expandedId === wf.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
                 <div className="flex-1 min-w-0 grid grid-cols-6 gap-4 items-center">
@@ -281,7 +281,7 @@ export default function WorkflowsPage() {
                                 <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Timeout</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-[var(--surface-sunken)]">
                               {steps.map(step => (
                                 <tr key={step.id} className="hover:bg-[var(--interactive-hover)] transition-colors">
                                   <td className="px-3 py-1.5 text-[var(--text-secondary)]">{step.order}</td>
@@ -331,7 +331,7 @@ export default function WorkflowsPage() {
                                 <th className="text-left px-3 py-1.5 font-medium text-[var(--text-secondary)]">Started At</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-[var(--surface-sunken)]">
                               {executions.map(ex => (
                                 <tr key={ex.id} className="hover:bg-[var(--interactive-hover)] transition-colors">
                                   <td className="px-3 py-1.5">
@@ -367,7 +367,7 @@ export default function WorkflowsPage() {
           <div className="enterprise-modal max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Create Workflow</h2>
-              <button onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -414,16 +414,16 @@ export default function WorkflowsPage() {
                 <label className="text-sm font-medium text-[var(--text-secondary)]">Active</label>
                 <button
                   onClick={() => setCreateForm({ ...createForm, isActive: !createForm.isActive })}
-                  className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', createForm.isActive ? 'bg-[var(--nexus-success-50)]0' : 'bg-[var(--surface-muted)]')}
+                  className={clsx('relative inline-flex h-5 w-9 items-center rounded-full transition-colors', createForm.isActive ? 'bg-[var(--nexus-success-500)]' : 'bg-[var(--surface-muted)]')}
                 >
                   <span className={clsx('inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform', createForm.isActive ? 'translate-x-[18px]' : 'translate-x-[3px]')} />
                 </button>
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowCreateModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="workflows" action="create">
-                <button onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleCreate} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                   Create
                 </button>
@@ -439,7 +439,7 @@ export default function WorkflowsPage() {
           <div className="enterprise-modal max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">Execute Workflow</h2>
-              <button onClick={() => setShowExecuteModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowExecuteModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -456,9 +456,9 @@ export default function WorkflowsPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowExecuteModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowExecuteModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="workflows" action="create">
-                <button onClick={handleExecute} disabled={executing} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleExecute} disabled={executing} className="enterprise-btn enterprise-btn-primary text-sm">
                   {executing && <Loader2 className="w-4 h-4 animate-spin" />}
                   <Play className="w-4 h-4" /> Execute
                 </button>

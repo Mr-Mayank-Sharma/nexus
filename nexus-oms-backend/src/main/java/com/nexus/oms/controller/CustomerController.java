@@ -51,7 +51,7 @@ public class CustomerController {
 
     @Operation(summary = "Update customer details")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<NxCustomer>> updateCustomer(@PathVariable UUID id, @Valid @RequestBody NxCustomer updates) {
+    public ResponseEntity<ApiResponse<NxCustomer>> updateCustomer(@PathVariable UUID id, @RequestBody NxCustomer updates) {
         NxCustomer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer", id));
         if (updates.getName() != null) customer.setName(updates.getName());

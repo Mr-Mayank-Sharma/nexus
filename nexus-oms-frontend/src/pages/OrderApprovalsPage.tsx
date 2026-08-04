@@ -43,9 +43,9 @@ export default function OrderApprovalsPage() {
   const [selectedApproval, setSelectedApproval] = useState<OrderApproval | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'pending', label: 'Pending Review', icon: Clock },
-    { key: 'rules', label: 'Approval Rules', icon: Shield },
-    { key: 'all', label: 'All Approvals', icon: CheckCircle },
+    { key: 'pending', label: 'Pending Review', icon: <Clock className="w-4 h-4" /> },
+    { key: 'rules', label: 'Approval Rules', icon: <Shield className="w-4 h-4" /> },
+    { key: 'all', label: 'All Approvals', icon: <CheckCircle className="w-4 h-4" /> },
   ]
 
   const { data: pendingApprovals = [], isLoading: loadingPending } = useQuery({
@@ -213,7 +213,7 @@ export default function OrderApprovalsPage() {
                       <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{rule.priority}</td>
                       <td className="px-4 py-3 text-center">
                         <PermissionGate permission="approvals.edit">
-                          <button onClick={() => toggleRuleMutation.mutate({ id: rule.id, active: !rule.active })}>
+                          <button type="button" onClick={() => toggleRuleMutation.mutate({ id: rule.id, active: !rule.active })}>
                             {rule.active ? <ToggleRight className="w-6 h-6 text-[var(--nexus-primary-600)] mx-auto" /> : <ToggleLeft className="w-6 h-6 text-[var(--text-tertiary)] mx-auto" />}
                           </button>
                         </PermissionGate>
@@ -303,7 +303,7 @@ export default function OrderApprovalsPage() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold">Approval Details</h2>
-                <button onClick={() => setSelectedApproval(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
+                <button type="button" onClick={() => setSelectedApproval(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]">
                   <XCircle className="w-6 h-6" />
                 </button>
               </div>

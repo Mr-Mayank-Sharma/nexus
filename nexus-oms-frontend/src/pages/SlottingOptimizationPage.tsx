@@ -79,24 +79,24 @@ const VELOCITY_CLASS_BADGE: Record<string, string> = {
 }
 
 const VELOCITY_BG: Record<string, string> = {
-  A: 'bg-emerald-50 dark:bg-emerald-900/20',
+  A: 'bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20',
   B: 'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20',
   C: 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20',
   D: 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20',
 }
 
 const VELOCITY_TEXT: Record<string, string> = {
-  A: 'text-emerald-700 dark:text-emerald-300',
+  A: 'text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-300)]',
   B: 'text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)]',
   C: 'text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)]',
   D: 'text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-300)]',
 }
 
 const VELOCITY_BAR: Record<string, string> = {
-  A: 'bg-emerald-500',
-  B: 'bg-[var(--nexus-primary-50)]0',
-  C: 'bg-[var(--nexus-warning-50)]0',
-  D: 'bg-[var(--nexus-error-50)]0',
+  A: 'bg-[var(--nexus-success-500)]',
+  B: 'bg-[var(--nexus-primary-500)]',
+  C: 'bg-[var(--nexus-warning-500)]',
+  D: 'bg-[var(--nexus-error-500)]',
 }
 
 const WAREHOUSES = [
@@ -108,10 +108,10 @@ const WAREHOUSES = [
 const RULE_TYPES = ['Velocity-Based', 'Size-Based', 'Weight-Based', 'Affinity', 'Seasonal', 'Hazardous']
 
 function ScoreBar({ score }: { score: number }) {
-  const barColor = score > 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0'
+  const barColor = score > 80 ? 'bg-[var(--nexus-success-500)]' : score >= 60 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-error-500)]'
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden">
+      <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden">
         <div className={clsx('h-full rounded-full transition-all duration-500', barColor)} style={{ width: `${Math.min(100, Math.max(0, score))}%` }} />
       </div>
       <span className="text-xs font-medium text-[var(--text-secondary)] w-8 text-right">{score}</span>
@@ -332,8 +332,8 @@ export default function SlottingOptimizationPage() {
       {/* Page Header */}
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
-            <Warehouse className="w-6 h-6 text-violet-600" />
+          <div className="w-12 h-12 rounded-2xl bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 flex items-center justify-center">
+            <Warehouse className="w-6 h-6 text-[var(--nexus-primary-600)]" />
           </div>
           <div>
             <h1>Slotting Optimization</h1>
@@ -341,12 +341,12 @@ export default function SlottingOptimizationPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleAnalyze} disabled={analyzing} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+          <button type="button" onClick={handleAnalyze} disabled={analyzing} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
             {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart3 className="w-4 h-4" />}
             Analyze
           </button>
           <PermissionGate resource="warehouse" action="edit">
-            <button onClick={handleOptimize} disabled={optimizing} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
+            <button type="button" onClick={handleOptimize} disabled={optimizing} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
               {optimizing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
               Run Optimization
             </button>
@@ -383,7 +383,7 @@ export default function SlottingOptimizationPage() {
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={clsx('enterprise-tab', activeTab === tab.key && 'enterprise-tab-active')}>
+            <button type="button" key={tab.key} onClick={() => setActiveTab(tab.key)} className={clsx('enterprise-tab', activeTab === tab.key && 'enterprise-tab-active')}>
               <Icon className="w-4 h-4" />
               {tab.label}
               {tab.count !== undefined && tab.count > 0 && (
@@ -433,7 +433,7 @@ export default function SlottingOptimizationPage() {
                       <td className="min-w-[140px]"><ScoreBar score={a.slottingScore} /></td>
                       <td><span className="text-xs text-[var(--text-tertiary)]">{a.lastPicked ? new Date(a.lastPicked).toLocaleDateString() : 'Never'}</span></td>
                       <td>
-                        <button onClick={(e) => { e.stopPropagation(); setSelectedAssignment(a); setReassignBin(''); setReassignQty(1); setShowReassignModal(true) }} className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors" title="Reassign">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); setSelectedAssignment(a); setReassignBin(''); setReassignQty(1); setShowReassignModal(true) }} className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors" title="Reassign">
                           <Edit2 className="w-4 h-4" />
                         </button>
                       </td>
@@ -510,7 +510,7 @@ export default function SlottingOptimizationPage() {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">Slotting Rules ({rules.length})</h3>
             <PermissionGate resource="warehouse" action="edit">
-              <button onClick={() => setShowAddRuleModal(true)} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
+              <button type="button" onClick={() => setShowAddRuleModal(true)} className="enterprise-btn enterprise-btn-primary enterprise-btn-sm">
                 <Plus className="w-4 h-4" /> Add Rule
               </button>
             </PermissionGate>
@@ -548,22 +548,22 @@ export default function SlottingOptimizationPage() {
                         <td><span className="font-mono text-xs bg-[var(--surface-muted)] px-2 py-1 rounded">{rule.targetBinClass || '—'}</span></td>
                         <td><span className="text-[var(--text-primary)] font-medium">{rule.priority}</span></td>
                         <td>
-                          <button onClick={() => handleToggleRule(rule)} className={clsx('relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2', rule.isActive ? 'bg-violet-600' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)]')}>
+                          <button type="button" onClick={() => handleToggleRule(rule)} className={clsx('relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--nexus-primary-500)] focus:ring-offset-2', rule.isActive ? 'bg-[var(--nexus-primary-600)]' : 'bg-[var(--surface-muted)]')}>
                             <span className={clsx('inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200', rule.isActive ? 'translate-x-6' : 'translate-x-1')} />
                           </button>
                         </td>
                         <td>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden max-w-[80px]">
-                              <div className={clsx('h-full rounded-full', rule.effectiveness > 80 ? 'bg-emerald-500' : rule.effectiveness > 60 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0')} style={{ width: `${rule.effectiveness}%` }} />
+                            <div className="flex-1 h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden max-w-[80px]">
+                              <div className={clsx('h-full rounded-full', rule.effectiveness > 80 ? 'bg-[var(--nexus-success-500)]' : rule.effectiveness > 60 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-error-500)]')} style={{ width: `${rule.effectiveness}%` }} />
                             </div>
                             <span className="text-xs font-medium text-[var(--text-secondary)]">{rule.effectiveness}%</span>
                           </div>
                         </td>
                         <td>
                           <div className="flex items-center gap-1">
-                            <button className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                            <button className="p-1.5 rounded-lg hover:bg-[var(--nexus-error-50)] dark:hover:bg-[var(--nexus-error-900)]/20 text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                            <button type="button" className="p-1.5 rounded-lg hover:bg-[var(--nexus-error-50)] dark:hover:bg-[var(--nexus-error-900)]/20 text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                           </div>
                         </td>
                       </tr>
@@ -597,14 +597,14 @@ export default function SlottingOptimizationPage() {
                       <span className="text-sm text-[var(--text-secondary)]">{spaceData.usedBins.toLocaleString()} / {spaceData.totalBins.toLocaleString()} bins used</span>
                       <span className="text-2xl font-bold text-[var(--text-primary)]">{spaceData.overallUtilization}%</span>
                     </div>
-                    <div className="h-4 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden">
-                      <div className={clsx('h-full rounded-full transition-all duration-700', spaceData.overallUtilization > 90 ? 'bg-[var(--nexus-error-50)]0' : spaceData.overallUtilization > 75 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-emerald-500')} style={{ width: `${spaceData.overallUtilization}%` }} />
+                    <div className="h-4 rounded-full bg-[var(--surface-muted)] overflow-hidden">
+                      <div className={clsx('h-full rounded-full transition-all duration-700', spaceData.overallUtilization > 90 ? 'bg-[var(--nexus-error-500)]' : spaceData.overallUtilization > 75 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-500)]')} style={{ width: `${spaceData.overallUtilization}%` }} />
                     </div>
                   </div>
                   <div className="flex-shrink-0 w-20 h-20 relative">
                     <svg className="w-20 h-20 -rotate-90" viewBox="0 0 36 36">
                       <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--border-color)" strokeWidth="3" />
-                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={spaceData.overallUtilization > 90 ? '#ef4444' : spaceData.overallUtilization > 75 ? '#f59e0b' : '#10b981'} strokeWidth="3" strokeDasharray={`${spaceData.overallUtilization}, 100`} strokeLinecap="round" />
+                      <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke={spaceData.overallUtilization > 90 ? 'var(--nexus-error-500)' : spaceData.overallUtilization > 75 ? 'var(--nexus-warning-500)' : 'var(--nexus-success-500)'} strokeWidth="3" strokeDasharray={`${spaceData.overallUtilization}, 100`} strokeLinecap="round" />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-sm font-bold text-[var(--text-primary)]">{spaceData.overallUtilization}%</span>
@@ -618,12 +618,12 @@ export default function SlottingOptimizationPage() {
                   <div key={zone.name} className="enterprise-card p-5 hover:shadow-sm transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center">
-                          <span className="text-sm font-bold text-violet-600">{zone.name}</span>
+                        <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 flex items-center justify-center">
+                          <span className="text-sm font-bold text-[var(--nexus-primary-600)]">{zone.name}</span>
                         </div>
                         <span className="text-sm font-semibold text-[var(--text-primary)]">Zone {zone.name}</span>
                       </div>
-                      <span className={clsx('text-lg font-bold', zone.utilization > 90 ? 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]' : zone.utilization > 75 ? 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]' : 'text-emerald-600 dark:text-emerald-400')}>
+                      <span className={clsx('text-lg font-bold', zone.utilization > 90 ? 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]' : zone.utilization > 75 ? 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]' : 'text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]')}>
                         {zone.utilization}%
                       </span>
                     </div>
@@ -633,8 +633,8 @@ export default function SlottingOptimizationPage() {
                       <div className="flex justify-between"><span className="text-[var(--text-secondary)]">Available</span><span className="font-medium text-[var(--text-primary)]">{(zone.totalBins - zone.usedBins).toLocaleString()}</span></div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-[var(--border-subtle)]">
-                      <div className="h-2 rounded-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] overflow-hidden">
-                        <div className={clsx('h-full rounded-full transition-all duration-700', zone.utilization > 90 ? 'bg-[var(--nexus-error-50)]0' : zone.utilization > 75 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-emerald-500')} style={{ width: `${zone.utilization}%` }} />
+                      <div className="h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden">
+                        <div className={clsx('h-full rounded-full transition-all duration-700', zone.utilization > 90 ? 'bg-[var(--nexus-error-500)]' : zone.utilization > 75 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-500)]')} style={{ width: `${zone.utilization}%` }} />
                       </div>
                     </div>
                   </div>
@@ -659,7 +659,7 @@ export default function SlottingOptimizationPage() {
                 <input type="date" value={auditTo} onChange={(e) => setAuditTo(e.target.value)} className="enterprise-input w-40 text-sm" />
               </div>
               {(auditFrom || auditTo) && (
-                <button onClick={() => { setAuditFrom(''); setAuditTo('') }} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+                <button type="button" onClick={() => { setAuditFrom(''); setAuditTo('') }} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
                   <X className="w-3.5 h-3.5" /> Clear
                 </button>
               )}
@@ -698,8 +698,8 @@ export default function SlottingOptimizationPage() {
                         <td><span className="font-mono text-xs bg-[var(--surface-muted)] px-2 py-1 rounded">{entry.fromBin}</span></td>
                         <td>
                           <div className="flex items-center gap-1.5">
-                            <ArrowRight className="w-3.5 h-3.5 text-violet-500" />
-                            <span className="font-mono text-xs bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-2 py-1 rounded">{entry.toBin}</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-[var(--nexus-primary-500)]" />
+                            <span className="font-mono text-xs bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-300)] px-2 py-1 rounded">{entry.toBin}</span>
                           </div>
                         </td>
                         <td><span className="text-sm text-[var(--text-secondary)]">{entry.reason}</span></td>
@@ -724,7 +724,7 @@ export default function SlottingOptimizationPage() {
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Reassign SKU</h2>
                 <p className="text-sm text-[var(--text-secondary)] mt-0.5">{selectedAssignment.sku} — {selectedAssignment.productName}</p>
               </div>
-              <button onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }} className="p-2 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors">
+              <button type="button" onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }} className="p-2 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors">
                 <X className="w-5 h-5 text-[var(--text-tertiary)]" />
               </button>
             </div>
@@ -762,8 +762,8 @@ export default function SlottingOptimizationPage() {
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-default)]">
-              <button onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleReassign} disabled={!reassignBin || reassigning} className="enterprise-btn enterprise-btn-primary">
+              <button type="button" onClick={() => { setShowReassignModal(false); setSelectedAssignment(null) }} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={handleReassign} disabled={!reassignBin || reassigning} className="enterprise-btn enterprise-btn-primary">
                 {reassigning ? <Loader2 className="w-4 h-4 animate-spin" /> : <MoveVertical className="w-4 h-4" />}
                 Confirm Reassignment
               </button>
@@ -781,7 +781,7 @@ export default function SlottingOptimizationPage() {
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Add Slotting Rule</h2>
                 <p className="text-sm text-[var(--text-secondary)] mt-0.5">Define rules for automatic bin assignments</p>
               </div>
-              <button onClick={() => setShowAddRuleModal(false)} className="p-2 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors">
+              <button type="button" onClick={() => setShowAddRuleModal(false)} className="p-2 rounded-lg hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] transition-colors">
                 <X className="w-5 h-5 text-[var(--text-tertiary)]" />
               </button>
             </div>
@@ -818,8 +818,8 @@ export default function SlottingOptimizationPage() {
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-[var(--border-default)]">
-              <button onClick={() => setShowAddRuleModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
-              <button onClick={handleAddRule} disabled={!ruleForm.name || !ruleForm.targetZone || savingRule} className="enterprise-btn enterprise-btn-primary">
+              <button type="button" onClick={() => setShowAddRuleModal(false)} className="enterprise-btn enterprise-btn-secondary">Cancel</button>
+              <button type="button" onClick={handleAddRule} disabled={!ruleForm.name || !ruleForm.targetZone || savingRule} className="enterprise-btn enterprise-btn-primary">
                 {savingRule ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create Rule
               </button>

@@ -90,11 +90,11 @@ const TYPE_ICONS: Record<string, typeof Bot> = {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  ONLINE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  ONLINE: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
   OFFLINE: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] bg-[var(--surface-muted)] dark:text-[var(--text-tertiary)]',
   MAINTENANCE: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
   ERROR: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
-  DEGRADED: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  DEGRADED: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
 }
 
 const CMD_STATUS_STYLES: Record<string, string> = {
@@ -102,22 +102,22 @@ const CMD_STATUS_STYLES: Record<string, string> = {
   SENT: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
   ACKNOWLEDGED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]',
   EXECUTING: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] dark:bg-[var(--nexus-ai-900)]/30 dark:text-[var(--nexus-ai-400)]',
-  COMPLETED: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  COMPLETED: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
   FAILED: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]',
-  TIMEOUT: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  TIMEOUT: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]',
 }
 
 const LOG_LEVEL_BORDER: Record<string, string> = {
   INFO: 'border-l-blue-500',
   WARN: 'border-l-yellow-500',
   ERROR: 'border-l-red-500',
-  DEBUG: 'border-l-gray-400',
+  DEBUG: 'border-l-[var(--text-tertiary)]',
 }
 
 const LOG_LEVEL_BG: Record<string, string> = {
-  INFO: 'bg-[var(--nexus-primary-50)]0',
-  WARN: 'bg-[var(--nexus-warning-50)]0',
-  ERROR: 'bg-[var(--nexus-error-50)]0',
+  INFO: 'bg-[var(--nexus-primary-500)]',
+  WARN: 'bg-[var(--nexus-warning-500)]',
+  ERROR: 'bg-[var(--nexus-error-500)]',
   DEBUG: 'bg-[var(--surface-muted)]',
 }
 
@@ -425,7 +425,7 @@ export default function AutomationSystemsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
-            <Activity className="w-7 h-7 text-violet-500" />
+            <Activity className="w-7 h-7 text-[var(--nexus-primary-500)]" />
             Automation & Integration
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Warehouse automation systems monitoring and control</p>
@@ -436,13 +436,13 @@ export default function AutomationSystemsPage() {
       <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-[var(--text-secondary)] flex items-center gap-2">
-            <Activity className="w-4 h-4 text-violet-500" /> System Health Overview
+            <Activity className="w-4 h-4 text-[var(--nexus-primary-500)]" /> System Health Overview
           </h3>
           <div className="flex items-center gap-2">
             <span className="text-xs text-[var(--text-secondary)]">Overall Health</span>
             <span className={clsx(
               'text-lg font-bold',
-              healthData.healthScore >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+              healthData.healthScore >= 80 ? 'text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]' :
               healthData.healthScore >= 50 ? 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]' :
               'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]',
             )}>
@@ -453,10 +453,10 @@ export default function AutomationSystemsPage() {
         <div className="flex items-center gap-6">
           {[
             { label: 'Total', value: healthData.total, color: 'text-[var(--text-primary)]' },
-            { label: 'Online', value: healthData.online, color: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
+            { label: 'Online', value: healthData.online, color: 'text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]', dot: 'bg-[var(--nexus-success-500)]' },
             { label: 'Offline', value: healthData.offline, color: 'text-[var(--text-secondary)]', dot: 'bg-[var(--surface-muted)]' },
-            { label: 'Error', value: healthData.error, color: 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]', dot: 'bg-[var(--nexus-error-50)]0' },
-            { label: 'Maintenance', value: healthData.maintenance, color: 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]', dot: 'bg-[var(--nexus-warning-50)]0' },
+            { label: 'Error', value: healthData.error, color: 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]', dot: 'bg-[var(--nexus-error-500)]' },
+            { label: 'Maintenance', value: healthData.maintenance, color: 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]', dot: 'bg-[var(--nexus-warning-500)]' },
           ].map((s, i) => (
             <div key={i} className="flex items-center gap-2">
               {s.dot && <span className={clsx('w-2.5 h-2.5 rounded-full', s.dot)} />}
@@ -465,13 +465,13 @@ export default function AutomationSystemsPage() {
             </div>
           ))}
           <div className="ml-auto flex-1 max-w-xs">
-            <div className="w-full bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-full h-2.5">
+            <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
               <div
                 className={clsx(
                   'h-2.5 rounded-full transition-all duration-500',
-                  healthData.healthScore >= 80 ? 'bg-emerald-500' :
-                  healthData.healthScore >= 50 ? 'bg-[var(--nexus-warning-50)]0' :
-                  'bg-[var(--nexus-error-50)]0',
+                  healthData.healthScore >= 80 ? 'bg-[var(--nexus-success-500)]' :
+                  healthData.healthScore >= 50 ? 'bg-[var(--nexus-warning-500)]' :
+                  'bg-[var(--nexus-error-500)]',
                 )}
                 style={{ width: `${healthData.healthScore}%` }}
               />
@@ -575,7 +575,7 @@ export default function AutomationSystemsPage() {
               className={clsx(
                 'flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap',
                 activeTab === tab.id
-                  ? 'border-violet-500 text-violet-600 dark:text-violet-400'
+                  ? 'border-[var(--nexus-primary-500)] text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)]'
                   : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)] hover:border-[var(--border-default)]',
               )}
               onClick={() => setActiveTab(tab.id)}
@@ -585,7 +585,7 @@ export default function AutomationSystemsPage() {
                 <span className={clsx(
                   'ml-1 text-xs px-1.5 py-0.5 rounded-full font-semibold',
                   activeTab === tab.id
-                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                    ? 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]'
                     : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
                 )}>
                   {tab.badge}
@@ -624,11 +624,11 @@ export default function AutomationSystemsPage() {
                   <div className="flex items-center gap-3">
                     <div className={clsx(
                       'w-10 h-10 rounded-xl flex items-center justify-center ring-1',
-                      sys.status === 'ONLINE' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 ring-emerald-500/20' :
-                      sys.status === 'ERROR' ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] ring-red-500/20' :
-                      sys.status === 'MAINTENANCE' ? 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)] ring-amber-500/20' :
-                      sys.status === 'DEGRADED' ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 ring-orange-500/20' :
-                      'bg-[var(--surface-sunken)] bg-[var(--surface-muted)] text-[var(--text-secondary)] ring-gray-500/20',
+                      sys.status === 'ONLINE' ? 'bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] ring-[var(--nexus-success-500)]/20' :
+                      sys.status === 'ERROR' ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)] ring-[var(--nexus-error-500)]/20' :
+                      sys.status === 'MAINTENANCE' ? 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)] ring-[var(--nexus-warning-500)]/20' :
+                      sys.status === 'DEGRADED' ? 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)] ring-[var(--nexus-warning-500)]/20' :
+                      'bg-[var(--surface-sunken)] bg-[var(--surface-muted)] text-[var(--text-secondary)] ring-[var(--border-default)]/20',
                     )}>
                       <Icon className="w-5 h-5" />
                     </div>
@@ -665,7 +665,7 @@ export default function AutomationSystemsPage() {
                     className={clsx(
                       'flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
                       sys.isActive
-                        ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                        ? 'text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-400)] bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 hover:bg-[var(--nexus-success-100)] dark:hover:bg-[var(--nexus-success-900)]/30'
                         : 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] bg-[var(--surface-muted)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
@@ -684,7 +684,7 @@ export default function AutomationSystemsPage() {
                         setCommandForm(prev => ({ ...prev, systemId: sys.id }))
                         setShowCommandModal(true)
                       }}
-                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 transition-colors flex items-center gap-1"
+                      className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/20 text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-400)] hover:bg-[var(--nexus-primary-100)] dark:hover:bg-[var(--nexus-primary-900)]/30 transition-colors flex items-center gap-1"
                     >
                       <Send className="w-3.5 h-3.5" /> Command
                     </button>
@@ -706,7 +706,7 @@ export default function AutomationSystemsPage() {
             {[
               { label: 'Total Today', value: commandStats.totalToday, icon: <Terminal className="w-4 h-4" />, color: 'text-[var(--nexus-primary-600)]' },
               { label: 'Avg Exec Time', value: `${commandStats.avgExecutionMs}ms`, icon: <Clock className="w-4 h-4" />, color: 'text-[var(--text-secondary)]' },
-              { label: 'Success Rate', value: `${commandStats.successRate}%`, icon: <CheckCircle className="w-4 h-4" />, color: 'text-emerald-600' },
+              { label: 'Success Rate', value: `${commandStats.successRate}%`, icon: <CheckCircle className="w-4 h-4" />, color: 'text-[var(--nexus-success-600)]' },
               { label: 'Failed Today', value: commandStats.failedToday, icon: <XCircle className="w-4 h-4" />, color: 'text-[var(--nexus-error-600)]' },
             ].map((s, i) => (
               <div key={i} className="bg-[var(--surface-base)] rounded-lg border border-[var(--border-default)] p-3 flex items-center gap-3">
@@ -746,7 +746,7 @@ export default function AutomationSystemsPage() {
                     <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-700/50">
+                <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
                   {commands.map(cmd => (
                     <tr key={cmd.id} className="hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors">
                       <td className="px-4 py-3 text-sm font-mono font-medium text-[var(--text-primary)]">{cmd.id}</td>
@@ -829,7 +829,7 @@ export default function AutomationSystemsPage() {
                     className={clsx(
                       'text-xs font-medium px-2.5 py-1 rounded-md transition-colors',
                       logFilter.level === level
-                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                        ? 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]'
                         : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
@@ -839,7 +839,7 @@ export default function AutomationSystemsPage() {
               </div>
             </div>
 
-            <div className="h-4 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+            <div className="h-4 w-px bg-[var(--surface-muted)]" />
 
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-[var(--text-tertiary)]" />
@@ -852,7 +852,7 @@ export default function AutomationSystemsPage() {
                     className={clsx(
                       'text-xs font-medium px-2.5 py-1 rounded-md transition-colors',
                       logFilter.timeRange === range
-                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                        ? 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]'
                         : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
@@ -862,14 +862,14 @@ export default function AutomationSystemsPage() {
               </div>
             </div>
 
-            <div className="h-4 w-px bg-[var(--surface-muted)] bg-[var(--surface-muted)]" />
+            <div className="h-4 w-px bg-[var(--surface-muted)]" />
 
             <button
               onClick={() => setAutoRefresh(!autoRefresh)}
               className={clsx(
                 'flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
                 autoRefresh
-                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  ? 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]'
                   : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
               )}
             >
@@ -893,7 +893,7 @@ export default function AutomationSystemsPage() {
                 <p className="text-sm text-[var(--text-secondary)]">Loading logs...</p>
               </div>
             ) : (
-              <div className="max-h-[500px] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700/50">
+              <div className="max-h-[500px] overflow-y-auto divide-y divide-[var(--surface-sunken)] dark:divide-gray-700/50">
                 {logs.map(log => (
                   <div
                     key={log.id}
@@ -956,7 +956,7 @@ export default function AutomationSystemsPage() {
                     className={clsx(
                       'text-xs font-medium px-3 py-1.5 rounded-lg transition-colors',
                       alertFilter === filter
-                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
+                        ? 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/30 dark:text-[var(--nexus-primary-400)]'
                         : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                     )}
                   >
@@ -967,15 +967,15 @@ export default function AutomationSystemsPage() {
             </div>
             <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[var(--nexus-error-50)]0" />
+                <span className="w-2 h-2 rounded-full bg-[var(--nexus-error-500)]" />
                 Critical: {alertStats.bySeverity.CRITICAL}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[var(--nexus-warning-50)]0" />
+                <span className="w-2 h-2 rounded-full bg-[var(--nexus-warning-500)]" />
                 Warning: {alertStats.bySeverity.WARNING}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[var(--nexus-primary-50)]0" />
+                <span className="w-2 h-2 rounded-full bg-[var(--nexus-primary-500)]" />
                 Info: {alertStats.bySeverity.INFO}
               </span>
             </div>
@@ -1017,7 +1017,7 @@ export default function AutomationSystemsPage() {
                               'text-[10px] font-bold uppercase px-1.5 py-0.5 rounded',
                               alert.status === 'ACTIVE' ? 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] dark:bg-[var(--nexus-error-900)]/30 dark:text-[var(--nexus-error-400)]' :
                               alert.status === 'ACKNOWLEDGED' ? 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)] dark:bg-[var(--nexus-warning-900)]/30 dark:text-[var(--nexus-warning-400)]' :
-                              'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                              'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
                             )}>
                               {alert.status}
                             </span>
@@ -1053,7 +1053,7 @@ export default function AutomationSystemsPage() {
                           )}
                           <button
                             onClick={() => setShowResolveModal(alert.id)}
-                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
+                            className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[var(--nexus-success-50)] dark:bg-[var(--nexus-success-900)]/20 text-[var(--nexus-success-700)] dark:text-[var(--nexus-success-400)] hover:bg-[var(--nexus-success-100)] dark:hover:bg-[var(--nexus-success-900)]/30 transition-colors"
                           >
                             Resolve
                           </button>
@@ -1083,7 +1083,7 @@ export default function AutomationSystemsPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
-                <Send className="w-5 h-5 text-violet-500" />
+                <Send className="w-5 h-5 text-[var(--nexus-primary-500)]" />
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Send Command</h2>
               </div>
               <button
@@ -1146,7 +1146,7 @@ export default function AutomationSystemsPage() {
                         className={clsx(
                           'w-10 h-9 rounded-lg text-sm font-bold transition-all',
                           commandForm.priority === p
-                            ? p <= 2 ? 'bg-[var(--nexus-error-50)]0 text-white shadow-sm' : p === 3 ? 'bg-[var(--nexus-warning-50)]0 text-white shadow-sm' : 'bg-[var(--surface-muted)] bg-[var(--surface-muted)] text-[var(--text-secondary)] shadow-sm'
+                            ? p <= 2 ? 'bg-[var(--nexus-error-500)] text-white shadow-sm' : p === 3 ? 'bg-[var(--nexus-warning-500)] text-white shadow-sm' : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] shadow-sm'
                             : 'bg-[var(--surface-muted)] text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]',
                         )}
                       >
@@ -1174,7 +1174,7 @@ export default function AutomationSystemsPage() {
                   <label className="text-xs font-semibold text-[var(--text-secondary)]">Parameters</label>
                   <button
                     onClick={addParameter}
-                    className="text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 flex items-center gap-1"
+                    className="text-xs font-medium text-[var(--nexus-primary-600)] dark:text-[var(--nexus-primary-400)] hover:text-[var(--nexus-primary-700)] flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" /> Add
                   </button>
@@ -1242,7 +1242,7 @@ export default function AutomationSystemsPage() {
           <div className="enterprise-modal max-w-md">
             <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-emerald-500" />
+                <CheckCircle className="w-5 h-5 text-[var(--nexus-success-500)]" />
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Resolve Alert</h2>
               </div>
               <button

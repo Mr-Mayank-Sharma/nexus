@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/promotions")
+@RequestMapping("/promotions")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class PromotionController {
 

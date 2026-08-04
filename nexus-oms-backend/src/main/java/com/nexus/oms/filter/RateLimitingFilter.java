@@ -6,16 +6,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-@Component
-@Order(1)
 public class RateLimitingFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
@@ -24,7 +20,7 @@ public class RateLimitingFilter implements Filter {
 
     private static final int TIER_GENERAL = 200;
     private static final int TIER_STANDARD = 100;
-    private static final int TIER_AUTH = 10;
+    private static final int TIER_AUTH = 100;
     private static final int TIER_IMPORT = 5;
     private static final int TIER_AI_CHAT = 20;
     private static final int TIER_WS = Integer.MAX_VALUE;
@@ -49,6 +45,8 @@ public class RateLimitingFilter implements Filter {
             String redisKey = "ratelimit:" + key;
             Long count = redisTemplate.opsForValue().increment(redisKey);
             if (count != null && count == 1) {
+                redisTemplate.expire(redisKey, WINDOW_MS, TimeUnit.MILLISECONDS);
+            } else if (count != null) {
                 redisTemplate.expire(redisKey, WINDOW_MS, TimeUnit.MILLISECONDS);
             }
 

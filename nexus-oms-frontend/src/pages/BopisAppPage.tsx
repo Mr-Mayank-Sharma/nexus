@@ -15,7 +15,7 @@ const STATUS_FLOW = [
   { key: 'PICKED', label: 'Picked', color: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]' },
   { key: 'PACKED', label: 'Packed', color: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)]' },
   { key: 'READY_FOR_HANDOFF', label: 'Ready', color: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]' },
-  { key: 'POD_COLLECTED', label: 'Collected', color: 'bg-emerald-100 text-emerald-700' },
+  { key: 'POD_COLLECTED', label: 'Collected', color: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)]' },
 ]
 
 export default function BopisAppPage() {
@@ -209,7 +209,7 @@ export default function BopisAppPage() {
               { label: 'Pending', value: statusCounts.pending, color: 'text-[var(--nexus-warning-600)]' },
               { label: 'Picking', value: statusCounts.picking, color: 'text-[var(--nexus-primary-600)]' },
               { label: 'Ready', value: statusCounts.ready, color: 'text-[var(--nexus-success-600)]' },
-              { label: 'Done', value: statusCounts.collected, color: 'text-emerald-600' },
+              { label: 'Done', value: statusCounts.collected, color: 'text-[var(--nexus-success-600)]' },
             ].map((s) => (
               <div key={s.label} className="bg-[var(--surface-base)] rounded-lg p-3 text-center shadow-sm">
                 <div className={clsx('text-2xl font-bold', s.color)}>{s.value}</div>
@@ -287,7 +287,7 @@ export default function BopisAppPage() {
           <div className="enterprise-modal max-w-md">
             <div className="p-4 border-b flex items-center justify-between">
               <h2 className="font-bold text-lg">Proof of Delivery</h2>
-              <button onClick={() => setShowPodModal(false)}>
+              <button type="button" onClick={() => setShowPodModal(false)}>
                 <XCircle className="w-6 h-6 text-[var(--text-tertiary)]" />
               </button>
             </div>
@@ -415,7 +415,7 @@ function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, o
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-[var(--nexus-primary-600)] flex items-center gap-1">
+      <button type="button" onClick={onBack} className="text-sm text-[var(--nexus-primary-600)] flex items-center gap-1">
         ← Back to list
       </button>
 
@@ -437,7 +437,7 @@ function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, o
           {STATUS_FLOW.map((s, i) => (
             <div key={s.key} className={clsx(
               'flex-1 h-1.5 rounded',
-              i <= statusIndex ? 'bg-[var(--nexus-success-50)]0' : 'bg-[var(--surface-muted)]'
+              i <= statusIndex ? 'bg-[var(--nexus-success-500)]' : 'bg-[var(--surface-muted)]'
             )} />
           ))}
         </div>
@@ -545,7 +545,7 @@ function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, o
             <>
               <button
                 onClick={onHandoff}
-                className="w-full py-3 bg-emerald-600 text-white rounded-lg font-medium flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[var(--nexus-success-600)] text-white rounded-lg font-medium flex items-center justify-center gap-2"
               >
                 <Truck className="w-5 h-5" /> Hand Off (No POD)
               </button>

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   TrendingUp, AlertTriangle, Info, Calendar,
-  DollarSign, ShoppingCart, Package, TrendingDown,
-  CheckCircle, XCircle, Brain, ChevronRight,
-  RefreshCw, ArrowUp, ArrowDown, BarChart3,
+  DollarSign, ShoppingCart, Package,
+  CheckCircle, XCircle, Brain,
+  RefreshCw, ArrowUp, BarChart3,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { getBriefing, getRecommendations, approveRecommendation, rejectRecommendation, getForecasts } from '../api/aiAgents'
@@ -55,7 +55,7 @@ const INSIGHT_ICON_BG: Record<string, string> = {
 const PRIORITY_STYLES: Record<string, string> = {
   high: 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/20 text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-300)] border-[var(--nexus-error-200)] dark:border-[var(--nexus-error-800)]',
   medium: 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/20 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-300)] border-[var(--nexus-warning-200)] dark:border-[var(--nexus-warning-800)]',
-  low: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] border-[var(--border-default)] border-[var(--border-default)]',
+  low: 'bg-[var(--surface-muted)] text-[var(--text-secondary)] border-[var(--border-default)]',
 }
 
 const SPARKLINE_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -77,9 +77,9 @@ export default function AiBriefingPage() {
         getRecommendations(),
         getForecasts(),
       ])
-      setBriefing(briefingRes)
-      setRecommendations(recsRes)
-      setForecastsData(forecastsRes)
+      setBriefing(briefingRes.data ?? null)
+      setRecommendations(recsRes.data ?? [])
+      setForecastsData(forecastsRes.data ?? [])
     } catch {
       setError('Failed to load briefing data')
     } finally {
@@ -132,37 +132,37 @@ export default function AiBriefingPage() {
       <div className="space-y-6">
         <div className="enterprise-page-header">
           <div>
-            <div className="h-7 w-48 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded animate-pulse" />
-            <div className="h-4 w-64 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded mt-2 animate-pulse" />
+            <div className="h-7 w-48 bg-[var(--surface-muted)] rounded animate-pulse" />
+            <div className="h-4 w-64 bg-[var(--surface-muted)] rounded mt-2 animate-pulse" />
           </div>
         </div>
-        <div className="bg-gradient-to-r from-gray-300 to-gray-400 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 animate-pulse">
-          <div className="h-5 w-40 bg-white/30 rounded" />
-          <div className="h-8 w-56 bg-white/30 rounded mt-2" />
+        <div className="bg-gradient-to-r from-[var(--surface-muted)] to-[var(--border-default)] dark:from-[var(--surface-muted)] dark:to-[var(--border-default)] rounded-xl p-6 animate-pulse">
+          <div className="h-5 w-40 bg-[var(--surface-base)]/50 rounded" />
+          <div className="h-8 w-56 bg-[var(--surface-base)]/50 rounded mt-2" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5 animate-pulse">
-              <div className="h-4 w-20 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" />
-              <div className="h-8 w-28 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded mt-3" />
-              <div className="h-3 w-16 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded mt-2" />
+              <div className="h-4 w-20 bg-[var(--surface-muted)] rounded" />
+              <div className="h-8 w-28 bg-[var(--surface-muted)] rounded mt-3" />
+              <div className="h-3 w-16 bg-[var(--surface-muted)] rounded mt-2" />
             </div>
           ))}
         </div>
         <div className="h-12 bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-6 animate-pulse">
-            <div className="h-5 w-40 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" />
-            <div className="h-3 w-56 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded mt-2" />
+            <div className="h-5 w-40 bg-[var(--surface-muted)] rounded" />
+            <div className="h-3 w-56 bg-[var(--surface-muted)] rounded mt-2" />
             {[1, 2, 3].map(i => (
-              <div key={i} className="mt-4 h-16 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-lg" />
+              <div key={i} className="mt-4 h-16 bg-[var(--surface-muted)] rounded-lg" />
             ))}
           </div>
           <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-6 animate-pulse">
-            <div className="h-5 w-40 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded" />
-            <div className="h-3 w-56 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded mt-2" />
+            <div className="h-5 w-40 bg-[var(--surface-muted)] rounded" />
+            <div className="h-3 w-56 bg-[var(--surface-muted)] rounded mt-2" />
             {[1, 2, 3].map(i => (
-              <div key={i} className="mt-4 h-24 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-lg" />
+              <div key={i} className="mt-4 h-24 bg-[var(--surface-muted)] rounded-lg" />
             ))}
           </div>
         </div>
@@ -175,7 +175,7 @@ export default function AiBriefingPage() {
       <div className="flex flex-col items-center justify-center py-16 text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
         <AlertTriangle className="w-12 h-12 mb-4" />
         <p className="text-lg font-medium text-[var(--text-secondary)]">{error}</p>
-        <button onClick={fetchData} className="enterprise-btn enterprise-btn-primary mt-4">
+        <button type="button" onClick={fetchData} className="enterprise-btn enterprise-btn-primary mt-4">
           <RefreshCw className="w-4 h-4" /> Retry
         </button>
       </div>
@@ -197,13 +197,13 @@ export default function AiBriefingPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={fetchData} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" disabled={loading}>
+          <button type="button" onClick={fetchData} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm" disabled={loading}>
             <RefreshCw className={clsx('w-3.5 h-3.5', loading && 'animate-spin')} /> Refresh
           </button>
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-[var(--nexus-primary-500)] to-[var(--nexus-primary-700)] rounded-xl p-6 text-white">
         <p className="text-lg font-medium opacity-90">{greeting}, Admin</p>
         <p className="text-3xl font-bold mt-1">Here's your daily briefing</p>
       </div>
@@ -267,7 +267,7 @@ export default function AiBriefingPage() {
         </div>
         <div className="w-full h-3 bg-[var(--surface-muted)] rounded-full overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary-400 to-primary-600 transition-all duration-700"
+            className="h-full rounded-full bg-gradient-to-r from-[var(--nexus-primary-400)] to-[var(--nexus-primary-600)] transition-all duration-700"
             style={{ width: `${overallConfidence}%` }}
           />
         </div>
@@ -376,7 +376,7 @@ export default function AiBriefingPage() {
                       </div>
                       <div className="w-full h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                         <div
-                          className={clsx('h-full rounded-full transition-all', rec.confidence >= 90 ? 'bg-[var(--nexus-success-50)]0' : rec.confidence >= 80 ? 'bg-[var(--nexus-warning-50)]0' : 'bg-[var(--nexus-error-50)]0')}
+                          className={clsx('h-full rounded-full transition-all', rec.confidence >= 90 ? 'bg-[var(--nexus-success-500)]' : rec.confidence >= 80 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-error-500)]')}
                           style={{ width: `${rec.confidence}%` }}
                         />
                       </div>
@@ -403,9 +403,9 @@ export default function AiBriefingPage() {
                         <XCircle className="w-3.5 h-3.5" /> Reject
                       </button>
                     </PermissionGate>
-                    {rec.reasoning.length > 0 && (
+                    {(rec.reasoning?.length ?? 0) > 0 && (
                       <div className="ml-auto flex items-center gap-1 text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
-                        <Brain className="w-3 h-3" /> {rec.reasoning.length} reasons
+                        <Brain className="w-3 h-3" /> {rec.reasoning?.length ?? 0} reasons
                       </div>
                     )}
                   </div>
@@ -439,8 +439,8 @@ export default function AiBriefingPage() {
             <svg viewBox="0 0 280 100" className="w-full h-full" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--nexus-primary-500)" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="var(--nexus-primary-500)" stopOpacity="0" />
                 </linearGradient>
               </defs>
               {revenueSparklineData.map((val, i) => {
@@ -460,7 +460,7 @@ export default function AiBriefingPage() {
                 const maxVal = Math.max(...revenueSparklineData)
                 const barHeight = (val / maxVal) * 75
                 return (
-                  <rect key={`fg-${i}`} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="#3B82F6" opacity={0.6} />
+                  <rect key={`fg-${i}`} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="var(--nexus-primary-500)" opacity={0.6} />
                 )
               })}
               {SPARKLINE_DAYS.map((day, i) => {
@@ -468,7 +468,7 @@ export default function AiBriefingPage() {
                 const gap = 8
                 const x = i * (barWidth + gap) + 10
                 return (
-                  <text key={i} x={x + barWidth / 2} y={98} textAnchor="middle" className="text-[8px]" fill="#9CA3AF">
+                  <text key={i} x={x + barWidth / 2} y={98} textAnchor="middle" className="text-[8px]" fill="var(--text-tertiary)">
                     {day}
                   </text>
                 )
@@ -489,8 +489,8 @@ export default function AiBriefingPage() {
             <svg viewBox="0 0 280 100" className="w-full h-full" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="ordersGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10B981" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+                  <stop offset="0%" stopColor="var(--nexus-success-500)" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="var(--nexus-success-500)" stopOpacity="0" />
                 </linearGradient>
               </defs>
               {ordersTrendData.map((val, i) => {
@@ -510,7 +510,7 @@ export default function AiBriefingPage() {
                 const maxVal = Math.max(...ordersTrendData)
                 const barHeight = (val / maxVal) * 75
                 return (
-                  <rect key={`fg-${i}`} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="#10B981" opacity={0.6} />
+                  <rect key={`fg-${i}`} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="var(--nexus-success-500)" opacity={0.6} />
                 )
               })}
               {SPARKLINE_DAYS.map((day, i) => {
@@ -518,7 +518,7 @@ export default function AiBriefingPage() {
                 const gap = 8
                 const x = i * (barWidth + gap) + 10
                 return (
-                  <text key={i} x={x + barWidth / 2} y={98} textAnchor="middle" className="text-[8px]" fill="#9CA3AF">
+                  <text key={i} x={x + barWidth / 2} y={98} textAnchor="middle" className="text-[8px]" fill="var(--text-tertiary)">
                     {day}
                   </text>
                 )

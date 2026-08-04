@@ -22,136 +22,146 @@ export interface UseWebSocketOptions {
   autoConnect?: boolean;
 }
 
+const WS_ENDPOINT = `${window.location.protocol}//${window.location.host}/api/v1/ws`;
+
 export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const { token } = useAuth();
   const stompClient = useRef<Client | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 3;
+  const mountedRef = useRef(true);
+  const disconnectingRef = useRef(false);
+  const optionsRef = useRef(options);
+  const tokenRef = useRef(token);
+  const connectRef = useRef<() => void>();
+  const autoConnectRef = useRef(options.autoConnect);
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  optionsRef.current = options;
+  tokenRef.current = token;
+  autoConnectRef.current = options.autoConnect;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const subscribe = useCallback((client: Client) => {
+    const opts = optionsRef.current;
     client.subscribe('/topic/orders', (message) => {
       const payload = JSON.parse(message.body) as WebSocketMessage;
       setLastMessage(payload);
-      options.onOrderUpdate?.(payload);
+      opts.onOrderUpdate?.(payload);
     });
-
     client.subscribe('/topic/inventory', (message) => {
       const payload = JSON.parse(message.body) as WebSocketMessage;
       setLastMessage(payload);
-      options.onInventoryAlert?.(payload);
+      opts.onInventoryAlert?.(payload);
     });
-
     client.subscribe('/topic/shipments', (message) => {
       const payload = JSON.parse(message.body) as WebSocketMessage;
       setLastMessage(payload);
-      options.onShipmentUpdate?.(payload);
+      opts.onShipmentUpdate?.(payload);
     });
-
     client.subscribe('/topic/system', (message) => {
       const payload = JSON.parse(message.body) as WebSocketMessage;
       setLastMessage(payload);
-      options.onSystemAlert?.(payload);
+      opts.onSystemAlert?.(payload);
     });
-
     client.subscribe('/topic/dashboard', (message) => {
       const payload = JSON.parse(message.body) as WebSocketMessage;
       setLastMessage(payload);
-      options.onDashboardUpdate?.(payload);
+      opts.onDashboardUpdate?.(payload);
     });
-
     client.subscribe('/topic/users', (message) => {
       const payload = JSON.parse(message.body) as WebSocketMessage;
       setLastMessage(payload);
-      options.onUserStatus?.(payload);
+      opts.onUserStatus?.(payload);
     });
-
     client.subscribe('/user/queue/notifications', (message) => {
       const payload = JSON.parse(message.body) as WebSocketMessage;
       setLastMessage(payload);
-      options.onNotification?.(payload);
+      opts.onNotification?.(payload);
     });
-  }, [options]);
+  }, []);
+
+  const disconnect = useCallback(() => {
+    disconnectingRef.current = true;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = undefined;
+    }
+    reconnectAttempts.current = 0;
+    if (stompClient.current) {
+      stompClient.current.deactivate();
+      stompClient.current = null;
+    }
+    setStatus('disconnected');
+    setError(null);
+  }, []);
 
   const connect = useCallback(() => {
-    if (!token) return;
-
+    if (!tokenRef.current) return;
     setStatus('connecting');
     setError(null);
+    disconnectingRef.current = false;
 
     try {
-      // Use relative URL through Vite proxy (which has ws: true configured)
-      // to avoid SockJS connection storms hitting the backend directly.
-      // In production, same-origin through reverse proxy.
-      const wsUrl = `${window.location.protocol}//${window.location.host}/api/v1/ws`;
-      const socket = new SockJS(wsUrl);
-
+      const useNativeWs = 'WebSocket' in window;
       const client = new Client({
-        webSocketFactory: () => socket as unknown as WebSocket,
-        connectHeaders: {
-          Authorization: `Bearer ${token}`,
-        },
+        connectHeaders: { Authorization: `Bearer ${tokenRef.current}` },
         heartbeatIncoming: 10000,
         heartbeatOutgoing: 10000,
-        reconnectDelay: 5000,
         onConnect: () => {
+          if (!mountedRef.current) return;
           setStatus('connected');
           setError(null);
           reconnectAttempts.current = 0;
           subscribe(client);
         },
-        onStompError: (frame) => {
-          const msg = frame.headers['message'] || 'STOMP protocol error';
-          setError(msg);
+        onStompError: () => {
+          if (!mountedRef.current) return;
+          setError('STOMP protocol error');
           setStatus('error');
-
-          if (reconnectAttempts.current < maxReconnectAttempts) {
-            reconnectAttempts.current++;
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-            reconnectTimeoutRef.current = setTimeout(connect, delay);
-          }
         },
         onWebSocketError: () => {
+          if (!mountedRef.current) return;
           setError('WebSocket transport unavailable');
           setStatus('error');
-          if (reconnectAttempts.current < maxReconnectAttempts) {
-            reconnectAttempts.current++;
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
-            reconnectTimeoutRef.current = setTimeout(connect, delay);
-          }
         },
         onWebSocketClose: () => {
-          if (status !== 'error') {
-            setStatus('disconnected');
-          }
+          if (!mountedRef.current) return;
+          setStatus('disconnected');
         },
         onDisconnect: () => {
+          if (!mountedRef.current) return;
           setStatus('disconnected');
         },
       });
 
+      if (useNativeWs && window.location.protocol === 'http:') {
+        client.brokerURL = `ws://${window.location.host}/api/v1/ws`;
+      } else if (useNativeWs) {
+        client.brokerURL = `wss://${window.location.host}/api/v1/ws`;
+      } else {
+        client.webSocketFactory = () => new SockJS(WS_ENDPOINT) as unknown as WebSocket;
+      }
+
       client.activate();
       stompClient.current = client;
     } catch {
+      if (!mountedRef.current) return;
       setStatus('error');
       setError('Failed to create connection');
     }
-  }, [token, subscribe]);
+  }, [subscribe]);
 
-  const disconnect = useCallback(() => {
-    if (stompClient.current) {
-      stompClient.current.deactivate();
-      stompClient.current = null;
-    }
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-    }
-    setStatus('disconnected');
-    setError(null);
-  }, []);
+  connectRef.current = connect;
 
   const sendMessage = useCallback((destination: string, message: Record<string, unknown>) => {
     if (stompClient.current && stompClient.current.connected) {
@@ -160,14 +170,13 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   }, []);
 
   useEffect(() => {
-    if (options.autoConnect !== false && token) {
-      connect();
+    if (autoConnectRef.current !== false && tokenRef.current) {
+      connectRef.current?.();
     }
-
     return () => {
       disconnect();
     };
-  }, [token, connect, disconnect, options.autoConnect]);
+  }, [disconnect]);
 
   return {
     status,

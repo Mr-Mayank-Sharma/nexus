@@ -157,6 +157,20 @@ public class IntegrationStoreService {
                         s -> s.getSettingValue() != null ? s.getSettingValue() : ""));
     }
 
+    @Transactional
+    @CacheEvict(value = "storeSettings", allEntries = true)
+    public void updateSetting(UUID storeId, String settingType, String value) {
+        NxIntegrationStoreSetting setting = settingRepository
+                .findByStoreIdAndSettingType(storeId, settingType)
+                .orElse(NxIntegrationStoreSetting.builder()
+                        .storeId(storeId)
+                        .settingType(settingType)
+                        .isEncrypted(settingType.contains("token") || settingType.contains("secret"))
+                        .build());
+        setting.setSettingValue(value);
+        settingRepository.save(setting);
+    }
+
     public StoreSyncStatus getSyncStatus(UUID storeId) {
         NxIntegrationStore store = getStore(storeId);
         List<NxIntegrationSyncConfig> syncConfigs = syncConfigRepository.findByStoreId(storeId);

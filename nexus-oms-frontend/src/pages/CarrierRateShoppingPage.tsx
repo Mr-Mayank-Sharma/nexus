@@ -76,7 +76,7 @@ export default function CarrierRateShoppingPage() {
       <div className="enterprise-page-header">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="flex items-center gap-2.5"><Truck className="w-6 h-6 text-emerald-600" />Carrier Rate Shopping</h1>
+            <h1 className="flex items-center gap-2.5"><Truck className="w-6 h-6 text-[var(--nexus-success-600)]" />Carrier Rate Shopping</h1>
             <p>Compare real-time rates across carriers to find the best shipping option</p>
           </div>
         </div>
@@ -208,8 +208,8 @@ export default function CarrierRateShoppingPage() {
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
-              { label: 'Fastest', quote: result.fastest, icon: Zap, color: 'bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400' },
-              { label: 'Cheapest', quote: result.cheapest, icon: DollarSign, color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' },
+              { label: 'Fastest', quote: result.fastest, icon: Zap, color: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-400)]' },
+              { label: 'Cheapest', quote: result.cheapest, icon: DollarSign, color: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-600)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-400)]' },
               { label: 'Best Value', quote: result.bestValue, icon: Star, color: 'bg-[var(--nexus-warning-50)] text-[var(--nexus-warning-600)] dark:bg-[var(--nexus-warning-900)]/20 dark:text-[var(--nexus-warning-400)]' },
             ].map(cat => cat.quote && (
               <div key={cat.label} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">
@@ -248,7 +248,7 @@ export default function CarrierRateShoppingPage() {
                 className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   sortBy === 'cost'
                     ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)]'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)]')}
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]')}
               >
                 <DollarSign className="w-3 h-3 inline mr-1" />Cost
               </button>
@@ -257,7 +257,7 @@ export default function CarrierRateShoppingPage() {
                 className={clsx('px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
                   sortBy === 'speed'
                     ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] dark:bg-[var(--nexus-primary-900)]/20 dark:text-[var(--nexus-primary-300)]'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)] hover:bg-[var(--surface-base)]')}
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-muted)]')}
               >
                 <Clock className="w-3 h-3 inline mr-1" />Speed
               </button>
@@ -271,7 +271,7 @@ export default function CarrierRateShoppingPage() {
               className={clsx(
                 'bg-[var(--surface-base)] rounded-xl border p-5 transition-all duration-150 hover:shadow-sm',
                 rate === result.cheapest
-                  ? 'border-emerald-300 dark:border-emerald-700 ring-1 ring-emerald-200 dark:ring-emerald-800'
+                  ? 'border-[var(--nexus-success-300)] dark:border-[var(--nexus-success-700)] ring-1 ring-[var(--nexus-success-200)] dark:ring-[var(--nexus-success-800)]'
                   : 'border-[var(--border-default)]',
               )}
             >
@@ -296,7 +296,7 @@ export default function CarrierRateShoppingPage() {
                           </span>
                         )}
                         {rate === result.cheapest && (
-                          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded-md">
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-300)] rounded-md">
                             BEST PRICE
                           </span>
                         )}

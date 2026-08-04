@@ -9,15 +9,17 @@ import PermissionGate from '../components/rbac/PermissionGate'
 import clsx from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
 import { fetchManifests, createManifest, updateManifest, fetchCarriers } from '../api/newBackend'
+import { getShipments } from '../api/shipping'
 
 interface ManifestShipment {
   id: string
   orderId: string
   tracking: string
-  weight: number
-  cost: number
+  weight?: number
+  cost?: number
   service: string
-  destination: string
+  destination?: string
+  status?: string
 }
 
 interface Manifest {
@@ -39,18 +41,16 @@ const STATUS_STYLES: Record<string, string> = {
   Submitted: 'bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/30 dark:text-[var(--nexus-success-400)]',
 }
 
-function generateShipmentForManifest(orderIdx: number): ManifestShipment {
-  const carriers = ['FedEx', 'UPS', 'USPS', 'DHL']
-  const services = ['Ground', '2Day', 'Overnight', 'International']
-  const destinations = ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ', 'Dallas, TX']
+function toManifestShipment(row: any): ManifestShipment {
   return {
-    id: `SHP-${String(Math.random()).slice(2, 10)}`,
-    orderId: `ORD-${String(10230 + orderIdx).padStart(5, '0')}`,
-    tracking: `TRK${String(Math.random()).slice(2, 13)}`,
-    weight: +(Math.random() * 25 + 0.5).toFixed(1),
-    cost: +(Math.random() * 30 + 4).toFixed(2),
-    service: services[orderIdx % services.length],
-    destination: destinations[orderIdx % destinations.length],
+    id: row.id,
+    orderId: row.orderId || row.orderNumber || '',
+    tracking: row.trackingNumber || '',
+    service: row.serviceLevel || row.service || '',
+    status: row.status || 'PENDING',
+    weight: typeof row.weight === 'number' ? row.weight : undefined,
+    cost: typeof row.shippingCost === 'number' ? row.shippingCost : undefined,
+    destination: row.destination || row.city || '',
   }
 }
 
@@ -61,8 +61,12 @@ export default function ManifestPage() {
   const [searchManifest, setSearchManifest] = useState('')
 
   const [createCarrier, setCreateCarrier] = useState('FedEx')
-  const [dateFrom, setDateFrom] = useState('2026-06-28')
-  const [dateTo, setDateTo] = useState('2026-06-30')
+  const [dateFrom, setDateFrom] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 7)
+    return d.toISOString().split('T')[0]
+  })
+  const [dateTo, setDateTo] = useState(() => new Date().toISOString().split('T')[0])
   const [fetchedShipments, setFetchedShipments] = useState<ManifestShipment[]>([])
   const [selectedShipments, setSelectedShipments] = useState<string[]>([])
   const [isFetching, setIsFetching] = useState(false)
@@ -73,8 +77,8 @@ export default function ManifestPage() {
 
   useEffect(() => {
     Promise.all([fetchManifests(), fetchCarriers()]).then(([m, c]) => {
-      if (m?.manifests) setManifests(m.manifests)
-      if (c?.carriers) setCarrierList(c.carriers)
+      if (m?.data) setManifests(m.data)
+      if (c?.data) setCarrierList(c.data)
     }).catch(() => {})
   }, [])
   const [selectedManifest, setSelectedManifest] = useState<Manifest | null>(null)
@@ -104,21 +108,32 @@ export default function ManifestPage() {
     }
   }, [manifests])
 
-  function handleFetchShipments() {
+  async function handleFetchShipments() {
     if (!dateFrom || !dateTo) {
       addToast({ type: 'error', title: 'Select a date range' })
       return
     }
     setIsFetching(true)
-    setTimeout(() => {
-      const count = Math.floor(Math.random() * 25 + 10)
-      const shipments = Array.from({ length: count }, (_, i) => generateShipmentForManifest(i))
-      setFetchedShipments(shipments)
-      setSelectedShipments(shipments.map(s => s.id))
-      setIsFetching(false)
-      setFetched(true)
-      addToast({ type: 'success', title: `${count} shipments fetched` })
-    }, 1000)
+    const res = await getShipments()
+    setIsFetching(false)
+    const from = new Date(`${dateFrom}T00:00:00`)
+    const to = new Date(`${dateTo}T23:59:59`)
+    const shipments = (res.data || [])
+      .filter((s: any) => !s.voided)
+      .filter((s: any) => {
+        if (!s.createdAt) return true
+        const t = new Date(s.createdAt)
+        return t >= from && t <= to
+      })
+      .map(toManifestShipment)
+    setFetchedShipments(shipments)
+    setSelectedShipments(shipments.map(s => s.id))
+    setFetched(true)
+    if (shipments.length === 0) {
+      addToast({ type: 'info', title: 'No shipments found in the selected range' })
+    } else {
+      addToast({ type: 'success', title: `${shipments.length} shipments fetched` })
+    }
   }
 
   function toggleShipment(id: string) {
@@ -129,10 +144,23 @@ export default function ManifestPage() {
 
   async function handleCreateManifest(data: any) {
     const res = await createManifest(data)
-    if (res?.manifest) {
-      setManifests(prev => [res.manifest, ...prev])
-      addToast({ type: 'success', title: 'Manifest created' })
+    if (!res?.success) {
+      addToast({ type: 'error', title: 'Failed to create manifest' })
+      return
     }
+    const created = res.data || {}
+    const manifest: Manifest = {
+      id: created.id || `MNF-${Date.now()}`,
+      carrier: data.carrier,
+      date: data.date,
+      shipments: data.shipments || [],
+      status: created.status === 'created' ? 'Draft' : (created.status || 'Draft'),
+      totalWeight: (data.shipments || []).reduce((sum: number, s: ManifestShipment) => sum + (s.weight || 0), 0),
+      totalCost: (data.shipments || []).reduce((sum: number, s: ManifestShipment) => sum + (s.cost || 0), 0),
+    }
+    setManifests(prev => [manifest, ...prev])
+    setFetched(false)
+    addToast({ type: 'success', title: 'Manifest created' })
   }
 
   function handleViewDetail(manifest: Manifest) {
@@ -141,15 +169,17 @@ export default function ManifestPage() {
   }
 
   function handleDownload(manifest: Manifest) {
-    addToast({ type: 'success', title: `Downloading manifest ${manifest.id}` })
+    addToast({ type: 'info', title: `Manifest download not available yet (${manifest.id})` })
   }
 
   async function handleUpdateManifest(id: string, updates: any) {
     const res = await updateManifest(id, updates)
-    if (res?.manifest) {
-      setManifests(prev => prev.map(m => m.id === id ? res.manifest : m))
-      addToast({ type: 'success', title: 'Manifest updated' })
+    if (!res?.success) {
+      addToast({ type: 'error', title: 'Failed to update manifest' })
+      return
     }
+    setManifests(prev => prev.map(m => m.id === id ? { ...m, ...updates, id: res.data?.id || m.id } : m))
+    addToast({ type: 'success', title: 'Manifest updated' })
   }
 
   function handleVoid(manifest: Manifest) {
@@ -201,7 +231,7 @@ export default function ManifestPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-500)] flex items-center justify-center text-white shrink-0">
             <ClipboardList className="w-5 h-5" />
           </div>
           <div>
@@ -210,7 +240,7 @@ export default function ManifestPage() {
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-ai-50)]0 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(bg-[var(--nexus-ai-500)])] flex items-center justify-center text-white shrink-0">
             <Package className="w-5 h-5" />
           </div>
           <div>
@@ -219,7 +249,7 @@ export default function ManifestPage() {
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-success-50)]0 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-success-500)] flex items-center justify-center text-white shrink-0">
             <DollarSign className="w-5 h-5" />
           </div>
           <div>
@@ -228,7 +258,7 @@ export default function ManifestPage() {
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-warning-50)]0 flex items-center justify-center text-white shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-[var(--nexus-warning-500)] flex items-center justify-center text-white shrink-0">
             <Truck className="w-5 h-5" />
           </div>
           <div>
@@ -240,7 +270,7 @@ export default function ManifestPage() {
 
       <div className="enterprise-card p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
+          <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-500)] flex items-center justify-center text-white">
             <Plus className="w-4 h-4" />
           </div>
           <div>
@@ -268,7 +298,7 @@ export default function ManifestPage() {
           </div>
           <div className="flex items-end">
             <PermissionGate resource="logistics" action="create">
-              <button onClick={handleFetchShipments} disabled={isFetching}
+              <button type="button" onClick={handleFetchShipments} disabled={isFetching}
                 className="enterprise-btn enterprise-btn-primary w-full justify-center">
                 {isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                 Fetch Shipments
@@ -284,9 +314,9 @@ export default function ManifestPage() {
                 {selectedShipments.length} of {fetchedShipments.length} shipments selected
               </span>
               <div className="flex items-center gap-2">
-                <button onClick={() => setSelectedShipments(fetchedShipments.map(s => s.id))}
+                <button type="button" onClick={() => setSelectedShipments(fetchedShipments.map(s => s.id))}
                   className="text-xs text-[var(--nexus-primary-600)] hover:underline">Select All</button>
-                <button onClick={() => setSelectedShipments([])}
+                <button type="button" onClick={() => setSelectedShipments([])}
                   className="text-xs text-[var(--text-tertiary)] hover:underline">Clear</button>
               </div>
             </div>
@@ -299,16 +329,16 @@ export default function ManifestPage() {
                   )}>
                   <input type="checkbox" checked={selectedShipments.includes(s.id)}
                     onChange={() => toggleShipment(s.id)}
-                    className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-blue-500" />
+                    className="w-4 h-4 rounded border-[var(--border-default)] text-[var(--nexus-primary-600)] focus:ring-[var(--nexus-primary-500)]" />
                   <div className="flex-1 flex items-center justify-between">
                     <div>
                       <span className="text-[var(--text-primary)] font-medium">{s.orderId}</span>
                       <span className="text-[var(--text-tertiary)] ml-2 text-xs">{s.service}</span>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
-                      <span>{s.weight} lbs</span>
-                      <span className="font-mono">${s.cost.toFixed(2)}</span>
-                      <span className="text-[var(--text-tertiary)]">{s.destination}</span>
+                      <span>{s.weight != null ? `${s.weight} lbs` : '—'}</span>
+                      <span className="font-mono">{s.cost != null ? `$${s.cost.toFixed(2)}` : '—'}</span>
+                      <span className="text-[var(--text-tertiary)]">{s.destination || '—'}</span>
                     </div>
                   </div>
                 </label>
@@ -316,7 +346,7 @@ export default function ManifestPage() {
             </div>
             <div className="p-3 bg-[var(--bg-tertiary)] border-t border-[var(--border-color)] flex justify-end">
                 <PermissionGate resource="logistics" action="create">
-                  <button onClick={() => handleCreateManifest({
+                  <button type="button" onClick={() => handleCreateManifest({
                         carrier: createCarrier,
                         date: new Date().toISOString().split('T')[0],
                         shipments: fetchedShipments.filter(s => selectedShipments.includes(s.id)),
@@ -365,8 +395,8 @@ export default function ManifestPage() {
                     <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{m.carrier}</td>
                     <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{m.date}</td>
                     <td className="px-4 py-3 text-right text-sm text-[var(--text-secondary)]">{m.shipments.length}</td>
-                    <td className="px-4 py-3 text-right text-sm text-[var(--text-secondary)]">{m.totalWeight.toFixed(1)} lbs</td>
-                    <td className="px-4 py-3 text-right text-sm font-mono text-[var(--text-primary)]">${m.totalCost.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right text-sm text-[var(--text-secondary)]">{m.totalWeight != null ? `${m.totalWeight.toFixed(1)} lbs` : '—'}</td>
+                    <td className="px-4 py-3 text-right text-sm font-mono text-[var(--text-primary)]">{m.totalCost != null ? `$${m.totalCost.toFixed(2)}` : '—'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[m.status])}>
                         {m.status}
@@ -375,14 +405,14 @@ export default function ManifestPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-center gap-1">
                         <PermissionGate resource="logistics" action="read">
-                          <button onClick={() => handleViewDetail(m)}
+                          <button type="button" onClick={() => handleViewDetail(m)}
                             className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors"
                             title="View">
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                         </PermissionGate>
                         <PermissionGate resource="logistics" action="edit">
-                          <button onClick={() => handleDownload(m)}
+                          <button type="button" onClick={() => handleDownload(m)}
                             className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-success-600)] transition-colors"
                             title="Download">
                             <Download className="w-3.5 h-3.5" />
@@ -390,7 +420,7 @@ export default function ManifestPage() {
                         </PermissionGate>
                         {m.status !== 'Submitted' && (
                           <PermissionGate resource="logistics" action="edit">
-                            <button onClick={() => handleUpdateManifest(m.id, { status: 'Submitted' })}
+                            <button type="button" onClick={() => handleUpdateManifest(m.id, { status: 'Submitted' })}
                               className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors"
                               title="Submit">
                               <Send className="w-3.5 h-3.5" />
@@ -398,7 +428,7 @@ export default function ManifestPage() {
                           </PermissionGate>
                         )}
                         <PermissionGate resource="logistics" action="delete">
-                          <button onClick={() => handleVoid(m)}
+                          <button type="button" onClick={() => handleVoid(m)}
                             className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)] transition-colors"
                             title="Void">
                             <Ban className="w-3.5 h-3.5" />
@@ -417,7 +447,7 @@ export default function ManifestPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="enterprise-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-[var(--nexus-success-50)]0 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-[var(--nexus-success-500)] flex items-center justify-center text-white">
               <DollarSign className="w-4 h-4" />
             </div>
             <div>
@@ -447,7 +477,7 @@ export default function ManifestPage() {
 
         <div className="enterprise-card p-5">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-[var(--nexus-warning-50)]0 flex items-center justify-center text-white">
+            <div className="w-8 h-8 rounded-lg bg-[var(--nexus-warning-500)] flex items-center justify-center text-white">
               <PenLine className="w-4 h-4" />
             </div>
             <div>
@@ -463,7 +493,7 @@ export default function ManifestPage() {
                   placeholder="Scan or type BOL number..."
                   className="enterprise-input flex-1" />
                 <PermissionGate resource="logistics" action="edit">
-                  <button onClick={handleBOLScan}
+                  <button type="button" onClick={handleBOLScan}
                     className="enterprise-btn enterprise-btn-secondary">
                     <Search className="w-4 h-4" /> Scan
                   </button>
@@ -477,7 +507,7 @@ export default function ManifestPage() {
                 rows={2} className="enterprise-input w-full" />
             </div>
             <PermissionGate resource="logistics" action="edit">
-              <button onClick={handleSign}
+              <button type="button" onClick={handleSign}
                 className="enterprise-btn enterprise-btn-primary w-full justify-center">
                 <PenLine className="w-4 h-4" /> Sign & Close Out
               </button>
@@ -493,7 +523,7 @@ export default function ManifestPage() {
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-500)] flex items-center justify-center text-white">
                   <ClipboardList className="w-5 h-5" />
                 </div>
                 <div>
@@ -505,7 +535,7 @@ export default function ManifestPage() {
                 <span className={clsx('inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium', STATUS_STYLES[selectedManifest.status])}>
                   {selectedManifest.status}
                 </span>
-                <button onClick={() => setShowDetail(false)}
+                <button type="button" onClick={() => setShowDetail(false)}
                   className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors">
                   <X className="w-5 h-5 text-[var(--text-secondary)]" />
                 </button>
@@ -519,11 +549,11 @@ export default function ManifestPage() {
               </div>
               <div className="bg-[var(--bg-tertiary)] rounded-lg p-3 text-center">
                 <p className="text-xs text-[var(--text-tertiary)]">Total Weight</p>
-                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.totalWeight.toFixed(1)} lbs</p>
+                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.totalWeight != null ? `${selectedManifest.totalWeight.toFixed(1)} lbs` : '—'}</p>
               </div>
               <div className="bg-[var(--bg-tertiary)] rounded-lg p-3 text-center">
                 <p className="text-xs text-[var(--text-tertiary)]">Total Cost</p>
-                <p className="text-xl font-bold text-[var(--text-primary)]">${selectedManifest.totalCost.toFixed(2)}</p>
+                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.totalCost != null ? `$${selectedManifest.totalCost.toFixed(2)}` : '—'}</p>
               </div>
             </div>
 
@@ -551,11 +581,11 @@ export default function ManifestPage() {
                   {selectedManifest.shipments.map(s => (
                     <tr key={s.id} className="enterprise-table-row">
                       <td className="px-3 py-2 font-medium text-[var(--text-primary)]">{s.orderId}</td>
-                      <td className="px-3 py-2 font-mono text-xs text-[var(--color-primary)]">{s.tracking}</td>
-                      <td className="px-3 py-2 text-[var(--text-secondary)]">{s.service}</td>
-                      <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{s.weight} lbs</td>
-                      <td className="px-3 py-2 text-right font-mono text-[var(--text-primary)]">${s.cost.toFixed(2)}</td>
-                      <td className="px-3 py-2 text-[var(--text-secondary)]">{s.destination}</td>
+                      <td className="px-3 py-2 font-mono text-xs text-[var(--color-primary)]">{s.tracking || '—'}</td>
+                      <td className="px-3 py-2 text-[var(--text-secondary)]">{s.service || '—'}</td>
+                      <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{s.weight != null ? `${s.weight} lbs` : '—'}</td>
+                      <td className="px-3 py-2 text-right font-mono text-[var(--text-primary)]">{s.cost != null ? `$${s.cost.toFixed(2)}` : '—'}</td>
+                      <td className="px-3 py-2 text-[var(--text-secondary)]">{s.destination || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -563,11 +593,11 @@ export default function ManifestPage() {
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setShowDetail(false)}
+              <button type="button" onClick={() => setShowDetail(false)}
                 className="enterprise-btn enterprise-btn-secondary">Close</button>
               {selectedManifest.status === 'Draft' && (
                 <PermissionGate resource="logistics" action="edit">
-                  <button onClick={handleCloseManifest}
+                  <button type="button" onClick={handleCloseManifest}
                     className="enterprise-btn enterprise-btn-primary">
                     <CheckCircle className="w-4 h-4" /> Close Manifest
                   </button>
@@ -575,7 +605,7 @@ export default function ManifestPage() {
               )}
               {selectedManifest.status !== 'Submitted' && (
                 <PermissionGate resource="logistics" action="edit">
-                  <button onClick={handleSubmitFromDetail}
+                  <button type="button" onClick={handleSubmitFromDetail}
                     className="bg-[var(--nexus-primary-600)] text-white px-4 py-2 rounded-lg hover:bg-[var(--nexus-primary-700)] transition-colors inline-flex items-center gap-2 text-sm font-medium">
                     <Send className="w-4 h-4" /> Submit Manifest
                   </button>

@@ -110,7 +110,7 @@ export default function RoutingRulesPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Configure order routing logic for fulfillment allocation</p>
         </div>
         <PermissionGate resource="routing" action="create">
-          <button onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
+          <button type="button" onClick={openCreate} className="enterprise-btn enterprise-btn-primary text-sm">
             <Plus className="w-4 h-4" /> New Rule
           </button>
         </PermissionGate>
@@ -130,10 +130,10 @@ export default function RoutingRulesPage() {
           {rules.map((rule, index) => (
             <div key={rule.id} className={`card flex items-center gap-4 p-4 ${!rule.isActive ? 'opacity-60' : ''}`}>
               <div className="flex flex-col gap-0.5 text-[var(--text-tertiary)]">
-                <button onClick={() => handleMoveUp(index)} className="hover:text-[var(--text-secondary)] disabled:opacity-30" disabled={index === 0}>
+                <button type="button" onClick={() => handleMoveUp(index)} className="hover:text-[var(--text-secondary)] disabled:opacity-30" disabled={index === 0}>
                   <ArrowUp className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={() => handleMoveDown(index)} className="hover:text-[var(--text-secondary)] disabled:opacity-30" disabled={index === rules.length - 1}>
+                <button type="button" onClick={() => handleMoveDown(index)} className="hover:text-[var(--text-secondary)] disabled:opacity-30" disabled={index === rules.length - 1}>
                   <ArrowDown className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -151,17 +151,17 @@ export default function RoutingRulesPage() {
               </div>
               <div className="flex items-center gap-1">
                 <PermissionGate resource="routing" action="edit">
-                  <button onClick={() => handleToggleActive(rule)} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
+                  <button type="button" onClick={() => handleToggleActive(rule)} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
                     {rule.isActive ? <ToggleRight className="w-4 h-4 text-[var(--nexus-success-500)]" /> : <ToggleLeft className="w-4 h-4" />}
                   </button>
                 </PermissionGate>
                 <PermissionGate resource="routing" action="edit">
-                  <button onClick={() => openEdit(rule)} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
+                  <button type="button" onClick={() => openEdit(rule)} className="p-1.5 hover:bg-[var(--surface-muted)] rounded text-[var(--text-secondary)] hover:text-[var(--text-secondary)]">
                     <Pencil className="w-4 h-4" />
                   </button>
                 </PermissionGate>
                 <PermissionGate resource="routing" action="delete">
-                  <button onClick={() => handleDelete(rule.id)} className="p-1.5 hover:bg-[var(--nexus-error-50)] rounded text-[var(--text-secondary)] hover:text-[var(--nexus-error-600)]">
+                  <button type="button" onClick={() => handleDelete(rule.id)} className="p-1.5 hover:bg-[var(--nexus-error-50)] rounded text-[var(--text-secondary)] hover:text-[var(--nexus-error-600)]">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </PermissionGate>
@@ -176,7 +176,7 @@ export default function RoutingRulesPage() {
           <div className="enterprise-modal max-w-lg">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-subtle)]">
               <h2 className="text-lg font-semibold text-[var(--text-primary)]">{editingRule ? 'Edit Rule' : 'New Routing Rule'}</h2>
-              <button onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--surface-muted)] rounded"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div>
@@ -211,9 +211,9 @@ export default function RoutingRulesPage() {
               </div>
             </div>
             <div className="p-6 border-t border-[var(--border-subtle)] flex justify-end gap-3">
-              <button onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
+              <button type="button" onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary text-sm">Cancel</button>
               <PermissionGate resource="routing" action={editingRule ? 'edit' : 'create'}>
-                <button onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
+                <button type="button" onClick={handleSave} disabled={saving} className="enterprise-btn enterprise-btn-primary text-sm">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingRule ? 'Update' : 'Create'}
                 </button>

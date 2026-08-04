@@ -24,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
   NORMAL: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-600)]',
-  HIGH: 'bg-orange-100 text-orange-600',
+  HIGH: 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-600)]',
   URGENT: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-600)]',
 }
 
@@ -35,9 +35,9 @@ export default function BrokeringQueuePage() {
   const [selectedRun, setSelectedRun] = useState<BrokeringRun | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'queue', label: 'Queue', icon: Clock },
-    { key: 'runs', label: 'Run History', icon: Play },
-    { key: 'stats', label: 'Statistics', icon: AlertTriangle },
+    { key: 'queue', label: 'Queue', icon: <Clock className="w-4 h-4" /> },
+    { key: 'runs', label: 'Run History', icon: <Play className="w-4 h-4" /> },
+    { key: 'stats', label: 'Statistics', icon: <AlertTriangle className="w-4 h-4" /> },
   ]
 
   const { data: queue = [], isLoading: loadingQueue } = useQuery({
@@ -127,7 +127,7 @@ export default function BrokeringQueuePage() {
             <button
               onClick={() => processPriorityMutation.mutate()}
               disabled={processPriorityMutation.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-warning-600)] text-white rounded-lg hover:bg-[var(--nexus-warning-700)] disabled:opacity-50"
             >
               <Zap className="w-4 h-4" />
               Priority Run
@@ -285,7 +285,7 @@ export default function BrokeringQueuePage() {
                       <td className="px-4 py-3">
                         <span className={clsx(
                           'px-2 py-1 text-xs rounded-full font-medium',
-                          run.runType === 'PRIORITY' ? 'bg-orange-100 text-orange-700' :
+                          run.runType === 'PRIORITY' ? 'bg-[var(--nexus-warning-100)] text-[var(--nexus-warning-700)]' :
                           run.runType === 'MANUAL' ? 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]' :
                           'bg-[var(--surface-muted)] text-[var(--text-secondary)]'
                         )}>

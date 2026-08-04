@@ -29,7 +29,7 @@ type LoginStep = 'tenant' | 'credentials' | 'register' | 'mfa' | 'forgot-passwor
 const SSO_PROVIDERS = [
   { id: 'google', name: 'Google', color: 'hover:bg-[var(--nexus-error-50)] hover:border-[var(--nexus-error-200)] hover:text-[var(--nexus-error-600)]' },
   { id: 'microsoft', name: 'Microsoft', color: 'hover:bg-[var(--nexus-primary-50)] hover:border-[var(--nexus-primary-200)] hover:text-[var(--nexus-primary-600)]' },
-  { id: 'okta', name: 'Okta', color: 'hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600' },
+  { id: 'okta', name: 'Okta', color: 'hover:bg-[var(--nexus-warning-50)] hover:border-[var(--nexus-warning-200)] hover:text-[var(--nexus-warning-600)]' },
   { id: 'auth0', name: 'Auth0', color: 'hover:bg-[var(--nexus-ai-50)] hover:border-[var(--nexus-ai-200)] hover:text-[var(--nexus-ai-600)]' },
 ]
 
@@ -76,8 +76,10 @@ export default function LoginPage() {
 
     if (ssoToken && ssoUser) {
       localStorage.setItem('nexus_token', ssoToken)
+      const ssoRefresh = params.get('refreshToken')
+      if (ssoRefresh) localStorage.setItem('nexus_refresh_token', ssoRefresh)
       localStorage.setItem('nexus_user', JSON.stringify({ username: ssoUser }))
-      window.location.href = '/api/v1/'
+      window.location.href = '/'
       return
     }
 
@@ -124,13 +126,13 @@ export default function LoginPage() {
     }
     setLoading(true)
     try {
-      await login({
+      const mfaNeeded = await login({
         username,
         password,
         tenantId: selectedTenant?.id,
         rememberMe,
       })
-      if (!mfaRequired) {
+      if (!mfaNeeded) {
         navigate('/', { replace: true })
       }
     } catch (err: unknown) {
@@ -262,9 +264,10 @@ export default function LoginPage() {
       })
       if (res.success && res.data?.accessToken) {
         localStorage.setItem('nexus_token', res.data.accessToken)
+        if (res.data.refreshToken) localStorage.setItem('nexus_refresh_token', res.data.refreshToken)
         const user = { id: '', username: registerEmail, email: registerEmail, fullName: registerName, role: res.data.role as UserRole, permissions: res.data.permissions ?? [], securityGroups: res.data.securityGroups ?? [] }
         localStorage.setItem('nexus_user', JSON.stringify(user))
-        window.location.href = '/api/v1/'
+        window.location.href = '/'
       } else {
         setError(res.error || 'Registration failed')
       }
@@ -283,7 +286,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-slate-900">
+    <div className="min-h-screen flex bg-[var(--surface-sunken)]">
       <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full blur-3xl" />
@@ -385,7 +388,7 @@ export default function LoginPage() {
                   <div className="px-4 py-6 text-center text-sm text-[var(--text-tertiary)]">No organizations found</div>
                 ) : (
                   (tenantSearch ? tenants.filter(t => t.name.toLowerCase().includes(tenantSearch.toLowerCase())) : tenants).map(t => (
-                    <button key={t.id}
+                    <button type="button" key={t.id}
                       onClick={() => handleTenantSelect(t)}
                       className={`w-full text-left px-4 py-3 text-sm transition-colors hover:bg-[var(--nexus-primary-50)] rounded-lg flex items-center gap-3 ${
                         selectedTenant?.id === t.id ? 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] font-medium' : 'text-[var(--text-secondary)]'

@@ -203,7 +203,7 @@ export default function CarriersPage() {
       render: (_, row) => (
         <div className="flex items-center gap-3">
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold
-            ${row.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-50)]0' : row.status === 'INACTIVE' ? 'bg-[var(--surface-muted)]' : 'bg-[var(--nexus-error-400)]'}`}>
+            ${row.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-500)]' : row.status === 'INACTIVE' ? 'bg-[var(--surface-muted)]' : 'bg-[var(--nexus-error-400)]'}`}>
             {row.name.charAt(0)}
           </div>
           <div>
@@ -238,13 +238,13 @@ export default function CarriersPage() {
       render: (_, row) => (
         <div className="flex items-center justify-center gap-1">
           <PermissionGate resource="logistics" action="edit">
-            <button onClick={e => { e.stopPropagation(); openEditModal(row) }}
+            <button type="button" onClick={e => { e.stopPropagation(); openEditModal(row) }}
               className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-primary-600)] transition-colors">
               <Edit className="w-3.5 h-3.5" />
             </button>
           </PermissionGate>
           <PermissionGate resource="logistics" action="delete">
-            <button onClick={e => { e.stopPropagation(); handleDelete(row) }}
+            <button type="button" onClick={e => { e.stopPropagation(); handleDelete(row) }}
               className="p-1.5 rounded-md hover:bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-600)] transition-colors">
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -269,7 +269,7 @@ export default function CarriersPage() {
         </div>
         <div className="flex items-center gap-2">
           <PermissionGate resource="logistics" action="create">
-            <button onClick={openAddModal} className="enterprise-btn enterprise-btn-primary">
+            <button type="button" onClick={openAddModal} className="enterprise-btn enterprise-btn-primary">
               <Plus className="w-4 h-4" /> Add Carrier
             </button>
           </PermissionGate>
@@ -338,7 +338,7 @@ export default function CarriersPage() {
               <div className="p-5 border-b border-[var(--border-color)] flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-bold
-                    ${expandedCarrier.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-50)]0' : expandedCarrier.status === 'INACTIVE' ? 'bg-[var(--surface-muted)]' : 'bg-[var(--nexus-error-400)]'}`}>
+                    ${expandedCarrier.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-500)]' : expandedCarrier.status === 'INACTIVE' ? 'bg-[var(--surface-muted)]' : 'bg-[var(--nexus-error-400)]'}`}>
                     {expandedCarrier.name.charAt(0)}
                   </div>
                   <div>
@@ -421,7 +421,7 @@ export default function CarriersPage() {
                     <th key={c.id} className={`text-center min-w-[130px] ${c.status === 'INACTIVE' ? 'opacity-50' : ''}`}>
                       <div className="flex flex-col items-center gap-1">
                         <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-bold
-                          ${c.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-50)]0' : 'bg-[var(--surface-muted)]'}`}>{c.name.charAt(0)}</div>
+                          ${c.status === 'ACTIVE' ? 'bg-[var(--nexus-primary-500)]' : 'bg-[var(--surface-muted)]'}`}>{c.name.charAt(0)}</div>
                         <span className="text-xs">{c.name}</span>
                       </div>
                     </th>
@@ -468,14 +468,14 @@ export default function CarriersPage() {
           <div className="enterprise-modal max-w-lg onClick={e => e.stopPropagation()}">
             <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-50)]0 flex items-center justify-center text-white">
+                <div className="w-8 h-8 rounded-lg bg-[var(--nexus-primary-500)] flex items-center justify-center text-white">
                   <Ship className="w-4 h-4" />
                 </div>
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">
                   {editingCarrier ? `Edit ${editingCarrier.name}` : 'Add Carrier'}
                 </h2>
               </div>
-              <button disabled={saving} onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors">
+              <button type="button" disabled={saving} onClick={() => setShowModal(false)} className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors">
                 <X className="w-5 h-5 text-[var(--text-secondary)]" />
               </button>
             </div>
@@ -537,11 +537,11 @@ export default function CarriersPage() {
             </div>
 
             <div className="p-6 border-t border-[var(--border-color)] flex justify-end gap-3">
-              <button disabled={saving} onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary">
+              <button type="button" disabled={saving} onClick={() => setShowModal(false)} className="enterprise-btn enterprise-btn-secondary">
                 Cancel
               </button>
               <PermissionGate resource="logistics" action={editingCarrier ? 'edit' : 'create'}>
-                <button disabled={saving} onClick={handleSave} className="enterprise-btn enterprise-btn-primary">
+                <button type="button" disabled={saving} onClick={handleSave} className="enterprise-btn enterprise-btn-primary">
                   {saving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingCarrier ? 'Update Carrier' : 'Add Carrier'}
                 </button>

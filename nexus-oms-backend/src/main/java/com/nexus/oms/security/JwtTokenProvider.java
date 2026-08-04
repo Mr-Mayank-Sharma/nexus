@@ -19,13 +19,16 @@ public class JwtTokenProvider {
 
     private final SecretKey key;
     private final long expirationMs;
+    private final long refreshExpirationMs;
 
     public JwtTokenProvider(
             @Value("${app.jwt.secret}") String secret,
-            @Value("${app.jwt.expiration-ms}") long expirationMs) {
+            @Value("${app.jwt.expiration-ms}") long expirationMs,
+            @Value("${app.jwt.refresh-expiration-ms:604800000}") long refreshExpirationMs) {
         this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(
                 java.util.Base64.getEncoder().encodeToString(secret.getBytes())));
         this.expirationMs = expirationMs;
+        this.refreshExpirationMs = refreshExpirationMs;
     }
 
     public String generateToken(String username, String role, UUID tenantId) {
@@ -37,10 +40,36 @@ public class JwtTokenProvider {
                 .subject(username)
                 .claim("role", role)
                 .claim("tenantId", tenantId.toString())
+                .claim("tokenType", "access")
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(key)
                 .compact();
+    }
+
+    public String generateRefreshToken(String username, String role, UUID tenantId) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + refreshExpirationMs);
+
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(username)
+                .claim("role", role)
+                .claim("tenantId", tenantId.toString())
+                .claim("tokenType", "refresh")
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(key)
+                .compact();
+    }
+
+    public boolean isRefreshToken(String token) {
+        try {
+            Claims claims = parseClaims(token);
+            return "refresh".equals(claims.get("tokenType", String.class));
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     public String getUsernameFromToken(String token) {

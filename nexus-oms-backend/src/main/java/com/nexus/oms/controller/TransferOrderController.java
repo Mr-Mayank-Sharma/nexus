@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/transfers")
+@RequestMapping("/transfers")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class TransferOrderController {
 

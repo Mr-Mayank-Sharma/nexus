@@ -528,6 +528,7 @@ public class OrderService {
                 .id(item.getId())
                 .sku(item.getSku())
                 .productName(item.getProductName())
+                .imageUrl(item.getImageUrl())
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
                 .totalPrice(item.getTotalPrice())

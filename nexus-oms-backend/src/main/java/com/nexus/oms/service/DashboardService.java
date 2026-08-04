@@ -1,6 +1,7 @@
 package com.nexus.oms.service;
 
 import com.nexus.oms.entity.NxOrder;
+import com.nexus.oms.entity.NxPicker;
 import com.nexus.oms.entity.NxShipment;
 import com.nexus.oms.repository.*;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,15 +22,18 @@ public class DashboardService {
     private final FulfillmentExceptionRepository exceptionRepository;
     private final ReturnRepository returnRepository;
     private final ShipmentRepository shipmentRepository;
+    private final PickerRepository pickerRepository;
 
     public DashboardService(OrderRepository orderRepository,
                             FulfillmentExceptionRepository exceptionRepository,
                             ReturnRepository returnRepository,
-                            ShipmentRepository shipmentRepository) {
+                            ShipmentRepository shipmentRepository,
+                            PickerRepository pickerRepository) {
         this.orderRepository = orderRepository;
         this.exceptionRepository = exceptionRepository;
         this.returnRepository = returnRepository;
         this.shipmentRepository = shipmentRepository;
+        this.pickerRepository = pickerRepository;
     }
 
     @Cacheable(value = "dashboard", key = "#tenantId")
@@ -39,13 +43,13 @@ public class DashboardService {
         BigDecimal revenueToday = orderRepository.sumTotalByTenantIdAndCreatedAtAfter(tenantId, todayStart);
         long activeExceptions = exceptionRepository.countByTenantIdAndStatus(tenantId, "OPEN");
         long totalOrders = orderRepository.countByTenantIdAndStatusNot(tenantId, "CANCELLED");
-        long shipped = orderRepository.countByTenantIdAndStatus(tenantId, "SHIPPED");
         long delivered = orderRepository.countByTenantIdAndStatus(tenantId, "DELIVERED");
 
         String onTimeDelivery = totalOrders > 0
                 ? String.format("%.1f%%", (delivered * 100.0 / totalOrders))
-                : "97.2%";
-        String avgShipTime = shipped > 0 ? "4.2h" : "—";
+                : "—";
+        String avgShipTime = computeAvgShipTime(tenantId);
+        long activePickers = pickerRepository.countActiveByTenantId(tenantId);
 
         Map<String, Object> kpis = new LinkedHashMap<>();
         kpis.put("ordersToday", (int) ordersToday);
@@ -53,15 +57,37 @@ public class DashboardService {
         kpis.put("activeExceptions", (int) activeExceptions);
         kpis.put("avgShipTime", avgShipTime);
         kpis.put("revenueToday", revenueToday.doubleValue());
-        kpis.put("activePickers", 18);
+        kpis.put("activePickers", (int) activePickers);
         return kpis;
     }
 
-    @Cacheable(value = "dashboard", key = "'velocity'")
-    public Map<String, Object> getOrderVelocity() {
+    private String computeAvgShipTime(UUID tenantId) {
+        List<NxShipment> shipments = shipmentRepository.findByTenantId(tenantId);
+        long totalMinutes = 0;
+        long count = 0;
+        for (NxShipment s : shipments) {
+            if (s.getOrderId() == null || s.getCreatedAt() == null) continue;
+            NxOrder order = orderRepository.findById(s.getOrderId()).orElse(null);
+            if (order == null || order.getCreatedAt() == null) continue;
+            long minutes = ChronoUnit.MINUTES.between(order.getCreatedAt(), s.getCreatedAt());
+            if (minutes < 0) continue;
+            totalMinutes += minutes;
+            count++;
+        }
+        if (count == 0) return "—";
+        long avgMinutes = totalMinutes / count;
+        long hours = avgMinutes / 60;
+        long mins = avgMinutes % 60;
+        return hours > 0 ? hours + "h " + mins + "m" : mins + "m";
+    }
+
+    @Cacheable(value = "dashboard", key = "'velocity:' + #tenantId + ':' + #hours")
+    public Map<String, Object> getOrderVelocity(UUID tenantId, int hours) {
+        LocalDateTime since = LocalDateTime.now().minusHours(Math.max(1, hours));
+        long orders = orderRepository.countByTenantIdAndCreatedAtAfter(tenantId, since);
         Map<String, Object> velocity = new LinkedHashMap<>();
         velocity.put("metric", "orders_per_hour");
-        velocity.put("value", 12.5);
+        velocity.put("value", Math.round((orders * 10.0) / Math.max(1, hours)) / 10.0);
         return velocity;
     }
 

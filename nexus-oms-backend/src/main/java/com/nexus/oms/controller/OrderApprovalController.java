@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1/approvals")
+@RequestMapping("/approvals")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class OrderApprovalController {
 

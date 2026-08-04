@@ -17,6 +17,15 @@
     <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
     <title>NexusShip - Supply Chain Command Center</title>
   </head>
+  <script>
+    // Force-unregister stale service workers in dev mode
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+      navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { r.unregister(); });
+        if (regs.length > 0) location.reload();
+      });
+    }
+  </script>
   <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

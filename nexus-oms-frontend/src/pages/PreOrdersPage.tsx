@@ -28,7 +28,7 @@ export default function PreOrdersPage() {
     queryKey: ['parked-orders'],
     queryFn: async () => {
       const res = await parkedOrdersApi.getParkedOrders()
-      return res.data as ParkedOrder[]
+      return Array.isArray(res.data) ? (res.data as ParkedOrder[]) : []
     },
   })
 
@@ -99,7 +99,7 @@ export default function PreOrdersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] text-[var(--text-primary)] flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Package className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Pre-Orders
           </h1>
           <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">Manage parked orders awaiting release</p>
@@ -120,7 +120,7 @@ export default function PreOrdersPage() {
           minChars={0}
           className="flex-1 max-w-md"
         />
-        <div className="flex gap-1 bg-[var(--surface-muted)] bg-[var(--surface-muted)] rounded-lg p-0.5">
+        <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-0.5">
           {(['all', 'PREORDER', 'BACKORDER', 'FRAUD_HOLD', 'CREDIT_HOLD', 'MANUAL_HOLD'] as const).map(f => (
             <button
               key={f}
@@ -132,7 +132,7 @@ export default function PreOrdersPage() {
             </button>
           ))}
         </div>
-        <button onClick={() => refetch()} className="enterprise-btn-secondary px-3 py-2">
+        <button type="button" onClick={() => refetch()} className="enterprise-btn-secondary px-3 py-2">
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
@@ -163,13 +163,13 @@ export default function PreOrdersPage() {
                   <th className="px-4 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-800">
                 {filteredOrders.map(order => {
                   const isOverdue = order.expectedDate && new Date(order.expectedDate) < new Date()
                   return (
                     <tr key={order.id} className="enterprise-table-row">
                       <td className="px-4 py-3">
-                        <div className="text-sm font-medium text-[var(--text-primary)] text-[var(--text-primary)]">{order.orderNumber}</div>
+                        <div className="text-sm font-medium text-[var(--text-primary)]">{order.orderNumber}</div>
                         <div className="text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{order.customerEmail || '—'}</div>
                       </td>
                       <td className="px-4 py-3">
@@ -205,7 +205,7 @@ export default function PreOrdersPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <button className="enterprise-btn-secondary text-xs px-2 py-1" onClick={() => navigate(`/orders/${order.orderId}`)}>
+                          <button type="button" className="enterprise-btn-secondary text-xs px-2 py-1" onClick={() => navigate(`/orders/${order.orderId}`)}>
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           {order.status === 'PARKED' && (

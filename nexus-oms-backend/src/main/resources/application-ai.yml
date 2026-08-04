@@ -21,6 +21,7 @@ spring:
 nexus:
   ai:
     enabled: ${NEXUS_AI_ENABLED:false}
+    warmup-on-startup: ${NEXUS_AI_WARMUP_ON_STARTUP:false}
     openai:
       api-key: ${OPENAI_API_KEY:}
       model: ${OPENAI_MODEL:gpt-4o}

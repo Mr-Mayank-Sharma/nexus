@@ -68,6 +68,14 @@ public class EdiAutomationController {
         return ResponseEntity.ok(ApiResponse.success(doc, "EDI document reprocessed"));
     }
 
+    @PostMapping("/dry-run")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> dryRun(
+            @RequestParam("content") String content,
+            @RequestParam("docType") String docType) {
+        return ResponseEntity.ok(ApiResponse.success(
+                ediAutomationService.dryRun(content, docType), "EDI dry-run completed"));
+    }
+
     @GetMapping("/kpis")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getKPIs() {
         return ResponseEntity.ok(ApiResponse.success(ediAutomationService.getKPIs()));

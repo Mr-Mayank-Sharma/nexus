@@ -25,6 +25,19 @@ public class PackingController {
         this.packingService = packingService;
     }
 
+    @Operation(summary = "Get packing queues (packages grouped by status)")
+    @GetMapping("/queues")
+    public ResponseEntity<ApiResponse<Map<String, List<NxPackage>>>> getQueues() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<NxPackage> all = packingService.getPackages(tenantId);
+        Map<String, List<NxPackage>> queues = new java.util.LinkedHashMap<>();
+        queues.put("PENDING_PACK", all.stream().filter(p -> "PENDING_PACK".equals(p.getStatus())).toList());
+        queues.put("PACKING", all.stream().filter(p -> "PACKING".equals(p.getStatus())).toList());
+        queues.put("PACKED", all.stream().filter(p -> "PACKED".equals(p.getStatus())).toList());
+        queues.put("SHIPPED", all.stream().filter(p -> "SHIPPED".equals(p.getStatus())).toList());
+        return ResponseEntity.ok(ApiResponse.success(queues));
+    }
+
     @Operation(summary = "List all packages")
     @GetMapping
     public ResponseEntity<ApiResponse<List<NxPackage>>> getAllPackages() {

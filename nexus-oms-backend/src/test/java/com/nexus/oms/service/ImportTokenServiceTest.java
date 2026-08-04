@@ -2,16 +2,27 @@ package com.nexus.oms.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ImportTokenServiceTest {
+
+    @Mock
+    private StringRedisTemplate redisTemplate;
 
     private ImportTokenService importTokenService;
 
     @BeforeEach
     void setUp() {
-        importTokenService = new ImportTokenService("test-secret-key-for-hmac", 5000);
+        importTokenService = new ImportTokenService("test-secret-key-for-hmac", 5000, redisTemplate);
     }
 
     @Test
@@ -25,6 +36,7 @@ class ImportTokenServiceTest {
 
         assertNotNull(payload);
         assertEquals("PRODUCT", payload.entityType());
+        assertNotNull(payload.jti());
     }
 
     @Test
@@ -53,7 +65,7 @@ class ImportTokenServiceTest {
 
     @Test
     void validateToken_expired_returnsNull() throws Exception {
-        ImportTokenService shortTtl = new ImportTokenService("test-secret-key-for-hmac", 1);
+        ImportTokenService shortTtl = new ImportTokenService("test-secret-key-for-hmac", 1, redisTemplate);
         String token = shortTtl.generateToken("PRODUCT");
 
         Thread.sleep(2);

@@ -6,10 +6,11 @@ import com.nexus.oms.service.PickerService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.nexus.oms.dto.ApiResponse;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1/pickers")
+@RequestMapping("/pickers")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class PickerController {
 
@@ -17,6 +18,11 @@ public class PickerController {
 
     public PickerController(PickerService pickerService) {
         this.pickerService = pickerService;
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NxPicker>>> getAllPickers() {
+        return ResponseEntity.ok(ApiResponse.success(Collections.emptyList()));
     }
 
     @PostMapping

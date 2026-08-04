@@ -117,7 +117,7 @@ export default function BOPISPage() {
       ) : (
         <div className="enterprise-card overflow-hidden">
           {activeTab === 'orders' && (
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-800">
               {bopisOrders.map(order => (
                 <div key={order.id} className="p-4 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
                   <div className="flex items-center justify-between">
@@ -134,11 +134,11 @@ export default function BOPISPage() {
                       <span className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{order.items?.length || 0} items</span>
                       <EnterpriseStatusBadge status="warning" label="Ready" />
                       <PermissionGate resource="orders" action="edit">
-                        <button className="enterprise-btn-primary text-xs px-3 py-1.5" onClick={() => confirmPickupMutation.mutate(order.id)}>
+                        <button type="button" className="enterprise-btn-primary text-xs px-3 py-1.5" onClick={() => confirmPickupMutation.mutate(order.id)}>
                           <CheckCircle className="w-3.5 h-3.5" /> Confirm Pickup
                         </button>
                       </PermissionGate>
-                      <button className="enterprise-btn-secondary text-xs px-2 py-1.5" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <button type="button" className="enterprise-btn-secondary text-xs px-2 py-1.5" onClick={() => navigate(`/orders/${order.id}`)}>
                         <Eye className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -165,7 +165,7 @@ export default function BOPISPage() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 p-4">
                 {filteredProducts.map(product => (
-                  <button key={product.id} onClick={() => navigate(`/products/${product.id}`)}
+                  <button type="button" key={product.id} onClick={() => navigate(`/products/${product.id}`)}
                     className="group text-left p-3 rounded-xl border border-[var(--border-default)] hover:border-[var(--nexus-primary-300)] dark:hover:border-[var(--nexus-primary-600)] hover:shadow-sm transition-all">
                     <div className="w-full aspect-square rounded-lg bg-[var(--surface-muted)] mb-2 flex items-center justify-center text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
                       <Store className="w-8 h-8" />
@@ -187,7 +187,7 @@ export default function BOPISPage() {
           )}
 
           {activeTab === 'ship-to-store' && (
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-800">
               {shipToStoreOrders.map(order => (
                 <div key={order.id} className="p-4 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
                   <div className="flex items-center justify-between">
@@ -203,7 +203,7 @@ export default function BOPISPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{order.items?.length || 0} items</span>
                       <EnterpriseStatusBadge status="pending" label="In Transit" />
-                      <button className="enterprise-btn-secondary text-xs px-3 py-1.5" onClick={() => navigate(`/orders/${order.id}`)}>
+                      <button type="button" className="enterprise-btn-secondary text-xs px-3 py-1.5" onClick={() => navigate(`/orders/${order.id}`)}>
                         <Eye className="w-3.5 h-3.5" /> Track
                       </button>
                     </div>
