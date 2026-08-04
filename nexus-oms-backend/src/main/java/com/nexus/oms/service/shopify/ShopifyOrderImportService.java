@@ -200,7 +200,10 @@ public class ShopifyOrderImportService {
         JsonNode lineItems = shopifyOrder.get("line_items");
         if (lineItems != null && lineItems.isArray()) {
             for (JsonNode item : lineItems) {
-                String sku = item.has("sku") ? item.get("sku").asText() : ("SPF-" + item.get("product_id").asText());
+                String rawSku = item.has("sku") && !item.get("sku").isNull() ? item.get("sku").asText() : "";
+                String sku = (rawSku == null || rawSku.isBlank())
+                        ? ("SPF-" + item.get("product_id").asText())
+                        : rawSku;
                 String productName = item.has("title") ? item.get("title").asText() : sku;
                 int qty = item.has("quantity") ? item.get("quantity").asInt() : 1;
                 BigDecimal unitPrice = money(item.get("price"));
@@ -208,7 +211,13 @@ public class ShopifyOrderImportService {
                 String imageUrl = productMappingRepository
                         .findByTenantIdAndBcSku(tenantId, sku)
                         .map(NxProductMapping::getImageUrl)
-                        .orElse(null);
+                        .orElseGet(() -> {
+                            Integer pid = item.has("product_id") ? item.get("product_id").asInt() : null;
+                            return pid != null
+                                    ? productMappingRepository.findByTenantIdAndBcProductId(tenantId, pid)
+                                            .map(NxProductMapping::getImageUrl).orElse(null)
+                                    : null;
+                        });
 
                 NxOrderItem orderItem = NxOrderItem.builder()
                         .orderId(order.getId())
