@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Fragment } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ClipboardList, Plus, UserCheck, Play, CheckCircle, XCircle, Loader2,
@@ -332,8 +332,8 @@ export default function PickingPage() {
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {filtered.map(pl => (
-                  <>
-                    <tr key={pl.id} className="enterprise-table-row cursor-pointer" onClick={() => setExpandedPicklist(expandedPicklist === pl.id ? null : pl.id)}>
+                  <Fragment key={pl.id}>
+                    <tr className="enterprise-table-row cursor-pointer" onClick={() => setExpandedPicklist(expandedPicklist === pl.id ? null : pl.id)}>
                       <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{pl.name}</td>
                       <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{pl.waveType}</td>
                       <td className="px-4 py-3">
@@ -473,7 +473,7 @@ export default function PickingPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
@@ -503,8 +503,8 @@ export default function PickingPage() {
                     const workload = pickerWorkload[s.id] || 0
                     const shift = ss.shift || '-'
                     return (
-                      <PermissionGate resource="warehouse" action="edit">
-                        <button type="button" key={s.id} type="button"
+                      <PermissionGate key={s.id} resource="warehouse" action="edit">
+                        <button type="button"
                           className="w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-3"
                           onClick={() => {
                             assignMutation.mutate({ id: assignTarget.picklistId, staffId: s.id })
@@ -559,8 +559,8 @@ export default function PickingPage() {
                     const workload = pickerWorkload[s.id] || 0
                     const shift = ss.shift || '-'
                     return (
-                      <PermissionGate resource="warehouse" action="edit">
-                        <button type="button" key={s.id} type="button"
+                      <PermissionGate key={s.id} resource="warehouse" action="edit">
+                        <button type="button"
                           className="w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-3"
                           onClick={() => {
                             pickItemMutation.mutate({ itemId: pickTarget.itemId, staffId: s.id })
@@ -656,7 +656,7 @@ export default function PickingPage() {
                           {filteredOrders.length === 0 ? (
                             <p className="p-3 text-sm text-[var(--text-tertiary)]">No open orders found</p>
                           ) : filteredOrders.slice(0, 50).map(o => (
-                            <button type="button" key={o.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-2"
+                            <button type="button" key={o.id} className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] border-b border-[var(--border-subtle)] last:border-0 flex items-center gap-2"
                               onClick={() => {
                                 const display = `${o.orderNumber || o.id.slice(0, 8)} — ${o.customerName || '?'} [${o.status}]`
                                 if (isMultiOrder) {

@@ -137,7 +137,8 @@ export default function OrderDetailPage() {
       else if (action === 'allocate') await ordersApi.allocateOrder(id)
       else if (action === 'ship') await ordersApi.shipOrder(id, 'auto', 'TN-' + Date.now())
       else if (action === 'cancel') await ordersApi.cancelOrder(id)
-      addToast({ type: 'success', title: `Order ${action}ed successfully` })
+      const verb = action === 'allocate' ? 'allocated' : action === 'confirm' ? 'confirmed' : action === 'ship' ? 'shipped' : action === 'cancel' ? 'cancelled' : action
+      addToast({ type: 'success', title: `Order ${verb} successfully` })
       await fetchOrder()
     } catch {
       addToast({ type: 'error', title: `Failed to ${action} order` })
