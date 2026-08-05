@@ -41,36 +41,49 @@ export interface BrokeringStats {
   expired: number
 }
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export const brokeringApi = {
   enqueueOrder: (orderId: string, priority: string = 'NORMAL') =>
-    client.post<BrokeringQueueEntry>(`/brokering/enqueue?orderId=${orderId}&priority=${priority}`),
+    unwrap<BrokeringQueueEntry>(client.post<BrokeringQueueEntry>(`/brokering/enqueue?orderId=${orderId}&priority=${priority}`)),
 
   processBrokeringQueue: () =>
-    client.post<BrokeringRun>('/brokering/process'),
+    unwrap<BrokeringRun>(client.post<BrokeringRun>('/brokering/process')),
 
   processPriorityQueue: () =>
-    client.post<BrokeringRun>('/brokering/process/priority'),
+    unwrap<BrokeringRun>(client.post<BrokeringRun>('/brokering/process/priority')),
 
   manualBrokeringRun: (orderIds: string[]) =>
-    client.post<BrokeringRun>('/brokering/process/manual', orderIds),
+    unwrap<BrokeringRun>(client.post<BrokeringRun>('/brokering/process/manual', orderIds)),
 
   getQueue: (status?: string) =>
-    client.get<BrokeringQueueEntry[]>('/brokering/queue', { params: { status } }),
+    unwrap<BrokeringQueueEntry[]>(client.get<BrokeringQueueEntry[]>('/brokering/queue', { params: { status } })),
 
   getQueueStats: () =>
-    client.get<BrokeringStats>('/brokering/queue/stats'),
+    unwrap<BrokeringStats>(client.get<BrokeringStats>('/brokering/queue/stats')),
 
   removeFromQueue: (id: string) =>
     client.delete(`/brokering/queue/${id}`),
 
   getRunHistory: () =>
-    client.get<BrokeringRun[]>('/brokering/runs'),
+    unwrap<BrokeringRun[]>(client.get<BrokeringRun[]>('/brokering/runs')),
 
   getRun: (id: string) =>
-    client.get<BrokeringRun>(`/brokering/runs/${id}`),
+    unwrap<BrokeringRun>(client.get<BrokeringRun>(`/brokering/runs/${id}`)),
 
   expireStaleOrders: () =>
-    client.post<BrokeringQueueEntry[]>('/brokering/expire-stale'),
+    unwrap<BrokeringQueueEntry[]>(client.post<BrokeringQueueEntry[]>('/brokering/expire-stale')),
 }
 
 export default brokeringApi

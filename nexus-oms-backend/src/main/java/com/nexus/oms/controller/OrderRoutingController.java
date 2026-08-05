@@ -55,6 +55,11 @@ public class OrderRoutingController {
         return ResponseEntity.ok(ApiResponse.success(result, "Order reallocated successfully"));
     }
 
+    @GetMapping("/allocations")
+    public ResponseEntity<ApiResponse<List<NxOrderAllocation>>> getAllocationsList() {
+        return ResponseEntity.ok(ApiResponse.success(orderRoutingService.getAllocations()));
+    }
+
     @GetMapping("/allocations/{orderId}")
     public ResponseEntity<ApiResponse<List<NxOrderAllocation>>> getAllocations(
             @PathVariable UUID orderId) {

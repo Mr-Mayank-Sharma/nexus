@@ -43,9 +43,9 @@ export default function OrderApprovalsPage() {
   const [selectedApproval, setSelectedApproval] = useState<OrderApproval | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'pending', label: 'Pending Review', icon: <Clock className="w-4 h-4" /> },
-    { key: 'rules', label: 'Approval Rules', icon: <Shield className="w-4 h-4" /> },
-    { key: 'all', label: 'All Approvals', icon: <CheckCircle className="w-4 h-4" /> },
+    { id: 'pending', label: 'Pending Review', icon: <Clock className="w-4 h-4" /> },
+    { id: 'rules', label: 'Approval Rules', icon: <Shield className="w-4 h-4" /> },
+    { id: 'all', label: 'All Approvals', icon: <CheckCircle className="w-4 h-4" /> },
   ]
 
   const { data: pendingApprovals = [], isLoading: loadingPending } = useQuery({

@@ -72,7 +72,7 @@ export default function OrderRoutingPage() {
           status: exceptionFilter === 'ALL' ? undefined : exceptionFilter,
           size: 50,
         }),
-        orderRoutingApi.getAllocations(''),
+        orderRoutingApi.getAllocations(),
       ])
       setKpis(kpiRes.data as Record<string, number>)
       setExceptions(excRes.data?.content || [])

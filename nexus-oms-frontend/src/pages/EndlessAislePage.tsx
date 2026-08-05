@@ -160,8 +160,8 @@ export default function EndlessAislePage() {
   const totalRevenue = orders.filter(o => o.status !== 'CANCELLED').reduce((sum, o) => sum + (o.totalAmount || 0), 0)
 
   const tabs = [
-    { key: 'orders', label: 'Orders', count: totalOrders },
-    { key: 'stats', label: 'Analytics' },
+    { id: 'orders', label: 'Orders', badge: totalOrders },
+    { id: 'stats', label: 'Analytics' },
   ] as const
 
   // ─── Render ────────────────────────────────────────────────────────

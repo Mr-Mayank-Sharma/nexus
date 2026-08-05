@@ -12,7 +12,8 @@ export interface Tab {
 interface Props {
   tabs: Tab[]
   activeTab: string
-  onChange: (tabId: string) => void
+  onChange?: (tabId: string) => void
+  onTabChange?: (tabId: string) => void
   variant?: 'underline' | 'pills' | 'cards'
 }
 
@@ -23,7 +24,8 @@ function renderIcon(icon: Tab['icon']): ReactNode {
   return null
 }
 
-export default function EnterpriseTabs({ tabs, activeTab, onChange, variant = 'underline' }: Props) {
+export default function EnterpriseTabs({ tabs, activeTab, onChange, onTabChange, variant = 'underline' }: Props) {
+  const emit = (tabId: string) => (onChange ?? onTabChange)?.(tabId)
   const enabledTabs = tabs.filter(t => !t.disabled)
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
@@ -53,8 +55,8 @@ export default function EnterpriseTabs({ tabs, activeTab, onChange, variant = 'u
       default:
         return
     }
-    onChange(enabledTabs[nextIndex].id)
-  }, [activeTab, enabledTabs, onChange])
+    emit(enabledTabs[nextIndex].id)
+  }, [activeTab, enabledTabs, emit])
 
   const tabButtonProps = (tab: Tab) => ({
     role: 'tab' as const,
@@ -63,7 +65,7 @@ export default function EnterpriseTabs({ tabs, activeTab, onChange, variant = 'u
     'aria-controls': `panel-${tab.id}`,
     tabIndex: activeTab === tab.id ? 0 : -1,
     disabled: tab.disabled,
-    onClick: () => onChange(tab.id),
+    onClick: () => emit(tab.id),
   })
 
   if (variant === 'pills') {

@@ -43,10 +43,10 @@ export default function RejectionsPage() {
   const [selectedRejection, setSelectedRejection] = useState<OrderRejection | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'pending', label: 'Pending', icon: <Clock className="w-4 h-4" /> },
-    { key: 'processed', label: 'Processed', icon: <CheckCircle className="w-4 h-4" /> },
-    { key: 'reasons', label: 'Reasons', icon: <Shield className="w-4 h-4" /> },
-    { key: 'all', label: 'All', icon: <Package className="w-4 h-4" /> },
+    { id: 'pending', label: 'Pending', icon: <Clock className="w-4 h-4" /> },
+    { id: 'processed', label: 'Processed', icon: <CheckCircle className="w-4 h-4" /> },
+    { id: 'reasons', label: 'Reasons', icon: <Shield className="w-4 h-4" /> },
+    { id: 'all', label: 'All', icon: <Package className="w-4 h-4" /> },
   ]
 
   const { data: pendingRejections = [], isLoading: loadingPending } = useQuery({

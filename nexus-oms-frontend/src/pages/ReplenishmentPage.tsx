@@ -45,7 +45,7 @@ const statusColors: Record<string, string> = {
 }
 
 const warehouses = [
-  { id: 'wh-main', name: 'Main Warehouse' },
+  { id: 'faaebaf3-3af7-43c2-bcde-83c2cfcd6031', name: 'Main Warehouse' },
   { id: 'wh-east', name: 'East DC' },
   { id: 'wh-west', name: 'West DC' },
 ]
@@ -53,7 +53,7 @@ const warehouses = [
 export default function ReplenishmentPage() {
   const { addToast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [selectedWarehouse, setSelectedWarehouse] = useState('wh-main')
+  const [selectedWarehouse, setSelectedWarehouse] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
   const [activeTab, setActiveTab] = useState<Tab>('rules')
 
   const [rules, setRules] = useState<ReplenishmentRule[]>([])

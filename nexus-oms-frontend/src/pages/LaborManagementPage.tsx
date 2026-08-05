@@ -134,8 +134,8 @@ export default function LaborManagementPage() {
 
   useEffect(() => {
     Promise.all([
-      laborApi.getActiveWorkers('wh-main').catch(() => null),
-      laborApi.getShiftSchedules('wh-main').catch(() => null),
+      laborApi.getActiveWorkers('faaebaf3-3af7-43c2-bcde-83c2cfcd6031').catch(() => null),
+      laborApi.getShiftSchedules('faaebaf3-3af7-43c2-bcde-83c2cfcd6031').catch(() => null),
     ]).then(([empRes, shiftRes]) => {
       if (empRes?.data && Array.isArray(empRes.data) && empRes.data.length > 0) setEmployees(empRes.data)
       if (shiftRes?.data && Array.isArray(shiftRes.data) && shiftRes.data.length > 0) setShifts(shiftRes.data)
@@ -149,11 +149,11 @@ export default function LaborManagementPage() {
     setWorkloadLoading(true)
     try {
       const [rulesRes, balanceRes, perfRes, prodRes, prodByTaskRes] = await Promise.allSettled([
-        laborApi.getWorkloadRules('wh-main'),
-        laborApi.getWorkloadBalance('wh-main'),
-        laborApi.calculatePerformanceVsStandard('wh-main', new Date().toISOString().slice(0, 10)),
-        laborApi.getProductivityLogs('wh-main', 7),
-        laborApi.getProductivityByTaskType('wh-main', 7),
+        laborApi.getWorkloadRules('faaebaf3-3af7-43c2-bcde-83c2cfcd6031'),
+        laborApi.getWorkloadBalance('faaebaf3-3af7-43c2-bcde-83c2cfcd6031'),
+        laborApi.calculatePerformanceVsStandard('faaebaf3-3af7-43c2-bcde-83c2cfcd6031', new Date().toISOString().slice(0, 10)),
+        laborApi.getProductivityLogs('faaebaf3-3af7-43c2-bcde-83c2cfcd6031', 7),
+        laborApi.getProductivityByTaskType('faaebaf3-3af7-43c2-bcde-83c2cfcd6031', 7),
       ])
 
       setWorkloadRules(rulesRes.status === 'fulfilled' && rulesRes.value.data?.length > 0 ? rulesRes.value.data : [])
@@ -213,7 +213,7 @@ export default function LaborManagementPage() {
   async function handleRebalance() {
     setRebalancing(true)
     try {
-      const res = await laborApi.rebalanceWorkload('wh-main')
+      const res = await laborApi.rebalanceWorkload('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
       addToast({ type: 'success', title: 'Workload rebalanced', description: res?.data?.message || 'Recommendations generated' })
       await loadWorkloadData()
     } catch {
@@ -226,7 +226,7 @@ export default function LaborManagementPage() {
   async function handleCreateRule() {
     try {
       await laborApi.createWorkloadRule({
-        warehouseId: 'wh-main',
+        warehouseId: 'faaebaf3-3af7-43c2-bcde-83c2cfcd6031',
         ruleName: ruleForm.taskType + ' Rule',
         taskType: ruleForm.taskType,
         maxWorkloadWeight: Number(ruleForm.maxWorkloadWeight),

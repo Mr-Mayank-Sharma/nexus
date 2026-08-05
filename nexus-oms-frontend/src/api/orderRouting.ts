@@ -44,10 +44,12 @@ export async function reallocateOrder(
 }
 
 export async function getAllocations(
-  orderId: string
+  orderId?: string
 ): Promise<ApiResponse<OrderAllocation[]>> {
   try {
-    const { data } = await client.get(`/order-routing/allocations/${orderId}`)
+    const { data } = orderId
+      ? await client.get(`/order-routing/allocations/${orderId}`)
+      : await client.get('/order-routing/allocations')
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get allocations'

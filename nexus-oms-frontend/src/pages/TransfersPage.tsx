@@ -43,10 +43,10 @@ export default function TransfersPage() {
   const [selectedTransfer, setSelectedTransfer] = useState<TransferOrder | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'active', label: 'Active', icon: <Clock className="w-4 h-4" /> },
-    { key: 'in-transit', label: 'In Transit', icon: <Truck className="w-4 h-4" /> },
-    { key: 'received', label: 'Received', icon: <CheckCircle className="w-4 h-4" /> },
-    { key: 'all', label: 'All', icon: <Package className="w-4 h-4" /> },
+    { id: 'active', label: 'Active', icon: <Clock className="w-4 h-4" /> },
+    { id: 'in-transit', label: 'In Transit', icon: <Truck className="w-4 h-4" /> },
+    { id: 'received', label: 'Received', icon: <CheckCircle className="w-4 h-4" /> },
+    { id: 'all', label: 'All', icon: <Package className="w-4 h-4" /> },
   ]
 
   const { data: transfers = [], isLoading: loadingTransfers } = useQuery({

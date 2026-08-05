@@ -266,6 +266,11 @@ public class OrderRoutingService {
         return allocationRepository.findByOrderId(orderId);
     }
 
+    public List<NxOrderAllocation> getAllocations() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        return allocationRepository.findByTenantId(tenantId, Sort.by(Sort.Direction.DESC, "createdAt"));
+    }
+
     public Page<NxFulfillmentException> getExceptions(String status, String severity, Pageable pageable) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (status != null && !status.isBlank()) {

@@ -31,9 +31,9 @@ export default function FulfillmentLimitsPage() {
   const [capacityData, setCapacityData] = useState<Record<string, CapacityCheck>>({})
 
   const tabs: Tab[] = [
-    { key: 'limits', label: 'Limits', icon: <Gauge className="w-4 h-4" /> },
-    { key: 'alerts', label: 'Alerts', icon: <AlertTriangle className="w-4 h-4" /> },
-    { key: 'history', label: 'History', icon: <Activity className="w-4 h-4" /> },
+    { id: 'limits', label: 'Limits', icon: <Gauge className="w-4 h-4" /> },
+    { id: 'alerts', label: 'Alerts', icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: 'history', label: 'History', icon: <Activity className="w-4 h-4" /> },
   ]
 
   const { data: limits = [], isLoading: loadingLimits } = useQuery({

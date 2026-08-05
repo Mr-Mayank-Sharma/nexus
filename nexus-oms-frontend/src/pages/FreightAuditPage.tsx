@@ -57,7 +57,7 @@ const auditStatusColors: Record<string, string> = {
 export default function FreightAuditPage() {
   const { addToast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [selectedWarehouse, setSelectedWarehouse] = useState('wh-main')
+  const [selectedWarehouse, setSelectedWarehouse] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
   const [activeTab, setActiveTab] = useState<Tab>('invoices')
 
   const [invoices, setInvoices] = useState<FreightInvoice[]>([])
@@ -216,7 +216,7 @@ export default function FreightAuditPage() {
             onChange={(e) => setSelectedWarehouse(e.target.value)}
             className="enterprise-input text-sm py-1.5"
           >
-            <option value="wh-main">Main Warehouse</option>
+            <option value="faaebaf3-3af7-43c2-bcde-83c2cfcd6031">Main Warehouse</option>
             <option value="wh-east">East DC</option>
             <option value="wh-west">West DC</option>
           </select>

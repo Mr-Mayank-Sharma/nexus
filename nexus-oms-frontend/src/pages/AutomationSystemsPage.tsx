@@ -182,7 +182,7 @@ export default function AutomationSystemsPage() {
   const [alertLoading, setAlertLoading] = useState(false)
 
   // UI State
-  const [selectedWarehouse] = useState('WH-001')
+  const [selectedWarehouse] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
   const [activeTab, setActiveTab] = useState('systems')
   const [showCommandModal, setShowCommandModal] = useState(false)
   const [showResolveModal, setShowResolveModal] = useState<string | null>(null)
@@ -538,7 +538,7 @@ export default function AutomationSystemsPage() {
               value={selectedWarehouse}
               onChange={() => {}}
             >
-              <option value="WH-001">Main DC — WH-001</option>
+              <option value="faaebaf3-3af7-43c2-bcde-83c2cfcd6031">Main DC</option>
               <option value="WH-002">East Hub — WH-002</option>
               <option value="WH-003">West Hub — WH-003</option>
             </select>

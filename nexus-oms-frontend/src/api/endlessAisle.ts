@@ -46,9 +46,9 @@ export interface EndlessAisleStats {
 
 const endlessAisleApi = {
   // CRUD
-  getOrders: () => api.get('/'),
+  getOrders: () => api.get(''),
   getOrder: (id: string) => api.get(`/${id}`),
-  createOrder: (data: NxEndlessAisleOrder) => api.post('/', data),
+  createOrder: (data: NxEndlessAisleOrder) => api.post('', data),
   updateOrder: (id: string, data: Partial<NxEndlessAisleOrder>) => api.put(`/${id}`, data),
   deleteOrder: (id: string) => api.delete(`/${id}`),
 

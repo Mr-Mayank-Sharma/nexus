@@ -200,8 +200,8 @@ export default function PromotionsPage() {
   const totalCouponPromos = promotions.filter(p => p.couponCode).length
 
   const tabs = [
-    { key: 'list', label: 'Promotions', count: totalPromos },
-    { key: 'stats', label: 'Usage Stats' },
+    { id: 'list', label: 'Promotions', badge: totalPromos },
+    { id: 'stats', label: 'Usage Stats' },
   ] as const
 
   // ─── Render ────────────────────────────────────────────────────────

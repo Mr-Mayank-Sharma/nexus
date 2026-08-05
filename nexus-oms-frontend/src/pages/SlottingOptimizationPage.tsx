@@ -100,7 +100,7 @@ const VELOCITY_BAR: Record<string, string> = {
 }
 
 const WAREHOUSES = [
-  { id: 'wh-main', name: 'Main Warehouse' },
+  { id: 'faaebaf3-3af7-43c2-bcde-83c2cfcd6031', name: 'Main Warehouse' },
   { id: 'wh-east', name: 'East DC' },
   { id: 'wh-west', name: 'West DC' },
 ]
@@ -135,7 +135,7 @@ function SkeletonRows({ count = 5 }: { count?: number }) {
 export default function SlottingOptimizationPage() {
   const { addToast } = useToast()
 
-  const [warehouseId, setWarehouseId] = useState('wh-main')
+  const [warehouseId, setWarehouseId] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
   const [activeTab, setActiveTab] = useState<Tab>('assignments')
   const [search, setSearch] = useState('')
 

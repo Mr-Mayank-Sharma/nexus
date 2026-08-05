@@ -39,9 +39,9 @@ export default function PickersPage() {
   const [nodeId] = useState(DEFAULT_NODE_ID)
 
   const tabs: Tab[] = [
-    { key: 'pickers', label: 'Pickers', icon: <Users className="w-4 h-4" /> },
-    { key: 'assignments', label: 'Assignments', icon: <ArrowRight className="w-4 h-4" /> },
-    { key: 'stats', label: 'Stats', icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'pickers', label: 'Pickers', icon: <Users className="w-4 h-4" /> },
+    { id: 'assignments', label: 'Assignments', icon: <ArrowRight className="w-4 h-4" /> },
+    { id: 'stats', label: 'Stats', icon: <BarChart3 className="w-4 h-4" /> },
   ]
 
   const { data: pickers = [], isLoading: loadingPickers } = useQuery({

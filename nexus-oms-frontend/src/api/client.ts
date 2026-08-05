@@ -91,6 +91,7 @@ function responseToCamel(obj: any): any {
 
 function normalizePagination(body: Record<string, any>): Record<string, any> {
   if (!body || typeof body !== 'object') return body
+  if (Array.isArray(body)) return { success: true, data: body }
 
   const {
     success, message, error, errors,
@@ -114,14 +115,18 @@ function normalizePagination(body: Record<string, any>): Record<string, any> {
   } else if (pg !== undefined) {
     data = pg
   } else {
-    const arrKey = Object.keys(rest).find(k => Array.isArray(rest[k]))
-    if (arrKey) {
+    const restKeys = Object.keys(rest)
+    const arrKey = restKeys.find(k => Array.isArray(rest[k]))
+    // Only unwrap a sibling array when the payload is a thin wrapper (<=2 keys),
+    // e.g. {rows:[...], count:N} or {data:[...]}. Objects with many fields (like a
+    // briefing with an `insights` array) must be preserved whole.
+    if (arrKey && restKeys.length <= 2) {
       data = rest[arrKey]
     } else {
-      const objKeys = Object.keys(rest).filter(k => rest[k] !== null && typeof rest[k] === 'object')
+      const objKeys = restKeys.filter(k => rest[k] !== null && typeof rest[k] === 'object')
       if (objKeys.length === 1) {
         data = rest[objKeys[0]]
-      } else if (Object.keys(rest).length > 0) {
+      } else if (restKeys.length > 0) {
         data = rest
       } else {
         data = undefined

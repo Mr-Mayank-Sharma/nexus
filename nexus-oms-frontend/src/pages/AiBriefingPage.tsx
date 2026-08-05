@@ -77,10 +77,19 @@ export default function AiBriefingPage() {
         getRecommendations(),
         getForecasts(),
       ])
-      setBriefing(briefingRes.data ?? null)
-      setRecommendations(recsRes.data ?? [])
-      setForecastsData(forecastsRes.data ?? [])
-    } catch {
+      const rawBriefing = briefingRes.data as any
+      const safeBriefing = rawBriefing && rawBriefing.revenue && rawBriefing.orders
+        ? rawBriefing
+        : {
+            revenue: { today: 0, yesterday: 0 },
+            orders: { today: 0, pending: 0, late: 0 },
+            profit: { today: 0, margin: 0 },
+            inventory: { total: 0, lowStock: 0, deadStock: 0 },
+            insights: [],
+          }
+      setBriefing(safeBriefing)
+      setRecommendations(Array.isArray(recsRes.data) ? recsRes.data : [])
+      setForecastsData(Array.isArray(forecastsRes.data) ? forecastsRes.data : [])    } catch {
       setError('Failed to load briefing data')
     } finally {
       setLoading(false)

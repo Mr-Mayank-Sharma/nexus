@@ -22,7 +22,7 @@ export default function LoaderScreen() {
 
   const [scanInput, setScanInput] = useState('')
 
-  const { data: warehouses = [] } = useQuery({
+  const { data: warehouses = [], isLoading: warehousesLoading } = useQuery({
     queryKey: ['loader-warehouses'],
     queryFn: async () => {
       const res = await getWarehousesSummary().catch(() => null)

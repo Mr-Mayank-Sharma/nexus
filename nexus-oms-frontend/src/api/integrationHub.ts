@@ -6,7 +6,7 @@ export const integrationHub = {
   async getPlatforms() {
     try {
       const { data } = await client.get('/integration-hub/platforms')
-      return data as ConnectorMetadata[]
+      return (data?.data ?? data) as ConnectorMetadata[]
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Failed to get platforms'
       return { success: false, error: msg } as any
@@ -15,7 +15,7 @@ export const integrationHub = {
   async getConnectors() {
     try {
       const { data } = await client.get('/integration-hub/connectors')
-      return data as ConnectorInstance[]
+      return (data?.data ?? data) as ConnectorInstance[]
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Failed to get connectors'
       return { success: false, error: msg } as any
@@ -79,7 +79,7 @@ export const integrationHub = {
   async getJobs(connectorId?: string) {
     try {
       const { data } = await client.get('/integration-hub/jobs', { params: { connectorId } })
-      return data as BatchJob[]
+      return (data?.data ?? data) as BatchJob[]
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Failed to get jobs'
       return { success: false, error: msg } as any

@@ -35,9 +35,9 @@ export default function BrokeringQueuePage() {
   const [selectedRun, setSelectedRun] = useState<BrokeringRun | null>(null)
 
   const tabs: Tab[] = [
-    { key: 'queue', label: 'Queue', icon: <Clock className="w-4 h-4" /> },
-    { key: 'runs', label: 'Run History', icon: <Play className="w-4 h-4" /> },
-    { key: 'stats', label: 'Statistics', icon: <AlertTriangle className="w-4 h-4" /> },
+    { id: 'queue', label: 'Queue', icon: <Clock className="w-4 h-4" /> },
+    { id: 'runs', label: 'Run History', icon: <Play className="w-4 h-4" /> },
+    { id: 'stats', label: 'Statistics', icon: <AlertTriangle className="w-4 h-4" /> },
   ]
 
   const { data: queue = [], isLoading: loadingQueue } = useQuery({

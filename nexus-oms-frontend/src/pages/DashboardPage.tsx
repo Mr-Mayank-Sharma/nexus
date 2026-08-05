@@ -134,6 +134,7 @@ export default function DashboardPage() {
   const fetchData = useCallback(async () => {
     setError(null)
     setLoading(true)
+    let observedKpis: Record<string, any> = {}
     try {
       // Fire ALL critical + non-critical calls in parallel
       const [
@@ -152,7 +153,10 @@ export default function DashboardPage() {
       ])
 
       // Critical data
-      if (kpiRes.status === 'fulfilled') setRawKpis(kpiRes.value.data || {})
+      if (kpiRes.status === 'fulfilled') {
+        setRawKpis(kpiRes.value.data || {})
+        observedKpis = kpiRes.value.data ?? {}
+      }
       if (velocityRes.status === 'fulfilled') {
         const vData = velocityRes.value.data
         setVelocityRate(typeof vData?.value === 'number' ? vData.value : null)
@@ -214,7 +218,6 @@ export default function DashboardPage() {
     }
 
     // AI predictions — fire-and-forget, non-blocking; inputs driven by live metrics
-    const observedKpis = kpiRes.status === 'fulfilled' ? (kpiRes.value.data ?? {}) : {}
     const observedOrders = Number(observedKpis.ordersToday ?? 0)
     Promise.allSettled([
       aiPlatformApi.predict('DEMAND_FORECAST', { historicalAverage: observedOrders }),

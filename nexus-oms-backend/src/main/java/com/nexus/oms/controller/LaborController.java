@@ -86,45 +86,49 @@ public class LaborController {
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getLaborStats(
             @RequestParam UUID warehouseId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        LocalDate d = date != null ? date : LocalDate.now();
         return ResponseEntity.ok(ApiResponse.success(
-                laborService.getLaborStats(warehouseId, date)));
+                laborService.getLaborStats(warehouseId, d)));
     }
 
     @Operation(summary = "Get efficiency breakdown by worker")
     @GetMapping("/efficiency/by-worker")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEfficiencyByWorker(
             @RequestParam UUID warehouseId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        LocalDate d = date != null ? date : LocalDate.now();
         return ResponseEntity.ok(ApiResponse.success(
-                laborService.getEfficiencyByWorker(warehouseId, date)));
+                laborService.getEfficiencyByWorker(warehouseId, d)));
     }
 
     @Operation(summary = "Get efficiency breakdown by shift")
     @GetMapping("/efficiency/by-shift")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEfficiencyByShift(
             @RequestParam UUID warehouseId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        LocalDate d = date != null ? date : LocalDate.now();
         return ResponseEntity.ok(ApiResponse.success(
-                laborService.getEfficiencyByShift(warehouseId, date)));
+                laborService.getEfficiencyByShift(warehouseId, d)));
     }
 
     @Operation(summary = "Get efficiency breakdown by task type")
     @GetMapping("/efficiency/by-task")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEfficiencyByTaskType(
             @RequestParam UUID warehouseId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        LocalDate d = date != null ? date : LocalDate.now();
         return ResponseEntity.ok(ApiResponse.success(
-                laborService.getEfficiencyByTaskType(warehouseId, date)));
+                laborService.getEfficiencyByTaskType(warehouseId, d)));
     }
 
     @Operation(summary = "Get shift schedules for a warehouse and date")
     @GetMapping("/schedules")
     public ResponseEntity<ApiResponse<List<NxShiftSchedule>>> getShiftSchedules(
             @RequestParam UUID warehouseId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(ApiResponse.success(
-                laborService.getShiftSchedules(warehouseId, date)));
+                laborService.getShiftSchedules(warehouseId, date != null ? date : LocalDate.now())));
     }
 
     @Operation(summary = "Create a shift schedule entry")
