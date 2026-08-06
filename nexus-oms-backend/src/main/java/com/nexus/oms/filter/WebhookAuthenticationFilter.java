@@ -32,7 +32,7 @@ public class WebhookAuthenticationFilter implements Filter {
         HttpServletResponse res = (HttpServletResponse) response;
         String path = req.getRequestURI();
 
-        if (path.contains("/webhooks/")) {
+        if (path.contains("/webhooks/") && !path.endsWith("/register")) {
             String body = new BufferedReader(req.getReader()).lines().collect(Collectors.joining("\n"));
             String eventId = req.getHeader("X-Shopify-Webhook-Id");
             if (eventId == null) eventId = req.getHeader("X-Bc-Webhook-Id");

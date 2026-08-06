@@ -3,6 +3,7 @@ package com.nexus.oms.service.bigcommerce;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.*;
+import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.service.WebhookDedupLedgerService;
 import org.slf4j.Logger;
@@ -41,7 +42,7 @@ public class BigCommerceWebhookService {
     @Transactional
     public void registerWebhooks(UUID tenantId, String baseUrl) {
         NxBigCommerceConfig config = configRepository.findByTenantIdAndIsActiveTrue(tenantId)
-                .orElseThrow(() -> new IllegalStateException("BigCommerce not configured"));
+                .orElseThrow(() -> new BadRequestException("BigCommerce is not configured. Save your API credentials first."));
 
         String apiPath = config.getApiPath() + "/stores/" + config.getStoreHash();
         String webhookBase = baseUrl + "/api/v1/bigcommerce/webhooks";

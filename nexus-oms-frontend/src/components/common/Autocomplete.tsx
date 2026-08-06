@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, ReactNode } from 'react'
+import { useState, useEffect, useRef, useCallback, Fragment, ReactNode } from 'react'
 import { Search, Loader2, X } from 'lucide-react'
 import { clsx } from 'clsx'
 
@@ -233,11 +233,12 @@ export default function Autocomplete<T = any>({
           className="absolute z-50 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-auto"
           style={{ maxHeight }}
         >
-          {options.map((item, index) =>
-            renderOption
+          {options.map((item, index) => {
+            const option = renderOption
               ? renderOption(item, index === highlightedIndex)
               : defaultRenderOption(item, index === highlightedIndex)
-          )}
+            return <Fragment key={getOptionValue(item)}>{option}</Fragment>
+          })}
         </div>
       )}
 

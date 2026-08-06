@@ -96,7 +96,7 @@ export default function BigCommercePage() {
     try {
       setLogsLoading(true)
       const res = await bcApi.getSyncLogs()
-      setSyncLogs(res.data || [])
+      setSyncLogs(res.data?.content || [])
     } catch {
       addToast({ type: 'error', title: 'Failed to load sync logs' })
     } finally { setLogsLoading(false) }

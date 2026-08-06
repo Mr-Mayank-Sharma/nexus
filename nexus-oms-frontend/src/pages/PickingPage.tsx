@@ -64,7 +64,7 @@ export default function PickingPage() {
       const res = await warehouseApi.getWarehouses(0, 1)
       const d = res.data as any
       const list = d?.content ?? []
-      return list[0] as { id: string } | undefined
+      return (list[0] as { id: string } | undefined) ?? null
     },
   })
 

@@ -3,6 +3,7 @@ package com.nexus.oms.service.bigcommerce;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nexus.oms.dto.SyncResult;
 import com.nexus.oms.entity.*;
+import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,7 +36,7 @@ public class BigCommerceRefundSyncService {
     @Transactional
     public SyncResult pushRefunds(UUID tenantId) {
         NxBigCommerceConfig config = configRepository.findByTenantIdAndIsActiveTrue(tenantId)
-                .orElseThrow(() -> new IllegalStateException("BigCommerce not configured"));
+                .orElseThrow(() -> new BadRequestException("BigCommerce is not configured. Save your API credentials first."));
 
         NxSyncLog syncLog = NxSyncLog.builder()
                 .tenantId(tenantId)

@@ -167,7 +167,7 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
                     onKeyDown={(e) => { if (col.sortable !== false && sortable && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); handleSort(col.key) } }}
                   >
                     <div className={clsx('flex items-center gap-1', col.align === 'right' && 'justify-end', col.align === 'center' && 'justify-center')}>
-                      {col.label}
+                      {col.label ?? (col as any).header ?? ''}
                       {col.sortable !== false && sortable && (
                         sortKey === col.key
                           ? (sortDir === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />)

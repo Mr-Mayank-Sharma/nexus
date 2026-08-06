@@ -671,24 +671,24 @@ function AiTrainingPipeline() {
         data={jobs}
         loading={loading}
         columns={[
-          { header: 'Name', accessor: 'name' as never, render: (j: AiTrainingJob) => (
+          { key: 'name', header: 'Name', accessor: 'name' as never, render: (j: AiTrainingJob) => (
             <span className="font-medium text-[var(--text-primary)] dark:text-white">{j.name || 'Training Job'}</span>
           )},
-          { header: 'Status', accessor: 'status' as never, render: (j: AiTrainingJob) => (
+          { key: 'status', header: 'Status', accessor: 'status' as never, render: (j: AiTrainingJob) => (
             <EnterpriseStatusBadge status={j.status} />
           )},
-          { header: 'Type', accessor: 'jobType' as never },
-          { header: 'Accuracy', accessor: 'accuracy' as never, render: (j: AiTrainingJob) => (
+          { key: 'jobType', header: 'Type', accessor: 'jobType' as never },
+          { key: 'accuracy', header: 'Accuracy', accessor: 'accuracy' as never, render: (j: AiTrainingJob) => (
             <span>{j.accuracy != null ? `${Number(j.accuracy).toFixed(1)}%` : '-'}</span>
           )},
-          { header: 'Epochs', accessor: 'epochs' as never, render: (j: AiTrainingJob) => j.epochs ?? '-' },
-          { header: 'Duration', accessor: 'durationSeconds' as never, render: (j: AiTrainingJob) => (
+          { key: 'epochs', header: 'Epochs', accessor: 'epochs' as never, render: (j: AiTrainingJob) => j.epochs ?? '-' },
+          { key: 'durationSeconds', header: 'Duration', accessor: 'durationSeconds' as never, render: (j: AiTrainingJob) => (
             <span>{j.durationSeconds ? `${Math.round(j.durationSeconds / 60)}m` : '-'}</span>
           )},
-          { header: 'Created', accessor: 'createdAt' as never, render: (j: AiTrainingJob) => (
+          { key: 'createdAt', header: 'Created', accessor: 'createdAt' as never, render: (j: AiTrainingJob) => (
             <span className="text-sm text-[var(--text-tertiary)]">{new Date(j.createdAt).toLocaleDateString()}</span>
           )},
-          { header: 'Actions', accessor: 'id' as never, render: (j: AiTrainingJob) => (
+          { key: 'id', header: 'Actions', accessor: 'id' as never, render: (j: AiTrainingJob) => (
             j.status === 'PENDING' ? (
               <PermissionGate resource="settings" action="create">
                 <button type="button" onClick={() => handleStartJob(j.id)} className="p-1.5 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">

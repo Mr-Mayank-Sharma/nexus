@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.SyncResult;
 import com.nexus.oms.entity.*;
+import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.security.TenantContext;
 import org.springframework.stereotype.Service;
@@ -52,7 +53,7 @@ public class BigCommerceOrderImportService {
     @Transactional
     public SyncResult importOrders(UUID tenantId) {
         NxBigCommerceConfig config = configRepository.findByTenantIdAndIsActiveTrue(tenantId)
-                .orElseThrow(() -> new IllegalStateException("BigCommerce not configured for this tenant"));
+                .orElseThrow(() -> new BadRequestException("BigCommerce is not configured for this tenant."));
 
         NxSyncLog syncLog = NxSyncLog.builder()
                 .tenantId(tenantId)

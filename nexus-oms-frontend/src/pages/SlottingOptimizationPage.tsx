@@ -196,7 +196,22 @@ export default function SlottingOptimizationPage() {
     setLoadingSpace(true)
     try {
       const res = await slottingApi.getSpaceUtilization(warehouseId)
-      setSpaceData(res.data ?? null)
+      const data = res.data
+      if (data) {
+        setSpaceData({
+          overallUtilization: data.utilizationPercent ?? 0,
+          totalBins: data.totalBins ?? 0,
+          usedBins: data.usedBins ?? 0,
+          zones: (data.byZone ?? []).map((z: any) => ({
+            name: z.zoneName || z.zoneId,
+            usedBins: z.usedBins ?? 0,
+            totalBins: z.totalBins ?? 0,
+            utilization: z.utilizationPercent ?? 0,
+          })),
+        })
+      } else {
+        setSpaceData(null)
+      }
     } catch { setSpaceData(null) } finally { setLoadingSpace(false) }
   }
 
@@ -614,7 +629,7 @@ export default function SlottingOptimizationPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {spaceData.zones.map((zone) => (
+                {(spaceData.zones ?? []).map((zone) => (
                   <div key={zone.name} className="enterprise-card p-5 hover:shadow-sm transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">

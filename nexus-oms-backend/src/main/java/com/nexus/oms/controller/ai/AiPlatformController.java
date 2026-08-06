@@ -232,12 +232,19 @@ public class AiPlatformController {
     // ========== EXPERIMENTS ==========
     @GetMapping("/experiments")
     public ResponseEntity<ApiResponse<Page<AiExperiment>>> getExperiments(
-            @RequestParam(required = false) UUID modelId,
+            @RequestParam(required = false) String modelId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        UUID parsedModelId = null;
+        if (modelId != null && !modelId.isBlank()) {
+            try {
+                parsedModelId = UUID.fromString(modelId);
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
         return ResponseEntity.ok(ApiResponse.success(
-                experimentService.getExperiments(tenant(), modelId, status, PageRequest.of(page, size))));
+                experimentService.getExperiments(tenant(), parsedModelId, status, PageRequest.of(page, size))));
     }
 
     @GetMapping("/experiments/{id}")
