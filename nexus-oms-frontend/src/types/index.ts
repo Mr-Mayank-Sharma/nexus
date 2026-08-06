@@ -520,7 +520,7 @@ export interface Customer {
   name: string
   email?: string
   phone?: string
-  address?: string
+  address?: string | { addressLine1?: string; addressLine2?: string; city?: string; state?: string; postalCode?: string; zip?: string; pincode?: string; street?: string; line1?: string }
   createdAt: string
 }
 

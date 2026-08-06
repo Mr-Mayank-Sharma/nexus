@@ -20,7 +20,6 @@ export default function CustomersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' })
-
   const { data: customers = [], isLoading } = useQuery({
     queryKey: ['customers'],
     queryFn: async () => {
@@ -28,6 +27,18 @@ export default function CustomersPage() {
       const d = res.data; return Array.isArray(d) ? d : (d?.content ?? []) as Customer[]
     },
   })
+
+  function addressText(a: Customer['address']): string {
+    if (!a) return ''
+    if (typeof a === 'string') return a
+    const o = a as Record<string, any>
+    const line1 = o.addressLine1 || o.street || o.line1 || ''
+    const line2 = o.addressLine2 || ''
+    const city = o.city || ''
+    const state = o.state || ''
+    const zip = o.postalCode || o.zip || o.pincode || ''
+    return [line1, line2, city, state, zip].filter(Boolean).join(', ')
+  }
 
   const filtered = customers.filter(c =>
     !searchTerm || c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,7 +56,7 @@ export default function CustomersPage() {
   }
 
   function openEdit(c: Customer) {
-    setForm({ name: c.name, email: c.email || '', phone: c.phone || '', address: c.address || '' })
+    setForm({ name: c.name, email: c.email || '', phone: c.phone || '', address: addressText(c.address) })
     setEditingCustomer(c)
     setShowCreateModal(true)
   }
@@ -149,10 +160,10 @@ export default function CustomersPage() {
                     <span>{c.phone}</span>
                   </div>
                 )}
-                {c.address && (
+                {addressText(c.address) && (
                   <div className="flex items-start gap-2">
                     <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] mt-0.5" />
-                    <span>{c.address}</span>
+                    <span>{addressText(c.address)}</span>
                   </div>
                 )}
               </div>
