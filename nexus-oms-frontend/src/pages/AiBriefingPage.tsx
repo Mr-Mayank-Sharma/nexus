@@ -27,6 +27,16 @@ function formatCompact(n: number): string {
   return n.toString()
 }
 
+function sparklineMax(values: number[]): number {
+  const finite = values.filter((v) => Number.isFinite(v))
+  return finite.length > 0 ? Math.max(...finite) : 0
+}
+
+function sparklineBarHeight(val: number, maxVal: number): number {
+  if (!Number.isFinite(val) || !Number.isFinite(maxVal) || maxVal <= 0) return 0
+  return (val / maxVal) * 75
+}
+
 function getGreeting(): string {
   const hour = new Date().getHours()
   if (hour < 12) return 'Good morning'
@@ -456,8 +466,8 @@ export default function AiBriefingPage() {
                 const barWidth = 28
                 const gap = 8
                 const x = i * (barWidth + gap) + 10
-                const maxVal = Math.max(...revenueSparklineData)
-                const barHeight = (val / maxVal) * 75
+                const maxVal = sparklineMax(revenueSparklineData)
+                const barHeight = sparklineBarHeight(val, maxVal)
                 return (
                   <rect key={i} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="url(#revenueGradient)" />
                 )
@@ -466,8 +476,8 @@ export default function AiBriefingPage() {
                 const barWidth = 28
                 const gap = 8
                 const x = i * (barWidth + gap) + 10
-                const maxVal = Math.max(...revenueSparklineData)
-                const barHeight = (val / maxVal) * 75
+                const maxVal = sparklineMax(revenueSparklineData)
+                const barHeight = sparklineBarHeight(val, maxVal)
                 return (
                   <rect key={`fg-${i}`} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="var(--nexus-primary-500)" opacity={0.6} />
                 )
@@ -506,8 +516,8 @@ export default function AiBriefingPage() {
                 const barWidth = 28
                 const gap = 8
                 const x = i * (barWidth + gap) + 10
-                const maxVal = Math.max(...ordersTrendData)
-                const barHeight = (val / maxVal) * 75
+                const maxVal = sparklineMax(ordersTrendData)
+                const barHeight = sparklineBarHeight(val, maxVal)
                 return (
                   <rect key={i} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="url(#ordersGradient)" />
                 )
@@ -516,8 +526,8 @@ export default function AiBriefingPage() {
                 const barWidth = 28
                 const gap = 8
                 const x = i * (barWidth + gap) + 10
-                const maxVal = Math.max(...ordersTrendData)
-                const barHeight = (val / maxVal) * 75
+                const maxVal = sparklineMax(ordersTrendData)
+                const barHeight = sparklineBarHeight(val, maxVal)
                 return (
                   <rect key={`fg-${i}`} x={x} y={85 - barHeight} width={barWidth} height={barHeight} rx={3} fill="var(--nexus-success-500)" opacity={0.6} />
                 )

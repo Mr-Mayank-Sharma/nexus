@@ -1,6 +1,11 @@
 import type { Marketplace, ConnectorResponse } from './types'
 
-const CONNECTOR_SERVER = 'http://localhost:8083'
+const CONNECTOR_SERVER = '/api/v1'
+
+function authHeaders(): Record<string, string> {
+  const token = localStorage.getItem('nexus_token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 
 async function request<T>(
   marketplace: Marketplace,
@@ -11,7 +16,7 @@ async function request<T>(
   const method = options?.method || (options?.body ? 'POST' : 'GET')
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: options?.body ? JSON.stringify(options.body) : undefined,
     signal: options?.signal,
   })
@@ -26,7 +31,7 @@ async function request<T>(
 
 export async function getConnectorStatus(signal?: AbortSignal) {
   const url = `${CONNECTOR_SERVER}/connectors/status`
-  const res = await fetch(url, { signal })
+  const res = await fetch(url, { signal, headers: authHeaders() })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
@@ -39,7 +44,7 @@ export async function configureConnector(
   const url = `${CONNECTOR_SERVER}/connectors/configure`
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ marketplace, ...config }),
     signal,
   })
