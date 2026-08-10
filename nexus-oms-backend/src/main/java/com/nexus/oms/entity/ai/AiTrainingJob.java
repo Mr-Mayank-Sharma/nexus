@@ -3,6 +3,8 @@ package com.nexus.oms.entity.ai;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,8 +20,8 @@ public class AiTrainingJob {
     private String status;
     private String jobType;
     @Column(columnDefinition = "TEXT") private String triggerReason;
-    @Column(columnDefinition = "JSONB") private String config;
-    @Column(columnDefinition = "JSONB") private String hyperparameters;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String config;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String hyperparameters;
     private UUID trainingDatasetId;
     private UUID validationDatasetId;
     @PositiveOrZero private java.math.BigDecimal accuracy;

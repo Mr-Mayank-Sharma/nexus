@@ -28,6 +28,7 @@ const AiLoadingPage = lazy(() => import('./pages/AiLoadingPage'))
 const AiAuditTrailPage = lazy(() => import('./pages/AiAuditTrailPage'))
 const AiForecastingPage = lazy(() => import('./pages/AiForecastingPage'))
 const AmazonIntegrationPage = lazy(() => import('./pages/AmazonIntegrationPage'))
+const ShopifyIntegrationPage = lazy(() => import('./pages/ShopifyIntegrationPage'))
 const EbayIntegrationPage = lazy(() => import('./pages/EbayIntegrationPage'))
 const WalmartIntegrationPage = lazy(() => import('./pages/WalmartIntegrationPage'))
 const IntegrationMarketplacePage = lazy(() => import('./pages/IntegrationMarketplacePage'))
@@ -161,6 +162,7 @@ export default function App() {
           <Route path="settings" element={<SettingsPage />} />
           <Route path="inventory/enhanced" element={<InventoryEnhancedPage />} />
           <Route path="integrations/amazon" element={<AmazonIntegrationPage />} />
+          <Route path="integrations/shopify" element={<ShopifyIntegrationPage />} />
           <Route path="integrations/ebay" element={<EbayIntegrationPage />} />
           <Route path="integrations/walmart" element={<WalmartIntegrationPage />} />
           <Route path="integrations/marketplace" element={<IntegrationMarketplacePage />} />

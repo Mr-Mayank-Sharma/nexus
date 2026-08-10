@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   BarChart3, TrendingUp, AlertTriangle,
-  Brain, ArrowUp, ArrowDown,
+  Brain, ArrowUp, ArrowDown, Cpu, Zap,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { getForecasts, getSupplierRisks, getRecommendations, getBriefing } from '../api/aiAgents'
+import { predictDemand } from '../api/aiPlatform'
 import Autocomplete from '../components/common/Autocomplete'
 import type { AiForecast, AiSupplierRisk } from '../api/aiAgents'
 
@@ -114,6 +115,18 @@ function SupplierRiskCard({ risk }: { risk: AiSupplierRisk }) {
 export default function AiForecastingPage() {
   const [activeTab, setActiveTab] = useState<'demand' | 'supplier' | 'recommendations'>('demand')
   const [searchTerm, setSearchTerm] = useState('')
+  const [forecastSku, setForecastSku] = useState('')
+  const [forecastDate, setForecastDate] = useState(() => new Date(Date.now() + 86400000).toISOString().slice(0, 10))
+
+  const forecastMutation = useMutation({
+    mutationFn: ({ sku, date }: { sku: string; date: string }) => predictDemand(sku, date),
+  })
+
+  const runForecast = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!forecastSku.trim()) return
+    forecastMutation.mutate({ sku: forecastSku.trim(), date: forecastDate })
+  }
 
   const { data: forecasts = [], isLoading: fcLoading } = useQuery({
     queryKey: ['ai-forecasts'],
@@ -188,6 +201,78 @@ export default function AiForecastingPage() {
 
       {activeTab === 'demand' && (
         <>
+          <div className="enterprise-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-5 h-5 text-[var(--nexus-primary-500)]" />
+                <h3 className="font-semibold text-[var(--text-primary)]">Live Model Forecast</h3>
+              </div>
+              {forecastMutation.data?.data?.onnxPowered && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] dark:bg-[var(--nexus-success-900)]/20 dark:text-[var(--nexus-success-300)]">
+                  <Zap className="w-3 h-3" /> ONNX Runtime
+                </span>
+              )}
+            </div>
+            <form onSubmit={runForecast} className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider">SKU</label>
+                <input
+                  value={forecastSku}
+                  onChange={e => setForecastSku(e.target.value)}
+                  placeholder="e.g. SKU-APP-001"
+                  className="h-9 px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-muted)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--nexus-primary-500)] w-52"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider">Target date</label>
+                <input
+                  type="date"
+                  value={forecastDate}
+                  onChange={e => setForecastDate(e.target.value)}
+                  className="h-9 px-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-muted)] text-sm text-[var(--text-primary)] outline-none focus:border-[var(--nexus-primary-500)]"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={forecastMutation.isPending || !forecastSku.trim()}
+                className="h-9 px-4 rounded-lg bg-[var(--nexus-primary-500)] text-white text-sm font-medium hover:bg-[var(--nexus-primary-600)] disabled:opacity-50"
+              >
+                {forecastMutation.isPending ? 'Running…' : 'Run forecast'}
+              </button>
+            </form>
+
+            {forecastMutation.data?.success && forecastMutation.data.data && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+                <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                  <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">Predicted</p>
+                  <p className="text-2xl font-bold text-[var(--text-primary)]">{forecastMutation.data.data.predictedOrders}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{forecastMutation.data.data.unit ?? 'units'}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                  <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">Raw model</p>
+                  <p className="text-2xl font-bold text-[var(--text-secondary)]">{forecastMutation.data.data.rawPrediction}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">before calibration</p>
+                </div>
+                <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                  <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">Calibration</p>
+                  <p className="text-2xl font-bold text-[var(--text-secondary)]">×{forecastMutation.data.data.calibrationFactor}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{forecastMutation.data.data.calibrated ? 'tenant/SKU adjusted' : 'factor 1.0 (uncalibrated)'}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
+                  <p className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider">Model</p>
+                  <p className="text-lg font-semibold text-[var(--text-secondary)]">{forecastMutation.data.data.modelName}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">v{forecastMutation.data.data.modelVersion} · {forecastMutation.data.data.engine}</p>
+                </div>
+              </div>
+            )}
+            {forecastMutation.isError && (
+              <p className="text-sm text-[var(--nexus-error-600)] mt-4">{forecastMutation.error?.message ?? 'Forecast failed'}</p>
+            )}
+            {forecastMutation.data && !forecastMutation.data.success && (
+              <p className="text-sm text-[var(--nexus-error-600)] mt-4">{forecastMutation.data.error}</p>
+            )}
+          </div>
+
           {fcLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[1, 2, 3, 4].map(i => <div key={i} className="enterprise-card p-5 animate-pulse"><div className="h-24 bg-[var(--surface-muted)] rounded" /></div>)}

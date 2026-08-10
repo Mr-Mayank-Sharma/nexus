@@ -33,20 +33,21 @@ public class WebhookAuthenticationFilter implements Filter {
         String path = req.getRequestURI();
 
         if (path.contains("/webhooks/") && !path.endsWith("/register")) {
-            String body = new BufferedReader(req.getReader()).lines().collect(Collectors.joining("\n"));
-            String eventId = req.getHeader("X-Shopify-Webhook-Id");
-            if (eventId == null) eventId = req.getHeader("X-Bc-Webhook-Id");
-            if (eventId == null) eventId = req.getHeader("X-Event-Id");
+            CachedBodyHttpServletRequest wrappedRequest = new CachedBodyHttpServletRequest(req);
+            String body = new BufferedReader(wrappedRequest.getReader()).lines().collect(Collectors.joining("\n"));
+            String eventId = wrappedRequest.getHeader("X-Shopify-Webhook-Id");
+            if (eventId == null) eventId = wrappedRequest.getHeader("X-Bc-Webhook-Id");
+            if (eventId == null) eventId = wrappedRequest.getHeader("X-Event-Id");
 
             boolean valid = false;
             String source = "";
 
             if (path.contains("shopify") && eventId != null) {
-                String hmac = req.getHeader("X-Shopify-Hmac-Sha256");
+                String hmac = wrappedRequest.getHeader("X-Shopify-Hmac-Sha256");
                 valid = webhookSecurityService.verifyShopifyHmac(body, hmac);
                 source = "shopify";
             } else if (path.contains("bigcommerce") && eventId != null) {
-                String sig = req.getHeader("X-Bc-Webhook-Signature");
+                String sig = wrappedRequest.getHeader("X-Bc-Webhook-Signature");
                 valid = webhookSecurityService.verifyBigCommerceHmac(body, sig);
                 source = "bigcommerce";
             }
@@ -71,8 +72,10 @@ public class WebhookAuthenticationFilter implements Filter {
                 res.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Invalid webhook signature\"}");
                 return;
             }
-        }
 
-        chain.doFilter(request, response);
+            chain.doFilter(wrappedRequest, response);
+        } else {
+            chain.doFilter(request, response);
+        }
     }
 }

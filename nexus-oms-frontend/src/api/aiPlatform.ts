@@ -121,6 +121,23 @@ export async function directPredict(modelId: string, versionId: string, input: R
   }
 }
 
+export async function predictDemand(sku: string, date?: string): Promise<ApiResponse<Record<string, unknown>>> {
+  const res = await getModels(0, 50)
+  if (!res.success) return res as any
+  const model = (res.data?.content ?? []).find(m => m.modelType === 'DEMAND_FORECAST')
+  if (!model) return { success: false, error: 'No DEMAND_FORECAST model registered' } as any
+
+  const versions = await getModelVersions(model.id)
+  if (!versions.success || !versions.data?.length) return { success: false, error: 'No model versions found' } as any
+  const version = versions.data.find(v => v.status === 'VALIDATED') ?? versions.data[versions.data.length - 1]
+
+  return directPredict(model.id, version.id, {
+    modelType: 'DEMAND_FORECAST',
+    sku,
+    ...(date ? { date } : {}),
+  })
+}
+
 // ─────────────── Feature Store ───────────────
 
 export async function getFeatures(featureGroup?: string, page = 0, size = 20): Promise<ApiResponse<{ content: AiFeatureDefinition[], totalElements: number }>> {

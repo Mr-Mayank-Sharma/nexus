@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.math.BigDecimal;
 
 @Tag(name = "Products", description = "Product management APIs")
 @RestController
@@ -22,10 +23,19 @@ public class ProductController {
         this.productService = productService;
     }
 
-    @Operation(summary = "List all products")
+    @Operation(summary = "List all products, optionally filtered by search query, category, price range, or active status")
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Product>>> getProducts() {
-        return ResponseEntity.ok(ApiResponse.success(productService.getProducts()));
+    public ResponseEntity<ApiResponse<List<Product>>> getProducts(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Boolean active) {
+        if (q == null && category == null && minPrice == null && maxPrice == null && active == null) {
+            return ResponseEntity.ok(ApiResponse.success(productService.getProducts()));
+        }
+        return ResponseEntity.ok(ApiResponse.success(
+                productService.searchProducts(q, category, minPrice, maxPrice, active)));
     }
 
     @Operation(summary = "Get product by ID")

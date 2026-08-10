@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 @Configuration
-@Lazy
+@Lazy(value = false)
 public class ConnectorFactoryConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(ConnectorFactoryConfiguration.class);

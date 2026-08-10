@@ -55,6 +55,7 @@ const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> 
   'notifications': { resource: 'notifications', action: 'view' },
   'workflows': { resource: 'workflows', action: 'view' },
   'integration-hub': { resource: 'integrations', action: 'view' },
+  'shopify': { resource: 'integrations', action: 'view' },
   'bigcommerce': { resource: 'integrations', action: 'view' },
   'amazon': { resource: 'integrations', action: 'view' },
   'ebay': { resource: 'integrations', action: 'view' },

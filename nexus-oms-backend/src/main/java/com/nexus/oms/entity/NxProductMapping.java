@@ -21,10 +21,10 @@ public class NxProductMapping {
     private UUID tenantId;
 
     @Column(name = "bc_product_id", nullable = false)
-    private Integer bcProductId;
+    private Long bcProductId;
 
     @Column(name = "bc_variant_id")
-    private Integer bcVariantId;
+    private Long bcVariantId;
 
     @Column(name = "bc_sku")
     private String bcSku;

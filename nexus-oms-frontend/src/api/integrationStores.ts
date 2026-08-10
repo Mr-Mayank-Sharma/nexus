@@ -72,6 +72,16 @@ export async function getStoreSyncStatus(id: string): Promise<ApiResponse<StoreS
   }
 }
 
+export async function getStoreSyncLogs(id: string, limit = 20): Promise<ApiResponse<any[]>> {
+  try {
+    const { data } = await client.get(`/integration-stores/${id}/sync-logs`, { params: { limit } })
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to get store sync logs'
+    return { success: false, error: msg } as any
+  }
+}
+
 // Shopify-specific
 export async function shopifySyncOrders(storeId: string): Promise<ApiResponse<any>> {
   try {

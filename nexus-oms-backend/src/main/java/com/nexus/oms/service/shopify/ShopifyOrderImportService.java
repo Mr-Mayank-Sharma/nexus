@@ -87,7 +87,9 @@ public class ShopifyOrderImportService {
             NxIntegrationSyncConfig syncConfig = syncConfigRepository
                     .findByStoreIdAndSyncType(storeId, "ORDER_IMPORT").orElse(null);
             if (syncConfig != null && syncConfig.getLastSyncAt() != null) {
-                params.put("updated_at_min", syncConfig.getLastSyncAt().toString());
+                params.put("updated_at_min", syncConfig.getLastSyncAt()
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toInstant().toString());
             }
 
             JsonNode response = shopifyClient.getOrders(shopDomain, accessToken, params);
@@ -212,7 +214,7 @@ public class ShopifyOrderImportService {
                         .findByTenantIdAndBcSku(tenantId, sku)
                         .map(NxProductMapping::getImageUrl)
                         .orElseGet(() -> {
-                            Integer pid = item.has("product_id") ? item.get("product_id").asInt() : null;
+                            Long pid = item.has("product_id") ? item.get("product_id").asLong() : null;
                             return pid != null
                                     ? productMappingRepository.findByTenantIdAndBcProductId(tenantId, pid)
                                             .map(NxProductMapping::getImageUrl).orElse(null)

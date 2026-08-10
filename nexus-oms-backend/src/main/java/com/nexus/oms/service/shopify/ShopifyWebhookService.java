@@ -51,14 +51,12 @@ public class ShopifyWebhookService {
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
         String accessToken = tokenService.getAccessToken(storeId);
 
-        String webhookBase = baseUrl + "/api/v1/shopify/webhooks";
+        String webhookBase = baseUrl + "/api/v1/webhooks/shopify";
 
         List<Map<String, String>> topics = List.of(
-                Map.of("topic", "orders/create", "type", "order_created"),
-                Map.of("topic", "orders/updated", "type", "order_updated"),
-                Map.of("topic", "orders/fulfilled", "type", "order_fulfilled"),
-                Map.of("topic", "products/update", "type", "product_updated"),
-                Map.of("topic", "inventory_levels/update", "type", "inventory_updated")
+                Map.of("topic", "orders/create", "event", "create"),
+                Map.of("topic", "orders/updated", "event", "updated"),
+                Map.of("topic", "orders/fulfilled", "event", "fulfilled")
         );
 
         for (Map<String, String> entry : topics) {
@@ -66,7 +64,7 @@ public class ShopifyWebhookService {
                 Map<String, Object> data = new HashMap<>();
                 Map<String, Object> webhook = new HashMap<>();
                 webhook.put("topic", entry.get("topic"));
-                webhook.put("address", webhookBase + "/" + entry.get("type"));
+                webhook.put("address", webhookBase + "/orders/" + entry.get("event"));
                 webhook.put("format", "json");
                 data.put("webhook", webhook);
 
@@ -78,7 +76,7 @@ public class ShopifyWebhookService {
                             .storeId(storeId)
                             .shopifyWebhookId(hook.get("id").asLong())
                             .topic(entry.get("topic"))
-                            .address(webhookBase + "/" + entry.get("type"))
+                            .address(webhookBase + "/orders/" + entry.get("event"))
                             .isActive(true)
                             .build();
                     webhookRepository.save(wh);

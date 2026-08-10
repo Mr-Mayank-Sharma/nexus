@@ -3,6 +3,8 @@ package com.nexus.oms.entity.ai;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -20,9 +22,9 @@ public class AiModel {
     @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "base_model_id") private AiModel baseModel;
     private String status;
     private String currentVersion;
-    @Column(columnDefinition = "JSONB") private String inputSchema;
-    @Column(columnDefinition = "JSONB") private String outputSchema;
-    @Column(columnDefinition = "JSONB") private String config;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String inputSchema;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String outputSchema;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String config;
     private String tags;
     private Boolean isActive;
     private String createdBy;

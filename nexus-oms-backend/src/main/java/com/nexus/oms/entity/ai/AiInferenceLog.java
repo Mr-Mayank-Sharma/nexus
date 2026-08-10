@@ -3,6 +3,8 @@ package com.nexus.oms.entity.ai;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,8 +18,8 @@ public class AiInferenceLog {
     private UUID versionId;
     private UUID deploymentId;
     private String requestId;
-    @Column(columnDefinition = "JSONB") private String inputData;
-    @Column(columnDefinition = "JSONB") private String outputData;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String inputData;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String outputData;
     @PositiveOrZero private java.math.BigDecimal confidence;
     @PositiveOrZero private java.math.BigDecimal latencyMs;
     private String status;
@@ -25,7 +27,7 @@ public class AiInferenceLog {
     private String fallbackReason;
     private Boolean ruleEngineUsed;
     private Boolean userOverridden;
-    @Column(columnDefinition = "JSONB") private String userOverrideValue;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String userOverrideValue;
     private String userId;
     private String sourceService;
     @PositiveOrZero private java.math.BigDecimal cost;

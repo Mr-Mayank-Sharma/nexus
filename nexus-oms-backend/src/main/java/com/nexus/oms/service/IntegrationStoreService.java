@@ -9,6 +9,7 @@ import com.nexus.oms.exception.ResourceNotFoundException;
 import com.nexus.oms.repository.*;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -191,5 +192,15 @@ public class IntegrationStoreService {
                         .build()).collect(Collectors.toList()))
                 .build();
         return status;
+    }
+
+    public List<NxSyncLog> getSyncLogs(UUID storeId, int limit) {
+        NxIntegrationStore store = getStore(storeId);
+        String integrationType = store.getPlatform().toUpperCase() + "_" + store.getStoreCode();
+        int safeLimit = Math.min(Math.max(limit, 1), 100);
+        return syncLogRepository
+                .findByTenantIdAndIntegrationTypeOrderByCreatedAtDesc(
+                        store.getTenantId(), integrationType, PageRequest.of(0, safeLimit))
+                .getContent();
     }
 }

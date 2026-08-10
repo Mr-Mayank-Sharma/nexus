@@ -3,6 +3,8 @@ package com.nexus.oms.entity.ai;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -19,7 +21,7 @@ public class AiFeatureValue {
     @Column(name = "`value`", columnDefinition = "TEXT") private String value;
     private java.math.BigDecimal numericValue;
     private Boolean boolValue;
-    @Column(columnDefinition = "JSONB") private String jsonValue;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String jsonValue;
     private LocalDateTime timestampValue;
     @NotNull @Column(nullable = false) private LocalDate asOfDate;
     private LocalDateTime createdAt;

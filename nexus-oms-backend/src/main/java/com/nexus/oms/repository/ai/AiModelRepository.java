@@ -26,6 +26,12 @@ public interface AiModelRepository extends JpaRepository<AiModel, UUID> {
     long countByTenantIdAndCategory(UUID tenantId, String category);
     long countByCategory(String category);
     long countByStatus(String status);
+    @Query("SELECT m FROM AiModel m WHERE m.tenantId = :tenantId OR m.category = 'GLOBAL' ORDER BY m.createdAt DESC")
+    Page<AiModel> findAllForTenant(@Param("tenantId") UUID tenantId, Pageable pageable);
+    @Query("SELECT m FROM AiModel m WHERE (m.tenantId = :tenantId OR m.category = 'GLOBAL') AND m.category = :category ORDER BY m.createdAt DESC")
+    Page<AiModel> findAllForTenantAndCategory(@Param("tenantId") UUID tenantId, @Param("category") String category, Pageable pageable);
+    @Query("SELECT m FROM AiModel m WHERE (m.tenantId = :tenantId OR m.category = 'GLOBAL') AND m.status = :status ORDER BY m.createdAt DESC")
+    Page<AiModel> findAllForTenantAndStatus(@Param("tenantId") UUID tenantId, @Param("status") String status, Pageable pageable);
     @Query("SELECT m FROM AiModel m WHERE m.modelType = :type AND (m.tenantId = :tenantId OR m.category = 'GLOBAL') ORDER BY m.createdAt DESC")
     Page<AiModel> findAvailableForTenant(@Param("tenantId") UUID tenantId, @Param("type") String modelType, Pageable pageable);
 }

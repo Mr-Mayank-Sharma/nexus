@@ -126,6 +126,17 @@ public class OrderService {
         return toOrderResponse(order);
     }
 
+    @Cacheable(value = "orders", key = "#id")
+    public OrderResponse getOrder(UUID tenantId, String id) {
+        try {
+            return getOrder(UUID.fromString(id));
+        } catch (IllegalArgumentException ignored) {
+            NxOrder order = orderRepository.findByTenantIdAndChannelOrderId(tenantId, id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+            return toOrderResponse(order);
+        }
+    }
+
     public Page<OrderResponse> getOrders(UUID tenantId, String status, String search, Pageable pageable) {
         Page<NxOrder> orders;
         if (search != null && !search.isBlank()) {
@@ -481,10 +492,13 @@ public class OrderService {
 
         // Populate customer name from the customer repository
         String customerName = null;
+        String customerEmail = null;
         if (order.getCustomerId() != null) {
-            customerName = customerRepository.findById(order.getCustomerId())
-                    .map(NxCustomer::getName)
-                    .orElse(null);
+            NxCustomer customer = customerRepository.findById(order.getCustomerId()).orElse(null);
+            if (customer != null) {
+                customerName = customer.getName();
+                customerEmail = customer.getEmail();
+            }
         }
 
         return OrderResponse.builder()
@@ -495,6 +509,7 @@ public class OrderService {
                 .channelOrderId(order.getChannelOrderId())
                 .customerId(order.getCustomerId())
                 .customerName(customerName)
+                .customerEmail(customerEmail)
                 .status(order.getStatus())
                 .subStatus(order.getSubStatus())
                 .fulfillmentType(order.getFulfillmentType())

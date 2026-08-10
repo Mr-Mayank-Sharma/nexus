@@ -37,12 +37,12 @@ public class AiModelRegistryService {
     }
 
     public Page<AiModel> getModels(UUID tenantId, String category, String status, Pageable pageable) {
-        if (category != null) return modelRepository.findByTenantIdAndCategory(tenantId, category, pageable);
+        if (category != null) return modelRepository.findAllForTenantAndCategory(tenantId, category, pageable);
         if (status != null) {
-            if (tenantId != null) return modelRepository.findByTenantIdAndStatus(tenantId, status, pageable);
+            if (tenantId != null) return modelRepository.findAllForTenantAndStatus(tenantId, status, pageable);
             return modelRepository.findByStatus(status, pageable);
         }
-        return modelRepository.findByTenantId(tenantId, pageable);
+        return modelRepository.findAllForTenant(tenantId, pageable);
     }
 
     public Optional<AiModel> getModel(UUID modelId) {

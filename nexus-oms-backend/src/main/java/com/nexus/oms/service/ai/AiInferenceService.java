@@ -31,6 +31,7 @@ public class AiInferenceService {
     private final AiInferenceLogRepository inferenceLogRepository;
     private final LlmChatService llmChatService;
     private final ShapExplainerService shapExplainerService;
+    private final AiOnnxRuntimeService onnxRuntimeService;
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
 
@@ -40,6 +41,7 @@ public class AiInferenceService {
                                AiInferenceLogRepository inferenceLogRepository,
                                LlmChatService llmChatService,
                                ShapExplainerService shapExplainerService,
+                               AiOnnxRuntimeService onnxRuntimeService,
                                ObjectMapper objectMapper,
                                MeterRegistry meterRegistry) {
         this.modelRepository = modelRepository;
@@ -48,6 +50,7 @@ public class AiInferenceService {
         this.inferenceLogRepository = inferenceLogRepository;
         this.llmChatService = llmChatService;
         this.shapExplainerService = shapExplainerService;
+        this.onnxRuntimeService = onnxRuntimeService;
         this.objectMapper = objectMapper;
         this.meterRegistry = meterRegistry;
     }
@@ -68,9 +71,25 @@ public class AiInferenceService {
 
         String modelType = model.getModelType();
         boolean llmSuccess = false;
+        boolean onnxSuccess = false;
 
-        // Try LLM-based prediction first
-        if (llmChatService.isEnabled()) {
+        // 1. Try in-process ONNX artifact (real trained model) for supported types
+        if (onnxRuntimeService.isArtifactAvailable(version)) {
+            try {
+                Map<String, Object> onnxResult = onnxPredict(model, version, input);
+                if (onnxResult != null) {
+                    result.putAll(onnxResult);
+                    onnxSuccess = true;
+                    meterRegistry.counter("nexus.ai.inference.onnx_success", "type", modelType).increment();
+                }
+            } catch (Exception e) {
+                log.warn("ONNX inference failed for {}, falling back: {}", modelType, e.getMessage());
+                meterRegistry.counter("nexus.ai.inference.onnx_fallback", "type", modelType).increment();
+            }
+        }
+
+        // 2. Try LLM-based prediction next (when no trained artifact served)
+        if (!onnxSuccess && llmChatService.isEnabled()) {
             try {
                 result = llmPredict(modelType, input, result);
                 llmSuccess = true;
@@ -81,8 +100,8 @@ public class AiInferenceService {
             }
         }
 
-        // Fall back to hardcoded rules
-        if (!llmSuccess) {
+        // 3. Fall back to hardcoded rules
+        if (!onnxSuccess && !llmSuccess) {
             result = ruleBasedPredict(modelType, input, result);
         }
 
@@ -97,7 +116,33 @@ public class AiInferenceService {
         }
 
         result.put("llmPowered", llmSuccess);
+        result.put("onnxPowered", onnxSuccess);
         return result;
+    }
+
+    /**
+     * Run a real trained ONNX artifact for demand forecasting. Returns null when
+     * the input lacks a resolvable SKU/date or the model doesn't support ONNX.
+     */
+    private Map<String, Object> onnxPredict(AiModel model, AiModelVersion version, Map<String, Object> input) {
+        if (!"DEMAND_FORECAST".equals(model.getModelType())) return null;
+
+        Object sku = input.get("sku");
+        if (sku == null) sku = input.get("productId");
+        if (sku == null) sku = input.get("entityId");
+        if (sku == null) return null;
+
+        LocalDate date;
+        Object dateObj = input.get("date");
+        if (dateObj == null) dateObj = input.get("targetDate");
+        if (dateObj == null) dateObj = input.get("asOfDate");
+        if (dateObj instanceof LocalDate ld) date = ld;
+        else if (dateObj != null) date = LocalDate.parse(dateObj.toString());
+        else date = LocalDate.now().plusDays(1);
+
+        return onnxRuntimeService.predictDemand(
+                        TenantContext.getCurrentTenantId(), model, version, sku.toString(), date)
+                .orElse(null);
     }
 
     // ============================================================

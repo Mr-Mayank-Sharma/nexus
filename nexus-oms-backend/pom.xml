@@ -19,6 +19,7 @@
         <jjwt.version>0.12.5</jjwt.version>
         <springdoc.version>2.3.0</springdoc.version>
         <resilience4j.version>2.2.0</resilience4j.version>
+        <onnxruntime.version>1.19.0</onnxruntime.version>
         <logstash.version>7.4</logstash.version>
         <jacoco.version>0.8.11</jacoco.version>
         <owasp.version>9.0.9</owasp.version>
@@ -152,6 +153,11 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
             <version>1.12.765</version>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.onnxruntime</groupId>
+            <artifactId>onnxruntime</artifactId>
+            <version>${onnxruntime.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

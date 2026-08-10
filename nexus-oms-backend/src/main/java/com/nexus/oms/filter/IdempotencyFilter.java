@@ -4,16 +4,12 @@ import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.IdempotencyService;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -106,51 +102,6 @@ public class IdempotencyFilter implements Filter {
         } catch (Exception e) {
             idempotencyService.delete(redisKey);
             throw e;
-        }
-    }
-
-    private static class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
-
-        private final byte[] cachedBody;
-
-        CachedBodyHttpServletRequest(HttpServletRequest request) throws IOException {
-            super(request);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (var is = request.getInputStream()) {
-                is.transferTo(baos);
-            }
-            this.cachedBody = baos.toByteArray();
-        }
-
-        @Override
-        public ServletInputStream getInputStream() {
-            return new ServletInputStream() {
-                private final ByteArrayInputStream bais = new ByteArrayInputStream(cachedBody);
-
-                @Override
-                public int read() {
-                    return bais.read();
-                }
-
-                @Override
-                public boolean isFinished() {
-                    return bais.available() == 0;
-                }
-
-                @Override
-                public boolean isReady() {
-                    return true;
-                }
-
-                @Override
-                public void setReadListener(ReadListener listener) {
-                }
-            };
-        }
-
-        @Override
-        public BufferedReader getReader() {
-            return new BufferedReader(new InputStreamReader(getInputStream()));
         }
     }
 

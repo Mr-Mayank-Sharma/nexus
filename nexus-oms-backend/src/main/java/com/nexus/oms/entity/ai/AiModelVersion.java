@@ -3,6 +3,8 @@ package com.nexus.oms.entity.ai;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,6 +19,10 @@ public class AiModelVersion {
     @PositiveOrZero private Long modelSizeBytes;
     private String framework;
     private String frameworkVersion;
+    private String artifactFormat;
+    private String artifactChecksum;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String featureColumns;
+    private String calibrationType;
     @PositiveOrZero private java.math.BigDecimal accuracy;
     @PositiveOrZero private java.math.BigDecimal precision;
     @PositiveOrZero private java.math.BigDecimal recall;
@@ -26,8 +32,8 @@ public class AiModelVersion {
     private UUID validationDatasetId;
     private UUID testDatasetId;
     private UUID trainingJobId;
-    @Column(columnDefinition = "JSONB") private String metrics;
-    @Column(columnDefinition = "JSONB") private String parameters;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String metrics;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String parameters;
     @Column(columnDefinition = "TEXT") private String commitMessage;
     private String status;
     private String validatedBy;

@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -20,14 +22,14 @@ public class AiFeatureDefinition {
     @NotBlank @Column(nullable = false) private String dataType;
     private String entityType;
     private String sourceType;
-    @Column(columnDefinition = "JSONB") private String sourceConfig;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String sourceConfig;
     @Column(columnDefinition = "TEXT") private String transformationSql;
     private Boolean isCategorical;
     @PositiveOrZero private Integer cardinality;
     private String defaultValue;
     private Boolean isActive;
     private Integer version;
-    @Column(columnDefinition = "JSONB") private String metadata;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String metadata;
     private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

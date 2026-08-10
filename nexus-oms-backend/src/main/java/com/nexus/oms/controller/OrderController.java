@@ -48,10 +48,11 @@ public class OrderController {
                 orderService.getOrders(TenantContext.getCurrentTenantId(), status, search, pageable)));
     }
 
-    @Operation(summary = "Get order by ID")
+    @Operation(summary = "Get order by ID, order number, or channel order ID")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<OrderResponse>> getOrder(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(orderService.getOrder(id)));
+    public ResponseEntity<ApiResponse<OrderResponse>> getOrder(@PathVariable String id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                orderService.getOrder(TenantContext.getCurrentTenantId(), id)));
     }
 
     @Operation(summary = "Update order status")

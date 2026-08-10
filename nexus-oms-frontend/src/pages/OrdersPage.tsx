@@ -66,6 +66,7 @@ export default function OrdersPage() {
       if (activeTab !== 'ALL') params.status = activeTab
       if (search) params.search = search
       params.size = '200'
+      params.sort = 'createdAt,desc'
       const res: ApiResponse<Order[]> = await ordersApi.getOrders(params as any)
       const d = res.data
       if (Array.isArray(d)) return d
@@ -119,7 +120,15 @@ export default function OrdersPage() {
   ]
 
   const columns: Column<Order>[] = [
-    { key: 'orderNumber', header: 'Order ID', sortable: true, render: (o) => <span className="font-medium text-[var(--text-brand)]">{o.orderNumber || o.id}</span> },
+    { key: 'orderNumber', header: 'Order ID', sortable: true, render: (o) => {
+      const external = o.channelOrderId || o.orderNumber
+      return (
+        <div className="leading-tight">
+          <span className="font-medium text-[var(--text-brand)]">{external || o.id}</span>
+          {external && <span className="block text-[11px] text-[var(--text-tertiary)]">Nexus: {o.id.slice(0, 8)}</span>}
+        </div>
+      )
+    } },
     { key: 'channel', header: 'Channel', sortable: true, render: (o) => <span className="text-xs font-medium text-[var(--text-secondary)] uppercase">{o.channel}</span> },
     { key: 'customerName', header: 'Customer', sortable: true },
     { key: 'status', header: 'Status', sortable: true, render: (o) => <EnterpriseStatusBadge status={o.status.toLowerCase()} /> },
@@ -153,7 +162,7 @@ export default function OrdersPage() {
             return Array.isArray(res.data) ? res.data : []
           },
           onSelect: (item: Order) => navigate(`/orders/${item.id}`),
-          getOptionLabel: (item: Order) => `${item.orderNumber || item.id} — ${item.customerName || ''}`,
+          getOptionLabel: (item: Order) => `${item.channelOrderId || item.orderNumber || item.id} — ${item.customerName || ''}`,
           getOptionValue: (item: Order) => item.id,
           minChars: 2,
         }}
@@ -171,7 +180,7 @@ export default function OrdersPage() {
           { label: 'Export', icon: <Download className="w-4 h-4" />, onClick: () => {
             const headers = ['Order Number', 'Channel', 'Customer', 'Status', 'Items', 'City', 'State', 'Carrier', 'Created']
             const rows = filtered.map(o => [
-              o.orderNumber || o.id,
+              o.channelOrderId || o.orderNumber || o.id,
               o.channel,
               o.customerName || '',
               o.status,

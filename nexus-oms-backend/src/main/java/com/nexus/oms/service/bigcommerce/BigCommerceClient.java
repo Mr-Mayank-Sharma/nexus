@@ -106,7 +106,7 @@ public class BigCommerceClient {
     }
 
     @CircuitBreaker(name = "bigcommerce-api")
-    public JsonNode updateInventory(String apiPath, String accessToken, int productId, Map<String, Object> inventoryData) {
+    public JsonNode updateInventory(String apiPath, String accessToken, long productId, Map<String, Object> inventoryData) {
         RestClient client = buildClient(apiPath, accessToken);
         String storeHash = extractStoreHash(apiPath);
         try {

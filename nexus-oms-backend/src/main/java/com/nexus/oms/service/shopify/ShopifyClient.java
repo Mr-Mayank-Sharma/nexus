@@ -43,8 +43,19 @@ public class ShopifyClient {
         return doGet(buildClient(shopDomain, accessToken), "/products.json", params);
     }
 
+    public ProductPage getProductsPage(String shopDomain, String accessToken, Map<String, String> params) {
+        return doGetWithLink(buildClient(shopDomain, accessToken), "/products.json", params);
+    }
+
+    public record ProductPage(JsonNode body, String nextPageInfo) {
+    }
+
     public JsonNode getInventoryLevels(String shopDomain, String accessToken, Map<String, String> params) {
         return doGet(buildClient(shopDomain, accessToken), "/inventory_levels.json", params);
+    }
+
+    public JsonNode getLocations(String shopDomain, String accessToken) {
+        return doGet(buildClient(shopDomain, accessToken), "/locations.json", null);
     }
 
     public JsonNode adjustInventoryLevel(String shopDomain, String accessToken, Map<String, Object> data) {
@@ -55,8 +66,12 @@ public class ShopifyClient {
         return doPost(buildClient(shopDomain, accessToken), "/inventory_levels/set.json", data);
     }
 
-    public JsonNode createFulfillment(String shopDomain, String accessToken, long orderId, Map<String, Object> data) {
-        return doPost(buildClient(shopDomain, accessToken), "/orders/" + orderId + "/fulfillments.json", data);
+    public JsonNode createFulfillment(String shopDomain, String accessToken, Map<String, Object> data) {
+        return doPost(buildClient(shopDomain, accessToken), "/fulfillments.json", data);
+    }
+
+    public JsonNode getOrderFulfillmentOrders(String shopDomain, String accessToken, long orderId) {
+        return doGet(buildClient(shopDomain, accessToken), "/orders/" + orderId + "/fulfillment_orders.json", null);
     }
 
     public JsonNode createRefund(String shopDomain, String accessToken, long orderId, Map<String, Object> data) {
@@ -87,7 +102,7 @@ public class ShopifyClient {
         try {
             String uri = path;
             if (params != null && !params.isEmpty()) {
-                StringBuilder qs = new StringBuilder("?");
+                StringBuilder qs = new StringBuilder();
                 params.forEach((k, v) -> qs.append(k).append("=").append(v).append("&"));
                 uri = path + "?" + qs.substring(0, qs.length() - 1);
             }
@@ -96,6 +111,46 @@ public class ShopifyClient {
                     .retrieve()
                     .body(String.class);
             return objectMapper.readTree(response);
+        } catch (RestClientException e) {
+            throw new BadRequestException("Shopify API error: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse Shopify response", e);
+        }
+    }
+
+    @CircuitBreaker(name = "shopify-api")
+    private ProductPage doGetWithLink(RestClient client, String path, Map<String, String> params) {
+        try {
+            String uri = path;
+            if (params != null && !params.isEmpty()) {
+                StringBuilder qs = new StringBuilder();
+                params.forEach((k, v) -> qs.append(k).append("=").append(v).append("&"));
+                uri = path + "?" + qs.substring(0, qs.length() - 1);
+            }
+            var response = client.get()
+                    .uri(uri)
+                    .retrieve()
+                    .toEntity(String.class);
+            JsonNode body = objectMapper.readTree(response.getBody());
+            String next = null;
+            String link = response.getHeaders().getFirst("Link");
+            if (link != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("<([^>]+)>\\s*;\\s*rel=\"next\"")
+                        .matcher(link);
+                if (m.find()) {
+                    String nextUrl = m.group(1);
+                    java.util.regex.Matcher qm = java.util.regex.Pattern
+                            .compile("[?&]page_info=([^&]+)")
+                            .matcher(nextUrl);
+                    if (qm.find()) {
+                        next = qm.group(1);
+                    } else {
+                        next = nextUrl;
+                    }
+                }
+            }
+            return new ProductPage(body, next);
         } catch (RestClientException e) {
             throw new BadRequestException("Shopify API error: " + e.getMessage());
         } catch (Exception e) {

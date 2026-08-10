@@ -3,6 +3,8 @@ package com.nexus.oms.entity.ai;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,7 +19,7 @@ public class AiDeployment {
     private String environment;
     @PositiveOrZero private java.math.BigDecimal trafficWeight;
     @Column(columnDefinition = "TEXT") private String endpointUrl;
-    @Column(columnDefinition = "JSONB") private String configOverrides;
+    @JdbcTypeCode(SqlTypes.JSON) @Column(columnDefinition = "jsonb") private String configOverrides;
     private String status;
     private String deployedBy;
     private LocalDateTime deployedAt;

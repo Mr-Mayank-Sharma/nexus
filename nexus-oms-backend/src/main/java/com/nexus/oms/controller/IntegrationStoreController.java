@@ -5,6 +5,7 @@ import com.nexus.oms.dto.IntegrationStoreRequest;
 import com.nexus.oms.dto.StoreSyncStatus;
 import com.nexus.oms.entity.NxIntegrationStore;
 import com.nexus.oms.entity.NxIntegrationStoreSetting;
+import com.nexus.oms.entity.NxSyncLog;
 import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.IntegrationStoreService;
 import jakarta.validation.Valid;
@@ -66,5 +67,12 @@ public class IntegrationStoreController {
     @GetMapping("/{id}/sync-status")
     public ResponseEntity<ApiResponse<StoreSyncStatus>> getSyncStatus(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(integrationStoreService.getSyncStatus(id)));
+    }
+
+    @GetMapping("/{id}/sync-logs")
+    public ResponseEntity<ApiResponse<List<NxSyncLog>>> getSyncLogs(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "20") int limit) {
+        return ResponseEntity.ok(ApiResponse.success(integrationStoreService.getSyncLogs(id, limit)));
     }
 }

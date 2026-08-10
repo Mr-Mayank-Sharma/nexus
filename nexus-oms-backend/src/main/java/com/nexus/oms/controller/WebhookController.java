@@ -27,33 +27,18 @@ public class WebhookController {
         this.storeService = storeService;
     }
 
-    @PostMapping("/shopify/orders/create")
-    public ResponseEntity<ApiResponse<String>> handleShopifyOrderCreate(
+    @PostMapping("/shopify/orders/{event}")
+    public ResponseEntity<ApiResponse<String>> handleShopifyOrderWebhook(
+            @PathVariable String event,
             @RequestBody Map<String, Object> payload,
             @RequestHeader("X-Shopify-Shop-Domain") String shopDomain) {
-        log.info("Shopify order create webhook received: orderId={} shop={}", payload.get("id"), shopDomain);
+        log.info("Shopify order webhook received: event={} orderId={} shop={}", event, payload.get("id"), shopDomain);
 
         Optional<NxIntegrationStore> store = storeService.findStoreByExternalDomain(shopDomain);
         if (store.isPresent()) {
+            payload.put("topic", "orders/" + event);
             shopifyWebhookService.handleWebhook(payload, store.get().getId());
             return ResponseEntity.ok(ApiResponse.success("Order import triggered", "Webhook processed"));
-        }
-
-        log.warn("No store found for Shopify domain: {}", shopDomain);
-        return ResponseEntity.ok(ApiResponse.success("Webhook received", "Store not found"));
-    }
-
-    @PostMapping("/shopify/orders/fulfilled")
-    public ResponseEntity<ApiResponse<String>> handleShopifyOrderFulfilled(
-            @RequestBody Map<String, Object> payload,
-            @RequestHeader("X-Shopify-Shop-Domain") String shopDomain) {
-        log.info("Shopify order fulfilled webhook received: orderId={} shop={}", payload.get("id"), shopDomain);
-
-        Optional<NxIntegrationStore> store = storeService.findStoreByExternalDomain(shopDomain);
-        if (store.isPresent()) {
-            payload.put("topic", "orders/fulfilled");
-            shopifyWebhookService.handleWebhook(payload, store.get().getId());
-            return ResponseEntity.ok(ApiResponse.success("Fulfillment processed", "Webhook processed"));
         }
 
         log.warn("No store found for Shopify domain: {}", shopDomain);

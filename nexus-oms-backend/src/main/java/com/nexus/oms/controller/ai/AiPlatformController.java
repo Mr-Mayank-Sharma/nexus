@@ -8,8 +8,11 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +34,10 @@ public class AiPlatformController {
     private final AiMonitoringService monitoringService;
     private final AiAnalyticsService analyticsService;
     private final AiExperimentService experimentService;
+    private final AiTrainingDataService trainingDataService;
+    private final AiArtifactService artifactService;
+    private final AiCalibrationService calibrationService;
+    private final AiOnnxRuntimeService onnxRuntimeService;
 
     public AiPlatformController(AiGatewayService gatewayService,
                                  AiModelRegistryService modelRegistryService,
@@ -40,7 +47,11 @@ public class AiPlatformController {
                                  AiRuleEngineService ruleEngineService,
                                  AiMonitoringService monitoringService,
                                  AiAnalyticsService analyticsService,
-                                 AiExperimentService experimentService) {
+                                 AiExperimentService experimentService,
+                                 AiTrainingDataService trainingDataService,
+                                 AiArtifactService artifactService,
+                                 AiCalibrationService calibrationService,
+                                 AiOnnxRuntimeService onnxRuntimeService) {
         this.gatewayService = gatewayService;
         this.modelRegistryService = modelRegistryService;
         this.featureStoreService = featureStoreService;
@@ -50,6 +61,10 @@ public class AiPlatformController {
         this.monitoringService = monitoringService;
         this.analyticsService = analyticsService;
         this.experimentService = experimentService;
+        this.trainingDataService = trainingDataService;
+        this.artifactService = artifactService;
+        this.calibrationService = calibrationService;
+        this.onnxRuntimeService = onnxRuntimeService;
     }
 
     private UUID tenant() { return TenantContext.getCurrentTenantId(); }
@@ -290,5 +305,72 @@ public class AiPlatformController {
             @PathVariable UUID id, @RequestBody Map<String, String> body) {
         return ResponseEntity.ok(ApiResponse.success(
                 experimentService.failExperiment(id, body.getOrDefault("error", "Unknown error"))));
+    }
+
+    // ========== TRAINING DATA (Phase 0+1) ==========
+    @GetMapping("/training/data/demand")
+    public ResponseEntity<String> exportDemandData(
+            @RequestParam(defaultValue = "365") int lookbackDays) {
+        String jsonl = trainingDataService.exportDemandJsonl(tenant(), lookbackDays);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=demand_export.jsonl")
+                .contentType(MediaType.parseMediaType("application/x-ndjson"))
+                .body(jsonl);
+    }
+
+    @GetMapping("/training/data/demand/count")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> demandDataStats(
+            @RequestParam(defaultValue = "365") int lookbackDays) {
+        return ResponseEntity.ok(ApiResponse.success(Map.of(
+                "records", trainingDataService.getDemandRecordCount(tenant(), lookbackDays),
+                "skus", trainingDataService.getSkusWithHistory(tenant(), lookbackDays).size(),
+                "lookbackDays", lookbackDays)));
+    }
+
+    @PostMapping("/training/data/demand/materialize")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> materializeDemandFeatures(
+            @RequestParam(defaultValue = "365") int lookbackDays) {
+        int written = trainingDataService.materializeDemandFeatures(tenant(), lookbackDays);
+        return ResponseEntity.ok(ApiResponse.success(Map.of(
+                "featureStoreValuesWritten", written,
+                "lookbackDays", lookbackDays)));
+    }
+
+    // ========== MODEL ARTIFACTS (Phase 0+1) ==========
+    @PostMapping("/models/{modelId}/versions/{versionId}/artifact")
+    public ResponseEntity<ApiResponse<AiModelVersion>> uploadArtifact(
+            @PathVariable UUID modelId,
+            @PathVariable UUID versionId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "featureColumns", required = false) String featureColumns,
+            @RequestParam(value = "calibrationBaseline", required = false) String calibrationBaseline,
+            @RequestParam(value = "calibrationType", required = false) String calibrationType) throws Exception {
+        AiModelVersion version = artifactService.storeArtifact(
+                modelId, versionId, file.getBytes(), file.getOriginalFilename());
+        artifactService.attachMetadata(
+                tenant(), modelId, versionId,
+                artifactService.parseFeatureColumns(featureColumns),
+                artifactService.parseSkuRatios(calibrationBaseline),
+                calibrationType);
+        return ResponseEntity.ok(ApiResponse.success(version, "Artifact stored and validated"));
+    }
+
+    @DeleteMapping("/models/{modelId}/versions/{versionId}/artifact")
+    public ResponseEntity<ApiResponse<Void>> deleteArtifact(
+            @PathVariable UUID modelId, @PathVariable UUID versionId) {
+        onnxRuntimeService.unload(versionId);
+        return ResponseEntity.ok(ApiResponse.success(null, "Artifact unloaded"));
+    }
+
+    // ========== CALIBRATION (Phase 0+1) ==========
+    @GetMapping("/models/{modelId}/calibrations")
+    public ResponseEntity<ApiResponse<List<AiCalibration>>> getCalibrations(@PathVariable UUID modelId) {
+        return ResponseEntity.ok(ApiResponse.success(calibrationService.listForModel(tenant(), modelId)));
+    }
+
+    @DeleteMapping("/models/{modelId}/calibrations")
+    public ResponseEntity<ApiResponse<Void>> clearCalibrations(@PathVariable UUID modelId) {
+        calibrationService.clearForModel(modelId);
+        return ResponseEntity.ok(ApiResponse.success(null, "Calibrations cleared"));
     }
 }

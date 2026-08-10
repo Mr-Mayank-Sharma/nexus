@@ -5,6 +5,8 @@ import com.nexus.oms.dto.SyncResult;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.service.IntegrationStoreService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,8 @@ import java.util.*;
 
 @Service
 public class ShopifyInventorySyncService {
+
+    private static final Logger log = LoggerFactory.getLogger(ShopifyInventorySyncService.class);
 
     private final ShopifyClient shopifyClient;
     private final IntegrationStoreService storeService;
@@ -68,16 +72,17 @@ public class ShopifyInventorySyncService {
                     int totalAllocated = invList.stream().mapToInt(NxInventory::getQuantityAllocated).sum();
                     int available = totalOnHand - totalAllocated;
 
-                    Long inventoryItemId = inventoryItemIds.getOrDefault((long) mapping.getBcProductId(), null);
+                    Long inventoryItemId = inventoryItemIds.get(mapping.getBcVariantId());
                     if (inventoryItemId != null) {
                         Map<String, Object> data = new HashMap<>();
                         data.put("inventory_item_id", inventoryItemId);
                         data.put("available", Math.max(0, available));
-                        data.put("location_id", getDefaultLocationId(shopDomain, accessToken));
+                        data.put("location_id", getLocationId(shopDomain, accessToken, inventoryItemId));
                         shopifyClient.setInventoryLevel(shopDomain, accessToken, data);
                     }
                     succeeded++;
                 } catch (Exception e) {
+                    log.error("Inventory push failed for mapping sku={} productId={} variantId={} resolvedInvItem={} resolvedLocation={}: {}", mapping.getNexusSku(), mapping.getBcProductId(), mapping.getBcVariantId(), inventoryItemIds.get(mapping.getBcVariantId()), getLocationId(shopDomain, accessToken, inventoryItemIds.get(mapping.getBcVariantId())), e.getMessage());
                     failed++;
                 }
                 processed++;
@@ -123,9 +128,9 @@ public class ShopifyInventorySyncService {
                     JsonNode variants = product.get("variants");
                     if (variants != null) {
                         for (JsonNode variant : variants) {
-                            long productId = product.get("id").asLong();
+                            long variantId = variant.get("id").asLong();
                             long invItemId = variant.has("inventory_item_id") ? variant.get("inventory_item_id").asLong() : 0;
-                            if (invItemId > 0) result.put(productId, invItemId);
+                            if (invItemId > 0) result.put(variantId, invItemId);
                         }
                     }
                 }
@@ -134,14 +139,19 @@ public class ShopifyInventorySyncService {
         return result;
     }
 
-    private long getDefaultLocationId(String shopDomain, String accessToken) {
+    private long getLocationId(String shopDomain, String accessToken, Long inventoryItemId) {
         try {
-            JsonNode response = shopifyClient.getInventoryLevels(shopDomain, accessToken, Map.of("limit", "1"));
+            log.debug("getLocationId: querying inventory_levels for item={}", inventoryItemId);
+            JsonNode response = shopifyClient.getInventoryLevels(shopDomain, accessToken,
+                    Map.of("inventory_item_ids", String.valueOf(inventoryItemId)));
             JsonNode levels = response != null ? response.get("inventory_levels") : null;
             if (levels != null && levels.isArray() && levels.size() > 0) {
                 return levels.get(0).get("location_id").asLong();
             }
-        } catch (Exception ignored) {}
+            log.warn("getLocationId: no inventory_levels returned for item {}", inventoryItemId);
+        } catch (Exception e) {
+            log.warn("getLocationId: failed for item {}: {}", inventoryItemId, e.getMessage(), e);
+        }
         return 1;
     }
 

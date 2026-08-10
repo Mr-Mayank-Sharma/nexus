@@ -150,7 +150,7 @@ export default function FindOrderPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-[var(--text-primary)]">
-                    {result.orderNumber || result.id}
+                    {result.channelOrderId ? `#${result.channelOrderId}` : (result.orderNumber || result.id)}
                   </h2>
                   <p className="text-sm text-[var(--text-secondary)]">
                     {result.channel || 'N/A'} channel &middot; {result.createdAt ? new Date(result.createdAt).toLocaleDateString() : 'N/A'}
@@ -164,11 +164,13 @@ export default function FindOrderPage() {
           <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <InfoGroup label="Customer" value={result.customerName || 'N/A'} sub={result.customerEmail || ''} />
             <InfoGroup label="Shipping Address" value={
-              result.shippingAddress
-                ? `${result.shippingAddress.street || ''}, ${result.shippingAddress.city || ''} ${result.shippingAddress.state || ''} ${result.shippingAddress.zip || ''}`
-                : 'N/A'
+              (result.shipTo as any)
+                ? `${(result.shipTo as any).street || ''}, ${(result.shipTo as any).city || ''} ${(result.shipTo as any).state || ''} ${(result.shipTo as any).zip || ''}`
+                : (result.shippingAddress
+                  ? `${result.shippingAddress.street || ''}, ${result.shippingAddress.city || ''} ${result.shippingAddress.state || ''} ${result.shippingAddress.zip || ''}`
+                  : 'N/A')
             } />
-            <InfoGroup label="Total" value={result.totalAmount != null ? `$${result.totalAmount.toFixed(2)}` : 'N/A'} />
+            <InfoGroup label="Total" value={result.total != null ? `${result.currency || 'USD'} ${Number(result.total).toFixed(2)}` : 'N/A'} />
             <InfoGroup label="Items" value={result.items?.length ? `${result.items.length} item(s)` : 'N/A'} />
             <InfoGroup label="Tracking" value={result.trackingNumber || 'Not yet shipped'} />
             <InfoGroup label="Priority" value={result.priority || 'Standard'} />
@@ -195,7 +197,7 @@ export default function FindOrderPage() {
                         <td className="py-2.5 text-[var(--text-primary)]">{item.productName || '—'}</td>
                         <td className="py-2.5 text-right text-[var(--text-secondary)]">{item.quantity ?? '—'}</td>
                         <td className="py-2.5 text-right text-[var(--text-primary)]">
-                          {item.unitPrice != null ? `$${item.unitPrice.toFixed(2)}` : '—'}
+                          {item.unitPrice != null ? `${result.currency || 'USD'} ${Number(item.unitPrice).toFixed(2)}` : '—'}
                         </td>
                       </tr>
                     ))}

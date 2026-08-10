@@ -68,19 +68,31 @@ public class ShopifyProductSyncService {
 
         int processed = 0, succeeded = 0, failed = 0;
         try {
-            Map<String, String> params = new HashMap<>();
-            params.put("limit", "250");
-            params.put("fields", "id,title,sku,variants,image,images");
-
-            JsonNode response = shopifyClient.getProducts(shopDomain, accessToken, params);
-            JsonNode products = response != null ? response.get("products") : null;
-
             List<NxNode> nodes = nodeRepository.findByTenantId(store.getTenantId());
+            String nextPageInfo = null;
 
-            if (products != null && products.isArray()) {
+            while (true) {
+                Map<String, String> params = new HashMap<>();
+                if (nextPageInfo == null) {
+                    params.put("limit", "250");
+                    params.put("fields", "id,title,sku,variants,image,images");
+                    params.put("published_status", "any");
+                } else {
+                    params.put("page_info", nextPageInfo);
+                }
+
+                ShopifyClient.ProductPage page = fetchPageWithRetry(shopDomain, accessToken, params);
+                nextPageInfo = page.nextPageInfo();
+                JsonNode response = page.body();
+                JsonNode products = response != null ? response.get("products") : null;
+
+                if (products == null || !products.isArray() || products.isEmpty()) {
+                    break;
+                }
+
                 for (JsonNode product : products) {
+                    long productId = product.get("id").asLong();
                     try {
-                        long productId = product.get("id").asLong();
                         String title = product.has("title") ? product.get("title").asText() : "";
                         String imageUrl = product.has("image") && product.get("image").has("src")
                                 ? product.get("image").get("src").asText() : null;
@@ -96,13 +108,15 @@ public class ShopifyProductSyncService {
                                         .findByTenantIdAndBcSku(store.getTenantId(), sku)
                                         .orElse(NxProductMapping.builder()
                                                 .tenantId(store.getTenantId())
-                                                .bcProductId((int) productId)
-                                                .bcVariantId((int) variantId)
+                                                .bcProductId(productId)
+                                                .bcVariantId(variantId)
                                                 .bcSku(sku)
                                                 .nexusSku(sku)
                                                 .nexusProductName(title)
                                                 .imageUrl(imageUrl)
                                                 .build());
+                                mapping.setBcProductId(productId);
+                                mapping.setBcVariantId(variantId);
                                 mapping.setLastSyncedAt(LocalDateTime.now());
                                 mapping.setImageUrl(imageUrl);
                                 productMappingRepository.save(mapping);
@@ -120,9 +134,6 @@ public class ShopifyProductSyncService {
 
                                 if (!nodes.isEmpty()) {
                                     NxNode node = nodes.get(0);
-                                    List<NxInventory> invList = inventoryRepository
-                                            .findByTenantIdAndSkuAndNodeId(store.getTenantId(), sku, node.getId())
-                                            .stream().toList();
                                     if (inventoryRepository.findByTenantIdAndSku(store.getTenantId(), sku).isEmpty()) {
                                         inventoryRepository.save(NxInventory.builder()
                                                 .tenantId(store.getTenantId())
@@ -141,6 +152,10 @@ public class ShopifyProductSyncService {
                         failed++;
                     }
                     processed++;
+                }
+
+                if (nextPageInfo == null) {
+                    break;
                 }
             }
 
@@ -172,6 +187,27 @@ public class ShopifyProductSyncService {
                 .itemsSucceeded(succeeded)
                 .itemsFailed(failed)
                 .build();
+    }
+
+    private ShopifyClient.ProductPage fetchPageWithRetry(String shopDomain, String accessToken, Map<String, String> params) {
+        int attempts = 3;
+        RuntimeException last = null;
+        for (int i = 0; i < attempts; i++) {
+            try {
+                return shopifyClient.getProductsPage(shopDomain, accessToken, params);
+            } catch (RuntimeException e) {
+                last = e;
+                if (i < attempts - 1) {
+                    try {
+                        Thread.sleep(2000L * (i + 1));
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        break;
+                    }
+                }
+            }
+        }
+        throw last;
     }
 
     private BigDecimal priceOf(JsonNode variant) {

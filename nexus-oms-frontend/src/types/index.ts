@@ -1,6 +1,7 @@
 export interface Order {
   id: string
   orderNumber: string
+  channelOrderId?: string
   customerName: string
   customerEmail: string
   channel: OrderChannel
@@ -13,6 +14,7 @@ export interface Order {
   currency: string
   shippingAddress: Address
   billingAddress: Address
+  shipTo?: Record<string, any>
   fulfillmentType: FulfillmentType
   allocationNodeId?: string
   carrier?: string

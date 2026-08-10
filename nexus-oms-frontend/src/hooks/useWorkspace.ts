@@ -216,6 +216,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       id: 'integrations-group', label: 'Integrations', path: '/integration-hub', icon: 'Zap',
       children: [
         { id: 'integration-hub', label: 'Integration Hub', path: '/integration-hub', icon: 'Zap' },
+        { id: 'shopify', label: 'Shopify', path: '/integrations/shopify', icon: 'ShoppingBag' },
         { id: 'edi', label: 'EDI Automation', path: '/edi', icon: 'Upload' },
         { id: 'import-export', label: 'Import/Export', path: '/import-export', icon: 'Upload' },
         { id: 'b2b-portal', label: 'B2B Portal', path: '/b2b-portal', icon: 'ShoppingCart' },

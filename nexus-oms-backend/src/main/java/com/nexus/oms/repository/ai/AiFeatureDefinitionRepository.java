@@ -18,6 +18,7 @@ public interface AiFeatureDefinitionRepository extends JpaRepository<AiFeatureDe
     Page<AiFeatureDefinition> findByTenantId(UUID tenantId, Pageable pageable);
     List<AiFeatureDefinition> findByTenantIdAndFeatureGroup(UUID tenantId, String featureGroup);
     Optional<AiFeatureDefinition> findByTenantIdAndName(UUID tenantId, String name);
+    Optional<AiFeatureDefinition> findFirstByTenantIdAndNameAndEntityType(UUID tenantId, String name, String entityType);
     List<AiFeatureDefinition> findByTenantIdAndEntityType(UUID tenantId, String entityType);
     long countByTenantIdAndFeatureGroup(UUID tenantId, String featureGroup);
 }

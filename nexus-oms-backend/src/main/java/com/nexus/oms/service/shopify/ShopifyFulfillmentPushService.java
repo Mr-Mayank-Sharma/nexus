@@ -3,8 +3,11 @@ package com.nexus.oms.service.shopify;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nexus.oms.dto.SyncResult;
 import com.nexus.oms.entity.*;
+import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.service.IntegrationStoreService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +17,8 @@ import java.util.*;
 @Service
 public class ShopifyFulfillmentPushService {
 
+    private static final Logger log = LoggerFactory.getLogger(ShopifyFulfillmentPushService.class);
+
     private final ShopifyClient shopifyClient;
     private final IntegrationStoreService storeService;
     private final ShopifyTokenService tokenService;
@@ -21,7 +26,6 @@ public class ShopifyFulfillmentPushService {
     private final NxIntegrationSyncConfigRepository syncConfigRepository;
     private final NxSyncLogRepository syncLogRepository;
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
     private final ShipmentRepository shipmentRepository;
 
     public ShopifyFulfillmentPushService(ShopifyClient shopifyClient,
@@ -31,7 +35,6 @@ public class ShopifyFulfillmentPushService {
                                           NxIntegrationSyncConfigRepository syncConfigRepository,
                                           NxSyncLogRepository syncLogRepository,
                                           OrderRepository orderRepository,
-                                          OrderItemRepository orderItemRepository,
                                           ShipmentRepository shipmentRepository) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
@@ -40,7 +43,6 @@ public class ShopifyFulfillmentPushService {
         this.syncConfigRepository = syncConfigRepository;
         this.syncLogRepository = syncLogRepository;
         this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
         this.shipmentRepository = shipmentRepository;
     }
 
@@ -73,34 +75,35 @@ public class ShopifyFulfillmentPushService {
                     long shopifyOrderId = Long.parseLong(order.getExternalId());
                     List<NxShipment> shipments = shipmentRepository.findByOrderId(order.getId());
 
-                    for (NxShipment shipment : shipments) {
-                        if (shipment.getTrackingNumber() == null) continue;
-
-                        List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
-
-                        Map<String, Object> fulfillmentData = new HashMap<>();
-                        fulfillmentData.put("tracking_number", shipment.getTrackingNumber());
-                        fulfillmentData.put("tracking_url", shipment.getLabelUrl());
-                        fulfillmentData.put("notify_customer", true);
-
-                        if (shipment.getCarrierId() != null) {
-                            fulfillmentData.put("tracking_company", shipment.getCarrierId());
+                    // Guard: skip if Shopify already reports the order fulfilled
+                    try {
+                        JsonNode shopifyOrder = shopifyClient.getOrderById(shopDomain, accessToken, shopifyOrderId);
+                        JsonNode orderNode = shopifyOrder != null ? shopifyOrder.get("order") : null;
+                        if (orderNode != null && "fulfilled".equals(orderNode.path("fulfillment_status").asText(null))) {
+                            log.info("Order {} already fulfilled in Shopify, skipping", shopifyOrderId);
+                            continue;
                         }
+                    } catch (Exception e) {
+                        log.warn("Failed to fetch Shopify order {}: {}", shopifyOrderId, e.getMessage());
+                    }
 
-                        List<Map<String, Object>> lineItems = new ArrayList<>();
-                        for (NxOrderItem item : items) {
-                            Map<String, Object> li = new HashMap<>();
-                            li.put("quantity", item.getQuantity());
-                            lineItems.add(li);
-                        }
-                        fulfillmentData.put("line_items", lineItems);
-
-                        shopifyClient.createFulfillment(shopDomain, accessToken, shopifyOrderId,
-                                Map.of("fulfillment", fulfillmentData));
+                    if (shipments.isEmpty()) {
+                        // No shipment record — fall back to tracking captured on the order itself
+                        if (order.getTrackingNumber() == null) continue;
+                        pushFulfillment(shopDomain, accessToken, shopifyOrderId,
+                                order.getTrackingNumber(), order.getLabelUrl(), order.getCarrierId());
                         succeeded++;
+                    } else {
+                        for (NxShipment shipment : shipments) {
+                            if (shipment.getTrackingNumber() == null) continue;
+                            pushFulfillment(shopDomain, accessToken, shopifyOrderId,
+                                    shipment.getTrackingNumber(), shipment.getLabelUrl(), shipment.getCarrierId());
+                            succeeded++;
+                        }
                     }
                     processed++;
                 } catch (Exception e) {
+                    log.error("Fulfillment push failed for order {}: {}", order.getId(), e.getMessage(), e);
                     failed++;
                     processed++;
                 }
@@ -132,6 +135,53 @@ public class ShopifyFulfillmentPushService {
                 .itemsSucceeded(succeeded)
                 .itemsFailed(failed)
                 .build();
+    }
+
+    private void pushFulfillment(String shopDomain, String accessToken, long shopifyOrderId,
+                                 String trackingNumber, String trackingUrl, String carrierId) {
+        JsonNode foResponse = shopifyClient.getOrderFulfillmentOrders(shopDomain, accessToken, shopifyOrderId);
+        JsonNode fulfillmentOrders = foResponse != null ? foResponse.get("fulfillment_orders") : null;
+        if (fulfillmentOrders == null || !fulfillmentOrders.isArray() || fulfillmentOrders.isEmpty()) {
+            throw new BadRequestException("No fulfillment orders found for Shopify order " + shopifyOrderId);
+        }
+
+        List<Map<String, Object>> byFulfillmentOrder = new ArrayList<>();
+        for (JsonNode fo : fulfillmentOrders) {
+            if (!"open".equals(fo.path("status").asText())) continue;
+
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("fulfillment_order_id", fo.get("id").asLong());
+
+            JsonNode foLineItems = fo.get("line_items");
+            List<Map<String, Object>> foItems = new ArrayList<>();
+            if (foLineItems != null && foLineItems.isArray()) {
+                for (JsonNode li : foLineItems) {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", li.get("id").asLong());
+                    m.put("quantity", li.has("quantity") ? li.get("quantity").asInt() : 1);
+                    foItems.add(m);
+                }
+            }
+            entry.put("fulfillment_order_line_items", foItems);
+            byFulfillmentOrder.add(entry);
+        }
+
+        if (byFulfillmentOrder.isEmpty()) {
+            throw new BadRequestException("No open fulfillment orders for Shopify order " + shopifyOrderId);
+        }
+
+        Map<String, Object> trackingInfo = new HashMap<>();
+        trackingInfo.put("number", trackingNumber);
+        if (trackingUrl != null) trackingInfo.put("url", trackingUrl);
+        if (carrierId != null) trackingInfo.put("company", carrierId);
+
+        Map<String, Object> fulfillment = new HashMap<>();
+        fulfillment.put("line_items_by_fulfillment_order", byFulfillmentOrder);
+        fulfillment.put("tracking_info", trackingInfo);
+        fulfillment.put("notify_customer", true);
+
+        log.info("Pushing fulfillment for Shopify order {} with tracking {}", shopifyOrderId, trackingNumber);
+        shopifyClient.createFulfillment(shopDomain, accessToken, Map.of("fulfillment", fulfillment));
     }
 
     private void updateSyncConfig(UUID storeId, String syncType, String status, int processed, int succeeded, int failed, List<String> errors) {

@@ -58,7 +58,7 @@ public class BigCommerceProductSyncService {
             if (products != null && products.isArray()) {
                 for (JsonNode product : products) {
                     try {
-                        int bcProductId = product.get("id").asInt();
+                        long bcProductId = product.get("id").asLong();
                         String bcSku = product.has("sku") ? product.get("sku").asText() : "";
                         String name = product.has("name") ? product.get("name").asText() : "";
 

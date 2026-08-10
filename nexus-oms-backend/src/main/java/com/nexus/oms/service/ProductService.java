@@ -7,6 +7,7 @@ import com.nexus.oms.security.TenantContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +25,20 @@ public class ProductService {
         return productRepository.findAll().stream()
                 .filter(p -> p.getTenantId().equals(TenantContext.getCurrentTenantId()))
                 .toList();
+    }
+
+    public List<Product> searchProducts(String query, String category, BigDecimal minPrice, BigDecimal maxPrice, Boolean active) {
+        return productRepository.search(
+                TenantContext.getCurrentTenantId(),
+                normalize(query),
+                normalize(category),
+                minPrice,
+                maxPrice,
+                active);
+    }
+
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     @Cacheable(value = "products", key = "#id")
