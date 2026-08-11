@@ -10,6 +10,7 @@ import com.nexus.oms.security.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -143,21 +144,17 @@ public class AutomationService {
         command.setSentAt(LocalDateTime.now());
         command = commandRepository.save(command);
 
-        long ackDelay = 50 + new Random().nextInt(200);
         command.setStatus("ACKNOWLEDGED");
         command.setAcknowledgedAt(LocalDateTime.now());
         command = commandRepository.save(command);
 
         addSystemLog(systemId, command.getId(), "INFO", "COMMAND_ACK",
-                "Command " + command.getCommandType() + " acknowledged");
+                "Command " + command.getCommandType() + " acknowledged (simulated)");
 
         command.setStatus("COMPLETED");
         command.setCompletedAt(LocalDateTime.now());
-        command.setExecutionTimeMs(command.getCompletedAt().getNano() / 1_000_000L - command.getSentAt().getNano() / 1_000_000L);
-        if (command.getExecutionTimeMs() <= 0) {
-            command.setExecutionTimeMs(ackDelay + 100L + new Random().nextInt(500));
-        }
-        command.setResult("{\"success\":true,\"message\":\"Command executed successfully\"}");
+        command.setExecutionTimeMs(elapsedMs(command.getSentAt(), command.getCompletedAt()));
+        command.setResult("{\"success\":true,\"message\":\"Command executed successfully\",\"simulated\":true}");
         command = commandRepository.save(command);
 
         addSystemLog(systemId, command.getId(), "INFO", "COMMAND_COMPLETE",
@@ -244,11 +241,15 @@ public class AutomationService {
 
         retry.setStatus("COMPLETED");
         retry.setCompletedAt(LocalDateTime.now());
-        retry.setExecutionTimeMs(100L + new Random().nextInt(500));
-        retry.setResult("{\"success\":true,\"message\":\"Retry executed successfully\"}");
+        retry.setExecutionTimeMs(elapsedMs(retry.getSentAt(), retry.getCompletedAt()));
+        retry.setResult("{\"success\":true,\"message\":\"Retry executed successfully\",\"simulated\":true}");
         retry = commandRepository.save(retry);
 
         return retry;
+    }
+
+    private long elapsedMs(LocalDateTime start, LocalDateTime end) {
+        return start != null && end != null ? Math.max(0, Duration.between(start, end).toMillis()) : 0;
     }
 
     public Map<String, Object> getCommandStats(UUID warehouseId) {

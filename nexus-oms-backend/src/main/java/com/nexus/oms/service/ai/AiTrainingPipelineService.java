@@ -23,7 +23,6 @@ public class AiTrainingPipelineService {
     private final AiTrainingJobRepository trainingJobRepository;
     private final AiModelRepository modelRepository;
     private final AiModelVersionRepository versionRepository;
-    private final Random random = new Random();
 
     public AiTrainingPipelineService(AiTrainingJobRepository trainingJobRepository,
                                       AiModelRepository modelRepository,
@@ -82,21 +81,31 @@ public class AiTrainingPipelineService {
         job.setStatus("COMPLETED");
         job.setCompletedAt(LocalDateTime.now());
 
-        Number accuracy = (Number) results.getOrDefault("accuracy", 0.85 + random.nextDouble() * 0.14);
-        Number precision = (Number) results.getOrDefault("precision", 0.80 + random.nextDouble() * 0.15);
-        Number recall = (Number) results.getOrDefault("recall", 0.78 + random.nextDouble() * 0.17);
-        Number f1 = (Number) results.getOrDefault("f1Score", 0.82 + random.nextDouble() * 0.13);
-        Number loss = (Number) results.getOrDefault("loss", 0.1 + random.nextDouble() * 0.5);
+        boolean hasRealMetrics = hasMetric(results, "accuracy") || hasMetric(results, "precision")
+                || hasMetric(results, "recall") || hasMetric(results, "f1Score") || hasMetric(results, "loss");
 
-        job.setAccuracy(BigDecimal.valueOf(accuracy.doubleValue()));
-        job.setPrecision(BigDecimal.valueOf(precision.doubleValue()));
-        job.setRecall(BigDecimal.valueOf(recall.doubleValue()));
-        job.setF1Score(BigDecimal.valueOf(f1.doubleValue()));
-        job.setLoss(BigDecimal.valueOf(loss.doubleValue()));
-        job.setDriftScore(BigDecimal.valueOf(random.nextDouble() * 0.1));
-        job.setEpochs((Integer) results.getOrDefault("epochs", 10 + random.nextInt(40)));
-        job.setDatasetSize((Integer) results.getOrDefault("datasetSize", 10000 + random.nextInt(90000)));
-        job.setDurationSeconds((Integer) results.getOrDefault("durationSeconds", 300 + random.nextInt(2700)));
+        if (hasRealMetrics) {
+            job.setAccuracy(toDecimal(results.get("accuracy")));
+            job.setPrecision(toDecimal(results.get("precision")));
+            job.setRecall(toDecimal(results.get("recall")));
+            job.setF1Score(toDecimal(results.get("f1Score")));
+            job.setLoss(toDecimal(results.get("loss")));
+            job.setDriftScore(toDecimal(results.get("driftScore")));
+            job.setMetricsSource("REAL");
+        } else {
+            job.setAccuracy(null);
+            job.setPrecision(null);
+            job.setRecall(null);
+            job.setF1Score(null);
+            job.setLoss(null);
+            job.setDriftScore(null);
+            job.setMetricsSource("NO_METRICS");
+            log.warn("Training job {} completed without real evaluation metrics; marked NO_METRICS", jobId);
+        }
+
+        job.setEpochs(toInt(results.get("epochs")));
+        job.setDatasetSize(toInt(results.get("datasetSize")));
+        job.setDurationSeconds(toInt(results.get("durationSeconds")));
 
         AiTrainingJob saved = trainingJobRepository.save(job);
 
@@ -104,25 +113,41 @@ public class AiTrainingPipelineService {
         if (model != null) {
             model.setStatus("ACTIVE");
 
-            AiModelVersion version = AiModelVersion.builder()
-                    .modelId(model.getId())
-                    .version("v" + (versionRepository.countByModelId(model.getId()) + 1) + ".0.0")
-                    .accuracy(job.getAccuracy())
-                    .precision(job.getPrecision())
-                    .recall(job.getRecall())
-                    .f1Score(job.getF1Score())
-                    .status("VALIDATING")
-                    .trainingJobId(jobId)
-                    .createdBy(TenantContext.getCurrentUsername())
-                    .build();
-            versionRepository.save(version);
+            if (hasRealMetrics) {
+                AiModelVersion version = AiModelVersion.builder()
+                        .modelId(model.getId())
+                        .version("v" + (versionRepository.countByModelId(model.getId()) + 1) + ".0.0")
+                        .accuracy(job.getAccuracy())
+                        .precision(job.getPrecision())
+                        .recall(job.getRecall())
+                        .f1Score(job.getF1Score())
+                        .status("VALIDATING")
+                        .trainingJobId(jobId)
+                        .createdBy(TenantContext.getCurrentUsername())
+                        .build();
+                versionRepository.save(version);
 
-            model.setCurrentVersion(version.getVersion());
+                model.setCurrentVersion(version.getVersion());
+                log.info("Training job {} completed. New version {} created.", jobId, version.getVersion());
+            } else {
+                log.warn("Training job {} completed without metrics; no model version recorded.", jobId);
+            }
             modelRepository.save(model);
-            log.info("Training job {} completed. New version {} created.", jobId, version.getVersion());
         }
 
         return saved;
+    }
+
+    private boolean hasMetric(Map<String, Object> results, String key) {
+        return results.containsKey(key) && results.get(key) != null;
+    }
+
+    private BigDecimal toDecimal(Object value) {
+        return value instanceof Number ? BigDecimal.valueOf(((Number) value).doubleValue()) : null;
+    }
+
+    private Integer toInt(Object value) {
+        return value instanceof Number ? ((Number) value).intValue() : null;
     }
 
     @Transactional

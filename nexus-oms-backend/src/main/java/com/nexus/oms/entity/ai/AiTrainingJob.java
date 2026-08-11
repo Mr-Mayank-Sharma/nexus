@@ -30,6 +30,7 @@ public class AiTrainingJob {
     @PositiveOrZero private java.math.BigDecimal f1Score;
     @PositiveOrZero private java.math.BigDecimal loss;
     @PositiveOrZero private java.math.BigDecimal driftScore;
+    @Column(columnDefinition = "TEXT") private String metricsSource;
     @Positive private Integer epochs;
     @PositiveOrZero private Integer datasetSize;
     @PositiveOrZero private Integer durationSeconds;

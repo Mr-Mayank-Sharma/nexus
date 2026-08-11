@@ -23,7 +23,6 @@ public class AiRuleEngineService {
     private final LlmChatService llmChatService;
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
-    private final Random random = new Random();
 
     public AiRuleEngineService(AiRuleFallbackRepository fallbackRepository,
                                 AiModelRepository modelRepository,
@@ -136,9 +135,40 @@ public class AiRuleEngineService {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("strategy", "historical_average");
         result.put("lookbackDays", 90);
-        result.put("computedValue", 100 + random.nextInt(500));
+        result.put("computedValue", computeFormulaValue(config, input));
         result.put("confidence", new BigDecimal("0.60"));
         return result;
+    }
+
+    private double computeFormulaValue(String config, Map<String, Object> input) {
+        double multiplier = 1.0;
+        Double base = null;
+        if (config != null && !config.isBlank()) {
+            try {
+                JsonNode node = objectMapper.readTree(config);
+                if (node.has("multiplier") && node.get("multiplier").isNumber()) {
+                    multiplier = node.get("multiplier").asDouble(1.0);
+                }
+                if (node.has("baseValue") && node.get("baseValue").isNumber()) {
+                    base = node.get("baseValue").asDouble();
+                }
+                if (base == null && node.has("feature") && node.get("feature").isTextual()) {
+                    String feature = node.get("feature").asText();
+                    if (input.get(feature) instanceof Number) {
+                        base = ((Number) input.get(feature)).doubleValue();
+                    }
+                }
+            } catch (Exception e) {
+                log.debug("Unparseable formula config '{}', falling back to input-derived value", config);
+            }
+        }
+        if (base == null && input.get("historicalAverage") instanceof Number) {
+            base = ((Number) input.get("historicalAverage")).doubleValue();
+        }
+        if (base == null) {
+            base = 100.0;
+        }
+        return Math.round(base * multiplier * 100.0) / 100.0;
     }
 
     private Map<String, Object> applyLookup(String config, Map<String, Object> input) {
@@ -151,10 +181,31 @@ public class AiRuleEngineService {
     }
 
     private Map<String, Object> applyThreshold(String config, Map<String, Object> input) {
+        double threshold = 0.5;
+        if (config != null && !config.isBlank()) {
+            try {
+                JsonNode node = objectMapper.readTree(config);
+                if (node.has("threshold") && node.get("threshold").isNumber()) {
+                    threshold = node.get("threshold").asDouble(0.5);
+                }
+            } catch (Exception e) {
+                log.debug("Unparseable threshold config '{}', using default threshold", config);
+            }
+        }
+
+        double orderValue = input.get("orderValue") instanceof Number
+                ? ((Number) input.get("orderValue")).doubleValue() : 0;
+        int itemCount = input.get("itemCount") instanceof Number
+                ? ((Number) input.get("itemCount")).intValue() : 1;
+
+        double riskScore = Math.min(1.0, (orderValue / 10000.0) * 0.7 + (Math.min(itemCount, 50) / 50.0) * 0.3);
+        riskScore = Math.round(riskScore * 100.0) / 100.0;
+        boolean isAnomaly = riskScore >= threshold;
+
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("isAnomaly", false);
-        result.put("riskScore", 0.1 + random.nextDouble() * 0.3);
-        result.put("severity", "LOW");
+        result.put("isAnomaly", isAnomaly);
+        result.put("riskScore", riskScore);
+        result.put("severity", isAnomaly ? (riskScore >= 0.8 ? "HIGH" : "MEDIUM") : "LOW");
         result.put("confidence", new BigDecimal("0.75"));
         return result;
     }
