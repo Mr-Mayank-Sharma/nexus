@@ -4,6 +4,22 @@
 
 ---
 
+## 0. Start Here — Plain-English map of the machine 🏗️
+
+Think of Nexus as a **restaurant with 4 floors**:
+
+- **Floor 1 — The counter (Frontend):** where customers and staff see everything. In a restaurant, this is the menu, the order tickets, the kitchen screens.
+- **Floor 2 — The kitchen (Backend):** where all the real cooking happens. The chefs are the 63 "controllers" and 50+ "services". They receive a ticket (request) and produce the food (data).
+- **Floor 3 — The pantry (Database & caches):** where all ingredients live — Postgres is the big fridge (everything saved permanently), Redis is the counter-side tray (things we grab fast, like today's special), Kafka is the kitchen bell system (announcements that different teams listen to).
+- **Floor 4 — The robot friends (AI services):** `ai-ops` cooks smarter (optimizes operations) and `ai-intel` writes the daily summary for the boss.
+- **Security guard at the door (RBAC):** checks your ID (JWT) and your badge (role) before letting you in — and only into the rooms you're allowed.
+
+Every floor talks to the others using agreed "languages" (HTTP/JSON for requests, STOMP/WebSocket for live updates). Everything is monitored by **cameras** (Prometheus + Grafana).
+
+> 🧒 **Kid translation:** Frontend = the screens. Backend = the brain. Database = the memory. Kafka = the walkie-talkie. Redis = the speed rack. AI = the smart helpers. RBAC = the security guard.
+
+---
+
 ## 1. System Overview
 
 Nexus OMS is a **cloud-native, multi-tenant** commerce-to-dispatch platform with a Java/Spring Boot backend, a React SPA frontend, and a compose-deployed infrastructure of PostgreSQL, Redis, Kafka, Prometheus and Grafana, plus two purpose-built AI services (`ai-ops`, `ai-intel`).
@@ -42,48 +58,49 @@ Nexus OMS is a **cloud-native, multi-tenant** commerce-to-dispatch platform with
 
 ## 2. Technology Stack
 
+> 🧒 **Kid translation of "stack":** The pile of tools we used to build everything — like the wood, nails, paint and robot arms used to build the clubhouse.
+
 ### 2.1 Backend (`nexus-oms-backend`)
 
-| Concern | Technology |
-|---|---|
-| Runtime | Java **17**, Spring Boot 3 (spring-boot-starter-parent) |
-| Web | spring-boot-starter-web (REST), spring-boot-starter-websocket (STOMP) |
-| Data | spring-boot-starter-data-jpa, PostgreSQL (`postgresql`), Flyway (`flyway-core` + `flyway-database-postgresql`) |
-| Security | spring-boot-starter-security, **jjwt** (api/impl/jackson) JWT |
-| Messaging | **spring-kafka** (event bus / async integrations) |
-| Caching | spring-boot-starter-data-redis + spring-boot-starter-cache (60s RBAC permission cache) |
-| Cross-cutting | spring-boot-starter-aop (aspects), spring-boot-starter-validation, Resilience4j (`resilience4j-spring-boot3`) circuit breakers |
-| AI/Docs | springdoc-openapi (Swagger UI), jackson-databind + jsr310 |
-| Files/Reporting | Apache POI (`poi-ooxml` Excel), PDFBox (PDF), iText/SAAJ (`saaj-impl` SOAP) |
-| Observability | actuator, micrometer-tracing-bridge-brave, micrometer-registry-prometheus, logstash-logback-encoder |
-| Boilerplate | Lombok |
+| Concern | Technology | Plain-English job |
+|---|---|---|
+| Runtime | Java 17, Spring Boot 3 | The engine that runs the kitchen |
+| Web | spring-boot-starter-web, spring-boot-starter-websocket | The doorbell + the intercom (REST + live chat) |
+| Data | spring-boot-starter-data-jpa, PostgreSQL, Flyway | The fridge + recipe book that records every schema change |
+| Security | spring-boot-starter-security, jjwt | The guard + ID cards (JWT) |
+| Messaging | spring-kafka | The walkie-talkie between teams |
+| Caching | spring-boot-starter-data-redis + cache | The speed rack for things fetched often |
+| Cross-cutting | AOP, Validation, Resilience4j | The toolbox: seatbelts, rules, checks |
+| AI/Docs | springdoc-openapi, jackson | The map book (API docs) + the translator (JSON) |
+| Files/Reports | Apache POI, PDFBox, SAAJ | The printer (Excel, PDF, SOAP) |
+| Observability | actuator, micrometer, logstash, brave | The cameras and CCTV |
+| Boilerplate | Lombok | The robot that writes boring repetitive code for us |
 
 ### 2.2 Frontend (`nexus-oms-frontend`)
 
-| Concern | Technology |
-|---|---|
-| Framework | React 18 + TypeScript, Vite build (`tsc && vite build`), port 3000 |
-| Routing | react-router-dom v6, **hash-based** router, lazy-loaded routes |
-| Data | axios, @tanstack/react-query v5 |
-| Realtime | @stomp/stompjs + sockjs-client (STOMP over SockJS) |
-| UI | Tailwind + tailwind-merge + tailwindcss-animate, Radix primitives (dialog, dropdown, select, tabs), class-variance-authority + clsx, lucide-react icons |
-| Charts | recharts |
-| Sanitization | dompurify |
-| Tests | vitest (unit + coverage scripts) |
+| Concern | Technology | Plain-English job |
+|---|---|---|
+| Framework | React 18 + TypeScript, Vite | The screens + paint, Vite = fast paint brush |
+| Routing | react-router-dom v6 (hash) | The signposts between pages |
+| Data | axios, @tanstack/react-query | The courier + smart inbox (caches answers) |
+| Realtime | @stomp/stompjs + sockjs | Live "ticket arrived" updates |
+| UI | Tailwind, Radix, cva, clsx, lucide | The furniture and decorations |
+| Charts | recharts | The graphs |
+| Sanitization | dompurify | The filter that blocks dangerous messages |
+| Tests | vitest | The practice quizzes |
 
 ### 2.3 Infrastructure (docker-compose)
 
-| Service | Image/Purpose |
+| Service | Plain-English job |
 |---|---|
-| `postgres` | Primary OLTP database (volumes: postgres-data) |
-| `redis` | Cache + rate-limit backing store (redis-data) |
-| `kafka` | Async event bus / integration ingestion (kafka-data) |
-| `backend` | Spring Boot app (compiled from `nexus-oms-backend`) |
-| `frontend` | Served React SPA |
-| `ai-ops` | Operational AI service (training, rules, automation) |
-| `ai-intel` | Intelligence/briefing AI service |
-| `prometheus` / `grafana` | Metrics collection + dashboards (prometheus-data, grafana-data) |
-| Network | `nexus-network` bridge for all services |
+| `postgres` | The big permanent fridge |
+| `redis` | The fast counter tray |
+| `kafka` | The announcement speaker system |
+| `backend` | The main kitchen |
+| `frontend` | The screens at the counter |
+| `ai-ops` | Robot that optimizes operations |
+| `ai-intel` | Robot that writes boss briefings |
+| `prometheus`/`grafana` | Cameras + control-room dashboards |
 
 ---
 
@@ -108,21 +125,27 @@ Nexus OMS is a **cloud-native, multi-tenant** commerce-to-dispatch platform with
 └─────────────────────────────────────────────────────────────┘
 ```
 
+> 🍕 **Real life analogy — ordering a pizza through the layers:**
+> 1. **Controller** = the waiter who takes your order at the counter ("I'll have a pepperoni").
+> 2. **Service** = the head chef who decides *how* to make it ("grab dough, add sauce, add cheese, bake 8 min").
+> 3. **Domain (entities)** = the actual ingredients — dough, sauce, cheese, pizza box — each with a name tag.
+> 4. **Infrastructure** = the fridge (Postgres), the speed rack (Redis), and the bell to call the delivery team (Kafka).
+
 ### 3.1 Cross-cutting services
 
-| Service | Responsibility |
-|---|---|
-| `PermissionService` | 39 `PATH_TO_RESOURCE` mappings; role-permission lookup from `nx_role_permissions` (tenant+role), 60s cache, **allow-by-default** semantics |
-| `PermissionAuthorizationFilter` | Pre-authorization filter resolving path→resource→permission before controllers |
-| `AuthService` | Login, JWT issuance, `ALLOWED_ROLES` (14 roles) |
-| `ImportTokenService` | Signed, expiring tokens for bulk import endpoints (idempotency + tamper-evidence) |
-| `GenericImportService` / `ImportExportEngine` | CSV/Excel/JSON import + export pipeline |
-| `EventBus` | In-process + Kafka-backed domain event publishing |
-| `CredentialVault` | Encrypted storage of external-connector credentials |
+| Service | Responsibility | Plain-English |
+|---|---|---|
+| `PermissionService` | 39 path→resource mappings; role-permission lookup, 60s cache, allow-by-default | The list that says *which key opens which door* |
+| `PermissionAuthorizationFilter` | Resolves path→resource→permission before controllers | The guard checking keys before you enter |
+| `AuthService` | Login, JWT issuance, `ALLOWED_ROLES` (14 roles) | The ID-card office |
+| `ImportTokenService` | Signed, expiring tokens for bulk import | The signed permission slip for big deliveries |
+| `GenericImportService`/`ImportExportEngine` | CSV/Excel/JSON import + export | The bulk-copy machine |
+| `EventBus` | In-process + Kafka-backed domain events | The announcement system |
+| `CredentialVault` | Encrypted storage of external-connector credentials | The locked safe for passwords to other systems |
 
 ---
 
-## 4. Integration Hub (iPaaS-lite)
+## 4. Integration Hub (iPaaS-lite) 🔌
 
 Path: `integration/`
 
@@ -157,15 +180,17 @@ integration/
 └── dto/            ConnectorConfig · SyncResult · IntegrationEvent
 ```
 
+> 🧒 **Kid translation:** The Integration Hub is like a **universal plug adapter**. Each store (Shopify, Amazon…) speaks its own "language" (REST, SOAP, EDI…). Nexus has one plug per language and one plug per store — so any store can connect without us rebuilding the kitchen.
+
 **Design principles**
-- One `Connector` interface; adapters translate protocol differences (REST/SOAP/GraphQL/EDI).
-- Credentials never leave `CredentialVault`; secrets are encrypted at rest.
+- One `Connector` interface; adapters translate protocol differences.
+- Credentials never leave `CredentialVault`; secrets encrypted at rest.
 - `EventBus` decouples ingestion (webhook/poll/batch) from processing (Kafka).
-- Every connector exposes `ConnectorHealth` for the Integration Hub dashboard.
+- Every connector exposes `ConnectorHealth` for the hub dashboard (like a doctor's check-up per plug).
 
 ---
 
-## 5. AI Platform Architecture
+## 5. AI Platform Architecture 🤖
 
 ```
                     ┌──────────────────────────────────────────┐
@@ -186,6 +211,13 @@ integration/
                     └──────────────────────────────────────────┘
 ```
 
+> 🎓 **Real life example — teaching a robot to guess sales:**
+> 1. **Collect** (features/dataset): "Last 12 months, sold 100 hoodies in Jan, 40 in Feb, 130 in Dec…"
+> 2. **Train** (`AiTrainingJob`): the robot studies the pattern (winter = more hoodies).
+> 3. **Evaluate**: we measure how close the robot's guesses are. **If we have no real test data, we say `NO_METRICS` — we never invent the score.** ✅ (This is the Phase 2.5 honesty promise.)
+> 4. **Register/Deploy**: the approved robot goes to work.
+> 5. **Monitor**: if the real world stops matching ("everyone now buys crop tops"), drift detection switches to **safe rules** until retrained.
+
 ### 5.1 Honesty model (Phase 2.5)
 - **`AiTrainingJob.metricsSource`** (`V52`): `REAL` / `NO_METRICS` — no fabricated training metrics.
 - **Deterministic fallbacks**: `AiRuleEngineService` computes formula values and thresholds from real order input + config with documented defaults (no `Random`).
@@ -200,7 +232,7 @@ collect → prepare → train (job) → evaluate (real metrics) → register (mo
 
 ---
 
-## 6. Security Architecture
+## 6. Security Architecture 🔐
 
 ```
  Request → PermissionAuthorizationFilter (path→resource→permission)
@@ -210,46 +242,53 @@ collect → prepare → train (job) → evaluate (real metrics) → register (mo
   Frontend: ProtectedRoute (auth) → PermissionGate (resource+action) → page
 ```
 
-- **RBAC**: 14 roles (`ALLOWED_ROLES`), role↔permission rows in `nx_role_permissions`, tenant-scoped.
-- **Authorization model**: `PermissionService.PATH_TO_RESOURCE` (39 mappings) maps URL paths to `resource:action` pairs; first-prefix-match wins; `*:*` wildcard for ADMIN; **allow-by-default** when no mapping matches (documented trade-off, see `06-BUSINESS-FLOW-RBAC.md`).
-- **Multi-tenancy**: every entity carries tenant scope; queries filter by tenant.
+> 🧒 **Kid translation:** It's like a school with a **security guard**.
+> 1. You show your ID card (JWT) — *proves who you are*.
+> 2. The guard checks his big list — *which rooms may you enter?* (role → resource → action)
+> 3. You enter only allowed rooms (data is also filtered to *your* school only — tenant scoping).
+
+- **RBAC**: 14 roles, role↔permission rows in `nx_role_permissions`, tenant-scoped.
+- **Authorization model**: `PermissionService.PATH_TO_RESOURCE` (39 mappings), first-prefix-match, `*:*` for ADMIN, **allow-by-default** (documented trade-off — see `06-BUSINESS-FLOW-RBAC.md`).
+- **Multi-tenancy**: every entity carries tenant scope.
 - **Import security**: signed import tokens with expiry; idempotency keys.
-- **External credentials**: encrypted `CredentialVault`; Okta SSO connector; MFA-ready.
+- **External credentials**: encrypted `CredentialVault`; Okta SSO; MFA-ready.
 
 ---
 
 ## 7. Data & Messaging
 
-| Store | Use |
-|---|---|
-| PostgreSQL | System of record; Flyway migrations `V1…V52`; JPA-managed |
-| Redis | Cache (RBAC permissions 60s, hot lookups), session-adjacent state |
-| Kafka | Domain events, integration ingestion, async automation (resilient via Resilience4j) |
-| In-memory/WS | STOMP push of live order/shipment/notification updates |
+| Store | Use | Plain-English |
+|---|---|---|
+| PostgreSQL | System of record; Flyway `V1…V52`; JPA | The permanent fridge |
+| Redis | Cache (RBAC 60s, hot lookups) | The speed rack |
+| Kafka | Domain events, integration ingestion, async automation | The walkie-talkie network |
+| In-memory/WS | STOMP push of live updates | Live "order just arrived" screen refreshes |
 
 ### 7.1 Concurrency & idempotency
-- Version/optimistic-locking patterns on mutable aggregates (orders, training jobs).
+- Optimistic locking on mutable aggregates (orders, training jobs).
 - Import token + idempotency keys deduplicate bulk loads.
 - Retry with backoff for Kafka consumers and connector calls (circuit breakers).
+
+> 🧒 **Kid translation of idempotency:** If the delivery person rings the bell twice, the kitchen should not cook the pizza twice. Idempotency = "same message twice = only one pizza." 🍕
 
 ---
 
 ## 8. Frontend Architecture
 
 - **Entry** `src/main.tsx` → `App.tsx` defines HashRouter + lazy `Route` elements wrapped in `ProtectedRoute` + `AppLayout`.
-- **Guards**: `ProtectedRoute` (authenticated), `PermissionGate` (resource+action; **caveat**: 6 pages pass a non-functional `permission` prop — see G2 in `01-CURRENT-STATE.md`), legacy unused `RoleProtectedRoute`.
+- **Guards**: `ProtectedRoute` (authenticated), `PermissionGate` (resource+action; **caveat G2**: 6 pages pass a non-functional `permission` prop), legacy unused `RoleProtectedRoute`.
 - **API layer**: typed clients per domain in `src/api/`; `src/types/index.ts` mirrors backend DTOs.
-- **State**: React Query server-state caching; STOMP subscription for realtime updates.
-- **Charts/UX**: recharts for analytics; Radix + Tailwind for components; LaunchPad groups navigation by role.
+- **State**: React Query server-state caching; STOMP subscription for realtime.
+- **Charts/UX**: recharts; Radix + Tailwind; LaunchPad groups navigation by role.
 
 ---
 
-## 9. Deployment Topology
+## 9. Deployment Topology 🚀
 
-- **docker-compose** single-file topology (dev/self-hosted): all services on `nexus-network`.
-- Health: Spring Actuator `/actuator/health`, Prometheus scrape, Grafana dashboards.
-- **Frontend build**: `tsc && vite build` (type-check enforced at build).
-- **Backend build**: Java 17 required (`JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64`); tests currently blocked (see §6 of CURRENT-STATE).
+- **docker-compose** single-file topology: all services on `nexus-network`.
+- Health: Actuator `/actuator/health`, Prometheus scrape, Grafana dashboards.
+- **Frontend build**: `tsc && vite build` (type-check enforced).
+- **Backend build**: Java 17 required; tests currently blocked (see §6 of CURRENT-STATE).
 
 ---
 

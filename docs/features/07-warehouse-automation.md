@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 🏗️
+
+**Warehouse** is the *building where the magic happens*. Nexus keeps a digital model of it (zones, bins, machines, people) so it can plan where to put things (slotting), how many people you need (labor), and control the machines (automation) — while being honest about what the machines actually did.
+
+> 🏭 **Real life example — where does the hoodie live?**
+> Slotters learn that hoodies sell fast → `NxSlottingRule` says "put them in the front aisle." An `NxEngineeredStandard` says a picker handles 40 items/hour → Nexus schedules 5 pickers for a 200-item wave. A conveyor command is sent and its **real** completion time is recorded (never a made-up one).
+
 ## Overview
 Warehouse master data (zones, bins, equipment, staff), engineered labor standards, slotting, workload rules, productivity logging and command/control of automation systems (conveyor, AGV, ASRS). Also covers alerts and notifications.
 
@@ -57,3 +64,5 @@ Tables: `nx_warehouses` · `nx_warehouse_zones` · `nx_warehouse_bins` · `nx_wa
 ## Integrity notes
 - Automation commands record **real elapsed time** and an explicit **`simulated`** flag — no fabricated execution metrics (Phase 2.5).
 - Slotting changes are audited (`NxSlottingAudit`) for traceability.
+
+> 🧒 **Kid translation of the simulated flag:** The robot can *practice* (simulated) without it counting as real work. When it actually moves boxes, the stopwatch is real. Nobody fakes the robot's gym score.

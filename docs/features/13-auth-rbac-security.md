@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md). Authoritative access matrix: [`06-BUSINESS-FLOW-RBAC.md`](../06-BUSINESS-FLOW-RBAC.md).
 
+## Start here 🔐
+
+**Security** is the *locks and guards* of Nexus. The core rule is RBAC: **the badge you wear decides the doors you can open.** Everyone logs in with a badge (JWT), a guard checks the badge on every single request, and sensitive actions are written into the logbook.
+
+> 🏫 **Real life analogy — the school:**
+> The Principal (ADMIN) opens everything. A student (VIEWER) can only watch. A janitor (PICKER) can enter storage but not the money room. Nexus checks the badge at **every door, every time** — not just at the front gate.
+
 ## Overview
 JWT-based authentication, 14-role RBAC enforced server-side via a path→resource→permission filter, tenant scoping on all data, signed import tokens, encrypted credential vault and SSO/MFA readiness.
 
@@ -61,3 +68,5 @@ Tables: `nx_users` · `nx_user_roles` · `nx_role_permissions` · `nx_teams` · 
 ## Integrity notes
 - Credentials hashed (bcrypt-style via `PasswordEncoder`); JWT stateless; external keys in encrypted vault.
 - 60s permission cache is tenant-scoped — role changes propagate within a minute.
+
+> 🧒 **Kid translation of the "allow-by-default" warning:** Today, if a brand-new door has no name in the guard's book, the guard lets people through. That's fast for building, but before the big launch we flip it to: **no name in the book = nobody enters.**

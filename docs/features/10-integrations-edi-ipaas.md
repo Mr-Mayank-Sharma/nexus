@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 🔌
+
+**Integrations** are the *doors and windows of Nexus*: they let Shopify, Amazon, QuickBooks, FedEx and hundreds of other systems talk to your OMS in their own language. Nexus translates every message, and — crucially — **never lets a message get lost**. Bad letters go to the "can't read" bin (DLQ), not the trash.
+
+> 📬 **Real life analogy — the mail room:**
+> Every system is a pen-pal writing in its own language. The mail room (Integration Hub) opens each letter (connector), translates it (DataMapper), checks the address (validation). Good letters reach the kitchen (EventBus). Unreadable ones sit in the **"can't read" bin (DLQ)** where ops can fix and resend them — never silently dropped.
+
 ## Overview
 The connectivity layer: store connectors, protocol adapters (REST/SOAP/GraphQL/EDI), webhooks, batch jobs, transform/validation flows, sync configs and a DLQ. Also email order ingestion and change-data-capture.
 
@@ -56,6 +63,8 @@ Tables: `nx_integration_stores` · `nx_integration_store_settings` · `nx_integr
 | Integration view | CEO (view) |
 
 ## Integrity notes
-- Credentials live in the encrypted `CredentialVault`, never in config/DTOs.
+- Credentials live in the encrypted `CredentialVault`, never in config/DTOs — passwords are kept in the safe.
 - Idempotent sync keyed by `channel_order_id`; DLQ + retries prevent data loss.
 - CDC events enable change capture for downstream analytics.
+
+> 🧒 **Kid translation of the DLQ (can't-read bin):** When a system sends a letter with scribbles, we don't throw it out — we put it in a special tray with a note: "fix me and send back." If we threw letters away, orders would vanish. We never let that happen.

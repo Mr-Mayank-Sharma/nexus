@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 📦
+
+**Inventory** is *how many of something you have, and where*. Nexus thinks of your whole network — warehouses AND stores — as "nodes" that hold stock. The star of the show is **ATP (Available-to-Promise)**: *"can you honestly promise me this item by Friday?"*
+
+> 🛍️ **Real life example — the "sold out" lie:**
+> A customer on your website sees "Only 3 left — in stock!" But 2 of those are already reserved for other people, and 1 is sitting in a store across town. The web page would be *lying*. Nexus answers with **ATP = on-hand − already-reserved**, so the promise is always honest.
+
 ## Overview
 Multi-node inventory model (warehouses + stores as nodes) with real-time on-hand, reservations, cycle counts, transfers and **Available-to-Promise** evaluation. Powers promises for orders, BOPIS, endless aisle and replenishment.
 
@@ -17,6 +24,8 @@ Multi-node inventory model (warehouses + stores as nodes) with real-time on-hand
 - **UC-08** Cycle count & variance adjustment
 - **UC-09** Transfer stock node↔node/store
 - **UC-10** Replenishment suggestions
+
+> 🔄 **Real life — the store borrows a hoodie:** Store A runs out of size M. Nexus shows Store B has 3. A transfer order moves one from B to A; ATP updates instantly. The store shelf is honest again.
 
 ## Data flow
 ```mermaid
@@ -53,5 +62,7 @@ Tables: `nx_inventory` · `nx_inventory_receipts` · `nx_nodes` · `nx_atp_rules
 | Inventory import | WAREHOUSE_MANAGER (create) |
 
 ## Integrity notes
-- Every quantity change is traceable (receipts, counts, adjustments, allocations).
+- Every quantity change is traceable (receipts, counts, adjustments, allocations) — a full "stock diary."
 - ATP snapshots give a timestamped promise baseline for audits.
+
+> 🧒 **Kid translation of the stock diary:** Every time the fridge count changes — a box arrives, someone buys milk, a count says "we thought 3, it's actually 2" — the diary page gets a timestamp. No silent changes.

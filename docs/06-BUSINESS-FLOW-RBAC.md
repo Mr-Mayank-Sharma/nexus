@@ -1,6 +1,21 @@
 # Nexus OMS — Business Flow & Access Control (RBAC)
 
-> **Who can touch what, at every stage of the business flow.** This document is the authoritative answer to "who has access to what" — derived from the 14-role model, the `PermissionService.PATH_TO_RESOURCE` map (39 mappings), and the seeded `nx_role_permissions` rows (`V24`/`V25`).
+> **Who can touch what, at every stage of the business flow.** The authoritative answer to "who has access to what" — derived from the 14-role model, `PermissionService.PATH_TO_RESOURCE` (39 mappings), and seeded `nx_role_permissions` (`V24`/`V25`).
+
+---
+
+## 0. Start Here — What is RBAC, in plain English? 🪪
+
+**RBAC = Role-Based Access Control.** Imagine a school where everyone wears a **badge**:
+
+- 🎓 **Admin** badge → master key to every room.
+- 👨‍💼 **OPS_MANAGER** badge → can run the whole clubhouse.
+- 🧺 **PICKER** badge → can enter the storage room and scan boxes — but *cannot* open the finance office.
+- 💰 **FINANCE** badge → can open the money room — but cannot touch warehouse shelves.
+
+The rule is simple: **your badge decides your keys.** Nexus checks the badge on every single action — not just at the front door. That's RBAC.
+
+> 🧒 **Kid translation:** RBAC = *"the badge you wear decides the doors you can open."* 14 badges exist. ADMIN can open everything. VIEWER can only look through the windows.
 
 ---
 
@@ -10,7 +25,7 @@ Defined in `AuthService.ALLOWED_ROLES`:
 
 | # | Role | Profile |
 |---|---|---|
-| 1 | `ADMIN` | Platform super-user; wildcard `*:*` |
+| 1 | `ADMIN` | Platform super-user; wildcard `*:*` (opens everything) |
 | 2 | `CEO` | Strategic visibility; view-only on key modules |
 | 3 | `OPS_MANAGER` | Full operations access (orders, inventory, fulfillment, AI, import) |
 | 4 | `WAREHOUSE_MANAGER` | Full warehouse-facing access |
@@ -24,6 +39,13 @@ Defined in `AuthService.ALLOWED_ROLES`:
 | 12 | `FINANCE` | View/edit invoices, payments, returns; analytics |
 | 13 | `LOGISTICS_MANAGER` | Full logistics access (shipping, carriers, routing, yard) |
 | 14 | `VIEWER` | Read-only dashboards |
+
+> 🎭 **Real life roles at a toy company:**
+> - `CEO` Priya wants *to see* everything, not break it → view-only on key modules.
+> - `OPS_MANAGER` Dan runs the day → full operations CRUD.
+> - `PICKER` Leo just scans bins → picking only.
+> - `FINANCE` Amal handles money → invoices/payments only.
+> - `VIEWER` intern Ravi watches dashboards → read-only.
 
 ---
 
@@ -50,29 +72,31 @@ Defined in `AuthService.ALLOWED_ROLES`:
 | `/webhooks/` | webhooks | `/edi/` | edi |
 | `/cycle-counts/` | cycle-counts | `/rate-shopping/` | rate-shopping |
 | `/import/` | import | `/audit/` | audit |
-| `/integration/`, `/integrations/`, `/integration-platform/`, `/integration-stores/`, `/integration-hub/`, `/shopify/`, `/email-parser/` | integration | `/fulfillment/` | fulfillment |
+| `/integration/`+friends | integration | `/fulfillment/` | fulfillment |
 | `/bopis/` | inventory | `/api/sample-data/` | settings |
 
 **Semantics:** a role is authorized for a request only if it holds `can_<method>` on the matched resource (`view`/`create`/`edit`/`delete`). `ADMIN` matches the wildcard `*:*`. **Allow-by-default caveat:** requests whose path matches no prefix are permitted — see §6.
 
+> 🧒 **Kid translation of the mapping table:** It's the guard's cheat-sheet: "a URL starting with `/orders/` belongs to the ORDERS room; `/picking/` → PICKING room." When someone knocks, the guard checks the badge against the room.
+
 ### 2.2 Frontend — UI gates
 - `ProtectedRoute` (authenticated) + `AppLayout` shell.
-- `PermissionGate` (`resource`+`action`) hides/disables UI that a role may not use.
-- ⚠️ **Gap G2:** 6 pages pass a `permission` prop that `PermissionGate` ignores (only `resource`/`action` are honored). Server remains the enforcement point; UI must be corrected. Legacy `RoleProtectedRoute` is unused.
+- `PermissionGate` (`resource`+`action`) hides/disables UI a role may not use.
+- ⚠️ **Gap G2:** 6 pages pass a `permission` prop that `PermissionGate` ignores (only `resource`/`action` honored). Server remains the enforcement point; UI must be corrected. Legacy `RoleProtectedRoute` is unused.
 
 ---
 
 ## 3. The Business Flow — Who Does What (end to end)
 
-> **Legend:** 👁 view · ✍ create · ✎ edit · ✖ delete. Roles not listed have no access to that stage. `ADMIN` (wildcard) is implicit everywhere.
+> **Legend:** 👁 view · ✍ create · ✎ edit · ✖ delete. Roles not listed have no access. `ADMIN` (wildcard) is implicit everywhere.
 
 ### 3.1 Commerce & order intake
 | Stage | Role → access |
 |---|---|
 | Channel order sync (Shopify/BC/Amazon…) | System (connector). Human review: `OPS_MANAGER` ✍✎, `CUSTOMER_SUPPORT` ✍✎, `STORE_MANAGER` ✍✎, `CEO` 👁, `VIEWER` 👁 |
 | Manual order entry | `CUSTOMER_SUPPORT` ✍, `OPS_MANAGER` ✍ |
-| Bulk import orders | `OPS_MANAGER` ✍ (full), `WAREHOUSE_MANAGER`/`PROCUREMENT_MANAGER`/`FINANCE`/`LOGISTICS_MANAGER` ✍ (scoped), `STORE_MANAGER`/`CEO`/`VIEWER` 👁 |
-| Email order parsing | Configure: `OPS_MANAGER`; confirm parsed orders: `CUSTOMER_SUPPORT` ✎ |
+| Bulk import orders | `OPS_MANAGER` ✍ (full), scoped ✍ for WH/PROCURE/FINANCE/LOGISTICS, `STORE_MANAGER`/`CEO`/`VIEWER` 👁 |
+| Email order parsing | Configure: `OPS_MANAGER`; confirm: `CUSTOMER_SUPPORT` ✎ |
 | Parked / brokering queue | `OPS_MANAGER` ✎, `LOGISTICS_MANAGER` ✎, `CUSTOMER_SUPPORT` 👁 |
 | Routing rules & config | `OPS_MANAGER` ✎, `LOGISTICS_MANAGER` ✎, `CEO` 👁 |
 | BOPIS / pickup orders | `BOPIS_OWNER` ✍✎, `STORE_MANAGER` ✍✎, `CUSTOMER_SUPPORT` ✎, `OPS_MANAGER` ✎ |
@@ -81,13 +105,13 @@ Defined in `AuthService.ALLOWED_ROLES`:
 ### 3.2 Inventory & network
 | Stage | Role → access |
 |---|---|
-| Inventory view/ATP | `OPS_MANAGER` 👁, `WAREHOUSE_MANAGER` 👁, `STORE_MANAGER` 👁, `BOPIS_OWNER` 👁, `VIEWER` 👁 |
+| Inventory view/ATP | `OPS_MANAGER`, `WAREHOUSE_MANAGER`, `STORE_MANAGER`, `BOPIS_OWNER`, `VIEWER` (👁) |
 | Receive inventory (PO/transfer) | `WAREHOUSE_MANAGER` ✍✎, `LOADER` (ship/load side), `STORE_MANAGER` ✎ |
 | Cycle counts | `WAREHOUSE_MANAGER` ✍✎ |
-| Transfer orders (node↔store) | `WAREHOUSE_MANAGER` ✍✎, `STORE_MANAGER` ✍✎ |
+| Transfer orders | `WAREHOUSE_MANAGER` ✍✎, `STORE_MANAGER` ✍✎ |
 | Replenishment suggestions | Approve: `PROCUREMENT_MANAGER` ✎, `WAREHOUSE_MANAGER` ✎; view: `CEO` 👁 |
 | Inventory import | `WAREHOUSE_MANAGER` ✍, `OPS_MANAGER` ✍ |
-| Warehouse structure (zones/bins/nodes) | `WAREHOUSE_MANAGER` ✍✎✖, `OPS_MANAGER` ✍✎ |
+| Warehouse structure | `WAREHOUSE_MANAGER` ✍✎✖, `OPS_MANAGER` ✍✎ |
 
 ### 3.3 Fulfillment (wave → pick → pack → load)
 | Stage | Role → access |
@@ -96,7 +120,7 @@ Defined in `AuthService.ALLOWED_ROLES`:
 | Picklists | `OPS_MANAGER`/`WAREHOUSE_MANAGER` ✍✎; execute: `PICKER` ✍✎; view: `LOGISTICS_MANAGER` 👁 |
 | Packing | `OPS_MANAGER`/`WAREHOUSE_MANAGER` ✍✎; execute: `PACKER` ✍✎ |
 | Loading & dispatch | `OPS_MANAGER`/`WAREHOUSE_MANAGER`/`LOGISTICS_MANAGER` ✍✎; execute: `LOADER` ✍✎ |
-| Shipments / tracking | `OPS_MANAGER` 👁✎, `WAREHOUSE_MANAGER` 👁✎, `LOGISTICS_MANAGER` 👁✎, `LOADER` 👁, `CUSTOMER_SUPPORT` 👁, `VIEWER` 👁 |
+| Shipments / tracking | `OPS_MANAGER`/`WAREHOUSE_MANAGER`/`LOGISTICS_MANAGER` ✎👁, `LOADER` 👁, `CUSTOMER_SUPPORT` 👁, `VIEWER` 👁 |
 | Fulfillment exceptions | `WAREHOUSE_MANAGER` ✎, `OPS_MANAGER` ✎ |
 | Fulfillment limits/capacity | `OPS_MANAGER` ✍✎ |
 
@@ -105,7 +129,7 @@ Defined in `AuthService.ALLOWED_ROLES`:
 |---|---|
 | Carrier accounts/rates/zones | `LOGISTICS_MANAGER` ✍✎✖, `OPS_MANAGER` ✎ |
 | Rate shopping | `LOGISTICS_MANAGER` ✎, `OPS_MANAGER` 👁, `FINANCE` 👁 |
-| Trailers & yard locations | `LOGISTICS_MANAGER` ✍✎, `LOADER` ✎, `WAREHOUSE_MANAGER` 👁 |
+| Trailers & yard | `LOGISTICS_MANAGER` ✍✎, `LOADER` ✎, `WAREHOUSE_MANAGER` 👁 |
 | Dock doors & appointments | `LOGISTICS_MANAGER` ✍✎ |
 | Freight invoices & audit | `FINANCE` ✍✎👁, `LOGISTICS_MANAGER` 👁 |
 | Shipment/carrier import | `LOGISTICS_MANAGER` ✍ |
@@ -141,7 +165,7 @@ Defined in `AuthService.ALLOWED_ROLES`:
 |---|---|
 | Automation systems & commands | `WAREHOUSE_MANAGER` ✍✎, `OPS_MANAGER` ✎ |
 | Alert rules | `OPS_MANAGER` ✍✎, `WAREHOUSE_MANAGER` ✍✎ |
-| Notifications (templates/logs) | `OPS_MANAGER` ✍✎, `WAREHOUSE_MANAGER` ✎, `STORE_MANAGER` ✎, `BOPIS_OWNER` ✎, `CUSTOMER_SUPPORT` 👁, `FINANCE` 👁, `LOGISTICS_MANAGER` ✎, `VIEWER` 👁 |
+| Notifications | `OPS_MANAGER` ✍✎, `WAREHOUSE_MANAGER` ✎, `STORE_MANAGER` ✎, `BOPIS_OWNER` ✎, `CUSTOMER_SUPPORT` 👁, `FINANCE` 👁, `LOGISTICS_MANAGER` ✎, `VIEWER` 👁 |
 
 ### 3.9 AI platform
 | Stage | Role → access |
@@ -158,7 +182,7 @@ Defined in `AuthService.ALLOWED_ROLES`:
 | Integration Hub / stores / connectors | `OPS_MANAGER` ✍✎, `ADMIN` ✍✎ |
 | Webhooks & sync configs | `OPS_MANAGER` ✍✎, `ADMIN` ✎ |
 | EDI partners & documents | `LOGISTICS_MANAGER` ✍✎, `ADMIN` ✎ |
-| Import/export jobs | `OPS_MANAGER` ✍, scoped ✍ per role (see §3.1), `VIEWER` 👁 |
+| Import/export jobs | `OPS_MANAGER` ✍, scoped ✍ per role, `VIEWER` 👁 |
 
 ### 3.11 Administration
 | Stage | Role → access |
@@ -174,7 +198,7 @@ Defined in `AuthService.ALLOWED_ROLES`:
 
 ## 4. Permission Matrix (seeded `nx_role_permissions`)
 
-`can_*` flags per role per permission_group (source: `V24__seed_default_permissions.sql` + `V25__seed_import_permissions.sql`; `tenant_id = NULL` = global defaults, tenants can override):
+`can_*` flags per role per permission_group (source: `V24` + `V25`; `tenant_id = NULL` = global defaults, tenants can override):
 
 | Permission group | ADMIN | CEO | OPS | WH MGMT | PICKER | PACKER | LOADER | STORE | BOPIS | SUPPORT | PROCURE | FINANCE | LOGISTICS | VIEWER |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -213,10 +237,14 @@ Defined in `AuthService.ALLOWED_ROLES`:
 | **webhooks** | * | – | – | – | – | – | – | – | – | – | – | – | – | – |
 | **integration** | * | – | V/C/E/D | – | – | – | – | – | – | – | – | – | – | – |
 
-*Legend: V=can_view, C=can_create, E=can_edit, D=can_delete, * = ADMIN wildcard, – = no permission row.*
+*Legend: V=view, C=create, E=edit, D=delete, * = ADMIN wildcard, – = no permission row.*
+
+> 🎭 **Read this matrix like a school badge table:**
+> - Look at the **PICKER** column: you see V/C/E on **picking** and V on **inventory**. Leo the Picker can scan picklists and peek at inventory — that's it. No finance, no carriers.
+> - Look at **FINANCE**: V/C/E on **invoices** & **payments**, V/E on **returns**, but **– (nothing)** on **orders**. Amal can't touch orders at all.
 
 **Notes & observed gaps (flagged for review):**
-1. **PICKER/PACKER/LOADER** have `can_view` on their module but `can_delete=false`; `create/edit` restricted to their own module — sound least-privilege.
+1. **PICKER/PACKER/LOADER** have `can_view` on their module and `can_delete=false` — sound least-privilege.
 2. **`edi`, `rate-shopping`, `webhooks`, `integration`, `receiving`, `cycle-counts`, `routing-rules`, `rbac`** have no seed rows beyond the roles shown — verify intent (a missing row means **denied** by the resolver, *unless* path matches no mapping — see §6).
 3. **OPS_MANAGER** is extremely broad (18+ groups full CRUD) — effectively a non-admin super-user; consider splitting.
 4. **CEO** has no `edit` on `orders`/`inventory` — visibility only, by design.
@@ -229,6 +257,8 @@ Defined in `AuthService.ALLOWED_ROLES`:
 - Endpoints under `/rbac/` map to resource `rbac`; **only `ADMIN`** has permission rows → only ADMIN can manage roles/permissions/teams.
 - Lookup path: `PermissionAuthorizationFilter` → `PermissionService.resolve` → tenant-specific override first → global default → allow/deny.
 
+> 🧒 **Kid translation:** There is one room with a special sign: "RBAC — keys to all doors live here." Only the ADMIN badge opens it.
+
 ---
 
 ## 6. Allow-by-default trade-off (must-read)
@@ -236,6 +266,8 @@ Defined in `AuthService.ALLOWED_ROLES`:
 `PermissionService` returns **allow** when a URL path matches **no** prefix in `PATH_TO_RESOURCE`. Consequences:
 - New endpoints are reachable until a mapping is added → **security review gate needed on every new controller**.
 - This is by design for velocity (Phase 1), but for GA the team should invert to **deny-by-default** with an explicit allowlist.
+
+> 🧒 **Kid translation:** Right now, if a new door is built and nobody wrote its name in the guard's book, the guard lets people in by default. That speeds up building, but for the big launch we should flip it: *if it's not in the book, nobody enters.*
 
 ---
 

@@ -1,6 +1,21 @@
 # Nexus OMS — Data Flow
 
-> End-to-end data movement across the platform: ingestion, orchestration, fulfillment, integration and AI. Mermaid `sequenceDiagram`/`flowchart` notation. See [`02-TECHNICAL-ARCHITECTURE.md`](./02-TECHNICAL-ARCHITECTURE.md) for infrastructure and [`features/`](./features/) for per-module flows.
+> End-to-end data movement: ingestion, orchestration, fulfillment, integration and AI. Mermaid notation. See [`02-TECHNICAL-ARCHITECTURE.md`](./02-TECHNICAL-ARCHITECTURE.md) and [`features/`](./features/) for per-module flows.
+
+---
+
+## 0. Start Here — What is a "data flow"? 🚿
+
+A data flow is the **path a piece of information travels**, like water through pipes. Real-life example:
+
+> 🛍️ **Mia buys a hoodie at 9:04 pm.** Follow the hoodie's journey:
+> 1. Shopify sends "order #1001" → Nexus (ingestion)
+> 2. Nexus checks stock (ATP) → reserves 1 hoodie
+> 3. Nexus groups it into tomorrow's wave → picklist
+> 4. A picker picks it → packed → shipped → tracked
+> 5. A receipt (invoice) is created → analytics updated
+
+Each arrow below is one of those steps. **The diagrams are the plumbing map.**
 
 ---
 
@@ -24,6 +39,8 @@ flowchart LR
     AI -.->|suggestions| ROUT
     AI -.->|drift fallback| ROUT
 ```
+
+> 🧒 **Kid translation of the big picture:** A ball (the order) rolls down a slide: **in the front door (channel) → into the sorter (orchestration) → through the stock checker (ATP) → into the basket (wave) → picked → packed → shipped → billed → counted.** If the sorter can't handle it, the ball goes into the "waiting bin" (parked) instead of getting lost.
 
 ---
 
@@ -49,6 +66,7 @@ sequenceDiagram
 ```
 
 **Idempotency:** orders keyed by `channel_order_id` + store; duplicate webhooks are skipped.
+> 🧒 **Kid translation of idempotency:** If the doorbell rings twice, you don't cook two pizzas. Same order message twice = still one order.
 
 ---
 
@@ -70,6 +88,13 @@ flowchart TD
     X -->|resolve| A
 ```
 
+> 🏭 **Real life example — the warehouse morning:**
+> - **6:30 am** — Nexus groups 200 orders by aisle (a wave).
+> - **7:00** — Pickers get picklists; each walks one aisle once.
+> - **9:30** — Packers box everything; Nexus picks the cheapest carrier per box.
+> - **11:00** — A truck leaves with 180 packages; customers get tracking numbers.
+> - Meanwhile one box was short — the exception path flagged it at 9:35, a manager fixed it by 10:00.
+
 ---
 
 ## 4. Integration Hub Data Flow (iPaaS)
@@ -88,7 +113,10 @@ flowchart LR
     EXP --> EXT
 ```
 
-**Supporting stores:** `NxIntegrationFlow` + steps (transform/validation), `NxIntegrationSyncConfig`, `NxIntegrationAuditLog`, `IntegrationCDCEvent` for change-data-capture.
+**Supporting stores:** `NxIntegrationFlow` + steps, `NxIntegrationSyncConfig`, `NxIntegrationAuditLog`, `IntegrationCDCEvent`.
+
+> 📬 **Real life analogy — the mail room:**
+> Every store's messages are letters. The mail room (hub) opens them (connector), translates them (DataMapper), checks the address (validation). Good letters go to the kitchen (EventBus). Bad letters go to the "can't read" bin (DLQ) — **never thrown away**, so ops can fix and resend.
 
 ---
 
@@ -115,6 +143,9 @@ flowchart LR
 - Rule evaluation is deterministic from config + order input.
 - Automation results carry real `elapsed_ms` and explicit `simulated` flags.
 
+> 🎓 **Real life example — the robot gets a grade:**
+> The robot studies 12 months of sales (`AiDataset`). After training (`AiTrainingJob`), we grade it on data we held back. If we have held-back real data → report card shows REAL metrics and a model version is born. If we have no test data → the card honestly says `NO_METRICS`. We never invent a grade.
+
 ---
 
 ## 6. Returns Data Flow
@@ -131,6 +162,9 @@ flowchart LR
     RC --> REF[Refund / credit memo]
 ```
 
+> 🎁 **Real life example — the stained hoodie:**
+> Mia returns the hoodie (request) → gets RMA #88 → warehouse receives it and inspects (stain!) → disposition = **destroy** → Nexus posts a write-off and tells Finance → Finance issues a partial refund. Every step recorded.
+
 ---
 
 ## 7. Procurement Data Flow
@@ -145,6 +179,9 @@ flowchart LR
     REQ -.-> RFQ[RFQ + responses]
     RFQ -->|award| PO
 ```
+
+> 🏗️ **Real life example — the hoodie shortage:**
+> AI notices hoodies sell out every winter → suggestion "buy 120" → request "over $500 needs approval" → approved → PO sent to CottonCo → hoodies arrive → receiving adds them → customers can order again.
 
 ---
 
@@ -163,18 +200,21 @@ flowchart LR
     CAR --> TRACK[Tracking events]
 ```
 
+> 🚚 **Real life example — truck at the dock:**
+> Truck T-7 arrives 8:00 → parked at Yard Spot 2 (event logged) → dock 3 free → assigned → loaded by 10:30 → departs 11:00 (dwell = 3h). Meanwhile the shipment got its rate-shop + label + tracking. All visible on one screen.
+
 ---
 
 ## 9. Cross-cutting concerns in every flow
 
-| Concern | Mechanism |
-|---|---|
-| **Tenancy** | Every entity query scoped by `tenant_id` |
-| **Authorization** | `PermissionAuthorizationFilter` path→resource→permission (39 mappings) |
-| **Audit** | `NxAuditLog` writes on sensitive actions; `IntegrationAuditLog` on syncs |
-| **Idempotency** | `channel_order_id` keys, import tokens, sync-state tracking |
-| **Resilience** | Kafka retries + Resilience4j circuit breakers |
-| **Observability** | Micrometer/Prometheus counters per flow stage; logstash JSON |
+| Concern | Mechanism | Plain-English |
+|---|---|---|
+| **Tenancy** | Every query scoped by `tenant_id` | Your data stays in your locker |
+| **Authorization** | `PermissionAuthorizationFilter` (39 mappings) | The guard checks badges |
+| **Audit** | `NxAuditLog`, `IntegrationAuditLog` | The logbook records who did what |
+| **Idempotency** | `channel_order_id` keys, import tokens, sync state | No double-cooking pizzas |
+| **Resilience** | Kafka retries + Resilience4j breakers | Seatbelts so one failure doesn't crash everything |
+| **Observability** | Micrometer/Prometheus, logstash JSON | Cameras on every pipe |
 
 ---
 

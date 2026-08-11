@@ -1,16 +1,43 @@
 # Nexus OMS — Entity Relationship Diagram (ER)
 
-> The authoritative catalog of the ~180 JPA entities in `nexus-oms-backend`. Diagrams use **Mermaid** (`erDiagram`). Relationships below are **logical FKs** — in this codebase most associations are plain `UUID` columns (e.g. `customerId`, `warehouseId`, `tenantId`) rather than JPA `@ManyToOne` object graphs (only ~6 JPA associations exist). Foreign keys are enforced at the application layer; `tenant_id` is present on every tenant-scoped table.
+> The authoritative catalog of the ~180 JPA entities. Diagrams use **Mermaid** (`erDiagram`). Relationships are **logical FKs** — most associations are plain `UUID` columns (e.g. `customerId`, `warehouseId`, `tenantId`) rather than JPA object graphs (only ~6 JPA associations exist).
 
 ---
 
-## 0. Reading Guide
+## 0. Start Here — What is an "ER diagram"? 🧩
 
+Imagine your school's **storage room**. It has:
+- **Shelves** — each shelf holds ONE kind of thing. We call each shelf a **TABLE** (like `nx_orders` = the "orders shelf").
+- **Boxes on each shelf** — each box is one **ROW** (like ONE specific order for one customer).
+- **Name tags** — each box has a **PRIMARY KEY (PK)**, a unique ID (like a locker number).
+- **Cross-reference cards** — a card on the order box says *"customer #77"*. That's a **FOREIGN KEY (FK)** — a reference to a box on another shelf (the customers shelf).
+
+An **ER diagram** is just the **floor plan** of the storage room: which shelf connects to which shelf, and how.
+
+> 🧒 **Kid translation:**
+> - **Table** = a drawer (one type of thing).
+> - **Row** = one thing in the drawer.
+> - **PK** = the thing's unique tag.
+> - **FK** = "this belongs to that" (e.g. *this order belongs to customer #77*).
+> - **tenant_id** = "which school this belongs to" (multi-tenant safety).
+
+### Real-life example — one order touches many shelves
+> 🛍️ **Mila orders 2 blue hoodies:**
+> - `nx_orders` gets a row: "Order #1001, customer Mila" (FK: customer_id)
+> - `nx_order_items` gets 1 row: "hoodie, qty 2" (FK: order_id, product_id)
+> - `nx_inventory` loses 2 hoodies (FK: product_id, node_id)
+> - `nx_waves`/`nx_picklists` get rows when it's time to pick
+> - `nx_shipments` gets a row when it ships (FK: carrier_id)
+> - `nx_invoices` gets a row for payment (FK: order_id)
+>
+> The ER diagram is the map that shows ALL these shelves and their links.
+
+### Reading Guide
 - `PK` — `UUID` (Hibernate `GenerationType.UUID`) unless noted.
 - `tenant_id` — multi-tenancy scope column (present on virtually every table).
-- All timestamps `LocalDateTime`; money `BigDecimal`; flexible payloads `jsonb`.
-- Three tables use a legacy casing `nxFreight_*` (kept for schema stability; **do not rename without a migration**).
-- Naming convention: `nx_<domain>` (orders, inventory, warehouses, waves, …), `ai_*` (AI platform), `import_*` (import/export engine).
+- Timestamps `LocalDateTime`; money `BigDecimal`; flexible payloads `jsonb`.
+- Three tables use legacy casing `nxFreight_*` (kept; **do not rename without a migration**).
+- Naming: `nx_<domain>`, `ai_*` (AI), `import_*` (import/export).
 
 ---
 
@@ -112,6 +139,15 @@ erDiagram
     }
 ```
 
+> 🍩 **Real life example — the doughnut shop:**
+> - `nx_customers` = the "who" (Mia, Leo…)
+> - `nx_orders` = "Mia wants 6 glazed + 2 chocolate"
+> - `nx_order_items` = one row per flavor with quantity
+> - `nx_order_allocations` = "reserve 6 glazed from Shelf B"
+> - `nx_invoices` = the receipt
+> - `nx_payments` = the coins handed over
+> - `nx_promotions` = the "buy 5 get 1 free" sign; `nx_promotion_usage` = how many times it was used
+
 **Key columns (logical FKs):** `NxOrder.customerId`, `NxOrder.shipToAddressId` (JPA `@ManyToOne` → `Address`), `NxOrderItem.orderId`, `NxOrderItem.productId`, `NxOrderAllocation.orderId` + `inventoryId`, `NxInvoice.orderId`.
 
 ---
@@ -164,6 +200,14 @@ erDiagram
         string status
     }
 ```
+
+> 🎒 **Real life analogy — your school bag:**
+> - `nx_warehouses` = your bag (holds everything)
+> - `nx_warehouse_zones` = the big pockets (books pocket, lunch pocket)
+> - `nx_warehouse_bins` = the little zip pockets (this is *exactly* where the pencil lives)
+> - `nx_inventory` = "3 pencils, 2 are reserved for tomorrow, 1 available"
+> - `nx_transfer_orders` = moving pencils from home bag to school bag
+> - `nx_atp_snapshots` = a photo of "what can I promise today"
 
 **Key columns:** `NxInventory.productId`, `NxInventory.nodeId`, `NxInventory.binId`, `NxWarehouseBin.zoneId`, `NxTransferOrder.fromNodeId`/`toNodeId`, `NxTransferOrderItem.transferOrderId`.
 
@@ -221,6 +265,14 @@ erDiagram
     }
 ```
 
+> 📚 **Real life analogy — homework baskets:**
+> - `nx_wave_rules` = the rule "group all math homework together"
+> - `nx_waves` = one basket of grouped homework
+> - `nx_picklists` = a checklist for one student "collect these 4 books"
+> - `nx_picklist_items` = each item on the checklist with its shelf (bin)
+> - `nx_packages` = the bag you carry them in
+> - `nx_shipments` = handing the bag to the bus driver; `nx_tracking_events` = the bus stops
+
 **Key columns:** `NxWave` status/strategy; `NxPicklist.waveId`, `NxPicklist.pickerId`; `NxPicklistItem.picklistId`/`orderItemId`/`binId`; `NxPackage.picklistId`; `NxShipment.carrierId`; `NxManifestShipment.manifestId`/`shipmentId`.
 
 ---
@@ -260,6 +312,13 @@ erDiagram
     }
 ```
 
+> 🚚 **Real life analogy — the delivery yard:**
+> - `nx_carriers` = the delivery companies (Blue Truck Co., Fast Van Ltd.)
+> - `nx_carrier_rates` = their price lists ("Zone 2 = $8")
+> - `nx_rate_shopping_log` = the record of "we compared 3, chose Fast Van = $8"
+> - `nx_trailers` = the trailers parked outside; `nx_yard_locations` = parking spots
+> - `nx_trailer_events` = "arrived at 8am, moved to dock 3 at 9am"
+
 **Key columns:** `NxCarrierRate.carrierId`, `NxTrailer.yardLocationId`, `NxTrailerEvent.trailerId`, `NxManifestShipment.shipmentId`, `NxFreightInvoiceLine.freightInvoiceId`.
 
 ---
@@ -289,6 +348,11 @@ erDiagram
         money refund_amount
     }
 ```
+
+> 🎁 **Real life analogy — returning a gift:**
+> - `nx_returns` = the return slip ("Grandma's sweater came back")
+> - `nx_return_items` = which item, what condition, refund amount
+> - `nx_rejection_reasons` = "no, because it's clearly worn" (evidence recorded)
 
 ---
 
@@ -321,6 +385,13 @@ erDiagram
     }
 ```
 
+> 🏗️ **Real life analogy — buying bricks for the clubhouse:**
+> - `nx_purchase_requests` = "we need 50 bricks" (the ask)
+> - `nx_approval_rules` = "asks over $500 need the boss's OK"
+> - `nx_purchase_orders` = the official order form to the brick shop
+> - `nx_rfqs` = "how much do 3 shops want for 50 bricks?" + `nx_rfq_responses` = their bids
+> - `nx_suppliers` = the brick shop's profile + contacts + contract
+
 ---
 
 ## 8. Automation & Alerting ER
@@ -351,7 +422,13 @@ erDiagram
     }
 ```
 
-**Honesty note:** `NxAutomationCommand` carries `elapsed_ms` (real `Duration` since Phase 2.5) and an explicit `simulated` flag — see `FIX_LOG.md` Phase 2.5.
+> 🤖 **Real life analogy — the conveyor belt:**
+> - `nx_automation_systems` = the conveyor machine
+> - `nx_automation_commands` = "start belt, speed 2" (with real time taken + `simulated` flag)
+> - `nx_automation_logs` = what happened
+> - `nx_alert_rules` + `nx_automation_alerts` = "belt stopped twice in an hour → page the manager"
+
+**Honesty note:** `NxAutomationCommand` carries `elapsed_ms` (real `Duration` since Phase 2.5) and an explicit `simulated` flag.
 
 ---
 
@@ -393,6 +470,12 @@ erDiagram
     }
 ```
 
+> 🔌 **Real life analogy — the mail room:**
+> - `nx_integration_stores` = each mailbox (Shopify box, Amazon box)
+> - `nx_integration_messages` = each letter with a stamp (payload)
+> - `nx_integration_flow_steps` = the sorting instructions ("open → translate → check → deliver")
+> - `nx_integration_dlq` = the "can't read this" bin (never thrown away — quarantined)
+
 ---
 
 ## 10. AI Platform ER
@@ -430,6 +513,14 @@ erDiagram
     }
 ```
 
+> 🎓 **Real life analogy — robot report card:**
+> - `ai_models` = the robot (named "Sales-Guesser")
+> - `ai_model_versions` = robot v1, robot v2 (improved)
+> - `ai_training_jobs` = a training session; `metrics_source` says **REAL** or **NO_METRICS**
+> - `ai_model_metrics` = the report card (accuracy etc. — real only)
+> - `ai_inference_logs` = every guess the robot made, logged
+> - `ai_rule_fallbacks` = the safety rulebook used if the robot drifts
+
 **Honesty note:** `AiTrainingJob.metricsSource` (`REAL` / `NO_METRICS`) added in migration `V52` — a model version is created only when the job produces real metrics.
 
 ---
@@ -466,6 +557,12 @@ erDiagram
     }
 ```
 
+> 🪪 **Real life analogy — school badges:**
+> - `nx_users` = every student/teacher (with photo ID)
+> - `nx_user_roles` = "Mia = Class Monitor" badge
+> - `nx_role_permissions` = the list "Class Monitors may open the supply cupboard, not the staff room"
+> - `nx_audit_log` = the visitor logbook ("Mia opened the cupboard at 10:02")
+
 ---
 
 ## 12. Workflow & Platform ER
@@ -493,18 +590,21 @@ erDiagram
     }
 ```
 
+> 📋 **Real life analogy — the permission slip process:**
+> `nx_workflows` = "Field trip permission" · `nx_workflow_steps` = "1. print form, 2. get signature, 3. collect" · `nx_workflow_executions` = one student's progress through the steps.
+
 ---
 
 ## 13. Entity Health Notes
 
-| Aspect | Status |
-|---|---|
-| JPA object-graph associations | **Minimal** (6 `@ManyToOne`/`@OneToMany` uses) — most links are UUID columns |
-| `@JoinColumn` with `insertable/updatable=false` | Used for read-only navigation (e.g. `NxOrder → Address`) |
-| jsonb columns | Present on workflow/config/integration payload tables |
-| Tenant scoping | `tenant_id` on all tenant tables; enforced in services |
-| Schema migrations | 44 Flyway files `V1…V52` (idempotent `IF NOT EXISTS` patterns in later versions) |
-| Legacy naming | `nxFreight_*` casing anomaly (3 tables) — requires migration to normalize |
+| Aspect | Status | Plain-English |
+|---|---|---|
+| JPA object-graph associations | **Minimal** (6 uses) — most links are UUID columns | Most "links" are just ID tags on boxes |
+| `@JoinColumn` insertable/updatable=false | Read-only navigation (e.g. `NxOrder → Address`) | A reference card you can read but not change |
+| jsonb columns | Workflow/config/integration payload tables | Flexible pockets for "anything goes" data |
+| Tenant scoping | `tenant_id` on all tenant tables; enforced in services | Every box is labelled with its school |
+| Schema migrations | 44 Flyway files `V1…V52` (idempotent) | Every drawer change is recorded in history |
+| Legacy naming | `nxFreight_*` (3 tables) — requires migration to normalize | Old labels on 3 drawers; renaming needs care |
 
 ---
 

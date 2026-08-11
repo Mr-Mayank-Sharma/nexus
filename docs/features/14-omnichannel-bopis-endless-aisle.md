@@ -2,6 +2,16 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 🏬
+
+**Omnichannel** means *your store is not just a showroom — it's a warehouse too.* Three superpowers:
+- **BOPIS** — *Buy Online, Pick Up In Store*: order on the website, grab it at the counter.
+- **Pickup orders** — reserve in store, collect later.
+- **Endless aisle** — the store is out? Order from the warehouse or another store, with an honest promise.
+
+> 🛍️ **Real life example — Mia at the mall:**
+> Mia buys a hoodie online, chooses **pickup at the mall store**. The store's shelf reserves the hoodie (ATP-backed — no lying about stock). She gets a "ready!" notification, collects it, and Nexus records the hand-off as proof of delivery. At the next store, the size is out — **endless aisle** routes it from the warehouse in 2 days.
+
 ## Overview
 Store-centric fulfillment: **BOPIS** (buy online, pick up in store), **pickup orders**, **endless aisle** (order out-of-stock-in-store items from warehouse/other nodes) and store-to-store operations. Makes the store a first-class fulfillment node, not a bolt-on.
 
@@ -54,3 +64,5 @@ Tables: `nx_pickup_orders` · `nx_pickup_order_items` · `nx_endless_aisle_order
 ## Integrity notes
 - Store promises are ATP-backed (`NxATPSnapshot`) — no over-promising shelf stock.
 - Pickup confirmation closes the loop with a proof-of-delivery event.
+
+> 🧒 **Kid translation of "no over-promising":** The store can't claim "we have 2 hoodies!" if both are already reserved. The promise is always real: *on-hand minus reserved*, like a cookie jar you count before promising a cookie.

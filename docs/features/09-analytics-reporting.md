@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 📊
+
+**Analytics** is *the scoreboard for your business*. Nexus takes every recorded event from every module and turns it into numbers you can trust: orders, on-time %, cost per order, how fast people pick, freight overcharges. Real-time, drill-downable, role-based.
+
+> 🏆 **Real life example — Friday morning scoreboard:**
+> The CEO opens the LaunchPad: *OTIF 96.2%* (on-time, in-full) · *$2.10 cost/order* · *3 pickers on track*. Tapping "OTIF 96.2%" drills into the exact shipments that were late and why. No spreadsheets, no guessing.
+
 ## Overview
 Operational and strategic analytics across orders, inventory, fulfillment, labor, freight and finance, surfaced in dashboards with real-time (WebSocket) refresh and drill-downs.
 
@@ -50,3 +57,5 @@ Tables: `nx_productivity_log` · `nx_labor_entries` · `nx_rate_shopping_log` ·
 ## Integrity notes
 - Metrics are computed from real recorded events; simulated paths are explicitly flagged.
 - Every alert/exception has a drill-down trail to the source records.
+
+> 🧒 **Kid translation of drill-down:** Every number on the scoreboard has a "?" you can press that shows you the actual plays behind it — the score isn't magic, it's math you can check.

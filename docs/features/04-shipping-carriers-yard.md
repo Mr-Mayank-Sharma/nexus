@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 🚚
+
+**Shipping** is *getting the box to the customer*. Nexus plays the role of a picky travel agent for every package: it compares carrier prices and speeds, picks the best deal, prints a label, and tracks the journey — right down to the trailer parked in your yard.
+
+> 🚚 **Real life example — the box's road trip:**
+> The packed hoodie box needs to reach Mia in 3 days. Nexus checks: FedEx $9 (2 days) · UPS $12 (1 day) · USPS $6 (4 days). It picks FedEx, prints the label, and the trailer it's loaded on gets a yard spot + dock door. Mia gets a tracking number.
+
 ## Overview
 Carrier management (accounts, rates, zones), deterministic rate shopping, labels, manifests, tracking, trailer/yard visibility, dock doors and freight invoice auditing. Handles both parcel and freight flows.
 
@@ -18,6 +25,8 @@ Carrier management (accounts, rates, zones), deterministic rate shopping, labels
 - **UC-18** Trailer/yard visibility
 - **UC-19** Appointment scheduling
 - **UC-20** Freight audit
+
+> 💰 **Real life — the inflated bill:** A carrier sends a $1,200 freight invoice. The rate card says this route should be $980. Nexus flags the **$220 overcharge** for the finance team. Nobody pays by accident.
 
 ## Data flow
 ```mermaid
@@ -60,3 +69,5 @@ Tables: `nx_carriers` · `nx_carrier_accounts` · `nx_carrier_rates` · `nx_carr
 - Rate shopping is **deterministic** — no hidden randomness in carrier selection (Phase 2.5).
 - Freight audit pairs carrier invoices with the quoted rate card for overcharge detection.
 - Trailer dwell is observable end-to-end from check-in to check-out.
+
+> 🧒 **Kid translation of deterministic:** The carrier choice is not a coin toss — the same package on the same day always picks the same best carrier. No surprises, no "why did it pick that one?"

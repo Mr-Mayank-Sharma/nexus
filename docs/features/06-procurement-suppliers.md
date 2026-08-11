@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 🛒
+
+**Procurement** is *buying the stuff you sell*. Nexus walks every purchase through the same honest path: **request → approval → (optional) bidding → purchase order → receive**. It also remembers everything about your suppliers — contacts, contracts, prices.
+
+> 🏗️ **Real life example — the hoodie shortage:**
+> Nexus notices hoodies sell out every winter → suggestion: *"buy 120."* The request is over $500, so the **approval rule** requires a manager → approved → PO sent to CottonCo → hoodies arrive at the dock → receiving adds them → customers can order again.
+
 ## Overview
 Plan-to-pay sourcing: purchase requests, approval rules, RFQs, purchase orders, supplier master (contacts/contracts) and inbound receiving. Integrates with replenishment suggestions and receiving.
 
@@ -11,6 +18,8 @@ Plan-to-pay sourcing: purchase requests, approval rules, RFQs, purchase orders, 
 3. Optionally run `NxRfq` + `NxRfqResponse` bidding to select supplier.
 4. Convert to `NxPurchaseOrder` (+ items) against `NxSupplier`.
 5. Receiving posts to inventory (see Inventory feature).
+
+> 🔨 **Real life — RFQ bidding:** Need 10,000 boxes? Nexus sends the RFQ to 3 box makers, collects their bids side-by-side, and records *why* the winner won. No favorite-friend deals.
 
 ## Use cases
 - **UC-23** Purchase request → approval → PO
@@ -57,3 +66,5 @@ Tables: `nx_purchase_requests` · `nx_purchase_request_items` · `nx_purchase_or
 ## Integrity notes
 - Approval rules are deterministic and auditable — no secret approvals.
 - RFQ comparison produces a documented award decision.
+
+> 🧒 **Kid translation of no-secret-approvals:** If the rule says "orders over $500 need a manager's OK," the system *always* applies it — no favorites, no back-door purchases. The logbook shows who approved what.

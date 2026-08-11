@@ -2,6 +2,17 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 🍦
+
+An **order** is simply *someone asking to buy something*. Nexus handles orders from **everywhere** — your website, Amazon, a store counter, an email, a spreadsheet — and treats them ALL the same way. No more "which system has this order?"
+
+> 🛍️ **Real life example — the same minute, three ways to buy:**
+> - Mia clicks "Buy" on your Shopify store (web order).
+> - A phone order is typed in at the store counter (manual entry).
+> - A retailer emails "2 boxes of gloves, please" (email order).
+>
+> Three different doors, one house. In Nexus they become three normal orders flowing through the exact same pipeline.
+
 ## Overview
 Single order backbone for every selling surface: Shopify, BigCommerce, Amazon, eBay, Walmart, Magento, manual entry, email, bulk import and BOPIS/endless-aisle. Every order flows through the same pipeline: **intake → normalize → validate → route → allocate → fulfill → settle**.
 
@@ -13,6 +24,8 @@ Single order backbone for every selling surface: Shopify, BigCommerce, Amazon, e
 5. Fulfillment consumes the allocation; status/sub-status advances.
 6. Payments/invoices settle; analytics captured.
 
+> 🧒 **Kid translation of dedup:** If the doorbell rings twice, you don't cook two pizzas. The same order message arriving twice is still one order — the `channel_order_id` is the "customer name" we check.
+
 ## Use cases
 - **UC-01** Place order via channel connector
 - **UC-02** Manual order entry
@@ -21,6 +34,8 @@ Single order backbone for every selling surface: Shopify, BigCommerce, Amazon, e
 - **UC-05** Park/broker unfulfillable orders
 - **UC-16** BOPIS pickup order
 - **UC-31** EDI order intake (850)
+
+> 📧 **Real life — email order:** A wholesale customer emails "2 boxes of medium gloves." Nexus reads it, creates a draft, support confirms it. Seconds, not minutes.
 
 ## Data flow
 ```mermaid
@@ -62,3 +77,5 @@ Tables: `nx_orders` · `nx_order_items` · `nx_order_allocations` · `nx_order_a
 
 ## State machine (status → sub-status)
 `NEW → ROUTED → ALLOCATED → WAVE → PICK → PACK → SHIPPED → DELIVERED` with `PARKED`, `APPROVAL`, `REJECTED`, `CANCELLED` exception paths.
+
+> 🧒 **Kid translation of statuses:** NEW = just arrived. ROUTED = we picked the path. ALLOCATED = the stock is reserved for it. WAVE/PICK/PACK/SHIPPED = physical progress through the warehouse. DELIVERED = done. PARKED = waiting in the visible "to fix" bin (never lost).

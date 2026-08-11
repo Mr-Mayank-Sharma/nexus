@@ -2,6 +2,13 @@
 
 > Part of the Nexus OMS documentation set. See [index](../README.md).
 
+## Start here 💰
+
+**Finance** is *the money story of every order*: the bill goes out (invoice), the money comes in (payment), and when things go wrong the money goes back (credit memo). Nexus keeps that story complete and honest — you can **edit** the books, but you can never just **delete** a record.
+
+> 💳 **Real life example — the hoodie's money trip:**
+> Mia's hoodie ships → Nexus creates an invoice for $49 → Stripe charges her card → payment recorded. She returns it? A **credit memo** appears. A carrier bills you $1,200 for a $980 route? Freight audit flags the **$220 overcharge**.
+
 ## Overview
 Order-to-cash and procure-to-pay support: invoices, invoice items, payments (Stripe connector), credit memos, freight invoice auditing and financial analytics.
 
@@ -52,3 +59,5 @@ Tables: `nx_invoices` · `nx_invoice_items` · `nx_payments` · `nx_credit_memos
 ## Integrity notes
 - Invoice/payment edit is allowed but **delete is not** for FINANCE — a control lineage.
 - Freight overcharge detection pairs carrier invoices with the rate card.
+
+> 🧒 **Kid translation of the no-delete rule:** The finance team can fix a typo (edit) but can never make a record vanish (delete). Money stories have a "white-out forbidden" rule — the diary stays complete.
