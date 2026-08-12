@@ -73,13 +73,13 @@ public class PermissionAuthorizationFilter extends OncePerRequestFilter {
 
         String resource = permissionService.resolveResource(path);
         if (resource == null) {
-            filterChain.doFilter(request, response);
+            deny(response, "unmapped", "access");
             return;
         }
 
         String action = permissionService.resolveAction(method);
         if (action == null) {
-            filterChain.doFilter(request, response);
+            deny(response, resource, "access");
             return;
         }
 
@@ -87,13 +87,17 @@ public class PermissionAuthorizationFilter extends OncePerRequestFilter {
         if (!permitted) {
             log.warn("Permission denied: role={} resource={} action={} path={} tenantId={}",
                 role, resource, action, path, MDC.get("tenantId"));
-            response.setStatus(FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"Insufficient permissions for " + resource + ":" + action + "\"}");
+            deny(response, resource, action);
             return;
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void deny(HttpServletResponse response, String resource, String action) throws IOException {
+        response.setStatus(FORBIDDEN);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\":\"Forbidden\",\"message\":\"Insufficient permissions for " + resource + ":" + action + "\"}");
     }
 
     private boolean isPublicOrPermitAll(String path) {

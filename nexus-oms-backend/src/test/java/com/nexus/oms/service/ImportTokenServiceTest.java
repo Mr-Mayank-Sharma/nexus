@@ -8,8 +8,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -71,6 +76,31 @@ class ImportTokenServiceTest {
         Thread.sleep(2);
 
         assertNull(shortTtl.validateToken(token));
+    }
+
+    @Test
+    void tryMarkNonceUsed_redisUnavailable_returnsFalse() {
+        when(redisTemplate.opsForValue()).thenThrow(new RuntimeException("redis down"));
+
+        assertFalse(importTokenService.tryMarkNonceUsed("nonce", System.currentTimeMillis() + 5000));
+    }
+
+    @Test
+    void isNonceUsed_redisUnavailable_returnsTrue() {
+        when(redisTemplate.hasKey("import:nonce:nonce")).thenThrow(new RuntimeException("redis down"));
+
+        assertTrue(importTokenService.isNonceUsed("nonce"));
+    }
+
+    @Test
+    void tryMarkNonceUsed_storesNonce() {
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> ops = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(ops);
+        when(ops.setIfAbsent(eq("import:nonce:nonce"), eq("1"), anyLong(), eq(TimeUnit.SECONDS)))
+                .thenReturn(true);
+
+        assertTrue(importTokenService.tryMarkNonceUsed("nonce", System.currentTimeMillis() + 5000));
     }
 
     @Test

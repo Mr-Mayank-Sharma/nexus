@@ -378,11 +378,12 @@ class PermissionMatrixIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Order(12)
-    void testImportEndpointPublic() {
-        ResponseEntity<String> resp = restTemplate.getForEntity(
-                baseUrl() + "/import", String.class);
-        assertTrue(resp.getStatusCode().is2xxSuccessful() || resp.getStatusCode().is4xxClientError(),
-                "/import should be accessible (public). Got: " + resp.getStatusCode());
+    void testImportEndpointRequiresAuthentication() {
+        ResponseEntity<String> resp = restTemplate.exchange(
+                baseUrl() + "/import/history", HttpMethod.GET,
+                new HttpEntity<>(new HttpHeaders()), String.class);
+        assertEquals(HttpStatus.UNAUTHORIZED, resp.getStatusCode(),
+                "/import/history should require authentication");
     }
 
     @Test

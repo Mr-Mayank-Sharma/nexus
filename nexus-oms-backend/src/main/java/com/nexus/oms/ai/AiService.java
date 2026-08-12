@@ -93,10 +93,10 @@ public class AiService {
     public AllocationResponse callPickPackAi(Map<String, Object> input) {
         try {
             String response = restTemplate.postForObject(
-                    baseUrlOps + "/api/predict/pickpack", input, String.class);
+                    baseUrlOps + "/api/predict/pick-pack", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return AllocationResponse.builder()
-                    .pickPackDetails(json.path("instructions").asText("Standard pick-pack"))
+                    .pickPackDetails(buildPickPackDetails(json))
                     .build();
         } catch (Exception e) {
             log.warn("PickPack AI call failed: {}", e.getMessage(), e);
@@ -111,11 +111,11 @@ public class AiService {
                     baseUrlIntel + "/api/predict/demand", input, String.class);
             JsonNode json = objectMapper.readTree(response);
             return DemandForecastResponse.builder()
-                    .next7Days(objectMapper.convertValue(json.path("next_7_days"), Map.class))
-                    .next30Days(objectMapper.convertValue(json.path("next_30_days"), Map.class))
+                    .next7Days(Map.of("total", json.path("next_7_days").asInt(0)))
+                    .next30Days(Map.of("total", json.path("next_30_days").asInt(0)))
                     .confidence(DemandForecastResponse.ConfidenceInterval.builder()
-                            .lower(json.path("confidence").path("lower").asDouble(0.8))
-                            .upper(json.path("confidence").path("upper").asDouble(0.95))
+                            .lower(json.path("confidence_interval").path("p10").asDouble(0.0))
+                            .upper(json.path("confidence_interval").path("p90").asDouble(0.0))
                             .build())
                     .build();
         } catch (Exception e) {
@@ -143,6 +143,13 @@ public class AiService {
                     .confidence(0.0)
                     .build();
         }
+    }
+
+    private String buildPickPackDetails(JsonNode json) {
+        String strategy = json.path("picking_strategy").asText("Standard");
+        int pickers = json.path("pickers_required").asInt(1);
+        double minutes = json.path("estimated_minutes").asDouble(0.0);
+        return strategy + " pick-pack; pickers=" + pickers + "; estimatedMinutes=" + minutes;
     }
 
     AllocationResponse fallbackRouting(Map<String, Object> input, Exception ex) {

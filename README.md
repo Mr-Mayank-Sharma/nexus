@@ -65,7 +65,7 @@ docker compose up -d postgres redis kafka
 ```bash
 JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 $JAVA_HOME/bin/java -jar nexus-oms-backend/target/oms-1.0.0.jar \
-  --spring.jpa.hibernate.ddl-auto=update
+  --spring.jpa.hibernate.ddl-auto=validate
 ```
 
 The server starts on `http://localhost:8080/api/v1`.
@@ -88,7 +88,7 @@ Default credentials (seeded via Flyway) — or register a new account at the log
 
 ### Generic Import Engine
 
-All endpoints require authentication via `Authorization: Bearer <token>` header, except `/import/**` which are publicly accessible.
+All endpoints require authentication via `Authorization: Bearer <token>` header. Import uploads require JWT auth or a signed `X-Import-Token`; import metadata endpoints are safe to expose as read-only helpers when configured by security rules.
 
 ```bash
 # Get supported entity types

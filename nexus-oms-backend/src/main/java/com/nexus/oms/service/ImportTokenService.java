@@ -87,15 +87,15 @@ public class ImportTokenService {
      * Mark a token's jti as used in Redis. Returns false if already consumed (replay detected).
      */
     public boolean tryMarkNonceUsed(String jti, long expMs) {
-        if (jti == null) return true;
+        if (jti == null) return false;
         try {
             String key = NONCE_PREFIX + jti;
             long ttlSeconds = Math.max(1, (expMs - System.currentTimeMillis()) / 1000);
             Boolean set = redisTemplate.opsForValue().setIfAbsent(key, "1", ttlSeconds, TimeUnit.SECONDS);
             return Boolean.TRUE.equals(set);
         } catch (Exception e) {
-            log.warn("Redis nonce check failed, allowing request: {}", e.getMessage());
-            return true;
+            log.warn("Redis nonce check failed, rejecting import token request: {}", e.getMessage());
+            return false;
         }
     }
 
@@ -103,13 +103,13 @@ public class ImportTokenService {
      * Check if a token's jti has already been consumed (replay detection).
      */
     public boolean isNonceUsed(String jti) {
-        if (jti == null) return false;
+        if (jti == null) return true;
         try {
             Boolean exists = redisTemplate.hasKey(NONCE_PREFIX + jti);
             return Boolean.TRUE.equals(exists);
         } catch (Exception e) {
-            log.warn("Redis nonce check failed: {}", e.getMessage());
-            return false;
+            log.warn("Redis nonce check failed, treating token as used: {}", e.getMessage());
+            return true;
         }
     }
 

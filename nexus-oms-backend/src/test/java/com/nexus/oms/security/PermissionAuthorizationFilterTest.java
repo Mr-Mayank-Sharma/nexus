@@ -78,13 +78,21 @@ class PermissionAuthorizationFilterTest {
     }
 
     @Test
-    void testImportPathPassesThrough() throws Exception {
+    void testImportTokenRolePassesThrough() throws Exception {
         when(request.getRequestURI()).thenReturn("/import/orders");
         when(request.getMethod()).thenReturn("POST");
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(
+                        "import-token",
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_IMPORT_TOKEN"))
+                ));
 
         filter.doFilterInternal(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(permissionService);
     }
 
     @Test
@@ -163,11 +171,12 @@ class PermissionAuthorizationFilterTest {
     }
 
     @Test
-    void testUnresolvablePathPassesThrough() throws Exception {
+    void testUnresolvableAuthenticatedPathGets403() throws Exception {
         UUID tenantId = UUID.randomUUID();
         when(request.getRequestURI()).thenReturn("/some/unknown/path");
         when(request.getMethod()).thenReturn("GET");
         when(permissionService.resolveResource("/some/unknown/path")).thenReturn(null);
+        when(response.getWriter()).thenReturn(mock(PrintWriter.class));
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(
@@ -178,7 +187,9 @@ class PermissionAuthorizationFilterTest {
 
         filter.doFilterInternal(request, response, filterChain);
 
-        verify(filterChain).doFilter(request, response);
+        verify(response).setStatus(403);
+        verify(response).getWriter();
+        verify(filterChain, never()).doFilter(request, response);
     }
 
     @Test

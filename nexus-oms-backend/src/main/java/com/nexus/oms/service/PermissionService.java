@@ -42,11 +42,16 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/customers/", "customers");
         PATH_TO_RESOURCE.put("/returns/", "returns");
         PATH_TO_RESOURCE.put("/shipments/", "shipments");
+        PATH_TO_RESOURCE.put("/pickup/", "pickup");
         PATH_TO_RESOURCE.put("/picking/", "picking");
+        PATH_TO_RESOURCE.put("/pickers/", "picking");
         PATH_TO_RESOURCE.put("/packing/", "packing");
         PATH_TO_RESOURCE.put("/shipping/", "shipping");
+        PATH_TO_RESOURCE.put("/labels/", "shipping");
+        PATH_TO_RESOURCE.put("/manifests/", "shipping");
         PATH_TO_RESOURCE.put("/warehouse/", "warehouse");
         PATH_TO_RESOURCE.put("/warehouses/", "warehouse");
+        PATH_TO_RESOURCE.put("/waves/", "fulfillment");
         PATH_TO_RESOURCE.put("/routing/", "routing");
         PATH_TO_RESOURCE.put("/routing-rules/", "routing-rules");
         PATH_TO_RESOURCE.put("/order-routing/", "routing");
@@ -54,19 +59,24 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/invoices/", "invoices");
         PATH_TO_RESOURCE.put("/invoicing/", "invoices");
         PATH_TO_RESOURCE.put("/payments/", "payments");
+        PATH_TO_RESOURCE.put("/freight/", "payments");
         PATH_TO_RESOURCE.put("/carriers/", "carriers");
         PATH_TO_RESOURCE.put("/carrier/", "carriers");
         PATH_TO_RESOURCE.put("/rbac/", "rbac");
         PATH_TO_RESOURCE.put("/settings/", "settings");
+        PATH_TO_RESOURCE.put("/sample-data/", "settings");
         PATH_TO_RESOURCE.put("/workflows/", "workflows");
         PATH_TO_RESOURCE.put("/ai/", "ai");
         PATH_TO_RESOURCE.put("/api/ai/", "ai");
+        PATH_TO_RESOURCE.put("/dashboard/", "analytics");
+        PATH_TO_RESOURCE.put("/reports/", "analytics");
         PATH_TO_RESOURCE.put("/analytics/", "analytics");
         PATH_TO_RESOURCE.put("/documents/", "documents");
         PATH_TO_RESOURCE.put("/notifications/", "notifications");
         PATH_TO_RESOURCE.put("/webhooks/", "webhooks");
         PATH_TO_RESOURCE.put("/edi/", "edi");
         PATH_TO_RESOURCE.put("/cycle-counts/", "cycle-counts");
+        PATH_TO_RESOURCE.put("/atp/", "inventory");
         PATH_TO_RESOURCE.put("/rate-shopping/", "rate-shopping");
         PATH_TO_RESOURCE.put("/import/", "import");
         PATH_TO_RESOURCE.put("/audit/", "audit");
@@ -74,13 +84,29 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/integrations/", "integration");
         PATH_TO_RESOURCE.put("/integration-platform/", "integration");
         PATH_TO_RESOURCE.put("/integration-stores/", "integration");
+        PATH_TO_RESOURCE.put("/connectors/", "integration");
         PATH_TO_RESOURCE.put("/integration-hub/", "integration");
         PATH_TO_RESOURCE.put("/shopify/", "integration");
         PATH_TO_RESOURCE.put("/email-parser/", "integration");
         PATH_TO_RESOURCE.put("/api/sample-data/", "settings");
         PATH_TO_RESOURCE.put("/fulfillment/", "fulfillment");
+        PATH_TO_RESOURCE.put("/fulfillment-limits/", "fulfillment");
+        PATH_TO_RESOURCE.put("/task-queues/", "fulfillment");
         PATH_TO_RESOURCE.put("/receiving/", "warehouse");
         PATH_TO_RESOURCE.put("/bopis/", "inventory");
+        PATH_TO_RESOURCE.put("/endless-aisle/", "inventory");
+        PATH_TO_RESOURCE.put("/replenishment/", "inventory");
+        PATH_TO_RESOURCE.put("/transfers/", "inventory");
+        PATH_TO_RESOURCE.put("/brokering/", "orders");
+        PATH_TO_RESOURCE.put("/parked-orders/", "orders");
+        PATH_TO_RESOURCE.put("/approvals/", "orders");
+        PATH_TO_RESOURCE.put("/rejections/", "orders");
+        PATH_TO_RESOURCE.put("/promotions/", "orders");
+        PATH_TO_RESOURCE.put("/slotting/", "warehouse");
+        PATH_TO_RESOURCE.put("/labor/", "warehouse");
+        PATH_TO_RESOURCE.put("/automation/", "warehouse");
+        PATH_TO_RESOURCE.put("/yards/", "warehouse");
+        PATH_TO_RESOURCE.put("/trailers/", "warehouse");
     }
 
     private static final Map<String, String> METHOD_TO_ACTION = Map.of(
@@ -132,7 +158,9 @@ public class PermissionService {
                 return isActionGranted(rp, action);
             }
         }
-        return true;
+        log.warn("Permission denied: no matching permission row for role={} resource={} action={}",
+                role, resource, action);
+        return false;
     }
 
     public boolean hasPermissionCached(String role, String resource, String action) {
