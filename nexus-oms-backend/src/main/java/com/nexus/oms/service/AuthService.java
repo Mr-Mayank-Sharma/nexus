@@ -382,6 +382,7 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername(), user.getRole(), user.getTenantId());
 
         return AuthResponse.builder()
+                .id(user.getId() != null ? user.getId().toString() : null)
                 .accessToken(token)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")

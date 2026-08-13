@@ -100,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const storeAuth = useCallback((authData: Record<string, unknown>) => {
     const accessToken = authData.accessToken as string
     const refreshToken = authData.refreshToken as string
+    const id = authData.id as string
     const username = authData.username as string
     const role = authData.role as string
     const tenantId = authData.tenantId as string
@@ -114,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       : 'VIEWER' as UserRole
 
     const user: User = {
-      id: '',
+      id: id || '',
       username,
       email: email || '',
       fullName: fullName || username,

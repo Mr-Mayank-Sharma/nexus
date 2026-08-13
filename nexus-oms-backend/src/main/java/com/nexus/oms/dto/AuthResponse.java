@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 public class AuthResponse {
 
+    private String id;
     private String accessToken;
     private String tokenType;
     private long expiresIn;

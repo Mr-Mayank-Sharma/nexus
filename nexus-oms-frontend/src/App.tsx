@@ -1,4 +1,4 @@
-import { lazy } from 'react'
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import NotFoundPage from './pages/NotFoundPage'
@@ -89,6 +89,15 @@ const EndlessAislePage = lazy(() => import('./pages/EndlessAislePage'))
 const AnalyticsDashboardPage = lazy(() => import('./pages/AnalyticsDashboardPage'))
 const FindOrderPage = lazy(() => import('./pages/FindOrderPage'))
 
+const RfLayout = lazy(() => import('./rf/RfLayout'))
+const RfHomeScreen = lazy(() => import('./rf/screens/HomeScreen'))
+const RfPickScreen = lazy(() => import('./rf/screens/PickScreen'))
+const RfPackScreen = lazy(() => import('./rf/screens/PackScreen'))
+const RfReceiveScreen = lazy(() => import('./rf/screens/ReceiveScreen'))
+const RfShipScreen = lazy(() => import('./rf/screens/ShipScreen'))
+const RfCountScreen = lazy(() => import('./rf/screens/CountScreen'))
+const RfScanScreen = lazy(() => import('./rf/screens/ScanScreen'))
+
 function PageLoader() {
   return (
     <div className="flex items-center justify-center h-64">
@@ -103,8 +112,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route index element={<LaunchPadPage />} />
-          <Route path="analytics-dashboard" element={<AnalyticsDashboardPage />} />
+          <Route index element={<LaunchPadPage />} />          <Route path="analytics-dashboard" element={<AnalyticsDashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/search" element={<FindOrderPage />} />
@@ -188,6 +196,16 @@ export default function App() {
           <Route path="promotions" element={<PromotionsPage />} />
           <Route path="endless-aisle" element={<EndlessAislePage />} />
           <Route path="*" element={<NotFoundPage />} />
+        </Route>
+
+        <Route path="rf" element={<Suspense fallback={<PageLoader />}><RfLayout /></Suspense>}>
+          <Route index element={<RfHomeScreen />} />
+          <Route path="pick" element={<RfPickScreen />} />
+          <Route path="pack" element={<RfPackScreen />} />
+          <Route path="receive" element={<RfReceiveScreen />} />
+          <Route path="ship" element={<RfShipScreen />} />
+          <Route path="count" element={<RfCountScreen />} />
+          <Route path="scan" element={<RfScanScreen />} />
         </Route>
       </Route>
     </Routes>

@@ -6,7 +6,7 @@ import {
   Globe, ShoppingCart, Receipt, Bell, FileText, Shield, UserCog, Activity,
   Upload, Download, Zap, Mail, TrendingDown, Truck, Building2, Search, AlertTriangle,
   LayoutDashboard, ChevronRight, Star, Sparkles, Menu, ShoppingBag, Calendar, Gauge,
-  Plus, Layers, Printer,
+  Plus, Layers, Printer, ScanLine,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
@@ -43,6 +43,7 @@ const apps: AppCard[] = [
 
   // Fulfillment & Warehouse
   { name: 'WH Dashboard', path: '/warehouse-dashboard', icon: <Building2 className="w-6 h-6" />, description: 'Warehouse operations & labor', category: 'Fulfillment & Warehouse', color: 'from-amber-500 to-amber-600' },
+  { name: 'RF Handheld', path: '/rf', icon: <ScanLine className="w-6 h-6" />, description: 'Warehouse handheld scanner UI', category: 'Fulfillment & Warehouse', color: 'from-emerald-600 to-emerald-700', isNew: true },
   { name: 'Picking', path: '/picking', icon: <ClipboardCheck className="w-6 h-6" />, description: 'Picklist management', category: 'Fulfillment & Warehouse', color: 'from-orange-500 to-orange-600' },
   { name: 'Packer View', path: '/packer', icon: <PackagePlus className="w-6 h-6" />, description: 'Packing station experience', category: 'Fulfillment & Warehouse', color: 'from-emerald-500 to-emerald-600' },
   { name: 'Packing', path: '/packing', icon: <PackagePlus className="w-6 h-6" />, description: 'Package orders for shipment', category: 'Fulfillment & Warehouse', color: 'from-rose-500 to-rose-600' },
