@@ -10,6 +10,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 > - "What can a user do?" → [04-USE-CASES.md](./04-USE-CASES.md)
 > - "How does data move?" → [05-DATA-FLOW.md](./05-DATA-FLOW.md)
 > - "Who can access what?" → [06-BUSINESS-FLOW-RBAC.md](./06-BUSINESS-FLOW-RBAC.md)
+> - "How do we compare vs Manhattan, SAP, HotWax?" → [07-SCM-COMPARISON.md](./07-SCM-COMPARISON.md)
 
 ## Library map
 
@@ -22,6 +23,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`04-USE-CASES.md`](./04-USE-CASES.md) | UC-01…UC-42 actor/precondition/flow/result catalogue | PM, QA, Engineering |
 | [`05-DATA-FLOW.md`](./05-DATA-FLOW.md) | End-to-end data movement (intake, fulfillment, integrations, AI, returns, procurement, yard) | Engineering, QA |
 | [`06-BUSINESS-FLOW-RBAC.md`](./06-BUSINESS-FLOW-RBAC.md) | **Who can access what**: 14 roles, 39 path→resource mappings, seeded permission matrix, flow-stage access tables | All |
+| [`07-SCM-COMPARISON.md`](./07-SCM-COMPARISON.md) | Deep-research comparison vs **12 SCM/OMS/WMS systems** (Manhattan, HotWax, SAP, Oracle, Blue Yonder…), feature scores /10, weighted rankings, Nexus gap analysis | All, exec, investors |
 | [`features/`](./features/) | Per-feature deep dives (overview, process, use cases, data flow, ER subset, access) | All |
 
 ### Feature docs

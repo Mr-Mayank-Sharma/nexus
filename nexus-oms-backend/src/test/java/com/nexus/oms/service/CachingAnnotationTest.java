@@ -40,7 +40,7 @@ class CachingAnnotationTest {
 
     @Test
     void dashboardService_getOrderVelocity_HasCacheableAnnotation() throws Exception {
-        Method method = DashboardService.class.getMethod("getOrderVelocity");
+        Method method = DashboardService.class.getMethod("getOrderVelocity", java.util.UUID.class, int.class);
         Cacheable annotation = method.getAnnotation(Cacheable.class);
 
         assertNotNull(annotation);

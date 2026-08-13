@@ -270,7 +270,7 @@ export default function RejectionsPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           {rejection.status === 'PENDING' && (
-                            <PermissionGate permission="rejections.process">
+                            <PermissionGate resource="rejections" action="process">
                               <button
                                 onClick={() => processMutation.mutate(rejection.id)}
                                 className="px-2 py-1 text-xs bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] rounded hover:bg-[var(--nexus-success-200)]"

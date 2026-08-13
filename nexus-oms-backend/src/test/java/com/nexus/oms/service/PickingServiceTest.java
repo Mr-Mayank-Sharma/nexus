@@ -4,6 +4,8 @@ import com.nexus.oms.entity.NxPicklist;
 import com.nexus.oms.entity.NxPicklistItem;
 import com.nexus.oms.entity.WarehouseStaff;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.repository.OrderItemRepository;
+import com.nexus.oms.repository.OrderRepository;
 import com.nexus.oms.repository.PicklistItemRepository;
 import com.nexus.oms.repository.PicklistRepository;
 import com.nexus.oms.repository.WarehouseStaffRepository;
@@ -30,6 +32,10 @@ class PickingServiceTest {
     private PicklistItemRepository picklistItemRepository;
     @Mock
     private WarehouseStaffRepository warehouseStaffRepository;
+    @Mock
+    private OrderRepository orderRepository;
+    @Mock
+    private OrderItemRepository orderItemRepository;
 
     private PickingService pickingService;
     private UUID tenantId;
@@ -37,7 +43,8 @@ class PickingServiceTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        pickingService = new PickingService(picklistRepository, picklistItemRepository, warehouseStaffRepository);
+        pickingService = new PickingService(picklistRepository, picklistItemRepository, warehouseStaffRepository,
+                orderRepository, orderItemRepository);
         tenantId = UUID.randomUUID();
         picklistId = UUID.randomUUID();
     }

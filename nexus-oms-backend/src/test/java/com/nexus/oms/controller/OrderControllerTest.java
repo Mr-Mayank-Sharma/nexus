@@ -97,7 +97,7 @@ class OrderControllerTest {
 
     @Test
     void testGetOrder_ReturnsOrder() throws Exception {
-        when(orderService.getOrder(orderId)).thenReturn(testOrderResponse);
+        when(orderService.getOrder(any(), eq(orderId.toString()))).thenReturn(testOrderResponse);
 
         mockMvc.perform(get("/orders/" + orderId))
                 .andExpect(status().isOk())

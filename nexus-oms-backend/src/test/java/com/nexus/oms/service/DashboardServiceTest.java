@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,6 +32,8 @@ class DashboardServiceTest {
     private ReturnRepository returnRepository;
     @Mock
     private ShipmentRepository shipmentRepository;
+    @Mock
+    private PickerRepository pickerRepository;
 
     private DashboardService dashboardService;
     private UUID tenantId;
@@ -38,7 +41,7 @@ class DashboardServiceTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         dashboardService = new DashboardService(orderRepository, exceptionRepository,
-                returnRepository, shipmentRepository);
+                returnRepository, shipmentRepository, pickerRepository);
         tenantId = UUID.randomUUID();
     }
 
@@ -48,8 +51,18 @@ class DashboardServiceTest {
         when(orderRepository.sumTotalByTenantIdAndCreatedAtAfter(any(), any())).thenReturn(BigDecimal.valueOf(1000));
         when(exceptionRepository.countByTenantIdAndStatus(tenantId, "OPEN")).thenReturn(3L);
         when(orderRepository.countByTenantIdAndStatusNot(tenantId, "CANCELLED")).thenReturn(100L);
-        when(orderRepository.countByTenantIdAndStatus(tenantId, "SHIPPED")).thenReturn(30L);
         when(orderRepository.countByTenantIdAndStatus(tenantId, "DELIVERED")).thenReturn(80L);
+
+        NxOrder order = new NxOrder();
+        order.setId(UUID.randomUUID());
+        order.setCreatedAt(LocalDateTime.now().minusMinutes(252));
+        NxShipment shipment = new NxShipment();
+        shipment.setId(UUID.randomUUID());
+        shipment.setOrderId(order.getId());
+        shipment.setCreatedAt(LocalDateTime.now());
+        when(shipmentRepository.findByTenantId(tenantId)).thenReturn(List.of(shipment));
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+        when(pickerRepository.countActiveByTenantId(tenantId)).thenReturn(18L);
 
         Map<String, Object> kpis = dashboardService.getKPIs(tenantId);
 
@@ -57,7 +70,7 @@ class DashboardServiceTest {
         assertEquals(1000.0, kpis.get("revenueToday"));
         assertEquals(3, kpis.get("activeExceptions"));
         assertEquals("80.0%", kpis.get("onTimeDelivery"));
-        assertEquals("4.2h", kpis.get("avgShipTime"));
+        assertEquals("4h 12m", kpis.get("avgShipTime"));
         assertEquals(18, kpis.get("activePickers"));
     }
 
@@ -67,18 +80,20 @@ class DashboardServiceTest {
         when(orderRepository.sumTotalByTenantIdAndCreatedAtAfter(any(), any())).thenReturn(BigDecimal.ZERO);
         when(exceptionRepository.countByTenantIdAndStatus(tenantId, "OPEN")).thenReturn(0L);
         when(orderRepository.countByTenantIdAndStatusNot(tenantId, "CANCELLED")).thenReturn(0L);
-        when(orderRepository.countByTenantIdAndStatus(tenantId, "SHIPPED")).thenReturn(0L);
         when(orderRepository.countByTenantIdAndStatus(tenantId, "DELIVERED")).thenReturn(0L);
 
         Map<String, Object> kpis = dashboardService.getKPIs(tenantId);
 
-        assertEquals("97.2%", kpis.get("onTimeDelivery"));
+        assertEquals("—", kpis.get("onTimeDelivery"));
         assertEquals("—", kpis.get("avgShipTime"));
     }
 
     @Test
     void getOrderVelocity() {
-        Map<String, Object> velocity = dashboardService.getOrderVelocity();
+        when(orderRepository.countByTenantIdAndCreatedAtAfter(any(), any())).thenReturn(250L);
+
+        Map<String, Object> velocity = dashboardService.getOrderVelocity(tenantId, 20);
+
         assertEquals("orders_per_hour", velocity.get("metric"));
         assertEquals(12.5, velocity.get("value"));
     }

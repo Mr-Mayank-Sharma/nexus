@@ -212,7 +212,7 @@ export default function OrderApprovalsPage() {
                       </td>
                       <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{rule.priority}</td>
                       <td className="px-4 py-3 text-center">
-                        <PermissionGate permission="approvals.edit">
+                        <PermissionGate resource="approvals" action="edit">
                           <button type="button" onClick={() => toggleRuleMutation.mutate({ id: rule.id, active: !rule.active })}>
                             {rule.active ? <ToggleRight className="w-6 h-6 text-[var(--nexus-primary-600)] mx-auto" /> : <ToggleLeft className="w-6 h-6 text-[var(--text-tertiary)] mx-auto" />}
                           </button>
@@ -271,7 +271,7 @@ export default function OrderApprovalsPage() {
                             <Eye className="w-4 h-4" />
                           </button>
                           {approval.status === 'PENDING' && (
-                            <PermissionGate permission="approvals.review">
+                            <PermissionGate resource="approvals" action="review">
                               <button
                                 onClick={() => reviewMutation.mutate({ id: approval.id, decision: 'APPROVED', reviewer: 'admin' })}
                                 className="px-2 py-1 text-xs bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] rounded hover:bg-[var(--nexus-success-200)]"

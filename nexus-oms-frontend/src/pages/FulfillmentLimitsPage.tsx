@@ -122,7 +122,7 @@ export default function FulfillmentLimitsPage() {
           <p className="text-[var(--text-secondary)] mt-1">Manage capacity limits per fulfillment node</p>
         </div>
         <div className="flex items-center gap-2">
-          <PermissionGate permission="fulfillment.edit">
+          <PermissionGate resource="fulfillment" action="edit">
             <button
               onClick={() => resetMutation.mutate()}
               className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-muted)] text-[var(--text-secondary)] rounded-lg hover:bg-[var(--surface-muted)]"
@@ -221,7 +221,7 @@ export default function FulfillmentLimitsPage() {
                         <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{limit.maxOrdersPerWeek || '∞'}</td>
                         <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{limit.currentItemsToday}</td>
                         <td className="px-4 py-3 text-center">
-                          <PermissionGate permission="fulfillment.edit">
+                          <PermissionGate resource="fulfillment" action="edit">
                             <button type="button" onClick={() => toggleMutation.mutate({ nodeId: limit.nodeId, enabled: !limit.fulfillmentEnabled })}>
                               {limit.fulfillmentEnabled ? <ToggleRight className="w-6 h-6 text-[var(--nexus-success-600)] mx-auto" /> : <ToggleLeft className="w-6 h-6 text-[var(--text-tertiary)] mx-auto" />}
                             </button>

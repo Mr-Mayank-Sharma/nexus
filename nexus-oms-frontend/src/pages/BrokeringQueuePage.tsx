@@ -113,7 +113,7 @@ export default function BrokeringQueuePage() {
           <p className="text-[var(--text-secondary)] mt-1">Manage order brokering and allocation runs</p>
         </div>
         <div className="flex items-center gap-2">
-          <PermissionGate permission="brokering.process">
+          <PermissionGate resource="brokering" action="process">
             <button
               onClick={() => processMutation.mutate()}
               disabled={processMutation.isPending}
@@ -123,7 +123,7 @@ export default function BrokeringQueuePage() {
               Process Queue
             </button>
           </PermissionGate>
-          <PermissionGate permission="brokering.process">
+          <PermissionGate resource="brokering" action="process">
             <button
               onClick={() => processPriorityMutation.mutate()}
               disabled={processPriorityMutation.isPending}
@@ -133,7 +133,7 @@ export default function BrokeringQueuePage() {
               Priority Run
             </button>
           </PermissionGate>
-          <PermissionGate permission="brokering.expire">
+          <PermissionGate resource="brokering" action="expire">
             <button
               onClick={() => expireMutation.mutate()}
               disabled={expireMutation.isPending}

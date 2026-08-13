@@ -129,7 +129,7 @@ export default function TransfersPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Transfer Orders</h1>
           <p className="text-[var(--text-secondary)] mt-1">Manage inventory transfers between locations</p>
         </div>
-        <PermissionGate permission="transfers.create">
+        <PermissionGate resource="transfers" action="create">
           <button type="button" className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
             <Plus className="w-4 h-4" />
             New Transfer
@@ -251,7 +251,7 @@ export default function TransfersPage() {
                           <Eye className="w-4 h-4" />
                         </button>
                         {transfer.status === 'PENDING_APPROVAL' && (
-                          <PermissionGate permission="transfers.approve">
+                          <PermissionGate resource="transfers" action="approve">
                             <button
                               onClick={() => approveMutation.mutate(transfer.id)}
                               className="px-2 py-1 text-xs bg-[var(--nexus-success-100)] text-[var(--nexus-success-700)] rounded hover:bg-[var(--nexus-success-200)]"
@@ -261,7 +261,7 @@ export default function TransfersPage() {
                           </PermissionGate>
                         )}
                         {transfer.status === 'APPROVED' && (
-                          <PermissionGate permission="transfers.ship">
+                          <PermissionGate resource="transfers" action="ship">
                             <button
                               onClick={() => shipMutation.mutate(transfer.id)}
                               className="px-2 py-1 text-xs bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)] rounded hover:bg-[var(--nexus-ai-200)]"
@@ -271,7 +271,7 @@ export default function TransfersPage() {
                           </PermissionGate>
                         )}
                         {transfer.status === 'IN_TRANSIT' && (
-                          <PermissionGate permission="transfers.receive">
+                          <PermissionGate resource="transfers" action="receive">
                             <button
                               onClick={() => receiveMutation.mutate(transfer.id)}
                               className="px-2 py-1 text-xs bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)] rounded hover:bg-[var(--nexus-primary-200)]"
@@ -281,7 +281,7 @@ export default function TransfersPage() {
                           </PermissionGate>
                         )}
                         {!['RECEIVED', 'CANCELLED'].includes(transfer.status) && (
-                          <PermissionGate permission="transfers.cancel">
+                          <PermissionGate resource="transfers" action="cancel">
                             <button
                               onClick={() => cancelMutation.mutate(transfer.id)}
                               className="px-2 py-1 text-xs bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)] rounded hover:bg-[var(--nexus-error-200)]"

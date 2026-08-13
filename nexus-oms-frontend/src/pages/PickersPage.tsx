@@ -110,7 +110,7 @@ export default function PickersPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Picker Management</h1>
           <p className="text-[var(--text-secondary)] mt-1">Assign and track picker workload</p>
         </div>
-        <PermissionGate permission="pickers.create">
+        <PermissionGate resource="pickers" action="create">
           <button type="button" className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
             <Plus className="w-4 h-4" />
             Add Picker
