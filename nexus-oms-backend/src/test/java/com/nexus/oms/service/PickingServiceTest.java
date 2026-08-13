@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.entity.NxOrder;
 import com.nexus.oms.entity.NxPicklist;
 import com.nexus.oms.entity.NxPicklistItem;
 import com.nexus.oms.entity.WarehouseStaff;
@@ -99,6 +100,27 @@ class PickingServiceTest {
 
         assertEquals(0, result.getTotalItems());
         assertEquals(0, result.getPickedItems());
+    }
+
+    @Test
+    void createPicklistFromOrder_usesExternalIdOrFallsBackToOrderId() {
+        UUID orderId = UUID.randomUUID();
+        NxOrder order = new NxOrder();
+        order.setId(orderId);
+        order.setTenantId(tenantId);
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of());
+        when(picklistRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        NxPicklist result = pickingService.createPicklistFromOrder(orderId);
+
+        assertTrue(result.getName().startsWith("PL-" + orderId + "-"));
+        assertFalse(result.getName().contains("null"));
+
+        order.setExternalId("SHOP-100");
+        NxPicklist named = pickingService.createPicklistFromOrder(orderId);
+
+        assertTrue(named.getName().startsWith("PL-SHOP-100-"));
     }
 
     @Test

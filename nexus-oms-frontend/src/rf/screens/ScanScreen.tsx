@@ -1,36 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, PackageCheck, Package, PackageSearch, Truck, ClipboardCheck, PackagePlus } from 'lucide-react'
-import * as pickingApi from '../../api/picking'
-import * as packingApi from '../../api/packing'
-import * as shippingApi from '../../api/shipping'
-import * as receiptsApi from '../../api/inventoryReceipts'
-import * as cycleCountsApi from '../../api/cycleCounts'
+import { searchScan, ScanResult } from '../../api/scan'
 import { RfCard, RfEmpty, ScreenHeader } from '../components'
 import ScannerOverlay from '../ScannerOverlay'
 
 type LookupType = 'picklist' | 'package' | 'shipment' | 'receipt' | 'count'
-
-interface LookupResult {
-  type: LookupType
-  id: string
-  label: string
-  sub: string
-  href: string
-}
-
-const asArray = (data: any): any[] => (Array.isArray(data) ? data : (data?.content ?? []))
-
-function actionableShipment(s: any) {  return !['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(String(s.status ?? '').toUpperCase())
-}
-
-function actionableReceipt(r: any) {
-  return !r.receivedAt && !['RECEIVED', 'COMPLETED'].includes(String(r.status ?? '').toUpperCase())
-}
-
-function actionableCount(c: any) {
-  return !c.countedAt && !['COUNTED', 'COMPLETED'].includes(String(c.status ?? '').toUpperCase())
-}
 
 const TYPE_ICON: Record<LookupType, JSX.Element> = {
   picklist: <PackageCheck className="w-6 h-6 text-[var(--nexus-primary-600)] shrink-0" />,
@@ -43,7 +18,7 @@ const TYPE_ICON: Record<LookupType, JSX.Element> = {
 export default function ScanScreen() {
   const [scanOpen, setScanOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<LookupResult[]>([])
+  const [results, setResults] = useState<ScanResult[]>([])
   const [searched, setSearched] = useState(false)
   const [loading, setLoading] = useState(false)
 
@@ -52,47 +27,8 @@ export default function ScanScreen() {
     if (!needle) return
     setQuery(needle)
     setLoading(true)
-    const out: LookupResult[] = []
-    const low = needle.toLowerCase()
-
-    const [plRes, pkgRes, shipRes, recRes, cntRes] = await Promise.all([
-      pickingApi.getPicklists(),
-      packingApi.getPackages(),
-      shippingApi.getShipments(),
-      receiptsApi.getReceipts({}),
-      cycleCountsApi.getCycleCounts({}),
-    ])
-
-      for (const pl of asArray(plRes.data)) {
-        if (String(pl.id ?? '').toLowerCase().includes(low) || String(pl.name ?? '').toLowerCase().includes(low)) {
-          out.push({ type: 'picklist', id: pl.id, label: pl.name, sub: `${pl.pickedItems}/${pl.totalItems} picked · ${pl.status}`, href: `/rf/pick?id=${pl.id}` })
-        }
-      }
-      for (const p of asArray(pkgRes.data)) {
-        if (String(p.id ?? '').toLowerCase().includes(low) || String(p.orderId ?? '').toLowerCase().includes(low)) {
-          out.push({ type: 'package', id: p.id, label: `Package #${p.id?.slice(0, 8)}`, sub: `Order ${p.orderId?.slice(0, 8) ?? '—'} · ${p.status}`, href: `/rf/pack?id=${p.id}` })
-        }
-      }
-      for (const s of asArray(shipRes.data)) {
-        if (!actionableShipment(s)) continue
-        if (String(s.id ?? '').toLowerCase().includes(low) || String(s.orderId ?? '').toLowerCase().includes(low) || String(s.trackingNumber ?? '').toLowerCase().includes(low)) {
-          out.push({ type: 'shipment', id: s.id, label: `Shipment #${s.id?.slice(0, 8)}`, sub: `Order ${s.orderId?.slice(0, 8) ?? '—'} · ${s.status}`, href: '/rf/ship' })
-        }
-      }
-      for (const r of asArray(recRes.data)) {
-        if (!actionableReceipt(r)) continue
-        if (String(r.id ?? '').toLowerCase().includes(low) || String(r.sku ?? '').toLowerCase().includes(low) || String(r.referenceNumber ?? '').toLowerCase().includes(low)) {
-          out.push({ type: 'receipt', id: r.id, label: r.productName || r.sku, sub: `SKU ${r.sku} · ${r.receiptType ?? 'RECEIPT'}`, href: '/rf/receive' })
-        }
-      }
-      for (const c of asArray(cntRes.data)) {
-        if (!actionableCount(c)) continue
-        if (String(c.id ?? '').toLowerCase().includes(low) || String(c.sku ?? '').toLowerCase().includes(low)) {
-          out.push({ type: 'count', id: c.id, label: c.productName || c.sku, sub: `SKU ${c.sku} · expected ${c.expectedQty}`, href: '/rf/count' })
-        }
-      }
-
-    setResults(out)
+    const res = await searchScan(needle)
+    setResults(res.success && Array.isArray(res.data) ? res.data : [])
     setSearched(true)
     setLoading(false)
   }
@@ -144,7 +80,7 @@ export default function ScanScreen() {
         {!loading && results.map((r) => (
           <Link key={`${r.type}-${r.id}`} to={r.href}>
             <RfCard className="p-4 flex items-center gap-3 active:scale-[0.99] transition-transform">
-              {TYPE_ICON[r.type]}
+              {TYPE_ICON[r.type as LookupType] ?? <Package className="w-6 h-6 text-[var(--text-tertiary)] shrink-0" />}
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{r.label}</p>
                 <p className="text-xs text-[var(--text-secondary)] truncate">{r.sub}</p>

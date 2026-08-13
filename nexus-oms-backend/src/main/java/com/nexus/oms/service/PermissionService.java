@@ -45,6 +45,7 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/pickup/", "pickup");
         PATH_TO_RESOURCE.put("/picking/", "picking");
         PATH_TO_RESOURCE.put("/pickers/", "picking");
+        PATH_TO_RESOURCE.put("/rf/", "picking");
         PATH_TO_RESOURCE.put("/packing/", "packing");
         PATH_TO_RESOURCE.put("/shipping/", "shipping");
         PATH_TO_RESOURCE.put("/labels/", "shipping");

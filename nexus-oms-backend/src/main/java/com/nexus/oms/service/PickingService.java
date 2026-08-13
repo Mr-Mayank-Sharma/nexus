@@ -69,9 +69,10 @@ public class PickingService {
 
         List<NxOrderItem> items = orderItemRepository.findByOrderId(orderId);
 
+        String orderRef = order.getExternalId() != null ? order.getExternalId() : order.getId().toString();
         NxPicklist pl = NxPicklist.builder()
                 .tenantId(order.getTenantId())
-                .name("PL-" + order.getExternalId() + "-" + LocalDateTime.now().toLocalDate())
+                .name("PL-" + orderRef + "-" + LocalDateTime.now().toLocalDate())
                 .waveType("SINGLE_ORDER")
                 .priority("NORMAL")
                 .status("OPEN")

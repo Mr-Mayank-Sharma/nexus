@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { BrowserMultiFormatReader } from '@zxing/browser'
+import type { IScannerControls } from '@zxing/browser'
 
 interface DetectedBarcode {
   rawValue: string
@@ -26,14 +28,26 @@ export function useBarcodeScanner({ onDetect }: BarcodeScannerOptions) {
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const onDetectRef = useRef(onDetect)
   const runningRef = useRef(false)
+  const nativeRef = useRef(false)
   const lastCodeRef = useRef<string | null>(null)
   const lastDetectedAtRef = useRef(0)
   const rafRef = useRef(0)
+  const zxingControlsRef = useRef<IScannerControls | null>(null)
 
   onDetectRef.current = onDetect
 
   useEffect(() => {
-    setSupported(typeof window !== 'undefined' && 'BarcodeDetector' in window)
+    setSupported(typeof window !== 'undefined' && !!navigator?.mediaDevices?.getUserMedia)
+  }, [])
+
+  const handleValue = useCallback((raw: string) => {
+    const value = raw.trim()
+    const now = Date.now()
+    if (value && value !== lastCodeRef.current && now - lastDetectedAtRef.current > SCAN_COOLDOWN_MS) {
+      lastCodeRef.current = value
+      lastDetectedAtRef.current = now
+      onDetectRef.current(value)
+    }
   }, [])
 
   const loop = useCallback(async () => {
@@ -45,14 +59,8 @@ export function useBarcodeScanner({ onDetect }: BarcodeScannerOptions) {
         try {
           const detector = new Ctor()
           const codes = await detector.detect(video)
-          const now = Date.now()
           for (const code of codes) {
-            const value = (code.rawValue || '').trim()
-            if (value && value !== lastCodeRef.current && now - lastDetectedAtRef.current > SCAN_COOLDOWN_MS) {
-              lastCodeRef.current = value
-              lastDetectedAtRef.current = now
-              onDetectRef.current(value)
-            }
+            handleValue(code.rawValue ?? '')
           }
         } catch {
           // detection errors are transient — keep looping
@@ -60,7 +68,7 @@ export function useBarcodeScanner({ onDetect }: BarcodeScannerOptions) {
       }
     }
     rafRef.current = requestAnimationFrame(loop)
-  }, [])
+  }, [handleValue])
 
   const start = useCallback(async () => {
     if (runningRef.current) return
@@ -72,15 +80,29 @@ export function useBarcodeScanner({ onDetect }: BarcodeScannerOptions) {
       })
       setStream(mediaStream)
       runningRef.current = true
-      rafRef.current = requestAnimationFrame(loop)
+      if (videoRef.current) videoRef.current.srcObject = mediaStream
+
+      nativeRef.current = typeof window !== 'undefined' && 'BarcodeDetector' in window
+      if (nativeRef.current) {
+        rafRef.current = requestAnimationFrame(loop)
+      } else {
+        const reader = new BrowserMultiFormatReader()
+        const video = videoRef.current
+        if (!video) throw new Error('Video element unavailable')
+        zxingControlsRef.current = await reader.decodeFromVideoElement(video, (result) => {
+          if (result) handleValue(result.getText() ?? '')
+        })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Camera unavailable')
     }
-  }, [loop])
+  }, [loop, handleValue])
 
   const stop = useCallback(() => {
     runningRef.current = false
     cancelAnimationFrame(rafRef.current)
+    zxingControlsRef.current?.stop()
+    zxingControlsRef.current = null
     setStream((current) => {
       current?.getTracks().forEach((t) => t.stop())
       return null
@@ -95,6 +117,7 @@ export function useBarcodeScanner({ onDetect }: BarcodeScannerOptions) {
     return () => {
       runningRef.current = false
       cancelAnimationFrame(rafRef.current)
+      zxingControlsRef.current?.stop()
     }
   }, [])
 
