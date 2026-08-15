@@ -79,12 +79,14 @@ docker compose -f docker-compose.prod.yml up -d
 ### Health Checks
 
 ```bash
-# Backend
-curl -f http://localhost:8080/api/v1/health
+# Backend (Spring Boot Actuator, enabled in prod profile)
+curl -f http://localhost:8080/api/v1/actuator/health
 
 # Frontend (PWA)
 curl -f http://localhost:3000/manifest.json
 ```
+
+> `docker-compose.prod.yml` runs the backend with `SPRING_PROFILES_ACTIVE=prod` (`application-prod.properties`): larger Hikari pool, `ddl-auto=validate`, Flyway validate/clean-disabled, graceful shutdown, health probes, prod CORS, Redis-backed caching.
 
 ## 4. Database
 
@@ -95,7 +97,7 @@ Flyway runs automatically on startup. Migrations are in:
 nexus-oms-backend/src/main/resources/db/migration/
 ```
 
-Current version: **V25+** (check `flyway_schema_history`)
+Current version: **V56** (check `flyway_schema_history`)
 
 ### Backup
 
