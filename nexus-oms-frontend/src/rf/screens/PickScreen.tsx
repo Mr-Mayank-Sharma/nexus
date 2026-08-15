@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { PackageCheck, ChevronLeft, CheckCircle2, AlertTriangle, PackageOpen } from 'lucide-react'
+import { PackageCheck, ChevronLeft, CheckCircle2, PackageOpen, WifiOff } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../hooks/useToast'
+import { useOfflineQueue } from '../../hooks/useOfflineQueue'
 import * as pickingApi from '../../api/picking'
 import type { Picklist, PicklistItem } from '../../types'
 import { RfButton, RfCard, RfBadge, RfEmpty, ScreenHeader } from '../components'
@@ -24,6 +25,19 @@ export default function PickScreen() {
   const { addToast } = useToast()
   const queryClient = useQueryClient()
   const workerId = user?.id ?? 'worker'
+
+  const offlineQueue = useOfflineQueue({
+    executor: async (action) => {
+      if (action.type === 'PICK_ITEM') {
+        const { itemId, staffId } = action.payload
+        await pickingApi.pickItem(String(itemId), String(staffId))
+      } else if (action.type === 'COMPLETE_PICKLIST') {
+        await pickingApi.completePicklist(String(action.payload.picklistId))
+      }
+    },
+  })
+
+  const isOffline = () => !navigator.onLine
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [scanItem, setScanItem] = useState<PicklistItem | null>(null)
@@ -105,10 +119,26 @@ export default function PickScreen() {
     },
   })
 
+  const complete = (id: string) => {
+    if (isOffline() || offlineQueue.pendingCount > 0) {
+      offlineQueue.enqueue('COMPLETE_PICKLIST', { picklistId: id })
+      addToast({ type: 'info', title: 'Queued offline — will sync when online' })
+      queryClient.invalidateQueries({ queryKey: ['rf-picklists'] })
+      return
+    }
+    completeMutation.mutate(id)
+  }
+
   const handleScan = (code: string) => {
     if (!scanItem) return
     if (matchesItem(code, scanItem)) {
-      pickMutation.mutate({ itemId: scanItem.id })
+      if (isOffline() || offlineQueue.pendingCount > 0) {
+        offlineQueue.enqueue('PICK_ITEM', { itemId: scanItem.id, staffId: workerId })
+        addToast({ type: 'info', title: 'Queued offline — will sync when online' })
+        setScanItem(null)
+      } else {
+        pickMutation.mutate({ itemId: scanItem.id })
+      }
     } else {
       addToast({ type: 'error', title: `Mismatch — expected "${scanItem.sku}"` })
     }
@@ -118,6 +148,15 @@ export default function PickScreen() {
     return (
       <div className="px-4 pt-4 pb-24">
         <ScreenHeader title="Pick" subtitle="Select a picklist to start picking" />
+        {offlineQueue.pendingCount > 0 && (
+          <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            <WifiOff className="w-4 h-4 shrink-0" />
+            <span>
+              {offlineQueue.pendingCount} action{offlineQueue.pendingCount === 1 ? '' : 's'} queued offline
+              {offlineQueue.isFlushing ? ' — syncing…' : ' — will sync when online'}
+            </span>
+          </div>
+        )}
         {isLoading ? (
           <div className="py-16 text-center text-[var(--text-tertiary)]">Loading…</div>
         ) : picklists.length === 0 ? (
@@ -163,6 +202,16 @@ export default function PickScreen() {
         </button>
         <ScreenHeader title={selected.name} subtitle={`${pickedCount}/${items.length} picked`} />
       </div>
+
+      {offlineQueue.pendingCount > 0 && (
+        <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          <WifiOff className="w-4 h-4 shrink-0" />
+          <span>
+            {offlineQueue.pendingCount} action{offlineQueue.pendingCount === 1 ? '' : 's'} queued offline
+            {offlineQueue.isFlushing ? ' — syncing…' : ' — will sync when online'}
+          </span>
+        </div>
+      )}
 
       <div className="mb-4 h-2 rounded-full bg-[var(--surface-muted)] overflow-hidden">
         <div className="h-full rounded-full bg-[var(--nexus-success-600)] transition-all" style={{ width: `${progress}%` }} />
@@ -211,7 +260,7 @@ export default function PickScreen() {
       </div>
 
       <div className="mt-5">
-        <RfButton variant="success" full disabled={!canComplete} onClick={() => completeMutation.mutate(selected.id)}>
+        <RfButton variant="success" full disabled={!canComplete} onClick={() => complete(selected.id)}>
           Complete Picklist
         </RfButton>
       </div>
