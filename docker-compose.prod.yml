@@ -1,0 +1,131 @@
+# Production deployment — mirrors docs/DEPLOYMENT.md §3.
+# Usage:  docker compose -f docker-compose.prod.yml up -d
+# Secrets come from the host environment / .env (never committed).
+name: nexus-prod
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: nexus-prod-postgres
+    environment:
+      POSTGRES_DB: nexus_oms
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD not set}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus -d nexus_oms"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - nexus-prod-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-prod-redis
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD not set}"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - nexus-prod-net
+
+  kafka:
+    image: apache/kafka:3.7.2
+    container_name: nexus-prod-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    restart: unless-stopped
+    networks:
+      - nexus-prod-net
+
+  backend:
+    build:
+      context: ./nexus-oms-backend
+      dockerfile: Dockerfile
+    container_name: nexus-prod-backend
+    expose:
+      - "8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/nexus_oms
+      SPRING_DATASOURCE_USERNAME: nexus
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD not set}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD not set}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      APP_JWT_SECRET: ${JWT_SECRET:?JWT_SECRET not set}
+      NEXUS_CORS_ORIGINS: ${NEXUS_CORS_ORIGINS:?NEXUS_CORS_ORIGINS not set (comma-separated allowed origins)}
+      NEXUS_FRONTEND_URL: ${NEXUS_FRONTEND_URL:?NEXUS_FRONTEND_URL not set}
+      NEXUS_DB_POOL_MAX: ${NEXUS_DB_POOL_MAX:-30}
+      NEXUS_DB_POOL_MIN: ${NEXUS_DB_POOL_MIN:-10}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      NEXUS_AI_ENABLED: ${NEXUS_AI_ENABLED:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: ${NEXUS_BACKEND_MEM_LIMIT:-1g}
+    restart: unless-stopped
+    networks:
+      - nexus-prod-net
+
+  frontend:
+    build:
+      context: ./nexus-oms-frontend
+      dockerfile: Dockerfile
+    container_name: nexus-prod-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/manifest.json"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - nexus-prod-net
+
+volumes:
+  postgres-data:
+  redis-data:
+  kafka-data:
+
+networks:
+  nexus-prod-net:
+    driver: bridge
