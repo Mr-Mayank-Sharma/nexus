@@ -1,10 +1,13 @@
 package com.nexus.oms.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.NxAutomationAlert;
 import com.nexus.oms.entity.NxAutomationCommand;
 import com.nexus.oms.entity.NxAutomationLog;
 import com.nexus.oms.entity.NxAutomationSystem;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.integration.protocol.RestProtocolAdapter;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.security.TenantContext;
 import org.springframework.stereotype.Service;
@@ -17,19 +20,24 @@ import java.util.*;
 @Service
 public class AutomationService {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private final AutomationSystemRepository systemRepository;
     private final AutomationCommandRepository commandRepository;
     private final AutomationLogRepository logRepository;
     private final AutomationAlertRepository alertRepository;
+    private final RestProtocolAdapter restProtocolAdapter;
 
     public AutomationService(AutomationSystemRepository systemRepository,
                              AutomationCommandRepository commandRepository,
                              AutomationLogRepository logRepository,
-                             AutomationAlertRepository alertRepository) {
+                             AutomationAlertRepository alertRepository,
+                             RestProtocolAdapter restProtocolAdapter) {
         this.systemRepository = systemRepository;
         this.commandRepository = commandRepository;
         this.logRepository = logRepository;
         this.alertRepository = alertRepository;
+        this.restProtocolAdapter = restProtocolAdapter;
     }
 
     // ==================== System Management ====================
@@ -144,21 +152,7 @@ public class AutomationService {
         command.setSentAt(LocalDateTime.now());
         command = commandRepository.save(command);
 
-        command.setStatus("ACKNOWLEDGED");
-        command.setAcknowledgedAt(LocalDateTime.now());
-        command = commandRepository.save(command);
-
-        addSystemLog(systemId, command.getId(), "INFO", "COMMAND_ACK",
-                "Command " + command.getCommandType() + " acknowledged (simulated)");
-
-        command.setStatus("COMPLETED");
-        command.setCompletedAt(LocalDateTime.now());
-        command.setExecutionTimeMs(elapsedMs(command.getSentAt(), command.getCompletedAt()));
-        command.setResult("{\"success\":true,\"message\":\"Command executed successfully\",\"simulated\":true}");
-        command = commandRepository.save(command);
-
-        addSystemLog(systemId, command.getId(), "INFO", "COMMAND_COMPLETE",
-                "Command " + command.getCommandType() + " completed in " + command.getExecutionTimeMs() + "ms");
+        dispatchCommand(command, system);
 
         return command;
     }
@@ -235,21 +229,131 @@ public class AutomationService {
         retry.setSentAt(LocalDateTime.now());
         retry = commandRepository.save(retry);
 
-        retry.setStatus("ACKNOWLEDGED");
-        retry.setAcknowledgedAt(LocalDateTime.now());
-        retry = commandRepository.save(retry);
-
-        retry.setStatus("COMPLETED");
-        retry.setCompletedAt(LocalDateTime.now());
-        retry.setExecutionTimeMs(elapsedMs(retry.getSentAt(), retry.getCompletedAt()));
-        retry.setResult("{\"success\":true,\"message\":\"Retry executed successfully\",\"simulated\":true}");
-        retry = commandRepository.save(retry);
+        UUID systemId = retry.getSystemId();
+        dispatchCommand(retry, systemRepository.findById(systemId)
+                .orElseThrow(() -> new ResourceNotFoundException("AutomationSystem", systemId)));
 
         return retry;
     }
 
     private long elapsedMs(LocalDateTime start, LocalDateTime end) {
         return start != null && end != null ? Math.max(0, Duration.between(start, end).toMillis()) : 0;
+    }
+
+    @Transactional
+    protected void dispatchCommand(NxAutomationCommand command, NxAutomationSystem system) {
+        String endpoint = system.getEndpointUrl();
+        if (endpoint == null || endpoint.isBlank() || !Boolean.TRUE.equals(system.getIsActive())) {
+            simulateAck(command, system, "no endpoint configured; result simulated");
+            return;
+        }
+
+        try {
+            Map<String, String> headers = new HashMap<>();
+            if (system.getApiKey() != null && !system.getApiKey().isBlank()) {
+                headers.put("Authorization", "Bearer " + system.getApiKey());
+            }
+            headers.put("X-Command-Type", command.getCommandType());
+            headers.put("X-Command-Id", command.getId().toString());
+            headers.put("X-Tenant-Id", command.getTenantId().toString());
+
+            Map<String, Object> body = new LinkedHashMap<>();
+            body.put("command", command.getCommandType());
+            body.put("commandId", command.getId().toString());
+            body.put("parameters", parseParams(command.getParameters()));
+            body.put("priority", command.getPriority());
+            body.put("timeoutMs", command.getTimeoutMs());
+
+            long startedAt = System.currentTimeMillis();
+            JsonNode response = restProtocolAdapter.post(endpoint, "", headers, body);
+            long elapsed = System.currentTimeMillis() - startedAt;
+
+            command.setExecutionTimeMs(elapsed);
+
+            boolean success = response != null
+                    && (!response.has("error") || response.path("error").isMissingNode())
+                    && (!response.has("statusCode") || response.path("statusCode").asInt(200) < 400);
+
+            if (success) {
+                command.setStatus("ACKNOWLEDGED");
+                command.setAcknowledgedAt(LocalDateTime.now());
+                command = commandRepository.save(command);
+
+                command.setStatus("COMPLETED");
+                command.setCompletedAt(LocalDateTime.now());
+                command.setResult(MAPPER.writeValueAsString(response) == null
+                        ? "{\"success\":true}" : MAPPER.writeValueAsString(response));
+                command = commandRepository.save(command);
+
+                system.setStatus("ONLINE");
+                system.setLastConnectedAt(LocalDateTime.now());
+                system.setErrorMessage(null);
+                systemRepository.save(system);
+
+                addSystemLog(system.getId(), command.getId(), "INFO", "COMMAND_ACK",
+                        "Command " + command.getCommandType() + " acknowledged by " + system.getSystemName());
+                addSystemLog(system.getId(), command.getId(), "INFO", "COMMAND_COMPLETE",
+                        "Command " + command.getCommandType() + " completed in " + elapsed + "ms (real latency)");
+            } else {
+                command.setStatus("FAILED");
+                command.setCompletedAt(LocalDateTime.now());
+                command.setResult("{\"success\":false,\"error\":\"" + escapeJson(response != null ? response.toString() : "unknown") + "\"}");
+                command = commandRepository.save(command);
+
+                system.setStatus("ERROR");
+                system.setErrorMessage("Command " + command.getCommandType() + " rejected by " + system.getSystemName());
+                systemRepository.save(system);
+
+                addSystemLog(system.getId(), command.getId(), "ERROR", "COMMAND_FAILED",
+                        "Command " + command.getCommandType() + " rejected by " + system.getSystemName() + ": " + response);
+            }
+        } catch (Exception e) {
+            command.setStatus("FAILED");
+            command.setCompletedAt(LocalDateTime.now());
+            command.setResult("{\"success\":false,\"error\":\"" + escapeJson(e.getMessage()) + "\"}");
+            command = commandRepository.save(command);
+
+            system.setStatus("ERROR");
+            system.setErrorMessage("Dispatch failed for " + system.getSystemName() + ": " + e.getMessage());
+            systemRepository.save(system);
+
+            addSystemLog(system.getId(), command.getId(), "ERROR", "COMMAND_FAILED",
+                    "Command " + command.getCommandType() + " dispatch failed: " + e.getMessage());
+        }
+    }
+
+    private void simulateAck(NxAutomationCommand command, NxAutomationSystem system, String reason) {
+        command.setStatus("ACKNOWLEDGED");
+        command.setAcknowledgedAt(LocalDateTime.now());
+        command = commandRepository.save(command);
+
+        addSystemLog(system.getId(), command.getId(), "WARN", "COMMAND_ACK",
+                "Command " + command.getCommandType() + " acknowledged (simulated: " + reason + ")");
+
+        command.setStatus("COMPLETED");
+        command.setCompletedAt(LocalDateTime.now());
+        command.setExecutionTimeMs(elapsedMs(command.getSentAt(), command.getCompletedAt()));
+        command.setResult("{\"success\":true,\"message\":\"Command executed successfully\",\"simulated\":true,\"reason\":\"" + reason + "\"}");
+        command = commandRepository.save(command);
+
+        addSystemLog(system.getId(), command.getId(), "INFO", "COMMAND_COMPLETE",
+                "Command " + command.getCommandType() + " completed in " + command.getExecutionTimeMs() + "ms (simulated)");
+    }
+
+    private Map<String, Object> parseParams(String json) {
+        if (json == null || json.isBlank()) return Map.of();
+        try {
+            JsonNode node = MAPPER.readTree(json);
+            if (node.isObject()) return MAPPER.convertValue(node, Map.class);
+            return Map.of();
+        } catch (Exception e) {
+            return Map.of("raw", json);
+        }
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) return "";
+        return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     public Map<String, Object> getCommandStats(UUID warehouseId) {

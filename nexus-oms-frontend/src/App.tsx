@@ -88,6 +88,9 @@ const PromotionsPage = lazy(() => import('./pages/PromotionsPage'))
 const EndlessAislePage = lazy(() => import('./pages/EndlessAislePage'))
 const AnalyticsDashboardPage = lazy(() => import('./pages/AnalyticsDashboardPage'))
 const FindOrderPage = lazy(() => import('./pages/FindOrderPage'))
+const RateCardsPage = lazy(() => import('./pages/RateCardsPage'))
+const BillingStatementsPage = lazy(() => import('./pages/BillingStatementsPage'))
+const ClientPortalPage = lazy(() => import('./pages/ClientPortalPage'))
 
 const RfLayout = lazy(() => import('./rf/RfLayout'))
 const RfHomeScreen = lazy(() => import('./rf/screens/HomeScreen'))
@@ -192,6 +195,9 @@ export default function App() {
           <Route path="fulfillment-limits" element={<FulfillmentLimitsPage />} />
           <Route path="bopis-app" element={<BopisAppPage />} />
           <Route path="replenishment" element={<ReplenishmentPage />} />
+          <Route path="rate-cards" element={<RateCardsPage />} />
+          <Route path="billing-statements" element={<BillingStatementsPage />} />
+          <Route path="client-portal" element={<ClientPortalPage />} />
           <Route path="freight-audit" element={<FreightAuditPage />} />
           <Route path="promotions" element={<PromotionsPage />} />
           <Route path="endless-aisle" element={<EndlessAislePage />} />

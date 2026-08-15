@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 import java.net.URI;
 import java.util.*;
@@ -119,7 +120,10 @@ public class RestProtocolAdapter {
     }
 
     private RestTemplate buildRestTemplate(Map<String, String> headers) {
-        return new RestTemplate();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(3000);
+        factory.setReadTimeout(10000);
+        return new RestTemplate(factory);
     }
 
     private HttpHeaders toHttpHeaders(Map<String, String> h) {

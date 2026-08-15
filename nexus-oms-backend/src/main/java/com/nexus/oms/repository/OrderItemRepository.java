@@ -13,6 +13,8 @@ public interface OrderItemRepository extends JpaRepository<NxOrderItem, UUID> {
 
     List<NxOrderItem> findByOrderId(UUID orderId);
 
+    List<NxOrderItem> findByOrderIdIn(List<UUID> orderIds);
+
     void deleteByOrderId(UUID orderId);
 
     @Query(value = """

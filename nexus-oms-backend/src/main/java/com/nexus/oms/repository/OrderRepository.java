@@ -41,4 +41,9 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
 
     @Query("SELECT o FROM NxOrder o WHERE o.tenantId = :tenantId ORDER BY o.createdAt DESC")
     List<NxOrder> findRecentByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
+    @Query("SELECT o FROM NxOrder o WHERE o.tenantId = :tenantId AND o.customerId = :customerId " +
+           "AND o.createdAt >= :from AND o.createdAt < :to ORDER BY o.createdAt DESC")
+    List<NxOrder> findByTenantIdAndCustomerIdAndCreatedAtBetween(@Param("tenantId") UUID tenantId,
+            @Param("customerId") UUID customerId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

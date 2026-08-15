@@ -1,8 +1,10 @@
 package com.nexus.oms.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.integration.protocol.RestProtocolAdapter;
 import com.nexus.oms.repository.*;
 import com.nexus.oms.security.TenantContext;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,7 @@ public class IntegrationPlatformService {
     private final ImportExportEngine importExportEngine;
     private final DLQManager dlqManager;
     private final CDCProcessor cdcProcessor;
+    private final RestProtocolAdapter restProtocolAdapter;
 
     public IntegrationPlatformService(IntegrationEndpointRepository endpointRepository,
                                      IntegrationFlowRepository flowRepository,
@@ -45,7 +48,8 @@ public class IntegrationPlatformService {
                                      IntegrationAuditLogRepository auditLogRepository,
                                      ImportExportEngine importExportEngine,
                                      DLQManager dlqManager,
-                                     CDCProcessor cdcProcessor) {
+                                     CDCProcessor cdcProcessor,
+                                     RestProtocolAdapter restProtocolAdapter) {
         this.endpointRepository = endpointRepository;
         this.flowRepository = flowRepository;
         this.flowStepRepository = flowStepRepository;
@@ -60,6 +64,7 @@ public class IntegrationPlatformService {
         this.importExportEngine = importExportEngine;
         this.dlqManager = dlqManager;
         this.cdcProcessor = cdcProcessor;
+        this.restProtocolAdapter = restProtocolAdapter;
     }
 
     // ──────────────────────────────────────────────
@@ -133,12 +138,47 @@ public class IntegrationPlatformService {
     }
 
     public Map<String, Object> testEndpoint(UUID id) {
-        getEndpoint(id);
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("status", "SUCCESS");
-        result.put("latencyMs", 42);
-        result.put("message", "Connection test completed successfully");
-        return result;
+        IntegrationEndpoint endpoint = getEndpoint(id);
+        if (endpoint.getHost() == null || endpoint.getHost().isBlank()) {
+            return Map.of("status", "FAILED", "latencyMs", 0L,
+                    "message", "Endpoint has no host configured");
+        }
+
+        String protocol = endpoint.getProtocol() == null ? "HTTP" : endpoint.getProtocol().toUpperCase();
+        String scheme = ("HTTPS".equals(protocol) || Boolean.TRUE.equals(endpoint.getSslEnabled())) ? "https" : "http";
+        String baseUrl = scheme + "://" + endpoint.getHost()
+                + (endpoint.getPort() != null ? ":" + endpoint.getPort() : "");
+        String path = endpoint.getPath() == null || endpoint.getPath().isBlank() ? "" : endpoint.getPath();
+        Map<String, String> headers = parseHeaderJson(endpoint.getHeaders());
+
+        long startedAt = System.currentTimeMillis();
+        try {
+            JsonNode response = restProtocolAdapter.get(baseUrl, path, headers, null);
+            long latencyMs = System.currentTimeMillis() - startedAt;
+            boolean success = response != null
+                    && !response.has("error")
+                    && (!response.has("statusCode") || response.path("statusCode").asInt(200) < 400);
+            return Map.of(
+                    "status", success ? "SUCCESS" : "FAILED",
+                    "latencyMs", latencyMs,
+                    "message", success
+                            ? "Connection test completed successfully"
+                            : "Endpoint returned an error: " + response);
+        } catch (Exception e) {
+            long latencyMs = System.currentTimeMillis() - startedAt;
+            return Map.of("status", "FAILED", "latencyMs", latencyMs,
+                    "message", "Connection failed: " + e.getMessage());
+        }
+    }
+
+    private Map<String, String> parseHeaderJson(String json) {
+        if (json == null || json.isBlank()) return Map.of();
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper()
+                    .readValue(json, new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            return Map.of();
+        }
     }
 
     // ──────────────────────────────────────────────

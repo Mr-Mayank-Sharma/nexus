@@ -44,6 +44,9 @@ public class NxShippingLabel {
     @Column(name = "label_base64", columnDefinition = "TEXT")
     private String labelBase64;
 
+    @Column(name = "label_source")
+    private String labelSource; // SIMULATED (local) or CARRIER (real connector purchase)
+
     @Column(name = "status", nullable = false)
     private String status; // GENERATED, PRINTED, ATTACHED, CANCELLED
 

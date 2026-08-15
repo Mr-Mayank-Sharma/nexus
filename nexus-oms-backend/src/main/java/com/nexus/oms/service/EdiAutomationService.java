@@ -183,17 +183,17 @@ public class EdiAutomationService {
         // Extract basic header info
         extractSegment(content, "BEG", data -> {
             result.put("transactionSet", "850");
-            result.put("purchaseOrderType", safeGet(data, 1));
-            result.put("purchaseOrderNumber", safeGet(data, 2));
-            result.put("releaseNumber", safeGet(data, 3));
-            result.put("orderDate", safeGet(data, 4));
+            result.put("purchaseOrderType", safeGet(data, 2));
+            result.put("purchaseOrderNumber", safeGet(data, 3));
+            result.put("releaseNumber", safeGet(data, 4));
+            result.put("orderDate", safeGet(data, 5));
         });
 
         extractSegment(content, "N1", data -> {
             if ("BY".equals(safeGet(data, 1))) {
-                result.put("partnerId", safeGet(data, 3));
+                result.put("partnerId", safeGet(data, 4));
                 result.put("partnerName", safeGet(data, 2));
-                result.put("buyerCode", safeGet(data, 3));
+                result.put("buyerCode", safeGet(data, 4));
             }
             if ("ST".equals(safeGet(data, 1))) {
                 result.put("shipToName", safeGet(data, 2));
@@ -219,14 +219,14 @@ public class EdiAutomationService {
             item.put("quantityOrdered", safeGet(fields, 1));
             item.put("unitOfMeasure", safeGet(fields, 2));
             item.put("unitPrice", safeGet(fields, 3));
-            if (fields.length > 5 && "VN".equals(safeGet(fields, 5))) {
-                item.put("vendorPartNumber", safeGet(fields, 6));
+            if (fields.length > 4 && "VN".equals(safeGet(fields, 4))) {
+                item.put("vendorPartNumber", safeGet(fields, 5));
             }
-            if (fields.length > 7 && "UP".equals(safeGet(fields, 7))) {
-                item.put("upc", safeGet(fields, 8));
+            if (fields.length > 4 && "UP".equals(safeGet(fields, 4))) {
+                item.put("upc", safeGet(fields, 5));
             }
-            if (fields.length > 9 && "BP".equals(safeGet(fields, 9))) {
-                item.put("buyerPartNumber", safeGet(fields, 10));
+            if (fields.length > 4 && "BP".equals(safeGet(fields, 4))) {
+                item.put("buyerPartNumber", safeGet(fields, 5));
             }
             items.add(item);
         }
@@ -252,9 +252,9 @@ public class EdiAutomationService {
 
         extractSegment(content, "BSN", data -> {
             result.put("transactionSet", "856");
-            result.put("shipNoticeNumber", safeGet(data, 1));
-            result.put("shipDate", safeGet(data, 2));
-            result.put("shipTime", safeGet(data, 3));
+            result.put("shipNoticeNumber", safeGet(data, 2));
+            result.put("shipDate", safeGet(data, 3));
+            result.put("shipTime", safeGet(data, 4));
         });
 
         extractSegment(content, "REF", data -> {
@@ -280,7 +280,7 @@ public class EdiAutomationService {
         });
 
         // Extract HL segments with MAN for serial numbers
-        Pattern hlPattern = Pattern.compile("HL\\*([^~]+)~?(?:[^~]*~?)*?MAN\\*([^~]+)~?", Pattern.MULTILINE);
+        Pattern hlPattern = Pattern.compile("HL\\*([^~\\n]+)~?\\n?MAN\\*([^~\\n]+)~?", Pattern.MULTILINE);
         Matcher hlMatcher = hlPattern.matcher(content);
         while (hlMatcher.find()) {
             Map<String, Object> pkg = new LinkedHashMap<>();
@@ -328,9 +328,9 @@ public class EdiAutomationService {
             item.put("quantityInvoiced", safeGet(fields, 1));
             item.put("unitOfMeasure", safeGet(fields, 2));
             item.put("unitPrice", safeGet(fields, 3));
-            if (fields.length > 5) {
-                item.put("productIdQualifier", safeGet(fields, 5));
-                item.put("productId", safeGet(fields, 6));
+            if (fields.length > 4) {
+                item.put("productIdQualifier", safeGet(fields, 4));
+                item.put("productId", safeGet(fields, 5));
             }
             items.add(item);
         }
@@ -416,7 +416,7 @@ public class EdiAutomationService {
         Pattern pattern = Pattern.compile(segId + "\\*([^~]+)~?", Pattern.MULTILINE);
         Matcher matcher = pattern.matcher(content);
         if (matcher.find()) {
-            consumer.accept(matcher.group(1).split("\\*"));
+            consumer.accept((segId + "*" + matcher.group(1)).split("\\*"));
         }
     }
 

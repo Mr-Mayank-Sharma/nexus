@@ -6,7 +6,7 @@ import {
   Globe, ShoppingCart, Receipt, Bell, FileText, Shield, UserCog, Activity,
   Upload, Download, Zap, Mail, TrendingDown, Truck, Building2, Search, AlertTriangle,
   LayoutDashboard, ChevronRight, Star, Sparkles, Menu, ShoppingBag, Calendar, Gauge,
-  Plus, Layers, Printer, ScanLine,
+  Plus, Layers, Printer, ScanLine, Tag, Wallet,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
@@ -80,6 +80,9 @@ const apps: AppCard[] = [
   { name: 'Report Builder', path: '/report-builder', icon: <BarChart3 className="w-6 h-6" />, description: 'Custom dashboards & scheduled reports', category: 'Operations', color: 'from-violet-500 to-violet-600', isNew: true },
   { name: 'Import/Export', path: '/import-export', icon: <Activity className="w-6 h-6" />, description: 'Data import & export', category: 'Operations', color: 'from-amber-500 to-amber-600' },
   { name: 'EDI Automation', path: '/edi', icon: <FileText className="w-6 h-6" />, description: 'EDI document management', category: 'Operations', color: 'from-teal-500 to-teal-600' },
+  { name: '3PL Rate Cards', path: '/rate-cards', icon: <Tag className="w-6 h-6" />, description: 'Client pricing for 3PL billing', category: 'Operations', color: 'from-emerald-600 to-emerald-700', isNew: true },
+  { name: 'Billing Statements', path: '/billing-statements', icon: <Wallet className="w-6 h-6" />, description: 'Generate & manage client invoices', category: 'Operations', color: 'from-teal-600 to-teal-700', isNew: true },
+  { name: 'Client Portal', path: '/client-portal', icon: <Globe className="w-6 h-6" />, description: 'Self-service 3PL client dashboard', category: 'Operations', color: 'from-cyan-600 to-cyan-700', isNew: true },
   { name: 'Email Orders', path: '/email-parser', icon: <Mail className="w-6 h-6" />, description: 'Parse orders from email', category: 'Operations', color: 'from-cyan-500 to-cyan-600' },
   { name: 'Task Queues', path: '/task-queues', icon: <AlertTriangle className="w-6 h-6" />, description: 'Swap, bad address, fraud & hold', category: 'Operations', color: 'from-red-500 to-red-600' },
   { name: 'Workflows', path: '/workflows', icon: <GitBranch className="w-6 h-6" />, description: 'Automation workflows', category: 'Operations', color: 'from-violet-500 to-violet-600' },

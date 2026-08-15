@@ -29,6 +29,9 @@ public class ShippingLabelService {
         UUID tenantId = TenantContext.getCurrentTenantId();
         label.setTenantId(tenantId);
 
+        if (label.getLabelSource() == null) {
+            label.setLabelSource("SIMULATED");
+        }
         if (label.getTrackingNumber() == null) {
             label.setTrackingNumber(generateTrackingNumber(label.getCarrier()));
         }
@@ -37,7 +40,8 @@ public class ShippingLabelService {
         }
 
         label = shippingLabelRepository.save(label);
-        log.info("Generated shipping label for order {}: tracking={}", label.getOrderNumber(), label.getTrackingNumber());
+        log.info("Generated shipping label for order {}: tracking={} source={}",
+                label.getOrderNumber(), label.getTrackingNumber(), label.getLabelSource());
         return label;
     }
 
@@ -50,6 +54,9 @@ public class ShippingLabelService {
             label.setTenantId(tenantId);
             label.setOrderId(orderId);
             label.setOrderNumber(orderNumber);
+            if (label.getLabelSource() == null) {
+                label.setLabelSource("SIMULATED");
+            }
             if (label.getTrackingNumber() == null) {
                 label.setTrackingNumber(generateTrackingNumber(label.getCarrier()));
             }
@@ -72,6 +79,7 @@ public class ShippingLabelService {
                 .serviceType("SAME_DAY")
                 .trackingNumber(generateTrackingNumber("LOCAL"))
                 .status("GENERATED")
+                .labelSource("SIMULATED")
                 .fromName(fromName)
                 .fromAddress(fromAddress)
                 .labelUrl("/api/v1/labels/bopis/" + pickupOrderId)
