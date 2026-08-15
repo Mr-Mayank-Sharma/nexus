@@ -4,6 +4,7 @@ import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.entity.NxAutomationCommand;
 import com.nexus.oms.entity.NxPicklist;
 import com.nexus.oms.entity.NxPickerAssignment;
+import com.nexus.oms.exception.ResourceNotFoundException;
 import com.nexus.oms.repository.AutomationCommandRepository;
 import com.nexus.oms.repository.PicklistItemRepository;
 import com.nexus.oms.repository.PicklistRepository;
@@ -12,6 +13,7 @@ import com.nexus.oms.security.TenantContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -125,11 +127,97 @@ public class TaskQueueController {
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateTaskQueue(
             @PathVariable UUID id, @RequestBody Map<String, Object> request) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
         String status = request.get("status") instanceof String s ? s : null;
+        if (status == null || status.isBlank()) {
+            Map<String, Object> invalid = new LinkedHashMap<>();
+            invalid.put("id", id.toString());
+            invalid.put("error", "status is required");
+            return ResponseEntity.badRequest().body(ApiResponse.error("status is required"));
+        }
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("id", id.toString());
-        result.put("status", status != null ? status : "updated");
-        return ResponseEntity.ok(ApiResponse.success(result, "Task queue updated"));
+        result.put("type", "UNKNOWN");
+
+        NxPicklist picklist = picklistRepository.findById(id).orElse(null);
+        if (picklist != null && picklist.getTenantId().equals(tenantId)) {
+            picklist.setStatus(validateTransition(status, Set.of("OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"), "pick task"));
+            if ("IN_PROGRESS".equals(status) && picklist.getStartedAt() == null) {
+                picklist.setStartedAt(LocalDateTime.now());
+            }
+            if ("COMPLETED".equals(status)) {
+                picklist.setCompletedAt(LocalDateTime.now());
+                if (picklist.getPickedItems() == null) {
+                    picklist.setPickedItems(picklist.getTotalItems());
+                }
+            }
+            NxPicklist saved = picklistRepository.save(picklist);
+            result.put("type", "PICK_TASK");
+            result.put("source", "WAVE");
+            result.put("status", saved.getStatus());
+            return ResponseEntity.ok(ApiResponse.success(result, "Task queue updated"));
+        }
+
+        NxAutomationCommand command = commandRepository.findById(id).orElse(null);
+        if (command != null && command.getTenantId().equals(tenantId)) {
+            command.setStatus(validateTransition(status,
+                    Set.of("PENDING", "SENT", "EXECUTING", "ACKNOWLEDGED", "COMPLETED", "FAILED", "CANCELLED"),
+                    "automation command"));
+            if ("SENT".equals(status)) {
+                command.setSentAt(LocalDateTime.now());
+            }
+            if ("ACKNOWLEDGED".equals(status)) {
+                command.setAcknowledgedAt(LocalDateTime.now());
+            }
+            if ("COMPLETED".equals(status)) {
+                command.setCompletedAt(LocalDateTime.now());
+                if (command.getSentAt() != null) {
+                    command.setExecutionTimeMs(java.time.Duration.between(command.getSentAt(), LocalDateTime.now()).toMillis());
+                }
+            }
+            if ("FAILED".equals(status)) {
+                int retries = command.getRetryCount() != null ? command.getRetryCount() : 0;
+                int maxRetries = command.getMaxRetries() != null ? command.getMaxRetries() : 3;
+                command.setRetryCount(retries + 1);
+                command.setStatus(retries + 1 <= maxRetries ? "PENDING" : "FAILED");
+                command.setErrorMessage((String) request.getOrDefault("errorMessage", "Command failed"));
+            }
+            NxAutomationCommand saved = commandRepository.save(command);
+            result.put("type", "AUTOMATION_COMMAND");
+            result.put("source", "WES");
+            result.put("status", saved.getStatus());
+            result.put("retryCount", saved.getRetryCount());
+            return ResponseEntity.ok(ApiResponse.success(result, "Task queue updated"));
+        }
+
+        NxPickerAssignment assignment = pickerAssignmentRepository.findById(id).orElse(null);
+        if (assignment != null && assignment.getTenantId().equals(tenantId)) {
+            assignment.setStatus(validateTransition(status,
+                    Set.of("ASSIGNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"), "pickup task"));
+            if ("IN_PROGRESS".equals(status)) {
+                assignment.setStartedAt(LocalDateTime.now());
+            }
+            if ("COMPLETED".equals(status)) {
+                assignment.setCompletedAt(LocalDateTime.now());
+            }
+            NxPickerAssignment saved = pickerAssignmentRepository.save(assignment);
+            result.put("type", "PICKUP_TASK");
+            result.put("source", "BOPIS");
+            result.put("status", saved.getStatus());
+            return ResponseEntity.ok(ApiResponse.success(result, "Task queue updated"));
+        }
+
+        throw new ResourceNotFoundException("Task", id);
+    }
+
+    private String validateTransition(String status, Set<String> allowed, String taskType) {
+        String upper = status.toUpperCase();
+        if (!allowed.contains(upper)) {
+            throw new IllegalArgumentException("Invalid " + taskType + " status: " + status
+                    + " (allowed: " + allowed + ")");
+        }
+        return upper;
     }
 
     private int priorityRank(String priority) {

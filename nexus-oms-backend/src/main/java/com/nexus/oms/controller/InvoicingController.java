@@ -32,6 +32,11 @@ public class InvoicingController {
         return ResponseEntity.ok(ApiResponse.success(invoicingService.getInvoiceSummary()));
     }
 
+    @GetMapping("/reports/aging")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAgingReport() {
+        return ResponseEntity.ok(ApiResponse.success(invoicingService.getAgingReport()));
+    }
+
     @GetMapping("/invoices")
     public ResponseEntity<ApiResponse<Page<Invoice>>> getAllInvoices(
             @RequestParam(defaultValue = "0") int page,

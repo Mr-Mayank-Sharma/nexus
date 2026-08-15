@@ -3,6 +3,8 @@ package com.nexus.oms.service;
 import com.nexus.oms.entity.NxPackage;
 import com.nexus.oms.entity.WarehouseStaff;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.repository.OrderItemRepository;
+import com.nexus.oms.repository.OrderRepository;
 import com.nexus.oms.repository.PackageRepository;
 import com.nexus.oms.repository.WarehouseStaffRepository;
 import org.springframework.stereotype.Service;
@@ -16,11 +18,20 @@ public class PackingService {
 
     private final PackageRepository packageRepository;
     private final WarehouseStaffRepository warehouseStaffRepository;
+    private final BoxRecommendationService boxRecommendationService;
+    private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public PackingService(PackageRepository packageRepository,
-                          WarehouseStaffRepository warehouseStaffRepository) {
+                          WarehouseStaffRepository warehouseStaffRepository,
+                          BoxRecommendationService boxRecommendationService,
+                          OrderRepository orderRepository,
+                          OrderItemRepository orderItemRepository) {
         this.packageRepository = packageRepository;
         this.warehouseStaffRepository = warehouseStaffRepository;
+        this.boxRecommendationService = boxRecommendationService;
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
     }
 
     public List<NxPackage> getPackages(UUID tenantId) {
@@ -69,6 +80,54 @@ public class PackingService {
         pkg.setPackedBy(packedBy);
         pkg.setPackedAt(LocalDateTime.now());
         return packageRepository.save(pkg);
+    }
+
+    @Transactional
+    public Map<String, Object> recommendBox(UUID tenantId, UUID packageId) {
+        Map<String, Object> recommendation = boxRecommendationService.recommendForPackage(tenantId, packageId);
+        if (!"NO_FIT".equals(recommendation.get("boxName"))) {
+            NxPackage pkg = getPackage(packageId);
+            pkg.setBoxName((String) recommendation.get("boxName"));
+            String dimensions = (String) recommendation.get("dimensions");
+            if (dimensions != null) {
+                String[] parts = dimensions.replace(" in", "").split("x");
+                if (parts.length == 3) {
+                    try {
+                        pkg.setWidthIn(Double.parseDouble(parts[0]));
+                        pkg.setDepthIn(Double.parseDouble(parts[1]));
+                        pkg.setHeightIn(Double.parseDouble(parts[2]));
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+            }
+            packageRepository.save(pkg);
+        }
+        return recommendation;
+    }
+
+    public Map<String, Object> validatePack(UUID tenantId, UUID packageId) {
+        NxPackage pkg = getPackage(packageId);
+        int orderedQty = orderItemRepository.findByOrderId(pkg.getOrderId()).stream()
+                .mapToInt(i -> i.getQuantity() != null ? i.getQuantity() : 0)
+                .sum();
+        int packedQty = pkg.getItemCount() != null ? pkg.getItemCount() : 0;
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("packageId", packageId.toString());
+        result.put("orderId", pkg.getOrderId().toString());
+        result.put("orderedQty", orderedQty);
+        result.put("packedQty", packedQty);
+        if (packedQty == orderedQty) {
+            result.put("valid", true);
+            result.put("message", "Packed quantity matches order quantity");
+        } else if (packedQty < orderedQty) {
+            result.put("valid", false);
+            result.put("message", "Under-packed: " + (orderedQty - packedQty) + " item(s) missing");
+        } else {
+            result.put("valid", false);
+            result.put("message", "Over-packed: " + (packedQty - orderedQty) + " extra item(s)");
+        }
+        return result;
     }
 
     @Transactional

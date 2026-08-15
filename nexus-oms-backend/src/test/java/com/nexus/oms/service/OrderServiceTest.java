@@ -48,6 +48,12 @@ class OrderServiceTest {
     private AddressRepository addressRepository;
     @Mock
     private NodeRepository nodeRepository;
+    @Mock
+    private OrderRoutingService orderRoutingService;
+    @Mock
+    private RoutingConfigRepository routingConfigRepository;
+    @Mock
+    private KittingService kittingService;
 
     private OrderService orderService;
     private UUID tenantId;
@@ -58,7 +64,8 @@ class OrderServiceTest {
     @BeforeEach
     void setUp() {
         orderService = new OrderService(orderRepository, orderItemRepository, customerRepository,
-                addressRepository, inventoryService, kafkaProducerService, objectMapper, nodeRepository);
+                addressRepository, inventoryService, kafkaProducerService, objectMapper, nodeRepository,
+                orderRoutingService, routingConfigRepository, kittingService);
         tenantId = UUID.randomUUID();
         orderId = UUID.randomUUID();
 
@@ -247,6 +254,53 @@ class OrderServiceTest {
 
         assertEquals("CONFIRMED", result.getStatus());
         verify(kafkaProducerService).publish("order.confirmed", orderId.toString());
+    }
+
+    @Test
+    void testConfirmOrder_WhenAutoAllocationEnabled_RoutesBeforeConfirming() {
+        NxRoutingConfig config = NxRoutingConfig.builder()
+                .tenantId(tenantId)
+                .enableAutoAllocation(true)
+                .defaultStrategy("HYBRID")
+                .build();
+        when(routingConfigRepository.findByTenantId(tenantId)).thenReturn(Optional.of(config));
+
+        NxOrder pending = NxOrder.builder()
+                .id(orderId)
+                .tenantId(tenantId)
+                .status("PENDING")
+                .build();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(pending));
+        when(orderRepository.save(any(NxOrder.class))).thenAnswer(i -> i.getArgument(0));
+        when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));
+
+        OrderResponse result = orderService.confirmOrder(orderId);
+
+        assertEquals("CONFIRMED", result.getStatus());
+        verify(orderRoutingService).allocateOrder(any(AllocationRequest.class));
+    }
+
+    @Test
+    void testConfirmOrder_AutoAllocationSkippedWhenAlreadyAllocated() {
+        NxRoutingConfig config = NxRoutingConfig.builder()
+                .tenantId(tenantId)
+                .enableAutoAllocation(true)
+                .build();
+        when(routingConfigRepository.findByTenantId(tenantId)).thenReturn(Optional.of(config));
+
+        NxOrder allocated = NxOrder.builder()
+                .id(orderId)
+                .tenantId(tenantId)
+                .status("ALLOCATED")
+                .build();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(allocated));
+        when(orderRepository.save(any(NxOrder.class))).thenAnswer(i -> i.getArgument(0));
+        when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));
+
+        OrderResponse result = orderService.confirmOrder(orderId);
+
+        assertEquals("CONFIRMED", result.getStatus());
+        verify(orderRoutingService, never()).allocateOrder(any());
     }
 
     @Test

@@ -153,4 +153,63 @@ class InvoicingServiceTest {
         assertEquals(2, summary.get("pendingCount"));
         assertEquals(1, summary.get("overdueCount"));
     }
+
+    @Test
+    void getAgingReport_bucketsInvoicesByDaysPastDue() {
+        LocalDate today = LocalDate.now();
+        Invoice current = invoice(new BigDecimal("40.00"), BigDecimal.ZERO, "PENDING");
+        current.setDueDate(today.plusDays(5));
+        Invoice bucket30 = invoice(new BigDecimal("100.00"), BigDecimal.ZERO, "PENDING");
+        bucket30.setDueDate(today.minusDays(10));
+        Invoice bucket60 = invoice(new BigDecimal("200.00"), BigDecimal.ZERO, "PENDING");
+        bucket60.setDueDate(today.minusDays(45));
+        Invoice bucket90 = invoice(new BigDecimal("300.00"), BigDecimal.ZERO, "PENDING");
+        bucket90.setDueDate(today.minusDays(75));
+        Invoice bucketPlus = invoice(new BigDecimal("400.00"), BigDecimal.ZERO, "PENDING");
+        bucketPlus.setDueDate(today.minusDays(120));
+        Invoice paid = invoice(new BigDecimal("500.00"), new BigDecimal("500.00"), "PAID");
+
+        when(invoiceRepository.findByTenantId(tenantId)).thenReturn(List.of(
+                current, bucket30, bucket60, bucket90, bucketPlus, paid));
+
+        Map<String, Object> report = service.getAgingReport();
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> buckets = (List<Map<String, Object>>) report.get("buckets");
+
+        Map<String, Map<String, Object>> byLabel = new java.util.HashMap<>();
+        for (Map<String, Object> b : buckets) {
+            byLabel.put((String) b.get("label"), b);
+        }
+
+        assertEquals(1, byLabel.get("current").get("invoiceCount"));
+        assertEquals(new BigDecimal("40.00"), byLabel.get("current").get("amount"));
+        assertEquals(1, byLabel.get("1-30").get("invoiceCount"));
+        assertEquals(new BigDecimal("100.00"), byLabel.get("1-30").get("amount"));
+        assertEquals(1, byLabel.get("31-60").get("invoiceCount"));
+        assertEquals(new BigDecimal("200.00"), byLabel.get("31-60").get("amount"));
+        assertEquals(1, byLabel.get("61-90").get("invoiceCount"));
+        assertEquals(new BigDecimal("300.00"), byLabel.get("61-90").get("amount"));
+        assertEquals(1, byLabel.get("90+").get("invoiceCount"));
+        assertEquals(new BigDecimal("400.00"), byLabel.get("90+").get("amount"));
+
+        assertEquals(new BigDecimal("1040.00"), report.get("totalOutstanding"));
+        assertEquals(new BigDecimal("1000.00"), report.get("totalOverdue")); // all but current
+        assertEquals(5, report.get("openInvoiceCount"));
+    }
+
+    @Test
+    void getAgingReport_returnsZeroBucketsWhenNoOpenInvoices() {
+        Invoice paid = invoice(new BigDecimal("100.00"), new BigDecimal("100.00"), "PAID");
+        when(invoiceRepository.findByTenantId(tenantId)).thenReturn(List.of(paid));
+
+        Map<String, Object> report = service.getAgingReport();
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> buckets = (List<Map<String, Object>>) report.get("buckets");
+        assertEquals(5, buckets.size());
+        assertEquals(BigDecimal.ZERO, report.get("totalOutstanding"));
+        assertEquals(BigDecimal.ZERO, report.get("totalOverdue"));
+        assertEquals(0, report.get("openInvoiceCount"));
+    }
 }

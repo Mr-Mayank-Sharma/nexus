@@ -31,6 +31,9 @@ public class OrderService {
     private final KafkaProducerService kafkaProducerService;
     private final ObjectMapper objectMapper;
     private final NodeRepository nodeRepository;
+    private final OrderRoutingService orderRoutingService;
+    private final RoutingConfigRepository routingConfigRepository;
+    private final KittingService kittingService;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
@@ -39,7 +42,10 @@ public class OrderService {
                         InventoryService inventoryService,
                         KafkaProducerService kafkaProducerService,
                         ObjectMapper objectMapper,
-                        NodeRepository nodeRepository) {
+                        NodeRepository nodeRepository,
+                        OrderRoutingService orderRoutingService,
+                        RoutingConfigRepository routingConfigRepository,
+                        KittingService kittingService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
@@ -48,6 +54,9 @@ public class OrderService {
         this.kafkaProducerService = kafkaProducerService;
         this.objectMapper = objectMapper;
         this.nodeRepository = nodeRepository;
+        this.orderRoutingService = orderRoutingService;
+        this.routingConfigRepository = routingConfigRepository;
+        this.kittingService = kittingService;
     }
 
     @Transactional
@@ -84,6 +93,9 @@ public class OrderService {
                 .customerId(customer.getId())
                 .customerEmail(customer.getEmail())
                 .status("PENDING")
+                .fulfillmentType(request.getFulfillmentType() != null && !request.getFulfillmentType().isBlank()
+                        ? request.getFulfillmentType().toUpperCase()
+                        : "SHIP_TO_HOME")
                 .shipToAddress(shipToAddress)
                 .currency(currency)
                 .subtotal(BigDecimal.ZERO)
@@ -113,6 +125,10 @@ public class OrderService {
         order.setSubtotal(subtotal);
         order.setTotal(subtotal.add(order.getShippingCost()).add(order.getTaxAmount()));
         order = orderRepository.save(order);
+
+        if (kittingService.hasKitLines(tenantId, request.getItems())) {
+            kittingService.explodeAndPersist(tenantId, order.getId());
+        }
 
         kafkaProducerService.publish("order.created", order.getId().toString());
 
@@ -226,10 +242,27 @@ public class OrderService {
     public OrderResponse confirmOrder(UUID id) {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+
+        if ("PENDING".equalsIgnoreCase(order.getStatus()) && isAutoAllocationEnabled(order.getTenantId())) {
+            AllocationRequest request = new AllocationRequest();
+            request.setOrderId(id);
+            request.setStrategy(null);
+            request.setDryRun(false);
+            orderRoutingService.allocateOrder(request);
+            order = orderRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+        }
+
         order.setStatus("CONFIRMED");
         order = orderRepository.save(order);
         kafkaProducerService.publish("order.confirmed", order.getId().toString());
         return toOrderResponse(order);
+    }
+
+    private boolean isAutoAllocationEnabled(UUID tenantId) {
+        return routingConfigRepository.findByTenantId(tenantId)
+                .map(NxRoutingConfig::getEnableAutoAllocation)
+                .orElse(false);
     }
 
     @Transactional

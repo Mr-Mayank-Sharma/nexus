@@ -181,6 +181,103 @@ public class IntegrationPlatformService {
         }
     }
 
+    /**
+     * Dispatch an outbound payload to an integration endpoint with automatic retries
+     * (exponential backoff capped by the endpoint's retryCount/retryDelayMs) and an
+     * Idempotency-Key header. On final failure the payload is parked on the DLQ for replay.
+     */
+    @Transactional
+    public Map<String, Object> sendOutbound(UUID endpointId, Object payload, String idempotencyKey) {
+        IntegrationEndpoint endpoint = getEndpoint(endpointId);
+        if (endpoint.getHost() == null || endpoint.getHost().isBlank()) {
+            throw new BadRequestException("Endpoint has no host configured");
+        }
+
+        String key = (idempotencyKey == null || idempotencyKey.isBlank())
+                ? UUID.randomUUID().toString()
+                : idempotencyKey;
+
+        String protocol = endpoint.getProtocol() == null ? "HTTP" : endpoint.getProtocol().toUpperCase();
+        String scheme = ("HTTPS".equals(protocol) || Boolean.TRUE.equals(endpoint.getSslEnabled())) ? "https" : "http";
+        String baseUrl = scheme + "://" + endpoint.getHost()
+                + (endpoint.getPort() != null ? ":" + endpoint.getPort() : "");
+        String path = endpoint.getPath() == null || endpoint.getPath().isBlank() ? "" : endpoint.getPath();
+
+        Map<String, String> headers = new LinkedHashMap<>(parseHeaderJson(endpoint.getHeaders()));
+        headers.put("Idempotency-Key", key);
+
+        int retries = endpoint.getRetryCount() != null ? endpoint.getRetryCount() : 1;
+        int maxAttempts = Math.max(1, retries + 1);
+        long baseDelayMs = endpoint.getRetryDelayMs() != null ? endpoint.getRetryDelayMs() : 1000L;
+        String method = endpoint.getMethod() == null ? "POST" : endpoint.getMethod().toUpperCase();
+
+        JsonNode lastResponse = null;
+        String lastError = null;
+        int attempts = 0;
+        long startedAt = System.currentTimeMillis();
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            attempts = attempt;
+            try {
+                lastResponse = switch (method) {
+                    case "PUT" -> restProtocolAdapter.put(baseUrl, path, headers, payload);
+                    case "GET" -> restProtocolAdapter.get(baseUrl, path, headers, null);
+                    case "DELETE" -> restProtocolAdapter.delete(baseUrl, path, headers);
+                    default -> restProtocolAdapter.post(baseUrl, path, headers, payload);
+                };
+                boolean success = lastResponse != null
+                        && !lastResponse.has("error")
+                        && (!lastResponse.has("statusCode") || lastResponse.path("statusCode").asInt(200) < 400);
+                if (success) {
+                    return Map.of(
+                            "status", "SUCCESS",
+                            "attempts", attempts,
+                            "idempotencyKey", key,
+                            "latencyMs", System.currentTimeMillis() - startedAt,
+                            "response", lastResponse);
+                }
+                lastError = "HTTP status error: " + lastResponse;
+            } catch (Exception e) {
+                lastError = e.getMessage();
+                lastResponse = null;
+            }
+            if (attempt < maxAttempts) {
+                try {
+                    Thread.sleep(baseDelayMs * (1L << (attempt - 1)));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
+
+        IntegrationMessage msg = IntegrationMessage.builder()
+                .tenantId(endpoint.getTenantId())
+                .flowId(endpoint.getId())
+                .messageId(key)
+                .correlationId(key)
+                .source("OUTBOUND")
+                .messageType(endpoint.getEndpointType())
+                .format("JSON")
+                .payload(payload != null ? payload.toString() : null)
+                .status("FAILED")
+                .errorMessage(lastError)
+                .retryCount(attempts - 1)
+                .maxRetries(retries)
+                .processedAt(LocalDateTime.now())
+                .build();
+        dlqManager.moveToDLQ(msg, lastError, "OUTBOUND_DISPATCH");
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("status", "FAILED");
+        result.put("attempts", attempts);
+        result.put("idempotencyKey", key);
+        result.put("latencyMs", System.currentTimeMillis() - startedAt);
+        result.put("error", lastError);
+        result.put("queuedToDLQ", true);
+        return result;
+    }
+
     // ──────────────────────────────────────────────
     // Flow CRUD
     // ──────────────────────────────────────────────

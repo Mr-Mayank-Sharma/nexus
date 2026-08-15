@@ -95,6 +95,18 @@ public class IntegrationPlatformController {
                 integrationPlatformService.testEndpoint(id), "Endpoint test completed"));
     }
 
+    @Operation(summary = "Dispatch an outbound payload with retry + idempotency")
+    @PostMapping("/endpoints/{id}/dispatch")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> dispatchOutbound(
+            @PathVariable UUID id,
+            @RequestBody Map<String, Object> request) {
+        Object payload = request.getOrDefault("payload", Map.of());
+        String idempotencyKey = request.get("idempotencyKey") instanceof String
+                ? (String) request.get("idempotencyKey") : null;
+        return ResponseEntity.ok(ApiResponse.success(
+                integrationPlatformService.sendOutbound(id, payload, idempotencyKey)));
+    }
+
     // ──────────────────────────────────────────────
     // Flows
     // ──────────────────────────────────────────────

@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -241,5 +242,69 @@ public class InvoicingService {
         summary.put("paidCount", paidCount);
         summary.put("overdueCount", overdueCount);
         return summary;
+    }
+
+    /** Standard AR aging buckets: current, 1-30, 31-60, 61-90, 90+ days past due. */
+    private static final List<String> AGING_BUCKETS = List.of(
+            "current", "1-30", "31-60", "61-90", "90+");
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getAgingReport() {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        List<Invoice> allInvoices = invoiceRepository.findByTenantId(tenantId);
+        LocalDate today = LocalDate.now();
+
+        Map<String, Map<String, Object>> buckets = new LinkedHashMap<>();
+        for (String bucket : AGING_BUCKETS) {
+            Map<String, Object> b = new LinkedHashMap<>();
+            b.put("label", bucket);
+            b.put("invoiceCount", 0);
+            b.put("amount", BigDecimal.ZERO);
+            buckets.put(bucket, b);
+        }
+
+        BigDecimal totalOutstanding = BigDecimal.ZERO;
+        BigDecimal totalOverdue = BigDecimal.ZERO;
+        int openInvoiceCount = 0;
+
+        for (Invoice inv : allInvoices) {
+            BigDecimal balance = inv.getBalanceDue();
+            if (balance == null || balance.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+            long daysPastDue = inv.getDueDate() != null
+                    ? java.time.temporal.ChronoUnit.DAYS.between(inv.getDueDate(), today)
+                    : -1L;
+
+            String bucket;
+            if (daysPastDue <= 0) {
+                bucket = "current";
+            } else if (daysPastDue <= 30) {
+                bucket = "1-30";
+            } else if (daysPastDue <= 60) {
+                bucket = "31-60";
+            } else if (daysPastDue <= 90) {
+                bucket = "61-90";
+            } else {
+                bucket = "90+";
+            }
+
+            Map<String, Object> b = buckets.get(bucket);
+            b.put("invoiceCount", (int) b.get("invoiceCount") + 1);
+            b.put("amount", ((BigDecimal) b.get("amount")).add(balance));
+
+            totalOutstanding = totalOutstanding.add(balance);
+            openInvoiceCount++;
+            if (daysPastDue > 0) {
+                totalOverdue = totalOverdue.add(balance);
+            }
+        }
+
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("asOf", today.toString());
+        report.put("buckets", new ArrayList<>(buckets.values()));
+        report.put("totalOutstanding", totalOutstanding);
+        report.put("totalOverdue", totalOverdue);
+        report.put("openInvoiceCount", openInvoiceCount);
+        return report;
     }
 }

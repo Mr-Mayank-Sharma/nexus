@@ -17,10 +17,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class ProcurementService {
+
+    /** Maximum allowed over-receipt per line, as a percentage of the ordered quantity. */
+    private static final double RECEIVING_TOLERANCE_PCT = 10.0;
 
     private final SupplierRepository supplierRepository;
     private final SupplierContactRepository supplierContactRepository;
@@ -31,6 +35,7 @@ public class ProcurementService {
     private final RfqResponseRepository rfqResponseRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final PurchaseOrderItemRepository purchaseOrderItemRepository;
+    private final SlottingService slottingService;
 
     public ProcurementService(SupplierRepository supplierRepository,
                               SupplierContactRepository supplierContactRepository,
@@ -40,7 +45,8 @@ public class ProcurementService {
                               RfqRepository rfqRepository,
                               RfqResponseRepository rfqResponseRepository,
                               PurchaseOrderRepository purchaseOrderRepository,
-                              PurchaseOrderItemRepository purchaseOrderItemRepository) {
+                              PurchaseOrderItemRepository purchaseOrderItemRepository,
+                              SlottingService slottingService) {
         this.supplierRepository = supplierRepository;
         this.supplierContactRepository = supplierContactRepository;
         this.supplierContractRepository = supplierContractRepository;
@@ -50,6 +56,7 @@ public class ProcurementService {
         this.rfqResponseRepository = rfqResponseRepository;
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderItemRepository = purchaseOrderItemRepository;
+        this.slottingService = slottingService;
     }
 
     // ==================== SUPPLIERS ====================
@@ -273,8 +280,28 @@ public class ProcurementService {
                     .findFirst()
                     .orElseThrow(() -> new BadRequestException("Item with SKU " + sku + " not found on PO"));
 
-            item.setQuantityReceived(item.getQuantityReceived() + qty);
+            int newReceived = item.getQuantityReceived() + qty;
+            int toleranceLimit = (int) Math.floor(item.getQuantityOrdered() * (1 + RECEIVING_TOLERANCE_PCT / 100.0));
+            if (newReceived > toleranceLimit) {
+                throw new BadRequestException("Over-receipt for SKU " + sku + ": " + newReceived
+                        + " received vs " + item.getQuantityOrdered() + " ordered (tolerance "
+                        + RECEIVING_TOLERANCE_PCT + "%)");
+            }
+
+            item.setQuantityReceived(newReceived);
             purchaseOrderItemRepository.save(item);
+
+            // Destination warehouse (optional) drives a putaway slot recommendation.
+            Object warehouseRef = received.get("warehouseId");
+            if (warehouseRef != null) {
+                try {
+                    UUID warehouseId = UUID.fromString(String.valueOf(warehouseRef));
+                    slottingService.recommendPutaway(sku, warehouseId, qty, TenantContext.getCurrentTenantId() != null
+                            ? TenantContext.getCurrentTenantId().toString() : "PO_RECEIVING");
+                } catch (IllegalArgumentException ex) {
+                    throw new BadRequestException("Invalid warehouseId: " + warehouseRef);
+                }
+            }
         }
 
         items = purchaseOrderItemRepository.findByPoId(poId);

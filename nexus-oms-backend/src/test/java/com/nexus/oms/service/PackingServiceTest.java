@@ -1,8 +1,11 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.entity.NxOrderItem;
 import com.nexus.oms.entity.NxPackage;
 import com.nexus.oms.entity.WarehouseStaff;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.repository.OrderItemRepository;
+import com.nexus.oms.repository.OrderRepository;
 import com.nexus.oms.repository.PackageRepository;
 import com.nexus.oms.repository.WarehouseStaffRepository;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,12 @@ class PackingServiceTest {
     private PackageRepository packageRepository;
     @Mock
     private WarehouseStaffRepository warehouseStaffRepository;
+    @Mock
+    private BoxRecommendationService boxRecommendationService;
+    @Mock
+    private OrderRepository orderRepository;
+    @Mock
+    private OrderItemRepository orderItemRepository;
 
     private PackingService packingService;
     private UUID tenantId;
@@ -35,7 +44,8 @@ class PackingServiceTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        packingService = new PackingService(packageRepository, warehouseStaffRepository);
+        packingService = new PackingService(packageRepository, warehouseStaffRepository,
+                boxRecommendationService, orderRepository, orderItemRepository);
         tenantId = UUID.randomUUID();
         packageId = UUID.randomUUID();
     }
@@ -208,5 +218,66 @@ class PackingServiceTest {
         assertEquals(2L, kpis.get("packing"));
         assertEquals(3L, kpis.get("packed"));
         assertEquals(4L, kpis.get("shipped"));
+    }
+
+    @Test
+    void recommendBox_AppliesRecommendationToPackage() {
+        NxPackage pkg = new NxPackage();
+        pkg.setId(packageId);
+        pkg.setOrderId(UUID.randomUUID());
+
+        Map<String, Object> recommendation = Map.of(
+                "boxName", "MD-BOX",
+                "dimensions", "16x12x8 in",
+                "fillRate", 0.5,
+                "recommendedBy", "VOLUME");
+
+        when(packageRepository.findById(packageId)).thenReturn(Optional.of(pkg));
+        when(boxRecommendationService.recommendForPackage(tenantId, packageId)).thenReturn(recommendation);
+        when(packageRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        Map<String, Object> result = packingService.recommendBox(tenantId, packageId);
+
+        assertEquals("MD-BOX", result.get("boxName"));
+        assertEquals("MD-BOX", pkg.getBoxName());
+        assertEquals(16.0, pkg.getWidthIn());
+        assertEquals(12.0, pkg.getDepthIn());
+        assertEquals(8.0, pkg.getHeightIn());
+    }
+
+    @Test
+    void validatePack_UnderPacked_ReportsMissingItems() {
+        NxPackage pkg = new NxPackage();
+        pkg.setId(packageId);
+        pkg.setOrderId(UUID.randomUUID());
+        pkg.setItemCount(1);
+
+        NxOrderItem item = new NxOrderItem();
+        item.setQuantity(3);
+        when(packageRepository.findById(packageId)).thenReturn(Optional.of(pkg));
+        when(orderItemRepository.findByOrderId(pkg.getOrderId())).thenReturn(List.of(item));
+
+        Map<String, Object> result = packingService.validatePack(tenantId, packageId);
+
+        assertFalse((Boolean) result.get("valid"));
+        assertEquals(3, result.get("orderedQty"));
+        assertEquals(1, result.get("packedQty"));
+    }
+
+    @Test
+    void validatePack_MatchingQuantity_IsValid() {
+        NxPackage pkg = new NxPackage();
+        pkg.setId(packageId);
+        pkg.setOrderId(UUID.randomUUID());
+        pkg.setItemCount(3);
+
+        NxOrderItem item = new NxOrderItem();
+        item.setQuantity(3);
+        when(packageRepository.findById(packageId)).thenReturn(Optional.of(pkg));
+        when(orderItemRepository.findByOrderId(pkg.getOrderId())).thenReturn(List.of(item));
+
+        Map<String, Object> result = packingService.validatePack(tenantId, packageId);
+
+        assertTrue((Boolean) result.get("valid"));
     }
 }

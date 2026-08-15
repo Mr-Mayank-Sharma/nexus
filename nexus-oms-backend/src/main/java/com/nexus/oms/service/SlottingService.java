@@ -242,6 +242,91 @@ public class SlottingService {
         return assignment;
     }
 
+    /**
+     * Recommend and record a putaway slot for a received SKU. Prefers the SKU's existing
+     * assignment bin, then an available storage bin, then any empty bin in the warehouse.
+     * Returns empty when the warehouse has no bins at all (nothing to put away into).
+     */
+    @Transactional
+    public Optional<NxSlottingAssignment> recommendPutaway(String sku, UUID warehouseId, Integer quantity, String performedBy) {
+        Optional<NxSlottingAssignment> existing = assignmentRepository.findByWarehouseId(warehouseId).stream()
+                .filter(a -> sku.equals(a.getSku()))
+                .findFirst();
+
+        WarehouseBin targetBin;
+        if (existing.isPresent() && existing.get().getBinId() != null) {
+            targetBin = binRepository.findById(existing.get().getBinId()).orElse(null);
+        } else {
+            targetBin = binRepository.findAvailableByWarehouseIdAndBinClass(warehouseId, "STORAGE").stream()
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (targetBin == null) {
+            targetBin = binRepository.findByWarehouseIdAndIsEmpty(warehouseId, true).stream()
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (targetBin == null) {
+            targetBin = binRepository.findByWarehouseId(warehouseId).stream()
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (targetBin == null) {
+            return Optional.empty();
+        }
+
+        NxSlottingAssignment assignment;
+        UUID fromBinId = null;
+        String fromBinCode = null;
+
+        if (existing.isPresent()) {
+            assignment = existing.get();
+            fromBinId = assignment.getBinId();
+            WarehouseBin fromBin = fromBinId != null ? binRepository.findById(fromBinId).orElse(null) : null;
+            fromBinCode = fromBin != null ? fromBin.getCode() : null;
+            assignment.setBinId(targetBin.getId());
+            assignment.setZoneId(targetBin.getZoneId());
+            assignment.setAssignedQuantity(assignment.getAssignedQuantity() + quantity);
+            assignment.setLastSlottingAt(LocalDateTime.now());
+            assignment.setAssignedBy(performedBy);
+            assignment.setSlottingScore(calculateSlottingScore(assignment));
+            assignmentRepository.save(assignment);
+        } else {
+            assignment = NxSlottingAssignment.builder()
+                    .warehouseId(warehouseId)
+                    .sku(sku)
+                    .binId(targetBin.getId())
+                    .zoneId(targetBin.getZoneId())
+                    .assignedQuantity(quantity)
+                    .velocityClass("C")
+                    .assignedBy(performedBy)
+                    .lastSlottingAt(LocalDateTime.now())
+                    .slottingScore(calculateSlottingScore(NxSlottingAssignment.builder()
+                            .warehouseId(warehouseId).sku(sku).binId(targetBin.getId()).zoneId(targetBin.getZoneId())
+                            .assignedQuantity(quantity).velocityClass("C").build()))
+                    .build();
+            assignmentRepository.save(assignment);
+        }
+
+        NxSlottingAudit audit = NxSlottingAudit.builder()
+                .warehouseId(warehouseId)
+                .sku(sku)
+                .fromBinId(fromBinId)
+                .fromBinCode(fromBinCode)
+                .toBinId(targetBin.getId())
+                .toBinCode(targetBin.getCode())
+                .fromZoneId(existing.map(NxSlottingAssignment::getZoneId).orElse(null))
+                .toZoneId(targetBin.getZoneId())
+                .reason("PUTAWAY")
+                .action("PUTAWAY")
+                .movedQuantity(quantity)
+                .performedBy(performedBy)
+                .build();
+        auditRepository.save(audit);
+
+        return Optional.of(assignment);
+    }
+
     @Transactional(readOnly = true)
     public Map<String, Object> getVelocityAnalysis(UUID warehouseId) {
         List<NxSlottingAssignment> allAssignments = assignmentRepository.findByWarehouseId(warehouseId);

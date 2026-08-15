@@ -116,4 +116,18 @@ public class PackingController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getKPIs() {
         return ResponseEntity.ok(ApiResponse.success(packingService.getDashboardKPIs(TenantContext.getCurrentTenantId())));
     }
+
+    @Operation(summary = "Recommend the best box for a package")
+    @PostMapping("/packages/{id}/recommend-box")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> recommendBox(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                packingService.recommendBox(TenantContext.getCurrentTenantId(), id), "Box recommended"));
+    }
+
+    @Operation(summary = "Validate packed quantity against the order")
+    @GetMapping("/packages/{id}/validate")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validatePack(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(
+                packingService.validatePack(TenantContext.getCurrentTenantId(), id)));
+    }
 }

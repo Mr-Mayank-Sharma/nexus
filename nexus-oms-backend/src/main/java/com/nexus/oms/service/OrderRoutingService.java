@@ -15,6 +15,7 @@ import com.nexus.oms.repository.RoutingConfigRepository;
 import com.nexus.oms.repository.RoutingLogRepository;
 import com.nexus.oms.repository.WarehouseRepository;
 import com.nexus.oms.repository.OrderRepository;
+import com.nexus.oms.repository.OrderItemRepository;
 import com.nexus.oms.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,8 @@ public class OrderRoutingService {
     private final RoutingLogRepository routingLogRepository;
     private final WarehouseRepository warehouseRepository;
     private final OrderRepository orderRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final InventoryService inventoryService;
 
     public OrderRoutingService(OrderAllocationRepository allocationRepository,
                                 FulfillmentExceptionRepository exceptionRepository,
@@ -52,7 +55,9 @@ public class OrderRoutingService {
                                 RoutingConfigRepository routingConfigRepository,
                                 RoutingLogRepository routingLogRepository,
                                 WarehouseRepository warehouseRepository,
-                                OrderRepository orderRepository) {
+                                OrderRepository orderRepository,
+                                OrderItemRepository orderItemRepository,
+                                InventoryService inventoryService) {
         this.allocationRepository = allocationRepository;
         this.exceptionRepository = exceptionRepository;
         this.routingRuleRepository = routingRuleRepository;
@@ -60,6 +65,8 @@ public class OrderRoutingService {
         this.routingLogRepository = routingLogRepository;
         this.warehouseRepository = warehouseRepository;
         this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.inventoryService = inventoryService;
     }
 
     @Transactional
@@ -203,11 +210,20 @@ public class OrderRoutingService {
         if (warehouses.isEmpty()) return allocations;
 
         String shipRegion = conditionEvaluator.extractRegion(order.getShipToAddress());
+        Map<String, Integer> demanded = collectOrderDemand(order);
 
         List<Warehouse> scored = warehouses.stream()
                 .map(wh -> {
-                    BigDecimal score = scoreNodeForOrder(wh, order, shipRegion);
-                    return new AbstractMap.SimpleEntry<>(wh, score);
+                    boolean fulfillsAll = canFulfill(order, wh, demanded);
+                    BigDecimal base = scoreNodeForOrder(wh, order, shipRegion);
+                    if (fulfillsAll) {
+                        base = base.add(BigDecimal.valueOf(40));
+                    } else if (canFulfillAny(order, wh, demanded)) {
+                        base = base.add(BigDecimal.valueOf(10));
+                    } else {
+                        base = base.subtract(BigDecimal.valueOf(50));
+                    }
+                    return new AbstractMap.SimpleEntry<>(wh, base);
                 })
                 .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
                 .limit(3)
@@ -357,22 +373,62 @@ public class OrderRoutingService {
             return List.of(failed);
         }
 
-        Warehouse closest = warehouses.get(0);
+        Map<String, Integer> demanded = collectOrderDemand(order);
+        Warehouse best = warehouses.stream()
+                .filter(wh -> canFulfill(order, wh, demanded))
+                .findFirst()
+                .orElse(warehouses.get(0));
+
+        int qty = estimateOrderQuantity(order);
         NxOrderAllocation alloc = NxOrderAllocation.builder()
                 .orderId(order.getId())
                 .tenantId(tenantId)
-                .nodeId(closest.getId())
-                .nodeName(closest.getName())
-                .nodeType(closest.getType() != null ? closest.getType() : "WAREHOUSE")
+                .nodeId(best.getId())
+                .nodeName(best.getName())
+                .nodeType(best.getType() != null ? best.getType() : "WAREHOUSE")
                 .priority(1)
-                .quantityAllocated(estimateOrderQuantity(order))
-                .quantityRequested(estimateOrderQuantity(order))
+                .quantityAllocated(qty)
+                .quantityRequested(qty)
                 .status("ALLOCATED")
                 .allocationStrategy("RULE_BASED")
-                .costEstimated(estimateShippingCost(closest, order, 1))
+                .costEstimated(estimateShippingCost(best, order, 1))
+                .distanceKm(estimateDistance(best, conditionEvaluator.extractRegion(order.getShipToAddress())))
                 .deliveryPromiseConfidence(new BigDecimal("0.6500"))
                 .build();
         return List.of(alloc);
+    }
+
+    private Map<String, Integer> collectOrderDemand(NxOrder order) {
+        Map<String, Integer> demand = new HashMap<>();
+        List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        for (NxOrderItem item : items) {
+            demand.merge(item.getSku(), item.getQuantity(), Integer::sum);
+        }
+        if (demand.isEmpty()) {
+            int estimated = estimateOrderQuantity(order);
+            String metadata = order.getMetadata();
+            if (metadata != null) {
+                try {
+                    JsonNode node = MAPPER.readTree(metadata);
+                    if (node.has("sku")) {
+                        demand.put(node.get("sku").asText(), estimated);
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        return demand;
+    }
+
+    private boolean canFulfill(NxOrder order, Warehouse wh, Map<String, Integer> demanded) {
+        if (demanded.isEmpty()) return true;
+        return demanded.entrySet().stream()
+                .allMatch(e -> inventoryService.checkAvailability(order.getTenantId(), e.getKey(), wh.getId(), e.getValue()));
+    }
+
+    private boolean canFulfillAny(NxOrder order, Warehouse wh, Map<String, Integer> demanded) {
+        if (demanded.isEmpty()) return true;
+        return demanded.entrySet().stream()
+                .anyMatch(e -> inventoryService.checkAvailability(order.getTenantId(), e.getKey(), wh.getId(), e.getValue()));
     }
 
     private BigDecimal scoreNodeForOrder(Warehouse wh, NxOrder order, String shipRegion) {

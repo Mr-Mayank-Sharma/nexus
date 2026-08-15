@@ -34,6 +34,8 @@ public class OrderRequest {
 
     private String currency;
 
+    private String fulfillmentType;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

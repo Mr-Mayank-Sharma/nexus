@@ -12,10 +12,11 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
 
     Page<Invoice> findByTenantId(UUID tenantId, Pageable pageable);
 
+    List<Invoice> findByTenantId(UUID tenantId);
+
     Optional<Invoice> findByTenantIdAndInvoiceNumber(UUID tenantId, String invoiceNumber);
 
     List<Invoice> findByTenantIdAndStatus(UUID tenantId, String status);
-
     List<Invoice> findByOrderId(UUID orderId);
 
     List<Invoice> findByCustomerId(UUID customerId);

@@ -46,4 +46,11 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
            "AND o.createdAt >= :from AND o.createdAt < :to ORDER BY o.createdAt DESC")
     List<NxOrder> findByTenantIdAndCustomerIdAndCreatedAtBetween(@Param("tenantId") UUID tenantId,
             @Param("customerId") UUID customerId, @Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT o.createdAt FROM NxOrder o WHERE o.tenantId = :tenantId AND o.createdAt >= :from")
+    List<LocalDateTime> findCreatedAtSince(@Param("tenantId") UUID tenantId, @Param("from") LocalDateTime from);
+
+    @Query("SELECT o.createdAt, COALESCE(SUM(o.total), 0) FROM NxOrder o " +
+           "WHERE o.tenantId = :tenantId AND o.createdAt >= :from GROUP BY o.createdAt")
+    List<Object[]> findDailyTotalsSince(@Param("tenantId") UUID tenantId, @Param("from") LocalDateTime from);
 }
