@@ -9,7 +9,7 @@
 Think of Nexus as a **restaurant with 4 floors**:
 
 - **Floor 1 — The counter (Frontend):** where customers and staff see everything. In a restaurant, this is the menu, the order tickets, the kitchen screens.
-- **Floor 2 — The kitchen (Backend):** where all the real cooking happens. The chefs are the 63 "controllers" and 50+ "services". They receive a ticket (request) and produce the food (data).
+- **Floor 2 — The kitchen (Backend):** where all the real cooking happens. The chefs are the 74 "controllers" and 111 "services". They receive a ticket (request) and produce the food (data).
 - **Floor 3 — The pantry (Database & caches):** where all ingredients live — Postgres is the big fridge (everything saved permanently), Redis is the counter-side tray (things we grab fast, like today's special), Kafka is the kitchen bell system (announcements that different teams listen to).
 - **Floor 4 — The robot friends (AI services):** `ai-ops` cooks smarter (optimizes operations) and `ai-intel` writes the daily summary for the boss.
 - **Security guard at the door (RBAC):** checks your ID (JWT) and your badge (role) before letting you in — and only into the rooms you're allowed.
@@ -108,10 +108,10 @@ Nexus OMS is a **cloud-native, multi-tenant** commerce-to-dispatch platform with
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ CONTROLLER LAYER   — 63 controllers, REST + WebSocket        │
+│ CONTROLLER LAYER   — 74 controllers, REST + WebSocket        │
 │   /api/** · /ws/** · openapi at /v3/api-docs, /swagger-ui    │
 ├─────────────────────────────────────────────────────────────┤
-│ APPLICATION LAYER — 50+ services                            │
+│ APPLICATION LAYER — 111 services                            │
 │   Order orchestration · Inventory · Fulfillment · Shipping   │
 │   Returns · Procurement · Warehouse/Yard · Finance ·       │
 │   AI platform · Integrations · Import/Export · Auth/RBAC     │
@@ -259,7 +259,7 @@ collect → prepare → train (job) → evaluate (real metrics) → register (mo
 
 | Store | Use | Plain-English |
 |---|---|---|
-| PostgreSQL | System of record; Flyway `V1…V52`; JPA | The permanent fridge |
+| PostgreSQL | System of record; Flyway `V1…V58`; JPA | The permanent fridge |
 | Redis | Cache (RBAC 60s, hot lookups) | The speed rack |
 | Kafka | Domain events, integration ingestion, async automation | The walkie-talkie network |
 | In-memory/WS | STOMP push of live updates | Live "order just arrived" screen refreshes |

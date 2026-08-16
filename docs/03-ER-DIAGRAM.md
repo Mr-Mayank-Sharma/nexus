@@ -1,6 +1,6 @@
 # Nexus OMS — Entity Relationship Diagram (ER)
 
-> The authoritative catalog of the ~180 JPA entities. Diagrams use **Mermaid** (`erDiagram`). Relationships are **logical FKs** — most associations are plain `UUID` columns (e.g. `customerId`, `warehouseId`, `tenantId`) rather than JPA object graphs (only ~6 JPA associations exist).
+> The authoritative catalog of the ~157 JPA entities. Diagrams use **Mermaid** (`erDiagram`). Relationships are **logical FKs** — most associations are plain `UUID` columns (e.g. `customerId`, `warehouseId`, `tenantId`) rather than JPA object graphs (only ~6 JPA associations exist).
 
 ---
 
@@ -41,7 +41,7 @@ An **ER diagram** is just the **floor plan** of the storage room: which shelf co
 
 ---
 
-## 1. Domain Catalog (all ~180 tables)
+## 1. Domain Catalog (all ~157 tables)
 
 ### Core commerce & customers
 `nx_customers` · `nx_addresses` · `nx_contacts` · `products` · `nx_product_mappings` · `nx_promotions` · `nx_promotion_usage` · `nx_payments` · `nx_invoices` · `nx_invoice_items` · `nx_credit_memos`
@@ -603,7 +603,7 @@ erDiagram
 | `@JoinColumn` insertable/updatable=false | Read-only navigation (e.g. `NxOrder → Address`) | A reference card you can read but not change |
 | jsonb columns | Workflow/config/integration payload tables | Flexible pockets for "anything goes" data |
 | Tenant scoping | `tenant_id` on all tenant tables; enforced in services | Every box is labelled with its school |
-| Schema migrations | 44 Flyway files `V1…V52` (idempotent) | Every drawer change is recorded in history |
+| Schema migrations | 58 Flyway files `V1…V58` (idempotent) | Every drawer change is recorded in history |
 | Legacy naming | `nxFreight_*` (3 tables) — requires migration to normalize | Old labels on 3 drawers; renaming needs care |
 
 ---

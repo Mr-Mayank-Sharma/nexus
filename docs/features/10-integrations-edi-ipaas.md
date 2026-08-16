@@ -16,7 +16,7 @@ The connectivity layer: store connectors, protocol adapters (REST/SOAP/GraphQL/E
 1. Connector (Shopify, BigCommerce, Amazon, Magento, FedEx, Stripe, QuickBooks, Salesforce, SAP, Twilio, Okta, OpenAI, generic HTTP) pulls/pushes via `ConnectorFactory`.
 2. Messages normalized → transformed (`IntegrationTransformMapping`) → validated (`IntegrationValidationRule`) → published on `EventBus`.
 3. Failures land in `NxIntegrationDlq` — never silently lost.
-4. EDI partners exchange 850/856/810 via `EdiProtocolAdapter`.
+4. EDI partners exchange **850/856/810/855/997** via `EdiProtocolAdapter` — inbound POs create orders (850), inbound ASNs auto-create from 856, and **855 PO acknowledgment + 997 functional acknowledgment are generated automatically**; bulk **940 shipping-schedule imports** supported.
 5. Email orders parsed (`NxEmailParsedOrder`); webhooks received; exports scheduled.
 
 ## Use cases

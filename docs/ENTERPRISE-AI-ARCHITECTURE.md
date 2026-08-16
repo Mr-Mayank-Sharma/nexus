@@ -1694,11 +1694,11 @@ AI_MAX_COST_PER_PREDICTION=0.05
 
 | Category | Path | Purpose |
 |----------|------|---------|
-| AI Services | `nexus-oms-backend/src/main/java/com/nexus/oms/service/ai/` | All 11 AI services |
-| AI Repos | `nexus-oms-backend/src/main/java/com/nexus/oms/repository/ai/` | All 17 AI repositories |
-| AI Entities | `nexus-oms-backend/src/main/java/com/nexus/oms/entity/ai/` | All 17 AI entities |
+| AI Services | `nexus-oms-backend/src/main/java/com/nexus/oms/service/ai/` | All 25 AI services |
+| AI Repos | `nexus-oms-backend/src/main/java/com/nexus/oms/repository/ai/` | All 18 AI repositories |
+| AI Entities | `nexus-oms-backend/src/main/java/com/nexus/oms/entity/ai/` | All 18 AI entities |
 | AI DTOs | `nexus-oms-backend/src/main/java/com/nexus/oms/dto/ai/` | 3 AI DTOs |
-| AI Controllers | `nexus-oms-backend/src/main/java/com/nexus/oms/controller/ai/` | 3 AI controllers |
+| AI Controllers | `nexus-oms-backend/src/main/java/com/nexus/oms/controller/ai/` | 4 AI controllers |
 | Python ML | `supply_chain_ai/` | Models 1-4 |
 | Python ML | `supply_chain_ai2/` | Models 5-6 |
 | Frontend AI | `nexus-oms-frontend/src/pages/Ai*.tsx` | 9 AI pages |

@@ -21,7 +21,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`00-VISION-DREAM.md`](./00-VISION-DREAM.md) | Vision, dream product, **market numbers** (OMS/WMS/AI), roadmap, moat | Founders, investors, exec |
 | [`01-CURRENT-STATE.md`](./01-CURRENT-STATE.md) | Honest snapshot: what works, known gaps (G1–G7), Phase 2.5 hardening | Engineering, PM |
 | [`02-TECHNICAL-ARCHITECTURE.md`](./02-TECHNICAL-ARCHITECTURE.md) | Stack, layers, integration hub, AI platform, security, deployment | Engineering |
-| [`03-ER-DIAGRAM.md`](./03-ER-DIAGRAM.md) | ~180 entities: domain catalog + per-domain Mermaid ER diagrams | Engineering, DBA |
+| [`03-ER-DIAGRAM.md`](./03-ER-DIAGRAM.md) | ~157 entities: domain catalog + per-domain Mermaid ER diagrams | Engineering, DBA |
 | [`04-USE-CASES.md`](./04-USE-CASES.md) | UC-01…UC-42 actor/precondition/flow/result catalogue | PM, QA, Engineering |
 | [`05-DATA-FLOW.md`](./05-DATA-FLOW.md) | End-to-end data movement (intake, fulfillment, integrations, AI, returns, procurement, yard) | Engineering, QA |
 | [`06-BUSINESS-FLOW-RBAC.md`](./06-BUSINESS-FLOW-RBAC.md) | **Who can access what**: 14 roles, 39 path→resource mappings, seeded permission matrix, flow-stage access tables | All |

@@ -24,14 +24,14 @@ That is exactly where Nexus stands: **broad, real surface + a short, honest list
 | Dimension | State |
 |---|---|
 | **Codebase** | Monorepo: `nexus-oms-backend` (Java/Spring Boot) + `nexus-oms-frontend` (React/Vite) |
-| **Git history** | 76 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
+| **Git history** | 80 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
 | **Migrations** | 58 Flyway migrations (`V1`…`V58`) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
-| **Backend surface** | **~136 JPA entities**, **66 controllers**, 50+ services, 14 RBAC roles |
+| **Backend surface** | **~157 JPA entities**, **74 controllers**, 111 services, 14 RBAC roles |
 | **Frontend surface** | **89 pages**, hash-routed, role/resource-gated, React Query + WebSockets |
 | **Infra (docker-compose)** | Postgres, Redis, Kafka, backend, frontend, **ai-ops**, **ai-intel**, Prometheus, Grafana |
 | **Testing** | Backend: **704 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest 400 passing (4 pre-existing failures in `newBackendApi.test.ts`/`AuthContext.test.tsx`); Playwright smoke-tested on live dev stack |
 
-> 🧒 **Kid translation of the table:** "Entities" are the *things* we keep track of (orders, boxes, warehouses, cars). "Controllers" are the *doors* people knock on. "Pages" are the *rooms* you see on screen. We built ~136 things, ~66 doors, and ~89 rooms — and the practice exams all pass.
+> 🧒 **Kid translation of the table:** "Entities" are the *things* we keep track of (orders, boxes, warehouses, cars). "Controllers" are the *doors* people knock on. "Pages" are the *rooms* you see on screen. We built ~157 things, ~74 doors, and ~89 rooms — and the practice exams all pass.
 
 ---
 
@@ -41,8 +41,9 @@ The platform implements a **broad end-to-end commerce-to-dispatch pipeline** —
 
 ### 2.1 Commerce & orders 🛒
 - Orders from **Shopify, BigCommerce, Amazon, eBay, Walmart, Magento** + manual + import
-- **BOPIS** (buy online, pick up in store) with a full pickup lifecycle — assign picker → pick items (with substitution/short handling) → pack → ready-for-handoff → handoff → **POD collection**; BOPIS shipping labels generated server-side
-- **Endless aisle**, store transfers, marketplace listings
+- **Order lifecycle control** — approval → parked → rejection workflow (`approveOrder` / `parkOrder` / `rejectOrder` with `parkedReason` + `rejectionReason`, parked orders re-approvable), tested end-to-end
+- **BOPIS** (buy online, pick up in store) with a full pickup lifecycle — assign picker → pick items (with substitution/short handling) → pack → ready-for-handoff → handoff → **POD collection**; **no-show timeout + auto-cancel**, **pickup KPIs** (pickup rate, no-show rate, handoff time); BOPIS shipping labels generated server-side
+- **Endless aisle** (with **real inventory deduction** at the fulfilling node on transfer-out, verified at the warehouse level), store transfers, marketplace listings
 - Order import/export engine, bulk CSV/Excel, email order parsing
 
 > 🛍️ **Real life example:** A customer on Amazon buys a blue hoodie. The hoodie is at the downtown store, not the warehouse. Nexus sees the store has 3 blue hoodies, creates the order, and — because the customer chooses store pickup — reserves one hoodie at the store, walks the picker through picking it, and prints a BOPIS handoff label when it's ready. All automatic.
@@ -63,6 +64,8 @@ The platform implements a **broad end-to-end commerce-to-dispatch pipeline** —
 
 ### 2.4 Returns (RMA) 🔄
 - Return requests, inspections, dispositions (restock/destroy/donate/refund), refund workflows
+- **Refund disposition → linked refund** (inspection disposition creates the refund with a tracked `refundStatus`, idempotent `processRefund`) — unit-tested
+- **RMA ↔ order/line traceability** — return lines linked to original order lines with `refundStatus` + amounts carried through the workflow — unit-tested
 
 ### 2.5 Procurement & warehouse ops 🏗️
 - Purchase orders (subtotal/tax/total computation), vendors (supplier codes, tax IDs, status), replenishment rules + replenishment suggestions (engine + controller + rules/suggestions entities); warehouse zones/aisles/bins, labor tasks, automation config (AGV/ASRS), IoT/telemetry hooks
@@ -70,6 +73,7 @@ The platform implements a **broad end-to-end commerce-to-dispatch pipeline** —
 
 ### 2.6 Finance, billing & 3PL 💰
 - **Invoicing**: invoice creation (subtotal/tax/discount/shipping → total), payments (`recordPayment` with settlement + over-payment rejection), **refunds + credit memos**, invoice summary (outstanding / overdue / paid-this-month), and an **AR aging report** (`GET /api/v1/invoicing/reports/aging` — current / 1-30 / 31-60 / 61-90 / 90+ buckets) — unit-tested
+- **QuickBooks connector** — refunds made **idempotent** (in-memory dedup keyed on `nexus-refund-{refundId}` + `Idempotency-Key` header on every credit-memo push, so a retry never double-posts), real refund push tested — unit-tested
 - **3PL billing**: per-client **rate cards** (per-order / per-line / picking / storage pricing), **billing statement generation** (itemized lines, totals, outstanding/collected KPIs) — live-verified via REST
 - **Client portal**: per-client overview (open/fulfilled orders, units, open invoices, outstanding $), orders-by-status, recent orders; client selector in the UI
 - Invoices, payments (Stripe connector), QuickBooks connector, KPIs/analytics dashboards, reporting
@@ -77,7 +81,7 @@ The platform implements a **broad end-to-end commerce-to-dispatch pipeline** —
 ### 2.7 Integrations hub (iPaaS-lite) 🔌
 - `ConnectorFactory`, `EventBus`, `CredentialVault`, `DataMapper`, `ConnectorHealth`, batch jobs, webhooks
 - **Protocol adapters**: REST (with connect/read timeouts so unreachable partners fail fast), SOAP, GraphQL, EDI (X12/EDIFACT)
-- **EDI 850/856/810** — real X12 parsing (BEG/N1/PO1, BSN/HL/MAN/TD3/TD5, BIG/IT1/TDS), validation, control-number extraction, dry-run, partner management, and **PO → order creation**; parser hardened (field mapping + regex DoS fixes) — unit-tested
+- **EDI 850/856/810/855/997** — real X12 parsing (BEG/N1/PO1, BSN/HL/MAN/TD3/TD5, BIG/IT1/TDS, AK1/AK2), validation, control-number extraction, dry-run, partner management, **PO → order creation**, **bulk 940 shipping-schedule import**, **855 PO acknowledgment + 997 functional acknowledgment** (auto-generated on inbound EDI); parser hardened (field mapping + regex DoS fixes) — unit-tested
 - **Outbound dispatch** — `POST /api/v1/integration-platform/endpoints/{id}/dispatch` with exponential-backoff retries, **`Idempotency-Key` dedup**, and **DLQ parking** on final failure (never silently dropped) — unit-tested
 - **Connectors**: Shopify, BigCommerce, Magento, Amazon, Salesforce, SAP, QuickBooks, Stripe, Twilio, FedEx, Okta, OpenAI + generic HTTP
 - **Import/Export engine + signed import tokens**, `ImportExportEngine`
@@ -90,7 +94,7 @@ The platform implements a **broad end-to-end commerce-to-dispatch pipeline** —
 
 ### 2.9 Security & access 🔐
 - JWT auth, 14-role RBAC with resource→action permission gates (deny-by-default), tenant-scoped data everywhere
-- MFA/SSO-ready (Okta connector), credential vault for external system keys
+- **SSO/MFA ready** — `POST /auth/sso/{provider}` (Okta/Auth0/Google/Microsoft) + `POST /auth/mfa/verify` (TOTP-style) with MFA challenge sessions, Okta connector, credential vault for external system keys — unit + integration tested
 
 ---
 
@@ -119,7 +123,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 - **`AutomationService`** — removed random ACK delays and fabricated execution times; results are real `Duration` elapsed, and simulated paths are **explicitly flagged** `"simulated":true`.
 - **`RestProtocolAdapter`** — REST calls now enforce connect/read timeouts so an unreachable partner fails in ~3s instead of hanging.
 - **`EdiAutomationService`** — corrected X12 field mapping (off-by-one in BEG/N1/BSN/TD3/PO1/IT1 indexing) and replaced a catastrophic-backtracking regex that could hang on malformed input; 850 now creates real orders end-to-end; **856 now extracts LIN/SN1 line items and auto-creates an inbound ASN** (linked via `nx_edi_documents.asn_id`).
-- **Backend test suite** — expanded from 501 → **704 green tests** with new suites for ATP, yard/dock, procurement (incl. over-receipt tolerance + putaway), invoicing (incl. AR aging), EDI (incl. dry-run/upload + 856→ASN + bulk 940 shipping schedules), BOPIS pickup lifecycle, billing, rate cards, waves, task-queue, DOM order routing, box recommendation, kitting, AI demand forecast, integration outbound, **ASN inbound**, **automation emulator + slotting feedback**, **RF task picker**, **AI training orchestration**, **QuickBooks refund idempotency**, and **SSO/MFA (unit + integration)**.
+- **Backend test suite** — expanded from 501 → **704 green tests** with new suites for ATP, yard/dock, procurement (incl. over-receipt tolerance + putaway), invoicing (incl. AR aging), EDI (incl. dry-run/upload + 856→ASN + bulk 940 shipping schedules + 855/997 acks), BOPIS pickup lifecycle (+ no-show timeout + pickup KPIs), billing, rate cards, waves, task-queue, DOM order routing, box recommendation, kitting, AI demand forecast, integration outbound, **ASN inbound**, **automation emulator + slotting feedback**, **RF task picker**, **AI training orchestration**, **QuickBooks refund idempotency**, **order lifecycle (approve/park/reject)**, **endless-aisle inventory deduction**, **RMA refund linkage**, and **SSO/MFA (unit + integration)**.
 
 > 🎯 **Real life example of why this matters:**
 > Before: an AI "safety score" for an order was partly decided by **rolling dice** (`Random`). So the *same* order could score 80% one second and 55% the next.
@@ -130,7 +134,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 ## 5. Engineering Rigor in Place 🏗️
 
 - **Determinism**: rule engine + automation are reproducible and auditable (no hidden randomness).
-- **Data integrity**: Flyway-versioned schema (V54); tenant-scoped queries; JSONB for flexible payloads.
+- **Data integrity**: Flyway-versioned schema (V58); tenant-scoped queries; JSONB for flexible payloads.
 - **Observability**: Actuator + Micrometer + Prometheus + Grafana; logstash JSON logging; tracing (Brave).
 - **Resilience**: Resilience4j circuit breakers, Kafka event bus for async integration, Redis caching, integration timeouts.
 - **API docs**: springdoc OpenAPI (Swagger UI) generated from controllers.
@@ -158,7 +162,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 | Trustworthy AI platform | Model registry, experiments, drift, fallbacks, audit; demand forecast (Holt + WAPE) shipped | Real training data → **no production model yet** (G3) |
 | One-touch integrations | 15+ connectors + EDI 850/856/810 + iPaaS-lite + outbound retry/idempotency/DLQ + **856 → inbound ASN** | Depth (auth refresh, carrier EDI bulk) |
 | 3PL-grade billing | Rate cards + statements + read-only client portal; AR aging report | Self-serve portal, credit/payment workflows (G9) |
-| GA quality | 58 migrations, 66+ controllers, 89 pages, 704 backend tests green | Real provider wiring (G4), curated ML dataset + deployed model (G3) |
+| GA quality | 58 migrations, 74 controllers, 89 pages, 704 backend tests green | Real provider wiring (G4), curated ML dataset + deployed model (G3) |
 
 **Bottom line:** the *architecture* and *surface* of the dream product exist, the locks work (RBAC gates), and the practice exams all pass. The remaining distance is **trust**: real data for ML, real provider wiring, and closed-loop automation.
 

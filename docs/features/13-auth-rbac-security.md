@@ -10,11 +10,11 @@
 > The Principal (ADMIN) opens everything. A student (VIEWER) can only watch. A janitor (PICKER) can enter storage but not the money room. Nexus checks the badge at **every door, every time** — not just at the front gate.
 
 ## Overview
-JWT-based authentication, 14-role RBAC enforced server-side via a path→resource→permission filter, tenant scoping on all data, signed import tokens, encrypted credential vault and SSO/MFA readiness.
+JWT-based authentication, 14-role RBAC enforced server-side via a path→resource→permission filter, tenant scoping on all data, signed import tokens, encrypted credential vault and **SSO/MFA shipped** (unit + integration tested).
 
 ## Business process
-1. User logs in (`AuthService`) → JWT issued (jjwt); MFA/SSO flows (Okta/Auth0/Google/Microsoft) supported.
-2. Every request passes `PermissionAuthorizationFilter` → `PermissionService` resolves path → resource → permission (39 mappings, first-prefix-match).
+1. User logs in (`AuthService`) → JWT issued (jjwt). **SSO** (`POST /auth/sso/{provider}` + provider authorize/callback, Okta-style) and **MFA** (`POST /auth/mfa/verify`, TOTP-style) are live endpoints, unit + integration tested.
+2. Every request passes `PermissionAuthorizationFilter` → `PermissionService` resolves path → resource → permission (73 mappings, first-prefix-match).
 3. Role permissions resolved from `nx_role_permissions` (tenant override → global default; 60s cache).
 4. Frontend `ProtectedRoute` + `PermissionGate` mirror the same model for UI.
 5. Sensitive actions write `NxAuditLog`.

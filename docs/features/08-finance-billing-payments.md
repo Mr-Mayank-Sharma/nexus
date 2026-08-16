@@ -15,7 +15,7 @@ Order-to-cash and procure-to-pay support: invoices, invoice items, payments (Str
 ## Business process
 1. Shipment/order completion → `NxInvoice` + `NxInvoiceItem`.
 2. Customer payment via Stripe → `NxPayments`.
-3. Disputes/returns → `NxCreditMemo`.
+3. Disputes/returns → `NxCreditMemo`; **QuickBooks refunds/payouts are idempotent** (integration-ID dedup — a retry never double-posts).
 4. Carrier invoices → freight audit against rate card (see Shipping feature).
 5. Analytics aggregate AR, COGS, freight cost, promotion ROI.
 

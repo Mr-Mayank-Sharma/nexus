@@ -19,8 +19,10 @@ Store-centric fulfillment: **BOPIS** (buy online, pick up in store), **pickup or
 1. Order arrives tagged `fulfillmentType = BOPIS` (or manual pickup).
 2. `NxPickupOrder` created; store inventory reserved; ready-for-pickup notification sent.
 3. Store picks `NxPickupOrderItem`; customer collects; proof-of-delivery recorded.
-4. Endless aisle: product out of stock at store → route/transfer from another node with honest promise.
-5. Store transfers and cycle counts reconcile store inventory.
+4. **No-show handling** — if a customer never collects, a configurable timeout **auto-cancels** the pickup order (with reason recorded) and releases the reservation.
+5. **Pickup KPIs** — pickup rate, no-show rate and handoff time are tracked from the pickup lifecycle events.
+6. Endless aisle: product out of stock at store → route/transfer from another node with an honest promise; **transfer-out decrements real inventory** at the fulfilling node (verified warehouse-level).
+7. Store transfers and cycle counts reconcile store inventory.
 
 ## Use cases
 - **UC-07** ATP check for store promises
@@ -64,5 +66,7 @@ Tables: `nx_pickup_orders` · `nx_pickup_order_items` · `nx_endless_aisle_order
 ## Integrity notes
 - Store promises are ATP-backed (`NxATPSnapshot`) — no over-promising shelf stock.
 - Pickup confirmation closes the loop with a proof-of-delivery event.
+- Endless-aisle transfers deduct real inventory at the fulfilling node (not just reserved).
+- No-show pickup orders auto-cancel after timeout; pickup/no-show/handoff KPIs are computed from lifecycle events.
 
 > 🧒 **Kid translation of "no over-promising":** The store can't claim "we have 2 hoodies!" if both are already reserved. The promise is always real: *on-hand minus reserved*, like a cookie jar you count before promising a cookie.

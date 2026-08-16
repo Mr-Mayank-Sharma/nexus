@@ -1,6 +1,6 @@
 # Nexus OMS — Business Flow & Access Control (RBAC)
 
-> **Who can touch what, at every stage of the business flow.** The authoritative answer to "who has access to what" — derived from the 14-role model, `PermissionService.PATH_TO_RESOURCE` (39 mappings), and seeded `nx_role_permissions` (`V24`/`V25`).
+> **Who can touch what, at every stage of the business flow.** The authoritative answer to "who has access to what" — derived from the 14-role model, `PermissionService.PATH_TO_RESOURCE` (73 mappings), and seeded `nx_role_permissions` (`V24`/`V25`).
 
 ---
 
@@ -52,7 +52,7 @@ Defined in `AuthService.ALLOWED_ROLES`:
 ## 2. How Authorization Works (two layers)
 
 ### 2.1 Server-side — path → resource → permission
-`PermissionAuthorizationFilter` → `PermissionService.PATH_TO_RESOURCE` (39 mappings, first-prefix-match wins):
+`PermissionAuthorizationFilter` → `PermissionService.PATH_TO_RESOURCE` (73 mappings, first-prefix-match wins):
 
 | URL prefix | Resource | URL prefix | Resource |
 |---|---|---|---|

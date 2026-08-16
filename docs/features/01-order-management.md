@@ -21,8 +21,9 @@ Single order backbone for every selling surface: Shopify, BigCommerce, Amazon, e
 2. Normalized to `NxOrder` + `NxOrderItem` (dedup by `channel_order_id`).
 3. Routing rules choose fulfillment path (ship-from / store / pickup).
 4. ATP check allocates stock or parks/brokers the order.
-5. Fulfillment consumes the allocation; status/sub-status advances.
-6. Payments/invoices settle; analytics captured.
+5. **Lifecycle control** — orders can be **approved**, **parked** (`parkOrder` with `parkedReason`) or **rejected** (`rejectOrder` with `rejectionReason`); parked orders can be re-approved; each action is recorded and unit-tested end-to-end.
+6. Fulfillment consumes the allocation; status/sub-status advances.
+7. Payments/invoices settle; analytics captured.
 
 > 🧒 **Kid translation of dedup:** If the doorbell rings twice, you don't cook two pizzas. The same order message arriving twice is still one order — the `channel_order_id` is the "customer name" we check.
 

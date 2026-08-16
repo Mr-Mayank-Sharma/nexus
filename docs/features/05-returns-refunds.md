@@ -17,7 +17,8 @@ Reverse-logistics lifecycle: return request → authorization (RMA) → receipt 
 2. RMA number issued; return authorized.
 3. Warehouse receives and inspects; condition recorded.
 4. Disposition chosen: restock / destroy / donate / reject.
-5. Refund or credit memo posted by Finance; inventory or write-off updated.
+5. **Refund disposition creates a linked refund** — the refund is tracked with its own `refundStatus` and processed idempotently (`processRefund`, no double-credit on retry).
+6. Refund or credit memo posted by Finance; inventory or write-off updated.
 
 ## Use cases
 - **UC-21** Create return request (support)
@@ -34,7 +35,8 @@ flowchart LR
     DSP -->|restock| INV[Inventory +]
     DSP -->|destroy/donate| WR[Write-off]
     DSP -->|reject| REJ[NxRejectionReason]
-    REC --> REF[Refund / NxCreditMemo]
+    DSP -->|refund| REF[Linked refund: refundStatus tracked]
+    REF --> QB[QuickBooks refund idempotent]
 ```
 
 ## Key entities (ER subset)
@@ -58,6 +60,7 @@ Tables: `nx_returns` · `nx_return_items` · `nx_rejection_reasons` · `nx_credi
 
 ## Integrity notes
 - Dispositions and rejection reasons are audited (no silent write-offs) — "throw it away" always needs a recorded reason.
+- Refund processing is **idempotent** — retries never double-post a refund; RMA lines carry `refundStatus` + amounts through the workflow (unit-tested).
 - Refund amounts tie back to inspected return items (the refund math starts from what the inspector actually saw).
 
 > 🧒 **Kid translation of the "no silent write-off" rule:** When a toy comes back and must be tossed, the logbook says WHY — "broken arm, can't resell." You can't make inventory vanish without a note.

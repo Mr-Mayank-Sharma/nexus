@@ -5,8 +5,8 @@
 This document outlines the implementation plan to close all feature gaps between NexusShip OMS and HotWax Commerce, and surpass HotWax in each capability area. The plan covers 10 prioritized gaps across order lifecycle, inventory management, store fulfillment, and operational efficiency.
 
 **Current State:**
-- Backend: 497 tests passing, 43 controllers, 51+ services, 100 entities
-- Frontend: 395 tests passing, 70+ pages, 46 API modules
+- Backend: 704 tests passing, 74 controllers, 111 services, ~157 entities
+- Frontend: 400 tests passing, 89 pages, 61 API modules
 - HotWax Analysis: Full glossary, BPMs, and how-to guides scraped
 
 **Target State:**
