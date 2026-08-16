@@ -1,6 +1,7 @@
 package com.nexus.oms.service;
 
 import com.nexus.oms.entity.NxAppointment;
+import com.nexus.oms.entity.NxAsn;
 import com.nexus.oms.entity.NxDockDoor;
 import com.nexus.oms.entity.NxYardLocation;
 import com.nexus.oms.repository.AppointmentRepository;
@@ -184,6 +185,39 @@ class YardServiceTest {
         assertEquals(1L, util.get("occupied"));
         assertEquals(1L, util.get("available"));
         assertEquals(33.33, util.get("utilizationPercent"));
+    }
+
+    @Test
+    void linkAsnToAppointment_setsAsnAndEdiDocument() {
+        NxAppointment apt = appointment(UUID.randomUUID(), "REQUESTED");
+        UUID asnId = UUID.randomUUID();
+        UUID ediDocId = UUID.randomUUID();
+        when(appointmentRepository.findById(apt.getId())).thenReturn(java.util.Optional.of(apt));
+        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        NxAppointment linked = yardService.linkAsnToAppointment(apt.getId(), asnId, ediDocId);
+
+        assertEquals(asnId, linked.getAsnId());
+        assertEquals(ediDocId, linked.getEdiDocumentId());
+    }
+
+    @Test
+    void createAppointmentFromAsn_buildsInboundAppointment() {
+        UUID asnId = UUID.randomUUID();
+        NxAsn asn = NxAsn.builder().id(asnId).tenantId(tenantId)
+                .asnNumber("SN-1001").purchaseOrderNumber("PO-12345")
+                .carrierCode("FDX").supplierName("Acme Corp").build();
+        when(appointmentRepository.findAll()).thenReturn(List.of());
+        when(appointmentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        NxAppointment apt = yardService.createAppointmentFromAsn(warehouseId, asn, null);
+
+        assertEquals("INBOUND", apt.getType());
+        assertEquals("REQUESTED", apt.getStatus());
+        assertEquals("FDX", apt.getCarrierCode());
+        assertEquals("Acme Corp", apt.getCarrierName());
+        assertEquals("PO-12345", apt.getPoNumbers());
+        assertEquals(asnId, apt.getAsnId());
     }
 
     @Test

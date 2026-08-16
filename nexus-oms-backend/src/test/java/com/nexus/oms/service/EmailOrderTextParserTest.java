@@ -111,6 +111,45 @@ class EmailOrderTextParserTest {
     }
 
     @Test
+    void extractOrderFromText_carrierTrackingVendor() {
+        String body = """
+                Vendor: Acme Supply
+                Order #: ORD-999
+                Ship Via: UPS Ground
+                Tracking #: 1Z999AA10123456784
+                Expected Delivery: 2026-08-20
+                """;
+
+        Map<String, Object> data = parser.extractOrderFromText(body);
+
+        assertEquals("Acme Supply", data.get("vendorName"));
+        assertEquals("UPS Ground", data.get("carrierName"));
+        assertEquals("1Z999AA10123456784", data.get("trackingNumber"));
+        assertEquals(java.util.List.of("1Z999AA10123456784"), data.get("trackingNumbers"));
+        assertEquals("2026-08-20", data.get("deliveryDate"));
+    }
+
+    @Test
+    void extractOrderFromText_multipleTrackingNumbers() {
+        String body = """
+                Tracking Numbers: 1ZAAA1, 1ZBBB2, 1ZCCC3
+                """;
+
+        Map<String, Object> data = parser.extractOrderFromText(body);
+
+        assertEquals(3, ((java.util.List<?>) data.get("trackingNumbers")).size());
+        assertTrue(((java.util.List<?>) data.get("trackingNumbers")).contains("1ZBBB2"));
+    }
+
+    @Test
+    void extractOrderFromText_noTrackingLeavesEmptyList() {
+        Map<String, Object> data = parser.extractOrderFromText("Order: X-1\nTotal: $5.00");
+
+        assertEquals(java.util.Collections.emptyList(), data.get("trackingNumbers"));
+        assertNull(data.get("trackingNumber"));
+    }
+
+    @Test
     void calculateConfidence_halfSignals() {
         Map<String, Object> data = Map.of(
             "customerName", "John",

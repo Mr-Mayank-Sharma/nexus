@@ -39,6 +39,30 @@ public class SlottingService {
         return assignmentRepository.findByWarehouseId(warehouseId);
     }
 
+    @Transactional
+    public void recordPick(UUID warehouseId, String sku) {
+        List<NxSlottingAssignment> matches = assignmentRepository.findByWarehouseId(warehouseId).stream()
+                .filter(a -> sku.equals(a.getSku()))
+                .toList();
+        for (NxSlottingAssignment a : matches) {
+            a.setLastPickedAt(LocalDateTime.now());
+            a.setPickFrequency(a.getPickFrequency() == null ? 1 : a.getPickFrequency() + 1);
+            assignmentRepository.save(a);
+        }
+    }
+
+    @Transactional
+    public void recordPutaway(UUID warehouseId, String sku, UUID binId) {
+        List<NxSlottingAssignment> matches = assignmentRepository.findByWarehouseId(warehouseId).stream()
+                .filter(a -> sku.equals(a.getSku()))
+                .toList();
+        for (NxSlottingAssignment a : matches) {
+            a.setLastSlottingAt(LocalDateTime.now());
+            a.setBinId(binId);
+            assignmentRepository.save(a);
+        }
+    }
+
     public NxSlottingAssignment getAssignment(UUID id) {
         return assignmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("SlottingAssignment", id));

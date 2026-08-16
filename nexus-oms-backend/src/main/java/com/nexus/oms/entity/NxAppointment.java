@@ -59,6 +59,12 @@ public class NxAppointment {
     @Column(name = "yard_location_id")
     private UUID yardLocationId;
 
+    @Column(name = "asn_id")
+    private UUID asnId;
+
+    @Column(name = "edi_document_id")
+    private UUID ediDocumentId;
+
     @Column(name = "estimated_arrival")
     private LocalDateTime estimatedArrival;
 

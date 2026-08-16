@@ -19,6 +19,7 @@ public interface AiModelVersionRepository extends JpaRepository<AiModelVersion, 
     Page<AiModelVersion> findByModelId(UUID modelId, Pageable pageable);
     Optional<AiModelVersion> findByModelIdAndVersion(UUID modelId, String version);
     Optional<AiModelVersion> findTopByModelIdAndStatusOrderByCreatedAtDesc(UUID modelId, String status);
+    Optional<AiModelVersion> findTopByTrainingJobIdOrderByCreatedAtDesc(UUID trainingJobId);
     long countByModelId(UUID modelId);
     List<AiModelVersion> findByModelIdAndStatus(UUID modelId, String status);
 }

@@ -64,6 +64,30 @@ class EdiAutomationServiceTest {
             "TDS*2500~\n" +
             "SE*5*0001~";
 
+    private static final String EDI_856_BULK =
+            "ST*856*0001~\n" +
+            "BSN*00*SN-1001*20260101*120000~\n" +
+            "TD5*B*FDX*FedEx*PRIORITY~\n" +
+            "LIN*1*UP*111111111111~\n" +
+            "SN1*1*12*EA~\n" +
+            "SE*6*0001~\n" +
+            "ST*856*0002~\n" +
+            "BSN*00*SN-1002*20260102*090000~\n" +
+            "TD5*B*UPS*UPS*NEXT_DAY~\n" +
+            "LIN*1*UP*222222222222~\n" +
+            "SN1*1*7*EA~\n" +
+            "SE*6*0002~";
+
+    private static final String EDI_940 =
+            "ST*940*0001~\n" +
+            "W05*SHIP-777*20260103~\n" +
+            "N1*SF*Acme Corp*92*ACME001~\n" +
+            "N1*ST*Nexus WH*92*NEXUS01~\n" +
+            "TD5*B*UPS*UPS*\n" +
+            "LIN*1*UP*333333333333~\n" +
+            "QTY*1*8*EA~\n" +
+            "SE*8*0001~";
+
     @BeforeEach
     void setUp() {
         service = new EdiAutomationService(ediDocumentRepository, ediPartnerRepository, orderRepository, asnService);
@@ -135,6 +159,58 @@ class EdiAutomationServiceTest {
         assertEquals("PARSED", doc.getParsedStatus());
         assertEquals(created.getId(), doc.getAsnId());
         verify(asnService).createAsnFromEdi(eq(tenantId), any(), eq(doc.getId()));
+    }
+
+    @Test
+    void dryRun_856_bulkParsesEveryShipment() {
+        Map<String, Object> result = service.dryRun(EDI_856_BULK, "856");
+
+        assertEquals(true, result.get("valid"));
+        Map<?, ?> data = (Map<?, ?>) result.get("parsedData");
+        assertEquals(true, data.get("bulk"));
+        assertEquals(2, data.get("shipmentCount"));
+        java.util.List<Map<?, ?>> shipments = (java.util.List<Map<?, ?>>) data.get("shipments");
+        assertEquals(2, shipments.size());
+        assertEquals("SN-1001", shipments.get(0).get("shipNoticeNumber"));
+        assertEquals("SN-1002", shipments.get(1).get("shipNoticeNumber"));
+        assertEquals("UPS", shipments.get(1).get("carrierName"));
+        java.util.List<?> secondItems = (java.util.List<?>) shipments.get(1).get("items");
+        assertEquals("222222222222", ((Map<?, ?>) secondItems.get(0)).get("productId"));
+    }
+
+    @Test
+    void uploadAndParse_856_bulkCreatesAsnPerShipment() {
+        when(ediDocumentRepository.save(any())).thenAnswer(inv -> {
+            NxEdiDocument d = inv.getArgument(0);
+            if (d.getId() == null) d.setId(UUID.randomUUID());
+            return d;
+        });
+        when(asnService.createAsnFromEdi(eq(tenantId), any(), any())).thenAnswer(inv -> {
+            com.nexus.oms.entity.NxAsn a = new com.nexus.oms.entity.NxAsn();
+            a.setId(UUID.randomUUID());
+            return a;
+        });
+
+        NxEdiDocument doc = service.uploadAndParse("bulk.856", EDI_856_BULK, "856");
+
+        assertEquals("PARSED", doc.getParsedStatus());
+        verify(asnService, times(2)).createAsnFromEdi(eq(tenantId), any(), eq(doc.getId()));
+        assertNotNull(doc.getAsnId());
+    }
+
+    @Test
+    void dryRun_940_parsesWarehouseShippingOrder() {
+        Map<String, Object> result = service.dryRun(EDI_940, "940");
+
+        assertEquals(true, result.get("valid"));
+        Map<?, ?> data = (Map<?, ?>) result.get("parsedData");
+        assertEquals("940", data.get("transactionSet"));
+        assertEquals("SHIP-777", data.get("shippingOrderNumber"));
+        assertEquals("Acme Corp", data.get("shipFromName"));
+        assertEquals(1, ((java.util.List<?>) data.get("items")).size());
+        Map<?, ?> item = (Map<?, ?>) ((java.util.List<?>) data.get("items")).get(0);
+        assertEquals("333333333333", item.get("productId"));
+        assertEquals("8", item.get("quantity"));
     }
 
     @Test

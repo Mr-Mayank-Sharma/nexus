@@ -15,6 +15,8 @@ public class EmailOrderTextParser {
         data.put("customerEmail", extractField(body, "(?:Email|E-mail)[:\\s]+([^\\s]+@[^\\s]+)", 1));
         data.put("customerPhone", extractField(body, "(?:Phone|Tel|Telephone)[:\\s]+([\\d\\-\\+\\(\\)\\s]+)", 1));
 
+        data.put("vendorName", extractField(body, "(?:Vendor|Supplier|Sold By|From)[:\\s]+(.+)", 1));
+
         String orderNum = extractField(body, "(?:Order|PO|Purchase Order)\\s*(?:#|No|Number)?[.:\\s]+([A-Za-z0-9\\-]+)", 1);
         data.put("orderNumber", orderNum);
 
@@ -38,7 +40,7 @@ public class EmailOrderTextParser {
 
         if (items.isEmpty()) {
             Pattern tablePattern = Pattern.compile(
-                "(\\d+)\\s+(.+?)\\s+\\$?([\\d,.]+)", Pattern.MULTILINE);
+                "(?m)^(\\d+)\\s+(.+?)\\s+\\$?([\\d,.]+)", Pattern.MULTILINE);
             Matcher tableMatcher = tablePattern.matcher(body);
             while (tableMatcher.find()) {
                 Map<String, Object> item = new LinkedHashMap<>();
@@ -59,6 +61,30 @@ public class EmailOrderTextParser {
 
         String shipping = extractField(body, "(?:Ship Via|Shipping Method|Carrier)[:\\s]+(.+)", 1);
         data.put("shippingMethod", shipping);
+        if (shipping != null) {
+            data.put("carrierName", shipping);
+        }
+
+        String tracking = extractField(body, "(?:Tracking|Track)\\s*(?:Numbers?|#|No|Number)?\\s*[:.\\s]+([A-Za-z0-9]{6,})", 1);
+        if (tracking != null) {
+            data.put("trackingNumber", tracking);
+        }
+        List<String> trackingNumbers = new ArrayList<>();
+        Pattern trackingPattern = Pattern.compile(
+            "(?:Tracking|Track)\\s*(?:Numbers?|#|No|Number)?\\s*[:.\\s]+([A-Za-z0-9]{6,}(?:\\s*,\\s*[A-Za-z0-9]{6,})*)",
+            Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+        Matcher trackingMatcher = trackingPattern.matcher(body);
+        while (trackingMatcher.find()) {
+            String[] parts = trackingMatcher.group(1).split("[,\\s]+");
+            Collections.addAll(trackingNumbers, parts);
+        }
+        data.put("trackingNumbers", trackingNumbers);
+
+        String deliveryDate = extractField(body,
+            "(?:Expected Delivery|Delivery Date|Est. Delivery|Arrival)[:\\s]+([A-Za-z0-9,\\s/\\-]+)", 1);
+        if (deliveryDate != null) {
+            data.put("deliveryDate", deliveryDate);
+        }
 
         return data;
     }

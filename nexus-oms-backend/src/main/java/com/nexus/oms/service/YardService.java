@@ -1,6 +1,7 @@
 package com.nexus.oms.service;
 
 import com.nexus.oms.entity.NxAppointment;
+import com.nexus.oms.entity.NxAsn;
 import com.nexus.oms.entity.NxDockDoor;
 import com.nexus.oms.entity.NxYardLocation;
 import com.nexus.oms.entity.Warehouse;
@@ -274,6 +275,35 @@ public class YardService {
     public NxAppointment requestAppointment(NxAppointment appointment) {
         appointment.setTenantId(TenantContext.getCurrentTenantId());
         appointment.setStatus("REQUESTED");
+        appointment.setAppointmentNumber(generateAppointmentNumber());
+        return appointmentRepository.save(appointment);
+    }
+
+    @Transactional
+    public NxAppointment linkAsnToAppointment(UUID appointmentId, UUID asnId, UUID ediDocumentId) {
+        NxAppointment apt = getAppointment(appointmentId);
+        apt.setAsnId(asnId);
+        if (ediDocumentId != null) {
+            apt.setEdiDocumentId(ediDocumentId);
+        }
+        return appointmentRepository.save(apt);
+    }
+
+    @Transactional
+    public NxAppointment createAppointmentFromAsn(UUID warehouseId, NxAsn asn, UUID ediDocumentId) {
+        NxAppointment appointment = new NxAppointment();
+        appointment.setTenantId(TenantContext.getCurrentTenantId());
+        appointment.setWarehouseId(warehouseId);
+        appointment.setType("INBOUND");
+        appointment.setStatus("REQUESTED");
+        appointment.setCarrierCode(asn.getCarrierCode());
+        appointment.setCarrierName(asn.getSupplierName());
+        appointment.setPoNumbers(asn.getPurchaseOrderNumber());
+        appointment.setLoadCount(1);
+        appointment.setAsnId(asn.getId());
+        if (ediDocumentId != null) {
+            appointment.setEdiDocumentId(ediDocumentId);
+        }
         appointment.setAppointmentNumber(generateAppointmentNumber());
         return appointmentRepository.save(appointment);
     }

@@ -106,10 +106,14 @@ public class EdiAutomationService {
                 doc.setOrderId(order.getId());
             }
 
-            if ("856".equals(docType)) {
-                NxAsn asn = asnService.createAsnFromEdi(tenantId, parsedData, doc.getId());
-                if (asn != null) {
-                    doc.setAsnId(asn.getId());
+            if ("856".equals(docType) && parsedData.containsKey("shipments")) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> shipments = (List<Map<String, Object>>) parsedData.get("shipments");
+                for (Map<String, Object> shipment : shipments) {
+                    NxAsn asn = asnService.createAsnFromEdi(tenantId, shipment, doc.getId());
+                    if (asn != null && doc.getAsnId() == null) {
+                        doc.setAsnId(asn.getId());
+                    }
                 }
             }
 
@@ -183,6 +187,7 @@ public class EdiAutomationService {
             case "850" -> parse850(content);
             case "856" -> parse856(content);
             case "810" -> parse810(content);
+            case "940" -> parse940(content);
             default -> throw new BadRequestException("Unsupported EDI document type: " + docType);
         };
     }
@@ -258,41 +263,78 @@ public class EdiAutomationService {
     }
 
     private Map<String, Object> parse856(String content) {
+        // Bulk carrier EDI: one 856 file may carry several shipments, each
+        // opening with its own BSN. Split on BSN so every shipment becomes its
+        // own ASN payload (single-shipment files behave exactly as before).
+        List<Map<String, Object>> shipments = new ArrayList<>();
+        List<Integer> bsnIndexes = new ArrayList<>();
+        Pattern bsnPattern = Pattern.compile("(^|\\n)(?<seg>BSN\\*[^~]+~)", Pattern.MULTILINE);
+        Matcher bsnMatcher = bsnPattern.matcher(content);
+        int lastEnd = -1;
+        while (bsnMatcher.find()) {
+            int start = bsnMatcher.start();
+            if (lastEnd != -1) {
+                shipments.add(parseShipment856(content.substring(lastEnd, start)));
+            }
+            lastEnd = start;
+        }
+        if (lastEnd != -1) {
+            shipments.add(parseShipment856(content.substring(lastEnd)));
+        }
+        if (shipments.isEmpty()) {
+            return new LinkedHashMap<>();
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("shipments", shipments);
+        result.put("shipmentCount", shipments.size());
+        result.put("bulk", shipments.size() > 1);
+        result.putAll(shipments.get(0));
+        return result;
+    }
+
+    private Map<String, Object> parseShipment856(String segmentContent) {
         Map<String, Object> result = new LinkedHashMap<>();
         List<Map<String, Object>> packages = new ArrayList<>();
 
-        extractSegment(content, "BSN", data -> {
+        extractSegment(segmentContent, "BSN", data -> {
             result.put("transactionSet", "856");
             result.put("shipNoticeNumber", safeGet(data, 2));
             result.put("shipDate", safeGet(data, 3));
             result.put("shipTime", safeGet(data, 4));
         });
 
-        extractSegment(content, "REF", data -> {
+        extractSegment(segmentContent, "REF", data -> {
             if ("PO".equals(safeGet(data, 1))) {
                 result.put("purchaseOrderNumber", safeGet(data, 2));
             }
         });
 
-        extractSegment(content, "TD1", data -> {
+        extractSegment(segmentContent, "TD1", data -> {
             result.put("packageCount", safeGet(data, 1));
             result.put("packageType", safeGet(data, 2));
         });
 
-        extractSegment(content, "TD5", data -> {
+        extractSegment(segmentContent, "TD5", data -> {
             result.put("carrierCode", safeGet(data, 2));
             result.put("carrierName", safeGet(data, 3));
             result.put("serviceLevel", safeGet(data, 4));
         });
 
-        extractSegment(content, "TD3", data -> {
+        extractSegment(segmentContent, "N1", data -> {
+            if ("SU".equals(safeGet(data, 1)) || "SF".equals(safeGet(data, 1))) {
+                result.putIfAbsent("supplierName", safeGet(data, 2));
+            }
+        });
+
+        extractSegment(segmentContent, "TD3", data -> {
             result.put("trackingNumber", safeGet(data, 2));
             result.put("packageId", safeGet(data, 3));
         });
 
         // Extract HL segments with MAN for serial numbers
         Pattern hlPattern = Pattern.compile("HL\\*([^~\\n]+)~?\\n?MAN\\*([^~\\n]+)~?", Pattern.MULTILINE);
-        Matcher hlMatcher = hlPattern.matcher(content);
+        Matcher hlMatcher = hlPattern.matcher(segmentContent);
         while (hlMatcher.find()) {
             Map<String, Object> pkg = new LinkedHashMap<>();
             pkg.put("hlData", hlMatcher.group(1));
@@ -301,14 +343,14 @@ public class EdiAutomationService {
         }
 
         // Extract PRF (purchase order reference)
-        extractSegment(content, "PRF", data -> {
+        extractSegment(segmentContent, "PRF", data -> {
             result.putIfAbsent("purchaseOrderNumber", safeGet(data, 1));
         });
 
         // Extract LIN + SN1 segments as line items (product id + shipped qty)
         List<Map<String, Object>> items = new ArrayList<>();
         Pattern linPattern = Pattern.compile("LIN\\*([^~\\n]+)~?", Pattern.MULTILINE);
-        Matcher linMatcher = linPattern.matcher(content);
+        Matcher linMatcher = linPattern.matcher(segmentContent);
         while (linMatcher.find()) {
             String[] fields = linMatcher.group(1).split("\\*");
             Map<String, Object> item = new LinkedHashMap<>();
@@ -319,7 +361,7 @@ public class EdiAutomationService {
             items.add(item);
         }
         Pattern sn1Pattern = Pattern.compile("SN1\\*([^~\\n]+)~?", Pattern.MULTILINE);
-        Matcher sn1Matcher = sn1Pattern.matcher(content);
+        Matcher sn1Matcher = sn1Pattern.matcher(segmentContent);
         int idx = 0;
         while (sn1Matcher.find()) {
             String[] fields = sn1Matcher.group(1).split("\\*");
@@ -334,6 +376,63 @@ public class EdiAutomationService {
         result.put("items", items);
 
         result.put("packages", packages);
+        return result;
+    }
+
+    /**
+     * X12 940 — Warehouse Shipping Order. Parses the header (order number, ship
+     * date, carrier) and the LIN+QTY line items so the warehouse has a concrete
+     * outbound instruction set from the carrier/vendor without manual entry.
+     */
+    private Map<String, Object> parse940(String content) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        List<Map<String, Object>> items = new ArrayList<>();
+
+        extractSegment(content, "W05", data -> {
+            result.put("transactionSet", "940");
+            result.put("shippingOrderNumber", safeGet(data, 1));
+            result.put("shipDate", safeGet(data, 4));
+        });
+
+        extractSegment(content, "N1", data -> {
+            if ("SF".equals(safeGet(data, 1))) {
+                result.put("shipFromName", safeGet(data, 2));
+            }
+            if ("ST".equals(safeGet(data, 1))) {
+                result.put("shipToName", safeGet(data, 2));
+            }
+        });
+
+        extractSegment(content, "TD5", data -> {
+            result.put("carrierCode", safeGet(data, 2));
+            result.put("carrierName", safeGet(data, 3));
+        });
+
+        Pattern linPattern = Pattern.compile("LIN\\*([^~\\n]+)~?", Pattern.MULTILINE);
+        Matcher linMatcher = linPattern.matcher(content);
+        while (linMatcher.find()) {
+            String[] fields = linMatcher.group(1).split("\\*");
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("lineNumber", safeGet(fields, 0));
+            if (fields.length > 2) {
+                item.put("productId", safeGet(fields, 2));
+            }
+            items.add(item);
+        }
+        Pattern qtyPattern = Pattern.compile("QTY\\*([^~\\n]+)~?", Pattern.MULTILINE);
+        Matcher qtyMatcher = qtyPattern.matcher(content);
+        int idx = 0;
+        while (qtyMatcher.find()) {
+            String[] fields = qtyMatcher.group(1).split("\\*");
+            Map<String, Object> item = idx < items.size() ? items.get(idx) : new LinkedHashMap<>();
+            item.putIfAbsent("lineNumber", safeGet(fields, 0));
+            item.put("quantity", safeGet(fields, 1));
+            if (idx >= items.size()) {
+                items.add(item);
+            }
+            idx++;
+        }
+        result.put("items", items);
         return result;
     }
 
@@ -424,6 +523,13 @@ public class EdiAutomationService {
                     errors.add("Missing invoice number (BIG02)");
                 if (data.get("totalInvoiceAmount") == null)
                     errors.add("Missing total amount (TDS01)");
+            }
+            case "940" -> {
+                if (data.get("shippingOrderNumber") == null)
+                    errors.add("Missing shipping order number (W0501)");
+                List<?> items = (List<?>) data.getOrDefault("items", Collections.emptyList());
+                if (items.isEmpty())
+                    errors.add("No line items found (LIN segments)");
             }
         }
         return errors;

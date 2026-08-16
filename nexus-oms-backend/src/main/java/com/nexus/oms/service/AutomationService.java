@@ -244,7 +244,16 @@ public class AutomationService {
     protected void dispatchCommand(NxAutomationCommand command, NxAutomationSystem system) {
         String endpoint = system.getEndpointUrl();
         if (endpoint == null || endpoint.isBlank() || !Boolean.TRUE.equals(system.getIsActive())) {
-            simulateAck(command, system, "no endpoint configured; result simulated");
+            if (Boolean.TRUE.equals(system.getIsActive())) {
+                command.setStatus("SENT");
+                command.setSentAt(LocalDateTime.now());
+                command = commandRepository.save(command);
+
+                addSystemLog(system.getId(), command.getId(), "INFO", "COMMAND_DISPATCHED",
+                        "Command " + command.getCommandType() + " handed off to emulator loop for " + system.getSystemName());
+            } else {
+                simulateAck(command, system, "system inactive; result simulated");
+            }
             return;
         }
 

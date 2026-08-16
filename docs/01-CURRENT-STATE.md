@@ -13,7 +13,7 @@ What's still to do:
 - **Furniture that wobbles** (a few features are "simulated" — they look real but aren't wired to real providers yet).
 - **No real ingredients for the kitchen** (the AI hasn't been given real data to learn from yet).
 
-The **skeleton is complete, the locks work, and the practice exams pass (617/617)**. The job now is **trust**: giving the AI real food to cook with and wiring the last simulated doors to the real world.
+The **skeleton is complete, the locks work, and the practice exams pass (655/655)**. The job now is **trust**: giving the AI real food to cook with and wiring the last simulated doors to the real world.
 
 That is exactly where Nexus stands: **broad, real surface + a short, honest list of gaps.**
 
@@ -24,12 +24,12 @@ That is exactly where Nexus stands: **broad, real surface + a short, honest list
 | Dimension | State |
 |---|---|
 | **Codebase** | Monorepo: `nexus-oms-backend` (Java/Spring Boot) + `nexus-oms-frontend` (React/Vite) |
-| **Git history** | 72 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
-| **Migrations** | 57 Flyway migrations (`V1`…`V57`) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound |
+| **Git history** | 76 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
+| **Migrations** | 58 Flyway migrations (`V1`…`V58`) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
 | **Backend surface** | **~136 JPA entities**, **66 controllers**, 50+ services, 14 RBAC roles |
 | **Frontend surface** | **89 pages**, hash-routed, role/resource-gated, React Query + WebSockets |
 | **Infra (docker-compose)** | Postgres, Redis, Kafka, backend, frontend, **ai-ops**, **ai-intel**, Prometheus, Grafana |
-| **Testing** | Backend: **617 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest 396 passing (4 pre-existing failures in `newBackendApi.test.ts`/`AuthContext.test.tsx`); Playwright smoke-tested on live dev stack |
+| **Testing** | Backend: **655 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest 400 passing (4 pre-existing failures in `newBackendApi.test.ts`/`AuthContext.test.tsx`); Playwright smoke-tested on live dev stack |
 
 > 🧒 **Kid translation of the table:** "Entities" are the *things* we keep track of (orders, boxes, warehouses, cars). "Controllers" are the *doors* people knock on. "Pages" are the *rooms* you see on screen. We built ~136 things, ~66 doors, and ~89 rooms — and the practice exams all pass.
 
@@ -119,7 +119,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 - **`AutomationService`** — removed random ACK delays and fabricated execution times; results are real `Duration` elapsed, and simulated paths are **explicitly flagged** `"simulated":true`.
 - **`RestProtocolAdapter`** — REST calls now enforce connect/read timeouts so an unreachable partner fails in ~3s instead of hanging.
 - **`EdiAutomationService`** — corrected X12 field mapping (off-by-one in BEG/N1/BSN/TD3/PO1/IT1 indexing) and replaced a catastrophic-backtracking regex that could hang on malformed input; 850 now creates real orders end-to-end; **856 now extracts LIN/SN1 line items and auto-creates an inbound ASN** (linked via `nx_edi_documents.asn_id`).
-- **Backend test suite** — expanded from 501 → **617 green tests** with new suites for ATP, yard/dock, procurement (incl. over-receipt tolerance + putaway), invoicing (incl. AR aging), EDI (incl. dry-run/upload + 856→ASN), BOPIS pickup lifecycle, billing, rate cards, waves, task-queue, DOM order routing, box recommendation, kitting, AI demand forecast, integration outbound and **ASN inbound**.
+- **Backend test suite** — expanded from 501 → **655 green tests** with new suites for ATP, yard/dock, procurement (incl. over-receipt tolerance + putaway), invoicing (incl. AR aging), EDI (incl. dry-run/upload + 856→ASN + bulk 940 shipping schedules), BOPIS pickup lifecycle, billing, rate cards, waves, task-queue, DOM order routing, box recommendation, kitting, AI demand forecast, integration outbound, **ASN inbound**, **automation emulator + slotting feedback**, **RF task picker**, and **AI training orchestration**.
 
 > 🎯 **Real life example of why this matters:**
 > Before: an AI "safety score" for an order was partly decided by **rolling dice** (`Random`). So the *same* order could score 80% one second and 55% the next.
@@ -135,7 +135,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 - **Resilience**: Resilience4j circuit breakers, Kafka event bus for async integration, Redis caching, integration timeouts.
 - **API docs**: springdoc OpenAPI (Swagger UI) generated from controllers.
 - **Security posture**: JWT (jjwt), resource→action authorization filter, signed import tokens, credential vault.
-- **Testing**: 617 backend unit tests green; frontend vitest 396 passing (4 pre-existing failures in `newBackendApi.test.ts` / `AuthContext.test.tsx`); Playwright smoke suite on the live dev stack (rate cards, billing statements, client portal) with 0 console errors.
+- **Testing**: 655 backend unit tests green; frontend vitest 400 passing (4 pre-existing failures in `newBackendApi.test.ts` / `AuthContext.test.tsx`); Playwright smoke suite on the live dev stack (rate cards, billing statements, client portal) with 0 console errors.
 
 > 🧒 **Kid translation:** We have **safety rails**: a seatbelt (circuit breakers so one broken part doesn't crash everything), a speedometer (Prometheus/Grafana so we see what's happening), and a map book (OpenAPI docs so developers know every door).
 
@@ -158,7 +158,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 | Trustworthy AI platform | Model registry, experiments, drift, fallbacks, audit; demand forecast (Holt + WAPE) shipped | Real training data → **no production model yet** (G3) |
 | One-touch integrations | 15+ connectors + EDI 850/856/810 + iPaaS-lite + outbound retry/idempotency/DLQ + **856 → inbound ASN** | Depth (auth refresh, carrier EDI bulk) |
 | 3PL-grade billing | Rate cards + statements + read-only client portal; AR aging report | Self-serve portal, credit/payment workflows (G9) |
-| GA quality | 57 migrations, 66+ controllers, 89 pages, 617 backend tests green | Stub→real provider wiring (G4), real ML data (G3) |
+| GA quality | 58 migrations, 66+ controllers, 89 pages, 655 backend tests green | Real provider wiring (G4), curated ML dataset + deployed model (G3) |
 
 **Bottom line:** the *architecture* and *surface* of the dream product exist, the locks work (RBAC gates), and the practice exams all pass. The remaining distance is **trust**: real data for ML, real provider wiring, and closed-loop automation.
 

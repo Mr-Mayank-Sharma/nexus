@@ -22,6 +22,14 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
 
     List<NxOrder> findByCustomerId(UUID customerId);
 
+    List<NxOrder> findByTenantIdAndChannel(UUID tenantId, String channel);
+
+    @Query("SELECT o FROM NxOrder o WHERE o.tenantId = :tenantId AND LOWER(o.channel) = LOWER(:channel)")
+    List<NxOrder> findByTenantIdAndChannelIgnoreCase(@Param("tenantId") UUID tenantId, @Param("channel") String channel);
+
+    @Query("SELECT COUNT(o) FROM NxOrder o WHERE o.tenantId = :tenantId AND LOWER(o.channel) = LOWER(:channel)")
+    long countByTenantIdAndChannelIgnoreCase(@Param("tenantId") UUID tenantId, @Param("channel") String channel);
+
     long countByTenantIdAndStatus(UUID tenantId, String status);
 
     long countByTenantIdAndStatusNot(UUID tenantId, String status);

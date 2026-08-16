@@ -113,6 +113,8 @@ public class AsnService {
                         ? String.valueOf(parsed856.get("purchaseOrderNumber")) : null)
                 .carrierCode(parsed856.get("carrierCode") != null
                         ? String.valueOf(parsed856.get("carrierCode")) : null)
+                .supplierName(parsed856.get("supplierName") != null
+                        ? String.valueOf(parsed856.get("supplierName")) : null)
                 .trackingNumber(parsed856.get("trackingNumber") != null
                         ? String.valueOf(parsed856.get("trackingNumber")) : null)
                 .ediDocumentId(ediDocumentId)

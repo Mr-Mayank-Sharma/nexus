@@ -38,6 +38,7 @@ public class AiPlatformController {
     private final AiArtifactService artifactService;
     private final AiCalibrationService calibrationService;
     private final AiOnnxRuntimeService onnxRuntimeService;
+    private final AiTrainingOrchestrationService trainingOrchestrationService;
 
     public AiPlatformController(AiGatewayService gatewayService,
                                  AiModelRegistryService modelRegistryService,
@@ -51,7 +52,8 @@ public class AiPlatformController {
                                  AiTrainingDataService trainingDataService,
                                  AiArtifactService artifactService,
                                  AiCalibrationService calibrationService,
-                                 AiOnnxRuntimeService onnxRuntimeService) {
+                                 AiOnnxRuntimeService onnxRuntimeService,
+                                 AiTrainingOrchestrationService trainingOrchestrationService) {
         this.gatewayService = gatewayService;
         this.modelRegistryService = modelRegistryService;
         this.featureStoreService = featureStoreService;
@@ -65,6 +67,7 @@ public class AiPlatformController {
         this.artifactService = artifactService;
         this.calibrationService = calibrationService;
         this.onnxRuntimeService = onnxRuntimeService;
+        this.trainingOrchestrationService = trainingOrchestrationService;
     }
 
     private UUID tenant() { return TenantContext.getCurrentTenantId(); }
@@ -186,6 +189,11 @@ public class AiPlatformController {
     @PostMapping("/training/jobs/{jobId}/start")
     public ResponseEntity<ApiResponse<AiTrainingJob>> startTrainingJob(@PathVariable UUID jobId) {
         return ResponseEntity.ok(ApiResponse.success(trainingPipelineService.startJob(jobId)));
+    }
+
+    @PostMapping("/training/jobs/{jobId}/run")
+    public ResponseEntity<ApiResponse<AiTrainingJob>> runTrainingJob(@PathVariable UUID jobId) {
+        return ResponseEntity.ok(ApiResponse.success(trainingOrchestrationService.runJob(jobId)));
     }
 
     @PostMapping("/training/jobs/{jobId}/complete")

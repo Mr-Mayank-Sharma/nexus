@@ -97,7 +97,7 @@ Flyway runs automatically on startup. Migrations are in:
 nexus-oms-backend/src/main/resources/db/migration/
 ```
 
-Current version: **V57** (check `flyway_schema_history`)
+Current version: **V58** (check `flyway_schema_history`) — V58 adds the ASN↔dock-appointment link (`appointment_id` on inbound ASNs).
 
 ### Backup
 

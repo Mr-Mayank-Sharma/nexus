@@ -82,7 +82,9 @@ public class AiTrainingPipelineService {
         job.setCompletedAt(LocalDateTime.now());
 
         boolean hasRealMetrics = hasMetric(results, "accuracy") || hasMetric(results, "precision")
-                || hasMetric(results, "recall") || hasMetric(results, "f1Score") || hasMetric(results, "loss");
+                || hasMetric(results, "recall") || hasMetric(results, "f1Score") || hasMetric(results, "loss")
+                || hasMetric(results, "mae") || hasMetric(results, "rmse")
+                || hasMetric(results, "wape") || hasMetric(results, "pinball");
 
         if (hasRealMetrics) {
             job.setAccuracy(toDecimal(results.get("accuracy")));
@@ -125,6 +127,17 @@ public class AiTrainingPipelineService {
                         .trainingJobId(jobId)
                         .createdBy(TenantContext.getCurrentUsername())
                         .build();
+
+                if (hasMetric(results, "mae") || hasMetric(results, "rmse")
+                        || hasMetric(results, "wape") || hasMetric(results, "pinball")) {
+                    Map<String, Object> forecast = new LinkedHashMap<>();
+                    forecast.put("mae", results.get("mae"));
+                    forecast.put("rmse", results.get("rmse"));
+                    forecast.put("wape", results.get("wape"));
+                    forecast.put("pinball", results.get("pinball"));
+                    version.setMetrics(toJson(forecast));
+                }
+
                 versionRepository.save(version);
 
                 model.setCurrentVersion(version.getVersion());

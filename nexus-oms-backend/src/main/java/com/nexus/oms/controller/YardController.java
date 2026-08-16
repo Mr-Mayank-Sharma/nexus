@@ -2,8 +2,10 @@ package com.nexus.oms.controller;
 
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.entity.NxAppointment;
+import com.nexus.oms.entity.NxAsn;
 import com.nexus.oms.entity.NxDockDoor;
 import com.nexus.oms.entity.NxYardLocation;
+import com.nexus.oms.service.AsnService;
 import com.nexus.oms.service.YardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,9 +24,11 @@ import java.util.UUID;
 public class YardController {
 
     private final YardService yardService;
+    private final AsnService asnService;
 
-    public YardController(YardService yardService) {
+    public YardController(YardService yardService, AsnService asnService) {
         this.yardService = yardService;
+        this.asnService = asnService;
     }
 
     // ---- Dock Door Endpoints ----
@@ -156,6 +160,30 @@ public class YardController {
             @RequestBody NxAppointment appointment) {
         return ResponseEntity.ok(ApiResponse.success(
                 yardService.requestAppointment(appointment), "Appointment requested"));
+    }
+
+    @Operation(summary = "Link an inbound ASN to a dock appointment")
+    @PostMapping("/appointments/{id}/asn")
+    public ResponseEntity<ApiResponse<NxAppointment>> linkAsn(
+            @PathVariable UUID id,
+            @RequestParam UUID asnId,
+            @RequestParam(required = false) UUID ediDocumentId) {
+        return ResponseEntity.ok(ApiResponse.success(
+                yardService.linkAsnToAppointment(id, asnId, ediDocumentId),
+                "ASN linked to appointment"));
+    }
+
+    @Operation(summary = "Create an inbound dock appointment from an ASN")
+    @PostMapping("/appointments/from-asn")
+    public ResponseEntity<ApiResponse<NxAppointment>> createFromAsn(
+            @RequestParam String warehouseIdOrCode,
+            @RequestParam UUID asnId,
+            @RequestParam(required = false) UUID ediDocumentId) {
+        UUID warehouseId = yardService.resolveWarehouseId(warehouseIdOrCode);
+        NxAsn asn = asnService.getAsn(asnId);
+        return ResponseEntity.ok(ApiResponse.success(
+                yardService.createAppointmentFromAsn(warehouseId, asn, ediDocumentId),
+                "Dock appointment created from ASN"));
     }
 
     @Operation(summary = "Confirm an appointment and auto-assign dock and yard")
