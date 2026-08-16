@@ -28,6 +28,7 @@ class EdiAutomationServiceTest {
     @Mock private EdiDocumentRepository ediDocumentRepository;
     @Mock private EdiPartnerRepository ediPartnerRepository;
     @Mock private OrderRepository orderRepository;
+    @Mock private AsnService asnService;
 
     private EdiAutomationService service;
     private UUID tenantId;
@@ -50,7 +51,11 @@ class EdiAutomationServiceTest {
             "TD1*2*PLT~\n" +
             "TD5*B*FDX*FedEx*PRIORITY~\n" +
             "TD3*BOX*TRACK123*PACK1~\n" +
-            "SE*5*0001~";
+            "LIN*1*UP*123456789012~\n" +
+            "SN1*1*25*EA~\n" +
+            "LIN*2*UP*098765432109~\n" +
+            "SN1*2*10*EA~\n" +
+            "SE*10*0001~";
 
     private static final String EDI_810 =
             "ST*810*0001~\n" +
@@ -61,7 +66,7 @@ class EdiAutomationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EdiAutomationService(ediDocumentRepository, ediPartnerRepository, orderRepository);
+        service = new EdiAutomationService(ediDocumentRepository, ediPartnerRepository, orderRepository, asnService);
         tenantId = UUID.randomUUID();
         TenantContext.setCurrentTenantId(tenantId);
     }
@@ -97,6 +102,39 @@ class EdiAutomationServiceTest {
         assertEquals("TRACK123", data.get("trackingNumber"));
         assertEquals("FedEx", data.get("carrierName"));
         assertEquals(1, ((java.util.List<?>) data.get("packages")).size());
+        java.util.List<?> items = (java.util.List<?>) data.get("items");
+        assertEquals(2, items.size());
+    }
+
+    @Test
+    void dryRun_856_extractsLinSn1LineItems() {
+        Map<String, Object> result = service.dryRun(EDI_856, "856");
+
+        Map<?, ?> data = (Map<?, ?>) result.get("parsedData");
+        java.util.List<Map<?, ?>> items = (java.util.List<Map<?, ?>>) data.get("items");
+        assertEquals("123456789012", items.get(0).get("productId"));
+        assertEquals("25", items.get(0).get("quantity"));
+        assertEquals("098765432109", items.get(1).get("productId"));
+        assertEquals("10", items.get(1).get("quantity"));
+    }
+
+    @Test
+    void uploadAndParse_856_createsAsnAndLinksDocument() {
+        when(ediDocumentRepository.save(any())).thenAnswer(inv -> {
+            NxEdiDocument d = inv.getArgument(0);
+            if (d.getId() == null) d.setId(UUID.randomUUID());
+            return d;
+        });
+        com.nexus.oms.entity.NxAsn created = new com.nexus.oms.entity.NxAsn();
+        created.setId(UUID.randomUUID());
+        created.setAsnNumber("SN-987");
+        when(asnService.createAsnFromEdi(eq(tenantId), any(), any())).thenReturn(created);
+
+        NxEdiDocument doc = service.uploadAndParse("test.856", EDI_856, "856");
+
+        assertEquals("PARSED", doc.getParsedStatus());
+        assertEquals(created.getId(), doc.getAsnId());
+        verify(asnService).createAsnFromEdi(eq(tenantId), any(), eq(doc.getId()));
     }
 
     @Test

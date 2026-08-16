@@ -97,7 +97,7 @@ Flyway runs automatically on startup. Migrations are in:
 nexus-oms-backend/src/main/resources/db/migration/
 ```
 
-Current version: **V56** (check `flyway_schema_history`)
+Current version: **V57** (check `flyway_schema_history`)
 
 ### Backup
 

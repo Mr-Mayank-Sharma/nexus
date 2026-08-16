@@ -44,6 +44,9 @@ public class NxEdiDocument {
     @Column(name = "order_id")
     private UUID orderId;
 
+    @Column(name = "asn_id")
+    private UUID asnId;
+
     @Column(name = "shipment_id")
     private UUID shipmentId;
 

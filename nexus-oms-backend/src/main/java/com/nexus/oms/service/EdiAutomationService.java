@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.entity.NxEdiDocument;
 import com.nexus.oms.entity.NxEdiPartner;
+import com.nexus.oms.entity.NxAsn;
 import com.nexus.oms.entity.NxOrder;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.exception.ResourceNotFoundException;
@@ -34,13 +35,16 @@ public class EdiAutomationService {
     private final EdiDocumentRepository ediDocumentRepository;
     private final EdiPartnerRepository ediPartnerRepository;
     private final OrderRepository orderRepository;
+    private final AsnService asnService;
 
     public EdiAutomationService(EdiDocumentRepository ediDocumentRepository,
                                  EdiPartnerRepository ediPartnerRepository,
-                                 OrderRepository orderRepository) {
+                                 OrderRepository orderRepository,
+                                 AsnService asnService) {
         this.ediDocumentRepository = ediDocumentRepository;
         this.ediPartnerRepository = ediPartnerRepository;
         this.orderRepository = orderRepository;
+        this.asnService = asnService;
     }
 
     public Page<NxEdiDocument> getDocuments(String docType, String status, Pageable pageable) {
@@ -100,6 +104,13 @@ public class EdiAutomationService {
                 Map<String, Object> orderData = (Map<String, Object>) parsedData.get("orderData");
                 NxOrder order = createOrderFromEdi(orderData, tenantId, doc.getId());
                 doc.setOrderId(order.getId());
+            }
+
+            if ("856".equals(docType)) {
+                NxAsn asn = asnService.createAsnFromEdi(tenantId, parsedData, doc.getId());
+                if (asn != null) {
+                    doc.setAsnId(asn.getId());
+                }
             }
 
             doc.setProcessedAt(LocalDateTime.now());
@@ -293,6 +304,34 @@ public class EdiAutomationService {
         extractSegment(content, "PRF", data -> {
             result.putIfAbsent("purchaseOrderNumber", safeGet(data, 1));
         });
+
+        // Extract LIN + SN1 segments as line items (product id + shipped qty)
+        List<Map<String, Object>> items = new ArrayList<>();
+        Pattern linPattern = Pattern.compile("LIN\\*([^~\\n]+)~?", Pattern.MULTILINE);
+        Matcher linMatcher = linPattern.matcher(content);
+        while (linMatcher.find()) {
+            String[] fields = linMatcher.group(1).split("\\*");
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("lineNumber", safeGet(fields, 0));
+            if (fields.length > 2) {
+                item.put("productId", safeGet(fields, 2));
+            }
+            items.add(item);
+        }
+        Pattern sn1Pattern = Pattern.compile("SN1\\*([^~\\n]+)~?", Pattern.MULTILINE);
+        Matcher sn1Matcher = sn1Pattern.matcher(content);
+        int idx = 0;
+        while (sn1Matcher.find()) {
+            String[] fields = sn1Matcher.group(1).split("\\*");
+            Map<String, Object> item = idx < items.size() ? items.get(idx) : new LinkedHashMap<>();
+            item.putIfAbsent("lineNumber", safeGet(fields, 0));
+            item.put("quantity", safeGet(fields, 1));
+            if (idx >= items.size()) {
+                items.add(item);
+            }
+            idx++;
+        }
+        result.put("items", items);
 
         result.put("packages", packages);
         return result;
