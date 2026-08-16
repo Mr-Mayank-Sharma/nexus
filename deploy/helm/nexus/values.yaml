@@ -1,0 +1,118 @@
+# NexusShip OMS — Helm values
+# Mirrors docker-compose.prod.yml. Secrets come from Kubernetes Secrets (not these values).
+replicaCount: 2
+
+image:
+  backend:
+    repository: nexus/oms-backend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  frontend:
+    repository: nexus/oms-frontend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+backend:
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: "1"
+    requests:
+      memory: 512Mi
+      cpu: 250m
+  service:
+    type: ClusterIP
+    port: 8080
+
+frontend:
+  service:
+    type: ClusterIP
+    port: 80
+
+postgres:
+  enabled: true
+  image: pgvector/pgvector:pg16
+  storage: 20Gi
+  storageClass: ""
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  storage: 5Gi
+  storageClass: ""
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+
+kafka:
+  enabled: true
+  image: apache/kafka:3.7.2
+  storage: 20Gi
+  storageClass: ""
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: oms.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - oms.example.com
+      secretName: nexus-tls
+
+env:
+  springProfilesActive: prod
+  corsOrigins: "https://oms.example.com"
+  frontendUrl: "https://oms.example.com"
+  dbPoolMax: "30"
+  dbPoolMin: "10"
+  aiEnabled: "false"
+
+secrets:
+  # Set to true to let the chart create the Secret from the values below.
+  # Recommended for production: false, and pre-create the Secret externally.
+  create: false
+  existingSecret: nexus-secrets
+  # Required keys in the referenced Secret:
+  #   db-password, redis-password, jwt-secret, openai-api-key
+  dbPassword: ""
+  redisPassword: ""
+  jwtSecret: ""
+
+backup:
+  enabled: false
+  schedule: "0 2 * * *"
+  retention: 14
+  # PVC claimName to persist backups across Jobs (e.g. a pre-created PVC).
+  # If empty, backups go to emptyDir (non-persistent — not recommended).
+  volumeClaim: ""
+
+podAnnotations: {}
+podLabels: {}
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - nexus-backend
+          topologyKey: kubernetes.io/hostname

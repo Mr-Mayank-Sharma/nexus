@@ -1,0 +1,6 @@
+apiVersion: v2
+name: nexus
+description: NexusShip OMS — Helm chart for Kubernetes deployment
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

@@ -35,6 +35,14 @@ public class ParkedOrderService {
             throw new BadRequestException("Order is already parked");
         }
 
+        parkedOrder.setStatus("PARKED");
+        if (parkedOrder.getParkedAt() == null) {
+            parkedOrder.setParkedAt(LocalDateTime.now());
+        }
+        if (parkedOrder.getPriority() == null) {
+            parkedOrder.setPriority(10);
+        }
+
         parkedOrder = parkedOrderRepository.save(parkedOrder);
         log.info("Parked order {} with reason {}", parkedOrder.getOrderNumber(), parkedOrder.getReason());
         return parkedOrder;

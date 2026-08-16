@@ -274,4 +274,84 @@ class EdiAutomationServiceTest {
         assertNotNull(doc.getErrorMessage());
         verify(orderRepository, never()).save(any());
     }
+
+    @Test
+    void generate997Ack_echoesControlNumbersAndBuildsX12() {
+        NxEdiDocument inbound = NxEdiDocument.builder()
+                .id(UUID.randomUUID())
+                .tenantId(tenantId)
+                .docType("850")
+                .filename("po.txt")
+                .rawContent(EDI_850)
+                .parsedStatus("PARSED")
+                .interchangeControlNumber("000000123")
+                .groupControlNumber("1")
+                .controlNumber("0001")
+                .partnerId("PARTNER")
+                .partnerName("Acme Corp")
+                .build();
+        when(ediDocumentRepository.findById(inbound.getId())).thenReturn(java.util.Optional.of(inbound));
+        when(ediDocumentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        NxEdiDocument ack = service.generate997Ack(inbound.getId(), true);
+
+        assertEquals("997", ack.getDocType());
+        assertTrue(ack.getRawContent().contains("AK1*850*1"));
+        assertTrue(ack.getRawContent().contains("AK2*850*0001"));
+        assertTrue(ack.getRawContent().contains("AK9*A"));
+        assertTrue(ack.getRawContent().contains("ST*997*0001"));
+        assertTrue(ack.getRawContent().contains("IEA*1*000000997"));
+    }
+
+    @Test
+    void generate997Ack_rejectsAcknowledgingAnAck() {
+        NxEdiDocument ack = NxEdiDocument.builder()
+                .id(UUID.randomUUID())
+                .tenantId(tenantId)
+                .docType("997")
+                .filename("ack.txt")
+                .rawContent("ST*997*0001~")
+                .parsedStatus("PARSED")
+                .build();
+        when(ediDocumentRepository.findById(ack.getId())).thenReturn(java.util.Optional.of(ack));
+
+        assertThrows(BadRequestException.class, () -> service.generate997Ack(ack.getId(), true));
+    }
+
+    @Test
+    void generate855Ack_echoesPoNumberAndLineAcks() {
+        NxOrder order = NxOrder.builder()
+                .id(UUID.randomUUID())
+                .tenantId(tenantId)
+                .channel("EDI")
+                .channelOrderId("PO-12345")
+                .status("PENDING")
+                .build();
+        when(orderRepository.findById(order.getId())).thenReturn(java.util.Optional.of(order));
+        when(ediDocumentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        java.util.List<Map<String, Object>> lineAcks = java.util.List.of(
+                Map.of("status", "AC", "quantity", "10", "unitPrice", "12.50"),
+                Map.of("status", "BP", "quantity", "2", "unitPrice", "8.00")
+        );
+
+        NxEdiDocument ack = service.generate855Ack(order.getId(), "PO-12345", lineAcks);
+
+        assertEquals("855", ack.getDocType());
+        assertEquals(order.getId(), ack.getOrderId());
+        assertTrue(ack.getRawContent().contains("BAK*00*AC*PO-12345"));
+        assertTrue(ack.getRawContent().contains("ACK*AC*10"));
+        assertTrue(ack.getRawContent().contains("ACK*BP*2"));
+        assertTrue(ack.getRawContent().contains("ST*855*0001"));
+        assertTrue(ack.getRawContent().contains("IEA*1*000000855"));
+    }
+
+    @Test
+    void generate855Ack_throwsWhenOrderMissing() {
+        UUID missing = UUID.randomUUID();
+        when(orderRepository.findById(missing)).thenReturn(java.util.Optional.empty());
+
+        assertThrows(com.nexus.oms.exception.ResourceNotFoundException.class,
+                () -> service.generate855Ack(missing, "PO-999", null));
+    }
 }

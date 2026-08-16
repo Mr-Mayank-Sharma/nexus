@@ -1,0 +1,26 @@
+Thank you for installing {{ .Chart.Name }} {{ .Chart.Version }}.
+
+NexusShip OMS is deployed. Get started:
+
+1. Export your secrets (if the chart did not create them):
+   kubectl create secret generic nexus-secrets \
+     --from-literal=db-password=CHANGE_ME \
+     --from-literal=redis-password=CHANGE_ME \
+     --from-literal=jwt-secret=CHANGE_ME
+
+2. Wait for rollout:
+   kubectl rollout status deploy/{{ include "nexus.fullname" . }}-backend
+   kubectl rollout status deploy/{{ include "nexus.fullname" . }}-frontend
+
+3. Verify health:
+   kubectl get pods
+   kubectl port-forward svc/{{ include "nexus.fullname" . }}-backend 8080:8080
+   curl http://localhost:8080/api/v1/actuator/health
+
+4. Access the UI via the ingress host: {{- if .Values.ingress.enabled }}
+   https://{{ (first .Values.ingress.hosts).host }}
+   {{- else }}
+   kubectl port-forward svc/{{ include "nexus.fullname" . }}-frontend 8080:80
+   {{- end }}
+
+For backup/recovery procedures, see docs/DEPLOYMENT.md §4 (Database) and §12 (Kubernetes).

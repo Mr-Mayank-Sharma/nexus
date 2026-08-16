@@ -37,6 +37,8 @@ class ReturnServiceTest {
     private OrderRepository orderRepository;
     @Mock
     private CustomerRepository customerRepository;
+    @Mock
+    private InventoryService inventoryService;
 
     private ReturnService returnService;
     private UUID tenantId;
@@ -47,7 +49,7 @@ class ReturnServiceTest {
 
     @BeforeEach
     void setUp() {
-        returnService = new ReturnService(returnRepository, returnItemRepository, orderRepository, customerRepository);
+        returnService = new ReturnService(returnRepository, returnItemRepository, orderRepository, customerRepository, inventoryService);
         tenantId = UUID.randomUUID();
         returnId = UUID.randomUUID();
         customerId = UUID.randomUUID();
@@ -294,5 +296,100 @@ class ReturnServiceTest {
 
         assertThrows(ResourceNotFoundException.class, () -> returnService.getReturn(UUID.randomUUID()));
         assertThrows(ResourceNotFoundException.class, () -> returnService.approveReturn(UUID.randomUUID(), UUID.randomUUID()));
+    }
+
+    @Test
+    void applyDisposition_restockIncrementsInventoryAndComputesRefund() {
+        UUID itemId = UUID.randomUUID();
+        NxReturnItem item = NxReturnItem.builder()
+                .id(itemId)
+                .returnId(returnId)
+                .tenantId(tenantId)
+                .sku("SKU-1")
+                .quantity(3)
+                .originalPrice(BigDecimal.valueOf(10.00))
+                .status("INSPECTED")
+                .build();
+        NxReturnItem decision = NxReturnItem.builder()
+                .id(itemId)
+                .disposition("RESTOCK")
+                .disposedBy(UUID.randomUUID())
+                .build();
+        when(returnItemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(returnItemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        List<NxReturnItem> result = returnService.applyDisposition(returnId, List.of(decision));
+
+        assertEquals("DISPOSED", result.get(0).getStatus());
+        assertEquals("RESTOCK", result.get(0).getDisposition());
+        assertEquals(BigDecimal.valueOf(30.00), result.get(0).getRefundAmount());
+        verify(inventoryService).adjustInventoryBySku(tenantId, "SKU-1", 3);
+    }
+
+    @Test
+    void applyDisposition_scrapDoesNotTouchInventory() {
+        UUID itemId = UUID.randomUUID();
+        NxReturnItem item = NxReturnItem.builder()
+                .id(itemId)
+                .returnId(returnId)
+                .tenantId(tenantId)
+                .sku("SKU-2")
+                .quantity(2)
+                .originalPrice(BigDecimal.valueOf(20.00))
+                .status("INSPECTED")
+                .build();
+        NxReturnItem decision = NxReturnItem.builder()
+                .id(itemId)
+                .disposition("SCRAP")
+                .disposedBy(UUID.randomUUID())
+                .build();
+        when(returnItemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(returnItemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        List<NxReturnItem> result = returnService.applyDisposition(returnId, List.of(decision));
+
+        assertEquals("SCRAPPED", result.get(0).getCondition());
+        assertEquals(BigDecimal.ZERO, result.get(0).getRefundAmount());
+        verify(inventoryService, never()).adjustInventoryBySku(any(), any(), anyInt());
+    }
+
+    @Test
+    void applyDisposition_unsupportedDispositionThrows() {
+        UUID itemId = UUID.randomUUID();
+        NxReturnItem item = NxReturnItem.builder()
+                .id(itemId)
+                .returnId(returnId)
+                .tenantId(tenantId)
+                .sku("SKU-3")
+                .quantity(1)
+                .status("INSPECTED")
+                .build();
+        NxReturnItem decision = NxReturnItem.builder()
+                .id(itemId)
+                .disposition("LAND")
+                .build();
+        when(returnItemRepository.findById(itemId)).thenReturn(Optional.of(item));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> returnService.applyDisposition(returnId, List.of(decision)));
+    }
+
+    @Test
+    void settleRefund_sumsItemRefundsWhenAmountNull() {
+        NxReturnItem i1 = NxReturnItem.builder().status("DISPOSED").disposition("RESTOCK")
+                .refundAmount(BigDecimal.valueOf(30.00)).build();
+        NxReturnItem i2 = NxReturnItem.builder().status("DISPOSED").disposition("RESTOCK")
+                .refundAmount(BigDecimal.valueOf(12.50)).build();
+        when(returnRepository.findById(returnId)).thenReturn(Optional.of(nxReturn));
+        when(returnItemRepository.findByReturnId(returnId)).thenReturn(List.of(i1, i2));
+        when(returnRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ReturnResponse response = returnService.settleRefund(returnId, null, "GATEWAY-1");
+
+        assertEquals("REFUNDED", response.getStatus());
+        assertEquals(BigDecimal.valueOf(42.50), nxReturn.getRefundAmount());
+        assertEquals("GATEWAY-1", nxReturn.getRefundReference());
+        assertEquals("REFUNDED", i1.getStatus());
+        assertEquals("REFUNDED", i2.getStatus());
     }
 }

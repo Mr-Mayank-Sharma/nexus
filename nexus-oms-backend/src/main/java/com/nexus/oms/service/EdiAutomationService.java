@@ -163,6 +163,133 @@ public class EdiAutomationService {
      * Dry-run parse: returns parsed EDI data without persisting.
      * Validates structure, extracts fields, returns errors — no DB write.
      */
+    /**
+     * X12 997 — Functional Acknowledgment. Builds an outbound ack for a
+     * previously received inbound document (850/856/810/940). Echoes the
+     * interchange/group/transaction control numbers and reports AK1/AK2/AK9
+     * accept/reject status. The ack itself is persisted as a docType "997"
+     * document so the loop is auditable.
+     */
+    @Transactional
+    public NxEdiDocument generate997Ack(UUID documentId, boolean accepted) {
+        NxEdiDocument inbound = getDocument(documentId);
+        if ("997".equals(inbound.getDocType())) {
+            throw new BadRequestException("997 is an acknowledgment type and cannot be acknowledged itself");
+        }
+
+        String interchangedControl = inbound.getInterchangeControlNumber() != null
+                ? inbound.getInterchangeControlNumber() : "000000001";
+        String groupControl = inbound.getGroupControlNumber() != null
+                ? inbound.getGroupControlNumber() : "1";
+        String transactionControl = inbound.getControlNumber() != null
+                ? inbound.getControlNumber() : "0001";
+        String ackCode = accepted ? "A" : "R";
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("ISA*00*          *00*          *ZZ*NEXUS           *ZZ*")
+          .append(pad(inbound.getPartnerId() == null ? "PARTNER" : inbound.getPartnerId(), 15))
+          .append("*").append(nowIso()).append("*").append(nowIso()).append("*")
+          .append(ackCode).append("*00501*000000997*0*P*>~")
+          .append("\n");
+        sb.append("GS*FA*NEXUS*").append(inbound.getPartnerId() == null ? "PARTNER" : inbound.getPartnerId())
+          .append("*").append(nowIso()).append("*").append(nowIso()).append("*1*X*005010~\n");
+        sb.append("ST*997*0001~\n");
+        sb.append("AK1*").append(inbound.getDocType()).append("*").append(groupControl).append("~\n");
+        sb.append("AK2*").append(inbound.getDocType()).append("*").append(transactionControl).append("~\n");
+        sb.append("AK5*").append(accepted ? "A" : "R").append("*NEXUS could not process the transaction~\n");
+        sb.append("AK9*").append(accepted ? "A" : "R").append("*1*1*1*")
+          .append(accepted ? "1" : "2").append("~\n");
+        sb.append("SE*6*0001~\n");
+        sb.append("GE*1*1~\n");
+        sb.append("IEA*1*000000997~");
+
+        NxEdiDocument ack = NxEdiDocument.builder()
+                .tenantId(inbound.getTenantId())
+                .docType("997")
+                .filename("ack-" + inbound.getFilename())
+                .rawContent(sb.toString())
+                .parsedStatus("PARSED")
+                .partnerId(inbound.getPartnerId())
+                .partnerName(inbound.getPartnerName())
+                .build();
+
+        try {
+            Map<String, Object> ackData = new LinkedHashMap<>();
+            ackData.put("transactionSet", "997");
+            ackData.put("acknowledges", inbound.getDocType());
+            ackData.put("interchangeControlNumber", interchangedControl);
+            ackData.put("groupControlNumber", groupControl);
+            ackData.put("transactionControlNumber", transactionControl);
+            ackData.put("ackCode", ackCode);
+            ackData.put("accepted", accepted);
+            ack.setParsedData(MAPPER.writeValueAsString(ackData));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize 997 ack data: {}", e.getMessage());
+        }
+
+        return ediDocumentRepository.save(ack);
+    }
+
+    /**
+     * X12 855 — Purchase Order Acknowledgment. Builds an outbound ack for an
+     * order created from a 850. Echoes the PO number and per-line ACK
+     * quantities (accepted/backordered/rejected). Persisted as docType "855"
+     * for the audit loop.
+     */
+    @Transactional
+    public NxEdiDocument generate855Ack(UUID orderId, String poNumber,
+                                        List<Map<String, Object>> lineAcks) {
+        NxOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
+        UUID tenantId = TenantContext.getCurrentTenantId();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("ISA*00*          *00*          *ZZ*NEXUS           *ZZ*SUPPLIER        ")
+          .append("*").append(nowIso()).append("*").append(nowIso()).append("*A*00501*000000855*0*P*>~\n");
+        sb.append("GS*PO*NEXUS*SUPPLIER*").append(nowIso()).append("*").append(nowIso())
+          .append("*1*X*005010~\n");
+        sb.append("ST*855*0001~\n");
+        sb.append("BAK*00*AC*").append(poNumber).append("*").append(nowIso()).append("~\n");
+
+        if (lineAcks != null) {
+            int line = 0;
+            for (Map<String, Object> ack : lineAcks) {
+                line++;
+                sb.append("ACK*").append(ack.getOrDefault("status", "AC"))
+                  .append("*").append(ack.getOrDefault("quantity", "1")).append("~")
+                  .append("PO1*").append(line).append("*")
+                  .append(ack.getOrDefault("quantity", "1")).append("*EA*")
+                  .append(ack.getOrDefault("unitPrice", "0")).append("~");
+            }
+        }
+        sb.append("CTT*").append(lineAcks == null ? 0 : lineAcks.size()).append("~\n");
+        sb.append("SE*").append(lineAcks == null ? 4 : 4 + lineAcks.size()).append("*0001~\n");
+        sb.append("GE*1*1~\n");
+        sb.append("IEA*1*000000855~");
+
+        NxEdiDocument ack = NxEdiDocument.builder()
+                .tenantId(tenantId)
+                .docType("855")
+                .filename("ack-" + poNumber + ".855")
+                .rawContent(sb.toString())
+                .parsedStatus("PARSED")
+                .orderId(orderId)
+                .build();
+
+        try {
+            Map<String, Object> ackData = new LinkedHashMap<>();
+            ackData.put("transactionSet", "855");
+            ackData.put("poNumber", poNumber);
+            ackData.put("acknowledgeCode", "AC");
+            ackData.put("lineAcks", lineAcks == null ? List.of() : lineAcks);
+            ack.setParsedData(MAPPER.writeValueAsString(ackData));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize 855 ack data: {}", e.getMessage());
+        }
+
+        return ediDocumentRepository.save(ack);
+    }
+
     public Map<String, Object> dryRun(String content, String docType) {
         if (content == null || content.isBlank()) {
             throw new BadRequestException("EDI content cannot be empty");
@@ -567,6 +694,17 @@ public class EdiAutomationService {
 
     private String safeGet(String[] arr, int index) {
         return arr != null && index < arr.length ? arr[index].trim() : null;
+    }
+
+    private String nowIso() {
+        return java.time.LocalDate.now().toString().replace("-", "");
+    }
+
+    private String pad(String value, int width) {
+        if (value == null) {
+            value = "";
+        }
+        return value.length() >= width ? value.substring(0, width) : value + " ".repeat(width - value.length());
     }
 
     @FunctionalInterface

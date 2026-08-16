@@ -92,4 +92,23 @@ public class EdiAutomationController {
         return ResponseEntity.ok(ApiResponse.success(
                 ediAutomationService.createPartner(partner), "EDI partner created"));
     }
+
+    @PostMapping("/{id}/ack-997")
+    public ResponseEntity<ApiResponse<NxEdiDocument>> generate997Ack(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "true") boolean accepted) {
+        return ResponseEntity.ok(ApiResponse.success(
+                ediAutomationService.generate997Ack(id, accepted),
+                "Functional acknowledgment generated"));
+    }
+
+    @PostMapping("/855")
+    public ResponseEntity<ApiResponse<NxEdiDocument>> generate855Ack(
+            @RequestParam("orderId") UUID orderId,
+            @RequestParam("poNumber") String poNumber,
+            @RequestBody(required = false) List<Map<String, Object>> lineAcks) {
+        return ResponseEntity.ok(ApiResponse.success(
+                ediAutomationService.generate855Ack(orderId, poNumber, lineAcks),
+                "Purchase order acknowledgment generated"));
+    }
 }

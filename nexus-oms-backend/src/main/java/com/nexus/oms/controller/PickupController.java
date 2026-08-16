@@ -116,4 +116,18 @@ public class PickupController {
     public ResponseEntity<Map<String, Long>> getStatusCounts(@PathVariable UUID nodeId) {
         return ResponseEntity.ok(pickupOrderService.getStatusCounts(nodeId));
     }
+
+    @PostMapping("/no-show/{nodeId}")
+    public ResponseEntity<List<NxPickupOrder>> markNoShows(
+            @PathVariable UUID nodeId,
+            @RequestParam(required = false) Long holdingHours) {
+        java.time.Duration window = holdingHours != null
+                ? java.time.Duration.ofHours(holdingHours) : null;
+        return ResponseEntity.ok(pickupOrderService.markNoShows(nodeId, window));
+    }
+
+    @GetMapping("/kpis/{nodeId}")
+    public ResponseEntity<Map<String, Object>> getPickupKPIs(@PathVariable UUID nodeId) {
+        return ResponseEntity.ok(pickupOrderService.getPickupKPIs(nodeId));
+    }
 }

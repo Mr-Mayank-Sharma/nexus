@@ -58,6 +58,7 @@ public class AuthService {
     private final Map<String, PasswordResetToken> resetTokens = new HashMap<>();
     private final Map<String, SsoState> ssoStates = new HashMap<>();
 
+    @org.springframework.beans.factory.annotation.Autowired
     public AuthService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        JwtTokenProvider jwtTokenProvider,
@@ -65,6 +66,18 @@ public class AuthService {
                        RolePermissionRepository rolePermissionRepository,
                        SsoProviderConfig ssoProviderConfig,
                        ObjectMapper objectMapper) {
+        this(userRepository, passwordEncoder, jwtTokenProvider, companySettingsRepository,
+                rolePermissionRepository, ssoProviderConfig, objectMapper, HttpClient.newHttpClient());
+    }
+
+    AuthService(UserRepository userRepository,
+                PasswordEncoder passwordEncoder,
+                JwtTokenProvider jwtTokenProvider,
+                CompanySettingsRepository companySettingsRepository,
+                RolePermissionRepository rolePermissionRepository,
+                SsoProviderConfig ssoProviderConfig,
+                ObjectMapper objectMapper,
+                HttpClient httpClient) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
@@ -72,7 +85,7 @@ public class AuthService {
         this.rolePermissionRepository = rolePermissionRepository;
         this.ssoProviderConfig = ssoProviderConfig;
         this.objectMapper = objectMapper;
-        this.httpClient = HttpClient.newHttpClient();
+        this.httpClient = httpClient;
     }
 
     public AuthResponse authenticate(LoginRequest request) {

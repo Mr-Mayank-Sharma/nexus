@@ -21,9 +21,12 @@ public class EndlessAisleService {
     private static final Logger log = LoggerFactory.getLogger(EndlessAisleService.class);
 
     private final EndlessAisleOrderRepository endlessAisleOrderRepository;
+    private final InventoryService inventoryService;
 
-    public EndlessAisleService(EndlessAisleOrderRepository endlessAisleOrderRepository) {
+    public EndlessAisleService(EndlessAisleOrderRepository endlessAisleOrderRepository,
+                               InventoryService inventoryService) {
         this.endlessAisleOrderRepository = endlessAisleOrderRepository;
+        this.inventoryService = inventoryService;
     }
 
     // ─── CRUD Operations ────────────────────────────────────────────────
@@ -98,6 +101,19 @@ public class EndlessAisleService {
 
         String currentStatus = order.getStatus();
         validateStatusTransition(currentStatus, newStatus);
+
+        // Ship-from-store: deduct sellable stock at the store node on processing,
+        // restore it if the order is cancelled afterwards.
+        if ("PROCESSING".equals(newStatus) && order.getStoreId() != null
+                && !"SHIP_TO_STORE".equals(order.getFulfillmentType())) {
+            inventoryService.adjustInventoryBySkuAtNode(
+                    order.getTenantId(), order.getProductSku(), order.getStoreId(),
+                    -(order.getQuantity() == null ? 0 : order.getQuantity()));
+        } else if ("CANCELLED".equals(newStatus) && order.getStoreId() != null) {
+            inventoryService.adjustInventoryBySkuAtNode(
+                    order.getTenantId(), order.getProductSku(), order.getStoreId(),
+                    order.getQuantity() == null ? 0 : order.getQuantity());
+        }
 
         order.setStatus(newStatus);
         if (notes != null && !notes.isBlank()) {

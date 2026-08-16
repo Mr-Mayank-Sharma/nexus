@@ -24,15 +24,18 @@ public class ReturnService {
     private final ReturnItemRepository returnItemRepository;
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
+    private final InventoryService inventoryService;
 
     public ReturnService(ReturnRepository returnRepository,
                          ReturnItemRepository returnItemRepository,
                          OrderRepository orderRepository,
-                         CustomerRepository customerRepository) {
+                         CustomerRepository customerRepository,
+                         InventoryService inventoryService) {
         this.returnRepository = returnRepository;
         this.returnItemRepository = returnItemRepository;
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
+        this.inventoryService = inventoryService;
     }
 
     public List<ReturnResponse> getReturns(UUID tenantId, String status) {
@@ -180,6 +183,93 @@ public class ReturnService {
             nxReturn.setRejectedReason("Status updated to " + newStatus);
         }
         nxReturn = returnRepository.save(nxReturn);
+        return toResponse(nxReturn);
+    }
+
+    /**
+     * RMA disposition action. Applies the disposition decision per inspected
+     * item and links it to the warehouse consequence:
+     * RESTOCK   -> increments sellable inventory back by quantity
+     * REFURBISH -> increments inventory (condition = refurbished)
+     * SCRAP     -> no inventory change, item marked scrapped
+     * Also computes a default refund amount from the item's original
+     * refundable value when a disposition is provided, keeping the RMA and
+     * refund records linked.
+     */
+    @Transactional
+    public List<NxReturnItem> applyDisposition(UUID returnId, List<NxReturnItem> decisions) {
+        List<NxReturnItem> updated = new ArrayList<>();
+        for (NxReturnItem decision : decisions) {
+            NxReturnItem item = returnItemRepository.findById(decision.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("ReturnItem", decision.getId()));
+            if (decision.getDisposition() == null) {
+                throw new IllegalArgumentException("Disposition is required for item " + item.getId());
+            }
+            String disposition = decision.getDisposition().toUpperCase();
+            item.setDisposition(disposition);
+            item.setDispositionNotes(decision.getDispositionNotes());
+            item.setStatus("DISPOSED");
+            item.setDisposedAt(LocalDateTime.now());
+            item.setDisposedBy(decision.getDisposedBy());
+
+            switch (disposition) {
+                case "RESTOCK", "REPACKAGE" -> {
+                    int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                    if (qty > 0) {
+                        inventoryService.adjustInventoryBySku(item.getTenantId(), item.getSku(), qty);
+                    }
+                }
+                case "REFURBISH" -> {
+                    item.setCondition("REFURBISHED");
+                    int qty = item.getQuantity() != null ? item.getQuantity() : 0;
+                    if (qty > 0) {
+                        inventoryService.adjustInventoryBySku(item.getTenantId(), item.getSku(), qty);
+                    }
+                }
+                case "SCRAP", "DONATE" -> {
+                    item.setCondition("SCRAPPED");
+                }
+                default -> throw new IllegalArgumentException(
+                        "Unsupported disposition: " + disposition + " (expected RESTOCK/REPACKAGE/REFURBISH/SCRAP/DONATE)");
+            }
+
+            if (item.getRefundAmount() == null && item.getOriginalPrice() != null) {
+                item.setRefundAmount(switch (disposition) {
+                    case "RESTOCK", "REPACKAGE" -> item.getOriginalPrice().multiply(BigDecimal.valueOf(item.getQuantity() == null ? 1 : item.getQuantity()));
+                    case "REFURBISH" -> item.getOriginalPrice().multiply(BigDecimal.valueOf(0.8))
+                            .multiply(BigDecimal.valueOf(item.getQuantity() == null ? 1 : item.getQuantity()));
+                    default -> BigDecimal.ZERO;
+                });
+            }
+            returnItemRepository.save(item);
+            updated.add(item);
+        }
+        return updated;
+    }
+
+    @Transactional
+    public ReturnResponse settleRefund(UUID id, BigDecimal totalRefund, String refundReference) {
+        NxReturn nxReturn = returnRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Return", id));
+        List<NxReturnItem> items = returnItemRepository.findByReturnId(id);
+        if (totalRefund == null) {
+            totalRefund = items.stream()
+                    .filter(i -> i.getRefundAmount() != null)
+                    .map(NxReturnItem::getRefundAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        nxReturn.setStatus("REFUNDED");
+        nxReturn.setRefundAmount(totalRefund);
+        nxReturn.setRefundReference(refundReference);
+        nxReturn.setRefundedAt(LocalDateTime.now());
+        nxReturn = returnRepository.save(nxReturn);
+
+        for (NxReturnItem item : items) {
+            if (!"REJECTED".equals(item.getStatus()) && !"SCRAP".equals(item.getDisposition())) {
+                item.setStatus("REFUNDED");
+                returnItemRepository.save(item);
+            }
+        }
         return toResponse(nxReturn);
     }
 

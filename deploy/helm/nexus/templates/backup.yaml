@@ -1,0 +1,48 @@
+{{- if .Values.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "nexus.fullname" . }}-backup
+  labels:
+    {{- include "nexus.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+          containers:
+            - name: pg-dump
+              image: postgres:16
+              env:
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secrets.existingSecret }}
+                      key: db-password
+              command:
+                - /bin/sh
+                - -ec
+                - |
+                  pg_dump -U nexus -h {{ include "nexus.fullname" . }}-postgres \
+                    -F c -d nexus_oms -f /backups/nexus_$$(date +%Y%m%d_%H%M).dump
+                  ls -1 /backups | sort -r | tail -n +{{ .Values.backup.retention }} | xargs -r rm --
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              {{- if .Values.backup.volumeClaim }}
+              persistentVolumeClaim:
+                claimName: {{ .Values.backup.volumeClaim }}
+              {{- else }}
+              emptyDir: {}
+              {{- end }}
+{{- end }}

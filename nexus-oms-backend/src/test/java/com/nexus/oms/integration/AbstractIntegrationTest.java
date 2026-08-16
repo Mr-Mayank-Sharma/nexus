@@ -45,6 +45,7 @@ public abstract class AbstractIntegrationTest {
     protected RolePermissionRepository rolePermissionRepository;
 
     protected static String adminToken;
+    protected static String adminUsername;
     protected static UUID tenantId;
 
     protected String baseUrl() {
@@ -54,9 +55,7 @@ public abstract class AbstractIntegrationTest {
     protected void registerAdminUser() throws Exception {
         long ts = System.currentTimeMillis();
         String username = "testadmin-" + ts;
-        String password = "Test1234!";
-
-        HttpHeaders headers = new HttpHeaders();
+        String password = "Test1234!";        HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         String body = """
@@ -83,6 +82,7 @@ public abstract class AbstractIntegrationTest {
 
         JsonNode data = json.get("data");
         adminToken = data.get("accessToken").asText();
+        adminUsername = username;
         tenantId = UUID.fromString(data.get("tenantId").asText());
 
         assertNotNull(adminToken);

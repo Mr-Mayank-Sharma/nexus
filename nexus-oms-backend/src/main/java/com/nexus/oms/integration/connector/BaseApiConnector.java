@@ -129,15 +129,17 @@ public abstract class BaseApiConnector extends AbstractConnector {
         try {
             SyncResult result = runner.run();
             recordSuccess();
-            return SyncResult.builder()
+            SyncResult.Builder b = SyncResult.builder()
                     .syncType(syncType)
                     .status(result.getStatus())
                     .itemsSucceeded(result.getItemsSucceeded())
                     .itemsFailed(result.getItemsFailed())
                     .itemsSkipped(result.getItemsSkipped())
                     .startedAt(start)
-                    .durationMs(java.time.Duration.between(start, LocalDateTime.now()).toMillis())
-                    .build();
+                    .durationMs(java.time.Duration.between(start, LocalDateTime.now()).toMillis());
+            result.getErrors().forEach(b::addError);
+            result.getWarnings().forEach(b::addWarning);
+            return b.build();
         } catch (Exception e) {
             recordError();
             log.error("Sync failed: {}", syncType, e);

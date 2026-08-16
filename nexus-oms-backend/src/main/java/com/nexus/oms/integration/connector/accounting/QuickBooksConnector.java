@@ -13,12 +13,14 @@ import com.nexus.oms.integration.protocol.RestProtocolAdapter;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class QuickBooksConnector extends BaseApiConnector {
 
     private String realmId;
     private String accessToken;
+    private final Set<String> pushedRefundKeys = ConcurrentHashMap.newKeySet();
 
     public QuickBooksConnector(CredentialVault credentialVault, RestProtocolAdapter restClient,
                                 GraphqlProtocolAdapter graphqlClient, DataMapper dataMapper) {
@@ -53,6 +55,8 @@ public class QuickBooksConnector extends BaseApiConnector {
 
     @Override
     public void initialize(ConnectorConfig config) {
+        config.putSetting("base_url", "https://quickbooks.api.intuit.com");
+        super.initialize(config);
         this.realmId = config.getSetting("realm_id");
         String clientId = resolveCredential("client_id");
         String clientSecret = resolveCredential("client_secret");
@@ -61,9 +65,6 @@ public class QuickBooksConnector extends BaseApiConnector {
         if (clientId != null && clientSecret != null && refreshToken != null) {
             refreshAccessToken(clientId, clientSecret, refreshToken);
         }
-
-        config.putSetting("base_url", "https://quickbooks.api.intuit.com");
-        super.initialize(config);
     }
 
     private void refreshAccessToken(String clientId, String clientSecret, String refreshToken) {
@@ -121,12 +122,63 @@ public class QuickBooksConnector extends BaseApiConnector {
     @Override
     public SyncResult pushRefunds(UUID tenantId, Map<String, Object> params) {
         return runWithTiming("REFUND_PUSH", () -> {
-            log.info("QuickBooks credit memo creation");
-            return SyncResult.builder()
+            List<?> refunds = params != null && params.get("refunds") instanceof List<?> l
+                    ? l : List.of();
+            int succeeded = 0;
+            int skipped = 0;
+            List<String> errors = new ArrayList<>();
+
+            for (Object raw : refunds) {
+                if (!(raw instanceof Map<?, ?> m)) {
+                    skipped++;
+                    continue;
+                }
+                String refundId = String.valueOf(m.get("refundId") == null ? "" : m.get("refundId"));
+                String idempotencyKey = refundId.isEmpty()
+                        ? UUID.randomUUID().toString() : "nexus-refund-" + refundId;
+                if (!pushedRefundKeys.add(idempotencyKey)) {
+                    skipped++;
+                    continue;
+                }
+
+                Map<String, String> headers = new LinkedHashMap<>(defaultHeaders);
+                headers.put("Idempotency-Key", idempotencyKey);
+
+                Map<String, Object> creditMemo = new LinkedHashMap<>();
+                creditMemo.put("IdempotencyKey", idempotencyKey);
+                creditMemo.put("TotalAmt", m.get("amount"));
+                creditMemo.put("DocNumber", refundId);
+                if (m.get("customerRef") != null) {
+                    creditMemo.put("CustomerRef", Map.of("value", m.get("customerRef")));
+                }
+                if (m.get("reason") != null) {
+                    creditMemo.put("PrivateNote", m.get("reason"));
+                }
+
+                try {
+                    JsonNode response = restClient.post(baseUrl,
+                            "/v3/company/" + realmId + "/creditmemo", headers, creditMemo);
+                    if (response != null && response.has("CreditMemo")) {
+                        succeeded++;
+                        log.info("QuickBooks credit memo pushed for refund {}", refundId);
+                    } else {
+                        errors.add("QB returned no CreditMemo for refund " + refundId);
+                    }
+                } catch (Exception e) {
+                    pushedRefundKeys.remove(idempotencyKey);
+                    errors.add("QB refund push failed for " + refundId + ": " + e.getMessage());
+                    log.error("QuickBooks refund push failed", e);
+                }
+            }
+
+            SyncResult.Builder result = SyncResult.builder()
                     .syncType("REFUND_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
+                    .status(errors.isEmpty() ? SyncResult.Status.COMPLETED : SyncResult.Status.PARTIAL)
+                    .itemsSucceeded(succeeded)
+                    .itemsSkipped(skipped)
+                    .itemsFailed(errors.size());
+            errors.forEach(result::addError);
+            return result.build();
         });
     }
 

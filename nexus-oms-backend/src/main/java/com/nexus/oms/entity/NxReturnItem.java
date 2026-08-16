@@ -62,6 +62,18 @@ public class NxReturnItem {
     @Column(length = 30)
     private String status;
 
+    @Column(name = "disposition_notes", columnDefinition = "TEXT")
+    private String dispositionNotes;
+
+    @Column(name = "original_price")
+    private BigDecimal originalPrice;
+
+    @Column(name = "disposed_at")
+    private LocalDateTime disposedAt;
+
+    @Column(name = "disposed_by")
+    private UUID disposedBy;
+
     @Column(name = "inspected_at")
     private LocalDateTime inspectedAt;
 

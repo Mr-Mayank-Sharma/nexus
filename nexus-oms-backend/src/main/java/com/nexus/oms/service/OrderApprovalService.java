@@ -96,6 +96,18 @@ public class OrderApprovalService {
                         matched = true;
                     }
                     break;
+                case "BLACKLIST":
+                    if (customerId != null && rule.getThresholdString() != null
+                            && rule.getThresholdString().equals(customerId.toString())) {
+                        matched = true;
+                    }
+                    break;
+                case "GEOLOCATION":
+                    if (rule.getThresholdString() != null && orderNumber != null
+                            && rule.getThresholdString().equalsIgnoreCase(orderNumber)) {
+                        matched = true;
+                    }
+                    break;
             }
 
             if (matched) {
@@ -104,7 +116,7 @@ public class OrderApprovalService {
                     finalAction = "REJECT";
                     break;
                 } else if ("HOLD_FOR_REVIEW".equals(rule.getAction())) {
-                    finalAction = "HOLD_FOR_REVIEW";
+                    finalAction = "MANUAL_REVIEW";
                 }
             }
         }
@@ -169,7 +181,7 @@ public class OrderApprovalService {
         long autoApproved = all.stream().filter(a -> "AUTO_APPROVE".equals(a.getStatus())).count();
 
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("total", all.size());
+        stats.put("total", (long) all.size());
         stats.put("pending", pending);
         stats.put("approved", approved);
         stats.put("rejected", rejected);

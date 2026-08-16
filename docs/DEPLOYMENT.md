@@ -101,9 +101,63 @@ Current version: **V58** (check `flyway_schema_history`) — V58 adds the ASN↔
 
 ### Backup
 
+Logical backups with `pg_dump` (custom format) are the primary backup
+mechanism. They are portable across PostgreSQL versions/installs and safe
+to take while the system is running.
+
 ```bash
-pg_dump -U nexus -F c nexus > nexus_backup_$(date +%Y%m%d).dump
+# Full logical backup (schema + data) — run via cron, e.g. daily 02:00
+pg_dump -U nexus -h <db-host> -F c -d nexus_oms -f nexus_backup_$(date +%Y%m%d_%H%M).dump
+
+# Compact + integrity check
+pg_restore --list nexus_backup_$(date +%Y%m%d).dump | head
 ```
+
+#### Retention & schedule
+
+| Cadence | Retention | Purpose |
+|---|---|---|
+| Daily 02:00 | 14 days | RPO ≤ 24h baseline |
+| Weekly (Sun 03:00) | 8 weeks | Longer audit window |
+| Monthly | 12 months | Compliance/audit |
+
+Off-site copy every backup (S3, Azure Blob, or object store) and encrypt
+at rest (server-side or `gpg --symmetric`).
+
+#### Restore procedure
+
+```bash
+# 1. Create the target database (empty)
+createdb -U nexus -h <db-host> nexus_oms_restore
+
+# 2. Restore (custom-format dump)
+pg_restore -U nexus -h <db-host> -d nexus_oms_restore \
+  -j 4 --no-owner --role=nexus nexus_backup_20260601.dump
+
+# 3. Point the app at the restored DB and verify
+#    SPRING_DATASOURCE_URL=jdbc:postgresql://<db-host>:5432/nexus_oms_restore
+psql -U nexus -h <db-host> -d nexus_oms_restore -c "SELECT count(*) FROM orders;"
+```
+
+> Flyway runs on startup: any migrations between the dump and restore
+> time apply automatically. For point-in-time recovery use
+> `pg_basebackup` + WAL archiving (see §11 Kubernetes / §12).
+
+#### Backing up the store services
+
+- **Redis**: `redis-cli -a $REDIS_PASSWORD BGSAVE` then copy the RDB
+  from the PVC/volume. Redis is a cache — a flush is safe but causes a
+  cold start.
+- **Kafka**: logs replay via `offsets` topics; brokers re-balance on
+  restart. Kafka is not the durable record of record — Postgres is.
+
+#### Backup automation
+
+- Docker Compose: schedule the `pg_dump` on the host (cron/systemd
+  timer) and push to object storage with `aws s3 cp`/`azcopy`.
+- Kubernetes: use a `CronJob` (see `deploy/helm/nexus` notes) or a
+  managed backup add-on (e.g. Velero, K8up) for volume-level backups of
+  the postgres PVC.
 
 ## 5. Monitoring
 
@@ -254,3 +308,84 @@ npx vite build
 # Chrome: Application > Service Workers > Unregister
 # Or: hard refresh (Ctrl+Shift+R)
 ```
+
+## 11. Kubernetes (Helm)
+
+A Helm chart at `deploy/helm/nexus/` deploys the same stack as
+`docker-compose.prod.yml` onto a Kubernetes cluster. See
+`deploy/helm/nexus/README.md` for full instructions.
+
+### Quick start
+
+```bash
+# 1. Create the Secret (never put secrets in values.yaml)
+kubectl create secret generic nexus-secrets \
+  --from-literal=db-password='CHANGE_ME' \
+  --from-literal=redis-password='CHANGE_ME' \
+  --from-literal=jwt-secret='CHANGE_ME' \
+  --namespace nexus
+
+# 2. Install
+helm install nexus deploy/helm/nexus --namespace nexus --create-namespace
+
+# 3. Verify
+kubectl rollout status deploy/nexus-backend -n nexus
+curl -k https://oms.example.com/api/v1/actuator/health
+```
+
+### Topology
+
+| Resource | Kind | Replicas | Persistence |
+|---|---|---|---|
+| backend | Deployment | 2 (HA) | — (stateless) |
+| frontend | Deployment | 2 (HA) | — (static) |
+| postgres | StatefulSet | 1 | 20Gi PVC (`ReadWriteOnce`) |
+| redis | StatefulSet | 1 | 5Gi PVC |
+| kafka | StatefulSet | 1 | 20Gi PVC |
+| ingress | Ingress | — | TLS via `nexus-tls` Secret |
+
+### Production notes
+
+- Set `image.*.repository`/`image.*.tag` in `values.yaml` to your
+  registry; the chart defaults to local `nexus/*` images.
+- Backend and frontend roll automatically (rolling update). Postgres,
+  Redis, and Kafka keep data on PVCs — roll them only for image/arg
+  changes.
+- Scale backend beyond the default 2 replicas; it is stateless (JWT)
+  and all durable state lives in Postgres.
+- Use a managed Postgres (RDS/Cloud SQL) for production instead of the
+  in-cluster StatefulSet, or enable WAL archiving for PITR.
+
+## 12. Point-in-Time Recovery (PITR)
+
+The `pg_dump` procedure in §4 gives RPO ≤ 24h. For near-zero RPO:
+
+```bash
+# wal_level must be 'replica' or 'logical' (set in postgresql.conf)
+# Continuous archiving of WAL segments to object storage
+# (e.g. pgbackrest, barman, or wal-g):
+
+# Example: wal-g
+wal-g backup-push /var/lib/postgresql/data
+# Recover to a point in time:
+wal-g binlog-replay --since '2026-06-01T02:00:00Z'
+```
+
+Recommended production posture: nightly `pg_dump` (§4) **plus** WAL
+archiving (PITR). Restore drills should be run quarterly.
+
+## 13. Health Checks
+
+The stack exposes health endpoints for orchestrators, load balancers,
+and alerting:
+
+- **Backend**: `GET /api/v1/actuator/health` → `{"status":"UP"}`.
+  Liveness/readiness probes are wired into the Docker Compose
+  healthchecks (§3) and the Helm chart (§11).
+- **Frontend**: `GET /manifest.json` (PWA manifest) as readiness probe.
+- **Postgres**: `pg_isready` in container probes.
+- **Redis**: `redis-cli ping` in container probes.
+- **Kafka**: TCP probe on `:9092`.
+
+For alerting on these, see §5 (Prometheus/Grafana) and
+`deploy/prometheus/alerts.yml`.

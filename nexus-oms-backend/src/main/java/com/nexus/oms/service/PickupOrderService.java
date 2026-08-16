@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -218,5 +219,78 @@ public class PickupOrderService {
         counts.put("ready", (long) pickupOrderRepository.findByNodeIdAndStatus(nodeId, "READY_FOR_HANDOFF").size());
         counts.put("collected", (long) pickupOrderRepository.findByNodeIdAndStatus(nodeId, "POD_COLLECTED").size());
         return counts;
+    }
+
+    // ─── No-show timeout & pickup KPIs ────────────────────────────────────
+
+    /**
+     * BOPIS no-show enforcement. Orders that have been sitting at
+     * READY_FOR_HANDOFF past their holding window are marked NO_SHOW so the
+     * store can take action (restock / return to shelf). Default holding
+     * window is 48h from readyAt, overridable per call for tests.
+     */
+    @Transactional
+    public List<NxPickupOrder> markNoShows(UUID nodeId, Duration holdingWindow) {
+        List<NxPickupOrder> expired = pickupOrderRepository
+                .findByNodeIdAndStatus(nodeId, "READY_FOR_HANDOFF").stream()
+                .filter(o -> o.getReadyAt() != null
+                        && o.getReadyAt().plus(holdingWindow == null
+                                ? Duration.ofHours(48) : holdingWindow)
+                                .isBefore(LocalDateTime.now()))
+                .toList();
+        for (NxPickupOrder order : expired) {
+            order.setStatus("NO_SHOW");
+            order.setUpdatedAt(LocalDateTime.now());
+            pickupOrderRepository.save(order);
+        }
+        return expired;
+    }
+
+    /**
+     * Pickup KPIs per node: volumes, on-time readiness, no-show rate,
+     * average time from ready to collected, and average cycle time.
+     */
+    public Map<String, Object> getPickupKPIs(UUID nodeId) {
+        List<NxPickupOrder> all = pickupOrderRepository.findByNodeIdAndStatus(nodeId, null);
+
+        long total = all.size();
+        long collected = all.stream().filter(o -> "POD_COLLECTED".equals(o.getStatus())).count();
+        long noShows = all.stream().filter(o -> "NO_SHOW".equals(o.getStatus())).count();
+        long cancelled = all.stream().filter(o -> "CANCELLED".equals(o.getStatus())).count();
+        long currentlyReady = all.stream().filter(o -> "READY_FOR_HANDOFF".equals(o.getStatus())).count();
+
+        long onTime = 0;
+        long waitedTotalSeconds = 0;
+        long waitedCount = 0;
+        long cycleTotalSeconds = 0;
+        long cycleCount = 0;
+        for (NxPickupOrder o : all) {
+            if (o.getReadyAt() != null && o.getEstimatedReadyAt() != null
+                    && !o.getReadyAt().isAfter(o.getEstimatedReadyAt())) {
+                onTime++;
+            }
+            if (o.getReadyAt() != null && o.getCollectedAt() != null) {
+                waitedTotalSeconds += Duration.between(o.getReadyAt(), o.getCollectedAt()).getSeconds();
+                waitedCount++;
+            }
+            if (o.getCreatedAt() != null && o.getCollectedAt() != null) {
+                cycleTotalSeconds += Duration.between(o.getCreatedAt(), o.getCollectedAt()).getSeconds();
+                cycleCount++;
+            }
+        }
+
+        Map<String, Object> kpis = new LinkedHashMap<>();
+        kpis.put("totalPickups", total);
+        kpis.put("collected", collected);
+        kpis.put("noShows", noShows);
+        kpis.put("cancelled", cancelled);
+        kpis.put("currentlyReady", currentlyReady);
+        kpis.put("noShowRate", total > 0 ? Math.round((double) noShows / total * 1000) / 1000.0 : 0.0);
+        kpis.put("onTimeReadyRate", total > 0 ? Math.round((double) onTime / total * 1000) / 1000.0 : 0.0);
+        kpis.put("avgWaitMinutes", waitedCount > 0
+                ? Math.round((double) waitedTotalSeconds / waitedCount / 60 * 100) / 100.0 : 0.0);
+        kpis.put("avgCycleMinutes", cycleCount > 0
+                ? Math.round((double) cycleTotalSeconds / cycleCount / 60 * 100) / 100.0 : 0.0);
+        return kpis;
     }
 }

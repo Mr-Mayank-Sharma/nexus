@@ -11,6 +11,8 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 > - "How does data move?" → [05-DATA-FLOW.md](./05-DATA-FLOW.md)
 > - "Who can access what?" → [06-BUSINESS-FLOW-RBAC.md](./06-BUSINESS-FLOW-RBAC.md)
 > - "How do we compare vs Manhattan, SAP, HotWax?" → [07-SCM-COMPARISON.md](./07-SCM-COMPARISON.md)
+> - "How do I run the whole thing today?" → [08-SELF-HOST-BOOT.md](./08-SELF-HOST-BOOT.md)
+> - "What does it cost?" → [09-COST-TCO.md](./09-COST-TCO.md)
 
 ## Library map
 
@@ -24,6 +26,8 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`05-DATA-FLOW.md`](./05-DATA-FLOW.md) | End-to-end data movement (intake, fulfillment, integrations, AI, returns, procurement, yard) | Engineering, QA |
 | [`06-BUSINESS-FLOW-RBAC.md`](./06-BUSINESS-FLOW-RBAC.md) | **Who can access what**: 14 roles, 39 path→resource mappings, seeded permission matrix, flow-stage access tables | All |
 | [`07-SCM-COMPARISON.md`](./07-SCM-COMPARISON.md) | Deep-research comparison vs **12 SCM/OMS/WMS systems** (Manhattan, HotWax, SAP, Oracle, Blue Yonder…), feature scores /10, weighted rankings, Nexus gap analysis | All, exec, investors |
+| [`08-SELF-HOST-BOOT.md`](./08-SELF-HOST-BOOT.md) | **Production in under 1 hour** — step-by-step boot of the full stack, monitoring, teardown | Ops, buyers, evaluation teams |
+| [`09-COST-TCO.md`](./09-COST-TCO.md) | **Cost & TCO** — $0 license, self-host math (~$76–110/mo), vs enterprise vendors | Buyers, CFOs, investors |
 | [`features/`](./features/) | Per-feature deep dives (overview, process, use cases, data flow, ER subset, access) | All |
 
 ### Feature docs
@@ -54,7 +58,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`implementation.md`](./implementation.md) | Implementation notes |
 | [`ENTERPRISE-AI-ARCHITECTURE.md`](./ENTERPRISE-AI-ARCHITECTURE.md) | Deep AI architecture |
 | [`API.md`](./API.md) | API reference |
-| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Deployment guide |
+| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Deployment guide (compose + Kubernetes/Helm + backup/PITR) |
 | [`GAP_CLOSURE_PLAN.md`](./GAP_CLOSURE_PLAN.md) | Gap closure plan |
 | [`testing-guide.md`](./testing-guide.md) | Testing guide |
 | [`FIX_LOG.md`](../FIX_LOG.md) | Change/hardening log (incl. Phase 2.5 honesty sweep) |

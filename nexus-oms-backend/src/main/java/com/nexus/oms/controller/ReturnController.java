@@ -98,6 +98,23 @@ public class ReturnController {
                 returnService.processRefund(id, request.refundAmount, request.refundReference), "Refund processed"));
     }
 
+    @Operation(summary = "Apply RMA disposition actions (restock/refurbish/scrap) per item")
+    @PostMapping("/{id}/dispose")
+    public ResponseEntity<ApiResponse<List<NxReturnItem>>> disposeItems(
+            @PathVariable UUID id,
+            @Valid @RequestBody DispositionRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                returnService.applyDisposition(id, request.items), "Disposition applied"));
+    }
+
+    @Operation(summary = "Settle refund from inspected/disposed items")
+    @PostMapping("/{id}/settle")
+    public ResponseEntity<ApiResponse<ReturnResponse>> settleRefund(
+            @PathVariable UUID id, @Valid @RequestBody RefundRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                returnService.settleRefund(id, request.refundAmount, request.refundReference), "Refund settled"));
+    }
+
     @Operation(summary = "Reject a return")
     @PostMapping("/{id}/reject")
     public ResponseEntity<ApiResponse<ReturnResponse>> rejectReturn(
@@ -146,6 +163,11 @@ public class ReturnController {
         public List<NxReturnItem> items;
         @NotNull
         public UUID inspectedBy;
+    }
+
+    public static class DispositionRequest {
+        @NotEmpty
+        public List<NxReturnItem> items;
     }
 
     public static class RefundRequest {

@@ -58,6 +58,26 @@ public class InventoryService {
         return inventoryRepository.save(inv);
     }
 
+    /**
+     * Location-scoped deduction for ship-from-store / endless-aisle flows.
+     * Deducts sellable stock (quantityOnHand) at a specific store node and
+     * fails fast when the node has insufficient stock for the SKU.
+     */
+    @Transactional
+    @CacheEvict(value = "inventory", allEntries = true)
+    public NxInventory adjustInventoryBySkuAtNode(UUID tenantId, String sku, UUID nodeId, int quantityDelta) {
+        NxInventory inv = inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No inventory for SKU " + sku + " at node " + nodeId));
+        int newQty = inv.getQuantityOnHand() + quantityDelta;
+        if (newQty < 0) {
+            throw new BadRequestException("Insufficient inventory at node " + nodeId
+                    + " for SKU " + sku + " (on hand: " + inv.getQuantityOnHand() + ")");
+        }
+        inv.setQuantityOnHand(newQty);
+        return inventoryRepository.save(inv);
+    }
+
     @Transactional
     @CacheEvict(value = "inventory", allEntries = true)
     public NxInventory adjustInventory(UUID id, int quantityChange) {

@@ -41,6 +41,8 @@ class AuthServiceTest {
     private RolePermissionRepository rolePermissionRepository;
     @Mock
     private SsoProviderConfig ssoProviderConfig;
+    @Mock
+    private java.net.http.HttpClient mockHttpClient;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private AuthService authService;
@@ -311,5 +313,159 @@ class AuthServiceTest {
 
         assertThrows(BadRequestException.class,
                 () -> authService.generateSsoAuthorizationUrl("auth0", tenantId.toString()));
+    }
+
+    @Test
+    void testVerifyMfa_WithValidCode_ReturnsToken() throws Exception {
+        CompanySettings settings = CompanySettings.builder()
+                .tenantId(tenantId)
+                .securityPolicy("{\"mfaEnabled\": true}")
+                .build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("Test1234!", "encoded-pass")).thenReturn(true);
+        when(companySettingsRepository.findByTenantId(tenantId)).thenReturn(Optional.of(settings));
+
+        LoginRequest login = new LoginRequest("testuser", "Test1234!", null);
+        AuthResponse challenge = authService.authenticate(login);
+
+        assertTrue(challenge.isMfaRequired());
+        assertNotNull(challenge.getMfaToken());
+
+        String expectedTotp = generateExpectedTotp("testuser");
+        when(jwtTokenProvider.generateToken("testuser", "VIEWER", tenantId)).thenReturn("jwt-token");
+
+        AuthResponse result = authService.verifyMfa(new MfaVerificationRequest(challenge.getMfaToken(), expectedTotp));
+
+        assertNotNull(result.getAccessToken());
+        assertEquals("jwt-token", result.getAccessToken());
+        assertFalse(result.isMfaRequired());
+    }
+
+    @Test
+    void testVerifyMfa_WithInvalidCode_ThrowsException() throws Exception {
+        CompanySettings settings = CompanySettings.builder()
+                .tenantId(tenantId)
+                .securityPolicy("{\"mfaEnabled\": true}")
+                .build();
+
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("Test1234!", "encoded-pass")).thenReturn(true);
+        when(companySettingsRepository.findByTenantId(tenantId)).thenReturn(Optional.of(settings));
+
+        LoginRequest login = new LoginRequest("testuser", "Test1234!", null);
+        AuthResponse challenge = authService.authenticate(login);
+
+        assertTrue(challenge.isMfaRequired());
+
+        assertThrows(BadRequestException.class,
+                () -> authService.verifyMfa(new MfaVerificationRequest(challenge.getMfaToken(), "000000")));
+    }
+
+    @Test
+    void testVerifyMfa_WithUnknownSession_ThrowsException() {
+        assertThrows(BadRequestException.class,
+                () -> authService.verifyMfa(new MfaVerificationRequest("no-such-session", "123456")));
+    }
+
+    @Test
+    void testRefreshToken_WithValidToken_ReturnsNewAuth() {
+        when(jwtTokenProvider.validateToken("refresh-abc")).thenReturn(true);
+        when(jwtTokenProvider.isRefreshToken("refresh-abc")).thenReturn(true);
+        when(jwtTokenProvider.getUsernameFromToken("refresh-abc")).thenReturn("testuser");
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(companySettingsRepository.findByTenantId(tenantId)).thenReturn(Optional.empty());
+        when(rolePermissionRepository.findByTenantIdAndRole(tenantId, "VIEWER")).thenReturn(List.of());
+        when(jwtTokenProvider.generateToken("testuser", "VIEWER", tenantId)).thenReturn("new-jwt");
+
+        AuthResponse result = authService.refreshToken("refresh-abc");
+
+        assertEquals("new-jwt", result.getAccessToken());
+    }
+
+    @Test
+    void testRefreshToken_WithInvalidToken_ThrowsException() {
+        when(jwtTokenProvider.validateToken("expired")).thenReturn(false);
+
+        assertThrows(BadRequestException.class, () -> authService.refreshToken("expired"));
+    }
+
+    @Test
+    void testRefreshToken_WithAccessToken_ThrowsException() {
+        when(jwtTokenProvider.validateToken("access-abc")).thenReturn(true);
+        when(jwtTokenProvider.isRefreshToken("access-abc")).thenReturn(false);
+
+        assertThrows(BadRequestException.class, () -> authService.refreshToken("access-abc"));
+    }
+
+    @Test
+    void testHandleSsoCallback_WithUnknownState_ReturnsErrorRedirect() {
+        String result = authService.handleSsoCallback("okta", "code", "unknown-state");
+
+        assertTrue(result.contains("error=sso_invalid_state"));
+    }
+
+    @Test
+    void testHandleSsoCallback_WithConfiguredProviderAndIdToken_ReturnsTokenRedirect() throws Exception {
+        SsoProviderConfig.Provider provider = new SsoProviderConfig.Provider();
+        provider.setClientId("client");
+        provider.setClientSecret("secret");
+        provider.setAuthorizeUrl("https://idp.example.com/authorize");
+        provider.setTokenUrl("https://idp.example.com/token");
+        provider.setRedirectUri("http://localhost:8080/api/v1/auth/sso/{provider}/callback");
+        when(ssoProviderConfig.getProvider("okta")).thenReturn(provider);
+
+        AuthService ssoAuthService = new AuthService(userRepository, passwordEncoder, jwtTokenProvider,
+                companySettingsRepository, rolePermissionRepository, ssoProviderConfig, objectMapper,
+                mockHttpClient);
+
+        String authUrl = ssoAuthService.generateSsoAuthorizationUrl("okta", tenantId.toString());
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("state=([^&]+)").matcher(authUrl);
+        String state = m.find() ? m.group(1) : "";
+
+        String payload = "{\"email\":\"sso@example.com\"}";
+        String encoded = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(payload.getBytes());
+        String idToken = "header." + encoded + ".signature";
+
+        java.net.http.HttpResponse<String> tokenResponse = mock(java.net.http.HttpResponse.class);
+        when(tokenResponse.statusCode()).thenReturn(200);
+        when(tokenResponse.body()).thenReturn("{\"id_token\":\"" + idToken + "\"}");
+        doReturn(tokenResponse).when(mockHttpClient).send(any(java.net.http.HttpRequest.class), any());
+
+        when(userRepository.findByUsername("sso")).thenReturn(Optional.of(testUser));
+        when(jwtTokenProvider.generateToken("testuser", "VIEWER", tenantId)).thenReturn("sso-jwt");
+
+        String result = ssoAuthService.handleSsoCallback("okta", "code", state);
+
+        assertTrue(result.contains("token=sso-jwt"), "expected token redirect but was: " + result);
+    }
+
+    @Test
+    void testHandleSsoCallback_WithUnconfiguredProvider_ReturnsErrorRedirect() {
+        SsoProviderConfig.Provider provider = new SsoProviderConfig.Provider();
+        provider.setClientId("client");
+        provider.setClientSecret("secret");
+        provider.setAuthorizeUrl("https://idp.example.com/authorize");
+        provider.setRedirectUri("http://localhost:8080/api/v1/auth/sso/{provider}/callback");
+        when(ssoProviderConfig.getProvider("okta")).thenReturn(provider);
+
+        AuthService ssoAuthService = new AuthService(userRepository, passwordEncoder, jwtTokenProvider,
+                companySettingsRepository, rolePermissionRepository, ssoProviderConfig, objectMapper,
+                mockHttpClient);
+
+        String authUrl = ssoAuthService.generateSsoAuthorizationUrl("okta", tenantId.toString());
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("state=([^&]+)").matcher(authUrl);
+        String state = m.find() ? m.group(1) : "";
+
+        when(ssoProviderConfig.getProvider("okta")).thenReturn(null);
+
+        String result = ssoAuthService.handleSsoCallback("okta", "code", state);
+
+        assertTrue(result.contains("error=sso_not_configured"), "expected not-configured error but was: " + result);
+    }
+
+    private String generateExpectedTotp(String username) {
+        int code = Math.abs((username.hashCode() + (int)(System.currentTimeMillis() / 30000)) % 1000000);
+        return String.format("%06d", code);
     }
 }

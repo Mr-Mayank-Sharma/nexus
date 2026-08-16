@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nexus.fullname" . }}-backend
+  labels:
+    {{- include "nexus.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "nexus.selectorLabels" . | nindent 6 }}
+      component: backend
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "nexus.selectorLabels" . | nindent 8 }}
+        component: backend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: backend
+          image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+          imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.env.springProfilesActive }}
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://{{ include "nexus.fullname" . }}-postgres:5432/nexus_oms
+            - name: SPRING_DATASOURCE_USERNAME
+              value: nexus
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: db-password
+            - name: SPRING_DATA_REDIS_HOST
+              value: {{ include "nexus.fullname" . }}-redis
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: redis-password
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: {{ include "nexus.fullname" . }}-kafka:9092
+            - name: APP_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: jwt-secret
+            - name: NEXUS_CORS_ORIGINS
+              value: {{ .Values.env.corsOrigins }}
+            - name: NEXUS_FRONTEND_URL
+              value: {{ .Values.env.frontendUrl }}
+            - name: NEXUS_DB_POOL_MAX
+              value: {{ .Values.env.dbPoolMax }}
+            - name: NEXUS_DB_POOL_MIN
+              value: {{ .Values.env.dbPoolMin }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.existingSecret }}
+                  key: openai-api-key
+                  optional: true
+            - name: NEXUS_AI_ENABLED
+              value: {{ .Values.env.aiEnabled }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/v1/actuator/health
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nexus.fullname" . }}-backend
+  labels:
+    {{- include "nexus.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.backend.service.type }}
+  ports:
+    - port: {{ .Values.backend.service.port }}
+      targetPort: http
+      name: http
+  selector:
+    {{- include "nexus.selectorLabels" . | nindent 4 }}
+    component: backend
