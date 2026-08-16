@@ -5,7 +5,6 @@ import {
   fetchOrderById,
   createOrder,
   updateOrder,
-  transitionOrder,
   fetchOrderStats,
   fetchProducts,
   fetchCustomers,
@@ -19,14 +18,10 @@ import {
   fetchWavePlans,
   createWavePlan,
   updateWavePlan,
-  fetchEmployees,
-  fetchShifts,
-  assignTask,
   fetchPickLists,
   createPickList,
   updatePickList,
   fetchPackingQueues,
-  completePacking,
   fetchCarriers,
   fetchCarrierRates,
   generateLabel,
@@ -149,18 +144,6 @@ describe('New Backend API', () => {
     })
   })
 
-  describe('transitionOrder', () => {
-    it('should PATCH /orders/:id/:action', async () => {
-      await transitionOrder('ORD-001', 'confirm')
-      expect(mockPatch).toHaveBeenCalledWith('/orders/ORD-001/confirm')
-    })
-
-    it('should return null on error', async () => {
-      mockPatch.mockRejectedValueOnce(new Error('fail'))
-      expect(await transitionOrder('X', 'cancel')).toBeNull()
-    })
-  })
-
   describe('fetchOrderStats', () => {
     it('should GET /orders/stats', async () => {
       await fetchOrderStats()
@@ -227,9 +210,9 @@ describe('New Backend API', () => {
   })
 
   describe('fetchEnhancedInventory', () => {
-    it('should GET /inventory/enhanced', async () => {
+    it('should GET /inventory', async () => {
       await fetchEnhancedInventory()
-      expect(mockGet).toHaveBeenCalledWith('/inventory/enhanced')
+      expect(mockGet).toHaveBeenCalledWith('/inventory')
     })
 
     it('should return null on error', async () => {
@@ -343,49 +326,6 @@ describe('New Backend API', () => {
     })
   })
 
-  // ─── Labor Management ───────────────────────────────────────
-  describe('fetchEmployees', () => {
-    it('should GET /labor', async () => {
-      await fetchEmployees()
-      expect(mockGet).toHaveBeenCalledWith('/labor')
-    })
-
-    it('should return null on error', async () => {
-      mockGet.mockRejectedValueOnce(new Error('fail'))
-      expect(await fetchEmployees()).toBeNull()
-    })
-  })
-
-  describe('fetchShifts', () => {
-    it('should GET /labor/shifts without date', async () => {
-      await fetchShifts()
-      expect(mockGet).toHaveBeenCalledWith('/labor/shifts', { params: { date: undefined } })
-    })
-
-    it('should GET /labor/shifts with date', async () => {
-      await fetchShifts('2026-07-21')
-      expect(mockGet).toHaveBeenCalledWith('/labor/shifts', { params: { date: '2026-07-21' } })
-    })
-
-    it('should return null on error', async () => {
-      mockGet.mockRejectedValueOnce(new Error('fail'))
-      expect(await fetchShifts()).toBeNull()
-    })
-  })
-
-  describe('assignTask', () => {
-    it('should POST /labor/tasks', async () => {
-      const data = { employeeId: 'E-1', taskType: 'PICK' }
-      await assignTask(data)
-      expect(mockPost).toHaveBeenCalledWith('/labor/tasks', data)
-    })
-
-    it('should return null on error', async () => {
-      mockPost.mockRejectedValueOnce(new Error('fail'))
-      expect(await assignTask({})).toBeNull()
-    })
-  })
-
   // ─── Picking ────────────────────────────────────────────────
   describe('fetchPickLists', () => {
     it('should GET /picking/lists', async () => {
@@ -435,18 +375,6 @@ describe('New Backend API', () => {
     it('should return null on error', async () => {
       mockGet.mockRejectedValueOnce(new Error('fail'))
       expect(await fetchPackingQueues()).toBeNull()
-    })
-  })
-
-  describe('completePacking', () => {
-    it('should POST /packing/complete', async () => {
-      await completePacking()
-      expect(mockPost).toHaveBeenCalledWith('/packing/complete')
-    })
-
-    it('should return null on error', async () => {
-      mockPost.mockRejectedValueOnce(new Error('fail'))
-      expect(await completePacking()).toBeNull()
     })
   })
 
@@ -664,14 +592,14 @@ describe('New Backend API', () => {
   })
 
   describe('fetchReconciliation', () => {
-    it('should GET /reconciliation', async () => {
+    it('should GET /invoicing/payments', async () => {
       await fetchReconciliation()
-      expect(mockGet).toHaveBeenCalledWith('/reconciliation')
+      expect(mockGet).toHaveBeenCalledWith('/invoicing/payments')
     })
 
-    it('should return null on error', async () => {
+    it('should return empty items on error', async () => {
       mockGet.mockRejectedValueOnce(new Error('fail'))
-      expect(await fetchReconciliation()).toBeNull()
+      expect(await fetchReconciliation()).toEqual({ items: [] })
     })
   })
 

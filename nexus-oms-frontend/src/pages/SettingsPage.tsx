@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, Building2, Shield, Plus, X, Save } from 'lucide-react'
+import { Settings, Building2, Shield, Plus, X } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as settingsApi from '../api/settings'
 import PermissionGate from '../components/rbac/PermissionGate'

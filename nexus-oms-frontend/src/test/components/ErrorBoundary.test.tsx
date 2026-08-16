@@ -30,11 +30,9 @@ function installRealLocalStorage() {
 }
 
 describe('ErrorBoundary', () => {
-  let consoleErrorSpy: ReturnType<typeof vi.spyOn>
-
   beforeEach(() => {
     vi.clearAllMocks()
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(console, 'error').mockImplementation(() => {})
   })
 
   afterEach(() => {

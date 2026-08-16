@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, Warehouse, Truck, RotateCcw, Ship, BarChart3,
   Brain, Settings, ChevronLeft, ChevronRight, GitBranch, ClipboardCheck,
@@ -258,7 +258,6 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const location = useLocation()
-  const navigate = useNavigate()
   const { theme, toggleTheme } = useTheme()
   const { user, hasPermission } = useAuth()
 
@@ -356,7 +355,6 @@ export default function Sidebar() {
         {filteredLinks.map((item) => {
           const isParent = item.children && item.children.length > 0
           const parentActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
-          const hasActiveChild = isParent && item.children!.some(c => location.pathname.startsWith(c.path))
 
           if (collapsed || !isParent) {
             return (

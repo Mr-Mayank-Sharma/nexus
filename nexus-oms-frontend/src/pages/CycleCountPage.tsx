@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Search, X, Loader2, ClipboardCheck, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Plus, X, Loader2, ClipboardCheck, CheckCircle, AlertTriangle } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { CycleCount } from '../types'
 import * as cycleCountsApi from '../api/cycleCounts'

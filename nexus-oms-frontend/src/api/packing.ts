@@ -65,7 +65,7 @@ export async function completePacking(id: string, packedBy: string): Promise<Api
 }
 
 export async function generateLabel(id: string, carrierId: string, carrierName: string,
-  serviceLevel: string, trackingNumber: string, labelUrl?: string): Promise<ApiResponse<NxPackage>> {
+  serviceLevel: string, trackingNumber: string, _labelUrl?: string): Promise<ApiResponse<NxPackage>> {
   try {
     const { data } = await client.post(`/packing/packages/${id}/label`, null, {
       params: { carrierId, carrierName, serviceLevel, trackingNumber }
@@ -105,7 +105,7 @@ export async function getPackingKPIs(): Promise<ApiResponse<Record<string, numbe
       return { success: true, data: { pendingPack: 0, packing: 0, packed: 0, shipped: 0 } }
     }
     return raw
-  } catch (err: any) {
+  } catch {
     return { success: true, data: { pendingPack: 0, packing: 0, packed: 0, shipped: 0 } }
   }
 }

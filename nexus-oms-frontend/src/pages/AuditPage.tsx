@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Shield, Search, ChevronLeft, ChevronRight, Loader2,
+  Shield, ChevronLeft, ChevronRight,
   Clock, AlertTriangle, CheckCircle, XCircle, FileText,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
@@ -9,8 +9,6 @@ import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import * as auditApi from '../api/audit'
-import PermissionGate from '../components/rbac/PermissionGate'
-import type { AuditEntry } from '../api/audit'
 
 export default function AuditPage() {
   const [page, setPage] = useState(0)

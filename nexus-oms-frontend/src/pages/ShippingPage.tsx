@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Truck, Plus, Search, CheckCircle, XCircle, Loader2,
+  Truck, Plus, CheckCircle, XCircle, Loader2,
   Package, Clock, AlertTriangle, MapPin, ExternalLink,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'

@@ -265,7 +265,7 @@ export default function CarrierRateShoppingPage() {
           </div>
 
           {/* Rate Cards */}
-          {sortedRates.map((rate, i) => (
+          {sortedRates.map((rate) => (
             <div
               key={`${rate.carrierCode}-${rate.serviceLevel}`}
               className={clsx(

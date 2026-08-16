@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  ShoppingBag, Package, Store, Search, CheckCircle, Clock, XCircle, Truck,
-  ChevronRight, Plus, Minus, MapPin, Phone, Mail, User, ArrowRight, Eye,
+  ShoppingBag, Package, Store, CheckCircle, Truck, Eye,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
@@ -32,7 +31,6 @@ export default function BOPISPage() {
   const { addToast } = useToast()
   const [activeTab, setActiveTab] = useState<Bopistab>('orders')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
 
   const { data: bopisOrders = [], isLoading: loadingOrders } = useQuery({
     queryKey: ['bopis-orders'],

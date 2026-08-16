@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
-  Printer, Search, Plus, X, Loader2, CheckCircle, AlertCircle,
-  RefreshCw, Trash2, Download, FileText, Box, Settings, ChevronRight,
+  Printer, Plus, Loader2,
+  RefreshCw, Trash2, FileText, Box, Settings, ChevronRight,
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import clsx from 'clsx'
@@ -35,13 +35,11 @@ export default function LabelPrintingPage() {
   const { addToast } = useToast()
 
   const [labels, setLabels] = useState<any[]>([])
-  const [carriers, setCarriers] = useState<any[]>([])
   const [orders, setOrders] = useState<string[]>([])
 
   useEffect(() => {
-    Promise.all([fetchLabels(), fetchCarriers(), fetchOrders()]).then(([l, c, o]) => {
+    Promise.all([fetchLabels(), fetchCarriers(), fetchOrders()]).then(([l, _c, o]) => {
       if (l?.labels) setLabels(l.labels)
-      if (c?.carriers) setCarriers(c.carriers)
       if (o?.orders) setOrders(o.orders.map((ord: any) => ord.orderNumber || ord.id).filter(Boolean))
     }).catch((err) => {
       addToast({ type: 'error', title: 'Failed to load data', description: err?.message })
@@ -60,8 +58,8 @@ export default function LabelPrintingPage() {
   const [searchLabel, setSearchLabel] = useState('')
 
   const [bulkOrders, setBulkOrders] = useState<string[]>([])
-  const [bulkProgress, setBulkProgress] = useState(0)
-  const [isBulkGenerating, setIsBulkGenerating] = useState(false)
+  const bulkProgress = 0
+  const isBulkGenerating = false
 
   const [printerName, setPrinterName] = useState('Zebra ZD621')
   const [labelSize, setLabelSize] = useState('4x6')

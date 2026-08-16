@@ -1,4 +1,4 @@
-# Nexus OMS — Current State (Where We Are Today)
+`# Nexus OMS — Current State (Where We Are Today)
 
 > Companion to [`00-VISION-DREAM.md`](./00-VISION-DREAM.md). The honest engineering snapshot as of **August 2026**.
 
@@ -29,7 +29,7 @@ That is exactly where Nexus stands: **broad, real surface + a short, honest list
 | **Backend surface** | **~157 JPA entities**, **74 controllers**, 111 services, 14 RBAC roles |
 | **Frontend surface** | **89 pages**, hash-routed, role/resource-gated, React Query + WebSockets |
 | **Infra (docker-compose)** | Postgres, Redis, Kafka, backend, frontend, **ai-ops**, **ai-intel**, Prometheus, Grafana |
-| **Testing** | Backend: **704 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest 400 passing (4 pre-existing failures in `newBackendApi.test.ts`/`AuthContext.test.tsx`); Playwright smoke-tested on live dev stack |
+| **Testing** | Backend: **704 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest **391 passing, 0 failures, 0 errors** (`tsc --noEmit`, `npm run build`, and `npm run lint` green); Playwright smoke-tested on live dev stack |
 
 > 🧒 **Kid translation of the table:** "Entities" are the *things* we keep track of (orders, boxes, warehouses, cars). "Controllers" are the *doors* people knock on. "Pages" are the *rooms* you see on screen. We built ~157 things, ~74 doors, and ~89 rooms — and the practice exams all pass.
 
@@ -139,7 +139,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 - **Resilience**: Resilience4j circuit breakers, Kafka event bus for async integration, Redis caching, integration timeouts.
 - **API docs**: springdoc OpenAPI (Swagger UI) generated from controllers.
 - **Security posture**: JWT (jjwt), resource→action authorization filter, signed import tokens, credential vault.
-- **Testing**: 704 backend unit tests green; frontend vitest 400 passing (4 pre-existing failures in `newBackendApi.test.ts` / `AuthContext.test.tsx`); Playwright smoke suite on the live dev stack (rate cards, billing statements, client portal) with 0 console errors.
+- **Testing**: 704 backend unit tests green; frontend vitest **391 passing, 0 failures, 0 errors** (tsc, build, and lint green); Playwright smoke suite on the live dev stack (rate cards, billing statements, client portal) with 0 console errors.
 
 > 🧒 **Kid translation:** We have **safety rails**: a seatbelt (circuit breakers so one broken part doesn't crash everything), a speedometer (Prometheus/Grafana so we see what's happening), and a map book (OpenAPI docs so developers know every door).
 

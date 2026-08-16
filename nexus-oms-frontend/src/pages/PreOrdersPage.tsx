@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Calendar, Package, ShoppingCart, Clock, CheckCircle, AlertTriangle,
-  Search, Eye, Archive, TrendingUp, Filter, Play, XCircle, RefreshCw,
+  Calendar, Package, Clock, CheckCircle, AlertTriangle, Eye, Play, XCircle, RefreshCw,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'

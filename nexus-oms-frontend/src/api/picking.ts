@@ -90,7 +90,7 @@ export async function getPickingKPIs(): Promise<ApiResponse<Record<string, numbe
       return { success: true, data: { activePicklists: 0, completedToday: 0, pendingItems: 0, pickedItems: 0 } }
     }
     return raw
-  } catch (err: any) {
+  } catch {
     return { success: true, data: { activePicklists: 0, completedToday: 0, pendingItems: 0, pickedItems: 0 } }
   }
 }

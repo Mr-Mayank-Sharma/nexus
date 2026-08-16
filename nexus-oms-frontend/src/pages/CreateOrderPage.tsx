@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, X, Search, Package, Users, ShoppingCart, Trash2, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Plus, Package, Users, ShoppingCart, Trash2, CheckCircle } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import { createOrder, fetchCustomers, fetchProducts } from '../api/newBackend'
@@ -24,7 +24,6 @@ export default function CreateOrderPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([])
   const [productSearch, setProductSearch] = useState('')
   const [shippingInfo, setShippingInfo] = useState({ address: '', city: '', state: '', zip: '', country: 'US', method: 'ground', notes: '' })
-  const [orderSource, setOrderSource] = useState('manual')
   const [createAnother, setCreateAnother] = useState(false)
   const [customerList, setCustomerList] = useState<any[]>([])
   const [productList, setProductList] = useState<any[]>([])
@@ -37,10 +36,6 @@ export default function CreateOrderPage() {
       addToast({ type: 'error', title: 'Failed to load data', description: err?.message })
     })
   }, [])
-
-  const filteredProducts = productList.filter((p: any) =>
-    !productSearch.trim() || p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.sku?.toLowerCase().includes(productSearch.toLowerCase())
-  )
 
   const addItem = (product: any) => {
     setLineItems(prev => {

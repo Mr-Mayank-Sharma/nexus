@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { clsx } from 'clsx'
 import {
-  Building2, MapPin, Boxes, Users, Wrench, Plus, Search, X, Check,
-  Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Trash2, Edit3, Thermometer, Download, Upload,
+  Building2, MapPin, Boxes, Wrench, Plus, X, Check, Loader2, ChevronDown, ChevronRight, Trash2, Thermometer, Download, Upload,
 } from 'lucide-react'
 import * as warehouseApi from '../api/warehouse'
 import type {
@@ -437,7 +436,7 @@ export default function WarehousePage() {
     OUT_OF_SERVICE: 'bg-[var(--nexus-error-50)] text-[var(--nexus-error-700)]',
   }
 
-  function renderDetailPanel(wh: Warehouse) {
+  function renderDetailPanel(_wh: Warehouse) {
     const emptyBins = bins.filter((b) => b.status === 'EMPTY').length
     const occupiedBins = bins.filter((b) => b.status === 'OCCUPIED').length
 

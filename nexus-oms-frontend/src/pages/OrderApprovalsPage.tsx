@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Shield, CheckCircle, XCircle, Clock, Search, Eye, Plus,
-  AlertTriangle, Filter, ToggleLeft, ToggleRight, Edit, Trash2,
+  Shield, CheckCircle, XCircle, Clock, Search, Eye, ToggleLeft, ToggleRight,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
-import { approvalsApi, ApprovalRule, OrderApproval, ApprovalStats } from '../api/approvals'
-import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
+import { approvalsApi, OrderApproval, ApprovalStats } from '../api/approvals'
+import { EnterpriseTabs, EnterpriseKPICard } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
 import type { Tab } from '../components/enterprise'
 

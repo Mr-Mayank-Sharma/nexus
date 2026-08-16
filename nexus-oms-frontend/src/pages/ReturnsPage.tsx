@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { clsx } from 'clsx'
 import {
-  RotateCcw, Plus, Search, X, Check, ChevronDown, ChevronRight,
+  RotateCcw, Plus, X, Check, ChevronDown, ChevronRight,
   Eye, PackageCheck, DollarSign, ThumbsUp, RefreshCw, AlertTriangle, Loader2,
 } from 'lucide-react'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -170,14 +170,6 @@ export default function ReturnsPage() {
     setProcessing('create')
     try { await returnsApi.createReturn({ ...createForm, items: createItems.filter(i => i.sku) }); addToast({ type: 'success', title: 'Return created' }); setCreateOpen(false); setCreateForm({ orderId: '', customerId: '', reason: '', returnChannel: 'MANUAL', rmaType: 'RETURN' }); setCreateItems([{ sku: '', productName: '', quantity: 1 }]); fetchData() }
     catch { addToast({ type: 'error', title: 'Failed to create return' }) }
-    finally { setProcessing(null) }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Cancel this return?')) return
-    setProcessing(id)
-    try { await returnsApi.updateReturnStatus(id, 'CANCELLED'); addToast({ type: 'success', title: 'Return cancelled' }); fetchData() }
-    catch { addToast({ type: 'error', title: 'Failed to cancel return' }) }
     finally { setProcessing(null) }
   }
 

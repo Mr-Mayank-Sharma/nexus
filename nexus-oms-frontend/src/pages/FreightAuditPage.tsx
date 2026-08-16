@@ -62,7 +62,6 @@ export default function FreightAuditPage() {
 
   const [invoices, setInvoices] = useState<FreightInvoice[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
-  const [stats, setStats] = useState<Record<string, unknown> | null>(null)
 
   const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -74,21 +73,17 @@ export default function FreightAuditPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [invoicesRes, statsRes] = await Promise.allSettled([
+      const [invoicesRes] = await Promise.allSettled([
         freightAuditApi.getInvoices(),
-        freightAuditApi.getStats(),
       ])
 
       const invoicesData = invoicesRes.status === 'fulfilled' ? (invoicesRes.value.data?.data as FreightInvoice[]) : null
-      const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data?.data : null
 
       setInvoices(invoicesData || [])
       setAuditLogs([])
-      setStats(statsData || null)
     } catch {
       setInvoices([])
       setAuditLogs([])
-      setStats(null)
     } finally {
       setLoading(false)
     }

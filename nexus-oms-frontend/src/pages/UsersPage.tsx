@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
-import { UserCog, Users, Shield, Plus, Search, X, Check, Trash2, Lock, ChevronDown, ChevronRight } from 'lucide-react'
+import { UserCog, Users, Shield, Plus, X, Check, Trash2, Lock, ChevronDown, ChevronRight } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as rbacApi from '../api/rbac'
 import { ROLE_WORKSPACES } from '../hooks/useWorkspace'
@@ -41,16 +41,6 @@ interface PermissionItem {
   canEdit: boolean
   canDelete: boolean
   canApprove: boolean
-}
-
-interface SecurityGroup {
-  id: string
-  name: string
-  description: string
-  parentGroupId?: string
-  permissions: string[]
-  memberCount: number
-  isInherited: boolean
 }
 
 type Tab = 'user-roles' | 'teams' | 'security-groups'
@@ -184,7 +174,7 @@ export default function UsersPage() {
     }
   }
 
-  async function handleToggleTeam(team: TeamItem) {
+  async function handleToggleTeam(_team: TeamItem) {
     addToast({ type: 'warning', title: 'Team update API not available' })
   }
 

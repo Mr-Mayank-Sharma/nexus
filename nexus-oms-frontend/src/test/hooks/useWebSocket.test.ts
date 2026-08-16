@@ -2,33 +2,32 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useWebSocket } from '../../hooks/useWebSocket'
 
-// Mock sockjs-client
+// Mock sockjs-client (default export is the SockJS constructor)
 vi.mock('sockjs-client', () => {
-  return {
-    default: vi.fn().mockImplementation(() => ({
-      close: vi.fn(),
-      send: vi.fn(),
-      onmessage: null,
-      onclose: null,
-      onerror: null,
-      onopen: null,
-    })),
-  }
+  const SockJSMock = vi.fn().mockImplementation(() => ({
+    close: vi.fn(),
+    send: vi.fn(),
+    onmessage: null,
+    onclose: null,
+    onerror: null,
+    onopen: null,
+  }))
+  return { default: SockJSMock }
 })
 
-// Mock stompjs
-vi.mock('stompjs', () => {
-  return {
-    Client: vi.fn().mockImplementation(() => ({
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      send: vi.fn(),
-      subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
-      connected: false,
-      activate: vi.fn(),
-      deactivate: vi.fn(),
-    })),
-  }
+// Mock @stomp/stompjs (the package actually used by the hook)
+vi.mock('@stomp/stompjs', () => {
+  const ClientMock = vi.fn().mockImplementation(() => ({
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+    send: vi.fn(),
+    subscribe: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
+    connected: false,
+    activate: vi.fn(),
+    deactivate: vi.fn(),
+    webSocketFactory: undefined,
+  }))
+  return { Client: ClientMock }
 })
 
 // Mock AuthContext

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, Command, FileText, Package, Users, Building2, ShoppingCart, Receipt, BarChart3, Settings, ArrowRight, X, Bell, GitBranch, Upload, Plus, PackagePlus, Truck, RotateCcw, CreditCard, Eye, Sparkles } from 'lucide-react'
+import { Search, Command, FileText, Package, Users, Building2, ShoppingCart, Receipt, BarChart3, Settings, ArrowRight, X, Bell, GitBranch, Upload, Plus, PackagePlus, Truck, RotateCcw, CreditCard } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 

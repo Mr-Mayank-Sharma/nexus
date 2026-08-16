@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { clsx } from 'clsx'
 import {
-  Mail, Upload, RefreshCw, Loader2, Search, CheckCircle, XCircle,
-  AlertTriangle, Clock, Eye, FileText, User, DollarSign, Package,
+  Mail, Upload, RefreshCw, Loader2, CheckCircle, XCircle,
+  AlertTriangle, FileText, User, DollarSign, Package,
   ChevronDown, ChevronRight, Star,
 } from 'lucide-react'
 import * as emailParserApi from '../api/emailParser'

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { User, LoginRequest, MfaVerificationRequest, SsoLoginRequest, UserRole, ROLE_HIERARCHY } from '../types'
+import { User, LoginRequest, UserRole, ROLE_HIERARCHY } from '../types'
 import * as authApi from '../api/auth'
 import * as rbacApi from '../api/rbac'
 
@@ -42,8 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(storedToken)
       try {
         const parsed = JSON.parse(storedUser)
-        parsed.permissions = storedPermissions ? JSON.parse(storedPermissions) : []
-        parsed.securityGroups = storedSecurityGroups ? JSON.parse(storedSecurityGroups) : []
+        parsed.permissions = storedPermissions ? JSON.parse(storedPermissions) : (parsed.permissions || [])
+        parsed.securityGroups = storedSecurityGroups ? JSON.parse(storedSecurityGroups) : (parsed.securityGroups || [])
         setUser(parsed)
       } catch {
         localStorage.removeItem('nexus_token')

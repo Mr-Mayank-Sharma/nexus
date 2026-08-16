@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
-  ClipboardList, Search, Plus, X, Loader2, CheckCircle, AlertCircle,
-  Download, Eye, FileText, Truck, DollarSign, Package, PenLine,
-  ChevronRight, Calendar, Send, Ban,
+  ClipboardList, Search, Plus, X, Loader2, CheckCircle,
+  Download, Eye, FileText, Truck, DollarSign, Package, PenLine, Send, Ban,
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -73,12 +72,10 @@ export default function ManifestPage() {
   const [fetched, setFetched] = useState(false)
 
   const [manifests, setManifests] = useState<any[]>([])
-  const [carrierList, setCarrierList] = useState<any[]>([])
 
   useEffect(() => {
-    Promise.all([fetchManifests(), fetchCarriers()]).then(([m, c]) => {
+    Promise.all([fetchManifests(), fetchCarriers()]).then(([m, _c]) => {
       if (m?.data) setManifests(m.data)
-      if (c?.data) setCarrierList(c.data)
     }).catch(() => {})
   }, [])
   const [selectedManifest, setSelectedManifest] = useState<Manifest | null>(null)

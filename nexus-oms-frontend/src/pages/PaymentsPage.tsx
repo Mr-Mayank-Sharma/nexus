@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchPayments, fetchInvoices, fetchReconciliation, createInvoice, updateInvoice } from '../api/newBackend'
 import {
-  CreditCard, DollarSign, Receipt, TrendingUp, TrendingDown,
-  Search, Download, Plus, Filter, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, AlertTriangle, Clock, ArrowUpRight, ArrowDownRight,
+  CreditCard, TrendingUp, Download, Plus, XCircle, AlertTriangle,
 } from 'lucide-react'
 import Autocomplete from '../components/common/Autocomplete'
 import clsx from 'clsx'
@@ -55,20 +53,16 @@ export default function PaymentsPage() {
   const [invoiceForm, setInvoiceForm] = useState({ orderNumber: '', customerName: '', amount: '', dueDate: '' })
   const [payments, setPayments] = useState<any[]>([])
   const [invoices, setInvoices] = useState<any[]>([])
-  const [reconciliation, setReconciliation] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       fetchPayments(),
       fetchInvoices(),
       fetchReconciliation(),
-    ]).then(([payRes, invRes, recRes]) => {
+    ]).then(([payRes, invRes, _recRes]) => {
       if (payRes?.payments) setPayments(payRes.payments)
       if (invRes?.invoices) setInvoices(invRes.invoices)
-      if (recRes?.items) setReconciliation(recRes.items)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    }).catch(() => {})
   }, [])
 
   const totalCaptured = payments.filter(p => p.status === 'captured').reduce((s, p) => s + p.amount, 0)

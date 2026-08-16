@@ -3,38 +3,12 @@ import { clsx } from 'clsx'
 import {
   Users, Play, Pause, LogOut, TrendingUp, Clock, UserCheck, Package,
   Truck, Gauge, BarChart3, Calendar, AlertTriangle, Plus, X, Loader2,
-  RefreshCw, Target, Activity, Settings, Check, ArrowUp, ArrowDown,
+  RefreshCw, Target, Activity, Settings, ArrowUp, ArrowDown,
 } from 'lucide-react'
 import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import * as laborApi from '../api/laborManagement'
-
-interface Employee {
-  id: string
-  name: string
-  role: 'Picker' | 'Packer' | 'Loader'
-  status: 'Active' | 'Break' | 'Off'
-  currentTask: string
-  efficiency: number
-  hoursToday: number
-  avatar: string
-}
-
-interface Shift {
-  id: string
-  employee: string
-  role: string
-  shiftStart: string
-  shiftEnd: string
-  breakTimes: string
-  overtime: string
-}
-
-interface WaveAssign {
-  waveId: string
-  waveName: string
-}
 
 interface WorkloadRule {
   id: string
@@ -118,8 +92,6 @@ export default function LaborManagementPage() {
 
   const [employees, setEmployees] = useState<any[]>([])
   const [shifts, setShifts] = useState<any[]>([])
-  const [waves, setWaves] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedAssignWave, setSelectedAssignWave] = useState<string | null>(null)
 
   const [workloadRules, setWorkloadRules] = useState<WorkloadRule[]>([])
@@ -139,10 +111,7 @@ export default function LaborManagementPage() {
     ]).then(([empRes, shiftRes]) => {
       if (empRes?.data && Array.isArray(empRes.data) && empRes.data.length > 0) setEmployees(empRes.data)
       if (shiftRes?.data && Array.isArray(shiftRes.data) && shiftRes.data.length > 0) setShifts(shiftRes.data)
-      setLoading(false)
-    }).catch(() => {
-      setLoading(false)
-    })
+    }).catch(() => {})
   }, [])
 
   const loadWorkloadData = useCallback(async () => {

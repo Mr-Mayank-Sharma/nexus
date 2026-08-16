@@ -41,16 +41,6 @@ export async function createShipment(payload: Partial<Shipment>): Promise<ApiRes
   }
 }
 
-export async function updateTracking(id: string, trackingNumber: string, carrierId: string, serviceLevel?: string): Promise<ApiResponse<Shipment>> {
-  try {
-    const { data } = await client.put(`/shipments/${id}/tracking`, { trackingNumber, carrierId, serviceLevel })
-    return data
-  } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || 'Failed to update tracking'
-    return { success: false, error: msg } as any
-  }
-}
-
 export async function markShipped(id: string): Promise<ApiResponse<Shipment>> {
   try {
     const { data } = await client.post(`/shipments/${id}/ship`)

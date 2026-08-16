@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { clsx } from 'clsx'
 import {
-  FileText, Upload, RefreshCw, Loader2, Search, ChevronDown, ChevronRight,
-  CheckCircle, XCircle, AlertTriangle, Clock, Eye, Download, Trash2, Plus,
+  FileText, Upload, RefreshCw, Loader2, ChevronDown, ChevronRight,
+  CheckCircle, XCircle, Clock, Eye,
 } from 'lucide-react'
 import * as ediApi from '../api/edi'
 import type { EdiDocument } from '../types'

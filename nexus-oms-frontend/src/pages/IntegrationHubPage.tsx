@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Plug, Plus, Trash2, RefreshCw, TestTube, Globe, Database, Truck, CreditCard,
-  MessageSquare, UserCheck, BarChart3, Brain, Package, Settings, Link, Loader2,
-  CheckCircle, XCircle, AlertTriangle, Activity, Zap, Wifi, Clock, X, ChevronDown,
+  MessageSquare, UserCheck, BarChart3, Brain, Package, Link, Loader2, Activity, Zap, X,
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { integrationHub, ConnectorMetadata, ConnectorInstance, BatchJob } from '../api/integrationHub'

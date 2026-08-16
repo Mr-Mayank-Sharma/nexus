@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Users, UserCheck, Clock, Coffee, WifiOff, Search, Eye, Plus,
-  ChevronRight, ArrowRight, Filter, BarChart3,
+  Users, UserCheck, Clock, Search, Plus, ArrowRight, BarChart3,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
-import { pickersApi, Picker, PickerAssignment, PickerStats } from '../api/pickers'
-import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
+import { pickersApi, Picker, PickerStats } from '../api/pickers'
+import { EnterpriseTabs, EnterpriseKPICard } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
 import type { Tab } from '../components/enterprise'
 

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Gauge, AlertTriangle, CheckCircle, Clock, Search, Eye, Plus,
-  ToggleLeft, ToggleRight, Edit, Activity, TrendingUp,
+  Gauge, AlertTriangle, CheckCircle, Search, Eye,
+  ToggleLeft, ToggleRight, Activity,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import {
-  fulfillmentLimitsApi, FulfillmentLimit, CapacityLog, CapacityCheck,
+  fulfillmentLimitsApi, FulfillmentLimit, CapacityCheck,
 } from '../api/fulfillmentLimits'
 import { EnterpriseTabs, EnterpriseKPICard } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -208,7 +208,6 @@ export default function FulfillmentLimitsPage() {
                   <tr><td colSpan={9} className="px-4 py-8 text-center text-[var(--text-secondary)]">No limits configured</td></tr>
                 ) : (
                   filteredLimits.map((limit) => {
-                    const cap = capacityData[limit.nodeId]
                     const dayPct = limit.maxOrdersPerDay ? (limit.currentOrdersToday / limit.maxOrdersPerDay * 100) : 0
                     return (
                       <tr key={limit.id} className="hover:bg-[var(--surface-sunken)]">

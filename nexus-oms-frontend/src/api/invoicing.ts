@@ -132,7 +132,7 @@ export async function getInvoiceSummary(): Promise<ApiResponse<Record<string, an
       success: true,
       data: { totalOutstanding, totalOverdue, paidThisMonth, pendingCount, paidCount, overdueCount, totalInvoices: allInvoices.length }
     }
-  } catch (error: any) {
+  } catch {
     return {
       success: true,
       data: { totalOutstanding: 0, totalOverdue: 0, paidThisMonth: 0, pendingCount: 0, paidCount: 0, overdueCount: 0, totalInvoices: 0 }

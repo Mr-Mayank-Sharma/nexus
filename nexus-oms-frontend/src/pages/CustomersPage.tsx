@@ -1,13 +1,11 @@
 import { useState } from 'react'
-import { clsx } from 'clsx'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Users, Plus, Search, Mail, Phone, MapPin, Loader2, Trash2, Edit3,
+  Users, Plus, Mail, Phone, MapPin, Loader2, Trash2, Edit3,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
-import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
 import * as customersApi from '../api/customers'

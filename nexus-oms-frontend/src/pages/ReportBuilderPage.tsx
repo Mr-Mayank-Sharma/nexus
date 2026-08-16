@@ -53,7 +53,7 @@ export default function ReportBuilderPage() {
   })
 
   const runReport = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+    mutationFn: async ({ id }: { id: string; name: string }) => {
       return generateReport(id, 'PDF')
     },
     onSuccess: (res, vars) => {

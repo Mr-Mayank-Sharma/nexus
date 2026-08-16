@@ -29,7 +29,6 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const stompClient = useRef<Client | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const reconnectAttempts = useRef(0);
-  const maxReconnectAttempts = 3;
   const mountedRef = useRef(true);
   const disconnectingRef = useRef(false);
   const optionsRef = useRef(options);

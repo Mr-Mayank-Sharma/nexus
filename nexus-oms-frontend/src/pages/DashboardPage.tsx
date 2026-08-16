@@ -13,13 +13,11 @@ import clsx from 'clsx'
 import {
   EnterpriseKPICard,
   EnterpriseTimeline,
-  EnterpriseStatusBadge,
 } from '../components/enterprise'
 import type { TimelineEvent } from '../components/enterprise'
 import * as analyticsApi from '../api/analytics'
 import * as aiPlatformApi from '../api/aiPlatform'
 import * as pickingApi from '../api/picking'
-import * as packingApi from '../api/packing'
 import * as inventoryApi from '../api/inventory'
 import promotionsApi from '../api/promotions'
 import endlessAisleApi from '../api/endlessAisle'
@@ -52,7 +50,6 @@ export default function DashboardPage() {
   const [velocityRate, setVelocityRate] = useState<number | null>(null)
   const [activities, setActivities] = useState<TimelineEvent[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const { addToast } = useToast()
   const [aiDemand, setAiDemand] = useState<AiPrediction | null>(null)
   const [aiInventory, setAiInventory] = useState<AiPrediction | null>(null)
@@ -71,15 +68,6 @@ export default function DashboardPage() {
     queryKey: ['dashboard-picklists'],
     queryFn: async () => {
       const res = await pickingApi.getPicklists()
-      const d = res.data; return Array.isArray(d) ? d : (d?.content ?? [])
-    },
-    refetchInterval: 30000,
-  })
-
-  const { data: shipments = [] } = useQuery({
-    queryKey: ['dashboard-shipments-stats'],
-    queryFn: async () => {
-      const res = await packingApi.getPackages()
       const d = res.data; return Array.isArray(d) ? d : (d?.content ?? [])
     },
     refetchInterval: 30000,
@@ -115,8 +103,6 @@ export default function DashboardPage() {
   const openPicklists = picklists.filter((p: any) => p.status === 'OPEN').length
   const inProgressPicklists = picklists.filter((p: any) => p.status === 'IN_PROGRESS').length
   const completedPicklists = picklists.filter((p: any) => p.status === 'COMPLETED').length
-  const packedCount = shipments.filter((s: any) => s.status === 'PACKED').length
-  const shippedCount = shipments.filter((s: any) => s.status === 'SHIPPED').length
 
   const totalOrders = openPicklists + inProgressPicklists + completedPicklists
   const fulfillmentStageMetrics = [
@@ -132,7 +118,6 @@ export default function DashboardPage() {
   const selectedFacilityData = selectedFacility ? facilities.find(f => f.id === selectedFacility) : null
 
   const fetchData = useCallback(async () => {
-    setError(null)
     setLoading(true)
     let observedKpis: Record<string, any> = {}
     try {
@@ -211,7 +196,6 @@ export default function DashboardPage() {
       }
     } catch {
       addToast({ type: 'error', title: 'Failed to load dashboard data' })
-      setError('Failed to load dashboard data')
       setVelocityRate(null)
     } finally {
       setLoading(false)

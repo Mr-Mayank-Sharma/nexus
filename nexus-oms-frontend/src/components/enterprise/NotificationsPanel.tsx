@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Bell, Package, AlertTriangle, CreditCard, Truck, CheckCircle, X, RefreshCw, Settings } from 'lucide-react'
+import { Bell, Package, AlertTriangle, CreditCard, Truck, CheckCircle, X, Settings } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useNavigate } from 'react-router-dom'
 import * as notificationsApi from '../../api/notifications'

@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import {
   Package, Users, ClipboardCheck, PackagePlus, Ship, Warehouse, Store, CreditCard,
   GitBranch, Route, BarChart3, Brain, Cpu, FlaskConical, Settings, RotateCcw,
-  Globe, ShoppingCart, Receipt, Bell, FileText, Shield, UserCog, Activity,
-  Upload, Download, Zap, Mail, TrendingDown, Truck, Building2, Search, AlertTriangle,
-  LayoutDashboard, ChevronRight, Star, Sparkles, Menu, ShoppingBag, Calendar, Gauge,
+  Globe, ShoppingCart, Receipt, Bell, FileText, Shield, UserCog, Activity, Download, Zap, Mail, TrendingDown, Truck, Building2, Search, AlertTriangle,
+  LayoutDashboard, Star, Menu, ShoppingBag, Calendar, Gauge,
   Plus, Layers, Printer, ScanLine, Tag, Wallet,
 } from 'lucide-react'
 import { clsx } from 'clsx'

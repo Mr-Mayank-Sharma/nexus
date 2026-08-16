@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { clsx } from 'clsx'
 import {
-  Route, AlertTriangle, CheckCircle2, XCircle, Loader2, Search, RefreshCw,
-  TrendingUp, Clock, DollarSign, Zap, Shield, ChevronRight, ExternalLink,
+  Route, AlertTriangle, CheckCircle2, XCircle, Loader2, RefreshCw,
+  TrendingUp, Zap,
   ArrowUpRight, AlertCircle, Info, Flag, Brain,
 } from 'lucide-react'
 import * as orderRoutingApi from '../api/orderRouting'

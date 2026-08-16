@@ -3,10 +3,9 @@ import { clsx } from 'clsx'
 import {
   Bot, Move, ArrowUpDown, Navigation, Plane, Mic, ScanLine,
   Plus, RefreshCw, Send, X, AlertTriangle, CheckCircle, Clock,
-  Wifi, WifiOff, Settings, ShieldAlert, XCircle, Loader2,
-  ChevronDown, ChevronRight, ToggleLeft, ToggleRight, Eye,
-  Play, Square, RotateCcw, BarChart3, Activity, Zap, Bell,
-  Terminal, Filter, Search,
+  Wifi, Settings, ShieldAlert, XCircle, Loader2,
+  ChevronDown, ToggleLeft, ToggleRight, Eye, RotateCcw, Activity, Zap, Bell,
+  Terminal, Filter,
 } from 'lucide-react'
 import * as automationApi from '../api/automation'
 import { useToast } from '../hooks/useToast'
@@ -172,8 +171,8 @@ export default function AutomationSystemsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [healthData, setHealthData] = useState<HealthData>({ total: 0, online: 0, offline: 0, error: 0, maintenance: 0, healthScore: 0 })
-  const [commandStats, setCommandStats] = useState({ totalToday: 0, avgExecutionMs: 0, successRate: 0, failedToday: 0 })
-  const [alertStats, setAlertStats] = useState({ active: 0, acknowledged: 0, resolved: 0, bySeverity: { CRITICAL: 0, WARNING: 0, INFO: 0 } })
+  const commandStats = { totalToday: 0, avgExecutionMs: 0, successRate: 0, failedToday: 0 }
+  const alertStats = { active: 0, acknowledged: 0, resolved: 0, bySeverity: { CRITICAL: 0, WARNING: 0, INFO: 0 } }
 
   // Loading
   const [loading, setLoading] = useState(true)

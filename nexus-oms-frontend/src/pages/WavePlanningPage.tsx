@@ -298,7 +298,6 @@ export default function WavePlanningPage() {
             ) : (
               filtered.map(wave => {
                 const isExpanded = expandedId === wave.id
-                const progress = progressFor(wave)
                 return (
                   <tr key={wave.id} className={clsx('group', isExpanded && 'bg-[var(--nexus-primary-50)]/30')}>
                     <td className="px-4 py-3">

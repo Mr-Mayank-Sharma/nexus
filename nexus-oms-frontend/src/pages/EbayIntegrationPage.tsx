@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
-  ShoppingBag, Settings, RefreshCw, Link, ExternalLink, Loader2,
-  CheckCircle, XCircle, Clock, AlertTriangle, Activity, Search, Filter, Tag, ArrowRight,
+  ShoppingBag, Settings, RefreshCw, Link, Loader2,
+  CheckCircle, XCircle, Clock, Tag, ArrowRight,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
@@ -9,7 +9,6 @@ import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { useEffect } from 'react'
 import { fetchEbayOrders, authorizeEbay } from '../api/connectors/ebayConnector'
-import type { EbayOrder as ConnectorEbayOrder } from '../api/connectors/ebayConnector'
 import { fetchAllStatus } from '../api/connectors/connectorRegistry'
 
 interface EbayOrder {

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
-  Warehouse, Package, DollarSign, AlertTriangle, Layers, Archive,
+  Warehouse, DollarSign, AlertTriangle, Layers, Archive,
   Building2, Store, ArrowRight, Search, X, Truck, Plus,
   RefreshCw, TrendingUp, Sparkles, Clock, Hash, Ban,
 } from 'lucide-react'
@@ -9,50 +9,13 @@ import { useToast } from '../hooks/useToast'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import Autocomplete from '../components/common/Autocomplete'
-import { fetchEnhancedInventory, adjustInventory } from '../api/newBackend'
+import { fetchEnhancedInventory } from '../api/newBackend'
 import PermissionGate from '../components/rbac/PermissionGate'
-
-interface WarehouseNode {
-  id: string
-  name: string
-  type: 'DC' | 'Warehouse' | 'Store'
-  capacity: number
-  totalUnits: number
-  skuCount: number
-  lastUpdated: string
-}
 
 interface ProductATP {
   sku: string
   productName: string
   nodes: { nodeName: string; available: number; reserved: number; incoming: number; onOrder: number }[]
-}
-
-interface Transfer {
-  id: string
-  from: string
-  to: string
-  sku: string
-  productName: string
-  qty: number
-  status: 'In Transit' | 'Completed' | 'Pending'
-  date: string
-}
-
-interface StockAlert {
-  sku: string
-  productName: string
-  currentStock: number
-  reorderPoint: number
-  maxStock: number
-  node: string
-}
-
-interface ReplenishmentSuggestion {
-  id: string
-  message: string
-  type: 'reorder' | 'overstock'
-  priority: 'high' | 'medium' | 'low'
 }
 
 const nodeIconMap: Record<string, typeof Building2> = {
@@ -82,19 +45,16 @@ function atpBgBar(atp: number): string {
 
 export default function InventoryEnhancedPage() {
   const [warehouseData, setWarehouseData] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchEnhancedInventory().then(res => {
       if (res?.warehouses) setWarehouseData(res.warehouses)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    }).catch(() => {})
   }, [])
 
   const { addToast } = useToast()
 
   const [atpSearch, setAtpSearch] = useState('')
-  const [selectedSku, setSelectedSku] = useState<string | null>(null)
   const [showTransferModal, setShowTransferModal] = useState(false)
   const [alertTab, setAlertTab] = useState<'low' | 'overstock' | 'dead'>('low')
   const [transferForm, setTransferForm] = useState({ from: '', to: '', sku: '', qty: 0 })
@@ -108,13 +68,11 @@ export default function InventoryEnhancedPage() {
   const selectedProduct: ProductATP | null = null
 
   const totalUnits = warehouseData.reduce((s, w) => s + w.totalUnits, 0)
-  const totalValue = 12400000
   const lowStockCount = 23
   const overstockCount = 156
   const deadStockCount = 34
 
-  function handleSelectProduct(sku: string) {
-    setSelectedSku(sku)
+  function handleSelectProduct(_sku: string) {
     setAtpSearch('')
   }
 

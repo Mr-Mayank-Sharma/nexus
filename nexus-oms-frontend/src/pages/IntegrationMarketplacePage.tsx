@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ShoppingCart, Globe, ShoppingBag, Store, Package, CreditCard, Search, Grid3X3,
-  CheckCircle, XCircle, Clock, Loader2, Plug, Zap, ExternalLink, Filter, ArrowRight,
-  AlertTriangle, Wifi, SlidersHorizontal,
+  CheckCircle, Clock, Loader2, Plug, Zap, ExternalLink, Filter, ArrowRight,
+  AlertTriangle, Wifi,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useToast } from '../hooks/useToast'

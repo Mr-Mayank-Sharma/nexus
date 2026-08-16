@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  ShoppingCart, Plus, Package, Truck, CheckCircle, XCircle, Clock, Search, X,
-  MapPin, User, Mail, Phone,
+  ShoppingCart, Plus, Package, Truck, CheckCircle, XCircle, Clock, Search, X, User, Mail, Phone,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
@@ -53,7 +52,7 @@ export default function EndlessAislePage() {
 
   // ─── Queries ────────────────────────────────────────────────────────
 
-  const { data: orders = [], isLoading, refetch } = useQuery({
+  const { data: orders = [], isLoading } = useQuery({
     queryKey: ['endless-aisle-orders'],
     queryFn: async () => {
       const res = await endlessAisleApi.getOrders()
@@ -61,7 +60,7 @@ export default function EndlessAislePage() {
     },
   })
 
-  const { data: stats, isLoading: loadingStats } = useQuery({
+  const { data: stats } = useQuery({
     queryKey: ['endless-aisle-stats'],
     queryFn: async () => {
       const res = await endlessAisleApi.getStats()
@@ -91,15 +90,6 @@ export default function EndlessAislePage() {
       addToast({ type: 'success', title: 'Status updated' })
     },
     onError: (err: any) => addToast({ type: 'error', title: 'Failed to update status', message: err.message }),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => endlessAisleApi.deleteOrder(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['endless-aisle-orders'] })
-      addToast({ type: 'success', title: 'Order deleted' })
-    },
-    onError: (err: any) => addToast({ type: 'error', title: 'Failed to delete order', message: err.message }),
   })
 
   // ─── Helpers ────────────────────────────────────────────────────────
@@ -253,7 +243,6 @@ export default function EndlessAislePage() {
                 <tbody>
                   {filteredOrders.map((order) => {
                     const config = STATUS_CONFIG[order.status || 'PENDING']
-                    const Icon = config?.icon || Clock
                     const nextStatus = getNextStatus(order.status || 'PENDING')
                     return (
                       <tr key={order.id} className="border-b border-[var(--surface-sunken)] dark:border-[var(--border-input)]/50 hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-sunken)]/50">

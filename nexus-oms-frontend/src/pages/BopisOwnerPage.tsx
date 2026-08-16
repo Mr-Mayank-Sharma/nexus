@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  ShoppingBag, Package, Users, Clock, CheckCircle, Search, Eye,
+  ShoppingBag, Package, Users, Clock, CheckCircle, Eye,
   Calendar, TrendingUp, Phone,
 } from 'lucide-react'
 import clsx from 'clsx'

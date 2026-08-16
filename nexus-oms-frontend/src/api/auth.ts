@@ -8,7 +8,6 @@ import {
   ForgotPasswordRequest,
   ResetPasswordRequest,
   TenantInfo,
-  User,
 } from '../types'
 
 export async function login(credentials: LoginRequest): Promise<ApiResponse<AuthResponse>> {
@@ -87,16 +86,6 @@ export async function getSsoProviders(): Promise<ApiResponse<string[]>> {
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get SSO providers'
-    return { success: false, error: msg } as any
-  }
-}
-
-export async function getCurrentUser(): Promise<ApiResponse<User>> {
-  try {
-    const { data } = await client.get('/auth/me')
-    return data
-  } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || 'Failed to get current user'
     return { success: false, error: msg } as any
   }
 }

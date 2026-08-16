@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react'
-import { Building2, FileText, ShoppingCart, ClipboardList, Plus, Search, Eye, X, Check, ChevronDown, ChevronRight, Loader2, Star, PackageCheck, Send } from 'lucide-react'
+import { Building2, FileText, ShoppingCart, ClipboardList, Plus, Eye, X, Check, ChevronDown, ChevronRight, Loader2, Star, PackageCheck, Send } from 'lucide-react'
 import { clsx } from 'clsx'
 import StatusBadge from '../components/common/StatusBadge'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -8,9 +8,9 @@ import { useToast } from '../hooks/useToast'
 import * as procurementApi from '../api/procurement'
 import type {
   Supplier, SupplierContact, SupplierContract,
-  PurchaseRequest, PurchaseRequestItem,
-  Rfq, RfqResponse, RfqItem,
-  PurchaseOrder, PurchaseOrderItem,
+  PurchaseRequest,
+  Rfq, RfqResponse,
+  PurchaseOrder,
 } from '../api/procurement'
 
 type TabId = 'suppliers' | 'requests' | 'rfqs' | 'purchaseOrders'
@@ -30,17 +30,7 @@ const prStatusColors: Record<string, string> = {
   CONVERTED: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
 }
 
-const poStatusOrder: Record<string, number> = {
-  DRAFT: 0,
-  PENDING_APPROVAL: 1,
-  APPROVED: 2,
-  PARTIALLY_RECEIVED: 3,
-  RECEIVED: 4,
-  CLOSED: 5,
-}
-
 export default function ProcurementPage() {
-  const { addToast } = useToast()
   const [activeTab, setActiveTab] = useState<TabId>('suppliers')
 
   return (
@@ -1720,15 +1710,6 @@ function PurchaseOrdersTab() {
       addToast({ type: 'error', title: 'Failed to receive items' })
     } finally {
       setReceiving(false)
-    }
-  }
-
-  function getNextStatus(status: string): string | null {
-    switch (status) {
-      case 'DRAFT': return 'PENDING_APPROVAL'
-      case 'APPROVED': return 'SENT'
-      case 'SENT': return 'CONFIRMED'
-      default: return null
     }
   }
 

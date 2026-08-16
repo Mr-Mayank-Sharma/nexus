@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import Autocomplete from '../components/common/Autocomplete'
-import { Search, Ship, Truck, Plus, Edit, Trash2, DollarSign, CheckCircle, BarChart3, Loader2, X } from 'lucide-react'
+import { Ship, Truck, Plus, Edit, Trash2, DollarSign, CheckCircle, BarChart3, Loader2, X } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
 import client from '../api/client'
@@ -40,8 +40,6 @@ interface CarrierFormData {
   apiSecretEncrypted: string
   isActive: boolean
 }
-
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
 
 const SERVICE_TYPES = ['Ground', '2-Day', 'Overnight']
 
@@ -429,7 +427,7 @@ export default function CarriersPage() {
                 </tr>
               </thead>
               <tbody>
-                {rateComparison.map(({ serviceType, entries, bestCarrier }) => (
+                {rateComparison.map(({ serviceType, entries }) => (
                   <tr key={serviceType}>
                     <td className="font-semibold text-[var(--text-primary)]">{serviceType}</td>
                     {entries.map(({ carrier, rate }) => (

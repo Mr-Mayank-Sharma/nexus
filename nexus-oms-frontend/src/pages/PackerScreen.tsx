@@ -2,24 +2,22 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  PackagePlus, Package, Box, Printer, CheckCircle, Search, Eye,
-  Clock, AlertTriangle, ArrowRight, QrCode, Scan,
+  PackagePlus, Package, Box, Printer, CheckCircle, Search,
+  Clock, QrCode, Scan,
 } from 'lucide-react'
-import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import * as packingApi from '../api/packing'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
-import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
+import { EnterpriseKPICard } from '../components/enterprise'
 
 export default function PackerScreen() {
   const navigate = useNavigate()
   const { addToast } = useToast()
   const queryClient = useQueryClient()
-  const [searchTerm, setSearchTerm] = useState('')
   const [scanInput, setScanInput] = useState('')
 
-  const { data: packages = [], isLoading } = useQuery({
+  const { data: packages = [] } = useQuery({
     queryKey: ['packer-packages'],
     queryFn: async () => {
       const res = await packingApi.getPackages({})

@@ -71,16 +71,6 @@ const STATUS_BADGE: Record<string, string> = {
   CANCELLED: 'rejected',
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  REQUESTED: 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] ring-[var(--nexus-warning-500)]/20',
-  APPROVED: 'text-[var(--nexus-primary-600)] bg-[var(--nexus-primary-50)] ring-[var(--nexus-primary-500)]/20',
-  RECEIVED: 'text-[var(--text-secondary)] bg-[var(--surface-sunken)] ring-[var(--border-default)]/20',
-  INSPECTED: 'text-[var(--nexus-info-600)] bg-[var(--nexus-info-50)] ring-[var(--nexus-info-500)]/20',
-  REFUNDED: 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] ring-[var(--nexus-success-500)]/20',
-  REJECTED: 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] ring-[var(--nexus-error-500)]/20',
-  CANCELLED: 'text-[var(--text-tertiary)] bg-[var(--surface-sunken)] ring-[var(--border-default)]/20',
-}
-
 const CONDITION_OPTIONS: ItemCondition[] = ['EXCELLENT', 'GOOD', 'FAIR', 'POOR', 'DAMAGED']
 const DISPOSITION_OPTIONS: Disposition[] = ['RESTOCK', 'REFURBISH', 'DONATE', 'RECYCLE', 'SCRAP']
 const GRADE_OPTIONS: Grade[] = ['A', 'B', 'C', 'D', 'F']

@@ -58,7 +58,6 @@ export default function ReplenishmentPage() {
 
   const [rules, setRules] = useState<ReplenishmentRule[]>([])
   const [suggestions, setSuggestions] = useState<ReplenishmentSuggestion[]>([])
-  const [stats, setStats] = useState<Record<string, unknown> | null>(null)
 
   const [showRuleModal, setShowRuleModal] = useState(false)
   const [ruleForm, setRuleForm] = useState({ ruleName: '', sku: '', reorderPoint: '', reorderQty: '', targetQty: '', priority: 'MEDIUM', notes: '' })
@@ -67,7 +66,7 @@ export default function ReplenishmentPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [rulesRes, suggestionsRes, statsRes] = await Promise.allSettled([
+      const [rulesRes, suggestionsRes] = await Promise.allSettled([
         replenishmentApi.getRules(selectedWarehouse),
         replenishmentApi.getSuggestions(selectedWarehouse),
         replenishmentApi.getStats(selectedWarehouse),
@@ -75,15 +74,12 @@ export default function ReplenishmentPage() {
 
       const rulesData = rulesRes.status === 'fulfilled' ? (rulesRes.value.data as ReplenishmentRule[]) : null
       const suggestionsData = suggestionsRes.status === 'fulfilled' ? (suggestionsRes.value.data as ReplenishmentSuggestion[]) : null
-      const statsData = statsRes.status === 'fulfilled' ? statsRes.value.data : null
 
       setRules(rulesData || [])
       setSuggestions(suggestionsData || [])
-      setStats(statsData || null)
     } catch {
       setRules([])
       setSuggestions([])
-      setStats(null)
     } finally {
       setLoading(false)
     }

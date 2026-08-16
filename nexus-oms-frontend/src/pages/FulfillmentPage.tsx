@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
-  Play, Package, CheckCircle, Clock, AlertTriangle, Printer, Truck, Plus,
-  Loader2, ListOrdered, ClipboardList, TrendingUp, ArrowRight, Eye, Search,
-  XCircle, RotateCcw,
+  Play, Package, CheckCircle, Clock, Truck, ClipboardList, ArrowRight, Eye,
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
@@ -72,18 +70,6 @@ export default function FulfillmentPage() {
     queryClient.invalidateQueries({ queryKey: ['orders'] })
     queryClient.invalidateQueries({ queryKey: ['picklists'] })
   }
-
-  const confirmMutation = useMutation({
-    mutationFn: (id: string) => ordersApi.confirmOrder(id),
-    onSuccess: () => { invalidate(); addToast({ type: 'success', title: 'Order confirmed' }) },
-    onError: () => addToast({ type: 'error', title: 'Confirmation failed' }),
-  })
-
-  const allocateMutation = useMutation({
-    mutationFn: (id: string) => ordersApi.allocateOrder(id),
-    onSuccess: () => { invalidate(); addToast({ type: 'success', title: 'Order allocated' }) },
-    onError: () => addToast({ type: 'error', title: 'Allocation failed' }),
-  })
 
   const shipMutation = useMutation({
     mutationFn: (id: string) => ordersApi.shipOrder(id, 'auto', 'TN-' + Date.now()),

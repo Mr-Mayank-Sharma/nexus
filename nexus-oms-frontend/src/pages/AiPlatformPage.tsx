@@ -15,19 +15,16 @@ import {
   BarChart3,
   Server,
   DollarSign,
-  ArrowUp,
-  ArrowDown,
   Loader2,
   Shield,
-  Cpu,
   FileWarning,
   ThumbsDown,
 } from 'lucide-react'
 import {
-  AiModel, AiModelVersion, AiTrainingJob, AiFeatureDefinition, AiInferenceLog,
+  AiModel, AiModelVersion, AiTrainingJob, AiInferenceLog,
   getModels, getModelVersions, getModelSummary, getTrainingJobs,
   getMonitoringDashboard, getTenantDashboard, getFeatureGroups,
-  startTrainingJob, deployModel, getModel, getInferenceLogs,
+  startTrainingJob, deployModel, getInferenceLogs,
 } from '../api/aiPlatform'
 import PermissionGate from '../components/rbac/PermissionGate'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
@@ -48,22 +45,6 @@ const MODEL_TYPE_LABELS: Record<string, string> = {
   ANOMALY_DETECTOR: 'Anomaly Detector',
   AI_ASSISTANT: 'AI Assistant',
   DOCUMENT_AI: 'Document AI',
-}
-
-const MODEL_CATEGORY_COLORS: Record<string, string> = {
-  GLOBAL: 'info',
-  TENANT: 'primary',
-  HYBRID: 'warning',
-}
-
-const MODEL_STATUS_COLORS: Record<string, string> = {
-  ACTIVE: 'success',
-  DRAFT: 'info',
-  TRAINING: 'warning',
-  ERROR: 'error',
-  DISABLED: 'error',
-  ARCHIVED: 'error',
-  WARNING: 'warning',
 }
 
 export default function AiPlatformPage() {
@@ -110,7 +91,7 @@ function AiOverview() {
         setDashboard(dash.data)
         setMonitoring(mon.data)
       })
-      .catch((e) => { addToast({ type: 'error', title: 'Failed to load dashboard' }) })
+      .catch((_e) => { addToast({ type: 'error', title: 'Failed to load dashboard' }) })
       .finally(() => setLoading(false))
   }, [])
 
@@ -477,7 +458,7 @@ function AiModelRegistry() {
         setModels(modelsRes.data?.content ?? [])
         setSummary(sumRes.data)
       })
-      .catch((e) => { addToast({ type: 'error', title: 'Failed to load models' }) })
+      .catch((_e) => { addToast({ type: 'error', title: 'Failed to load models' }) })
       .finally(() => setLoading(false))
   }, [categoryFilter])
 
@@ -624,7 +605,7 @@ function AiTrainingPipeline() {
   useEffect(() => {
     getTrainingJobs(undefined, statusFilter || undefined, 0)
       .then(res => setJobs(res.data?.content ?? []))
-      .catch((e) => { addToast({ type: 'error', title: 'Failed to load training jobs' }) })
+      .catch((_e) => { addToast({ type: 'error', title: 'Failed to load training jobs' }) })
       .finally(() => setLoading(false))
   }, [statusFilter])
 
@@ -707,7 +688,6 @@ function AiTrainingPipeline() {
 
 function AiFeatureStore() {
   const [groups, setGroups] = useState<Array<{ group: string; count: number }>>([])
-  const [features, setFeatures] = useState<AiFeatureDefinition[]>([])
   const [loading, setLoading] = useState(true)
   const { addToast } = useToast()
 
@@ -717,7 +697,7 @@ function AiFeatureStore() {
       getModelSummary(),
     ])
       .then(([grp]) => setGroups(grp.data ?? []))
-      .catch((e) => { addToast({ type: 'error', title: 'Failed to load features' }) })
+      .catch((_e) => { addToast({ type: 'error', title: 'Failed to load features' }) })
       .finally(() => setLoading(false))
   }, [])
 

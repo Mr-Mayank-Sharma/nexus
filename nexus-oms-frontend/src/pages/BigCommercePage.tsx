@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  Settings, ShoppingCart, Package, Truck, RotateCcw, RefreshCw, Database, Link, ExternalLink,
-  Clock, CheckCircle, XCircle, Loader2, AlertTriangle, Activity,
+  Settings, ShoppingCart, Package, Truck, RotateCcw, RefreshCw, Database, Link, ExternalLink, Loader2, Activity,
 } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import * as bcApi from '../api/bigcommerce'
@@ -14,7 +13,7 @@ import PermissionGate from '../components/rbac/PermissionGate'
 export default function BigCommercePage() {
   const [activeTab, setActiveTab] = useState<'config' | 'sync' | 'logs'>('config')
   const [config, setConfig] = useState<BigCommerceConfig | null>(null)
-  const [configLoading, setConfigLoading] = useState(true)
+  const [, setConfigLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [syncing, setSyncing] = useState<string | null>(null)
   const [syncLogs, setSyncLogs] = useState<SyncLog[]>([])

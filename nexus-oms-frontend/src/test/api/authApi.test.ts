@@ -8,7 +8,6 @@ import {
   register,
   getTenants,
   getSsoProviders,
-  getCurrentUser,
   refreshToken,
 } from '../../api/auth'
 
@@ -159,21 +158,6 @@ describe('Auth API', () => {
       const result = await getSsoProviders()
       expect(result.success).toBe(false)
       expect(result.error).toBe('SSO unavailable')
-    })
-  })
-
-  describe('getCurrentUser', () => {
-    it('should GET /auth/me', async () => {
-      const result = await getCurrentUser()
-      expect(mockGet).toHaveBeenCalledWith('/auth/me')
-      expect(result.success).toBe(true)
-    })
-
-    it('should return error on failure', async () => {
-      mockGet.mockRejectedValueOnce(new Error('Session expired'))
-      const result = await getCurrentUser()
-      expect(result.success).toBe(false)
-      expect(result.error).toBe('Session expired')
     })
   })
 

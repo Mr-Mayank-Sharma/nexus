@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Package, DollarSign, Truck, AlertTriangle, Warehouse, Users,
-  ShoppingCart, ArrowRight, RefreshCw, CheckCircle, Activity, Shield, XCircle, Clock,
+  Package, DollarSign, Truck, AlertTriangle, Warehouse,
+  ShoppingCart, RefreshCw, CheckCircle, Activity, Shield, XCircle, Clock,
 } from 'lucide-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import clsx from 'clsx'

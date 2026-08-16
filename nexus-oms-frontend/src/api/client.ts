@@ -44,31 +44,12 @@ function snakeToCamel(str: string): string {
   return str.replace(/_([a-z0-9])/g, (_, c) => c.toUpperCase())
 }
 
-function camelToSnake(str: string): string {
-  return str.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)
-}
-
 /** Keys that should NOT be converted (pagination/meta fields) */
 const SKIP_CONVERT = new Set([
   'success', 'message', 'error', 'errors',
   'page', 'limit', 'total', 'totalPages', 'totalElements', 'number', 'size',
   'content', 'data', 'pagination',
 ])
-
-function convertKeys<T>(obj: T, converter: (key: string) => string): T {
-  if (obj === null || obj === undefined || typeof obj !== 'object') return obj
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => convertKeys(item, converter)) as T
-  }
-
-  const result: Record<string, any> = {}
-  for (const [key, value] of Object.entries(obj as Record<string, any>)) {
-    const newKey = converter(key)
-    result[newKey] = convertKeys(value, converter)
-  }
-  return result as T
-}
 
 /** Convert response keys: snake_case → camelCase (handles raw SQL results) */
 function responseToCamel(obj: any): any {

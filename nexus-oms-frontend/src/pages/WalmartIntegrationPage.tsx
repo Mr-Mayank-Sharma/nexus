@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import {
-  ShoppingCart, Settings, RefreshCw, Link, ExternalLink, Loader2,
-  CheckCircle, XCircle, Clock, AlertTriangle, Activity, Search, DollarSign, Truck, Package,
+  ShoppingCart, Settings, RefreshCw, Link, Loader2,
+  CheckCircle, XCircle, Clock, DollarSign, Truck, Package,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useEffect } from 'react'
 import { fetchWalmartOrders, authorizeWalmart } from '../api/connectors/walmartConnector'
-import type { WalmartOrder as ConnectorWalmartOrder } from '../api/connectors/walmartConnector'
 import { fetchAllStatus } from '../api/connectors/connectorRegistry'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'

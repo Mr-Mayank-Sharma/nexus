@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useMemo } from 'react'
 import {
   ArrowLeft, Clock, MapPin, Package, User, CreditCard, Truck, CheckCircle, XCircle,
-  AlertTriangle, FileText, MessageSquare, Printer, Loader2, Receipt,
+  AlertTriangle, FileText, Printer, Loader2, Receipt,
   Edit3, Split, Merge, Brain, Download, ExternalLink, Shield,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
@@ -254,7 +254,8 @@ export default function OrderDetailPage() {
 
   function toggleSplitItem(groupIdx: number, itemId: string) {
     const groups = [...splitGroups]; const idx = groups[groupIdx].itemIds.indexOf(itemId)
-    idx >= 0 ? groups[groupIdx].itemIds.splice(idx, 1) : groups[groupIdx].itemIds.push(itemId); setSplitGroups(groups)
+    if (idx >= 0) groups[groupIdx].itemIds.splice(idx, 1)
+    else groups[groupIdx].itemIds.push(itemId); setSplitGroups(groups)
   }
 
   function addSplitGroup() { setSplitGroups([...splitGroups, { itemIds: [], priority: splitGroups.length + 1 }]) }

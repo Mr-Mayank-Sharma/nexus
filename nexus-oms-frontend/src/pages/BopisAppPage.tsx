@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Package, CheckCircle, Truck, User, Clock, AlertTriangle, QrCode,
-  ArrowRight, ArrowDown, Camera, FileText, XCircle,
+  Package, CheckCircle, Truck, Clock, QrCode,
+  ArrowRight, FileText, XCircle,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
@@ -81,15 +81,6 @@ export default function BopisAppPage() {
       setPickupCodeInput('')
     },
     onError: () => addToast({ type: 'error', title: 'Order not found' }),
-  })
-
-  const assignMutation = useMutation({
-    mutationFn: (orderId: string) =>
-      pickupApi.assignPicker(orderId, user?.id || '', user?.name || 'Associate'),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pickup-pending'] })
-      addToast({ type: 'success', title: 'Picking started' })
-    },
   })
 
   const startPickingMutation = useMutation({
@@ -397,7 +388,7 @@ function OrderCard({ order, onSelect, variant }: {
   )
 }
 
-function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, onCompletePicking, onPack, onReady, onHandoff, onCollect, allPicked, allItemsPicked }: {
+function SelectedOrderView({ order, items, onBack, onStartPicking, onPickItem, onCompletePicking, onPack, onReady, onHandoff, onCollect, allItemsPicked }: {
   order: PickupOrder
   items: PickupOrderItem[]
   onBack: () => void

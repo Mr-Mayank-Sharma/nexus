@@ -1,5 +1,5 @@
 import { ReactNode, useState, useRef } from 'react'
-import { Search, X, Loader2 } from 'lucide-react'
+import { Search, Loader2 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { PermissionGate } from '../rbac'
 

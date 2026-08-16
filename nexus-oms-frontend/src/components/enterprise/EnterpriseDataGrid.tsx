@@ -100,7 +100,8 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
 
   const toggleSelect = (id: string) => {
     const next = new Set(selected)
-    next.has(id) ? next.delete(id) : next.add(id)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
     setSelected(next)
     onSelectionChange?.(Array.from(next))
   }
@@ -134,7 +135,8 @@ function EnterpriseDataGrid<T extends Record<string, any>>({
                   <label key={col.key} className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-[var(--bg-tertiary)] cursor-pointer">
                     <input type="checkbox" checked={visibleColumns.has(col.key)} onChange={() => {
                       const next = new Set(visibleColumns)
-                      next.has(col.key) ? next.delete(col.key) : next.add(col.key)
+                      if (next.has(col.key)) next.delete(col.key)
+                      else next.add(col.key)
                       setVisibleColumns(next)
                     }} className="rounded border-[var(--border-color)] text-[var(--color-primary-600)]" />
                     {col.label}

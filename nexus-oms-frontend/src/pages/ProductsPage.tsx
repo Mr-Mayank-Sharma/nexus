@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Tags, Plus, Search, Loader2, Trash2, Edit3, DollarSign, Package, Weight, Image, Download, Upload,
+  Tags, Plus, Loader2, Trash2, Edit3, DollarSign, Package, Weight, Image, Download, Upload,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseToolbar from '../components/enterprise/EnterpriseToolbar'
@@ -65,12 +65,6 @@ export default function ProductsPage() {
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['products'] })
-  }
-
-  function openCreate() {
-    setForm({ sku: '', productName: '', description: '', category: 'Apparel', unitPrice: 0, costPrice: 0, weight: 0 })
-    setEditingProduct(null)
-    setShowCreateModal(true)
   }
 
   function openEdit(p: Product) {

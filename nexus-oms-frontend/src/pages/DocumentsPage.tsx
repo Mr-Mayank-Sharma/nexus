@@ -1,5 +1,5 @@
 import { useState, useEffect, Fragment } from 'react'
-import { FileText, File, Upload, Download, Plus, Search, X, Clock, Tag } from 'lucide-react'
+import { FileText, Upload, Plus, Search, X, Clock, Tag } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
 import * as documentsApi from '../api/documents'

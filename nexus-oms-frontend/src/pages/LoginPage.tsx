@@ -7,14 +7,11 @@ import {
   Mail,
   Lock,
   Shield,
-  ChevronDown,
-  Search,
   Building2,
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
   Loader2,
-  ExternalLink,
   LogIn,
   AlertCircle,
   Users,
@@ -34,7 +31,7 @@ const SSO_PROVIDERS = [
 ]
 
 export default function LoginPage() {
-  const { login, verifyMfa, ssoLogin, mfaRequired, mfaToken } = useAuth()
+  const { login, verifyMfa, mfaRequired } = useAuth()
   const navigate = useNavigate()
 
   const [step, setStep] = useState<LoginStep>(
@@ -43,7 +40,6 @@ export default function LoginPage() {
   const [tenants, setTenants] = useState<TenantInfo[]>([])
   const [selectedTenant, setSelectedTenant] = useState<TenantInfo | null>(null)
   const [tenantSearch, setTenantSearch] = useState('')
-  const [tenantOpen, setTenantOpen] = useState(false)
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -107,13 +103,8 @@ export default function LoginPage() {
     }).catch(() => {})
   }, [])
 
-  const filteredTenants = tenants.filter(t =>
-    t.name.toLowerCase().includes(tenantSearch.toLowerCase())
-  )
-
   function handleTenantSelect(t: TenantInfo) {
     setSelectedTenant(t)
-    setTenantOpen(false)
     setTenantSearch('')
   }
 

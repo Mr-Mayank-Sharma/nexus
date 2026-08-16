@@ -1,33 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import {
-  Building2, Users, Package, ClipboardCheck, PackagePlus, Truck,
-  BarChart3, Clock, TrendingUp, AlertTriangle, Search, Eye, ArrowRight,
-  UserCheck, Calendar, RefreshCw, Target, Gauge,
+  Building2, Users, Package, ClipboardCheck, PackagePlus, Truck, Clock, TrendingUp, AlertTriangle, ArrowRight,
+  UserCheck, Target,
 } from 'lucide-react'
 import clsx from 'clsx'
-import * as pickingApi from '../api/picking'
-import * as packingApi from '../api/packing'
-import * as ordersApi from '../api/orders'
 import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
 
 export default function WarehouseDashboardPage() {
   const navigate = useNavigate()
   const [selectedTab, setSelectedTab] = useState<'overview' | 'labor' | 'dock'>('overview')
-
-  const { data: pieData } = useQuery({
-    queryKey: ['wh-kpis'],
-    queryFn: async () => {
-      const [pickRes, packRes, orderRes] = await Promise.all([
-        pickingApi.getPicklists({}).catch(() => ({ data: { content: [] } })),
-        packingApi.getPackages({}).catch(() => ({ data: { content: [] } })),
-        ordersApi.getOrders({}).catch(() => ({ data: { content: [] } })),
-      ])
-      return { picks: pickRes.data, packs: packRes.data, orders: orderRes.data }
-    },
-  })
 
   const kpis = [
     { title: 'Active Pickers', value: '12', icon: <UserCheck className="w-5 h-5" />, color: 'primary' as const, trend: { value: 8, isUp: true } },

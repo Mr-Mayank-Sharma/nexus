@@ -7,7 +7,6 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { Inventory } from '../types'
 import * as inventoryApi from '../api/inventory'
-import PermissionGate from '../components/rbac/PermissionGate'
 
 interface RawInventory {
   sku?: string
@@ -104,7 +103,6 @@ export default function InventoryPage() {
 
   const totalOnHand = inventory.reduce((s, i) => s + i.quantityOnHand, 0)
   const totalAllocated = inventory.reduce((s, i) => s + i.quantityAllocated, 0)
-  const totalValue = inventory.reduce((s, i) => s + i.totalValue, 0)
   const lowStockCount = inventory.filter((i) => i.atp < i.reorderPoint).length
 
   const columns: Column<Inventory>[] = [

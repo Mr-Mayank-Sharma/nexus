@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Receipt, CreditCard, FileText, Plus, Search, X, DollarSign, Loader2 } from 'lucide-react'
+import { Receipt, CreditCard, FileText, Plus, X, DollarSign, Loader2 } from 'lucide-react'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 import * as invoicingApi from '../api/invoicing'
 import Autocomplete from '../components/common/Autocomplete'
-import { Invoice, InvoiceItem, Payment, CreditMemo } from '../api/invoicing'
+import { Invoice, Payment, CreditMemo } from '../api/invoicing'
 
 type Tab = 'invoices' | 'payments' | 'credit-memos'
 

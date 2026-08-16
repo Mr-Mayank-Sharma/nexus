@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Tag, Plus, Percent, DollarSign, Gift, Truck, Trash2, Edit, ToggleLeft, ToggleRight,
-  BarChart3, Calendar, Users, Search, X, Check,
+  Tag, Plus, Percent, DollarSign, Gift, Truck, Trash2, Edit, ToggleLeft, ToggleRight, Calendar, Search, X, Check,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
@@ -51,7 +50,7 @@ export default function PromotionsPage() {
 
   // ─── Queries ────────────────────────────────────────────────────────
 
-  const { data: promotions = [], isLoading, refetch } = useQuery({
+  const { data: promotions = [], isLoading } = useQuery({
     queryKey: ['promotions'],
     queryFn: async () => {
       const res = await promotionsApi.getPromotions()

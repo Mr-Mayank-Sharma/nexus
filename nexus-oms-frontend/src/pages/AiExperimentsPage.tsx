@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Brain, Edit, FlaskConical, Play, CheckCircle2, XCircle, RotateCcw, AlertTriangle, Plus, Loader2 } from 'lucide-react'
+import { Edit, FlaskConical, Play, CheckCircle2, XCircle, RotateCcw, Plus, Loader2 } from 'lucide-react'
 import { AiExperiment } from '../types'
 import {
   getExperiments, createExperiment, updateExperiment,
@@ -16,14 +16,6 @@ import { useToast } from '../hooks/useToast'
 const EXPERIMENT_TYPES = ['A_B_TEST', 'CHAMPION_CHALLENGER', 'MULTIVARIATE', 'CANARY'] as const
 const STATUS_OPTIONS = ['DRAFT', 'RUNNING', 'COMPLETED', 'ROLLED_BACK', 'FAILED'] as const
 
-const STATUS_COLORS: Record<string, string> = {
-  DRAFT: 'info',
-  RUNNING: 'warning',
-  COMPLETED: 'success',
-  ROLLED_BACK: 'error',
-  FAILED: 'error',
-}
-
 export default function AiExperimentsPage() {
   const { addToast } = useToast()
   const [experiments, setExperiments] = useState<AiExperiment[]>([])
@@ -32,7 +24,6 @@ export default function AiExperimentsPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [modelFilter, setModelFilter] = useState('')
   const [page, setPage] = useState(0)
-  const [totalElements, setTotalElements] = useState(0)
   const [showCreate, setShowCreate] = useState(false)
   const [editing, setEditing] = useState<AiExperiment | null>(null)
   const [saving, setSaving] = useState(false)
@@ -43,7 +34,6 @@ export default function AiExperimentsPage() {
     getExperiments(modelFilter || undefined, statusFilter || undefined, page, 20)
       .then(res => {
         setExperiments(res.data?.content ?? [])
-        setTotalElements(res.data?.totalElements ?? 0)
       })
       .catch(() => addToast({ type: 'error', title: 'Failed to load experiments' }))
       .finally(() => setLoading(false))

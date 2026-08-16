@@ -1,5 +1,4 @@
 import client from './client'
-import type { ApiResponse } from '../types'
 
 export async function fetchDashboard(): Promise<any> {
   try { const { data } = await client.get('/dashboard'); return data } catch { return null }
@@ -19,10 +18,6 @@ export async function createOrder(orderData: Record<string, any>): Promise<any> 
 
 export async function updateOrder(id: string, body: Record<string, any>): Promise<any> {
   try { const { data } = await client.put(`/orders/${id}`, body); return data } catch { return null }
-}
-
-export async function transitionOrder(id: string, action: string): Promise<any> {
-  try { const { data } = await client.patch(`/orders/${id}/${action}`); return data } catch { return null }
 }
 
 export async function fetchOrderStats(): Promise<any> {
@@ -117,18 +112,6 @@ export async function optimizeWave(id: string): Promise<any> {
   try { const { data } = await client.post(`/waves/${id}/optimize`); return data } catch { return null }
 }
 
-export async function fetchEmployees(): Promise<any> {
-  try { const { data } = await client.get('/labor'); return data } catch { return null }
-}
-
-export async function fetchShifts(date?: string): Promise<any> {
-  try { const { data } = await client.get('/labor/shifts', { params: { date } }); return data } catch { return null }
-}
-
-export async function assignTask(taskData: Record<string, any>): Promise<any> {
-  try { const { data } = await client.post('/labor/tasks', taskData); return data } catch { return null }
-}
-
 export async function fetchPickLists(): Promise<any> {
   try { const { data } = await client.get('/picking/lists'); return data } catch { return null }
 }
@@ -143,10 +126,6 @@ export async function updatePickList(id: string, body: Record<string, any>): Pro
 
 export async function fetchPackingQueues(): Promise<any> {
   try { const { data } = await client.get('/packing/queues'); return data } catch { return null }
-}
-
-export async function completePacking(): Promise<any> {
-  try { const { data } = await client.post('/packing/complete'); return data } catch { return null }
 }
 
 export async function fetchCarriers(): Promise<any> {

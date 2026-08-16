@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import {
-  Globe, ShoppingCart, Settings, RefreshCw, Link, ExternalLink, Loader2,
-  CheckCircle, XCircle, Clock, AlertTriangle, Activity, Search, Filter, Download,
+  Globe, ShoppingCart, Settings, RefreshCw, Link, Loader2,
+  CheckCircle, XCircle, Clock, AlertTriangle, Download,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useEffect } from 'react'
 import { fetchAmazonOrders, authorizeAmazon } from '../api/connectors/amazonConnector'
-import type { AmazonOrder as ConnectorAmazonOrder } from '../api/connectors/amazonConnector'
 import { fetchAllStatus } from '../api/connectors/connectorRegistry'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
@@ -124,7 +123,7 @@ export default function AmazonIntegrationPage() {
     setSyncing(true)
     try {
       const { syncAmazonOrders } = await import('../api/connectors/amazonConnector')
-      const result = await syncAmazonOrders()
+      await syncAmazonOrders()
       const ordersRes = await fetchAmazonOrders()
       if (ordersRes.orders && Array.isArray(ordersRes.orders)) {
         const mapped: AmazonOrder[] = ordersRes.orders.map((o: ConnectorOrder, i: number) => ({
@@ -140,7 +139,7 @@ export default function AmazonIntegrationPage() {
         setFetchedOrders(mapped)
       }
       addToast({ type: 'success', title: 'Sync completed — orders fetched from connector' })
-    } catch (err: any) {
+    } catch {
       addToast({ type: 'success', title: 'Force sync completed — 47 orders imported, 0 failed' })
     } finally {
       setSyncing(false)
