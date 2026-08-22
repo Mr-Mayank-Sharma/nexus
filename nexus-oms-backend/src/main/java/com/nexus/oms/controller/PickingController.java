@@ -127,6 +127,14 @@ public class PickingController {
         return ResponseEntity.ok(ApiResponse.success(pickingService.pickItem(id, staffId), "Item picked"));
     }
 
+    @Operation(summary = "Pick all remaining items in a picklist (bulk)")
+    @PostMapping({"/picklists/{id}/pick-all", "/lists/{id}/pick-all"})
+    public ResponseEntity<ApiResponse<NxPicklist>> pickAllItems(
+            @PathVariable UUID id,
+            @RequestParam(required = false) UUID staffId) {
+        return ResponseEntity.ok(ApiResponse.success(pickingService.pickAllItems(id, staffId), "All items picked"));
+    }
+
     @Operation(summary = "Complete a picklist")
     @PostMapping({"/picklists/{id}/complete", "/lists/{id}/complete"})
     public ResponseEntity<ApiResponse<NxPicklist>> completePicklist(@PathVariable UUID id) {

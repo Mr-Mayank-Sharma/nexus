@@ -62,6 +62,18 @@ export async function pickItem(itemId: string, staffId: string): Promise<ApiResp
   }
 }
 
+export async function pickAllItems(id: string, staffId?: string): Promise<ApiResponse<Picklist>> {
+  try {
+    const { data } = await client.post(`/picking/lists/${id}/pick-all`, null, {
+      params: staffId ? { staffId } : {},
+    })
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'Failed to pick all items'
+    return { success: false, error: msg } as any
+  }
+}
+
 export async function completePicklist(id: string): Promise<ApiResponse<Picklist>> {
   try {
     const { data } = await client.post(`/picking/lists/${id}/complete`)

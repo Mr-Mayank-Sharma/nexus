@@ -163,6 +163,35 @@ public class PickingService {
         return item;
     }
 
+    /**
+     * Pick all remaining PENDING items in one action (bulk scan equivalent).
+     * Each item is attributed to the given picker; staff pick counts are updated.
+     */
+    @Transactional
+    public NxPicklist pickAllItems(UUID picklistId, UUID staffId) {
+        NxPicklist pl = getPicklist(picklistId);
+        List<NxPicklistItem> pending = picklistItemRepository.findByPicklistIdAndStatus(picklistId, "PENDING");
+        for (NxPicklistItem item : pending) {
+            item.setStatus("PICKED");
+            item.setPickedQuantity(item.getQuantity());
+            if (staffId != null) {
+                item.setPickedBy(staffId);
+                item.setPickedAt(LocalDateTime.now());
+            }
+            picklistItemRepository.save(item);
+        }
+        final int picked = pending.size();
+        if (staffId != null && picked > 0) {
+            warehouseStaffRepository.findById(staffId).ifPresent(staff -> {
+                staff.setItemsPickedToday(staff.getItemsPickedToday() + picked);
+                warehouseStaffRepository.save(staff);
+            });
+        }
+        pl.setStatus("IN_PROGRESS");
+        pl.setPickedItems(pl.getTotalItems());
+        return picklistRepository.save(pl);
+    }
+
     @Transactional
     public NxPicklist completePicklist(UUID picklistId) {
         NxPicklist pl = getPicklist(picklistId);

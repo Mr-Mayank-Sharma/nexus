@@ -216,6 +216,12 @@ export default function PickingPage() {
     onError: () => addToast({ type: 'error', title: 'Failed to complete picklist' }),
   })
 
+  const pickAllMutation = useMutation({
+    mutationFn: (id: string) => pickingApi.pickAllItems(id, picklists.find((p: any) => p.id === id)?.assigneeId),
+    onSuccess: () => { invalidate(); addToast({ type: 'success', title: 'All items picked' }) },
+    onError: () => addToast({ type: 'error', title: 'Failed to pick all items' }),
+  })
+
   const cancelMutation = useMutation({
     mutationFn: (id: string) => pickingApi.cancelPicklist(id),
     onSuccess: () => { invalidate(); addToast({ type: 'success', title: 'Picklist cancelled' }) },
@@ -409,9 +415,12 @@ export default function PickingPage() {
                                 </button>
                               </PermissionGate>
                             ) : (
-                              <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md border bg-[var(--surface-sunken)] text-[var(--text-tertiary)] border-[var(--border-default)] cursor-not-allowed transition-colors" title="Pick all items first" disabled>
-                                <CheckCircle className="w-3.5 h-3.5" /> Complete
-                              </button>
+                              <PermissionGate resource="warehouse" action="edit">
+                                <button type="button" className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] border border-[var(--nexus-primary-200)] hover:bg-[var(--nexus-primary-100)] cursor-pointer transition-colors" title="Pick All Items"
+                                  onClick={e => { e.stopPropagation(); pickAllMutation.mutate(pl.id); }}>
+                                  <CheckCircle className="w-3.5 h-3.5" /> Pick All
+                                </button>
+                              </PermissionGate>
                             )
                           )}
                         </div>
