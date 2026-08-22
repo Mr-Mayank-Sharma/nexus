@@ -99,16 +99,24 @@ export default function DashboardPage() {
     return { healthy, low, critical, outOfStock }
   }, [inventoryItems])
 
-  // Fulfillment stage metrics
-  const openPicklists = picklists.filter((p: any) => p.status === 'OPEN').length
-  const inProgressPicklists = picklists.filter((p: any) => p.status === 'IN_PROGRESS').length
-  const completedPicklists = picklists.filter((p: any) => p.status === 'COMPLETED').length
+  // Fulfillment stage metrics — derived from real ORDER statuses (not picklists)
+  const stageCounts = useMemo(() => {
+    const dist: Record<string, number> = {}
+    for (const d of pieChartData as any[]) {
+      if (d?.name != null) dist[String(d.name).toUpperCase()] = Number(d.value) || 0
+    }
+    const g = (...keys: string[]) => keys.reduce((s, k) => s + (dist[k] || 0), 0)
+    const assigned = g('PENDING', 'CONFIRMED', 'ALLOCATED')
+    const inFlight = g('PICKING', 'PACKING', 'IN PROGRESS', 'PROCESSING')
+    const shipped = g('SHIPPED', 'DELIVERED')
+    return { assigned, inFlight, shipped, total: assigned + inFlight + shipped }
+  }, [pieChartData])
 
-  const totalOrders = openPicklists + inProgressPicklists + completedPicklists
+  const totalOrders = stageCounts.total
   const fulfillmentStageMetrics = [
-    { label: 'Assigned', value: openPicklists, percent: totalOrders > 0 ? Math.round(openPicklists / Math.max(totalOrders, 1) * 100) : 0, color: 'bg-[var(--nexus-primary-600)]' },
-    { label: 'In Flight', value: inProgressPicklists, percent: totalOrders > 0 ? Math.round(inProgressPicklists / Math.max(totalOrders, 1) * 100) : 0, color: 'bg-[var(--nexus-warning-500)]' },
-    { label: 'Packed & Shipped', value: completedPicklists, percent: totalOrders > 0 ? Math.round(completedPicklists / Math.max(totalOrders, 1) * 100) : 0, color: 'bg-[var(--nexus-success-600)]' },
+    { label: 'Assigned', value: stageCounts.assigned, percent: totalOrders > 0 ? Math.round(stageCounts.assigned / Math.max(totalOrders, 1) * 100) : 0, color: 'bg-[var(--nexus-primary-600)]' },
+    { label: 'In Flight', value: stageCounts.inFlight, percent: totalOrders > 0 ? Math.round(stageCounts.inFlight / Math.max(totalOrders, 1) * 100) : 0, color: 'bg-[var(--nexus-warning-500)]' },
+    { label: 'Packed & Shipped', value: stageCounts.shipped, percent: totalOrders > 0 ? Math.round(stageCounts.shipped / Math.max(totalOrders, 1) * 100) : 0, color: 'bg-[var(--nexus-success-600)]' },
   ]
 
   const filteredFacilities = facilities.filter(f =>
@@ -134,13 +142,17 @@ export default function DashboardPage() {
         analyticsApi.getWarehousesSummary(),
         analyticsApi.getActivity(),
         promotionsApi.getPromotions(),
-        endlessAisleApi.getEndlessAisleOrders(),
+        endlessAisleApi.getOrders(),
       ])
 
       // Critical data
       if (kpiRes.status === 'fulfilled') {
-        setRawKpis(kpiRes.value.data || {})
-        observedKpis = kpiRes.value.data ?? {}
+        // analyticsApi helpers resolve to the ApiResponse envelope ({ success, data }) —
+        // handle both wrapped and unwrapped shapes defensively
+        const kd: any = kpiRes.value as any
+        const inner = kd?.data && typeof kd.data === 'object' && !Array.isArray(kd.data) ? kd.data : kd
+        setRawKpis(inner || {})
+        observedKpis = inner ?? {}
       }
       if (velocityRes.status === 'fulfilled') {
         const vData = velocityRes.value.data
@@ -149,9 +161,10 @@ export default function DashboardPage() {
       if (alertsRes.status === 'fulfilled' && Array.isArray(alertsRes.value.data)) {
         setAlerts(alertsRes.value.data as AlertItem[])
       }
-      if (statusDistRes.status === 'fulfilled' && Array.isArray(statusDistRes.value.data)) {
-        const distData = statusDistRes.value.data as any[]
-        setPieChartData(distData.map((item, i) => ({
+      const distEnvelope: any = statusDistRes.status === 'fulfilled' ? (statusDistRes.value as any) : null
+      const distArray = Array.isArray(distEnvelope?.data) ? distEnvelope.data : (Array.isArray(statusDistRes.value) ? statusDistRes.value as any[] : null)
+      if (distArray) {
+        setPieChartData(distArray.map((item, i) => ({
           name: item.name, value: item.value, color: PIE_COLORS[i % PIE_COLORS.length]
         })))
       } else {
@@ -194,8 +207,9 @@ export default function DashboardPage() {
           totalRevenue: eaList.reduce((s: number, o: any) => s + (o.orderTotal ?? 0), 0),
         })
       }
-    } catch {
-      addToast({ type: 'error', title: 'Failed to load dashboard data' })
+    } catch (e: any) {
+      addToast({ type: 'error', title: 'Failed to load dashboard data', description: String(e?.message || e) })
+      console.error('dashboard fetchData failed:', e)
       setVelocityRate(null)
     } finally {
       setLoading(false)
@@ -242,7 +256,8 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [fetchData])
 
-  const summaryKpis = rawKpis as Record<string, any> | null
+  // API helpers resolve to the ApiResponse envelope ({ success, data }) — unwrap it
+  const summaryKpis = ((rawKpis as any)?.data ?? rawKpis) as Record<string, any> | null
   const kpis = [
     { title: 'Orders Today', value: summaryKpis?.ordersToday ?? 0, icon: <ShoppingCart className="w-5 h-5" />, color: 'primary' as const, subtitle: 'Orders created today' },
     { title: 'On-Time Delivery', value: summaryKpis?.onTimeDelivery ?? '—', icon: <CheckCircle className="w-5 h-5" />, color: 'success' as const, subtitle: 'Share delivered on time' },
