@@ -38,6 +38,7 @@ public class SyncSchedulerService {
     private final BigCommerceInventorySyncService bcInventorySyncService;
     private final BigCommerceShipmentPushService bcShipmentPushService;
     private final BigCommerceRefundSyncService bcRefundSyncService;
+    private final BigCommerceCustomerImportService bcCustomerImportService;
 
     public SyncSchedulerService(NxIntegrationSyncConfigRepository syncConfigRepository,
                                  NxIntegrationStoreRepository storeRepository,
@@ -51,7 +52,8 @@ public class SyncSchedulerService {
                                  BigCommerceProductSyncService bcProductSyncService,
                                  BigCommerceInventorySyncService bcInventorySyncService,
                                  BigCommerceShipmentPushService bcShipmentPushService,
-                                 BigCommerceRefundSyncService bcRefundSyncService) {
+                                 BigCommerceRefundSyncService bcRefundSyncService,
+                                 BigCommerceCustomerImportService bcCustomerImportService) {
         this.syncConfigRepository = syncConfigRepository;
         this.storeRepository = storeRepository;
         this.storeService = storeService;
@@ -65,6 +67,7 @@ public class SyncSchedulerService {
         this.bcInventorySyncService = bcInventorySyncService;
         this.bcShipmentPushService = bcShipmentPushService;
         this.bcRefundSyncService = bcRefundSyncService;
+        this.bcCustomerImportService = bcCustomerImportService;
     }
 
     @Scheduled(fixedRate = 30000)
@@ -146,6 +149,7 @@ public class SyncSchedulerService {
                 case "INVENTORY_PUSH" -> bcInventorySyncService.pushInventory(tenantId);
                 case "FULFILLMENT_PUSH" -> bcShipmentPushService.pushShipments(tenantId);
                 case "REFUND_PUSH" -> bcRefundSyncService.pushRefunds(tenantId);
+                case "CUSTOMER_IMPORT" -> bcCustomerImportService.importCustomers(tenantId);
                 default -> {
                     log.warn("Unknown sync type {} for BigCommerce", syncType);
                     yield null;

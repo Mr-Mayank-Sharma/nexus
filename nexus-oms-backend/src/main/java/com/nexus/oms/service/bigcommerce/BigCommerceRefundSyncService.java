@@ -56,24 +56,29 @@ public class BigCommerceRefundSyncService {
                     NxOrder order = orderRepository.findById(nxReturn.getOrderId()).orElse(null);
                     if (order == null || order.getExternalId() == null) continue;
 
+                    int bcOrderId = Integer.parseInt(order.getExternalId());
+                    List<Map<String, Object>> items = resolveOrderItems(config, bcOrderId);
+                    if (items.isEmpty()) continue;
+
                     Map<String, Object> refundData = new HashMap<>();
                     refundData.put("reason", nxReturn.getReason() != null ? nxReturn.getReason() : "Return processed");
 
                     if (nxReturn.getRefundAmount() != null) {
                         Map<String, Object> total = new HashMap<>();
-                        total.put("amount", nxReturn.getRefundAmount());
+                        total.put("amount", nxReturn.getRefundAmount().toPlainString());
+                        total.put("merchant_amount", nxReturn.getRefundAmount().toPlainString());
+                        total.put("currency_code", "USD");
+                        total.put("shipping_cost", "0.00");
+                        total.put("handling_cost", "0.00");
                         refundData.put("total", total);
                     }
 
-                    List<Map<String, Object>> items = new ArrayList<>();
-                    Map<String, Object> item = new HashMap<>();
-                    item.put("quantity", 1);
-                    item.put("reason", nxReturn.getReason());
-                    items.add(item);
-                    refundData.put("items", items);
+                    Map<String, Object> item = items.get(0);
+                    item.put("quantity", item.getOrDefault("quantity", 1));
+                    item.put("reason", nxReturn.getReason() != null ? nxReturn.getReason() : "Return processed");
+                    refundData.put("items", List.of(item));
 
-                    bcClient.createRefund(apiPath, config.getAccessToken(),
-                            Integer.parseInt(order.getExternalId()), refundData);
+                    bcClient.createRefund(apiPath, config.getAccessToken(), bcOrderId, refundData);
                     succeeded++;
                     processed++;
                 } catch (Exception e) {
@@ -107,5 +112,22 @@ public class BigCommerceRefundSyncService {
                 .itemsSucceeded(succeeded)
                 .itemsFailed(failed)
                 .build();
+    }
+
+    private List<Map<String, Object>> resolveOrderItems(NxBigCommerceConfig config, int bcOrderId) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        try {
+            JsonNode products = bcClient.getOrderProducts(
+                    config.getApiPath() + "/stores/" + config.getStoreHash(), config.getAccessToken(), bcOrderId);
+            if (products != null && products.isArray()) {
+                for (JsonNode product : products) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("order_product_id", product.get("id").asInt());
+                    item.put("quantity", product.get("quantity").asInt());
+                    items.add(item);
+                }
+            }
+        } catch (Exception ignored) {}
+        return items;
     }
 }

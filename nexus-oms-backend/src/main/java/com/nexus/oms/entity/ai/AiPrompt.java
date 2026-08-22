@@ -11,7 +11,7 @@ import java.util.UUID;
 public class AiPrompt {
     @Id @GeneratedValue(strategy = GenerationType.UUID) private UUID id;
     private UUID tenantId;
-    @NotBlank @Column(nullable = false) private String name;
+    @NotNull @Column(nullable = false) private String name;
     @Column(columnDefinition = "TEXT") private String description;
     private UUID modelId;
     @NotBlank @Column(nullable = false, columnDefinition = "TEXT") private String promptTemplate;

@@ -56,25 +56,29 @@ public class BigCommerceShipmentPushService {
                 try {
                     if (order.getExternalId() == null) continue;
 
+                    int bcOrderId = Integer.parseInt(order.getExternalId());
+                    bcClient.updateOrderStatus(apiPath, config.getAccessToken(), bcOrderId, 2);
+                    succeeded++;
+
                     List<NxShipment> shipments = shipmentRepository.findByOrderId(order.getId());
                     for (NxShipment shipment : shipments) {
                         if (shipment.getTrackingNumber() == null) continue;
 
-                        Map<String, Object> shipmentData = new HashMap<>();
-                        shipmentData.put("tracking_number", shipment.getTrackingNumber());
-                        shipmentData.put("carrier", shipment.getCarrierId() != null ? shipment.getCarrierId() : "other");
-                        shipmentData.put("shipping_provider", shipment.getCarrierId());
-
-                        if (shipment.getOriginNodeId() != null) {
-                            shipmentData.put("warehouse_id", shipment.getOriginNodeId().toString());
+                        Integer addressId = resolveShippingAddressId(config, bcOrderId);
+                        List<Map<String, Object>> items = resolveOrderItems(config, bcOrderId);
+                        if (addressId == null) {
+                            failed++;
+                            errors.add("Order " + order.getId() + ": no shipping address found in BigCommerce");
+                            continue;
                         }
 
-                        Map<String, Object> items = new HashMap<>();
-                        items.put("quantity", 1);
-                        shipmentData.put("items", List.of(items));
+                        Map<String, Object> shipmentData = new HashMap<>();
+                        shipmentData.put("order_address_id", addressId);
+                        shipmentData.put("tracking_number", shipment.getTrackingNumber());
+                        shipmentData.put("shipping_provider", shipment.getCarrierId() != null ? shipment.getCarrierId() : "other");
+                        shipmentData.put("items", items);
 
-                        bcClient.createShipment(apiPath, config.getAccessToken(),
-                                Integer.parseInt(order.getExternalId()), shipmentData);
+                        bcClient.createShipment(apiPath, config.getAccessToken(), bcOrderId, shipmentData);
                         succeeded++;
                     }
                     processed++;
@@ -110,5 +114,33 @@ public class BigCommerceShipmentPushService {
                 .itemsSucceeded(succeeded)
                 .itemsFailed(failed)
                 .build();
+    }
+
+    private Integer resolveShippingAddressId(NxBigCommerceConfig config, int bcOrderId) {
+        try {
+            JsonNode addresses = bcClient.getOrderShippingAddresses(
+                    config.getApiPath() + "/stores/" + config.getStoreHash(), config.getAccessToken(), bcOrderId);
+            if (addresses != null && addresses.isArray() && !addresses.isEmpty()) {
+                return addresses.get(0).get("id").asInt();
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private List<Map<String, Object>> resolveOrderItems(NxBigCommerceConfig config, int bcOrderId) {
+        List<Map<String, Object>> items = new ArrayList<>();
+        try {
+            JsonNode products = bcClient.getOrderProducts(
+                    config.getApiPath() + "/stores/" + config.getStoreHash(), config.getAccessToken(), bcOrderId);
+            if (products != null && products.isArray()) {
+                for (JsonNode product : products) {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("order_product_id", product.get("id").asInt());
+                    item.put("quantity", product.get("quantity").asInt());
+                    items.add(item);
+                }
+            }
+        } catch (Exception ignored) {}
+        return items;
     }
 }

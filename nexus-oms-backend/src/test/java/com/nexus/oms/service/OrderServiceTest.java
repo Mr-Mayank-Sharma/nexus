@@ -54,6 +54,8 @@ class OrderServiceTest {
     private RoutingConfigRepository routingConfigRepository;
     @Mock
     private KittingService kittingService;
+    @Mock
+    private com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService bigCommerceStatusPushService;
 
     private OrderService orderService;
     private UUID tenantId;
@@ -65,7 +67,7 @@ class OrderServiceTest {
     void setUp() {
         orderService = new OrderService(orderRepository, orderItemRepository, customerRepository,
                 addressRepository, inventoryService, kafkaProducerService, objectMapper, nodeRepository,
-                orderRoutingService, routingConfigRepository, kittingService);
+                orderRoutingService, routingConfigRepository, kittingService, bigCommerceStatusPushService);
         tenantId = UUID.randomUUID();
         orderId = UUID.randomUUID();
 

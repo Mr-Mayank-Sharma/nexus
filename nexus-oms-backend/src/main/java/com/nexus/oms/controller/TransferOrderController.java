@@ -50,6 +50,11 @@ public class TransferOrderController {
         return ResponseEntity.ok(items);
     }
 
+    @PutMapping("/{id}/submit")
+    public ResponseEntity<NxTransferOrder> submitTransferOrder(@PathVariable UUID id) {
+        return ResponseEntity.ok(transferOrderService.submitTransferOrder(id));
+    }
+
     @PutMapping("/{id}/approve")
     public ResponseEntity<NxTransferOrder> approveTransferOrder(@PathVariable UUID id) {
         UUID approvedBy = TenantContext.getCurrentUserId();

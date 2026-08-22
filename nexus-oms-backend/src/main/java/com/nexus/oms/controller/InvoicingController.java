@@ -23,9 +23,12 @@ public class InvoicingController {
 
     private final InvoicingService invoicingService;
 
-    public InvoicingController(InvoicingService invoicingService) {
+    public InvoicingController(InvoicingService invoicingService, com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         this.invoicingService = invoicingService;
+        this.objectMapper = objectMapper;
     }
+
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getInvoicingSummary() {
@@ -52,8 +55,11 @@ public class InvoicingController {
 
     @PostMapping("/invoices")
     public ResponseEntity<ApiResponse<Invoice>> createInvoice(@Valid @RequestBody Map<String, Object> request) {
-        Invoice invoice = (Invoice) request.get("invoice");
-        List<InvoiceItem> items = (List<InvoiceItem>) request.get("items");
+        // Jackson deserializes JSON values as LinkedHashMap, not entities — convert explicitly
+        Invoice invoice = objectMapper.convertValue(request.get("invoice"), Invoice.class);
+        List<InvoiceItem> items = objectMapper.convertValue(
+                request.getOrDefault("items", List.of()),
+                objectMapper.getTypeFactory().constructCollectionType(List.class, InvoiceItem.class));
         return ResponseEntity.ok(ApiResponse.success(
                 invoicingService.createInvoice(invoice, items), "Invoice created"));
     }

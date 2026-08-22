@@ -25,7 +25,7 @@ public class NxWave {
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
-    @NotBlank
+    @NotNull
     @Column(nullable = false)
     private String name;
 

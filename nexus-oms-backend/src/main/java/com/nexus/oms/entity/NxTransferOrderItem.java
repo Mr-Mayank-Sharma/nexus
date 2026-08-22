@@ -2,6 +2,7 @@ package com.nexus.oms.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ public class NxTransferOrderItem {
     @Column(name = "transfer_order_id", nullable = false)
     private UUID transferOrderId;
 
-    @NotBlank
+    @NotNull
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 

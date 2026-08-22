@@ -19,17 +19,20 @@ public class BigCommerceProductSyncService {
     private final NxSyncLogRepository syncLogRepository;
     private final NxProductMappingRepository productMappingRepository;
     private final InventoryRepository inventoryRepository;
+    private final NodeRepository nodeRepository;
 
     public BigCommerceProductSyncService(BigCommerceClient bcClient,
                                           NxBigCommerceConfigRepository configRepository,
                                           NxSyncLogRepository syncLogRepository,
                                           NxProductMappingRepository productMappingRepository,
-                                          InventoryRepository inventoryRepository) {
+                                          InventoryRepository inventoryRepository,
+                                          NodeRepository nodeRepository) {
         this.bcClient = bcClient;
         this.configRepository = configRepository;
         this.syncLogRepository = syncLogRepository;
         this.productMappingRepository = productMappingRepository;
         this.inventoryRepository = inventoryRepository;
+        this.nodeRepository = nodeRepository;
     }
 
     @Transactional
@@ -50,6 +53,7 @@ public class BigCommerceProductSyncService {
             String apiPath = config.getApiPath() + "/stores/" + config.getStoreHash();
             Map<String, String> params = new HashMap<>();
             params.put("limit", "250");
+            params.put("include", "images");
             params.put("include_fields", "id,name,sku,price,inventory_level");
 
             JsonNode response = bcClient.getProducts(apiPath, config.getAccessToken(), params);
@@ -61,6 +65,7 @@ public class BigCommerceProductSyncService {
                         long bcProductId = product.get("id").asLong();
                         String bcSku = product.has("sku") ? product.get("sku").asText() : "";
                         String name = product.has("name") ? product.get("name").asText() : "";
+                        String imageUrl = resolvePrimaryImage(product);
 
                         if (bcSku.isBlank()) continue;
 
@@ -77,6 +82,7 @@ public class BigCommerceProductSyncService {
                                     .nexusProductName(name)
                                     .build();
                         }
+                        if (imageUrl != null) mapping.setImageUrl(imageUrl);
                         mapping.setLastSyncedAt(LocalDateTime.now());
                         productMappingRepository.save(mapping);
 
@@ -141,6 +147,26 @@ public class BigCommerceProductSyncService {
     }
 
     private NxNode getAnyNode(UUID tenantId) {
+        return nodeRepository.findByTenantIdAndIsActiveTrue(tenantId)
+                .stream()
+                .findFirst()
+                .orElse(null);
+    }
+
+    private String resolvePrimaryImage(JsonNode product) {
+        try {
+            if (product.has("images") && product.get("images").isArray()) {
+                JsonNode images = product.get("images");
+                for (JsonNode img : images) {
+                    if (img.has("is_thumbnail") && img.get("is_thumbnail").asBoolean()) {
+                        return img.get("url_standard").asText();
+                    }
+                }
+                if (!images.isEmpty()) {
+                    return images.get(0).get("url_standard").asText();
+                }
+            }
+        } catch (Exception ignored) {}
         return null;
     }
 }

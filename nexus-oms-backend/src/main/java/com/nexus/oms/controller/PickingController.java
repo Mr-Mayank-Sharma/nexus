@@ -110,6 +110,12 @@ public class PickingController {
     }
 
     @Operation(summary = "Start picking a picklist")
+    @PostMapping({"/picklists/{id}/start", "/lists/{id}/start"})
+    public ResponseEntity<ApiResponse<NxPicklist>> startPicklist(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(pickingService.startPicking(id), "Picking started"));
+    }
+
+    @Operation(summary = "Start picking a picklist")
     @PostMapping({"/picklists/{id}/assign", "/lists/{id}/assign"})
     public ResponseEntity<ApiResponse<NxPicklist>> assignPicker(@PathVariable UUID id, @RequestParam UUID staffId) {
         return ResponseEntity.ok(ApiResponse.success(pickingService.assignPicker(id, staffId), "Picker assigned"));

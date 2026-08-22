@@ -5,6 +5,8 @@ import com.nexus.oms.dto.SyncResult;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +15,8 @@ import java.util.*;
 
 @Service
 public class BigCommerceInventorySyncService {
+
+    private static final Logger log = LoggerFactory.getLogger(BigCommerceInventorySyncService.class);
 
     private final BigCommerceClient bcClient;
     private final NxBigCommerceConfigRepository configRepository;
@@ -50,7 +54,7 @@ public class BigCommerceInventorySyncService {
 
         try {
             String apiPath = config.getApiPath() + "/stores/" + config.getStoreHash();
-            List<NxProductMapping> mappings = productMappingRepository.findAll();
+            List<NxProductMapping> mappings = productMappingRepository.findByTenantId(tenantId);
 
             for (NxProductMapping mapping : mappings) {
                 try {
@@ -108,5 +112,42 @@ public class BigCommerceInventorySyncService {
                 .itemsFailed(failed)
                 .message(syncLog.getErrorMessage())
                 .build();
+    }
+
+    public void pushSkuInventory(UUID tenantId, String sku) {
+        if (tenantId == null || sku == null) return;
+        try {
+            Optional<NxBigCommerceConfig> configOpt = configRepository.findByTenantIdAndIsActiveTrue(tenantId);
+            if (configOpt.isEmpty()) return;
+
+            NxBigCommerceConfig config = configOpt.get();
+            String apiPath = config.getApiPath() + "/stores/" + config.getStoreHash();
+
+            List<NxProductMapping> mappings = productMappingRepository.findByTenantId(tenantId).stream()
+                    .filter(m -> sku.equals(m.getNexusSku()) || sku.equals(m.getBcSku()))
+                    .toList();
+
+            for (NxProductMapping mapping : mappings) {
+                List<NxInventory> invList = inventoryRepository.findByTenantIdAndSku(tenantId, mapping.getNexusSku());
+                if (invList.isEmpty()) continue;
+
+                int totalOnHand = invList.stream().mapToInt(NxInventory::getQuantityOnHand).sum();
+                int totalAllocated = invList.stream().mapToInt(NxInventory::getQuantityAllocated).sum();
+                int available = totalOnHand - totalAllocated;
+
+                Map<String, Object> inventoryData = new HashMap<>();
+                inventoryData.put("inventory_level", available);
+                inventoryData.put("inventory_warning_level", 0);
+
+                if (mapping.getBcVariantId() != null && mapping.getBcVariantId() > 0) {
+                    inventoryData.put("variant_id", mapping.getBcVariantId());
+                }
+
+                bcClient.updateInventory(apiPath, config.getAccessToken(), mapping.getBcProductId(), inventoryData);
+                log.info("Real-time inventory push to BigCommerce: sku={} available={}", sku, available);
+            }
+        } catch (Exception e) {
+            log.warn("Real-time inventory push to BigCommerce failed for sku {}: {}", sku, e.getMessage());
+        }
     }
 }

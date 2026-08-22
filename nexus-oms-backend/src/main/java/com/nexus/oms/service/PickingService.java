@@ -115,6 +115,18 @@ public class PickingService {
     }
 
     @Transactional
+    public NxPicklist startPicking(UUID picklistId) {
+        NxPicklist pl = getPicklist(picklistId);
+        if (pl.getStatus() == null || pl.getStatus().equals("OPEN")) {
+            pl.setStatus("IN_PROGRESS");
+        }
+        if (pl.getStartedAt() == null) {
+            pl.setStartedAt(LocalDateTime.now());
+        }
+        return picklistRepository.save(pl);
+    }
+
+    @Transactional
     public NxPicklist assignPicker(UUID picklistId, UUID staffId) {
         NxPicklist pl = getPicklist(picklistId);
         pl.setAssigneeId(staffId);

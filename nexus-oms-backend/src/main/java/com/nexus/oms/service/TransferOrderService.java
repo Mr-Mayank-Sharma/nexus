@@ -89,6 +89,16 @@ public class TransferOrderService {
     }
 
     @Transactional
+    public NxTransferOrder submitTransferOrder(UUID id) {
+        NxTransferOrder transferOrder = getTransferOrder(id);
+        if (!"DRAFT".equals(transferOrder.getStatus())) {
+            throw new BadRequestException("Only DRAFT transfer orders can be submitted. Current: " + transferOrder.getStatus());
+        }
+        transferOrder.setStatus("PENDING_APPROVAL");
+        return transferOrderRepository.save(transferOrder);
+    }
+
+    @Transactional
     public NxTransferOrder approveTransferOrder(UUID id, UUID approvedBy) {
         NxTransferOrder transferOrder = getTransferOrder(id);
 

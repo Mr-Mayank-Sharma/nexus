@@ -29,6 +29,7 @@ public class BigCommerceController {
     private final BigCommerceInventorySyncService inventorySyncService;
     private final BigCommerceShipmentPushService shipmentPushService;
     private final BigCommerceRefundSyncService refundSyncService;
+    private final BigCommerceCustomerImportService customerImportService;
     private final BigCommerceWebhookService webhookService;
 
     public BigCommerceController(NxBigCommerceConfigRepository configRepository,
@@ -38,6 +39,7 @@ public class BigCommerceController {
                                   BigCommerceInventorySyncService inventorySyncService,
                                   BigCommerceShipmentPushService shipmentPushService,
                                   BigCommerceRefundSyncService refundSyncService,
+                                  BigCommerceCustomerImportService customerImportService,
                                   BigCommerceWebhookService webhookService) {
         this.configRepository = configRepository;
         this.syncLogRepository = syncLogRepository;
@@ -46,6 +48,7 @@ public class BigCommerceController {
         this.inventorySyncService = inventorySyncService;
         this.shipmentPushService = shipmentPushService;
         this.refundSyncService = refundSyncService;
+        this.customerImportService = customerImportService;
         this.webhookService = webhookService;
     }
 
@@ -107,6 +110,13 @@ public class BigCommerceController {
         return ResponseEntity.ok(ApiResponse.success(
                 refundSyncService.pushRefunds(TenantContext.getCurrentTenantId()),
                 "Refund push completed"));
+    }
+
+    @PostMapping("/sync/customers")
+    public ResponseEntity<ApiResponse<SyncResult>> syncCustomers() {
+        return ResponseEntity.ok(ApiResponse.success(
+                customerImportService.importCustomers(TenantContext.getCurrentTenantId()),
+                "Customer import completed"));
     }
 
     @GetMapping("/sync-logs")

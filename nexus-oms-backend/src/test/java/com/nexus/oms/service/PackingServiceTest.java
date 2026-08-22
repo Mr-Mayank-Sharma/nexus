@@ -37,6 +37,8 @@ class PackingServiceTest {
     private OrderRepository orderRepository;
     @Mock
     private OrderItemRepository orderItemRepository;
+    @Mock
+    private com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService bigCommerceOrderStatusPushService;
 
     private PackingService packingService;
     private UUID tenantId;
@@ -45,7 +47,7 @@ class PackingServiceTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         packingService = new PackingService(packageRepository, warehouseStaffRepository,
-                boxRecommendationService, orderRepository, orderItemRepository);
+                boxRecommendationService, orderRepository, orderItemRepository, bigCommerceOrderStatusPushService);
         tenantId = UUID.randomUUID();
         packageId = UUID.randomUUID();
     }

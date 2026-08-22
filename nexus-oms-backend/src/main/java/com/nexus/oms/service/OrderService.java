@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService;
 import com.nexus.oms.dto.*;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.BadRequestException;
@@ -34,6 +35,7 @@ public class OrderService {
     private final OrderRoutingService orderRoutingService;
     private final RoutingConfigRepository routingConfigRepository;
     private final KittingService kittingService;
+    private final BigCommerceOrderStatusPushService bigCommerceStatusPushService;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
@@ -45,7 +47,8 @@ public class OrderService {
                         NodeRepository nodeRepository,
                         OrderRoutingService orderRoutingService,
                         RoutingConfigRepository routingConfigRepository,
-                        KittingService kittingService) {
+                        KittingService kittingService,
+                        BigCommerceOrderStatusPushService bigCommerceStatusPushService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
@@ -57,6 +60,7 @@ public class OrderService {
         this.orderRoutingService = orderRoutingService;
         this.routingConfigRepository = routingConfigRepository;
         this.kittingService = kittingService;
+        this.bigCommerceStatusPushService = bigCommerceStatusPushService;
     }
 
     @Transactional
@@ -182,6 +186,7 @@ public class OrderService {
         }
 
         order = orderRepository.save(order);
+        bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), status);
         kafkaProducerService.publish("order." + status.toLowerCase(), order.getId().toString());
         return toOrderResponse(order);
     }
@@ -191,6 +196,11 @@ public class OrderService {
     public AllocationResponse allocateOrder(UUID id) {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+
+        // Idempotency guard: never double-reserve inventory for an already-allocated order
+        if (order.getAllocatedNode() != null || "ALLOCATED".equalsIgnoreCase(order.getStatus())) {
+            throw new BadRequestException("Order is already allocated to " + order.getAllocatedNode());
+        }
 
         UUID tenantId = order.getTenantId();
         List<NxNode> activeNodes = nodeRepository.findByTenantIdAndIsActiveTrue(tenantId);
@@ -212,7 +222,11 @@ public class OrderService {
             throw new BadRequestException("Insufficient inventory to allocate order");
         }
 
-        for (NxOrderItem item : items) {
+        // Sort by SKU for consistent lock ordering across concurrent allocations (prevents deadlocks)
+        List<NxOrderItem> sortedItems = items.stream()
+                .sorted(java.util.Comparator.comparing(NxOrderItem::getSku, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .toList();
+        for (NxOrderItem item : sortedItems) {
             inventoryService.reserveInventory(tenantId, item.getSku(), selectedNode, item.getQuantity());
             item.setAllocatedNodeId(selectedNode);
             item.setAllocatedQty(item.getQuantity());
@@ -275,6 +289,7 @@ public class OrderService {
         order.setTrackingNumber(trackingNumber);
         order.setShippedAt(LocalDateTime.now());
         order = orderRepository.save(order);
+        bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "SHIPPED");
         kafkaProducerService.publish("order.shipped", order.getId().toString());
         return toOrderResponse(order);
     }
@@ -502,6 +517,7 @@ public class OrderService {
 
         order.setStatus("CANCELLED");
         order = orderRepository.save(order);
+        bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "CANCELLED");
         kafkaProducerService.publish("order.cancelled", order.getId().toString());
         return toOrderResponse(order);
     }

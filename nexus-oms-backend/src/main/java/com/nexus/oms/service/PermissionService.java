@@ -52,6 +52,9 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/manifests/", "shipping");
         PATH_TO_RESOURCE.put("/warehouse/", "warehouse");
         PATH_TO_RESOURCE.put("/warehouses/", "warehouse");
+        PATH_TO_RESOURCE.put("/yards/", "shipping");
+        PATH_TO_RESOURCE.put("/trailers/", "shipping");
+        PATH_TO_RESOURCE.put("/yard/", "shipping");
         PATH_TO_RESOURCE.put("/waves/", "fulfillment");
         PATH_TO_RESOURCE.put("/routing/", "routing");
         PATH_TO_RESOURCE.put("/routing-rules/", "routing-rules");

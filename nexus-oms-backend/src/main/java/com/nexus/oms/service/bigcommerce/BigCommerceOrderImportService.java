@@ -12,6 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -65,19 +68,26 @@ public class BigCommerceOrderImportService {
 
         int processed = 0, succeeded = 0, failed = 0;
         List<String> errors = new ArrayList<>();
+        int maxPages = 100;
 
         try {
             String apiPath = config.getApiPath() + "/stores/" + config.getStoreHash();
-            Map<String, String> params = new HashMap<>();
-            params.put("limit", "50");
-            params.put("sort", "id:asc");
-            if (config.getLastOrderSyncAt() != null) {
-                params.put("min_date_modified", config.getLastOrderSyncAt().toString());
-            }
 
-            JsonNode orders = bcClient.getOrders(apiPath, config.getAccessToken(), params);
+            for (int page = 1; page <= maxPages; page++) {
+                Map<String, String> params = new HashMap<>();
+                params.put("limit", "250");
+                params.put("page", String.valueOf(page));
+                params.put("sort", "id:asc");
+                if (config.getLastOrderSyncAt() != null) {
+                    params.put("min_date_modified", toUtcIso(config.getLastOrderSyncAt()));
+                }
 
-            if (orders != null && orders.isArray()) {
+                JsonNode orders = bcClient.getOrders(apiPath, config.getAccessToken(), params);
+
+                if (orders == null || !orders.isArray() || orders.size() == 0) {
+                    break;
+                }
+
                 for (JsonNode bcOrder : orders) {
                     try {
                         importSingleOrder(tenantId, bcOrder, apiPath, config.getAccessToken());
@@ -87,6 +97,10 @@ public class BigCommerceOrderImportService {
                         errors.add("Order " + bcOrder.get("id").asText() + ": " + e.getMessage());
                     }
                     processed++;
+                }
+
+                if (orders.size() < 250) {
+                    break;
                 }
             }
 
@@ -126,14 +140,20 @@ public class BigCommerceOrderImportService {
 
     private void importSingleOrder(UUID tenantId, JsonNode bcOrder, String apiPath, String accessToken) {
         int bcOrderId = bcOrder.get("id").asInt();
+        String channelOrderId = String.valueOf(bcOrderId);
+
+        if (orderRepository.findByTenantIdAndChannelOrderId(tenantId, channelOrderId).isPresent()) {
+            return;
+        }
+
         String status = mapStatus(bcOrder.get("status_id").asInt());
 
         NxCustomer customer = findOrCreateCustomer(tenantId, bcOrder);
 
-        BigDecimal subtotal = new BigDecimal(bcOrder.get("subtotal_ex_tax").decimalValue().toPlainString());
-        BigDecimal shippingCost = new BigDecimal(bcOrder.get("shipping_cost_ex_tax").decimalValue().toPlainString());
-        BigDecimal taxAmount = new BigDecimal(bcOrder.has("total_tax") ? bcOrder.get("total_tax").decimalValue().toPlainString() : "0");
-        BigDecimal total = new BigDecimal(bcOrder.get("total_inc_tax").decimalValue().toPlainString());
+        BigDecimal subtotal = parseDecimal(bcOrder.get("subtotal_ex_tax"));
+        BigDecimal shippingCost = parseDecimal(bcOrder.get("shipping_cost_ex_tax"));
+        BigDecimal taxAmount = parseDecimal(bcOrder.has("total_tax") ? bcOrder.get("total_tax") : null);
+        BigDecimal total = parseDecimal(bcOrder.get("total_inc_tax"));
 
         String channel = "BIGCOMMERCE";
         if (bcOrder.has("channel_id") && bcOrder.get("channel_id").asInt() > 1) {
@@ -155,9 +175,9 @@ public class BigCommerceOrderImportService {
 
         NxOrder order = NxOrder.builder()
                 .tenantId(tenantId)
-                .externalId(String.valueOf(bcOrderId))
+                .externalId(channelOrderId)
                 .channel(channel)
-                .channelOrderId(String.valueOf(bcOrderId))
+                .channelOrderId(channelOrderId)
                 .customerId(customer.getId())
                 .status(status)
                 .shipToAddress(shipToAddress)
@@ -180,17 +200,19 @@ public class BigCommerceOrderImportService {
                 String sku = item.has("sku") ? item.get("sku").asText() : "UNKNOWN";
                 String productName = item.has("name") ? item.get("name").asText() : sku;
                 int qty = item.has("quantity") ? item.get("quantity").asInt() : 1;
-                BigDecimal unitPrice = new BigDecimal(item.has("price_inc_tax") ? item.get("price_inc_tax").decimalValue().toPlainString() : "0");
+                BigDecimal unitPrice = parseDecimal(item.has("price_inc_tax") ? item.get("price_inc_tax") : null);
                 BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(qty));
 
                 NxProductMapping mapping = productMappingRepository.findByTenantIdAndBcSku(tenantId, sku)
                         .orElse(null);
                 String nexusSku = mapping != null ? mapping.getNexusSku() : sku;
+                String imageUrl = mapping != null ? mapping.getImageUrl() : null;
 
                 NxOrderItem orderItem = NxOrderItem.builder()
                         .orderId(order.getId())
                         .sku(nexusSku)
                         .productName(productName)
+                        .imageUrl(imageUrl)
                         .quantity(qty)
                         .unitPrice(unitPrice)
                         .totalPrice(totalPrice)
@@ -203,10 +225,25 @@ public class BigCommerceOrderImportService {
 
     private JsonNode getOrderProducts(String apiPath, String accessToken, int orderId) {
         try {
-            return bcClient.getOrderById(apiPath, accessToken, orderId).get("products");
+            return bcClient.getOrderProducts(apiPath, accessToken, orderId);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private BigDecimal parseDecimal(JsonNode node) {
+        if (node == null || node.isNull() || node.isMissingNode()) return BigDecimal.ZERO;
+        try {
+            return new BigDecimal(node.asText().trim());
+        } catch (Exception e) {
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private String toUtcIso(LocalDateTime local) {
+        return local.atZone(java.time.ZoneId.systemDefault())
+                .withZoneSameInstant(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
     }
 
     private NxCustomer findOrCreateCustomer(UUID tenantId, JsonNode bcOrder) {
@@ -237,15 +274,14 @@ public class BigCommerceOrderImportService {
         return switch (bcStatusId) {
             case 1 -> "PENDING";
             case 2 -> "SHIPPED";
-            case 3 -> "DELIVERED";
-            case 4 -> "PENDING";
-            case 5 -> "CANCELLED";
-            case 6 -> "CANCELLED";
+            case 3 -> "SHIPPED";
+            case 4 -> "DELIVERED";
+            case 5, 6 -> "CANCELLED";
             case 7 -> "PENDING";
-            case 8 -> "PENDING";
-            case 9 -> "PENDING";
-            case 10 -> "PENDING";
-            case 11 -> "CANCELLED";
+            case 8 -> "PICKING";
+            case 9 -> "PACKING";
+            case 10 -> "DELIVERED";
+            case 11 -> "CONFIRMED";
             default -> "PENDING";
         };
     }

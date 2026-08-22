@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface NxBigCommerceConfigRepository extends JpaRepository<NxBigCommerceConfig, UUID> {
     Optional<NxBigCommerceConfig> findByTenantId(UUID tenantId);
     Optional<NxBigCommerceConfig> findByTenantIdAndIsActiveTrue(UUID tenantId);
+
+    Optional<NxBigCommerceConfig> findByStoreHash(String storeHash);
 }

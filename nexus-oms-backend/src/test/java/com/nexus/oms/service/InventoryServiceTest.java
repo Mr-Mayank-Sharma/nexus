@@ -22,6 +22,8 @@ class InventoryServiceTest {
 
     @Mock
     private InventoryRepository inventoryRepository;
+    @Mock
+    private com.nexus.oms.service.bigcommerce.BigCommerceInventorySyncService bigCommerceInventorySyncService;
 
     private InventoryService inventoryService;
     private UUID tenantId;
@@ -29,7 +31,7 @@ class InventoryServiceTest {
 
     @BeforeEach
     void setUp() {
-        inventoryService = new InventoryService(inventoryRepository);
+        inventoryService = new InventoryService(inventoryRepository, bigCommerceInventorySyncService);
         tenantId = UUID.randomUUID();
         testInventory = NxInventory.builder()
                 .id(UUID.randomUUID())

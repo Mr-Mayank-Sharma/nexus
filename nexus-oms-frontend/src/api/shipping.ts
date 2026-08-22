@@ -33,11 +33,13 @@ export async function getShipmentsByOrder(orderId: string): Promise<ApiResponse<
 
 export async function createShipment(payload: Partial<Shipment>): Promise<ApiResponse<Shipment>> {
   try {
-    const { data } = await client.post('/shipments', payload)
+    // status is NOT NULL on the backend — default new shipments to PENDING
+    const body = { status: 'PENDING', ...payload }
+    const { data } = await client.post('/shipments', body)
     return data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to create shipment'
-    return { success: false, error: msg } as any
+    throw new Error(msg)
   }
 }
 

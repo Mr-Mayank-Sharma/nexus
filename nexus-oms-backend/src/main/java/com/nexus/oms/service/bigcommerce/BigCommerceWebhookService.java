@@ -22,6 +22,8 @@ public class BigCommerceWebhookService {
     private final NxBigCommerceConfigRepository configRepository;
     private final NxBigCommerceWebhookRepository webhookRepository;
     private final BigCommerceOrderImportService orderImportService;
+    private final BigCommerceProductSyncService productSyncService;
+    private final BigCommerceShipmentPushService shipmentPushService;
     private final WebhookDedupLedgerService dedupLedger;
     private final ObjectMapper objectMapper;
 
@@ -29,12 +31,16 @@ public class BigCommerceWebhookService {
                                       NxBigCommerceConfigRepository configRepository,
                                       NxBigCommerceWebhookRepository webhookRepository,
                                       BigCommerceOrderImportService orderImportService,
+                                      BigCommerceProductSyncService productSyncService,
+                                      BigCommerceShipmentPushService shipmentPushService,
                                       WebhookDedupLedgerService dedupLedger,
                                       ObjectMapper objectMapper) {
         this.bcClient = bcClient;
         this.configRepository = configRepository;
         this.webhookRepository = webhookRepository;
         this.orderImportService = orderImportService;
+        this.productSyncService = productSyncService;
+        this.shipmentPushService = shipmentPushService;
         this.dedupLedger = dedupLedger;
         this.objectMapper = objectMapper;
     }
@@ -45,7 +51,7 @@ public class BigCommerceWebhookService {
                 .orElseThrow(() -> new BadRequestException("BigCommerce is not configured. Save your API credentials first."));
 
         String apiPath = config.getApiPath() + "/stores/" + config.getStoreHash();
-        String webhookBase = baseUrl + "/api/v1/bigcommerce/webhooks";
+        String webhookBase = baseUrl + "/api/v1/integrations/bigcommerce/webhooks";
 
         List<Map<String, String>> scopes = List.of(
                 Map.of("scope", "store/order/created", "type", "ORDER_CREATED"),
@@ -55,22 +61,20 @@ public class BigCommerceWebhookService {
         );
 
         for (Map<String, String> entry : scopes) {
-            try {
-                JsonNode response = bcClient.registerWebhook(apiPath, config.getAccessToken(),
-                        entry.get("scope"), webhookBase + "/" + entry.get("type").toLowerCase());
+            JsonNode response = bcClient.registerWebhook(apiPath, config.getAccessToken(),
+                    entry.get("scope"), webhookBase + "/" + entry.get("type").toLowerCase());
 
-                if (response != null && response.has("data")) {
-                    JsonNode data = response.get("data");
-                    NxBigCommerceWebhook webhook = NxBigCommerceWebhook.builder()
-                            .tenantId(tenantId)
-                            .webhookId(data.get("id").asInt())
-                            .scope(entry.get("scope"))
-                            .destination(webhookBase + "/" + entry.get("type").toLowerCase())
-                            .isActive(true)
-                            .build();
-                    webhookRepository.save(webhook);
-                }
-            } catch (Exception ignored) {}
+            if (response != null && response.has("data")) {
+                JsonNode data = response.get("data");
+                NxBigCommerceWebhook webhook = NxBigCommerceWebhook.builder()
+                        .tenantId(tenantId)
+                        .webhookId(data.get("id").asInt())
+                        .scope(entry.get("scope"))
+                        .destination(webhookBase + "/" + entry.get("type").toLowerCase())
+                        .isActive(true)
+                        .build();
+                webhookRepository.save(webhook);
+            }
         }
     }
 
@@ -82,10 +86,14 @@ public class BigCommerceWebhookService {
         if (data == null) return;
 
         UUID tenantId = extractTenantFromPayload(payload);
-        if (tenantId == null) return;
+        if (tenantId == null) {
+            log.warn("Ignoring BigCommerce webhook: no tenant found for store_hash={}", payload.get("store_hash"));
+            return;
+        }
 
-        if (scope != null && scope.contains("order")) {
-            // Deduplication: extract external order ID and check ledger
+        if (scope == null) return;
+
+        if (scope.contains("order")) {
             String externalOrderId = extractBigCommerceOrderId(data);
             if (externalOrderId != null) {
                 if (!dedupLedger.tryClaimProcessing(tenantId, "BIGCOMMERCE", externalOrderId, null)) {
@@ -94,6 +102,10 @@ public class BigCommerceWebhookService {
                 }
             }
             orderImportService.importOrders(tenantId);
+        } else if (scope.contains("product")) {
+            productSyncService.syncProducts(tenantId);
+        } else if (scope.contains("shipment")) {
+            shipmentPushService.pushShipments(tenantId);
         }
     }
 
@@ -108,6 +120,10 @@ public class BigCommerceWebhookService {
     }
 
     private UUID extractTenantFromPayload(Map<String, Object> payload) {
-        return null;
+        Object storeHash = payload.get("store_hash");
+        if (storeHash == null) return null;
+        return configRepository.findByStoreHash(String.valueOf(storeHash))
+                .map(NxBigCommerceConfig::getTenantId)
+                .orElse(null);
     }
 }

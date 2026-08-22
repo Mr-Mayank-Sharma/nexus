@@ -4,6 +4,7 @@ import com.nexus.oms.entity.NxInventory;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.exception.ResourceNotFoundException;
 import com.nexus.oms.repository.InventoryRepository;
+import com.nexus.oms.service.bigcommerce.BigCommerceInventorySyncService;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -16,15 +17,20 @@ import java.util.UUID;
 public class InventoryService {
 
     private final InventoryRepository inventoryRepository;
+    private final BigCommerceInventorySyncService bigCommerceInventorySyncService;
 
-    public InventoryService(InventoryRepository inventoryRepository) {
+    public InventoryService(InventoryRepository inventoryRepository,
+                            BigCommerceInventorySyncService bigCommerceInventorySyncService) {
         this.inventoryRepository = inventoryRepository;
+        this.bigCommerceInventorySyncService = bigCommerceInventorySyncService;
     }
 
     @Transactional
     @CacheEvict(value = "inventory", allEntries = true)
     public NxInventory createInventory(NxInventory inventory) {
-        return inventoryRepository.save(inventory);
+        NxInventory saved = inventoryRepository.save(inventory);
+        bigCommerceInventorySyncService.pushSkuInventory(saved.getTenantId(), saved.getSku());
+        return saved;
     }
 
     @Cacheable(value = "inventory", key = "#tenantId")
@@ -55,7 +61,9 @@ public class InventoryService {
             throw new BadRequestException("Insufficient inventory to reduce (SKU: " + sku + ")");
         }
         inv.setQuantityOnHand(newQty);
-        return inventoryRepository.save(inv);
+        NxInventory saved = inventoryRepository.save(inv);
+        bigCommerceInventorySyncService.pushSkuInventory(tenantId, sku);
+        return saved;
     }
 
     /**
@@ -75,7 +83,9 @@ public class InventoryService {
                     + " for SKU " + sku + " (on hand: " + inv.getQuantityOnHand() + ")");
         }
         inv.setQuantityOnHand(newQty);
-        return inventoryRepository.save(inv);
+        NxInventory saved = inventoryRepository.save(inv);
+        bigCommerceInventorySyncService.pushSkuInventory(tenantId, sku);
+        return saved;
     }
 
     @Transactional
@@ -89,7 +99,9 @@ public class InventoryService {
             throw new BadRequestException("Insufficient inventory to reduce");
         }
         inv.setQuantityOnHand(newQty);
-        return inventoryRepository.save(inv);
+        NxInventory saved = inventoryRepository.save(inv);
+        bigCommerceInventorySyncService.pushSkuInventory(inv.getTenantId(), inv.getSku());
+        return saved;
     }
 
     @Cacheable(value = "inventory", key = "'check:' + #tenantId + ':' + #sku + ':' + #nodeId + ':' + #qty")
@@ -100,28 +112,24 @@ public class InventoryService {
                 .orElse(false);
     }
 
-    @Transactional
+    // NOTE: no @Transactional — the atomic UPDATE commits immediately so row locks are never
+    // held during the external BigCommerce HTTP push below (which caused deadlocks under load).
     @CacheEvict(value = "inventory", allEntries = true)
     public void reserveInventory(UUID tenantId, String sku, UUID nodeId, int qty) {
-        NxInventory inv = inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory at node", nodeId));
-
-        int available = inv.getQuantityOnHand() - inv.getQuantityAllocated() - inv.getQuantityReserved();
-        if (available < qty) {
+        // Atomic conditional update — safe under concurrency (no optimistic-lock retries needed)
+        int updated = inventoryRepository.reserveAtomic(tenantId, sku, nodeId, qty);
+        if (updated == 0) {
+            NxInventory inv = inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Inventory at node", nodeId));
+            int available = inv.getQuantityOnHand() - inv.getQuantityAllocated() - inv.getQuantityReserved();
             throw new BadRequestException("Insufficient inventory: available " + available + ", requested " + qty);
         }
-        inv.setQuantityAllocated(inv.getQuantityAllocated() + qty);
-        inventoryRepository.save(inv);
+        bigCommerceInventorySyncService.pushSkuInventory(tenantId, sku);
     }
 
-    @Transactional
     @CacheEvict(value = "inventory", allEntries = true)
     public void releaseInventory(UUID tenantId, String sku, UUID nodeId, int qty) {
-        inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
-                .ifPresent(inv -> {
-                    int newAllocated = Math.max(0, inv.getQuantityAllocated() - qty);
-                    inv.setQuantityAllocated(newAllocated);
-                    inventoryRepository.save(inv);
-                });
+        inventoryRepository.releaseAtomic(tenantId, sku, nodeId, qty);
+        bigCommerceInventorySyncService.pushSkuInventory(tenantId, sku);
     }
 }

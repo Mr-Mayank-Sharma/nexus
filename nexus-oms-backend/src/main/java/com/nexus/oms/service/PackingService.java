@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.entity.NxOrderItem;
 import com.nexus.oms.entity.NxPackage;
 import com.nexus.oms.entity.WarehouseStaff;
 import com.nexus.oms.exception.ResourceNotFoundException;
@@ -7,6 +8,8 @@ import com.nexus.oms.repository.OrderItemRepository;
 import com.nexus.oms.repository.OrderRepository;
 import com.nexus.oms.repository.PackageRepository;
 import com.nexus.oms.repository.WarehouseStaffRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,17 +24,20 @@ public class PackingService {
     private final BoxRecommendationService boxRecommendationService;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService bigCommerceOrderStatusPushService;
 
     public PackingService(PackageRepository packageRepository,
                           WarehouseStaffRepository warehouseStaffRepository,
                           BoxRecommendationService boxRecommendationService,
                           OrderRepository orderRepository,
-                          OrderItemRepository orderItemRepository) {
+                          OrderItemRepository orderItemRepository,
+                          com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService bigCommerceOrderStatusPushService) {
         this.packageRepository = packageRepository;
         this.warehouseStaffRepository = warehouseStaffRepository;
         this.boxRecommendationService = boxRecommendationService;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
+        this.bigCommerceOrderStatusPushService = bigCommerceOrderStatusPushService;
     }
 
     public List<NxPackage> getPackages(UUID tenantId) {
@@ -50,6 +56,25 @@ public class PackingService {
     @Transactional
     public NxPackage createPackage(NxPackage pkg) {
         pkg.setStatus("PENDING_PACK");
+        if (pkg.getOrderId() != null && (pkg.getItems() == null || pkg.getItems().isBlank())) {
+            List<NxOrderItem> orderItems = orderItemRepository.findByOrderId(pkg.getOrderId());
+            if (!orderItems.isEmpty()) {
+                List<Map<String, Object>> itemList = new ArrayList<>();
+                for (NxOrderItem oi : orderItems) {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("orderItemId", oi.getId().toString());
+                    m.put("sku", oi.getSku());
+                    m.put("productName", oi.getProductName());
+                    m.put("quantity", oi.getQuantity() != null ? oi.getQuantity() : 1);
+                    itemList.add(m);
+                }
+                try {
+                    pkg.setItems(new ObjectMapper().writeValueAsString(itemList));
+                    pkg.setItemCount(itemList.size());
+                } catch (JsonProcessingException ignored) {
+                }
+            }
+        }
         return packageRepository.save(pkg);
     }
 
@@ -154,7 +179,24 @@ public class PackingService {
         NxPackage pkg = getPackage(packageId);
         pkg.setStatus("SHIPPED");
         pkg.setShippedAt(LocalDateTime.now());
-        return packageRepository.save(pkg);
+        NxPackage saved = packageRepository.save(pkg);
+
+        // Transition the related order to SHIPPED and sync to BigCommerce
+        if (pkg.getOrderId() != null) {
+            orderRepository.findById(pkg.getOrderId()).ifPresent(order -> {
+                if (!"SHIPPED".equals(order.getStatus()) && !"DELIVERED".equals(order.getStatus())) {
+                    order.setStatus("SHIPPED");
+                    order.setCarrierId(pkg.getCarrierId() != null ? pkg.getCarrierId().toString() : order.getCarrierId());
+                    if (pkg.getTrackingNumber() != null) {
+                        order.setTrackingNumber(pkg.getTrackingNumber());
+                    }
+                    order.setShippedAt(LocalDateTime.now());
+                    orderRepository.save(order);
+                    bigCommerceOrderStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "SHIPPED");
+                }
+            });
+        }
+        return saved;
     }
 
     @Transactional
