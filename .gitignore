@@ -48,3 +48,4 @@ nexus-oms-frontend/e2e/
 nexus-oms-frontend/playwright.config.ts
 nexusship/
 nexus_full_audit.js
+.credentials
