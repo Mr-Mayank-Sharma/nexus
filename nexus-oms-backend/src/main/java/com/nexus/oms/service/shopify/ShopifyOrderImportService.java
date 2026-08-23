@@ -80,22 +80,37 @@ public class ShopifyOrderImportService {
         List<String> errors = new ArrayList<>();
 
         try {
-            Map<String, String> params = new HashMap<>();
-            params.put("limit", "50");
-            params.put("status", "any");
+            int maxPages = 100; // 250/page x 100 pages covers 25k orders
+            String pageInfo = null;
 
             NxIntegrationSyncConfig syncConfig = syncConfigRepository
                     .findByStoreIdAndSyncType(storeId, "ORDER_IMPORT").orElse(null);
-            if (syncConfig != null && syncConfig.getLastSyncAt() != null) {
-                params.put("updated_at_min", syncConfig.getLastSyncAt()
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toInstant().toString());
-            }
 
-            JsonNode response = shopifyClient.getOrders(shopDomain, accessToken, params);
-            JsonNode orders = response != null ? response.get("orders") : null;
+            for (int page = 1; page <= maxPages; page++) {
+                Map<String, String> params = new HashMap<>();
+                params.put("limit", "250");
+                params.put("status", "any");
+                if (syncConfig != null && syncConfig.getLastSyncAt() != null) {
+                    params.put("updated_at_min", syncConfig.getLastSyncAt()
+                            .atZone(java.time.ZoneId.systemDefault())
+                            .toInstant().toString());
+                }
+                if (pageInfo != null) {
+                    // Shopify cursor pagination accepts ONLY limit + page_info
+                    params.clear();
+                    params.put("limit", "250");
+                    params.put("page_info", pageInfo);
+                }
 
-            if (orders != null && orders.isArray()) {
+                ShopifyClient.ProductPage orderPage = shopifyClient.getOrdersPage(shopDomain, accessToken, params);
+                JsonNode response = orderPage != null ? orderPage.body() : null;
+                pageInfo = orderPage != null ? orderPage.nextPageInfo() : null;
+                JsonNode orders = response != null ? response.get("orders") : null;
+
+                if (orders == null || !orders.isArray() || orders.isEmpty()) {
+                    break;
+                }
+
                 for (JsonNode shopifyOrder : orders) {
                     try {
                         importSingleOrder(store, shopifyOrder);
@@ -105,6 +120,10 @@ public class ShopifyOrderImportService {
                         errors.add("Order " + shopifyOrder.get("id").asText() + ": " + e.getMessage());
                     }
                     processed++;
+                }
+
+                if (pageInfo == null || pageInfo.isBlank()) {
+                    break;
                 }
             }
 
@@ -197,6 +216,30 @@ public class ShopifyOrderImportService {
                 .total(totalPrice)
                 .paymentStatus(shopifyOrder.has("financial_status") ? shopifyOrder.get("financial_status").asText() : null)
                 .build();
+
+        // Derive fulfillment type from note_attributes (fulfillment_type / pickup_store),
+        // fall back to tags for BOPIS detection
+        String fulfillmentType = "STANDARD";
+        StringBuilder tags = new StringBuilder();
+        JsonNode noteAttrs = shopifyOrder.get("note_attributes");
+        if (noteAttrs != null && noteAttrs.isArray()) {
+            for (JsonNode attr : noteAttrs) {
+                String k = attr.path("name").asText("");
+                String v = attr.path("value").asText("");
+                if ("fulfillment_type".equals(k) && !v.isBlank()) fulfillmentType = v.toUpperCase();
+                if ("pickup_store".equals(k)) {
+                    order.setMetadata("{\"pickupStore\":\"" + v + "\"}");
+                }
+            }
+        }
+        if (shopifyOrder.has("tags") && !shopifyOrder.get("tags").asText().isBlank()) {
+            tags.append(shopifyOrder.get("tags").asText());
+            if (fulfillmentType.equals("STANDARD") && tags.toString().toLowerCase().contains("bopis")) {
+                fulfillmentType = "BOPIS";
+            }
+        }
+        final String ft = fulfillmentType;
+        order.setFulfillmentType(ft);
         order = orderRepository.save(order);
 
         JsonNode lineItems = shopifyOrder.get("line_items");
@@ -210,13 +253,15 @@ public class ShopifyOrderImportService {
                 int qty = item.has("quantity") ? item.get("quantity").asInt() : 1;
                 BigDecimal unitPrice = money(item.get("price"));
                 BigDecimal totalItemPrice = unitPrice.multiply(BigDecimal.valueOf(qty));
-                String imageUrl = productMappingRepository
-                        .findByTenantIdAndBcSku(tenantId, sku)
+                // Multiple mappings per SKU exist — take the first with an image instead of failing
+                String imageUrl = productMappingRepository.findAllByTenantIdAndBcSku(tenantId, sku)
+                        .stream().filter(m -> m.getImageUrl() != null).findFirst()
                         .map(NxProductMapping::getImageUrl)
                         .orElseGet(() -> {
                             Long pid = item.has("product_id") ? item.get("product_id").asLong() : null;
                             return pid != null
-                                    ? productMappingRepository.findByTenantIdAndBcProductId(tenantId, pid)
+                                    ? productMappingRepository.findAllByTenantIdAndBcProductId(tenantId, pid)
+                                            .stream().filter(m -> m.getImageUrl() != null).findFirst()
                                             .map(NxProductMapping::getImageUrl).orElse(null)
                                     : null;
                         });
@@ -254,12 +299,19 @@ public class ShopifyOrderImportService {
                 (customerNode.has("first_name") ? customerNode.get("first_name").asText() + " " + (customerNode.has("last_name") ? customerNode.get("last_name").asText() : "") : "Shopify Customer")
                 : "Shopify Customer";
 
-        return customerRepository.findByEmail(email)
-                .orElseGet(() -> customerRepository.save(NxCustomer.builder()
-                        .tenantId(tenantId)
-                        .name(name)
-                        .email(email)
-                        .build()));
+        // Duplicate emails exist across tenants/imports — take the first match instead of failing
+        List<NxCustomer> existing = customerRepository.findAllByEmail(email);
+        NxCustomer customer;
+        if (!existing.isEmpty()) {
+            customer = existing.get(0);
+        } else {
+            customer = customerRepository.save(NxCustomer.builder()
+                    .tenantId(tenantId)
+                    .name(name)
+                    .email(email)
+                    .build());
+        }
+        return customer;
     }
 
     private String mapStatus(String financialStatus) {
@@ -276,8 +328,11 @@ public class ShopifyOrderImportService {
         if (config != null) {
             config.setLastSyncAt(LocalDateTime.now());
             config.setLastSyncStatus(status);
-            config.setLastSyncMessage(processed + " processed, " + succeeded + " OK, " + failed + " failed" +
-                    (!errors.isEmpty() ? ": " + String.join("; ", errors) : ""));
+            String msg = processed + " processed, " + succeeded + " OK, " + failed + " failed" +
+                    (!errors.isEmpty() ? ": " + String.join("; ", errors) : "");
+            // last_sync_message is varchar(255) — truncate to avoid rolling back the whole import
+            if (msg.length() > 250) msg = msg.substring(0, 250) + "...";
+            config.setLastSyncMessage(msg);
             syncConfigRepository.save(config);
         }
     }

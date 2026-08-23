@@ -35,6 +35,10 @@ public class ShopifyClient {
         return doGet(buildClient(shopDomain, accessToken), "/orders.json", params);
     }
 
+    public ProductPage getOrdersPage(String shopDomain, String accessToken, Map<String, String> params) {
+        return doGetWithLink(buildClient(shopDomain, accessToken), "/orders.json", params);
+    }
+
     public JsonNode getOrderById(String shopDomain, String accessToken, long orderId) {
         return doGet(buildClient(shopDomain, accessToken), "/orders/" + orderId + ".json", null);
     }

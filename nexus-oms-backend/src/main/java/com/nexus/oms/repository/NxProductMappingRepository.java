@@ -9,5 +9,7 @@ import java.util.UUID;
 public interface NxProductMappingRepository extends JpaRepository<NxProductMapping, UUID> {
     Optional<NxProductMapping> findByTenantIdAndBcSku(UUID tenantId, String bcSku);
     Optional<NxProductMapping> findByTenantIdAndBcProductId(UUID tenantId, Long bcProductId);
+    List<NxProductMapping> findAllByTenantIdAndBcSku(UUID tenantId, String bcSku);
+    List<NxProductMapping> findAllByTenantIdAndBcProductId(UUID tenantId, Long bcProductId);
     List<NxProductMapping> findByTenantId(UUID tenantId);
 }

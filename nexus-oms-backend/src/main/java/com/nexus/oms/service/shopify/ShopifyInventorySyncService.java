@@ -160,7 +160,11 @@ public class ShopifyInventorySyncService {
         if (config != null) {
             config.setLastSyncAt(LocalDateTime.now());
             config.setLastSyncStatus(status);
-            config.setLastSyncMessage(processed + " processed, " + succeeded + " OK, " + failed + " failed");
+            String __m = processed + " processed, " + succeeded + " OK, " + failed + " failed";
+
+            __m = __m.length() > 250 ? __m.substring(0, 250) + "..." : __m;
+
+            config.setLastSyncMessage(__m);
             syncConfigRepository.save(config);
         }
     }
