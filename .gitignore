@@ -48,3 +48,10 @@ nexus-oms-frontend/e2e/
 nexus-oms-frontend/playwright.config.ts
 nexusship/
 nexus_full_audit.js
+deploy/local/
+
+# Runtime & session artifacts (never commit)
+thoughts/
+ai-artifacts/
+**/.venv/
+supply_chain_ai2/models/
