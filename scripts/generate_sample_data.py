@@ -7,7 +7,7 @@ import random
 import string
 from datetime import datetime, timedelta
 
-OUTPUT_DIR = "sample_import_files"
+OUTPUT_DIR = "docs/samples/sample_import_files"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def random_string(length=8):

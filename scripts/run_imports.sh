@@ -2,7 +2,7 @@
 # Import all sample files through the API
 set -e
 
-SAMPLE_DIR="sample_import_files"
+SAMPLE_DIR="docs/samples/sample_import_files"
 BASE_URL="http://localhost:8080/api/v1"
 TOKEN=$(cat /tmp/admin_token.txt)
 
