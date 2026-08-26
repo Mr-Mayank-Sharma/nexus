@@ -207,9 +207,12 @@ export default function EdiAutomationPage() {
         <div className="space-y-2">
           {filteredDocs.map(doc => (
             <div key={doc.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] overflow-hidden">
-              <button
+              <div
                 onClick={() => toggleExpand(doc.id)}
-                className="w-full flex items-center gap-4 p-4 hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors text-left"
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(doc.id) } }}
+                className="w-full flex items-center gap-4 p-4 hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)]/30 transition-colors text-left cursor-pointer"
               >
                 <div className={clsx('w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
                   doc.docType === '850' && 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-600)]',
@@ -259,7 +262,7 @@ export default function EdiAutomationPage() {
                   )}
                   {expanded.has(doc.id) ? <ChevronDown className="w-4 h-4 text-[var(--text-tertiary)]" /> : <ChevronRight className="w-4 h-4 text-[var(--text-tertiary)]" />}
                 </div>
-              </button>
+              </div>
 
               {/* Expanded parsed data */}
               {expanded.has(doc.id) && doc.parsedData && (

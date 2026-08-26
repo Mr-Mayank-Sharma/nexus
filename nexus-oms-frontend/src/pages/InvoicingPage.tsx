@@ -154,7 +154,10 @@ export default function InvoicingPage() {
       setLoadingInvoices(true)
       const res = await invoicingApi.getInvoices(invoicePage - 1, pageSize)
       const d = res.data
-      setInvoices(Array.isArray(d) ? d : (d?.content || []))
+      const rows = Array.isArray(d) ? d : (d?.content || [])
+      // Backend sends `balanceDue`; UI + forms use `amountDue`. Normalize here so
+      // no downstream `.toFixed()` ever hits undefined (page-crash bug).
+      setInvoices(rows.map((inv: any) => ({ ...inv, amountDue: inv.amountDue ?? inv.balanceDue ?? 0 })))
       setInvoiceTotalPages(res.pagination?.totalPages || (d?.totalPages || 1))
     } catch {
       addToast({ type: 'error', title: 'Failed to load invoices' })
@@ -496,9 +499,9 @@ export default function InvoicingPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                <div><span className="text-[var(--text-secondary)]">Total</span><p className="font-semibold">${selectedInvoice.totalAmount.toFixed(2)}</p></div>
-                <div><span className="text-[var(--text-secondary)]">Paid</span><p className="font-semibold">${selectedInvoice.amountPaid.toFixed(2)}</p></div>
-                <div><span className="text-[var(--text-secondary)]">Balance</span><p className="font-semibold">${selectedInvoice.amountDue.toFixed(2)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Total</span><p className="font-semibold">${Number(selectedInvoice.totalAmount ?? 0).toFixed(2)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Paid</span><p className="font-semibold">${Number(selectedInvoice.amountPaid ?? 0).toFixed(2)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Balance</span><p className="font-semibold">${Number(selectedInvoice.amountDue ?? 0).toFixed(2)}</p></div>
                 <div><span className="text-[var(--text-secondary)]">Due</span><p className="font-semibold">{selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : '-'}</p></div>
               </div>
 
@@ -521,8 +524,8 @@ export default function InvoicingPage() {
                         <td className="py-2 text-[var(--text-primary)]">{item.sku}</td>
                         <td className="py-2 text-[var(--text-secondary)]">{item.productName}</td>
                         <td className="py-2 text-right">{item.quantity}</td>
-                        <td className="py-2 text-right">${item.unitPrice.toFixed(2)}</td>
-                        <td className="py-2 text-right font-medium">${item.totalPrice.toFixed(2)}</td>
+                        <td className="py-2 text-right">${Number(item.unitPrice ?? 0).toFixed(2)}</td>
+                        <td className="py-2 text-right font-medium">${Number(item.totalPrice ?? 0).toFixed(2)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -550,7 +553,7 @@ export default function InvoicingPage() {
                         <tr key={p.id} className="border-b border-[var(--border-subtle)]">
                           <td className="py-2 text-[var(--text-primary)]">{p.transactionId || p.id.slice(0, 8)}</td>
                           <td className="py-2 text-[var(--text-secondary)]">{p.method.replace(/_/g, ' ')}</td>
-                          <td className="py-2 text-right">${p.amount.toFixed(2)}</td>
+                          <td className="py-2 text-right">${Number(p.amount ?? 0).toFixed(2)}</td>
                           <td className="py-2"><StatusBadgeLocal status={p.status} styles={paymentStatusStyles} /></td>
                           <td className="py-2 text-[var(--text-secondary)]">{p.processedAt ? new Date(p.processedAt).toLocaleDateString() : '-'}</td>
                         </tr>
@@ -626,9 +629,9 @@ export default function InvoicingPage() {
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{inv.orderNumber ? 'Sales' : 'Standard'}</td>
                         <td className="px-4 py-3 text-[var(--text-primary)]">{inv.customerName || inv.supplierName || '-'}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={inv.status} styles={invoiceStatusStyles} /></td>
-                        <td className="px-4 py-3 text-right font-medium">${inv.totalAmount.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right">${inv.amountPaid.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right font-semibold">${inv.amountDue.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-medium">${Number(inv.totalAmount ?? 0).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right">${Number(inv.amountPaid ?? 0).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-semibold">${Number(inv.amountDue ?? 0).toFixed(2)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
@@ -711,7 +714,7 @@ export default function InvoicingPage() {
                       <tr key={p.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-sunken)]">
                         <td className="px-4 py-3 font-medium text-[var(--text-brand)]">{p.transactionId || p.id.slice(0, 8)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{p.invoiceNumber || p.invoiceId.slice(0, 8)}</td>
-                        <td className="px-4 py-3 text-right font-medium">${p.amount.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-medium">${Number(p.amount ?? 0).toFixed(2)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{p.method.replace(/_/g, ' ')}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{p.reference || '-'}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={p.status} styles={paymentStatusStyles} /></td>
@@ -787,7 +790,7 @@ export default function InvoicingPage() {
                         </td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{m.invoiceNumber || m.invoiceId.slice(0, 8)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)] max-w-[200px] truncate">{m.reason}</td>
-                        <td className="px-4 py-3 text-right font-medium">${Math.abs(m.totalAmount).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-medium">${Math.abs(Number(m.totalAmount ?? 0)).toFixed(2)}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={m.status} styles={creditMemoStatusStyles} /></td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{m.issuedDate ? new Date(m.issuedDate).toLocaleDateString() : new Date(m.createdAt).toLocaleDateString()}</td>
                       </tr>
@@ -1027,7 +1030,7 @@ export default function InvoicingPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Payment</label>
-                <p className="text-sm text-[var(--text-primary)]">{showRefund.transactionId || showRefund.id.slice(0, 8)} &mdash; ${showRefund.amount.toFixed(2)}</p>
+                <p className="text-sm text-[var(--text-primary)]">{showRefund.transactionId || showRefund.id.slice(0, 8)} &mdash; ${Number(showRefund.amount ?? 0).toFixed(2)}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Refund Amount</label>

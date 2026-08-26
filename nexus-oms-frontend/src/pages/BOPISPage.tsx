@@ -37,9 +37,9 @@ export default function BOPISPage() {
     queryFn: async () => {
       const res = await ordersApi.getOrders({ status: 'ALLOCATED' })
       const d = res.data
-      if (Array.isArray(d)) return (d as Order[]).filter(o => o.channel === 'BOPIS' || o.channel === 'PICKUP')
+      if (Array.isArray(d)) return (d as Order[]).filter(o => (o as any).fulfillmentType === 'BOPIS')
       if (d && typeof d === 'object' && 'content' in d)
-        return ((d as { content: Order[] }).content).filter(o => o.channel === 'BOPIS' || o.channel === 'PICKUP')
+        return ((d as { content: Order[] }).content).filter(o => (o as any).fulfillmentType === 'BOPIS')
       return []
     },
   })
@@ -61,9 +61,9 @@ export default function BOPISPage() {
     queryFn: async () => {
       const res = await ordersApi.getOrders({ status: 'SHIPPED' })
       const d = res.data
-      if (Array.isArray(d)) return (d as Order[]).filter(o => o.channel === 'BOPIS' || o.channel === 'PICKUP')
+      if (Array.isArray(d)) return (d as Order[]).filter(o => (o as any).fulfillmentType === 'BOPIS')
       if (d && typeof d === 'object' && 'content' in d)
-        return ((d as { content: Order[] }).content).filter(o => o.channel === 'BOPIS' || o.channel === 'PICKUP')
+        return ((d as { content: Order[] }).content).filter(o => (o as any).fulfillmentType === 'BOPIS')
       return []
     },
     enabled: activeTab === 'ship-to-store',

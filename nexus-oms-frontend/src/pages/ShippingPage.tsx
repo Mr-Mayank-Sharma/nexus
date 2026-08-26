@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Truck, Plus, CheckCircle, XCircle, Loader2,
@@ -153,7 +153,7 @@ export default function ShippingPage() {
               </thead>
               <tbody className="divide-y divide-[var(--border-subtle)]">
                 {filtered.map(s => (
-                  <>
+                  <Fragment key={s.id}>
                     <tr key={s.id} className="enterprise-table-row cursor-pointer" onClick={() => setExpandedShipment(expandedShipment === s.id ? null : s.id)}>
                       <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{s.orderNumber || s.orderId?.slice(0, 8)}</td>
                       <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{s.carrier || '-'}</td>
@@ -254,7 +254,7 @@ export default function ShippingPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

@@ -61,16 +61,30 @@ export default function OrdersPage() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', activeTab, search],
     queryFn: async () => {
-      const params: Record<string, string> = {}
-      if (activeTab !== 'ALL') params.status = activeTab
-      if (search) params.search = search
-      params.size = '200'
-      params.sort = 'createdAt,desc'
-      const res: ApiResponse<Order[]> = await ordersApi.getOrders(params as any)
-      const d = res.data
-      if (Array.isArray(d)) return d
-      if (d && typeof d === 'object' && 'content' in d) return (d as { content: Order[] }).content
-      return []
+      // Backend caps page size at 2000 — fetch ALL pages so every order is visible
+      const baseParams: Record<string, string> = {}
+      if (activeTab !== 'ALL') baseParams.status = activeTab
+      if (search) baseParams.search = search
+      baseParams.sort = 'createdAt,desc'
+      const PAGE_SIZE = 2000
+      const all: Order[] = []
+      let p = 0
+      for (;;) {
+        const res: ApiResponse<Order[]> = await ordersApi.getOrders({ ...baseParams, page: String(p), size: String(PAGE_SIZE) } as any)
+        const d = res.data
+        const content = Array.isArray(d)
+          ? d
+          : d && typeof d === 'object' && 'content' in d
+            ? (d as { content: Order[] }).content
+            : []
+        const totalElements = !Array.isArray(d) && d && typeof d === 'object' && 'totalElements' in d
+          ? Number((d as { totalElements: number }).totalElements)
+          : null
+        all.push(...content)
+        if (Array.isArray(d) || content.length === 0 || (totalElements !== null && all.length >= totalElements)) break
+        p++
+      }
+      return all
     },
   })
 

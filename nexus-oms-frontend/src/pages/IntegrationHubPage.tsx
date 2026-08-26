@@ -166,10 +166,10 @@ export default function IntegrationHubPage() {
               <div key={cat}>
                 <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 px-2">{cat}</h3>
                 <div className="space-y-1">
-                  {platforms.filter(p => p.category === cat).map(p => {
+                  {platforms.filter(p => p.category === cat).map((p, idx) => {
                     const active = connectors.find(c => c.platform === p.platformType)
                     return (
-                      <button type="button" key={p.platformType} onClick={() => active ? setSelectedConnector(active) : openCreate(p)}
+                      <button type="button" key={`${cat}-${p.platformType}-${idx}`} onClick={() => active ? setSelectedConnector(active) : openCreate(p)}
                         className="w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm hover:bg-[var(--surface-muted)] transition-colors group">
                         <div className={`w-6 h-6 rounded ${CATEGORY_COLORS[p.category] || 'bg-[var(--surface-muted)]'} flex items-center justify-center text-white`}>
                           {CATEGORY_ICONS[p.category] || <Plug className="w-3 h-3" />}
