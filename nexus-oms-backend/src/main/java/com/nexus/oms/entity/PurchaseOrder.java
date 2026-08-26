@@ -26,7 +26,6 @@ public class PurchaseOrder {
     @Column(name = "tenant_id")
     private UUID tenantId;
 
-    @NotBlank
     @Column(name = "po_number", nullable = false)
     private String poNumber;
 
@@ -86,6 +85,13 @@ public class PurchaseOrder {
 
     @Column(name = "is_fully_received")
     private Boolean isFullyReceived;
+
+    /**
+     * Line items accepted on create from the UI payload.
+     * Not mapped to this table — persisted into nx_purchase_order_items by ProcurementService.
+     */
+    @Transient
+    private java.util.List<PurchaseOrderItem> items;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")

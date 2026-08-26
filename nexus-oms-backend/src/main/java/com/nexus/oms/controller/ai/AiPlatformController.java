@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -126,9 +127,23 @@ public class AiPlatformController {
     @PostMapping("/models/{modelId}/deploy/{versionId}")
     public ResponseEntity<ApiResponse<AiDeployment>> deploy(
             @PathVariable UUID modelId, @PathVariable UUID versionId,
-            @RequestParam(defaultValue = "PRODUCTION") String environment) {
+            @RequestParam(defaultValue = "PRODUCTION") String environment,
+            @RequestParam(defaultValue = "false") boolean force) {
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    modelRegistryService.deploy(tenant(), modelId, versionId, environment, force)));
+        } catch (AiGateBlockedException e) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body(ApiResponse.error(e.getMessage()
+                            + " | Pass ?force=true to override (logged and stamped on the version)"));
+        }
+    }
+
+    @PostMapping("/models/{modelId}/ramp/{versionId}")
+    public ResponseEntity<ApiResponse<AiDeployment>> ramp(
+            @PathVariable UUID modelId, @PathVariable UUID versionId) {
         return ResponseEntity.ok(ApiResponse.success(
-                modelRegistryService.deploy(tenant(), modelId, versionId, environment)));
+                modelRegistryService.ramp(tenant(), modelId, versionId)));
     }
 
     @PostMapping("/models/{modelId}/rollback/{versionId}")

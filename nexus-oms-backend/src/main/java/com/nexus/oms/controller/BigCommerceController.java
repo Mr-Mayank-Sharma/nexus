@@ -7,6 +7,8 @@ import com.nexus.oms.entity.NxBigCommerceConfig;
 import com.nexus.oms.entity.NxSyncLog;
 import com.nexus.oms.repository.NxBigCommerceConfigRepository;
 import com.nexus.oms.repository.NxSyncLogRepository;
+import com.nexus.oms.exception.BadRequestException;
+import com.nexus.oms.scheduler.SyncExecutionLocks;
 import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.bigcommerce.*;
 import jakarta.validation.Valid;
@@ -31,6 +33,7 @@ public class BigCommerceController {
     private final BigCommerceRefundSyncService refundSyncService;
     private final BigCommerceCustomerImportService customerImportService;
     private final BigCommerceWebhookService webhookService;
+    private final SyncExecutionLocks syncExecutionLocks;
 
     public BigCommerceController(NxBigCommerceConfigRepository configRepository,
                                   NxSyncLogRepository syncLogRepository,
@@ -40,7 +43,8 @@ public class BigCommerceController {
                                   BigCommerceShipmentPushService shipmentPushService,
                                   BigCommerceRefundSyncService refundSyncService,
                                   BigCommerceCustomerImportService customerImportService,
-                                  BigCommerceWebhookService webhookService) {
+                                  BigCommerceWebhookService webhookService,
+                                  SyncExecutionLocks syncExecutionLocks) {
         this.configRepository = configRepository;
         this.syncLogRepository = syncLogRepository;
         this.orderImportService = orderImportService;
@@ -50,6 +54,7 @@ public class BigCommerceController {
         this.refundSyncService = refundSyncService;
         this.customerImportService = customerImportService;
         this.webhookService = webhookService;
+        this.syncExecutionLocks = syncExecutionLocks;
     }
 
     @GetMapping("/config")
@@ -79,9 +84,18 @@ public class BigCommerceController {
 
     @PostMapping("/sync/orders")
     public ResponseEntity<ApiResponse<SyncResult>> syncOrders() {
-        return ResponseEntity.ok(ApiResponse.success(
-                orderImportService.importOrders(TenantContext.getCurrentTenantId()),
-                "Order import completed"));
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        String lockKey = SyncExecutionLocks.key(tenantId, "ORDER_IMPORT");
+        if (!syncExecutionLocks.tryAcquire(lockKey)) {
+            throw new BadRequestException("An order import is already running for this tenant");
+        }
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    orderImportService.importOrders(tenantId),
+                    "Order import completed"));
+        } finally {
+            syncExecutionLocks.release(lockKey);
+        }
     }
 
     @PostMapping("/sync/products")

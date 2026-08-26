@@ -15,4 +15,8 @@ public interface CustomerRepository extends JpaRepository<NxCustomer, UUID> {
     Optional<NxCustomer> findByTenantIdAndExternalId(UUID tenantId, String externalId);
 
     Optional<NxCustomer> findByTenantIdAndEmail(UUID tenantId, String email);
+
+    // Tenant-scoped, duplicate-tolerant lookup (List variant avoids
+    // IncorrectResultSizeDataAccessException when a tenant has dupes)
+    List<NxCustomer> findAllByTenantIdAndEmail(UUID tenantId, String email);
 }

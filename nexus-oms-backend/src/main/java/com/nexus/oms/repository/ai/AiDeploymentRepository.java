@@ -16,7 +16,10 @@ import java.util.UUID;
 
 public interface AiDeploymentRepository extends JpaRepository<AiDeployment, UUID> {
     List<AiDeployment> findByTenantIdAndModelId(UUID tenantId, UUID modelId);
-    Optional<AiDeployment> findByTenantIdAndModelIdAndEnvironment(UUID tenantId, UUID modelId, String environment);
+    // List variant: rollback()/supersede flows legitimately create multiple rows
+    // per (tenant, model, environment). The old Optional variant threw
+    // IncorrectResultSizeDataAccessException in that case. Callers pick ACTIVE.
+    List<AiDeployment> findAllByTenantIdAndModelIdAndEnvironment(UUID tenantId, UUID modelId, String environment);
     List<AiDeployment> findByTenantIdAndStatus(UUID tenantId, String status);
     List<AiDeployment> findByTenantId(UUID tenantId);
     List<AiDeployment> findByVersionId(UUID versionId);

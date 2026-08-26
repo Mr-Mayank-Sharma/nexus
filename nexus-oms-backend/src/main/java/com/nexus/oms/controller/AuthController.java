@@ -19,6 +19,9 @@ public class AuthController {
     private final AuthService authService;
     private final CompanySettingsService companySettingsService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.registration.enabled:true}")
+    private boolean registrationEnabled;
+
     public AuthController(AuthService authService, CompanySettingsService companySettingsService) {
         this.authService = authService;
         this.companySettingsService = companySettingsService;
@@ -31,6 +34,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+        if (!registrationEnabled) {
+            // Self-registration is disabled in secured deployments — admins provision
+            // accounts (or an invite flow) instead of allowing anonymous sign-ups.
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Registration is disabled. Contact your administrator."));
+        }
         return ResponseEntity.ok(ApiResponse.success(authService.register(request)));
     }
 

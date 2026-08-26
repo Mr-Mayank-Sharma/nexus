@@ -1,42 +1,42 @@
 package com.nexus.oms.ai;
 
-import com.nexus.oms.dto.AllocationResponse;
-import com.nexus.oms.dto.DemandForecastResponse;
-import com.nexus.oms.dto.InventoryRecommendation;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * P1.3 contract tests: the legacy bridge NEVER fabricates predictions.
+ * When the Flask backend is unreachable, every call must THROW (the
+ * controller turns that into a 503). The old silent fallbacks
+ * ("FALLBACK_WH", "STANDARD", empty demand) are gone.
+ */
 class AiServiceTest {
 
-    private final AiService aiService = new AiService("http://localhost:8000", "http://localhost:8001", 30000);
+    // Nothing listens here -> deterministic connection-refused, no network flakiness.
+    private static final String DEAD_OPS = "http://localhost:59987";
+    private static final String DEAD_INTEL = "http://localhost:59988";
+
+    private final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+    private final AiService aiService = new AiService(DEAD_OPS, DEAD_INTEL, 1000, registry);
 
     @Test
-    void fallbackRouting_returnsDefaultResponse() {
-        AllocationResponse result = aiService.fallbackRouting(Map.of(), new RuntimeException("timeout"));
-        assertNotNull(result);
-        assertEquals("FALLBACK_WH", result.getWarehouse());
-        assertEquals("FALLBACK_CARRIER", result.getCarrier());
-        assertEquals("FALLBACK", result.getRule());
+    void carrierAi_throws_whenBackendDown() {
+        assertThrows(RuntimeException.class, () -> aiService.callCarrierAi(Map.of()));
+        assertEquals(1.0, registry.counter("nexus.ai.legacy_bridge.errors", "endpoint", "carrier").count());
     }
 
     @Test
-    void fallbackDemand_returnsEmptyResponse() {
-        DemandForecastResponse result = aiService.fallbackDemand(Map.of(), new RuntimeException("timeout"));
-        assertNotNull(result);
-        assertNotNull(result.getNext7Days());
-        assertNotNull(result.getNext30Days());
-        assertNotNull(result.getConfidence());
+    void demandAi_throws_whenBackendDown() {
+        assertThrows(RuntimeException.class, () -> aiService.callDemandAi(Map.of()));
+        assertEquals(1.0, registry.counter("nexus.ai.legacy_bridge.errors", "endpoint", "demand").count());
     }
 
     @Test
-    void fallbackInventory_returnsSafeDefaults() {
-        InventoryRecommendation result = aiService.fallbackInventory(Map.of(), new RuntimeException("timeout"));
-        assertNotNull(result);
-        assertFalse(result.isNeedsReorder());
-        assertEquals(0, result.getRecommendedQty());
-        assertEquals(0.0, result.getConfidence());
+    void inventoryAi_throws_whenBackendDown() {
+        assertThrows(RuntimeException.class, () -> aiService.callInventoryAi(Map.of()));
+        assertEquals(1.0, registry.counter("nexus.ai.legacy_bridge.errors", "endpoint", "inventory").count());
     }
 }

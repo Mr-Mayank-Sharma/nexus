@@ -36,6 +36,10 @@ public class PurchaseOrderItem {
     @Column(name = "quantity_ordered")
     private Integer quantityOrdered;
 
+    /** UI alias for quantityOrdered (frontend sends `quantity`). Not persisted. */
+    @Transient
+    private Integer quantity;
+
     @PositiveOrZero
     @Column(name = "quantity_received")
     private Integer quantityReceived;

@@ -237,7 +237,14 @@ public class ProcurementController {
     @Operation(summary = "Receive items for a purchase order")
     @PostMapping("/purchase-orders/{id}/receive")
     public ResponseEntity<ApiResponse<PurchaseOrder>> receiveItems(
-            @PathVariable UUID id, @RequestBody List<Map<String, Object>> receivedItems) {
+            @PathVariable UUID id, @RequestBody Map<String, Object> body) {
+        Object payload = body.get("items") != null ? body.get("items") : body.get("receivedItems");
+        if (payload == null) {
+            throw new com.nexus.oms.exception.BadRequestException(
+                "Body must be {\"items\": [{\"itemId\"|\"sku\", \"quantityReceived\"}]}");
+        }
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> receivedItems = (List<Map<String, Object>>) payload;
         return ResponseEntity.ok(ApiResponse.success(
                 procurementService.receiveItems(id, receivedItems), "Items received"));
     }

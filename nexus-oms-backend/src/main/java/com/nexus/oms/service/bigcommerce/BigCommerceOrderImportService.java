@@ -188,6 +188,39 @@ public class BigCommerceOrderImportService {
                 .total(total)
                 .paymentStatus(bcOrder.has("payment_status") ? bcOrder.get("payment_status").asText() : null)
                 .build();
+
+        // Derive fulfillment type from custom_fields (fulfillment_type / pickup_store),
+        // fall back to staff_notes: "nexus_ft=<TYPE>;pickup_store=<WH>" or containing "bopis"
+        String fulfillmentType = "STANDARD";
+        JsonNode customFields = bcOrder.get("custom_fields");
+        if (customFields != null && customFields.isArray()) {
+            for (JsonNode field : customFields) {
+                String name = field.path("name").asText("");
+                String value = field.path("value").asText("");
+                if ("fulfillment_type".equals(name) && !value.isBlank()) {
+                    fulfillmentType = value.toUpperCase();
+                }
+                if ("pickup_store".equals(name) && !value.isBlank()) {
+                    order.setMetadata("{\"pickupStore\":\"" + value + "\"}");
+                }
+            }
+        }
+        String staffNotes = bcOrder.has("staff_notes") ? bcOrder.get("staff_notes").asText("") : "";
+        for (String part : staffNotes.split(";")) {
+            String[] kv = part.split("=", 2);
+            if (kv.length == 2 && !kv[1].isBlank()) {
+                if ("nexus_ft".equals(kv[0].trim())) {
+                    fulfillmentType = kv[1].trim().toUpperCase();
+                } else if ("pickup_store".equals(kv[0].trim())) {
+                    order.setMetadata("{\"pickupStore\":\"" + kv[1].trim() + "\"}");
+                }
+            }
+        }
+        if ("STANDARD".equals(fulfillmentType) && staffNotes.toLowerCase().contains("bopis")) {
+            fulfillmentType = "BOPIS";
+        }
+        order.setFulfillmentType(fulfillmentType);
+
         order = orderRepository.save(order);
 
         JsonNode products = bcOrder.get("products");
@@ -251,23 +284,25 @@ public class BigCommerceOrderImportService {
         String email = billing != null && billing.has("email") ? billing.get("email").asText() : "unknown@bigcommerce.com";
         String name = billing != null ? billing.get("first_name").asText() + " " + billing.get("last_name").asText() : "BigCommerce Customer";
 
-        return customerRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    Address customerAddress = addressRepository.save(Address.builder()
-                            .tenantId(tenantId)
-                            .addressLine1(billing != null && billing.has("street_1") ? billing.get("street_1").asText() : null)
-                            .city(billing != null && billing.has("city") ? billing.get("city").asText() : null)
-                            .state(billing != null && billing.has("state") ? billing.get("state").asText() : null)
-                            .postalCode(billing != null && billing.has("zip") ? billing.get("zip").asText() : null)
-                            .addressType("PRIMARY")
-                            .build());
-                    return customerRepository.save(NxCustomer.builder()
-                            .tenantId(tenantId)
-                            .name(name)
-                            .email(email)
-                            .address(customerAddress)
-                            .build());
-                });
+        // SECURITY: tenant-scoped lookup (was findByEmail — matched across tenants)
+        List<NxCustomer> existingCustomers = customerRepository.findAllByTenantIdAndEmail(tenantId, email);
+        if (!existingCustomers.isEmpty()) {
+            return existingCustomers.get(0);
+        }
+        Address customerAddress = addressRepository.save(Address.builder()
+                .tenantId(tenantId)
+                .addressLine1(billing != null && billing.has("street_1") ? billing.get("street_1").asText() : null)
+                .city(billing != null && billing.has("city") ? billing.get("city").asText() : null)
+                .state(billing != null && billing.has("state") ? billing.get("state").asText() : null)
+                .postalCode(billing != null && billing.has("zip") ? billing.get("zip").asText() : null)
+                .addressType("PRIMARY")
+                .build());
+        return customerRepository.save(NxCustomer.builder()
+                .tenantId(tenantId)
+                .name(name)
+                .email(email)
+                .address(customerAddress)
+                .build());
     }
 
     private String mapStatus(int bcStatusId) {

@@ -25,15 +25,23 @@ public class AiModelRegistryService {
     private final AiModelVersionRepository versionRepository;
     private final AiDeploymentRepository deploymentRepository;
     private final AiModelMetricRepository metricRepository;
+    private final AiDeploymentGateService gateService;
+
+    /** Ramp ladder for progressive rollout: 5% → 10% → 25% → 50% → 100%. */
+    private static final List<BigDecimal> RAMP_LADDER = List.of(
+            new BigDecimal("0.05"), new BigDecimal("0.10"), new BigDecimal("0.25"),
+            new BigDecimal("0.50"), BigDecimal.ONE);
 
     public AiModelRegistryService(AiModelRepository modelRepository,
                                    AiModelVersionRepository versionRepository,
                                    AiDeploymentRepository deploymentRepository,
-                                   AiModelMetricRepository metricRepository) {
+                                   AiModelMetricRepository metricRepository,
+                                   AiDeploymentGateService gateService) {
         this.modelRepository = modelRepository;
         this.versionRepository = versionRepository;
         this.deploymentRepository = deploymentRepository;
         this.metricRepository = metricRepository;
+        this.gateService = gateService;
     }
 
     public Page<AiModel> getModels(UUID tenantId, String category, String status, Pageable pageable) {
@@ -94,35 +102,86 @@ public class AiModelRegistryService {
         return saved;
     }
 
+    /**
+     * Deploy a version behind the P1.4 validation gate.
+     *
+     * Gate failure throws {@link AiGateBlockedException} unless {@code force}
+     * is true (escape hatch for admins; the override is logged and stamped on
+     * the version). On success, any existing ACTIVE deployment for the same
+     * (tenant, model, environment) is marked SUPERSEDED — champion keeps
+     * serving until the challenger actually beats it, never on ties.
+     */
     @Transactional
-    public AiDeployment deploy(UUID tenantId, UUID modelId, UUID versionId, String environment) {
+    public AiDeployment deploy(UUID tenantId, UUID modelId, UUID versionId, String environment, boolean force) {
         AiModelVersion version = versionRepository.findById(versionId)
                 .orElseThrow(() -> new NoSuchElementException("Version not found"));
 
+        String env = environment != null ? environment : "PRODUCTION";
+
+        AiDeploymentGateService.GateResult gate = gateService.evaluate(tenantId, modelId, version, env);
+        if (!gate.passed()) {
+            if (!force) {
+                throw new AiGateBlockedException(gate.failures(), gate.detail());
+            }
+            log.warn("Deployment gate OVERRIDDEN by {} for model={} version={}: {}",
+                    TenantContext.getCurrentUsername(), modelId, versionId, gate.failures());
+        }
+
         version.setStatus("DEPLOYED");
+        version.setValidatedBy(TenantContext.getCurrentUsername());
+        version.setValidatedAt(LocalDateTime.now());
         version.setDeployedBy(TenantContext.getCurrentUsername());
         version.setDeployedAt(LocalDateTime.now());
         versionRepository.save(version);
 
-        AiDeployment existing = deploymentRepository
-                .findByTenantIdAndModelIdAndEnvironment(tenantId, modelId, environment)
-                .orElse(null);
-        if (existing != null) {
-            existing.setVersionId(versionId);
-            existing.setStatus("ACTIVE");
-            existing.setTrafficWeight(new BigDecimal("1.00"));
-            return deploymentRepository.save(existing);
+        // Supersede current champion(s) - history preserved as separate rows.
+        List<AiDeployment> incumbents = deploymentRepository
+                .findAllByTenantIdAndModelIdAndEnvironment(tenantId, modelId, env);
+        boolean hadChampion = false;
+        for (AiDeployment incumbent : incumbents) {
+            if ("ACTIVE".equals(incumbent.getStatus())) {
+                incumbent.setStatus("SUPERSEDED");
+                deploymentRepository.save(incumbent);
+                hadChampion = true;
+            }
         }
 
         AiDeployment deployment = AiDeployment.builder()
                 .tenantId(tenantId)
                 .modelId(modelId)
                 .versionId(versionId)
-                .environment(environment != null ? environment : "PRODUCTION")
-                .trafficWeight(new BigDecimal("1.00"))
+                .environment(env)
+                .trafficWeight(BigDecimal.ONE)
                 .status("ACTIVE")
                 .deployedBy(TenantContext.getCurrentUsername())
                 .build();
+        return deploymentRepository.save(deployment);
+    }
+
+    /**
+     * Progressive rollout: bump the ACTIVE deployment's traffic weight along
+     * the 5% → 10% → 25% → 50% → 100% ladder. Bookkeeping today (the gateway
+     * serves the single ACTIVE deployment regardless of weight); wired into
+     * weighted serving once real traffic splitting lands post-P1.6.
+     */
+    @Transactional
+    public AiDeployment ramp(UUID tenantId, UUID modelId, UUID versionId) {
+        AiDeployment deployment = deploymentRepository
+                .findAllByTenantIdAndModelIdAndEnvironment(tenantId, modelId, "PRODUCTION")
+                .stream()
+                .filter(d -> versionId.equals(d.getVersionId()))
+                .filter(d -> "ACTIVE".equals(d.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException(
+                        "No ACTIVE deployment of version " + versionId + " to ramp"));
+
+        BigDecimal current = deployment.getTrafficWeight() == null ? BigDecimal.ZERO : deployment.getTrafficWeight();
+        BigDecimal next = RAMP_LADDER.stream()
+                .filter(rung -> rung.compareTo(current) > 0)
+                .findFirst()
+                .orElse(BigDecimal.ONE);
+        deployment.setTrafficWeight(next);
+        log.info("Ramping deployment {} to {}", deployment.getId(), next);
         return deploymentRepository.save(deployment);
     }
 

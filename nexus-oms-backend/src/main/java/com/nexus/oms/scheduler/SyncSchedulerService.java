@@ -26,6 +26,7 @@ public class SyncSchedulerService {
     private final NxIntegrationSyncConfigRepository syncConfigRepository;
     private final NxIntegrationStoreRepository storeRepository;
     private final IntegrationStoreService storeService;
+    private final SyncExecutionLocks syncExecutionLocks;
 
     private final ShopifyOrderImportService shopifyOrderImportService;
     private final ShopifyProductSyncService shopifyProductSyncService;
@@ -43,6 +44,7 @@ public class SyncSchedulerService {
     public SyncSchedulerService(NxIntegrationSyncConfigRepository syncConfigRepository,
                                  NxIntegrationStoreRepository storeRepository,
                                  IntegrationStoreService storeService,
+                                 SyncExecutionLocks syncExecutionLocks,
                                  ShopifyOrderImportService shopifyOrderImportService,
                                  ShopifyProductSyncService shopifyProductSyncService,
                                  ShopifyInventorySyncService shopifyInventorySyncService,
@@ -57,6 +59,7 @@ public class SyncSchedulerService {
         this.syncConfigRepository = syncConfigRepository;
         this.storeRepository = storeRepository;
         this.storeService = storeService;
+        this.syncExecutionLocks = syncExecutionLocks;
         this.shopifyOrderImportService = shopifyOrderImportService;
         this.shopifyProductSyncService = shopifyProductSyncService;
         this.shopifyInventorySyncService = shopifyInventorySyncService;
@@ -99,30 +102,41 @@ public class SyncSchedulerService {
         NxIntegrationStore store = storeRepository.findById(syncConfig.getStoreId()).orElse(null);
         if (store == null || !store.getIsActive()) return;
 
-        log.info("Running scheduled sync: store={} type={}", store.getStoreCode(), syncConfig.getSyncType());
-
-        syncConfig.setLastSyncAt(LocalDateTime.now());
-        syncConfig.setLastSyncStatus("RUNNING");
-        syncConfig = syncConfigRepository.save(syncConfig);
-
-        SyncResult result = null;
-        try {
-            com.nexus.oms.security.TenantContext.setCurrentTenantId(store.getTenantId());
-            result = dispatchSync(store, syncConfig.getSyncType());
-        } finally {
-            com.nexus.oms.security.TenantContext.clear();
+        String lockKey = SyncExecutionLocks.key(store.getId(), syncConfig.getSyncType());
+        if (!syncExecutionLocks.tryAcquire(lockKey)) {
+            log.info("Skipping scheduled sync: store={} type={} — already running",
+                    store.getStoreCode(), syncConfig.getSyncType());
+            return;
         }
 
-        syncConfig.setLastSyncStatus(result != null ? result.getStatus() : "FAILED");
-        syncConfig.setLastSyncMessage(result != null ? result.getStatus() : "No result returned");
-        syncConfig.setLastSyncAt(LocalDateTime.now());
-        syncConfigRepository.save(syncConfig);
+        try {
+            log.info("Running scheduled sync: store={} type={}", store.getStoreCode(), syncConfig.getSyncType());
 
-        log.info("Scheduled sync complete: store={} type={} status={} succeeded={} failed={}",
-                store.getStoreCode(), syncConfig.getSyncType(),
-                syncConfig.getLastSyncStatus(),
-                result != null ? result.getItemsSucceeded() : 0,
-                result != null ? result.getItemsFailed() : 0);
+            syncConfig.setLastSyncAt(LocalDateTime.now());
+            syncConfig.setLastSyncStatus("RUNNING");
+            syncConfig = syncConfigRepository.save(syncConfig);
+
+            SyncResult result = null;
+            try {
+                com.nexus.oms.security.TenantContext.setCurrentTenantId(store.getTenantId());
+                result = dispatchSync(store, syncConfig.getSyncType());
+            } finally {
+                com.nexus.oms.security.TenantContext.clear();
+            }
+
+            syncConfig.setLastSyncStatus(result != null ? result.getStatus() : "FAILED");
+            syncConfig.setLastSyncMessage(result != null ? result.getStatus() : "No result returned");
+            syncConfig.setLastSyncAt(LocalDateTime.now());
+            syncConfigRepository.save(syncConfig);
+
+            log.info("Scheduled sync complete: store={} type={} status={} succeeded={} failed={}",
+                    store.getStoreCode(), syncConfig.getSyncType(),
+                    syncConfig.getLastSyncStatus(),
+                    result != null ? result.getItemsSucceeded() : 0,
+                    result != null ? result.getItemsFailed() : 0);
+        } finally {
+            syncExecutionLocks.release(lockKey);
+        }
     }
 
     private SyncResult dispatchSync(NxIntegrationStore store, String syncType) {

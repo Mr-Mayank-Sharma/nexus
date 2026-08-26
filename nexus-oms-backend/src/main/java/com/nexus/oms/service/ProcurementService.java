@@ -240,6 +240,22 @@ public class ProcurementService {
         po.setOrderDate(LocalDate.now());
         po = purchaseOrderRepository.save(po);
 
+        // Persist line items supplied inline by the UI (frontend sends nested `items`).
+        if (po.getItems() != null) {
+            for (PurchaseOrderItem item : po.getItems()) {
+                item.setId(null);
+                item.setPoId(po.getId());
+                if (item.getQuantityOrdered() == null) {
+                    item.setQuantityOrdered(item.getQuantity());
+                }
+                item.setQuantityReceived(0);
+                if (item.getTotalPrice() == null && item.getQuantityOrdered() != null && item.getUnitPrice() != null) {
+                    item.setTotalPrice(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantityOrdered())));
+                }
+                purchaseOrderItemRepository.save(item);
+            }
+        }
+
         List<PurchaseOrderItem> items = purchaseOrderItemRepository.findByPoId(po.getId());
         BigDecimal subtotal = BigDecimal.ZERO;
         for (PurchaseOrderItem item : items) {
@@ -275,10 +291,22 @@ public class ProcurementService {
                     ? (Integer) received.get("quantityReceived")
                     : ((Number) received.get("quantityReceived")).intValue();
 
-            PurchaseOrderItem item = items.stream()
-                    .filter(i -> i.getSku().equals(sku))
-                    .findFirst()
-                    .orElseThrow(() -> new BadRequestException("Item with SKU " + sku + " not found on PO"));
+            PurchaseOrderItem item;
+            if (sku != null) {
+                final String fsku = sku;
+                item = items.stream()
+                        .filter(i -> i.getSku().equals(fsku))
+                        .findFirst()
+                        .orElseThrow(() -> new BadRequestException("Item with SKU " + sku + " not found on PO"));
+            } else if (received.get("itemId") != null) {
+                UUID itemId = UUID.fromString(String.valueOf(received.get("itemId")));
+                item = items.stream()
+                        .filter(i -> i.getId().equals(itemId))
+                        .findFirst()
+                        .orElseThrow(() -> new BadRequestException("Item " + itemId + " not found on PO"));
+            } else {
+                throw new BadRequestException("Received line must include either 'sku' or 'itemId'");
+            }
 
             int newReceived = item.getQuantityReceived() + qty;
             int toleranceLimit = (int) Math.floor(item.getQuantityOrdered() * (1 + RECEIVING_TOLERANCE_PCT / 100.0));

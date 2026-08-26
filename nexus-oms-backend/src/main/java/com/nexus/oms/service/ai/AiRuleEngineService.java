@@ -2,6 +2,7 @@ package com.nexus.oms.service.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.oms.entity.Warehouse;
 import com.nexus.oms.entity.ai.*;
 import com.nexus.oms.repository.ai.*;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -21,17 +22,20 @@ public class AiRuleEngineService {
     private final AiRuleFallbackRepository fallbackRepository;
     private final AiModelRepository modelRepository;
     private final LlmChatService llmChatService;
+    private final AiWarehouseResolutionService warehouseResolutionService;
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
 
     public AiRuleEngineService(AiRuleFallbackRepository fallbackRepository,
                                 AiModelRepository modelRepository,
                                 LlmChatService llmChatService,
+                                AiWarehouseResolutionService warehouseResolutionService,
                                 ObjectMapper objectMapper,
                                 MeterRegistry meterRegistry) {
         this.fallbackRepository = fallbackRepository;
         this.modelRepository = modelRepository;
         this.llmChatService = llmChatService;
+        this.warehouseResolutionService = warehouseResolutionService;
         this.objectMapper = objectMapper;
         this.meterRegistry = meterRegistry;
     }
@@ -65,14 +69,14 @@ public class AiRuleEngineService {
             List<AiRuleFallback> fallbacks = fallbackRepository
                     .findByModelIdAndIsActiveTrueOrderByPriorityAsc(modelId);
             if (!fallbacks.isEmpty()) {
-                Map<String, Object> ruleResult = executeRule(fallbacks.get(0), input);
+                Map<String, Object> ruleResult = executeRule(tenantId, fallbacks.get(0), input);
                 ruleResult.put("fallbackSource", "DB_RULE");
                 return ruleResult;
             }
         }
 
         // Final fallback: hardcoded rules
-        Map<String, Object> genericResult = generateGenericFallback(modelType, input);
+        Map<String, Object> genericResult = generateGenericFallback(tenantId, modelType, input);
         genericResult.put("fallbackSource", "HARDCODED_RULE");
         return genericResult;
     }
@@ -105,7 +109,7 @@ public class AiRuleEngineService {
         return result;
     }
 
-    private Map<String, Object> executeRule(AiRuleFallback rule, Map<String, Object> input) {
+    private Map<String, Object> executeRule(UUID tenantId, AiRuleFallback rule, Map<String, Object> input) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("fallbackUsed", true);
         result.put("fallbackRule", rule.getName());
@@ -117,7 +121,7 @@ public class AiRuleEngineService {
                 result.put("value", applyFormula(rule.getActionConfig(), input));
                 break;
             case "LOOKUP_TABLE":
-                result.put("value", applyLookup(rule.getActionConfig(), input));
+                result.put("value", applyLookup(tenantId, rule.getActionConfig(), input));
                 break;
             case "THRESHOLD_RULE":
                 result.put("value", applyThreshold(rule.getActionConfig(), input));
@@ -171,11 +175,20 @@ public class AiRuleEngineService {
         return Math.round(base * multiplier * 100.0) / 100.0;
     }
 
-    private Map<String, Object> applyLookup(String config, Map<String, Object> input) {
+    private Map<String, Object> applyLookup(UUID tenantId, String config, Map<String, Object> input) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("strategy", "nearest_warehouse");
-        result.put("warehouseId", "wh-default");
-        result.put("warehouseName", "Primary Warehouse");
+        // Resolve against the tenant's REAL warehouse network — never invent IDs.
+        java.util.Optional<Warehouse> resolved = warehouseResolutionService.primaryForTenant(tenantId);
+        if (resolved.isPresent()) {
+            Warehouse wh = resolved.get();
+            result.put("warehouseId", wh.getId().toString());
+            result.put("warehouseName", wh.getName());
+        } else {
+            result.put("warehouseId", null);
+            result.put("warehouseName", null);
+            result.put("warehouseNote", "No active warehouse configured for this tenant");
+        }
         result.put("confidence", new BigDecimal("0.70"));
         return result;
     }
@@ -210,7 +223,7 @@ public class AiRuleEngineService {
         return result;
     }
 
-    public Map<String, Object> generateGenericFallback(String modelType, Map<String, Object> input) {
+    public Map<String, Object> generateGenericFallback(UUID tenantId, String modelType, Map<String, Object> input) {
         Map<String, Object> result = new HashMap<>();
         result.put("fallbackReason", "AI model unavailable - using rule-based fallback");
         result.put("confidence", 0.65);
@@ -236,9 +249,19 @@ public class AiRuleEngineService {
                 break;
 
             case "SMART_ALLOCATOR":
-                String originZip = (String) input.getOrDefault("originZip", "");
-                result.put("warehouseId", "wh-fallback-" + (originZip.isEmpty() ? "default" : originZip.substring(0, 1)));
-                result.put("warehouseName", "Fallback Warehouse " + (originZip.isEmpty() ? "Central" : "Zone " + originZip.substring(0, 1)));
+                String destZip = (String) input.getOrDefault("destZip", "");
+                // Resolve against the tenant's REAL warehouse network — never invent IDs.
+                java.util.Optional<Warehouse> resolvedWh =
+                        warehouseResolutionService.resolveForDestination(tenantId, destZip);
+                if (resolvedWh.isPresent()) {
+                    Warehouse wh = resolvedWh.get();
+                    result.put("warehouseId", wh.getId().toString());
+                    result.put("warehouseName", wh.getName());
+                } else {
+                    result.put("warehouseId", null);
+                    result.put("warehouseName", null);
+                    result.put("warehouseNote", "No active warehouse configured for this tenant");
+                }
                 result.put("shippingCost", 12.50);
                 result.put("estimatedDays", 3);
                 result.put("strategy", "NEAREST_WAREHOUSE");

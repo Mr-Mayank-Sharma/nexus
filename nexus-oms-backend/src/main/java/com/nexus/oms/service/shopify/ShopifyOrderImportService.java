@@ -161,7 +161,15 @@ public class ShopifyOrderImportService {
         UUID tenantId = store.getTenantId();
         long shopifyOrderId = shopifyOrder.get("id").asLong();
         String orderNumber = shopifyOrder.has("order_number") ? String.valueOf(shopifyOrder.get("order_number").asInt()) : String.valueOf(shopifyOrderId);
-        if (orderRepository.findByTenantIdAndChannelOrderId(tenantId, orderNumber).isPresent()) {
+        // Channel-scoped dedup: a Shopify order_number must only match other SHOPIFY rows.
+        // The unscoped lookup threw "Query did not return a unique result: 2 results"
+        // whenever the numeric id collided with duplicated BigCommerce channel_order_ids.
+        Optional<NxOrder> existing = orderRepository.findByTenantIdAndChannelAndChannelOrderId(tenantId, "SHOPIFY", orderNumber);
+        if (existing.isEmpty()) {
+            existing = orderRepository.findByTenantIdAndChannelOrderId(tenantId, orderNumber)
+                    .filter(o -> "SHOPIFY".equalsIgnoreCase(o.getChannel()));
+        }
+        if (existing.isPresent()) {
             return;
         }
         String status = mapStatus(shopifyOrder.has("financial_status") ? shopifyOrder.get("financial_status").asText() : "pending");
@@ -299,8 +307,10 @@ public class ShopifyOrderImportService {
                 (customerNode.has("first_name") ? customerNode.get("first_name").asText() + " " + (customerNode.has("last_name") ? customerNode.get("last_name").asText() : "") : "Shopify Customer")
                 : "Shopify Customer";
 
-        // Duplicate emails exist across tenants/imports — take the first match instead of failing
-        List<NxCustomer> existing = customerRepository.findAllByEmail(email);
+        // SECURITY: scope the lookup to the importing tenant. The previous
+        // findAllByEmail matched customers across tenants (data-leak risk) and
+        // could also throw on duplicate rows within a tenant.
+        List<NxCustomer> existing = customerRepository.findAllByTenantIdAndEmail(tenantId, email);
         NxCustomer customer;
         if (!existing.isEmpty()) {
             customer = existing.get(0);

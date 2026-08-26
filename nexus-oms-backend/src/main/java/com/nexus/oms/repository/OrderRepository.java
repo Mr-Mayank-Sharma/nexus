@@ -18,6 +18,10 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
 
     Optional<NxOrder> findByTenantIdAndChannelOrderId(UUID tenantId, String channelOrderId);
 
+    // Channel-scoped dedup lookup — prevents cross-channel collisions (e.g. a Shopify
+    // order_number matching a BigCommerce channel_order_id) from breaking imports
+    Optional<NxOrder> findByTenantIdAndChannelAndChannelOrderId(UUID tenantId, String channel, String channelOrderId);
+
     Page<NxOrder> findByTenantId(UUID tenantId, Pageable pageable);
 
     List<NxOrder> findByCustomerId(UUID customerId);

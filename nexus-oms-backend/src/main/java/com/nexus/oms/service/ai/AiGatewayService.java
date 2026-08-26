@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -62,24 +63,42 @@ public class AiGatewayService {
             return executeFallback(tenantId, modelType, input, "NO_ROUTE", startTime);
         }
 
+        // Pick the ACTIVE deployment; multiple rows per (tenant, model, env) are
+        // legitimate after rollback/supersede flows (older rows keep ROLLED_BACK/
+        // SUPERSEDED status).
+        UUID routeModelId = findModelIdByType(tenantId, modelType);
         AiDeployment deployment = deploymentRepository
-                .findByTenantIdAndModelIdAndEnvironment(tenantId, findModelIdByType(tenantId, modelType), "PRODUCTION")
+                .findAllByTenantIdAndModelIdAndEnvironment(tenantId, routeModelId, "PRODUCTION")
+                .stream()
+                .filter(d -> "ACTIVE".equals(d.getStatus()))
+                .findFirst()
                 .orElse(null);
 
-        if (deployment == null || !"ACTIVE".equals(deployment.getStatus())) {
+        if (deployment == null) {
             log.warn("No active deployment for modelType={}, tenant={}. Using fallback.", modelType, tenantId);
             return executeFallback(tenantId, modelType, input, "NO_DEPLOYMENT", startTime);
         }
 
-        long elapsed = System.currentTimeMillis() - startTime;
-        if (elapsed > route.getTimeoutMs()) {
-            log.warn("Gateway timeout for modelType={}. Using fallback.", modelType);
-            return executeFallback(tenantId, modelType, input, "TIMEOUT", startTime);
-        }
+        // Enforce the route's timeout around the ACTUAL inference call.
+        // (Previously the check ran before inference started, so it only ever
+        // measured the route/deployment lookups and never bounded the model.)
+        long timeoutMs = route.getTimeoutMs() != null && route.getTimeoutMs() > 0
+                ? route.getTimeoutMs() : 3000L;
 
         try {
-            Map<String, Object> prediction = inferenceService.execute(
-                    deployment.getModelId(), deployment.getVersionId(), input);
+            Map<String, Object> prediction = CompletableFuture
+                    .supplyAsync(() -> {
+                        // Inference runs off the request thread — propagate tenant context.
+                        TenantContext.setCurrentTenantId(tenantId);
+                        try {
+                            return inferenceService.execute(
+                                    deployment.getModelId(), deployment.getVersionId(), input);
+                        } finally {
+                            TenantContext.clear();
+                        }
+                    })
+                    .orTimeout(timeoutMs, TimeUnit.MILLISECONDS)
+                    .join();
 
             inferenceLogRepository.save(AiInferenceLog.builder()
                     .tenantId(tenantId)
@@ -102,13 +121,23 @@ public class AiGatewayService {
             if (route.getFallbackStrategy() != null && confidence != null && confidence.compareTo(new BigDecimal("0.80")) < 0) {
                 log.info("Low confidence ({}) for modelType={}. Using fallback.", confidence, modelType);
                 Map<String, Object> fallbackResult = executeFallback(tenantId, modelType, input, "LOW_CONFIDENCE", startTime);
-                prediction.put("aiPrediction", prediction);
-                prediction.put("appliedPrediction", fallbackResult);
-                prediction.put("fallbackReason", "LOW_CONFIDENCE");
-                return prediction;
+                // Merged response — must NOT put a map into itself (stack overflow on serialize).
+                Map<String, Object> merged = new LinkedHashMap<>();
+                merged.put("aiPrediction", prediction);
+                merged.put("appliedPrediction", fallbackResult);
+                merged.put("fallbackReason", "LOW_CONFIDENCE");
+                return merged;
             }
 
             return prediction;
+        } catch (CompletionException ce) {
+            if (ce.getCause() instanceof TimeoutException) {
+                log.warn("Inference timed out after {}ms for modelType={}. Using fallback.", timeoutMs, modelType);
+                return executeFallback(tenantId, modelType, input, "TIMEOUT", startTime);
+            }
+            Throwable cause = ce.getCause() != null ? ce.getCause() : ce;
+            log.error("AI prediction failed for modelType={}: {}", modelType, cause.getMessage());
+            return executeFallback(tenantId, modelType, input, "PREDICTION_ERROR", startTime);
         } catch (Exception e) {
             log.error("AI prediction failed for modelType={}: {}", modelType, e.getMessage());
             return executeFallback(tenantId, modelType, input, "PREDICTION_ERROR", startTime);

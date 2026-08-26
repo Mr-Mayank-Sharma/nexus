@@ -81,13 +81,15 @@ public class OrderService {
                 .addressType("SHIPPING")
                 .build());
 
-        NxCustomer customer = customerRepository.findByEmail(request.getCustomerEmail())
-                .orElseGet(() -> customerRepository.save(NxCustomer.builder()
+        // SECURITY: tenant-scoped lookup (was findByEmail — matched across tenants)
+        List<NxCustomer> existingCustomers = customerRepository.findAllByTenantIdAndEmail(tenantId, request.getCustomerEmail());
+        NxCustomer customer = !existingCustomers.isEmpty() ? existingCustomers.get(0)
+                : customerRepository.save(NxCustomer.builder()
                         .tenantId(tenantId)
                         .name(request.getCustomerName())
                         .email(request.getCustomerEmail())
                         .address(shipToAddress)
-                        .build()));
+                        .build());
 
         String currency = request.getCurrency() != null ? request.getCurrency() : "USD";
         

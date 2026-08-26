@@ -3,6 +3,7 @@ package com.nexus.oms.service.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nexus.oms.entity.Warehouse;
 import com.nexus.oms.entity.ai.*;
 import com.nexus.oms.repository.ai.*;
 import com.nexus.oms.security.TenantContext;
@@ -32,6 +33,7 @@ public class AiInferenceService {
     private final LlmChatService llmChatService;
     private final ShapExplainerService shapExplainerService;
     private final AiOnnxRuntimeService onnxRuntimeService;
+    private final AiWarehouseResolutionService warehouseResolutionService;
     private final ObjectMapper objectMapper;
     private final MeterRegistry meterRegistry;
 
@@ -42,6 +44,7 @@ public class AiInferenceService {
                                LlmChatService llmChatService,
                                ShapExplainerService shapExplainerService,
                                AiOnnxRuntimeService onnxRuntimeService,
+                               AiWarehouseResolutionService warehouseResolutionService,
                                ObjectMapper objectMapper,
                                MeterRegistry meterRegistry) {
         this.modelRepository = modelRepository;
@@ -51,6 +54,7 @@ public class AiInferenceService {
         this.llmChatService = llmChatService;
         this.shapExplainerService = shapExplainerService;
         this.onnxRuntimeService = onnxRuntimeService;
+        this.warehouseResolutionService = warehouseResolutionService;
         this.objectMapper = objectMapper;
         this.meterRegistry = meterRegistry;
     }
@@ -273,11 +277,19 @@ public class AiInferenceService {
         double weightKg = input.containsKey("weightKg") ? ((Number) input.get("weightKg")).doubleValue() : 1.0;
         double declaredValue = input.containsKey("declaredValue") ? ((Number) input.get("declaredValue")).doubleValue() : 0.0;
 
-        String originRegion = getRegionFromZip(originZip);
-        String destRegion = getRegionFromZip(destZip);
-        String warehouseId = getNearestWarehouse(originRegion, destRegion);
-        String warehouseName = getWarehouseName(warehouseId);
+        // Resolve against the tenant's REAL warehouse network — never invent IDs.
+        UUID tenantId = currentTenantIdSafely();
+        java.util.Optional<Warehouse> resolved =
+                warehouseResolutionService.resolveForDestination(tenantId, destZip);
 
+        // The resolved warehouse IS the true origin; use its zip for zone math.
+        String effectiveOriginZip = resolved
+                .map(Warehouse::getZipCode)
+                .filter(z -> z != null && !z.isBlank())
+                .orElse(originZip);
+
+        String originRegion = getRegionFromZip(effectiveOriginZip);
+        String destRegion = getRegionFromZip(destZip);
         int zoneDistance = getZoneDistance(originRegion, destRegion);
         double shippingCost = 3.50 + weightKg * 0.45 + zoneDistance * 0.30 + declaredValue * 0.002;
         int estimatedDays = 1 + zoneDistance;
@@ -285,11 +297,23 @@ public class AiInferenceService {
         long providedFields = input.keySet().stream().filter(k -> input.get(k) != null).count();
         double confidence = Math.min(0.5 + providedFields * 0.12, 0.99);
 
-        result.put("warehouseId", warehouseId);
-        result.put("warehouseName", warehouseName);
+        if (resolved.isPresent()) {
+            Warehouse wh = resolved.get();
+            result.put("warehouseId", wh.getId().toString());
+            result.put("warehouseName", wh.getName());
+            result.put("warehouseResolved", true);
+        } else {
+            // Honest signal: tenant has no usable warehouses configured.
+            result.put("warehouseId", null);
+            result.put("warehouseName", null);
+            result.put("warehouseResolved", false);
+            result.put("warehouseNote", "No active warehouse configured for this tenant");
+            confidence *= 0.5;
+        }
+
         result.put("shippingCost", Math.round(shippingCost * 100.0) / 100.0);
         result.put("estimatedDays", estimatedDays);
-        result.put("prediction", warehouseName);
+        result.put("prediction", resolved.map(Warehouse::getName).orElse(null));
         result.put("confidence", Math.round(confidence * 100.0) / 100.0);
         result.put("featuresUsed", input.keySet().toArray(new String[0]));
     }
@@ -500,20 +524,11 @@ public class AiInferenceService {
         return Math.abs(o - d);
     }
 
-    private String getNearestWarehouse(String originRegion, String destRegion) {
-        if (destRegion.equals("UNKNOWN")) return "wh-1";
-        int zoneDist = getZoneDistance(originRegion, destRegion);
-        if (zoneDist <= 1) return "wh-1";
-        if (zoneDist <= 2) return "wh-2";
-        return "wh-3";
-    }
-
-    private String getWarehouseName(String warehouseId) {
-        return switch (warehouseId) {
-            case "wh-1" -> "Regional Hub Alpha";
-            case "wh-2" -> "Regional Hub Beta";
-            case "wh-3" -> "National Distribution Center";
-            default -> "Fulfillment Center";
-        };
+    private UUID currentTenantIdSafely() {
+        try {
+            return TenantContext.getCurrentTenantId();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

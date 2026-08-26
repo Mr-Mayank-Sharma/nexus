@@ -2,10 +2,10 @@ package com.nexus.oms.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nexus.oms.dto.AllocationResponse;
 import com.nexus.oms.dto.DemandForecastResponse;
 import com.nexus.oms.dto.InventoryRecommendation;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,9 +14,19 @@ import org.springframework.web.client.RestTemplate;
 
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
+/**
+ * Legacy bridge to the Python Flask model servers (:5000 ops / :5001 intel).
+ *
+ * P1.3 contract: this bridge NEVER fabricates results. When the Flask
+ * backend is down or malformed, it throws — the controller surfaces a 503.
+ * Silent "STANDARD"/"FALLBACK" responses are gone: callers must never
+ * mistake fabricated output for a real prediction.
+ *
+ * The @CircuitBreaker (no fallbackMethod) fast-fails after repeated
+ * failures instead of piling up 30s timeouts.
+ */
 @Service
 public class AiService {
 
@@ -24,92 +34,46 @@ public class AiService {
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final MeterRegistry meterRegistry;
     private final String baseUrlOps;
     private final String baseUrlIntel;
 
     public AiService(@Value("${nexus.ai.base-url-ops}") String baseUrlOps,
                      @Value("${nexus.ai.base-url-intel}") String baseUrlIntel,
-                     @Value("${nexus.ai.timeout-ms:30000}") int timeoutMs) {
+                     @Value("${nexus.ai.timeout-ms:30000}") int timeoutMs,
+                     MeterRegistry meterRegistry) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeoutMs);
         factory.setReadTimeout(timeoutMs);
         this.restTemplate = new RestTemplate(factory);
         this.objectMapper = new ObjectMapper();
+        this.meterRegistry = meterRegistry;
         this.baseUrlOps = baseUrlOps;
         this.baseUrlIntel = baseUrlIntel;
     }
 
-    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
-    public AllocationResponse callRoutingAi(Map<String, Object> input) {
+    @CircuitBreaker(name = "ai-service")
+    public com.nexus.oms.dto.AllocationResponse callCarrierAi(Map<String, Object> input) {
         try {
-            String response = restTemplate.postForObject(
-                    baseUrlOps + "/api/predict/route", input, String.class);
-            JsonNode json = objectMapper.readTree(response);
-            return AllocationResponse.builder()
-                    .warehouse(json.path("warehouse").asText("DEFAULT"))
-                    .carrier(json.path("carrier").asText("AUTO"))
-                    .boxSize(json.path("box_size").asText("STANDARD"))
-                    .pickPackDetails(json.path("pick_pack").asText("Standard picking"))
-                    .confidence(BigDecimal.valueOf(json.path("confidence").asDouble(0.9)))
-                    .rule(json.path("rule").asText("BEST_MATCH"))
-                    .build();
+            JsonNode json = postForJson(baseUrlOps + "/api/predict/carrier", input);
+            String carrier = json.path("carrier").asText("");
+            if (carrier.isBlank()) {
+                throw new IllegalStateException("Legacy AI carrier response missing 'carrier' field");
+            }
+            return com.nexus.oms.dto.AllocationResponse.builder().carrier(carrier).build();
         } catch (Exception e) {
-            log.warn("Routing AI call failed: {}", e.getMessage(), e);
-            return fallbackRouting();
+            recordError("carrier", e);
+            throw e instanceof RuntimeException re ? re : new IllegalStateException(e.getMessage(), e);
         }
     }
 
-    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
-    public AllocationResponse callCarrierAi(Map<String, Object> input) {
-        try {
-            String response = restTemplate.postForObject(
-                    baseUrlOps + "/api/predict/carrier", input, String.class);
-            JsonNode json = objectMapper.readTree(response);
-            return AllocationResponse.builder()
-                    .carrier(json.path("carrier").asText("STANDARD"))
-                    .build();
-        } catch (Exception e) {
-            log.warn("Carrier AI call failed: {}", e.getMessage(), e);
-            return AllocationResponse.builder().carrier("STANDARD").build();
-        }
-    }
-
-    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
-    public AllocationResponse callBoxAi(Map<String, Object> input) {
-        try {
-            String response = restTemplate.postForObject(
-                    baseUrlOps + "/api/predict/box", input, String.class);
-            JsonNode json = objectMapper.readTree(response);
-            return AllocationResponse.builder()
-                    .boxSize(json.path("box_size").asText("STANDARD"))
-                    .build();
-        } catch (Exception e) {
-            log.warn("Box AI call failed: {}", e.getMessage(), e);
-            return AllocationResponse.builder().boxSize("STANDARD").build();
-        }
-    }
-
-    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackRouting")
-    public AllocationResponse callPickPackAi(Map<String, Object> input) {
-        try {
-            String response = restTemplate.postForObject(
-                    baseUrlOps + "/api/predict/pick-pack", input, String.class);
-            JsonNode json = objectMapper.readTree(response);
-            return AllocationResponse.builder()
-                    .pickPackDetails(buildPickPackDetails(json))
-                    .build();
-        } catch (Exception e) {
-            log.warn("PickPack AI call failed: {}", e.getMessage(), e);
-            return AllocationResponse.builder().pickPackDetails("Standard pick-pack").build();
-        }
-    }
-
-    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackDemand")
+    @CircuitBreaker(name = "ai-service")
     public DemandForecastResponse callDemandAi(Map<String, Object> input) {
         try {
-            String response = restTemplate.postForObject(
-                    baseUrlIntel + "/api/predict/demand", input, String.class);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = postForJson(baseUrlIntel + "/api/predict/demand", input);
+            if (!json.has("next_7_days") && !json.has("next_30_days")) {
+                throw new IllegalStateException("Legacy AI demand response missing forecast fields");
+            }
             return DemandForecastResponse.builder()
                     .next7Days(Map.of("total", json.path("next_7_days").asInt(0)))
                     .next30Days(Map.of("total", json.path("next_30_days").asInt(0)))
@@ -119,75 +83,43 @@ public class AiService {
                             .build())
                     .build();
         } catch (Exception e) {
-            log.warn("Demand AI call failed: {}", e.getMessage(), e);
-            return fallbackDemand();
+            recordError("demand", e);
+            throw e instanceof RuntimeException re ? re : new IllegalStateException(e.getMessage(), e);
         }
     }
 
-    @CircuitBreaker(name = "ai-service", fallbackMethod = "fallbackInventory")
+    @CircuitBreaker(name = "ai-service")
     public InventoryRecommendation callInventoryAi(Map<String, Object> input) {
         try {
-            String response = restTemplate.postForObject(
-                    baseUrlIntel + "/api/predict/inventory", input, String.class);
-            JsonNode json = objectMapper.readTree(response);
+            JsonNode json = postForJson(baseUrlIntel + "/api/predict/inventory", input);
+            if (!json.has("needs_reorder")) {
+                throw new IllegalStateException("Legacy AI inventory response missing 'needs_reorder'");
+            }
             return InventoryRecommendation.builder()
                     .needsReorder(json.path("needs_reorder").asBoolean(false))
                     .recommendedQty(json.path("recommended_qty").asInt(0))
                     .confidence(json.path("confidence").asDouble(0.0))
                     .build();
         } catch (Exception e) {
-            log.warn("Inventory AI call failed: {}", e.getMessage(), e);
-            return InventoryRecommendation.builder()
-                    .needsReorder(false)
-                    .recommendedQty(0)
-                    .confidence(0.0)
-                    .build();
+            recordError("inventory", e);
+            throw e instanceof RuntimeException re ? re : new IllegalStateException(e.getMessage(), e);
         }
     }
 
-    private String buildPickPackDetails(JsonNode json) {
-        String strategy = json.path("picking_strategy").asText("Standard");
-        int pickers = json.path("pickers_required").asInt(1);
-        double minutes = json.path("estimated_minutes").asDouble(0.0);
-        return strategy + " pick-pack; pickers=" + pickers + "; estimatedMinutes=" + minutes;
+    private JsonNode postForJson(String url, Map<String, Object> input) {
+        String response = restTemplate.postForObject(url, input, String.class);
+        if (response == null || response.isBlank()) {
+            throw new IllegalStateException("Empty response from legacy AI service at " + url);
+        }
+        try {
+            return objectMapper.readTree(response);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unparseable response from legacy AI service at " + url);
+        }
     }
 
-    AllocationResponse fallbackRouting(Map<String, Object> input, Exception ex) {
-        log.warn("AI circuit breaker opened for routing: {}", ex.getMessage());
-        return fallbackRouting();
-    }
-
-    DemandForecastResponse fallbackDemand(Map<String, Object> input, Exception ex) {
-        log.warn("AI circuit breaker opened for demand: {}", ex.getMessage());
-        return fallbackDemand();
-    }
-
-    InventoryRecommendation fallbackInventory(Map<String, Object> input, Exception ex) {
-        log.warn("AI circuit breaker opened for inventory: {}", ex.getMessage());
-        return InventoryRecommendation.builder()
-                .needsReorder(false)
-                .recommendedQty(0)
-                .confidence(0.0)
-                .build();
-    }
-
-    private AllocationResponse fallbackRouting() {
-        return AllocationResponse.builder()
-                .warehouse("FALLBACK_WH")
-                .carrier("FALLBACK_CARRIER")
-                .boxSize("MEDIUM")
-                .pickPackDetails("Fallback routing applied")
-                .confidence(BigDecimal.valueOf(0.5))
-                .rule("FALLBACK")
-                .build();
-    }
-
-    private DemandForecastResponse fallbackDemand() {
-        return DemandForecastResponse.builder()
-                .next7Days(Map.of())
-                .next30Days(Map.of())
-                .confidence(DemandForecastResponse.ConfidenceInterval.builder()
-                        .lower(0.0).upper(0.0).build())
-                .build();
+    private void recordError(String endpoint, Exception e) {
+        log.warn("Legacy AI bridge failure [{}]: {}", endpoint, e.getMessage());
+        meterRegistry.counter("nexus.ai.legacy_bridge.errors", "endpoint", endpoint).increment();
     }
 }

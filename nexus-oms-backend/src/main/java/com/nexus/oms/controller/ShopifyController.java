@@ -2,6 +2,8 @@ package com.nexus.oms.controller;
 
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.dto.SyncResult;
+import com.nexus.oms.exception.BadRequestException;
+import com.nexus.oms.scheduler.SyncExecutionLocks;
 import com.nexus.oms.service.shopify.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,19 +21,22 @@ public class ShopifyController {
     private final ShopifyFulfillmentPushService fulfillmentPushService;
     private final ShopifyRefundSyncService refundSyncService;
     private final ShopifyWebhookService webhookService;
+    private final SyncExecutionLocks syncExecutionLocks;
 
     public ShopifyController(ShopifyOrderImportService orderImportService,
                               ShopifyProductSyncService productSyncService,
                               ShopifyInventorySyncService inventorySyncService,
                               ShopifyFulfillmentPushService fulfillmentPushService,
                               ShopifyRefundSyncService refundSyncService,
-                              ShopifyWebhookService webhookService) {
+                              ShopifyWebhookService webhookService,
+                              SyncExecutionLocks syncExecutionLocks) {
         this.orderImportService = orderImportService;
         this.productSyncService = productSyncService;
         this.inventorySyncService = inventorySyncService;
         this.fulfillmentPushService = fulfillmentPushService;
         this.refundSyncService = refundSyncService;
         this.webhookService = webhookService;
+        this.syncExecutionLocks = syncExecutionLocks;
     }
 
     @GetMapping
@@ -41,8 +46,16 @@ public class ShopifyController {
 
     @PostMapping("/stores/{storeId}/sync/orders")
     public ResponseEntity<ApiResponse<SyncResult>> syncOrders(@PathVariable UUID storeId) {
-        return ResponseEntity.ok(ApiResponse.success(
-                orderImportService.importOrders(storeId), "Shopify orders imported"));
+        String lockKey = SyncExecutionLocks.key(storeId, "ORDER_IMPORT");
+        if (!syncExecutionLocks.tryAcquire(lockKey)) {
+            throw new BadRequestException("An order import is already running for this store");
+        }
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    orderImportService.importOrders(storeId), "Shopify orders imported"));
+        } finally {
+            syncExecutionLocks.release(lockKey);
+        }
     }
 
     @PostMapping("/stores/{storeId}/sync/products")
