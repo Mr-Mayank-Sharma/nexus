@@ -33,7 +33,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 
 API = "http://localhost:8085/api/v1"
-DB_ARGS = ["-h", "localhost", "-U", "nexus", "-d", "nexus_oms_dev"]
+DB_ARGS = ["-h", "localhost", "-p", "5433", "-U", "nexus", "-d", "nexus_oms"]
 DB_ENV = {"PGPASSWORD": "nexus", "PATH": os.environ.get("PATH", "")}
 
 MODEL_NAME = "demand_forecast_v2"

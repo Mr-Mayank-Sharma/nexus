@@ -13,7 +13,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:e2e:api": "node ../../scripts/e2e/ai-flow.mjs && node ../../scripts/e2e/fallback.mjs",
+    "test:e2e:ui": "node ../../scripts/e2e/ui-sweep.mjs"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.1",
