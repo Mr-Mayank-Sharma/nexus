@@ -42,7 +42,9 @@ public class RateLimitingFilter implements Filter {
             String key = resolveKey(req);
             int maxRequests = resolveTier(req.getRequestURI(), req.getMethod());
 
-            String redisKey = "ratelimit:" + key;
+            // Key by tier so requests to different tiers (general GETs vs import
+            // uploads) never consume each other's budget within the window.
+            String redisKey = "ratelimit:" + maxRequests + ":" + key;
             Long count = redisTemplate.opsForValue().increment(redisKey);
             if (count != null && count == 1) {
                 redisTemplate.expire(redisKey, WINDOW_MS, TimeUnit.MILLISECONDS);
@@ -71,7 +73,9 @@ public class RateLimitingFilter implements Filter {
     private int resolveTier(String path, String method) {
         if (path.contains("/ws/")) return TIER_WS;
         if (path.contains("/auth/")) return TIER_AUTH;
-        if (path.contains("/import/")) return TIER_IMPORT;
+        // The strict import tier guards expensive file-parsing uploads (POST).
+        // Cheap metadata reads (GET /import/entity-types, /import/formats) get the general GET tier.
+        if (path.contains("/import/") && !"GET".equalsIgnoreCase(method)) return TIER_IMPORT;
         if (path.contains("/ai/chat")) return TIER_AI_CHAT;
         if ("GET".equalsIgnoreCase(method)) return TIER_GENERAL;
         return TIER_STANDARD;
