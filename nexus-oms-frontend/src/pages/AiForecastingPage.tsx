@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import { getForecasts, getSupplierRisks, getRecommendations, getBriefing } from '../api/aiAgents'
 import { predictDemand } from '../api/aiPlatform'
 import Autocomplete from '../components/common/Autocomplete'
+import { fmtPercent } from '../utils/format'
 import type { AiForecast, AiSupplierRisk } from '../api/aiAgents'
 
 function MiniSparkline({ data, color }: { data: number[]; color: string }) {
@@ -93,7 +94,7 @@ function SupplierRiskCard({ risk }: { risk: AiSupplierRisk }) {
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2 text-xs text-[var(--text-tertiary)] mb-2">
-        <div><span className="text-[var(--text-secondary)]">Delay: </span>{(risk.delayProbability * 100).toFixed(0)}%</div>
+        <div><span className="text-[var(--text-secondary)]">Delay: </span>{fmtPercent(risk.delayProbability)}</div>
         <div><span className="text-[var(--text-secondary)]">Quality: </span>{risk.qualityScore}%</div>
         <div><span className="text-[var(--text-secondary)]">On-Time: </span>{risk.onTimeRate}%</div>
       </div>

@@ -11,6 +11,7 @@ import * as inventoryApi from '../api/inventory'
 import { pickupApi } from '../api/pickup'
 import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { fmtMoney } from '../utils/format'
 
 function asArray<T = any>(d: any): T[] {
   if (Array.isArray(d)) return d
@@ -169,7 +170,7 @@ export default function StoreDashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">${o.total.toFixed(2)}</span>
+                    <span className="text-sm font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{fmtMoney(o.total)}</span>
                     <EnterpriseStatusBadge status={badge.status} label={badge.label} />
                     <button type="button" onClick={() => navigate(`/orders/${o.id}`)} className="p-1 hover:bg-[var(--surface-muted)] dark:hover:bg-[var(--surface-muted)] rounded"><Eye className="w-4 h-4 text-[var(--text-tertiary)]" /></button>
                   </div>

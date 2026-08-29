@@ -12,6 +12,7 @@ import { Order } from '../types'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { fmtMoney } from '../utils/format'
 import type { Tab } from '../components/enterprise'
 
 type Bopistab = 'orders' | 'catalog' | 'ship-to-store'
@@ -171,7 +172,7 @@ export default function BOPISPage() {
                     <p className="text-xs font-medium text-[var(--text-primary)] truncate">{product.name}</p>
                     <p className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] truncate">{product.sku}</p>
                     <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-sm font-bold text-[var(--text-brand)]">${product.price?.toFixed(2) || '0.00'}</span>
+                      <span className="text-sm font-bold text-[var(--text-brand)]">{fmtMoney(product.price)}</span>
                       <span className={clsx('text-[10px] font-medium',
                         (product.stock || 0) > 0 ? 'text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]' : 'text-[var(--nexus-error-500)]'
                       )}>

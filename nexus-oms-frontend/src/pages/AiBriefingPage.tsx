@@ -8,6 +8,7 @@ import {
 import clsx from 'clsx'
 import { getBriefing, getRecommendations, approveRecommendation, rejectRecommendation, getForecasts } from '../api/aiAgents'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { fmtPercent } from '../utils/format'
 import type { AiBriefing, AiRecommendation, AiForecast } from '../api/aiAgents'
 
 function formatNumber(n: number): string {
@@ -263,7 +264,7 @@ export default function AiBriefingPage() {
           <p className="text-2xl font-bold text-[var(--text-primary)] mt-2">{formatIndianCurrency(briefing.profit.today)}</p>
           <div className="flex items-center gap-1 mt-1 text-xs">
             <span className="text-[var(--text-secondary)]">Margin</span>
-            <span className="text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] font-medium">{(briefing.profit.margin * 100).toFixed(1)}%</span>
+            <span className="text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] font-medium">{fmtPercent(briefing.profit?.margin)}</span>
           </div>
         </div>
         <div className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5">

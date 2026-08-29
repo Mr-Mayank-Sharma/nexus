@@ -10,6 +10,7 @@ import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadg
 import EnterpriseTimeline from '../components/enterprise/EnterpriseTimeline'
 import { OrderTimelineEvent, Order } from '../types'
 import { useToast } from '../hooks/useToast'
+import { fmtMoney } from '../utils/format'
 import * as ordersApi from '../api/orders'
 import * as aiPlatformApi from '../api/aiPlatform'
 import * as aiOrdersApi from '../api/aiOrders'
@@ -399,16 +400,16 @@ export default function OrderDetailPage() {
                       </td>
                       <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] font-mono">{item.sku}</td>
                       <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>
-                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{order.currency} {item.unitPrice.toFixed(2)}</td>
-                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">{order.currency} {item.totalPrice.toFixed(2)}</td>
+                      <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{fmtMoney(item.unitPrice, order.currency + ' ')}</td>
+                      <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">{fmtMoney(item.totalPrice, order.currency + ' ')}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Subtotal</td><td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">{order.currency} {order.subtotal.toFixed(2)}</td></tr>
-                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Shipping</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">{order.currency} {order.shippingCost.toFixed(2)}</td></tr>
-                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Tax</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">{order.currency} {order.tax.toFixed(2)}</td></tr>
-                  <tr className="border-t-2 border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm font-semibold text-[var(--text-primary)] text-right">Total</td><td className="px-6 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{order.currency} {order.total.toFixed(2)}</td></tr>
+                  <tr className="border-t border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Subtotal</td><td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)] text-right">{fmtMoney(order.subtotal, order.currency + ' ')}</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Shipping</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">{fmtMoney(order.shippingCost, order.currency + ' ')}</td></tr>
+                  <tr><td colSpan={4} className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">Tax</td><td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right">{fmtMoney(order.tax, order.currency + ' ')}</td></tr>
+                  <tr className="border-t-2 border-[var(--border-subtle)]"><td colSpan={4} className="px-6 py-3 text-sm font-semibold text-[var(--text-primary)] text-right">Total</td><td className="px-6 py-3 text-sm font-bold text-[var(--text-primary)] text-right">{fmtMoney(order.total, order.currency + ' ')}</td></tr>
                 </tfoot>
               </table>
             </div>
@@ -589,7 +590,7 @@ export default function OrderDetailPage() {
               ) : payments.map(p => (
                 <div key={p.id} className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-[var(--text-primary)]">{order.currency} {p.amount.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{fmtMoney(p.amount, order.currency + ' ')}</p>
                     <p className="text-xs text-[var(--text-tertiary)]">{p.method}</p>
                     <p className="text-xs text-[var(--text-tertiary)]">Ref: {p.reference}</p>
                   </div>

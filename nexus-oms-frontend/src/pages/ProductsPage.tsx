@@ -9,6 +9,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
+import { fmtMoney } from '../utils/format'
 import * as productsApi from '../api/products'
 import type { Product } from '../types'
 
@@ -127,8 +128,8 @@ export default function ProductsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <EnterpriseKPICard title="Total Products" value={products.length} icon={<Tags />} color="primary" />
         <EnterpriseKPICard title="Categories" value={new Set(products.map(p => p.category)).size} icon={<Package />} color="info" />
-        <EnterpriseKPICard title="Avg Price" value={`$${avgPrice.toFixed(2)}`} icon={<DollarSign />} color="success" />
-        <EnterpriseKPICard title="Total Value" value={`$${totalValue.toFixed(2)}`} icon={<DollarSign />} color="warning" />
+        <EnterpriseKPICard title="Avg Price" value={fmtMoney(avgPrice)} icon={<DollarSign />} color="success" />
+        <EnterpriseKPICard title="Total Value" value={fmtMoney(totalValue)} icon={<DollarSign />} color="warning" />
       </div>
 
       <div className="flex gap-2 flex-wrap">
@@ -189,10 +190,10 @@ export default function ProductsPage() {
               </div>
               {p.description && <p className="mt-2 text-xs text-[var(--text-tertiary)] line-clamp-2">{p.description}</p>}
               <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-secondary)]">
-                <span className="font-semibold text-[var(--text-primary)]">${p.unitPrice.toFixed(2)}</span>
+                <span className="font-semibold text-[var(--text-primary)]">{fmtMoney(p.unitPrice)}</span>
                 <div className="flex items-center gap-3">
                   {p.weight && <span className="flex items-center gap-1"><Weight className="w-3 h-3" />{p.weight} lbs</span>}
-                  <span>Cost: ${p.costPrice?.toFixed(2)}</span>
+                  <span>Cost: {fmtMoney(p.costPrice)}</span>
                 </div>
               </div>
             </div>

@@ -12,6 +12,7 @@ import type { Customer, Return, Order } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { fmtMoney } from '../utils/format'
 
 const STATUS_BADGES: Record<string, string> = {
   PENDING: 'enterprise-badge-warning',
@@ -246,7 +247,7 @@ export default function B2BPortalPage() {
                   <div className="flex items-center gap-5 mt-2 text-sm text-[var(--text-secondary)] flex-wrap">
                     <span>{new Date(order.date).toLocaleDateString()}</span>
                     <span>{order.items} item{order.items > 1 ? 's' : ''}</span>
-                    <span className="font-semibold text-[var(--text-primary)]">${order.total.toFixed(2)}</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{fmtMoney(order.total)}</span>
                     {order.tracking && (
                       <span className="inline-flex items-center gap-1.5 text-[var(--text-brand)]">
                         <Truck className="w-3.5 h-3.5" />
@@ -315,7 +316,7 @@ export default function B2BPortalPage() {
                     <div className="flex items-center gap-4 mt-1.5 text-sm text-[var(--text-secondary)] flex-wrap">
                       <span>Order: <span className="font-mono text-[var(--text-secondary)]">{ret.orderId?.slice(0, 8)}</span></span>
                       <span>Reason: <span className="font-medium text-[var(--text-secondary)]">{ret.reason}</span></span>
-                      {ret.refundAmount > 0 && <span className="font-medium text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]">${ret.refundAmount.toFixed(2)} refunded</span>}
+                      {ret.refundAmount > 0 && <span className="font-medium text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)]">{fmtMoney(ret.refundAmount)} refunded</span>}
                       <span>{new Date(ret.createdAt).toLocaleDateString()}</span>
                     </div>
                     {ret.items && ret.items.length > 0 && (

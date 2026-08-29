@@ -6,6 +6,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import { useToast } from '../hooks/useToast'
 import * as freightAuditApi from '../api/freightAudit'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { fmtMoney } from '../utils/format'
 
 type Tab = 'invoices' | 'audit-log' | 'stats'
 
@@ -387,8 +388,8 @@ export default function FreightAuditPage() {
                                       <td className="py-1.5 text-[var(--text-secondary)] font-mono">{line.trackingNumber}</td>
                                       <td className="py-1.5 text-[var(--text-secondary)]">{line.serviceLevel}</td>
                                       <td className="py-1.5 text-[var(--text-secondary)] text-right">{line.weightKg} kg</td>
-                                      <td className="py-1.5 text-[var(--text-primary)] text-right font-medium">${line.billedAmount.toFixed(2)}</td>
-                                      <td className="py-1.5 text-[var(--text-secondary)] text-right">${line.expectedAmount.toFixed(2)}</td>
+                                      <td className="py-1.5 text-[var(--text-primary)] text-right font-medium">{fmtMoney(line.billedAmount)}</td>
+                                      <td className="py-1.5 text-[var(--text-secondary)] text-right">{fmtMoney(line.expectedAmount)}</td>
                                       <td className={clsx(
                                         'py-1.5 text-right font-medium',
                                         line.varianceAmount > 0 ? 'text-[var(--nexus-error-600)]' : 'text-[var(--nexus-success-600)]',
