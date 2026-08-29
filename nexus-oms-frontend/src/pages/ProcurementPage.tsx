@@ -5,6 +5,7 @@ import StatusBadge from '../components/common/StatusBadge'
 import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
+import { fmtMoney } from '../utils/format'
 import * as procurementApi from '../api/procurement'
 import type {
   Supplier, SupplierContact, SupplierContract,
@@ -1085,8 +1086,8 @@ function RequestsTab() {
                                       <td className="px-3 py-2 text-sm font-mono text-[var(--text-secondary)]">{item.sku}</td>
                                       <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{item.productName}</td>
                                       <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>
-                                      <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">${item.unitPrice.toFixed(2)}</td>
-                                      <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right font-medium">${item.totalPrice.toFixed(2)}</td>
+                                      <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{fmtMoney(item.unitPrice)}</td>
+                                      <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right font-medium">{fmtMoney(item.totalPrice)}</td>
                                     </tr>
                                   ))
                                 )}
@@ -1207,7 +1208,7 @@ function RequestsTab() {
                 )}
                 {items.length > 0 && (
                   <div className="text-right text-sm font-medium text-[var(--text-secondary)] mt-2">
-                    Total: ${items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0).toFixed(2)}
+                    Total: {fmtMoney(items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0))}
                   </div>
                 )}
               </div>
@@ -1437,7 +1438,7 @@ function RfqsTab() {
                                     return (
                                       <tr key={resp.id} className="hover:bg-[var(--surface-base)]">
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">{resp.supplierName}</td>
-                                        <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right font-medium">${resp.totalAmount.toFixed(2)}</td>
+                                        <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right font-medium">{fmtMoney(resp.totalAmount)}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{deliveryDays === '-' ? '-' : `${deliveryDays} days`}</td>
                                         <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">
                                           {resp.deliveryDate ? new Date(resp.deliveryDate).toLocaleDateString() : '-'}
@@ -1766,7 +1767,7 @@ function PurchaseOrdersTab() {
                       <td className="px-4 py-3 text-sm font-medium text-[var(--text-brand)]">{po.poNumber}</td>
                       <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{po.supplierName}</td>
                       <td className="px-4 py-3"><StatusBadge status={po.status} size="sm" /></td>
-                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)] text-right font-medium">${po.totalAmount.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-sm text-[var(--text-secondary)] text-right font-medium">{fmtMoney(po.totalAmount)}</td>
                       <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">
                         {po.expectedDeliveryDate ? new Date(po.expectedDeliveryDate).toLocaleDateString() : '-'}
                       </td>
@@ -1822,8 +1823,8 @@ function PurchaseOrdersTab() {
                                     <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{item.quantity}</td>
                                     <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{item.quantityReceived}</td>
                                     <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{0}</td>
-                                    <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">${item.unitPrice.toFixed(2)}</td>
-                                    <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right font-medium">${item.totalPrice.toFixed(2)}</td>
+                                    <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right">{fmtMoney(item.unitPrice)}</td>
+                                    <td className="px-3 py-2 text-sm text-[var(--text-secondary)] text-right font-medium">{fmtMoney(item.totalPrice)}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1963,7 +1964,7 @@ function PurchaseOrdersTab() {
                 )}
                 {poItems.length > 0 && (
                   <div className="text-right text-sm font-medium text-[var(--text-secondary)] mt-2">
-                    Total: ${poItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0).toFixed(2)}
+                    Total: {fmtMoney(poItems.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0))}
                   </div>
                 )}
               </div>

@@ -6,6 +6,7 @@ import { useToast } from '../hooks/useToast'
 import { createOrder, fetchCustomers, fetchProducts } from '../api/newBackend'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { fmtMoney } from '../utils/format'
 
 interface LineItem {
   id: string
@@ -153,18 +154,18 @@ export default function CreateOrderPage() {
               <div className="space-y-2">
                 {lineItems.map(item => (
                   <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-[var(--surface-sunken)]/50 border border-[var(--border-subtle)]">
-                    <div className="flex-1 min-w-0"><p className="text-sm font-medium text-[var(--text-primary)]">{item.productName}</p><p className="text-xs text-[var(--text-tertiary)]">{item.sku} — ${item.price.toFixed(2)} each</p></div>
+                    <div className="flex-1 min-w-0"><p className="text-sm font-medium text-[var(--text-primary)]">{item.productName}</p><p className="text-xs text-[var(--text-tertiary)]">{item.sku} — {fmtMoney(item.price)} each</p></div>
                     <div className="flex items-center gap-2">
                       <button type="button" onClick={() => updateQty(item.id, item.qty - 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">−</button>
                       <span className="w-8 text-center text-sm font-semibold text-[var(--text-primary)]">{item.qty}</span>
                       <button type="button" onClick={() => updateQty(item.id, item.qty + 1)} className="w-7 h-7 rounded-lg bg-[var(--surface-muted)] flex items-center justify-center text-sm font-medium hover:bg-[var(--surface-muted)] hover:bg-[var(--interactive-hover)]">+</button>
                     </div>
-                    <span className="text-sm font-semibold text-[var(--text-primary)] w-20 text-right">${(item.price * item.qty).toFixed(2)}</span>
+                    <span className="text-sm font-semibold text-[var(--text-primary)] w-20 text-right">{fmtMoney(item.price * item.qty)}</span>
                     <button type="button" onClick={() => removeItem(item.id)} className="p-1.5 rounded-lg hover:bg-[var(--nexus-error-50)] text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)]"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
               </div>
-              <div className="flex justify-end mt-3 text-sm font-semibold text-[var(--text-primary)]">Subtotal: ${subtotal.toFixed(2)}</div>
+              <div className="flex justify-end mt-3 text-sm font-semibold text-[var(--text-primary)]">Subtotal: {fmtMoney(subtotal)}</div>
             </div>
           )}
           <div className="flex justify-end mt-4">
@@ -208,12 +209,12 @@ export default function CreateOrderPage() {
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Order Summary</h2>
             <div className="space-y-4">
               <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Customer</p><p className="text-sm font-medium text-[var(--text-primary)]">{selectedCustomer?.name}</p></div>
-              <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Items ({lineItems.length})</p>{lineItems.map(item => <div key={item.id} className="flex justify-between text-sm py-1"><span>{item.productName} × {item.qty}</span><span>${(item.price * item.qty).toFixed(2)}</span></div>)}</div>
+              <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Items ({lineItems.length})</p>{lineItems.map(item => <div key={item.id} className="flex justify-between text-sm py-1"><span>{item.productName} × {item.qty}</span><span>{fmtMoney(item.price * item.qty)}</span></div>)}</div>
               <div className="border-t border-[var(--border-default)] pt-3 space-y-1">
-                <div className="flex justify-between text-sm"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-                <div className="flex justify-between text-sm"><span>Tax (8%)</span><span>${tax.toFixed(2)}</span></div>
-                <div className="flex justify-between text-sm"><span>Shipping ({shippingInfo.method})</span><span>${shipping.toFixed(2)}</span></div>
-                <div className="flex justify-between text-lg font-bold text-[var(--text-primary)] border-t border-[var(--border-default)] pt-2"><span>Total</span><span>${total.toFixed(2)}</span></div>
+                <div className="flex justify-between text-sm"><span>Subtotal</span><span>{fmtMoney(subtotal)}</span></div>
+                <div className="flex justify-between text-sm"><span>Tax (8%)</span><span>{fmtMoney(tax)}</span></div>
+                <div className="flex justify-between text-sm"><span>Shipping ({shippingInfo.method})</span><span>{fmtMoney(shipping)}</span></div>
+                <div className="flex justify-between text-lg font-bold text-[var(--text-primary)] border-t border-[var(--border-default)] pt-2"><span>Total</span><span>{fmtMoney(total)}</span></div>
               </div>
               <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Ship To</p><p className="text-sm text-[var(--text-primary)]">{shippingInfo.address}, {shippingInfo.city}, {shippingInfo.state} {shippingInfo.zip}</p></div>
               <div><p className="text-xs font-medium text-[var(--text-tertiary)] uppercase">Notes</p><p className="text-sm text-[var(--text-secondary)]">{shippingInfo.notes || 'None'}</p></div>

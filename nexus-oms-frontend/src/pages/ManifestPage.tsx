@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
 import { fetchManifests, createManifest, updateManifest, fetchCarriers } from '../api/newBackend'
 import { getShipments } from '../api/shipping'
+import { fmtMoney, fmtNumber } from '../utils/format'
 
 interface ManifestShipment {
   id: string
@@ -251,7 +252,7 @@ export default function ManifestPage() {
           </div>
           <div>
             <p className="text-xs text-[var(--text-tertiary)]">Total Cost</p>
-            <p className="text-xl font-bold text-[var(--text-primary)]">${totals.totalCost.toFixed(2)}</p>
+            <p className="text-xl font-bold text-[var(--text-primary)]">{fmtMoney(totals.totalCost)}</p>
           </div>
         </div>
         <div className="enterprise-card p-4 flex items-center gap-3">
@@ -260,7 +261,7 @@ export default function ManifestPage() {
           </div>
           <div>
             <p className="text-xs text-[var(--text-tertiary)]">Avg Cost / Shipment</p>
-            <p className="text-xl font-bold text-[var(--text-primary)]">${totals.avgCost.toFixed(2)}</p>
+            <p className="text-xl font-bold text-[var(--text-primary)]">{fmtMoney(totals.avgCost)}</p>
           </div>
         </div>
       </div>
@@ -334,7 +335,7 @@ export default function ManifestPage() {
                     </div>
                     <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
                       <span>{s.weight != null ? `${s.weight} lbs` : '—'}</span>
-                      <span className="font-mono">{s.cost != null ? `$${s.cost.toFixed(2)}` : '—'}</span>
+                      <span className="font-mono">{s.cost != null ? fmtMoney(s.cost) : '—'}</span>
                       <span className="text-[var(--text-tertiary)]">{s.destination || '—'}</span>
                     </div>
                   </div>
@@ -392,8 +393,8 @@ export default function ManifestPage() {
                     <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{m.carrier}</td>
                     <td className="px-4 py-3 text-sm text-[var(--text-secondary)]">{m.date}</td>
                     <td className="px-4 py-3 text-right text-sm text-[var(--text-secondary)]">{m.shipments.length}</td>
-                    <td className="px-4 py-3 text-right text-sm text-[var(--text-secondary)]">{m.totalWeight != null ? `${m.totalWeight.toFixed(1)} lbs` : '—'}</td>
-                    <td className="px-4 py-3 text-right text-sm font-mono text-[var(--text-primary)]">{m.totalCost != null ? `$${m.totalCost.toFixed(2)}` : '—'}</td>
+                    <td className="px-4 py-3 text-right text-sm text-[var(--text-secondary)]">{m.totalWeight != null ? `${fmtNumber(m.totalWeight, 1)} lbs` : '—'}</td>
+                    <td className="px-4 py-3 text-right text-sm font-mono text-[var(--text-primary)]">{m.totalCost != null ? fmtMoney(m.totalCost) : '—'}</td>
                     <td className="px-4 py-3 text-center">
                       <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', STATUS_STYLES[m.status])}>
                         {m.status}
@@ -463,11 +464,11 @@ export default function ManifestPage() {
             </div>
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4">
               <p className="text-xs text-[var(--text-tertiary)]">Total Cost</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">${totals.totalCost.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{fmtMoney(totals.totalCost)}</p>
             </div>
             <div className="bg-[var(--bg-tertiary)] rounded-lg p-4">
               <p className="text-xs text-[var(--text-tertiary)]">Avg Cost / Shipment</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)]">${totals.avgCost.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{fmtMoney(totals.avgCost)}</p>
             </div>
           </div>
         </div>
@@ -546,11 +547,11 @@ export default function ManifestPage() {
               </div>
               <div className="bg-[var(--bg-tertiary)] rounded-lg p-3 text-center">
                 <p className="text-xs text-[var(--text-tertiary)]">Total Weight</p>
-                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.totalWeight != null ? `${selectedManifest.totalWeight.toFixed(1)} lbs` : '—'}</p>
+                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.totalWeight != null ? `${fmtNumber(selectedManifest.totalWeight, 1)} lbs` : '—'}</p>
               </div>
               <div className="bg-[var(--bg-tertiary)] rounded-lg p-3 text-center">
                 <p className="text-xs text-[var(--text-tertiary)]">Total Cost</p>
-                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.totalCost != null ? `$${selectedManifest.totalCost.toFixed(2)}` : '—'}</p>
+                <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.totalCost != null ? fmtMoney(selectedManifest.totalCost) : '—'}</p>
               </div>
             </div>
 
@@ -581,7 +582,7 @@ export default function ManifestPage() {
                       <td className="px-3 py-2 font-mono text-xs text-[var(--color-primary)]">{s.tracking || '—'}</td>
                       <td className="px-3 py-2 text-[var(--text-secondary)]">{s.service || '—'}</td>
                       <td className="px-3 py-2 text-right text-[var(--text-secondary)]">{s.weight != null ? `${s.weight} lbs` : '—'}</td>
-                      <td className="px-3 py-2 text-right font-mono text-[var(--text-primary)]">{s.cost != null ? `$${s.cost.toFixed(2)}` : '—'}</td>
+                      <td className="px-3 py-2 text-right font-mono text-[var(--text-primary)]">{s.cost != null ? fmtMoney(s.cost) : '—'}</td>
                       <td className="px-3 py-2 text-[var(--text-secondary)]">{s.destination || '—'}</td>
                     </tr>
                   ))}

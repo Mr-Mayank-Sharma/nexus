@@ -33,6 +33,7 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import EnterpriseDataGrid from '../components/enterprise/EnterpriseDataGrid'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import { useToast } from '../hooks/useToast'
+import { fmtMoney, fmtNumber, fmtPercent } from '../utils/format'
 
 type AiTab = 'overview' | 'models' | 'training' | 'features'
 
@@ -144,7 +145,7 @@ function AiOverview() {
         />
         <EnterpriseKPICard
           title="Monthly Cost"
-          value={`$${costTotal.toFixed(2)}`}
+          value={fmtMoney(costTotal)}
           icon={<DollarSign className="w-5 h-5" />}
           variant="success"
         />
@@ -176,13 +177,13 @@ function AiOverview() {
                     <div className="flex justify-between">
                       <span>Accuracy</span>
                       <span className="font-medium text-[var(--text-secondary)]">
-                        {perf?.accuracy != null ? `${(Number(perf.accuracy) * 100).toFixed(1)}%` : 'N/A'}
+                        {perf?.accuracy != null ? fmtPercent(perf.accuracy) : 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Latency</span>
                       <span className="font-medium text-[var(--text-secondary)]">
-                        {perf?.avgLatencyMs != null ? `${Number(perf.avgLatencyMs).toFixed(0)}ms` : 'N/A'}
+                        {perf?.avgLatencyMs != null ? `${fmtNumber(perf.avgLatencyMs, 0)}ms` : 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -235,7 +236,7 @@ function AiOverview() {
                         {(m.name as string) || (m.modelType as string)}
                       </p>
                       <p className="text-xs text-[var(--text-tertiary)]">
-                        v{m.currentVersion as string} &middot; {Number(m.accuracy as number ?? 0).toFixed(1)}% accuracy
+                        v{m.currentVersion as string} &middot; {fmtNumber(m.accuracy, 1)}% accuracy
                       </p>
                     </div>
                   </div>
@@ -244,7 +245,7 @@ function AiOverview() {
                       {String(m.predictionsToday ?? 0)} predictions
                     </p>
                     <p className="text-xs text-[var(--text-tertiary)]">
-                      {Number(m.avgLatencyMs as number ?? 0).toFixed(0)}ms latency
+                      {fmtNumber(m.avgLatencyMs, 0)}ms latency
                     </p>
                   </div>
                 </div>
@@ -265,7 +266,7 @@ function AiOverview() {
                   <div key={type}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] capitalize">{type}</span>
-                      <span className="font-medium text-[var(--text-primary)] dark:text-white">${Number(amount).toFixed(2)}</span>
+                      <span className="font-medium text-[var(--text-primary)] dark:text-white">{fmtMoney(amount)}</span>
                     </div>
                     <div className="w-full bg-[var(--surface-muted)] rounded-full h-2">
                       <div className="bg-[var(--nexus-primary-500)] h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -331,7 +332,7 @@ function AiOverview() {
                         {(modelInfo?.name as string) || log.modelId}
                       </td>
                       <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">
-                        {log.confidence != null ? `${(log.confidence * 100).toFixed(1)}%` : '-'}
+                        {log.confidence != null ? fmtPercent(log.confidence) : '-'}
                       </td>
                       <td className="py-2.5 px-3 text-center">
                         <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
@@ -346,7 +347,7 @@ function AiOverview() {
                         </span>
                       </td>
                       <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">
-                        {log.latencyMs != null ? `${log.latencyMs.toFixed(0)}ms` : '-'}
+                        {log.latencyMs != null ? `${fmtNumber(log.latencyMs, 0)}ms` : '-'}
                       </td>
                     </tr>
                   )
@@ -381,7 +382,7 @@ function AiOverview() {
               <p className="text-sm text-[var(--text-secondary)]">Rule Engine Usage</p>
               <p className="text-2xl font-bold text-[var(--text-primary)] dark:text-white">
                 {dashboard?.ruleEngineUsedToday != null
-                  ? `${(Number(dashboard.ruleEngineUsedToday) / Math.max(Number(dashboard?.predictionsToday ?? 1), 1) * 100).toFixed(1)}%`
+                  ? fmtPercent(Number(dashboard.ruleEngineUsedToday) / Math.max(Number(dashboard?.predictionsToday ?? 1), 1))
                   : 'N/A'}
               </p>
             </div>
@@ -426,7 +427,7 @@ function AiOverview() {
                     <div key={reason}>
                       <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-0.5">
                         <span className="truncate">{reason}</span>
-                        <span>{pct.toFixed(0)}%</span>
+                        <span>{fmtNumber(pct, 0)}%</span>
                       </div>
                       <div className="w-full bg-[var(--surface-muted)] rounded-full h-1.5">
                         <div className="bg-[var(--nexus-warning-500)] h-1.5 rounded-full" style={{ width: `${pct}%` }} />
@@ -568,7 +569,7 @@ function AiModelRegistry() {
                               <span className="text-sm font-mono text-[var(--text-secondary)]">{v.version}</span>
                               <EnterpriseStatusBadge status={v.status} />
                               {v.accuracy != null && (
-                                <span className="text-xs text-[var(--text-tertiary)]">{Number(v.accuracy).toFixed(1)}% accuracy</span>
+                                <span className="text-xs text-[var(--text-tertiary)]">{fmtNumber(v.accuracy, 1)}% accuracy</span>
                               )}
                             </div>
                             <div className="flex gap-2">
@@ -660,7 +661,7 @@ function AiTrainingPipeline() {
           )},
           { key: 'jobType', header: 'Type', accessor: 'jobType' as never },
           { key: 'accuracy', header: 'Accuracy', accessor: 'accuracy' as never, render: (j: AiTrainingJob) => (
-            <span>{j.accuracy != null ? `${Number(j.accuracy).toFixed(1)}%` : '-'}</span>
+            <span>{j.accuracy != null ? `${fmtNumber(j.accuracy, 1)}%` : '-'}</span>
           )},
           { key: 'epochs', header: 'Epochs', accessor: 'epochs' as never, render: (j: AiTrainingJob) => j.epochs ?? '-' },
           { key: 'durationSeconds', header: 'Duration', accessor: 'durationSeconds' as never, render: (j: AiTrainingJob) => (

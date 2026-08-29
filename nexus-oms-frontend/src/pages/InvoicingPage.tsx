@@ -5,6 +5,7 @@ import { useToast } from '../hooks/useToast'
 import * as invoicingApi from '../api/invoicing'
 import Autocomplete from '../components/common/Autocomplete'
 import { Invoice, Payment, CreditMemo } from '../api/invoicing'
+import { fmtMoney } from '../utils/format'
 
 type Tab = 'invoices' | 'payments' | 'credit-memos'
 
@@ -499,9 +500,9 @@ export default function InvoicingPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                <div><span className="text-[var(--text-secondary)]">Total</span><p className="font-semibold">${Number(selectedInvoice.totalAmount ?? 0).toFixed(2)}</p></div>
-                <div><span className="text-[var(--text-secondary)]">Paid</span><p className="font-semibold">${Number(selectedInvoice.amountPaid ?? 0).toFixed(2)}</p></div>
-                <div><span className="text-[var(--text-secondary)]">Balance</span><p className="font-semibold">${Number(selectedInvoice.amountDue ?? 0).toFixed(2)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Total</span><p className="font-semibold">{fmtMoney(selectedInvoice.totalAmount)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Paid</span><p className="font-semibold">{fmtMoney(selectedInvoice.amountPaid)}</p></div>
+                <div><span className="text-[var(--text-secondary)]">Balance</span><p className="font-semibold">{fmtMoney(selectedInvoice.amountDue)}</p></div>
                 <div><span className="text-[var(--text-secondary)]">Due</span><p className="font-semibold">{selectedInvoice.dueDate ? new Date(selectedInvoice.dueDate).toLocaleDateString() : '-'}</p></div>
               </div>
 
@@ -524,8 +525,8 @@ export default function InvoicingPage() {
                         <td className="py-2 text-[var(--text-primary)]">{item.sku}</td>
                         <td className="py-2 text-[var(--text-secondary)]">{item.productName}</td>
                         <td className="py-2 text-right">{item.quantity}</td>
-                        <td className="py-2 text-right">${Number(item.unitPrice ?? 0).toFixed(2)}</td>
-                        <td className="py-2 text-right font-medium">${Number(item.totalPrice ?? 0).toFixed(2)}</td>
+                        <td className="py-2 text-right">{fmtMoney(item.unitPrice)}</td>
+                        <td className="py-2 text-right font-medium">{fmtMoney(item.totalPrice)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -553,7 +554,7 @@ export default function InvoicingPage() {
                         <tr key={p.id} className="border-b border-[var(--border-subtle)]">
                           <td className="py-2 text-[var(--text-primary)]">{p.transactionId || p.id.slice(0, 8)}</td>
                           <td className="py-2 text-[var(--text-secondary)]">{p.method.replace(/_/g, ' ')}</td>
-                          <td className="py-2 text-right">${Number(p.amount ?? 0).toFixed(2)}</td>
+                          <td className="py-2 text-right">{fmtMoney(p.amount)}</td>
                           <td className="py-2"><StatusBadgeLocal status={p.status} styles={paymentStatusStyles} /></td>
                           <td className="py-2 text-[var(--text-secondary)]">{p.processedAt ? new Date(p.processedAt).toLocaleDateString() : '-'}</td>
                         </tr>
@@ -629,9 +630,9 @@ export default function InvoicingPage() {
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{inv.orderNumber ? 'Sales' : 'Standard'}</td>
                         <td className="px-4 py-3 text-[var(--text-primary)]">{inv.customerName || inv.supplierName || '-'}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={inv.status} styles={invoiceStatusStyles} /></td>
-                        <td className="px-4 py-3 text-right font-medium">${Number(inv.totalAmount ?? 0).toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right">${Number(inv.amountPaid ?? 0).toFixed(2)}</td>
-                        <td className="px-4 py-3 text-right font-semibold">${Number(inv.amountDue ?? 0).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-medium">{fmtMoney(inv.totalAmount)}</td>
+                        <td className="px-4 py-3 text-right">{fmtMoney(inv.amountPaid)}</td>
+                        <td className="px-4 py-3 text-right font-semibold">{fmtMoney(inv.amountDue)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{inv.dueDate ? new Date(inv.dueDate).toLocaleDateString() : '-'}</td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
@@ -714,7 +715,7 @@ export default function InvoicingPage() {
                       <tr key={p.id} className="border-b border-[var(--border-subtle)] hover:bg-[var(--surface-sunken)]">
                         <td className="px-4 py-3 font-medium text-[var(--text-brand)]">{p.transactionId || p.id.slice(0, 8)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{p.invoiceNumber || p.invoiceId.slice(0, 8)}</td>
-                        <td className="px-4 py-3 text-right font-medium">${Number(p.amount ?? 0).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-medium">{fmtMoney(p.amount)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{p.method.replace(/_/g, ' ')}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{p.reference || '-'}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={p.status} styles={paymentStatusStyles} /></td>
@@ -790,7 +791,7 @@ export default function InvoicingPage() {
                         </td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{m.invoiceNumber || m.invoiceId.slice(0, 8)}</td>
                         <td className="px-4 py-3 text-[var(--text-secondary)] max-w-[200px] truncate">{m.reason}</td>
-                        <td className="px-4 py-3 text-right font-medium">${Math.abs(Number(m.totalAmount ?? 0)).toFixed(2)}</td>
+                        <td className="px-4 py-3 text-right font-medium">{fmtMoney(Math.abs(m.totalAmount ?? 0))}</td>
                         <td className="px-4 py-3"><StatusBadgeLocal status={m.status} styles={creditMemoStatusStyles} /></td>
                         <td className="px-4 py-3 text-[var(--text-secondary)]">{m.issuedDate ? new Date(m.issuedDate).toLocaleDateString() : new Date(m.createdAt).toLocaleDateString()}</td>
                       </tr>
@@ -883,13 +884,13 @@ export default function InvoicingPage() {
                       <div className="w-24">
                         <input type="number" min={0} step="0.01" value={item.unitPrice} onChange={e => updateItem(idx, 'unitPrice', e.target.value)} className="input w-full text-sm mb-1 text-right" />
                       </div>
-                      <div className="w-20 pt-1 text-sm font-medium text-right">${getItemTotal(item).toFixed(2)}</div>
+                      <div className="w-20 pt-1 text-sm font-medium text-right">{fmtMoney(getItemTotal(item))}</div>
                       <button type="button" onClick={() => removeItemRow(idx)} className="p-1 hover:bg-[var(--surface-muted)] rounded text-[var(--text-tertiary)] hover:text-[var(--nexus-error-500)] mt-0.5" disabled={invForm.items.length <= 1}><X className="w-4 h-4" /></button>
                     </div>
                   ))}
                 </div>
                 <div className="text-right mt-2 text-sm font-semibold text-[var(--text-primary)]">
-                  Total: ${getInvoiceFormTotal().toFixed(2)}
+                  Total: {fmtMoney(getInvoiceFormTotal())}
                 </div>
               </div>
             </div>
@@ -923,7 +924,7 @@ export default function InvoicingPage() {
                 }} className="input w-full">
                   <option value="">Select invoice...</option>
                   {invoices.filter(i => i.status !== 'PAID' && i.status !== 'CANCELLED').map(inv => (
-                    <option key={inv.id} value={inv.id}>{inv.invoiceNumber} - {inv.customerName} (${inv.amountDue.toFixed(2)})</option>
+                    <option key={inv.id} value={inv.id}>{inv.invoiceNumber} - {inv.customerName} ({fmtMoney(inv.amountDue)})</option>
                   ))}
                 </select>
               </div>
@@ -1030,7 +1031,7 @@ export default function InvoicingPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Payment</label>
-                <p className="text-sm text-[var(--text-primary)]">{showRefund.transactionId || showRefund.id.slice(0, 8)} &mdash; ${Number(showRefund.amount ?? 0).toFixed(2)}</p>
+                <p className="text-sm text-[var(--text-primary)]">{showRefund.transactionId || showRefund.id.slice(0, 8)} &mdash; {fmtMoney(showRefund.amount)}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Refund Amount</label>
