@@ -206,7 +206,7 @@ export default function YardDockPage() {
         const list = Array.isArray(res?.data) ? res.data : []
         if (!mounted) return
         setWarehouses(list.map((w: any) => ({ id: String(w.id), name: w.name || w.code || w.id })))
-        setSelectedWarehouse(prev => prev || String(list[0]?.id) || '')
+        setSelectedWarehouse(prev => prev || (list[0] ? String(list[0].id) : ''))
       })
       .catch(() => { if (mounted) setWarehouses([]) })
     return () => { mounted = false }
