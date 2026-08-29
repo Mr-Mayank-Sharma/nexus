@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Service
@@ -63,16 +64,17 @@ public class AiGatewayService {
             return executeFallback(tenantId, modelType, input, "NO_ROUTE", startTime);
         }
 
-        // Pick the ACTIVE deployment; multiple rows per (tenant, model, env) are
-        // legitimate after rollback/supersede flows (older rows keep ROLLED_BACK/
-        // SUPERSEDED status).
+        // Weighted selection among ACTIVE deployments for this (tenant, model, env).
+        // The trafficWeight column (set by the ramp ladder) determines the
+        // probability of each deployment receiving a request.
         UUID routeModelId = findModelIdByType(tenantId, modelType);
-        AiDeployment deployment = deploymentRepository
+        List<AiDeployment> actives = deploymentRepository
                 .findAllByTenantIdAndModelIdAndEnvironment(tenantId, routeModelId, "PRODUCTION")
                 .stream()
                 .filter(d -> "ACTIVE".equals(d.getStatus()))
-                .findFirst()
-                .orElse(null);
+                .collect(Collectors.toList());
+
+        AiDeployment deployment = selectByWeight(actives);
 
         if (deployment == null) {
             log.warn("No active deployment for modelType={}, tenant={}. Using fallback.", modelType, tenantId);
@@ -189,5 +191,28 @@ public class AiGatewayService {
     private String toJson(Object obj) {
         try { return objectMapper.writeValueAsString(obj); }
         catch (Exception e) { return "{}"; }
+    }
+
+    /**
+     * Weighted random selection among active deployments.
+     * Falls back to the first entry if weights are zero/missing.
+     */
+    private AiDeployment selectByWeight(List<AiDeployment> deployments) {
+        if (deployments.isEmpty()) return null;
+        if (deployments.size() == 1) return deployments.get(0);
+
+        BigDecimal total = deployments.stream()
+                .map(d -> d.getTrafficWeight() != null ? d.getTrafficWeight() : BigDecimal.ONE)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (total.compareTo(BigDecimal.ZERO) <= 0) return deployments.get(0);
+
+        double roll = ThreadLocalRandom.current().nextDouble(total.doubleValue());
+        double cumulative = 0;
+        for (AiDeployment d : deployments) {
+            cumulative += (d.getTrafficWeight() != null ? d.getTrafficWeight() : BigDecimal.ONE).doubleValue();
+            if (roll < cumulative) return d;
+        }
+        return deployments.get(deployments.size() - 1);
     }
 }

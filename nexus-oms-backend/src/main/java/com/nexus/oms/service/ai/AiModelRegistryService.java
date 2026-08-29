@@ -119,7 +119,8 @@ public class AiModelRegistryService {
         String env = environment != null ? environment : "PRODUCTION";
 
         AiDeploymentGateService.GateResult gate = gateService.evaluate(tenantId, modelId, version, env);
-        if (!gate.passed()) {
+        boolean forced = !gate.passed();
+        if (forced) {
             if (!force) {
                 throw new AiGateBlockedException(gate.failures(), gate.detail());
             }
@@ -130,6 +131,8 @@ public class AiModelRegistryService {
         version.setStatus("DEPLOYED");
         version.setValidatedBy(TenantContext.getCurrentUsername());
         version.setValidatedAt(LocalDateTime.now());
+        version.setGateOverride(forced);
+        version.setGateFailures(forced ? String.join("; ", gate.failures()) : null);
         version.setDeployedBy(TenantContext.getCurrentUsername());
         version.setDeployedAt(LocalDateTime.now());
         versionRepository.save(version);

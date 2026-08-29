@@ -38,6 +38,8 @@ public class AiModelVersion {
     private String status;
     private String validatedBy;
     private LocalDateTime validatedAt;
+    private Boolean gateOverride;
+    @Column(columnDefinition = "TEXT") private String gateFailures;
     private String deployedBy;
     private LocalDateTime deployedAt;
     private String createdBy;
