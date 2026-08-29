@@ -276,7 +276,7 @@ export default function Sidebar() {
       path: m.path,
       icon: iconForModule(m.icon),
       children: m.children
-        ?.filter(c => c.path !== m.path && hasModulePermission(c.id))
+        ?.filter(c => hasModulePermission(c.id))
         .map(c => ({
           label: c.label,
           path: c.path,

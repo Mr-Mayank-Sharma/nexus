@@ -41,14 +41,16 @@ export const ROLE_WORKSPACES: Record<UserRole, RoleWorkspace> = {
 export function getModulesForRole(role: string): WorkspaceModule[] {
   const groups: WorkspaceModule[] = [
     // ──────────────────────────────────────────────
-    // 1. HOME & DASHBOARDS
+    // 1. DASHBOARDS & ANALYTICS
     // ──────────────────────────────────────────────
     {
-      id: 'home', label: 'Home & Dashboards', path: '/', icon: 'LayoutDashboard',
+      id: 'home', label: 'Dashboards & Analytics', path: '/', icon: 'LayoutDashboard',
       children: [
         { id: 'launch-pad', label: 'Launch Pad', path: '/', icon: 'LayoutDashboard' },
         { id: 'analytics-dashboard', label: 'Analytics Dashboard', path: '/analytics-dashboard', icon: 'BarChart3' },
         { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: 'Activity' },
+        { id: 'analytics', label: 'Analytics', path: '/analytics', icon: 'BarChart3' },
+        { id: 'report-builder', label: 'Report Builder', path: '/report-builder', icon: 'BarChart3' },
         { id: 'notifications', label: 'Notifications', path: '/notifications', icon: 'Bell' },
       ]
     },
@@ -67,6 +69,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'rejections', label: 'Rejections', path: '/rejections', icon: 'AlertTriangle' },
         { id: 'transfers', label: 'Transfer Orders', path: '/transfers', icon: 'ArrowRightLeft' },
         { id: 'fulfillment-limits', label: 'Fulfillment Limits', path: '/fulfillment-limits', icon: 'Gauge' },
+        { id: 'customers', label: 'Customers', path: '/customers', icon: 'Users' },
       ]
     },
     // ──────────────────────────────────────────────
@@ -80,7 +83,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'packing', label: 'Packing', path: '/packing', icon: 'Package' },
         { id: 'shipping', label: 'Shipping', path: '/shipping', icon: 'Ship' },
         { id: 'wave-planning', label: 'Wave Planning', path: '/wave-planning', icon: 'Layers' },
-        { id: 'labor-management', label: 'Labor Management', path: '/labor-management', icon: 'Users' },
         { id: 'pickers', label: 'Pickers', path: '/pickers', icon: 'ClipboardCheck' },
         { id: 'packer', label: 'Packer View', path: '/packer', icon: 'PackagePlus' },
         { id: 'loader', label: 'Loader View', path: '/loader', icon: 'Truck' },
@@ -91,13 +93,14 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 4. INVENTORY MANAGEMENT
     // ──────────────────────────────────────────────
     {
-      id: 'inventory-management', label: 'Inventory Management', path: '/inventory', icon: 'Warehouse',
+      id: 'inventory-management', label: 'Inventory & Catalog', path: '/inventory', icon: 'Warehouse',
       children: [
         { id: 'inventory', label: 'Inventory', path: '/inventory', icon: 'Warehouse' },
         { id: 'inventory-enhanced', label: 'Multi-Node Inventory', path: '/inventory/enhanced', icon: 'Warehouse' },
         { id: 'receiving', label: 'Receiving', path: '/inventory/receiving', icon: 'PackagePlus' },
         { id: 'cycle-counts', label: 'Cycle Counts', path: '/inventory/cycle-counts', icon: 'ClipboardCheck' },
         { id: 'replenishment', label: 'Replenishment', path: '/replenishment', icon: 'RefreshCw' },
+        { id: 'products', label: 'Products', path: '/products', icon: 'Tags' },
       ]
     },
     // ──────────────────────────────────────────────
@@ -125,6 +128,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'pre-orders', label: 'Pre-Orders', path: '/pre-orders', icon: 'Calendar' },
         { id: 'atp-rules', label: 'ATP Rules', path: '/atp-rules', icon: 'Gauge' },
         { id: 'endless-aisle', label: 'Endless Aisle', path: '/endless-aisle', icon: 'ShoppingCart' },
+        { id: 'promotions', label: 'Promotions', path: '/promotions', icon: 'Tags' },
       ]
     },
     // ──────────────────────────────────────────────
@@ -138,28 +142,12 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'slotting-optimization', label: 'Slotting Optimization', path: '/slotting-optimization', icon: 'Target' },
         { id: 'yard-dock', label: 'Yard & Dock', path: '/yard-dock', icon: 'Truck' },
         { id: 'automation-systems', label: 'Automation Systems', path: '/automation-systems', icon: 'Bot' },
+        { id: 'labor-management', label: 'Labor Management', path: '/labor-management', icon: 'Users' },
+        { id: 'task-queues', label: 'Task Queues', path: '/task-queues', icon: 'AlertTriangle' },
       ]
     },
     // ──────────────────────────────────────────────
-    // 8. PRODUCT MANAGEMENT
-    // ──────────────────────────────────────────────
-    {
-      id: 'product-management', label: 'Product Management', path: '/products', icon: 'Tags',
-      children: [
-        { id: 'products', label: 'Products', path: '/products', icon: 'Tags' },
-      ]
-    },
-    // ──────────────────────────────────────────────
-    // 9. CUSTOMER MANAGEMENT
-    // ──────────────────────────────────────────────
-    {
-      id: 'customer-management', label: 'Customer Management', path: '/customers', icon: 'Users',
-      children: [
-        { id: 'customers', label: 'Customers', path: '/customers', icon: 'Users' },
-      ]
-    },
-    // ──────────────────────────────────────────────
-    // 10. PROCUREMENT
+    // 8. PROCUREMENT
     // ──────────────────────────────────────────────
     {
       id: 'procurement-group', label: 'Procurement', path: '/procurement', icon: 'ShoppingCart',
@@ -170,7 +158,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       ]
     },
     // ──────────────────────────────────────────────
-    // 11. SUPPLY CHAIN & LOGISTICS
+    // 9. SUPPLY CHAIN & LOGISTICS
     // ──────────────────────────────────────────────
     {
       id: 'supply-chain-group', label: 'Supply Chain & Logistics', path: '/carriers', icon: 'Ship',
@@ -181,7 +169,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       ]
     },
     // ──────────────────────────────────────────────
-    // 12. FINANCE
+    // 10. FINANCE
     // ──────────────────────────────────────────────
     {
       id: 'finance-group', label: 'Finance', path: '/invoices', icon: 'Receipt',
@@ -192,7 +180,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       ]
     },
     // ──────────────────────────────────────────────
-    // 13. INTELLIGENCE & AI
+    // 11. INTELLIGENCE & AI
     // ──────────────────────────────────────────────
     {
       id: 'ai-group', label: 'Intelligence & AI', path: '/ai', icon: 'Brain',
@@ -206,22 +194,15 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'ai-audit', label: 'AI Audit Trail', path: '/ai-audit', icon: 'Shield' },
         { id: 'ai-forecasting', label: 'AI Forecasting', path: '/ai-forecasting', icon: 'BarChart3' },
         { id: 'experiments', label: 'AI Experiments', path: '/experiments', icon: 'FlaskConical' },
-        { id: 'analytics', label: 'Analytics', path: '/analytics', icon: 'BarChart3' },
       ]
     },
     // ──────────────────────────────────────────────
-    // 14. INTEGRATIONS
+    // 12. MARKETPLACES
     // ──────────────────────────────────────────────
     {
-      id: 'integrations-group', label: 'Integrations', path: '/integration-hub', icon: 'Zap',
+      id: 'marketplaces-group', label: 'Marketplaces', path: '/integrations/marketplace', icon: 'Globe',
       children: [
-        { id: 'integration-hub', label: 'Integration Hub', path: '/integration-hub', icon: 'Zap' },
         { id: 'shopify', label: 'Shopify', path: '/integrations/shopify', icon: 'ShoppingBag' },
-        { id: 'edi', label: 'EDI Automation', path: '/edi', icon: 'Upload' },
-        { id: 'import-export', label: 'Import/Export', path: '/import-export', icon: 'Upload' },
-        { id: 'b2b-portal', label: 'B2B Portal', path: '/b2b-portal', icon: 'ShoppingCart' },
-        { id: 'email-parser', label: 'Email Order Parser', path: '/email-parser', icon: 'Mail' },
-        { id: 'documents', label: 'Documents', path: '/documents', icon: 'FileText' },
         { id: 'bigcommerce', label: 'BigCommerce', path: '/integrations/bigcommerce', icon: 'Store' },
         { id: 'amazon', label: 'Amazon', path: '/integrations/amazon', icon: 'ShoppingCart' },
         { id: 'ebay', label: 'eBay', path: '/integrations/ebay', icon: 'ShoppingBag' },
@@ -230,7 +211,21 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       ]
     },
     // ──────────────────────────────────────────────
-    // 15. ADMINISTRATION
+    // 13. INTEGRATIONS & DATA
+    // ──────────────────────────────────────────────
+    {
+      id: 'integrations-group', label: 'Integrations & Data', path: '/integration-hub', icon: 'Zap',
+      children: [
+        { id: 'integration-hub', label: 'Integration Hub', path: '/integration-hub', icon: 'Zap' },
+        { id: 'edi', label: 'EDI Automation', path: '/edi', icon: 'Upload' },
+        { id: 'import-export', label: 'Import/Export', path: '/import-export', icon: 'Upload' },
+        { id: 'b2b-portal', label: 'B2B Portal', path: '/b2b-portal', icon: 'ShoppingCart' },
+        { id: 'email-parser', label: 'Email Order Parser', path: '/email-parser', icon: 'Mail' },
+        { id: 'documents', label: 'Documents', path: '/documents', icon: 'FileText' },
+      ]
+    },
+    // ──────────────────────────────────────────────
+    // 14. ADMINISTRATION
     // ──────────────────────────────────────────────
     {
       id: 'admin-group', label: 'Administration', path: '/settings', icon: 'Settings',
@@ -239,9 +234,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'settings', label: 'Settings', path: '/settings', icon: 'Settings' },
         { id: 'audit', label: 'Audit & Compliance', path: '/audit', icon: 'Shield' },
         { id: 'workflows', label: 'Workflows', path: '/workflows', icon: 'GitBranch' },
-        { id: 'promotions', label: 'Promotions', path: '/promotions', icon: 'Tags' },
-        { id: 'task-queues', label: 'Task Queues', path: '/task-queues', icon: 'AlertTriangle' },
-        { id: 'report-builder', label: 'Report Builder', path: '/report-builder', icon: 'BarChart3' },
       ]
     },
   ]
