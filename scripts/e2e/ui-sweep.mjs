@@ -13,8 +13,12 @@
  *   NEXUS_USER (default pipeline)
  *   NEXUS_PASS (default Pipeline@2026)
  */
-const createRequire = require('module').createRequire;
-const { chromium } = createRequire(`${__dirname}/../../nexus-oms-frontend/package.json`)('playwright');
+import { createRequire as nodeCreateRequire } from 'module';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const req = nodeCreateRequire(join(__dirname, '../../nexus-oms-frontend/package.json'));
+const { chromium } = req('playwright');
 
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 const API_URL = process.env.API_URL || 'http://localhost:8085/api/v1';
