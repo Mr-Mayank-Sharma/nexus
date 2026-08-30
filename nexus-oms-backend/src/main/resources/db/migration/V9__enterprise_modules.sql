@@ -531,9 +531,12 @@ CREATE TABLE IF NOT EXISTS nx_document_versions (
 );
 
 -- 7. ENHANCED RBAC
+-- tenant_id is nullable: NULL represents global/system-level defaults (see V24 seed),
+-- while tenant-scoped rows carry a specific tenant UUID. RLS (V23/V26) treats NULL
+-- tenant_id as system-level access.
 CREATE TABLE IF NOT EXISTS nx_role_permissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
+    tenant_id UUID,
     role VARCHAR(50) NOT NULL,
     permission_group VARCHAR(100) NOT NULL,
     permission_name VARCHAR(100) NOT NULL,
