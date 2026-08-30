@@ -28,6 +28,28 @@ public class CreditMemo {
     @Column(name = "invoice_id")
     private UUID invoiceId;
 
+    // T-10: Returns / exchange financial reconciliation fields.
+    @Column(name = "sales_return_id")
+    private UUID salesReturnId;
+
+    @Column(name = "return_id")
+    private UUID returnId;
+
+    @Column(name = "outcome")
+    private String outcome;
+
+    @Column(name = "tax_delta", precision = 12, scale = 2)
+    private BigDecimal taxDelta;
+
+    @Column(name = "source_location_id")
+    private UUID sourceLocationId;
+
+    @Column(name = "target_location_id")
+    private UUID targetLocationId;
+
+    @Column(name = "customer_deposit_applied", precision = 12, scale = 2)
+    private BigDecimal customerDepositApplied;
+
     @Column(name = "order_id")
     private UUID orderId;
 
