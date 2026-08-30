@@ -1,0 +1,18 @@
+{
+  "id": "01M0WZVMMFNHDNMJFY4YPZTR2M",
+  "title": "International Shopify Routing Strategy",
+  "summary": "Gurveen Kaur Bagga and Aditya Patel evaluated whether Shopify routing rules and additional fulfillment locations are needed outside the United States, focusing on Berlin, Paris, and Canada. Aditya recommended using the simplest Shopify-to-NetSuite flow where Shopify routing functions correctly, avoiding additional locations or routing unless fulfillment requirements or inventory synchronization create a need. Canadian order volume may increase during the Labour Day sale, potentially justifying additional configuration. It also remains unresolved whether non-U.S. countries can use the standard Shopify-to-NetSuite flow without routing or more complex inventory synchronization.",
+  "action_items": [
+    "Gurveen Kaur Bagga will message Mike or Jonathan to confirm whether countries without Shopify routing issues should use the simple order-to-NetSuite flow.",
+    "Gurveen Kaur Bagga will clarify whether international routing and location configuration are required because of inventory synchronization issues.",
+    "Meeting participant will confirm the timing of the postponed follow-up call after considering both participants travel schedules and Friday connectivity constraints."
+  ],
+  "topics": [
+    "Shopify routing should remain unchanged outside the United States unless a specific fulfillment or inventory-sync issue requires additional configuration.",
+    "Canada may require increased capacity or additional consideration because order volume is expected to rise during the Labour Day sale.",
+    "Gurveen planned to seek clarification from Mike or Jonathan about whether non-U.S. markets can use the simple Shopify-to-NetSuite flow.",
+    "Additional locations and routing should not be created unnecessarily; the team should let the current setup run if Shopify routing is functioning properly.",
+    "Jonathan indicated that international configuration may be needed because of an inventory synchronization problem.",
+    "The follow-up call may be postponed because both participants are traveling and Gurveen expects internet connectivity issues on Friday."
+  ]
+}

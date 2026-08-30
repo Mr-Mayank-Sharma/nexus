@@ -91,6 +91,10 @@ const FindOrderPage = lazy(() => import('./pages/FindOrderPage'))
 const RateCardsPage = lazy(() => import('./pages/RateCardsPage'))
 const BillingStatementsPage = lazy(() => import('./pages/BillingStatementsPage'))
 const ClientPortalPage = lazy(() => import('./pages/ClientPortalPage'))
+const RfidPage = lazy(() => import('./pages/RfidPage'))
+const ReturnsFinancePage = lazy(() => import('./pages/ReturnsFinancePage'))
+const McpServerPage = lazy(() => import('./pages/McpServerPage'))
+const SyncConflictsPage = lazy(() => import('./pages/SyncConflictsPage'))
 
 const RfLayout = lazy(() => import('./rf/RfLayout'))
 const RfHomeScreen = lazy(() => import('./rf/screens/HomeScreen'))
@@ -124,11 +128,13 @@ export default function App() {
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="inventory/receiving" element={<InventoryReceivingPage />} />
           <Route path="inventory/cycle-counts" element={<CycleCountPage />} />
+          <Route path="inventory/rfid" element={<RfidPage />} />
           <Route path="routing-rules" element={<RoutingRulesPage />} />
           <Route path="order-routing" element={<OrderRoutingPage />} />
           <Route path="integrations/bigcommerce" element={<BigCommercePage />} />
           <Route path="integrations/stores" element={<IntegrationStoresPage />} />
           <Route path="integration-hub" element={<IntegrationHubPage />} />
+          <Route path="sync" element={<SyncConflictsPage />} />
           <Route path="import-export" element={<ImportExportCenter />} />
           <Route path="notifications" element={<NotificationsCenter />} />
           <Route path="warehouse" element={<WarehousePage />} />
@@ -169,6 +175,7 @@ export default function App() {
           <Route path="ai-loading" element={<AiLoadingPage />} />
           <Route path="ai-audit" element={<AiAuditTrailPage />} />
           <Route path="ai-forecasting" element={<AiForecastingPage />} />
+          <Route path="mcp-server" element={<McpServerPage />} />
           <Route path="experiments" element={<AiExperimentsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="inventory/enhanced" element={<InventoryEnhancedPage />} />
@@ -186,6 +193,7 @@ export default function App() {
           <Route path="manifest" element={<ManifestPage />} />
           <Route path="report-builder" element={<ReportBuilderPage />} />
           <Route path="returns-enhanced" element={<ReturnsEnhancedPage />} />
+          <Route path="returns-finance" element={<ReturnsFinancePage />} />
           <Route path="payments" element={<PaymentsPage />} />
           <Route path="transfers" element={<TransfersPage />} />
           <Route path="brokering" element={<BrokeringQueuePage />} />

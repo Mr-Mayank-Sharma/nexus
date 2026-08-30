@@ -1,0 +1,37 @@
+{
+  "id": "01M0T5SMZEM7BDSSKWBNZNYNP2",
+  "title": "Kick-off - Lovers x HotWax Commerce",
+  "folder": "Onboarding",
+  "summary": "HotWax Commerce and Lovers reviewed implementation scope, priorities, testing, and launch planning. HotWax had internally reviewed the P0 and P1 customizations, with P0 completion targeted for the current week and testing handoff planned for early the following week. The integration will import only BOPIS and DoorDash orders from Shopify into HotWax, using existing Shopify tags and sales-channel identifiers. P0 requirements include displaying both order types on one screen; showing product name, size, color, and SKU; providing customer receipts; supporting extended or non-expiring store sessions; and enabling whole-order DoorDash cancellations synchronized with Shopify. P1 requirements include prioritizing DoorDash orders, tracking associate fulfillment activity, and synchronizing cancellations and refunds between HotWax and Shopify. BOPIS orders may be partially fulfilled, while DoorDash cancellations are all-or-nothing and may originate in HotWax, DoorDash, or Shopify. DoorDash does not require a direct agreement with HotWax because order access will occur through Shopify. Receipt design remains open pending final printer specifications.",
+  "action_items": [
+    "Nick Ziff will confirm the receipt printer paper size",
+    "HotWax will determine whether the existing pick ticket can be replaced by the customer receipt",
+    "HotWax will complete the P0 customizations and QA testing preparation for handoff early the following week",
+    "Lovers will conduct its own testing early the following week",
+    "Yash Jain will resend or forward the payment links to Jen May",
+    "Yash Jain will share the HotWax team email addresses for Microsoft Teams invitations"
+  ],
+  "topics": [
+    "HotWax will import only BOPIS and DoorDash orders from Shopify",
+    "P0 scope includes a unified order screen, enhanced product details, customer receipts, extended sessions, and full DoorDash cancellation synchronization",
+    "The receipt must support Epson-style mobile printing and include product description, variant, and SKU information",
+    "P1 scope includes DoorDash prioritization, associate fulfillment tracking, and cancellation/refund synchronization",
+    "DoorDash does not need a direct agreement with HotWax because the integration is through Shopify",
+    "HotWax is targeting P0 customization completion during the current week and testing availability for Lovers early the following week",
+    "The teams will use Microsoft Teams for project communication"
+  ],
+  "participants": [
+    "Ajinkya Moghe",
+    "Avnindra Sharma",
+    "Brian Brinker (DoorDash)",
+    "Charlotte Edmunds (DoorDash)",
+    "Jaime Pietak (AllPoint)",
+    "Jen May (Lovers)",
+    "Matt Sharifi (Lovers)",
+    "Nick Ziff (AllPoint)",
+    "Stephanie Rojas (Lovers)",
+    "Taylor Clegg (Lovers)",
+    "Toni Eden (Lovers)",
+    "Yash Jain"
+  ]
+}
