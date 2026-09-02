@@ -3,6 +3,7 @@
 AI-native, multi-tenant Order Management System unifying **commerce → inventory → fulfillment → shipping → returns → procurement → finance → AI**.
 
 > **Quick answers:**
+> - "**How do I set up, connect, deploy, and run everything in production?**" → [**NEXUS-COMPLETE-GUIDE.md**](./NEXUS-COMPLETE-GUIDE.md) ⭐
 > - "What is this / what's the dream?" → [00-VISION-DREAM.md](./00-VISION-DREAM.md)
 > - "What works today?" → [01-CURRENT-STATE.md](./01-CURRENT-STATE.md)
 > - "What's the tech stack?" → [02-TECHNICAL-ARCHITECTURE.md](./02-TECHNICAL-ARCHITECTURE.md)
@@ -18,6 +19,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 
 | Doc | Purpose | Audience |
 |---|---|---|
+| [`NEXUS-COMPLETE-GUIDE.md`](./NEXUS-COMPLETE-GUIDE.md) | **⭐ Complete platform guide** — setup, connect, deploy, operate in production | All, ops, buyers |
 | [`00-VISION-DREAM.md`](./00-VISION-DREAM.md) | Vision, dream product, **market numbers** (OMS/WMS/AI), roadmap, moat | Founders, investors, exec |
 | [`01-CURRENT-STATE.md`](./01-CURRENT-STATE.md) | Honest snapshot: what works, known gaps (G1–G7), Phase 2.5 hardening | Engineering, PM |
 | [`02-TECHNICAL-ARCHITECTURE.md`](./02-TECHNICAL-ARCHITECTURE.md) | Stack, layers, integration hub, AI platform, security, deployment | Engineering |
