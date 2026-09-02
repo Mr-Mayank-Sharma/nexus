@@ -44,9 +44,9 @@ DECLARE
         'nx_carrier_rates',
         'nx_carrier_zones',
         'nx_routing_rules',
-        'nx_routing_configs',
+        'nx_routing_config',
         'nx_routing_log',
-        'nx_rate_shopping_logs',
+        'nx_rate_shopping_log',
 
         -- ── EDI / email ingestion ─────────────────────────────────
         'nx_edi_documents',
@@ -67,8 +67,8 @@ DECLARE
 
         -- ── warehouses ────────────────────────────────────────────
         'nx_warehouses',
-        'warehouse_zones',
-        'warehouse_bins',
+        'nx_warehouse_zones',
+        'nx_warehouse_bins',
         'nx_warehouse_staff',
         'nx_warehouse_equipment',
 
@@ -135,6 +135,21 @@ DECLARE
     ];
 BEGIN
     FOREACH tbl IN ARRAY tenant_tables LOOP
+        -- Skip tables that don't exist yet (defensive: a table listed here
+        -- but not created by any migration would otherwise abort the whole
+        -- migration with "relation does not exist").  Also skip tables that
+        -- exist but carry no tenant_id column — RLS on those would fail the
+        -- policy creation below.
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = tbl
+        ) OR NOT EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'tenant_id'
+        ) THEN
+            CONTINUE;
+        END IF;
+
         -- Enable RLS (no-op if already enabled)
         EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
 

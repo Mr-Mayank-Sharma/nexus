@@ -26,7 +26,7 @@ public class AiModelVersion {
     @PositiveOrZero private java.math.BigDecimal accuracy;
     @PositiveOrZero private java.math.BigDecimal precision;
     @PositiveOrZero private java.math.BigDecimal recall;
-    @PositiveOrZero private java.math.BigDecimal f1Score;
+    @PositiveOrZero @Column(name = "f1_score") private java.math.BigDecimal f1Score;
     @PositiveOrZero private java.math.BigDecimal latencyMs;
     private UUID trainingDatasetId;
     private UUID validationDatasetId;

@@ -27,7 +27,7 @@ public class AiTrainingJob {
     @PositiveOrZero private java.math.BigDecimal accuracy;
     @PositiveOrZero private java.math.BigDecimal precision;
     @PositiveOrZero private java.math.BigDecimal recall;
-    @PositiveOrZero private java.math.BigDecimal f1Score;
+    @PositiveOrZero @Column(name = "f1_score") private java.math.BigDecimal f1Score;
     @PositiveOrZero private java.math.BigDecimal loss;
     @PositiveOrZero private java.math.BigDecimal driftScore;
     @Column(columnDefinition = "TEXT") private String metricsSource;

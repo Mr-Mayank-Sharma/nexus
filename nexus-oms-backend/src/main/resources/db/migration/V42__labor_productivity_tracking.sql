@@ -1,6 +1,59 @@
 -- V42: Enhanced Labor Management - productivity tracking, workload balancing, performance standards enforcement
 -- Manhattan parity: labor productivity tracking, performance standards, workload balancing
 
+-- Base tables for labor tracking.  These are JPA entities (NxLaborEntry,
+-- NxEngineeredStandard) that were previously created only by Hibernate
+-- ddl-auto.  In production (ddl-auto=validate, Flyway-only schema) they
+-- must exist before the ALTERs below, so we create them here.
+CREATE TABLE IF NOT EXISTS nx_labor_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    warehouse_id UUID NOT NULL,
+    staff_id UUID NOT NULL,
+    employee_code VARCHAR(255),
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    task_type VARCHAR(255),
+    status VARCHAR(255),
+    shift VARCHAR(255),
+    clocked_in_at TIMESTAMP,
+    clocked_out_at TIMESTAMP,
+    break_started_at TIMESTAMP,
+    break_ended_at TIMESTAMP,
+    total_work_minutes INT,
+    total_break_minutes INT,
+    lines_picked INT,
+    lines_packed INT,
+    units_received INT,
+    units_shipped INT,
+    error_count INT,
+    productivity_score DOUBLE PRECISION,
+    efficiency_rating VARCHAR(255),
+    current_task VARCHAR(255),
+    current_wave_id UUID,
+    notes TEXT,
+    metadata JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS nx_engineered_standards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id UUID NOT NULL,
+    warehouse_id UUID NOT NULL,
+    task_type VARCHAR(255) NOT NULL,
+    uom VARCHAR(255) NOT NULL,
+    standard_value DOUBLE PRECISION NOT NULL,
+    category VARCHAR(255),
+    complexity_level VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    effective_from DATE,
+    effective_to DATE,
+    notes TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 -- Add workload balancing columns to labor entries
 ALTER TABLE nx_labor_entries ADD COLUMN IF NOT EXISTS zone_assignment VARCHAR(50);
 ALTER TABLE nx_labor_entries ADD COLUMN IF NOT EXISTS workload_weight DECIMAL(5,2) DEFAULT 0;
@@ -49,3 +102,25 @@ CREATE TABLE IF NOT EXISTS nx_productivity_log (
 
 CREATE INDEX IF NOT EXISTS idx_productivity_log_staff ON nx_productivity_log(staff_id);
 CREATE INDEX IF NOT EXISTS idx_productivity_log_warehouse ON nx_productivity_log(warehouse_id, logged_at);
+
+-- Row-Level Security for the tenant-scoped tables created by this migration.
+-- V26 (which normally applies RLS) runs BEFORE this migration, so these new
+-- tables would otherwise be unprotected.  Same policy as V26.
+DO $$
+DECLARE tbl TEXT;
+BEGIN
+    FOREACH tbl IN ARRAY ARRAY['nx_labor_entries', 'nx_engineered_standards'] LOOP
+        EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', tbl);
+        EXECUTE format('DROP POLICY IF EXISTS tenant_isolation ON %I', tbl);
+        EXECUTE format(
+            'CREATE POLICY tenant_isolation ON %I
+             USING (
+                 nullif(current_setting(''app.current_tenant_id'', true), '''')::uuid IS NULL
+                 OR tenant_id = nullif(current_setting(''app.current_tenant_id'', true), '''')::uuid
+             )',
+            tbl
+        );
+        EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', tbl);
+    END LOOP;
+END;
+$$;

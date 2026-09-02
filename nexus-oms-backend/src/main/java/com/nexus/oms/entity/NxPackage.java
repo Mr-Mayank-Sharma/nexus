@@ -32,16 +32,16 @@ public class NxPackage {
     @Column(name = "box_name")
     private String boxName;
 
-    @Column(name = "weight_lbs")
+    @Column(name = "weight_lbs", columnDefinition = "numeric(10,2)")
     private Double weightLbs;
 
-    @Column(name = "width_in")
+    @Column(name = "width_in", columnDefinition = "numeric(10,2)")
     private Double widthIn;
 
-    @Column(name = "height_in")
+    @Column(name = "height_in", columnDefinition = "numeric(10,2)")
     private Double heightIn;
 
-    @Column(name = "depth_in")
+    @Column(name = "depth_in", columnDefinition = "numeric(10,2)")
     private Double depthIn;
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -69,7 +69,7 @@ public class NxPackage {
     @Column(name = "label_format")
     private String labelFormat;
 
-    @Column(name = "shipping_cost")
+    @Column(name = "shipping_cost", columnDefinition = "numeric(10,2)")
     private Double shippingCost;
 
     private String status;

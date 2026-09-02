@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "nxFreight_invoice_lines")
+@Table(name = "nx_freight_invoice_lines")
 public class NxFreightInvoiceLine {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
