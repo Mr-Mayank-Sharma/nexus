@@ -94,6 +94,43 @@ TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
 echo "$TOKEN" > /tmp/nexus_token.txt
 ```
 
+### Register Stores in Nexus
+```bash
+TOKEN=$(cat /tmp/nexus_token.txt)
+
+# --- Shopify Store ---
+curl -s -X POST http://localhost:8080/api/v1/shopify/stores \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "storeName": "Nexus Shopify",
+    "storeUrl": "nexus-ship-ufb7gevv.myshopify.com",
+    "apiKey": "shpat_XXXX...see .credentials file or DB query below",
+    "channel": "SHOPIFY"
+  }' | python3 -m json.tool
+
+# --- BigCommerce Store ---
+curl -s -X POST http://localhost:8080/api/v1/bigcommerce/stores \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "storeName": "Nexus BigCommerce",
+    "storeUrl": "https://store-i6y8sbd1dg.mybigcommerce.com",
+    "apiKey": "2o958enl3emh0arxh435rgpod4iegtr",
+    "channel": "BIGCOMMERCE"
+  }' | python3 -m json.tool
+
+# Verify both stores registered
+PGPASSWORD=nexus psql -U nexus -d nexus_oms_dev -c "
+  SELECT store_name, channel, store_url FROM nx_integration_store_settings;
+"
+```
+
+> **Note:** If the endpoint paths differ on your fresh build, check:
+> ```bash
+> grep -rn "PostMapping.*store" nexus-oms-backend/src/main/java/com/nexus/oms/controller/Shopify*Controller.java
+> ```
+
 ---
 
 ## 3. Retesting BigCommerce (Shopify-Style — UI + AI)
