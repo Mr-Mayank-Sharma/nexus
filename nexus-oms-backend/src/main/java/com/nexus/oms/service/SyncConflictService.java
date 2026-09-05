@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,15 +42,18 @@ public class SyncConflictService {
     private final SyncFieldMappingRepository fieldMappingRepository;
     private final SyncJobStatusRepository jobStatusRepository;
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     public SyncConflictService(SyncConflictRepository conflictRepository,
                                SyncFieldMappingRepository fieldMappingRepository,
                                SyncJobStatusRepository jobStatusRepository,
-                               ObjectMapper objectMapper) {
+                               ObjectMapper objectMapper,
+                               JdbcTemplate jdbcTemplate) {
         this.conflictRepository = conflictRepository;
         this.fieldMappingRepository = fieldMappingRepository;
         this.jobStatusRepository = jobStatusRepository;
         this.objectMapper = objectMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     // ------------------------------------------------------------------
@@ -172,9 +176,27 @@ public class SyncConflictService {
      * records. Idempotent: keyed on job name, only touches FAILED/PENDING.
      */
     @Scheduled(cron = "${nexus.sync.recovery.cron:0 */15 * * * *}")
-    @Transactional
     public void recoveryJob() {
-        UUID tenantId = TenantContext.getCurrentTenantId();
+        // Scheduled jobs run without a security context — iterate tenants explicitly
+        // (same pattern as BrokeringScheduler) instead of reading the tenant from
+        // the security context, which throws when none is present.
+        List<UUID> tenantIds = jdbcTemplate.queryForList(
+                "SELECT DISTINCT tenant_id FROM nx_users WHERE tenant_id IS NOT NULL",
+                UUID.class);
+        for (UUID tenantId : tenantIds) {
+            try {
+                TenantContext.setCurrentTenantId(tenantId);
+                recoverTenant(tenantId);
+            } catch (Exception e) {
+                log.error("Recovery job error for tenant {}: {}", tenantId, e.getMessage(), e);
+            } finally {
+                TenantContext.clear();
+            }
+        }
+    }
+
+    @Transactional
+    private void recoverTenant(UUID tenantId) {
         List<NxSyncJobStatus> stuck = jobStatusRepository.findByTenantIdAndStatus(tenantId, "FAILED");
         stuck.addAll(jobStatusRepository.findByTenantIdAndStatus(tenantId, "PENDING"));
 
