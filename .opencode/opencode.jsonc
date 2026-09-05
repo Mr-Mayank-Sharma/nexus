@@ -21,6 +21,14 @@
       "type": "local",
       "command": ["npx", "-y", "mcp-remote", "https://chelan-grafana-mcp.hotwaxsystems.com/sse"]
     },
+    "grafana-local": {
+      "type": "local",
+      "command": ["npx", "-y", "mcp-grafana-npx@latest"],
+      "env": {
+        "GRAFANA_URL": "http://localhost:3001",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN": "glsa_QUWPCE6S4f8m1iYiWTB329lDCsFSylsn_bd7f6cc1"
+      }
+    },
     "qwen-coder": {
       "type": "local",
       "command": ["node", "/home/mayanksharma/Desktop/sandbox/chelan/index.js"],
