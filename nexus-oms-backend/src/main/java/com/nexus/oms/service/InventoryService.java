@@ -107,9 +107,16 @@ public class InventoryService {
     @Cacheable(value = "inventory", key = "'check:' + #tenantId + ':' + #sku + ':' + #nodeId + ':' + #qty")
     @Transactional
     public boolean checkAvailability(UUID tenantId, String sku, UUID nodeId, int qty) {
+        // Inventory is a shared tenant+SKU pool (node_id is NULL on seeded rows).
+        // Match node-specific rows first, then fall back to the shared pool.
         return inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
-                .map(inv -> (inv.getQuantityOnHand() - inv.getQuantityAllocated() - inv.getQuantityReserved()) >= qty)
-                .orElse(false);
+                .map(inv -> available(inv) >= qty)
+                .orElseGet(() -> inventoryRepository.findByTenantIdAndSku(tenantId, sku).stream()
+                        .anyMatch(inv -> available(inv) >= qty));
+    }
+
+    private int available(NxInventory inv) {
+        return inv.getQuantityOnHand() - inv.getQuantityAllocated() - inv.getQuantityReserved();
     }
 
     // NOTE: no @Transactional — the atomic UPDATE commits immediately so row locks are never
@@ -119,9 +126,10 @@ public class InventoryService {
         // Atomic conditional update — safe under concurrency (no optimistic-lock retries needed)
         int updated = inventoryRepository.reserveAtomic(tenantId, sku, nodeId, qty);
         if (updated == 0) {
-            NxInventory inv = inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Inventory at node", nodeId));
-            int available = inv.getQuantityOnHand() - inv.getQuantityAllocated() - inv.getQuantityReserved();
+            NxInventory inv = inventoryRepository.findByTenantIdAndSku(tenantId, sku).stream()
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException("Inventory", sku));
+            int available = available(inv);
             throw new BadRequestException("Insufficient inventory: available " + available + ", requested " + qty);
         }
         bigCommerceInventorySyncService.pushSkuInventory(tenantId, sku);

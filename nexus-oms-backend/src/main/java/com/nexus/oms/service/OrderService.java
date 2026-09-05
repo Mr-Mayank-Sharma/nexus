@@ -9,6 +9,8 @@ import com.nexus.oms.kafka.KafkaProducerService;
 import com.nexus.oms.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -24,6 +26,8 @@ import java.util.stream.Collectors;
 @Service
 public class OrderService {
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final CustomerRepository customerRepository;
@@ -32,9 +36,11 @@ public class OrderService {
     private final KafkaProducerService kafkaProducerService;
     private final ObjectMapper objectMapper;
     private final NodeRepository nodeRepository;
+    private final WarehouseRepository warehouseRepository;
     private final OrderRoutingService orderRoutingService;
     private final RoutingConfigRepository routingConfigRepository;
     private final KittingService kittingService;
+    private final BrokeringService brokeringService;
     private final BigCommerceOrderStatusPushService bigCommerceStatusPushService;
 
     public OrderService(OrderRepository orderRepository,
@@ -45,9 +51,11 @@ public class OrderService {
                         KafkaProducerService kafkaProducerService,
                         ObjectMapper objectMapper,
                         NodeRepository nodeRepository,
+                        WarehouseRepository warehouseRepository,
                         OrderRoutingService orderRoutingService,
                         RoutingConfigRepository routingConfigRepository,
                         KittingService kittingService,
+                        BrokeringService brokeringService,
                         BigCommerceOrderStatusPushService bigCommerceStatusPushService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -57,9 +65,11 @@ public class OrderService {
         this.kafkaProducerService = kafkaProducerService;
         this.objectMapper = objectMapper;
         this.nodeRepository = nodeRepository;
+        this.warehouseRepository = warehouseRepository;
         this.orderRoutingService = orderRoutingService;
         this.routingConfigRepository = routingConfigRepository;
         this.kittingService = kittingService;
+        this.brokeringService = brokeringService;
         this.bigCommerceStatusPushService = bigCommerceStatusPushService;
     }
 
@@ -205,18 +215,25 @@ public class OrderService {
         }
 
         UUID tenantId = order.getTenantId();
-        List<NxNode> activeNodes = nodeRepository.findByTenantIdAndIsActiveTrue(tenantId);
-        if (activeNodes.isEmpty()) {
+        List<UUID> candidateNodeIds = nodeRepository.findByTenantIdAndIsActiveTrue(tenantId).stream()
+                .map(NxNode::getId)
+                .collect(Collectors.toList());
+        if (candidateNodeIds.isEmpty()) {
+            // Fall back to ACTIVE warehouses — inventory is a shared tenant+SKU pool (node_id NULL)
+            candidateNodeIds = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE").stream()
+                    .map(Warehouse::getId)
+                    .collect(Collectors.toList());
+        }
+        if (candidateNodeIds.isEmpty()) {
             throw new BadRequestException("No active warehouse nodes found");
         }
 
         List<NxOrderItem> items = orderItemRepository.findByOrderId(id);
 
-        UUID selectedNode = activeNodes.stream()
-                .filter(node -> items.stream()
+        UUID selectedNode = candidateNodeIds.stream()
+                .filter(nodeId -> items.stream()
                         .allMatch(item -> inventoryService.checkAvailability(
-                                tenantId, item.getSku(), node.getId(), item.getQuantity())))
-                .map(NxNode::getId)
+                                tenantId, item.getSku(), nodeId, item.getQuantity())))
                 .findFirst()
                 .orElse(null);
 
@@ -259,19 +276,39 @@ public class OrderService {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
 
+        boolean allocated = false;
         if ("PENDING".equalsIgnoreCase(order.getStatus()) && isAutoAllocationEnabled(order.getTenantId())) {
-            AllocationRequest request = new AllocationRequest();
-            request.setOrderId(id);
-            request.setStrategy(null);
-            request.setDryRun(false);
-            orderRoutingService.allocateOrder(request);
-            order = orderRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+            try {
+                AllocationRequest request = new AllocationRequest();
+                request.setOrderId(id);
+                request.setStrategy(null);
+                request.setDryRun(false);
+                AllocationResult result = orderRoutingService.allocateOrder(request);
+                // Only treat as allocated if every allocation row succeeded (not empty / FAILED)
+                allocated = "ALLOCATED".equals(result.getStatus())
+                        && !result.getAllocations().isEmpty()
+                        && result.getAllocations().stream().allMatch(a -> "ALLOCATED".equals(a.getStatus()));
+                order = orderRepository.findById(id)
+                        .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+            } catch (Exception e) {
+                log.warn("Auto-allocation failed for order {}: {}", id, e.getMessage());
+            }
         }
 
-        order.setStatus("CONFIRMED");
-        order = orderRepository.save(order);
-        kafkaProducerService.publish("order.confirmed", order.getId().toString());
+        if (!allocated) {
+            // Order is still PENDING/CREATED here — mark CONFIRMED first, then enqueue
+            // for brokering so the scheduler allocates it. (enqueue guard requires
+            // PENDING/CONFIRMED, so the status must be set before the call.)
+            order.setStatus("CONFIRMED");
+            order = orderRepository.save(order);
+            try {
+                brokeringService.enqueueOrder(id, "NORMAL");
+            } catch (Exception e) {
+                log.warn("Could not enqueue order {} for brokering: {}", id, e.getMessage());
+            }
+            kafkaProducerService.publish("order.confirmed", order.getId().toString());
+        }
+
         return toOrderResponse(order);
     }
 

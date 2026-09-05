@@ -22,7 +22,7 @@ public interface InventoryRepository extends JpaRepository<NxInventory, UUID> {
     @Modifying
     @Query("UPDATE NxInventory i SET i.quantityAllocated = i.quantityAllocated + :qty, " +
            "i.version = i.version + 1 " +
-           "WHERE i.tenantId = :tenantId AND i.sku = :sku AND i.nodeId = :nodeId " +
+           "WHERE i.tenantId = :tenantId AND i.sku = :sku AND (i.nodeId = :nodeId OR i.nodeId IS NULL) " +
            "AND (i.quantityOnHand - i.quantityAllocated - i.quantityReserved) >= :qty")
     int reserveAtomic(@Param("tenantId") UUID tenantId, @Param("sku") String sku,
                       @Param("nodeId") UUID nodeId, @Param("qty") int qty);
@@ -30,7 +30,7 @@ public interface InventoryRepository extends JpaRepository<NxInventory, UUID> {
     @Modifying
     @Query("UPDATE NxInventory i SET i.quantityAllocated = CASE WHEN i.quantityAllocated >= :qty THEN i.quantityAllocated - :qty ELSE 0 END, " +
            "i.version = i.version + 1 " +
-           "WHERE i.tenantId = :tenantId AND i.sku = :sku AND i.nodeId = :nodeId")
+           "WHERE i.tenantId = :tenantId AND i.sku = :sku AND (i.nodeId = :nodeId OR i.nodeId IS NULL)")
     int releaseAtomic(@Param("tenantId") UUID tenantId, @Param("sku") String sku,
                       @Param("nodeId") UUID nodeId, @Param("qty") int qty);
 

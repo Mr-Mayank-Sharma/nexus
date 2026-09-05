@@ -44,8 +44,8 @@ public class BrokeringService {
         NxOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
 
-        if (!"PENDING".equals(order.getStatus())) {
-            throw new BadRequestException("Order must be PENDING to enqueue for brokering");
+        if (!"PENDING".equals(order.getStatus()) && !"CONFIRMED".equals(order.getStatus())) {
+            throw new BadRequestException("Order must be PENDING or CONFIRMED to enqueue for brokering");
         }
 
         List<NxBrokeringQueue> existing = brokeringQueueRepository.findByOrderId(orderId);
@@ -92,6 +92,19 @@ public class BrokeringService {
         int failed = 0;
 
         for (NxBrokeringQueue queueEntry : waitingOrders) {
+            // Skip orders already allocated elsewhere (e.g. manual allocate) — prevents double allocation
+            NxOrder queuedOrder = orderRepository.findById(queueEntry.getOrderId()).orElse(null);
+            if (queuedOrder != null && ("ALLOCATED".equals(queuedOrder.getStatus()) || queuedOrder.getAllocatedNode() != null)) {
+                queueEntry.setStatus("ALLOCATED");
+                queueEntry.setExitedAt(LocalDateTime.now());
+                if (queuedOrder.getAllocatedNode() != null) {
+                    queueEntry.setAllocatedNodeId(queuedOrder.getAllocatedNode());
+                }
+                brokeringQueueRepository.save(queueEntry);
+                allocated++;
+                processed++;
+                continue;
+            }
             try {
                 queueEntry.setStatus("PROCESSING");
                 queueEntry.setAttempts(queueEntry.getAttempts() + 1);
@@ -170,6 +183,19 @@ public class BrokeringService {
         int failed = 0;
 
         for (NxBrokeringQueue queueEntry : priorityOrders) {
+            // Skip orders already allocated elsewhere (e.g. manual allocate) — prevents double allocation
+            NxOrder queuedOrder = orderRepository.findById(queueEntry.getOrderId()).orElse(null);
+            if (queuedOrder != null && ("ALLOCATED".equals(queuedOrder.getStatus()) || queuedOrder.getAllocatedNode() != null)) {
+                queueEntry.setStatus("ALLOCATED");
+                queueEntry.setExitedAt(LocalDateTime.now());
+                if (queuedOrder.getAllocatedNode() != null) {
+                    queueEntry.setAllocatedNodeId(queuedOrder.getAllocatedNode());
+                }
+                brokeringQueueRepository.save(queueEntry);
+                allocated++;
+                processed++;
+                continue;
+            }
             try {
                 queueEntry.setStatus("PROCESSING");
                 queueEntry.setAttempts(queueEntry.getAttempts() + 1);

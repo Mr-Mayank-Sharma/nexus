@@ -77,8 +77,8 @@ public class OrderRoutingService {
         NxOrder order = orderRepository.findById(request.getOrderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + request.getOrderId()));
 
-        if (!"PENDING".equals(order.getStatus())) {
-            throw new BadRequestException("Order must be in PENDING status to allocate");
+        if (!"PENDING".equals(order.getStatus()) && !"CONFIRMED".equals(order.getStatus())) {
+            throw new BadRequestException("Order must be in PENDING or CONFIRMED status to allocate");
         }
 
         String strategy = request.getStrategy();
@@ -142,6 +142,18 @@ public class OrderRoutingService {
             order.setPromisedDelivery(deliveryPromise);
             order.setStatus("ALLOCATED");
             orderRepository.save(order);
+
+            // Persist item-level allocation so nx_order_items reflects the allocation
+            // (allocated_node_id / allocated_qty were previously left NULL).
+            if (!allocations.isEmpty()) {
+                UUID primaryNode = allocations.get(0).getNodeId();
+                List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
+                for (NxOrderItem item : items) {
+                    item.setAllocatedNodeId(primaryNode);
+                    item.setAllocatedQty(item.getQuantity());
+                }
+                orderItemRepository.saveAll(items);
+            }
 
             if (configHasExceptionDetection(tenantId)) {
                 exceptions = detectFulfillmentExceptions(order, allocations, tenantId);
