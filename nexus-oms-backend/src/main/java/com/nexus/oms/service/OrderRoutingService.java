@@ -130,13 +130,43 @@ public class OrderRoutingService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (!dryRun) {
+            // Winning node = first allocation that actually holds quantity. The routing plan
+            // can contain 0-qty rows (e.g. small orders split across nodes), so allocated_node
+            // must point at a node that can truly fulfill the order.
+            UUID primaryNode = allocations.stream()
+                    .filter(a -> a.getQuantityAllocated() != null && a.getQuantityAllocated() > 0)
+                    .map(NxOrderAllocation::getNodeId)
+                    .findFirst()
+                    .orElse(allocations.isEmpty() ? null : allocations.get(0).getNodeId());
+
+            List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
+
+            // Consume stock on the winning node so brokered orders can't oversell. Runs inside the
+            // caller's transaction: a failed reservation throws BadRequestException and rolls back
+            // the entire allocation. If a multi-item order fails partway, release the already-reserved
+            // items so no stock leaks before the order is retried.
+            if (primaryNode != null) {
+                List<NxOrderItem> reservedItems = new ArrayList<>();
+                try {
+                    for (NxOrderItem item : items) {
+                        inventoryService.reserveInventory(tenantId, item.getSku(), primaryNode, item.getQuantity());
+                        reservedItems.add(item);
+                    }
+                } catch (Exception e) {
+                    for (NxOrderItem item : reservedItems) {
+                        inventoryService.releaseInventory(tenantId, item.getSku(), primaryNode, item.getQuantity());
+                    }
+                    throw e;
+                }
+            }
+
             allocations.forEach(a -> {
                 a.setAllocatedAt(LocalDateTime.now());
                 a.setAllocatedBy(getCurrentUserId());
                 allocationRepository.save(a);
             });
 
-            order.setAllocatedNode(allocations.isEmpty() ? null : allocations.get(0).getNodeId());
+            order.setAllocatedNode(primaryNode);
             order.setAllocationRule(strategy);
             order.setAllocationConfidence(confidenceScore);
             order.setPromisedDelivery(deliveryPromise);
@@ -145,9 +175,7 @@ public class OrderRoutingService {
 
             // Persist item-level allocation so nx_order_items reflects the allocation
             // (allocated_node_id / allocated_qty were previously left NULL).
-            if (!allocations.isEmpty()) {
-                UUID primaryNode = allocations.get(0).getNodeId();
-                List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
+            if (primaryNode != null) {
                 for (NxOrderItem item : items) {
                     item.setAllocatedNodeId(primaryNode);
                     item.setAllocatedQty(item.getQuantity());
@@ -247,7 +275,7 @@ public class OrderRoutingService {
 
         for (int i = 0; i < scored.size() && remaining > 0; i++) {
             Warehouse wh = scored.get(i);
-            int allocQty = (i == scored.size() - 1) ? remaining : remaining / (scored.size() - i);
+            int allocQty = (i == scored.size() - 1) ? remaining : Math.max(1, remaining / (scored.size() - i));
             BigDecimal cost = estimateShippingCost(wh, order, allocQty);
             BigDecimal distance = estimateDistance(wh, shipRegion);
 

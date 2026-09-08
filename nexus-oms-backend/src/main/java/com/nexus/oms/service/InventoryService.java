@@ -116,7 +116,13 @@ public class InventoryService {
     }
 
     private int available(NxInventory inv) {
-        return inv.getQuantityOnHand() - inv.getQuantityAllocated() - inv.getQuantityReserved();
+        // Null-safe: seeded rows may have NULL quantity columns (schema default is 0 but
+        // legacy/seed data can contain explicit NULLs). Treat NULL as 0.
+        return nz(inv.getQuantityOnHand()) - nz(inv.getQuantityAllocated()) - nz(inv.getQuantityReserved());
+    }
+
+    private static int nz(Integer value) {
+        return value != null ? value : 0;
     }
 
     // NOTE: no @Transactional — the atomic UPDATE commits immediately so row locks are never

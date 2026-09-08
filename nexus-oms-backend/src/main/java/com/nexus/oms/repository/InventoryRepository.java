@@ -20,15 +20,15 @@ public interface InventoryRepository extends JpaRepository<NxInventory, UUID> {
     List<NxInventory> findByTenantIdAndSku(UUID tenantId, String sku);
 
     @Modifying
-    @Query("UPDATE NxInventory i SET i.quantityAllocated = i.quantityAllocated + :qty, " +
+    @Query("UPDATE NxInventory i SET i.quantityAllocated = COALESCE(i.quantityAllocated, 0) + :qty, " +
            "i.version = i.version + 1 " +
            "WHERE i.tenantId = :tenantId AND i.sku = :sku AND (i.nodeId = :nodeId OR i.nodeId IS NULL) " +
-           "AND (i.quantityOnHand - i.quantityAllocated - i.quantityReserved) >= :qty")
+           "AND (COALESCE(i.quantityOnHand, 0) - COALESCE(i.quantityAllocated, 0) - COALESCE(i.quantityReserved, 0)) >= :qty")
     int reserveAtomic(@Param("tenantId") UUID tenantId, @Param("sku") String sku,
                       @Param("nodeId") UUID nodeId, @Param("qty") int qty);
 
     @Modifying
-    @Query("UPDATE NxInventory i SET i.quantityAllocated = CASE WHEN i.quantityAllocated >= :qty THEN i.quantityAllocated - :qty ELSE 0 END, " +
+    @Query("UPDATE NxInventory i SET i.quantityAllocated = CASE WHEN COALESCE(i.quantityAllocated, 0) >= :qty THEN COALESCE(i.quantityAllocated, 0) - :qty ELSE 0 END, " +
            "i.version = i.version + 1 " +
            "WHERE i.tenantId = :tenantId AND i.sku = :sku AND (i.nodeId = :nodeId OR i.nodeId IS NULL)")
     int releaseAtomic(@Param("tenantId") UUID tenantId, @Param("sku") String sku,
@@ -37,6 +37,6 @@ public interface InventoryRepository extends JpaRepository<NxInventory, UUID> {
     @Query("SELECT COALESCE(SUM(i.quantityOnHand), 0) FROM NxInventory i WHERE i.tenantId = :tenantId AND i.sku = :sku")
     Integer getTotalOnHand(@Param("tenantId") UUID tenantId, @Param("sku") String sku);
 
-    @Query("SELECT COALESCE(SUM(i.quantityOnHand - i.quantityAllocated - i.quantityReserved), 0) FROM NxInventory i WHERE i.tenantId = :tenantId AND i.sku = :sku")
+    @Query("SELECT COALESCE(SUM(COALESCE(i.quantityOnHand, 0) - COALESCE(i.quantityAllocated, 0) - COALESCE(i.quantityReserved, 0)), 0) FROM NxInventory i WHERE i.tenantId = :tenantId AND i.sku = :sku")
     Integer getAvailableToPromise(@Param("tenantId") UUID tenantId, @Param("sku") String sku);
 }
