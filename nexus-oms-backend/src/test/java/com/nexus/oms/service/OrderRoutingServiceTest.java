@@ -145,16 +145,16 @@ class OrderRoutingServiceTest {
     }
 
     @Test
-    void allocateOrder_throwsWhenNotPending() {
-        NxOrder confirmed = NxOrder.builder()
+    void allocateOrder_throwsWhenNotAllocatable() {
+        NxOrder shipped = NxOrder.builder()
                 .id(UUID.randomUUID())
                 .tenantId(tenantId)
-                .status("CONFIRMED")
+                .status("SHIPPED")
                 .build();
-        when(orderRepository.findById(confirmed.getId())).thenReturn(Optional.of(confirmed));
+        when(orderRepository.findById(shipped.getId())).thenReturn(Optional.of(shipped));
 
         AllocationRequest request = new AllocationRequest();
-        request.setOrderId(confirmed.getId());
+        request.setOrderId(shipped.getId());
         request.setStrategy("HYBRID");
 
         assertThrows(BadRequestException.class, () -> service.allocateOrder(request));

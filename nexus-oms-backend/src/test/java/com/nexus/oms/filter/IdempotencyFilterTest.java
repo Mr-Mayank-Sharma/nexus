@@ -1,6 +1,8 @@
 package com.nexus.oms.filter;
 
+import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.IdempotencyService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
@@ -40,6 +42,11 @@ class IdempotencyFilterTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        // Other test classes set a tenant in TenantContext / SecurityContextHolder without
+        // clearing it; the ThreadLocals leak across classes in the same JVM fork. Clear both so
+        // the filter uses the unscoped key (the behavior these tests assert).
+        TenantContext.clear();
+        SecurityContextHolder.clearContext();
         filter = new IdempotencyFilter(idempotencyService);
         responseWriter = new StringWriter();
         lenient().when(response.getWriter()).thenReturn(new PrintWriter(responseWriter));

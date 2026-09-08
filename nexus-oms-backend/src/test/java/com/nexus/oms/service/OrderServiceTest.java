@@ -49,11 +49,15 @@ class OrderServiceTest {
     @Mock
     private NodeRepository nodeRepository;
     @Mock
+    private WarehouseRepository warehouseRepository;
+    @Mock
     private OrderRoutingService orderRoutingService;
     @Mock
     private RoutingConfigRepository routingConfigRepository;
     @Mock
     private KittingService kittingService;
+    @Mock
+    private BrokeringService brokeringService;
     @Mock
     private com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService bigCommerceStatusPushService;
 
@@ -67,7 +71,7 @@ class OrderServiceTest {
     void setUp() {
         orderService = new OrderService(orderRepository, orderItemRepository, customerRepository,
                 addressRepository, inventoryService, kafkaProducerService, objectMapper, nodeRepository,
-                orderRoutingService, routingConfigRepository, kittingService, bigCommerceStatusPushService);
+                warehouseRepository, orderRoutingService, routingConfigRepository, kittingService, brokeringService, bigCommerceStatusPushService);
         tenantId = UUID.randomUUID();
         orderId = UUID.randomUUID();
 
@@ -218,7 +222,7 @@ class OrderServiceTest {
                 .build();
 
         doReturn("{}").when(objectMapper).writeValueAsString(any());
-        when(customerRepository.findByEmail("existing@example.com")).thenReturn(Optional.of(existingCustomer));
+        when(customerRepository.findAllByTenantIdAndEmail(tenantId, "existing@example.com")).thenReturn(List.of(existingCustomer));
         when(orderRepository.save(any(NxOrder.class))).thenAnswer(i -> {
             NxOrder o = i.getArgument(0);
             if (o.getId() == null) o.setId(orderId);
