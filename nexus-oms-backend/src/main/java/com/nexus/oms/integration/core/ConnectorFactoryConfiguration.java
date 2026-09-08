@@ -47,7 +47,7 @@ public class ConnectorFactoryConfiguration {
         registry.registerFactory("SHOPIFY", new ShopifyConnector.Factory());
         registry.registerFactory("MAGENTO", new MagentoConnector.Factory());
         registry.registerFactory("AMAZON", new AmazonConnector.Factory());
-        registry.registerFactory("BIGCOMMERCE", new ShopifyConnector.Factory());
+        registry.registerFactory("BIGCOMMERCE", new BigCommerceConnector.Factory());
 
         // Marketplaces
         registry.registerFactory("EBAY", createGenericFactory("EBAY", "eBay", "eBay Inc.", "Marketplace",
