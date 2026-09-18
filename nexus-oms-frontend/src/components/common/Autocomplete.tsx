@@ -16,6 +16,7 @@ interface AutocompleteProps<T = any> {
   debounceMs?: number
   minChars?: number
   className?: string
+  containerClassName?: string
   inputClassName?: string
   disabled?: boolean
   error?: string
@@ -50,6 +51,7 @@ export default function Autocomplete<T = any>({
   debounceMs = 300,
   minChars = 0,
   className,
+  containerClassName,
   inputClassName,
   disabled,
   error,
@@ -182,7 +184,7 @@ export default function Autocomplete<T = any>({
   )
 
   return (
-    <div ref={containerRef} className={clsx('relative', className)}>
+    <div ref={containerRef} className={clsx('relative', containerClassName)}>
       {label && (
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {label}
@@ -197,9 +199,10 @@ export default function Autocomplete<T = any>({
           ref={inputRef}
           type="text"
           className={clsx(
-            'enterprise-input w-full',
+            'input w-full',
             showSearchIcon && 'pl-9',
             clearable && value && 'pr-8',
+            className,
             inputClassName
           )}
           placeholder={placeholder}

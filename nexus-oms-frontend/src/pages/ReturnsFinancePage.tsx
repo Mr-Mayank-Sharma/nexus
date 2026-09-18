@@ -1,19 +1,16 @@
 import { useState } from 'react'
-import { clsx } from 'clsx'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   DollarSign, Split, ArrowLeftRight, Loader2, Receipt, TrendingUp,
-  TrendingDown, Wallet, AlertTriangle, Check, Plus, X,
+  TrendingDown, Wallet, AlertTriangle, Check,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
-import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import { useToast } from '../hooks/useToast'
 import {
   splitCreditMemos, lesserValueExchange, getReturnsFinanceImpact,
-  applyCustomerDeposit, getCreditMemosForReturn,
-  type CreditMemo, type ImpactReport,
+  applyCustomerDeposit, type ImpactReport,
 } from '../api/returnsFinance'
 
 const TABS = [

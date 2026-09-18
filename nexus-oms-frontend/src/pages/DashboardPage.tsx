@@ -64,7 +64,7 @@ export default function DashboardPage() {
   const [endlessAisleStats, setEndlessAisleStats] = useState<{ pendingOrders: number; inTransit: number; delivered: number; cancelled: number; totalRevenue: number }>({ pendingOrders: 0, inTransit: 0, delivered: 0, cancelled: 0, totalRevenue: 0 })
 
   // Fetch funnel data
-  const { data: picklists = [] } = useQuery({
+  const { data: _picklists = [] } = useQuery({
     queryKey: ['dashboard-picklists'],
     queryFn: async () => {
       const res = await pickingApi.getPicklists()

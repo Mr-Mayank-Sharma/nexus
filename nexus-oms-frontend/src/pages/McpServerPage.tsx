@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { clsx } from 'clsx'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  Bot, Terminal, Loader2, Plus, X, ShieldCheck, Coins, Activity,
+  Bot, Terminal, Loader2, Plus, ShieldCheck, Coins, Activity,
   Check, AlertTriangle, Cpu, Zap,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
@@ -12,7 +12,7 @@ import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import { useToast } from '../hooks/useToast'
 import {
   executeMcpTool, getMcpTools, registerMcpTool, getMcpBudgets,
-  upsertMcpBudget, getMcpAgentUsage,
+  upsertMcpBudget,
   type McpTool, type McpAgentBudget, type McpToolResult,
 } from '../api/mcp'
 

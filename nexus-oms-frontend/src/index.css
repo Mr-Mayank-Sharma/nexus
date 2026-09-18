@@ -92,6 +92,7 @@
     --border-default:   #E2E8F0;
     --border-subtle:    #F1F5F9;
     --border-strong:    #CBD5E1;
+    --border-input:     #E2E8F0;
     --border-focus:     #4F46E5;
     --border-brand:     #C7D2FE;
     --border-success:   #D1FAE5;
@@ -295,9 +296,10 @@
     --text-ai:         #A78BFA;
 
     /* ── Border Colors (Dark) ── */
-    --border-default:   #1E293B;
-    --border-subtle:    #1E293B;
-    --border-strong:    #334155;
+    --border-default:   #2D3B4F;
+    --border-subtle:    #24303F;
+    --border-strong:    #475569;
+    --border-input:     #2D3B4F;
     --border-focus:     #6366F1;
     --border-brand:     rgba(99, 102, 241, 0.3);
     --border-success:   rgba(16, 185, 129, 0.25);
@@ -495,7 +497,8 @@
   }
 
   /* ── Input ── */
-  .input {
+  .input,
+  .enterprise-input {
     @apply flex w-full rounded-lg text-sm;
     height: 36px;
     padding: 0 var(--space-3);
@@ -505,15 +508,18 @@
     transition: border-color var(--duration-fast) var(--ease-default),
                 box-shadow var(--duration-fast) var(--ease-default);
   }
-  .input::placeholder {
+  .input::placeholder,
+  .enterprise-input::placeholder {
     color: var(--text-tertiary);
   }
-  .input:focus {
+  .input:focus,
+  .enterprise-input:focus {
     outline: none;
     border-color: var(--border-focus);
     box-shadow: var(--elevation-ring);
   }
-  .input:disabled {
+  .input:disabled,
+  .enterprise-input:disabled {
     cursor: not-allowed;
     opacity: 0.5;
   }

@@ -9,6 +9,9 @@ import endlessAisleApi from '../api/endlessAisle'
 import type { NxEndlessAisleOrder, EndlessAisleStats } from '../api/endlessAisle'
 import { EnterpriseTabs, EnterpriseStatusBadge, EnterpriseKPICard } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
+import Autocomplete from '../components/common/Autocomplete'
+import { getProducts } from '../api/products'
+import type { Product } from '../types'
 
 type EATab = 'orders' | 'stats'
 type StatusFilter = 'ALL' | 'PENDING' | 'CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
@@ -420,8 +423,22 @@ export default function EndlessAislePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1">Product SKU *</label>
-                  <input type="text" value={form.productSku || ''} onChange={e => setForm({ ...form, productSku: e.target.value })}
-                    className="w-full px-3 py-2 border border-[var(--border-input)] dark:border-[var(--border-default)] rounded-lg bg-white dark:bg-[var(--surface-sunken)] text-[var(--text-primary)] dark:text-white font-mono" />
+                  <Autocomplete
+                    value={form.productSku || ''}
+                    onChange={v => setForm({ ...form, productSku: v })}
+                    fetchSuggestions={async (q) => {
+                      const res = await getProducts()
+                      const all = Array.isArray(res?.data) ? res.data : []
+                      if (!q) return all.slice(0, 10)
+                      const term = q.toLowerCase()
+                      return all.filter((p: Product) => p.sku?.toLowerCase().includes(term) || p.productName?.toLowerCase().includes(term)).slice(0, 10)
+                    }}
+                    getOptionLabel={(p: Product) => `${p.sku} — ${p.productName || ''}`}
+                    getOptionValue={(p: Product) => p.sku}
+                    onSelect={(p: Product) => setForm(f => ({ ...f, productSku: p.sku, productName: p.productName || f.productName }))}
+                    className="w-full font-mono"
+                    minChars={1}
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1">Product Name *</label>

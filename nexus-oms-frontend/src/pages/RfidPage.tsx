@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { clsx } from 'clsx'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
@@ -12,7 +12,7 @@ import EnterpriseTabs from '../components/enterprise/EnterpriseTabs'
 import { useToast } from '../hooks/useToast'
 import {
   openRfidSession, ingestEpcs, completeRfidSession, receiveRfid,
-  runRfidCycleCount, getRfidInventory, retagRfid, decodeEpc,
+  runRfidCycleCount, getRfidInventory, retagRfid,
   type RfidScanSession, type RfidScanResult, type CycleCountResult,
   type SerializedInventory,
 } from '../api/rfid'

@@ -3,6 +3,9 @@ import { Plus, PackageCheck, X, Loader2, Download } from 'lucide-react'
 import { useToast } from '../hooks/useToast'
 import { InventoryReceipt } from '../types'
 import * as receiptsApi from '../api/inventoryReceipts'
+import { getWarehouses } from '../api/warehouse'
+import { getProducts } from '../api/products'
+import type { Warehouse, Product } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
 import StatusBadge from '../components/common/StatusBadge'
@@ -15,6 +18,7 @@ export default function InventoryReceivingPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [form, setForm] = useState({ nodeId: '', receiptType: 'PO', referenceNumber: '', sku: '', productName: '', quantity: 1, unitCost: 0, lotNumber: '', expiryDate: '' })
+  const [nodeQuery, setNodeQuery] = useState('')
   const { addToast } = useToast()
 
   useEffect(() => { fetchReceipts() }, [statusFilter])
@@ -152,14 +156,49 @@ export default function InventoryReceivingPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Node ID</label>
-                  <input value={form.nodeId} onChange={e => setForm({ ...form, nodeId: e.target.value })} className="input w-full" placeholder="Warehouse node UUID" />
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Warehouse / Node</label>
+                  <Autocomplete
+                    value={nodeQuery}
+                    onChange={setNodeQuery}
+                    fetchSuggestions={async (q) => {
+                      const res = await getWarehouses(1, 50)
+                      const all = Array.isArray(res?.data?.content) ? res.data.content : []
+                      if (!q) return all.slice(0, 10)
+                      const term = q.toLowerCase()
+                      return all.filter((w: Warehouse) => w.code?.toLowerCase().includes(term) || w.name?.toLowerCase().includes(term)).slice(0, 10)
+                    }}
+                    getOptionLabel={(w: Warehouse) => `${w.code} — ${w.name}`}
+                    getOptionValue={(w: Warehouse) => w.id}
+                    onSelect={(w: Warehouse) => {
+                      setForm(f => ({ ...f, nodeId: w.id }))
+                      setNodeQuery(`${w.code} — ${w.name}`)
+                    }}
+                    placeholder="Search warehouse by code or name..."
+                    minChars={1}
+                    className="w-full"
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">SKU</label>
-                  <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} className="input w-full" placeholder="e.g. PROD-001" />
+                  <Autocomplete
+                    value={form.sku}
+                    onChange={v => setForm({ ...form, sku: v })}
+                    fetchSuggestions={async (q) => {
+                      const res = await getProducts()
+                      const all = Array.isArray(res?.data) ? res.data : []
+                      if (!q) return all.slice(0, 10)
+                      const term = q.toLowerCase()
+                      return all.filter((p: Product) => p.sku?.toLowerCase().includes(term) || p.productName?.toLowerCase().includes(term)).slice(0, 10)
+                    }}
+                    getOptionLabel={(p: Product) => `${p.sku} — ${p.productName || ''}`}
+                    getOptionValue={(p: Product) => p.sku}
+                    onSelect={(p: Product) => setForm(f => ({ ...f, sku: p.sku, productName: p.productName || f.productName }))}
+                    placeholder="e.g. PROD-001"
+                    minChars={1}
+                    className="w-full"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Product Name</label>

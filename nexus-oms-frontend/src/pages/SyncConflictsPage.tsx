@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { clsx } from 'clsx'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  RefreshCw, Loader2, AlertTriangle, Check, ArrowLeftRight, GitMerge,
+  RefreshCw, Loader2, AlertTriangle, Check, GitMerge,
   Plus, X, Activity, ShieldAlert, Database,
 } from 'lucide-react'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'

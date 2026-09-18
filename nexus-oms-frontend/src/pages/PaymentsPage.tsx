@@ -7,6 +7,8 @@ import Autocomplete from '../components/common/Autocomplete'
 import clsx from 'clsx'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
+import { getCustomers } from '../api/customers'
+import type { Customer } from '../types'
 
 interface Payment {
   id: string
@@ -331,7 +333,26 @@ export default function PaymentsPage() {
             <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Create Invoice</h2>
             <div className="space-y-3">
               <div><label className="enterprise-label">Order Number</label><input value={invoiceForm.orderNumber} onChange={e => setInvoiceForm(f => ({ ...f, orderNumber: e.target.value }))} className="enterprise-input w-full" placeholder="ORD-20000" /></div>
-              <div><label className="enterprise-label">Customer Name</label><input value={invoiceForm.customerName} onChange={e => setInvoiceForm(f => ({ ...f, customerName: e.target.value }))} className="enterprise-input w-full" placeholder="Acme Corp" /></div>
+              <div>
+                <label className="enterprise-label">Customer Name</label>
+                <Autocomplete
+                  value={invoiceForm.customerName}
+                  onChange={v => setInvoiceForm(f => ({ ...f, customerName: v }))}
+                  fetchSuggestions={async (q) => {
+                    const res = await getCustomers()
+                    const all = Array.isArray(res?.data) ? res.data : []
+                    if (!q) return all.slice(0, 10)
+                    const term = q.toLowerCase()
+                    return all.filter((c: Customer) => c.name?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term)).slice(0, 10)
+                  }}
+                  getOptionLabel={(c: Customer) => `${c.name} — ${c.email || c.phone || ''}`}
+                  getOptionValue={(c: Customer) => c.id}
+                  onSelect={(c: Customer) => setInvoiceForm(f => ({ ...f, customerName: c.name }))}
+                  className="w-full"
+                  placeholder="Acme Corp"
+                  minChars={1}
+                />
+              </div>
               <div><label className="enterprise-label">Amount</label><input value={invoiceForm.amount} onChange={e => setInvoiceForm(f => ({ ...f, amount: e.target.value }))} className="enterprise-input w-full" placeholder="0.00" type="number" /></div>
               <div><label className="enterprise-label">Due Date</label><input value={invoiceForm.dueDate} onChange={e => setInvoiceForm(f => ({ ...f, dueDate: e.target.value }))} className="enterprise-input w-full" type="date" /></div>
             </div>

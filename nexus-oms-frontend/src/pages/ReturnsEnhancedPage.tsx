@@ -19,6 +19,10 @@ import {
   getReturns, getReturnKPIs, createReturn, approveReturn, rejectReturn, inspectReturn,
 } from '../api/returns'
 import { fetchReturnAnalytics } from '../api/newBackend'
+import { getOrders } from '../api/orders'
+import { getCustomers } from '../api/customers'
+import { getProducts } from '../api/products'
+import type { Order, Customer, Product } from '../types'
 
 type ItemCondition = 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | 'DAMAGED'
 type Disposition = 'RESTOCK' | 'REFURBISH' | 'DONATE' | 'RECYCLE' | 'SCRAP'
@@ -197,6 +201,8 @@ export default function ReturnsEnhancedPage() {
     reason: string
     items: { sku: string; productName: string; quantity: number; unitPrice: number }[]
   }>({ orderId: '', customerId: '', reason: '', items: [{ sku: '', productName: '', quantity: 1, unitPrice: 0 }] })
+  const [orderQuery, setOrderQuery] = useState('')
+  const [customerQuery, setCustomerQuery] = useState('')
 
   const actorId = user?.id
 
@@ -1031,12 +1037,47 @@ export default function ReturnsEnhancedPage() {
             </div>
             <div className="enterprise-modal-body space-y-4">
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Order ID (UUID)</label>
-                <input type="text" className="enterprise-input" placeholder="Order UUID" value={createForm.orderId} onChange={e => setCreateForm(f => ({ ...f, orderId: e.target.value }))} />
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Order</label>
+                <Autocomplete
+                  value={orderQuery}
+                  onChange={setOrderQuery}
+                  fetchSuggestions={async (q) => {
+                    const res = await getOrders({ search: q })
+                    return Array.isArray(res?.data) ? res.data.slice(0, 10) : []
+                  }}
+                  getOptionLabel={(o: Order) => `${o.externalId || o.channelOrderId || o.id} — ${o.customerEmail || ''}`}
+                  getOptionValue={(o: Order) => o.id}
+                  onSelect={(o: Order) => {
+                    setCreateForm(f => ({ ...f, orderId: o.id }))
+                    setOrderQuery(o.externalId || o.channelOrderId || o.id)
+                  }}
+                  placeholder="Search order by number or email..."
+                  minChars={1}
+                  className="w-full"
+                />
               </div>
               <div className="enterprise-form-group">
-                <label className="text-sm font-medium text-[var(--text-secondary)]">Customer ID (UUID)</label>
-                <input type="text" className="enterprise-input" placeholder="Customer UUID" value={createForm.customerId} onChange={e => setCreateForm(f => ({ ...f, customerId: e.target.value }))} />
+                <label className="text-sm font-medium text-[var(--text-secondary)]">Customer</label>
+                <Autocomplete
+                  value={customerQuery}
+                  onChange={setCustomerQuery}
+                  fetchSuggestions={async (q) => {
+                    const res = await getCustomers()
+                    const all = Array.isArray(res?.data) ? res.data : []
+                    if (!q) return all.slice(0, 10)
+                    const term = q.toLowerCase()
+                    return all.filter((c: Customer) => c.name?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term)).slice(0, 10)
+                  }}
+                  getOptionLabel={(c: Customer) => `${c.name} — ${c.email || c.phone || ''}`}
+                  getOptionValue={(c: Customer) => c.id}
+                  onSelect={(c: Customer) => {
+                    setCreateForm(f => ({ ...f, customerId: c.id }))
+                    setCustomerQuery(c.name)
+                  }}
+                  placeholder="Search customer by name or email..."
+                  minChars={1}
+                  className="w-full"
+                />
               </div>
               <div className="enterprise-form-group">
                 <label className="text-sm font-medium text-[var(--text-secondary)]">Reason</label>
@@ -1046,10 +1087,29 @@ export default function ReturnsEnhancedPage() {
                 <label className="text-sm font-medium text-[var(--text-secondary)]">Items</label>
                 {createForm.items.map((item, i) => (
                   <div key={i} className="flex gap-2">
-                    <input type="text" className="enterprise-input" placeholder="SKU" value={item.sku} onChange={e => {
-                      const items = createForm.items.map((it, idx) => idx === i ? { ...it, sku: e.target.value } : it)
-                      setCreateForm(f => ({ ...f, items }))
-                    }} />
+                    <Autocomplete
+                      className="flex-1"
+                      value={item.sku}
+                      onChange={v => {
+                        const items = createForm.items.map((it, idx) => idx === i ? { ...it, sku: v } : it)
+                        setCreateForm(f => ({ ...f, items }))
+                      }}
+                      fetchSuggestions={async (q) => {
+                        const res = await getProducts()
+                        const all = Array.isArray(res?.data) ? res.data : []
+                        if (!q) return all.slice(0, 10)
+                        const term = q.toLowerCase()
+                        return all.filter((p: Product) => p.sku?.toLowerCase().includes(term) || p.productName?.toLowerCase().includes(term)).slice(0, 10)
+                      }}
+                      getOptionLabel={(p: Product) => `${p.sku} — ${p.productName || ''}`}
+                      getOptionValue={(p: Product) => p.sku}
+                      onSelect={(p: Product) => {
+                        const items = createForm.items.map((it, idx) => idx === i ? { ...it, sku: p.sku, productName: p.productName || it.productName, unitPrice: p.unitPrice ?? it.unitPrice } : it)
+                        setCreateForm(f => ({ ...f, items }))
+                      }}
+                      placeholder="Search SKU or product name..."
+                      minChars={1}
+                    />
                     <input type="number" min="1" className="enterprise-input w-20" placeholder="Qty" value={item.quantity || ''} onChange={e => {
                       const items = createForm.items.map((it, idx) => idx === i ? { ...it, quantity: parseInt(e.target.value) || 0 } : it)
                       setCreateForm(f => ({ ...f, items }))
