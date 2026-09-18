@@ -1,0 +1,177 @@
+# =============================================================================
+# Nexus OMS — Prometheus Recording Rules
+# =============================================================================
+# Pre-computes expensive queries for dashboard performance.
+# These rules run every 30s and store results as new metrics.
+#
+# =============================================================================
+
+groups:
+  # ---------------------------------------------------------------------------
+  # HTTP Request Metrics (pre-aggregated for dashboards)
+  # ---------------------------------------------------------------------------
+  - name: http_requests
+    interval: 30s
+    rules:
+      # Request rate per second by URI
+      - record: nexus:http_requests:rate5m
+        expr: sum(rate(http_server_requests_seconds_count[5m])) by (uri, status, method)
+      
+      # Request rate per second (total)
+      - record: nexus:http_requests:total:rate5m
+        expr: sum(rate(http_server_requests_seconds_count[5m]))
+      
+      # Error rate (5xx responses)
+      - record: nexus:http_requests:errors:rate5m
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+      
+      # Error percentage
+      - record: nexus:http_requests:error_ratio:rate5m
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count[5m]))
+      
+      # Average latency by URI
+      - record: nexus:http_latency:avg:rate5m
+        expr: |
+          sum(rate(http_server_requests_seconds_sum[5m])) by (uri)
+          /
+          sum(rate(http_server_requests_seconds_count[5m])) by (uri)
+      
+      # Request duration histogram (for percentile calculations)
+      - record: nexus:http_requests:duration_seconds:histogram:rate5m
+        expr: sum(rate(http_server_requests_seconds_bucket[5m])) by (le)
+  
+  # ---------------------------------------------------------------------------
+  # JVM Metrics (pre-aggregated)
+  # ---------------------------------------------------------------------------
+  - name: jvm_metrics
+    interval: 30s
+    rules:
+      # JVM Heap utilization ratio
+      - record: nexus:jvm:heap_utilization_ratio
+        expr: |
+          sum(jvm_memory_used_bytes{area="heap"})
+          /
+          sum(jvm_memory_max_bytes{area="heap"})
+      
+      # JVM Heap used (MB)
+      - record: nexus:jvm:heap_used_mb
+        expr: sum(jvm_memory_used_bytes{area="heap"}) / 1024 / 1024
+      
+      # JVM GC pause rate
+      - record: nexus:jvm:gc_pause_rate
+        expr: sum(rate(jvm_gc_pause_seconds_sum[5m]))
+  
+  # ---------------------------------------------------------------------------
+  # Database Metrics (pre-aggregated)
+  # ---------------------------------------------------------------------------
+  - name: database_metrics
+    interval: 30s
+    rules:
+      # PostgreSQL connection utilization ratio
+      - record: nexus:pg:connection_utilization_ratio
+        expr: |
+          sum(pg_stat_activity_count{state="active"})
+          /
+          pg_settings_max_connections
+      
+      # PostgreSQL active connections
+      - record: nexus:pg:active_connections
+        expr: sum(pg_stat_activity_count{state="active"})
+      
+      # HikariCP connection pool utilization
+      - record: nexus:hikaricp:pool_utilization_ratio
+        expr: |
+          hikaricp_connections_active
+          /
+          hikaricp_connections_max
+      
+      # HikariCP average acquire time (ms)
+      - record: nexus:hikaricp:acquire_time_ms:rate5m
+        expr: |
+          rate(hikaricp_connections_acquire_seconds_sum[5m])
+          /
+          rate(hikaricp_connections_acquire_seconds_count[5m])
+          * 1000
+  
+  # ---------------------------------------------------------------------------
+  # Redis Metrics (pre-aggregated)
+  # ---------------------------------------------------------------------------
+  - name: redis_metrics
+    interval: 30s
+    rules:
+      # Redis command rate
+      - record: nexus:redis:commands:rate5m
+        expr: rate(redis_commands_processed_total[5m])
+      
+      # Redis memory utilization ratio
+      - record: nexus:redis:memory_utilization_ratio
+        expr: |
+          redis_memory_used_bytes
+          /
+          redis_memory_max_bytes
+      
+      # Redis hit rate (if keyspace hits/misses available)
+      - record: nexus:redis:hit_ratio
+        expr: |
+          rate(redis_keyspace_hits_total[5m])
+          /
+          (rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]))
+  
+  # ---------------------------------------------------------------------------
+  # Host System Metrics (pre-aggregated)
+  # ---------------------------------------------------------------------------
+  - name: host_metrics
+    interval: 30s
+    rules:
+      # CPU utilization percentage
+      - record: nexus:host:cpu_utilization_pct
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+      
+      # Memory utilization percentage
+      - record: nexus:host:memory_utilization_pct
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
+      
+      # Disk I/O read rate (MB/s)
+      - record: nexus:host:disk_read_mbps:rate5m
+        expr: sum(rate(node_disk_read_bytes_total[5m])) / 1024 / 1024
+      
+      # Disk I/O write rate (MB/s)
+      - record: nexus:host:disk_write_mbps:rate5m
+        expr: sum(rate(node_disk_written_bytes_total[5m])) / 1024 / 1024
+  
+  # ---------------------------------------------------------------------------
+  # SLO/SLI Metrics (for error budget dashboards)
+  # ---------------------------------------------------------------------------
+  - name: slo_metrics
+    interval: 30s
+    rules:
+      # Availability SLI (percentage of non-5xx responses)
+      - record: nexus:sli:availability:ratio
+        expr: |
+          1 - (
+            sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m]))
+            /
+            sum(rate(http_server_requests_seconds_count[5m]))
+          )
+      
+      # Latency SLI (percentage of requests under 500ms)
+      - record: nexus:sli:latency_under_500ms:ratio
+        expr: |
+          sum(rate(http_server_requests_seconds_bucket{le="0.5"}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count[5m]))
+      
+      # Error budget remaining (for 99.9% target over 30-day window)
+      - record: nexus:error_budget:remaining_pct
+        expr: |
+          (
+            (1 - nexus:sli:availability:ratio) * 30 * 24 * 60
+          )
+          /
+          (
+            0.001 * 30 * 24 * 60
+          )
+          * 100

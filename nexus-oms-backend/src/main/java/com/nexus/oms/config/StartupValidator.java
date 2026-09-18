@@ -58,6 +58,14 @@ public class StartupValidator {
             failed = true;
         }
 
+        String credentialKey = System.getenv("APP_CREDENTIAL_ENCRYPTION_KEY");
+        if (!isCredentialKeyValid(credentialKey)) {
+            log.error("FATAL: APP_CREDENTIAL_ENCRYPTION_KEY must be set to at least 16 characters. "
+                    + "Without it, integration credentials are encrypted with a hardcoded fallback key, "
+                    + "and any credentials already encrypted with a different key become unreadable.");
+            failed = true;
+        }
+
         if (s3Endpoint == null || s3Endpoint.isBlank() || s3Endpoint.contains("localhost")) {
             log.warn("S3 endpoint is localhost; not suitable for production.");
         }
@@ -74,5 +82,14 @@ public class StartupValidator {
         } else {
             log.info("Startup validation passed: all required secrets are configured.");
         }
+    }
+
+    /**
+     * The credential vault requires a key of at least 16 characters; anything
+     * shorter (or absent) makes it fall back to a hardcoded key. Mirrors the
+     * threshold enforced in {@code CredentialVault}.
+     */
+    static boolean isCredentialKeyValid(String key) {
+        return key != null && !key.isBlank() && key.length() >= 16;
     }
 }

@@ -1,0 +1,148 @@
+# =============================================================================
+# Nexus OMS — Alertmanager Configuration
+# =============================================================================
+# Routes alerts from Prometheus to various notification channels.
+#
+# SETUP:
+#   1. Edit the receiver configs below with your actual credentials
+#   2. For Slack: create a webhook at https://api.slack.com/messaging/webhooks
+#   3. For Email: configure SMTP settings in global section
+#   4. For PagerDuty: get your integration key from PagerDuty service settings
+#
+# =============================================================================
+
+global:
+  resolve_timeout: 5m
+  # Email SMTP configuration (uncomment and configure)
+  # smtp_smarthost: 'smtp.gmail.com:587'
+  # smtp_from: 'nexus-alerts@yourcompany.com'
+  # smtp_auth_username: 'nexus-alerts@yourcompany.com'
+  # smtp_auth_password: 'your-app-password'
+  # smtp_require_tls: true
+
+# =============================================================================
+# Notification templates
+# =============================================================================
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# =============================================================================
+# Routing tree — which alerts go where
+# =============================================================================
+route:
+  # Default receiver for all alerts
+  receiver: 'default-webhook'
+  
+  # Group alerts by alert name and severity
+  group_by: ['alertname', 'severity']
+  
+  # Wait 30s before sending to allow grouping
+  group_wait: 30s
+  
+  # Wait 5m between grouped notifications
+  group_interval: 5m
+  
+  # Wait 4h before re-sending resolved alerts
+  repeat_interval: 4h
+  
+  # Child routes for different severity levels
+  routes:
+    # Critical alerts → immediate notification
+    - match:
+        severity: 'critical'
+      receiver: 'critical-webhook'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+    
+    # Warning alerts → standard notification
+    - match:
+        severity: 'warning'
+      receiver: 'warning-webhook'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+    
+    # Info alerts → daily digest
+    - match:
+        severity: 'info'
+      receiver: 'info-webhook'
+      group_wait: 1m
+      group_interval: 24h
+      repeat_interval: 24h
+
+# =============================================================================
+# Inhibition rules — suppress lower severity when critical is firing
+# =============================================================================
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+  
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'instance']
+
+# =============================================================================
+# Receivers — notification channels
+# =============================================================================
+receivers:
+  # ---------------------------------------------------------------------------
+  # Default webhook (catch-all)
+  # Logs to Alertmanager UI, can be extended with webhook URL
+  # ---------------------------------------------------------------------------
+  - name: 'default-webhook'
+    webhook_configs:
+      - url: 'http://localhost:9095/alert'
+        send_resolved: true
+  
+  # ---------------------------------------------------------------------------
+  # Critical alerts — immediate notification
+  # Uncomment Slack webhook for real notifications
+  # ---------------------------------------------------------------------------
+  - name: 'critical-webhook'
+    webhook_configs:
+      - url: 'http://localhost:9095/alert'
+        send_resolved: true
+    # Uncomment for Slack notifications:
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    #     channel: '#nexus-critical'
+    #     title: '{{ .GroupLabels.alertname }}'
+    #     text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+    #     send_resolved: true
+  
+  # ---------------------------------------------------------------------------
+  # Warning alerts — standard notification
+  # ---------------------------------------------------------------------------
+  - name: 'warning-webhook'
+    webhook_configs:
+      - url: 'http://localhost:9095/alert'
+        send_resolved: true
+  
+  # ---------------------------------------------------------------------------
+  # Info alerts — daily digest
+  # ---------------------------------------------------------------------------
+  - name: 'info-webhook'
+    webhook_configs:
+      - url: 'http://localhost:9095/alert'
+        send_resolved: true
+  
+  # ---------------------------------------------------------------------------
+  # Email receiver (uncomment and configure SMTP in global section)
+  # ---------------------------------------------------------------------------
+  # - name: 'email-critical'
+  #   email_configs:
+  #     - to: 'oncall@yourcompany.com'
+  #       subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+  #       body: |
+  #         {{ range .Alerts }}
+  #         Alert: {{ .Annotations.summary }}
+  #         Description: {{ .Annotations.description }}
+  #         Instance: {{ .Labels.instance }}
+  #         {{ end }}
+  #       send_resolved: true

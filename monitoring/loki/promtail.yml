@@ -1,0 +1,174 @@
+# =============================================================================
+# Nexus OMS — Promtail Configuration
+# =============================================================================
+# Collects logs from Docker containers and ships them to Loki.
+# Automatically discovers all containers on the nexus-network.
+#
+# =============================================================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Docker container logs (auto-discovered)
+  # ---------------------------------------------------------------------------
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["com.docker.compose.project=nexus"]
+    relabel_configs:
+      # Use container name as the primary label
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      
+      # Add compose service name
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+      
+      # Add compose project
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+      
+      # Add container ID (short)
+      - source_labels: ['__meta_docker_container_id']
+        regex: '(.{12}).*'
+        target_label: 'container_id'
+    
+    pipeline_stages:
+      # Docker logs are JSON — extract timestamp and log level
+      - docker: {}
+      
+      # Detect log levels from common patterns
+      - regex:
+          expression: '(?i)(?P<level>(TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|CRITICAL))'
+      
+      # Map detected levels to Loki levels
+      - labels:
+          level:
+      
+      # Extract structured fields from Spring Boot logs
+      - regex:
+          expression: '(?P<timestamp>\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}[\.,]\d{3})'
+      
+      # Add timestamp
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02T15:04:05.000'
+          fallback_formats:
+            - '2006-01-02 15:04:05.000'
+          action_on_failure: skip
+
+  # ---------------------------------------------------------------------------
+  # Backend-specific log parsing (Spring Boot JSON format)
+  # ---------------------------------------------------------------------------
+  - job_name: backend
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: name
+            values: ['nexus-backend']
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+    
+    pipeline_stages:
+      - docker: {}
+      
+      # Try to parse as JSON (Spring Boot structured logging)
+      - json:
+          expressions:
+              level: level
+              logger: logger_name
+              message: message
+              stack_trace: stack_trace
+              thread: thread_name
+      
+      # Fallback: try regex for non-JSON logs
+      - regex:
+          expression: '(?i)(?P<level>(TRACE|DEBUG|INFO|WARN(?:ING)?|ERROR|FATAL|CRITICAL))'
+      
+      # Add level label
+      - labels:
+          level:
+      
+      # Extract timestamp
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02T15:04:05.000Z'
+          fallback_formats:
+            - '2006-01-02T15:04:05.000'
+            - '2006-01-02 15:04:05.000'
+          action_on_failure: skip
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL logs
+  # ---------------------------------------------------------------------------
+  - job_name: postgres
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: name
+            values: ['nexus-postgres']
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+    
+    pipeline_stages:
+      - docker: {}
+      
+      # Detect PostgreSQL log levels
+      - regex:
+          expression: '(?P<level>(LOG|ERROR|FATAL|PANIC|WARNING|NOTICE|INFO|DEBUG))'
+      
+      - labels:
+          level:
+
+  # ---------------------------------------------------------------------------
+  # Redis logs
+  # ---------------------------------------------------------------------------
+  - job_name: redis
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: name
+            values: ['nexus-redis']
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+    
+    pipeline_stages:
+      - docker: {}
+      
+      # Detect Redis log levels
+      - regex:
+          expression: '(?P<level>(Level|WARNING|ERROR|NOTICE|VERBOSE|DEBUG))'
+      
+      - labels:
+          level:

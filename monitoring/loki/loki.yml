@@ -1,0 +1,62 @@
+# =============================================================================
+# Nexus OMS — Loki Configuration
+# =============================================================================
+# Centralized log storage and querying.
+# Receives logs from Promtail and exposes them via Grafana.
+#
+# =============================================================================
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: "2024-01-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h    # 7 days
+  max_query_series: 5000
+  max_entries_limit_per_query: 10000
+
+storage_config:
+  filesystem:
+    directory: /loki/chunks
+
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+  delete_request_store: filesystem
+
+# Query scheduling for performance
+query_range:
+  align_queries_with_step: true
+
+# Analytics for performance monitoring
+analytics:
+  reporting_enabled: false
