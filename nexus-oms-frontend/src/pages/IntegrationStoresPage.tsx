@@ -103,11 +103,16 @@ export default function IntegrationStoresPage() {
     }
     setSaving(true)
     try {
-      await api.createStore(form)
+      const res = await api.createStore(form)
+      if (!res.success) {
+        addToast({ type: 'error', title: res.error || 'Failed to create store' })
+        return
+      }
       addToast({ type: 'success', title: 'Store created' })
       setShowCreate(false)
       await fetchStores()
-    } catch { addToast({ type: 'error', title: 'Failed to create store' })
+    } catch (err: any) {
+      addToast({ type: 'error', title: err?.response?.data?.message || err?.message || 'Failed to create store' })
     } finally { setSaving(false) }
   }
 
