@@ -90,7 +90,8 @@ public class SyncSchedulerService {
                             syncConfig.getStoreId(), syncConfig.getSyncType(), e.getMessage());
                     syncConfig.setLastSyncStatus("FAILED");
                     syncConfig.setLastSyncMessage(e.getMessage());
-                    syncConfig.setLastSyncAt(LocalDateTime.now());
+                    // Do NOT advance lastSyncAt on failure — the next run must retry
+                    // the full window, otherwise older orders are permanently missed.
                     syncConfigRepository.save(syncConfig);
                 }
             }
@@ -112,7 +113,6 @@ public class SyncSchedulerService {
         try {
             log.info("Running scheduled sync: store={} type={}", store.getStoreCode(), syncConfig.getSyncType());
 
-            syncConfig.setLastSyncAt(LocalDateTime.now());
             syncConfig.setLastSyncStatus("RUNNING");
             syncConfig = syncConfigRepository.save(syncConfig);
 
@@ -126,7 +126,12 @@ public class SyncSchedulerService {
 
             syncConfig.setLastSyncStatus(result != null ? result.getStatus() : "FAILED");
             syncConfig.setLastSyncMessage(result != null ? result.getStatus() : "No result returned");
-            syncConfig.setLastSyncAt(LocalDateTime.now());
+            // Only advance lastSyncAt on SUCCESS. Advancing it before the run (or on
+            // failure) makes the next sync use updated_at_min = now, which permanently
+            // misses older orders. importOrders also sets it via updateSyncConfig.
+            if (result != null && "COMPLETED".equals(result.getStatus())) {
+                syncConfig.setLastSyncAt(LocalDateTime.now());
+            }
             syncConfigRepository.save(syncConfig);
 
             log.info("Scheduled sync complete: store={} type={} status={} succeeded={} failed={}",
