@@ -21,12 +21,33 @@ public class ShippingLabelController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<NxShippingLabel>>> getAllLabels() {
-        return ResponseEntity.ok(ApiResponse.success(Collections.emptyList()));
+        return ResponseEntity.ok(ApiResponse.success(shippingLabelService.getAllLabels()));
     }
 
     @PostMapping
     public ResponseEntity<NxShippingLabel> generateLabel(@RequestBody NxShippingLabel label) {
         return ResponseEntity.ok(shippingLabelService.generateLabel(label));
+    }
+
+    /** T-12: real carrier purchase through the configured carrier adapter. */
+    @PostMapping("/carrier")
+    public ResponseEntity<NxShippingLabel> generateCarrierLabel(@RequestBody NxShippingLabel label) {
+        return ResponseEntity.ok(shippingLabelService.generateCarrierLabel(label));
+    }
+
+    /** T-12: validate a carrier label against its adapter's required fields. */
+    @GetMapping("/{id}/validate")
+    public ResponseEntity<ApiResponse<List<String>>> validateLabel(@PathVariable UUID id) {
+        List<String> missing = shippingLabelService.validateLabelForCarrier(id);
+        return missing.isEmpty()
+                ? ResponseEntity.ok(ApiResponse.success(missing, "Label is valid for carrier printing"))
+                : ResponseEntity.ok(ApiResponse.success(missing, "Label is missing required fields"));
+    }
+
+    /** Full label payload (incl. base64) for download / preview. */
+    @GetMapping("/{id}/download")
+    public ResponseEntity<NxShippingLabel> downloadLabel(@PathVariable UUID id) {
+        return ResponseEntity.ok(shippingLabelService.getLabelWithData(id));
     }
 
     @PostMapping("/bulk")
