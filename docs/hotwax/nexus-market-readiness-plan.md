@@ -8,7 +8,7 @@
 
 ## 0. Executive Summary
 
-Nexus is **technically strong** — it already has DOM routing, BOPIS, ATP, transfer orders, cycle counting, mobile RF, EDI, AI, 3PL billing, and a client portal. The gap to market-readiness is **not raw capability**; it's:
+Nexus is **technically strong** — it already has BOPIS, ATP, transfer orders, cycle counting, mobile RF, EDI, AI, 3PL billing, and a client portal, plus a DOM routing *surface* whose allocation path is currently defective (§1.2). The gap to market-readiness is **not raw capability**; it's:
 
 1. **Completing the last-mile workflows** HotWax's customers actually use (replenishment drop-off, picker analytics, transit-time model, store ops depth).
 2. **Packaging Nexus for sale** — demo scripts, pricing model, onboarding, go-live checklist.
@@ -18,7 +18,7 @@ Nexus is **technically strong** — it already has DOM routing, BOPIS, ATP, tran
 - **Track A — Product Gaps (P0/P1/P2):** close the market-defining gaps
 - **Track B — Sales & Demo Readiness:** build the demo playbook and pricing
 - **Track C — Onboarding & Go-Live:** self-serve onboarding, go-live checklist, roll-off
-- **Track D — Competitive Positioning:** lead with routing, honest data, fast import
+- **Track D — Competitive Positioning:** lead with fast import, honest data, EDI, and predictability — **not** routing (held back until T-14/T-17 land)
 
 **Timeline:** 8–12 weeks to market-ready. **North-star metric:** close a real HotWax-style deal (Shopify merchant with ERP) using the demo playbook.
 
@@ -28,9 +28,10 @@ Nexus is **technically strong** — it already has DOM routing, BOPIS, ATP, tran
 
 ### 1.1 Nexus Strengths (lead with these)
 
+*Routing is deliberately **not** in this table — see the P0 gap in §1.2. Lead with import speed, EDI, 3PL billing, and honest data until T-14/T-17 land.*
+
 | Capability | Status | Market relevance |
 |-----------|--------|------------------|
-| **DOM routing / order brokering** | ✅ | The #1 OMS differentiator — HotWax's core value |
 | **BOPIS lifecycle** | ✅ | Lovers/gorjana need this |
 | **ATP engine** | ✅ | SoC needs online-ATP |
 | **Transfer orders** | ✅ | SIMKHAI needs this |
@@ -46,6 +47,7 @@ Nexus is **technically strong** — it already has DOM routing, BOPIS, ATP, tran
 
 | Gap | Market evidence | Priority |
 |-----|-----------------|----------|
+| **Order routing / brokering correctness + depth** | Source audit (not transcripts) | **P0 — blocking** |
 | **Replenishment drop-off (system-directed)** | SoC | P0 |
 | **Picker-performance / labor analytics** | SoC | P0 |
 | **Transit-time model (ship-by/ship-after/days-in-transit)** | SoC | P0 |
@@ -226,11 +228,15 @@ Build the **standard go-live checklist** HotWax lacks:
 
 *Goal: win on HotWax's weaknesses.*
 
-### D1. Lead with Routing
-Nexus's **DOM routing** is stronger than HotWax's (which can't reroute on Shopify stockout). Lead every demo with routing.
+### D1. Do NOT Lead with Routing (yet)
+Routing/brokering is the heart of the OMS and shows up in *every* account — which makes it tempting to lead with. A source-code audit disproved the earlier "Nexus wins here" claim: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, shipment-group brokering, distance ranking), while Nexus's allocation path has **live defects (T-17)** and less depth (T-14).
+
+**Do not demo or lead with Nexus routing until T-17 and T-14 land** (T-18 rule expressiveness is P1). The Shopify "won't reroute when the last location holds the inventory" behavior is a *Shopify* constraint that HotWax works around — not a HotWax gap, and not a Nexus win. See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
 
 ### D2. Lead with Honest Data
-Nexus's **deterministic AI, honest metrics, no fake data** is a differentiator vs. HotWax's sync conflicts and reactive fixes.
+Nexus's **honest, auditable data** — no silent overwrites, no sync conflicts, every number real or clearly labelled — is a genuine differentiator vs. HotWax's reactive fixes.
+
+**Do not stretch this into "deterministic AI routing."** In the routing path, scoring is hardcoded (`AI_OPTIMIZED` bucket, default confidence `0.65` are constants, not model output). Deterministic AI is defensible for the *platform* (forecasting, drift detection, model registry); it is not defensible as a routing claim.
 
 ### D3. Lead with Fast Import
 Nexus's **fast import engine** beats HotWax's 2–3 min/order. Show a live import benchmark.
@@ -244,7 +250,7 @@ Nexus's **go-live checklist + self-serve onboarding** beats HotWax's reactive im
 
 | Week | Track A (Product) | Track B (Sales) | Track C (Onboarding) |
 |------|-------------------|-----------------|----------------------|
-| 1–2 | Replenishment drop-off, Picker analytics | Demo scripts (4 personas) | — |
+| 1–2 | **Routing correctness T-17 (P0, blocking)**, stock-aware allocator depth T-14 (P0), Replenishment drop-off, Picker analytics | Demo scripts (4 personas) | — |
 | 3–4 | Transit-time model, Store ops (DoorDash) | Pricing model, Demo env | Self-serve onboarding |
 | 5–6 | Store printing, Bidirectional sync | — | Go-live checklist |
 | 7–8 | Returns/exchange, Serialized/RFID | — | Roll-off process |
@@ -261,6 +267,8 @@ Nexus's **go-live checklist + self-serve onboarding** beats HotWax's reactive im
 | **Onboarding time** (signup → first order) | <1 day self-serve |
 | **Go-live time** (from kickoff) | <2 weeks |
 | **Replenishment drop-off completion** | >95% |
+| **Allocation correctness** (no over-allocation, no infeasible fallback warehouse) | 100% — closes T-17 |
+| **Routing rule expressiveness** (caps, substitutes, brokering, distance ranking) | T-14 landed; T-18 (P1) after |
 | **Picker analytics accuracy** | >99% |
 | **Transit-time accuracy** | >95% |
 | **Sync conflict resolution** | 100% no silent overwrites |
@@ -288,4 +296,4 @@ Nexus is **one step from market-ready**. The product already has the core OMS/WM
 3. **A sales motion** (demo scripts, pricing, demo env) — from HotWax's playbook.
 4. **Predictable onboarding** (go-live checklist, self-serve) — beating HotWax's #1 weakness.
 
-**Execute Tracks A–D in parallel, lead with routing + honest data + fast import, and close a real deal within 12 weeks.**
+**Execute Tracks A–D in parallel — routing correctness (T-17) and allocator depth (T-14) first, since they are P0 blockers gating the demo — then lead with fast import + honest data + EDI + predictable onboarding, and close a real deal within 12 weeks.**

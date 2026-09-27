@@ -151,7 +151,7 @@ HotWax is building a **consulting arm** (routing, RFID, implementation coordinat
 - 🚫 **No roll-off process** → Nexus: **clear hypercare → self-sufficiency transition**
 - 🚫 **Import performance (2–3 min/order)** → Nexus: **fast import engine**
 - 🚫 **Sync conflicts** → Nexus: **honest, conflict-free data model**
-- 🚫 **Shopify routing gaps** → Nexus: **stronger DOM routing**
+- 🚫 **Shopify routing gaps** → ⚠ **Not a Nexus win.** HotWax routes via a stock-aware SQL allocator; Shopify's stockout constraint is a Shopify limitation they engineer around. Do not use routing as a beat.
 - 🚫 **Consulting dependency** → Nexus: **self-serve where possible**
 
 ---
@@ -171,9 +171,9 @@ For each buyer persona, build a **10-minute demo script**:
 - **Nexus capability:** Waves, mobile RF, replenishment, cycle counts
 
 ### Persona C: DTC Brand with NetSuite (gorjana, Rails)
-- **Pain:** Shopify↔NetSuite sync, routing, returns
-- **Demo:** Order import → routing to best location → NetSuite fulfillment sync → return/exchange
-- **Nexus capability:** DOM routing, bidirectional sync, returns
+- **Pain:** Shopify↔NetSuite sync, returns
+- **Demo:** Order import → NetSuite fulfillment sync → return/exchange *(routing stays off-script until T-14/T-17 land)*
+- **Nexus capability:** bidirectional sync, returns
 
 ### Persona D: 3PL (Agape)
 - **Pain:** Multi-client billing, client portal, automation

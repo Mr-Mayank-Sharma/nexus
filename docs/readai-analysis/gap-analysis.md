@@ -19,9 +19,9 @@ This document details the specific capability gaps revealed by the 11 real-marke
 - Automatic rerouting on rejection or stockout
 - Routing by country/international location (Rails, International Routing)
 
-**Nexus status:** ❌ No routing engine. Orders are CRUD'd but not brokered to a fulfillment location.
+**Nexus status (superseded by source audit):** ⚠️ This entry originally read "❌ No routing engine" and was written from transcripts alone. A later line-level read of `OrderRoutingService.java` found a routing engine **does** ship — but its allocation path has live correctness defects (over-allocation; a fallback that selects a warehouse that cannot fulfill) and far less depth than HotWax's stock-aware SQL allocator. Routing exists; it is **not demo-ready**. See [`../hotwax/nexus-order-routing-comparison.md`](../hotwax/nexus-order-routing-comparison.md) and T-14 / T-17 in [`../hotwax/nexus-market-gap-tickets-3.md`](../hotwax/nexus-market-gap-tickets-3.md).
 
-**Recommendation:** This is the single highest-value build. A routing engine is the defining feature of an OMS vs. a simple order database.
+**Recommendation:** Still the single highest-value build — but now as a **correctness + depth** fix (T-17 allocation correctness, T-14 stock-aware multi-warehouse allocator), not a greenfield build. A correct allocator is the defining feature of an OMS vs. a simple order database.
 
 ---
 

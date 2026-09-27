@@ -131,7 +131,7 @@
 3. **Weak client roll-off** — "a stronger transition from post-rollout hypercare to long-term client self-sufficiency" needed.
 4. **Import performance** — BlackBrick import-orders takes 2–3 min/order vs. ms for direct REST (Agape).
 5. **Sync conflicts** — OFBiz↔end-to-end overwrites, missing consignment-shipment API, FRTTRA unsupported (Chelan).
-6. **Shopify routing limitations** — Shopify can't reroute on final-location stockout (Rails).
+6. **Shopify routing limitation** — Shopify won't reroute when the last location holds the inventory (Rails); HotWax is engineering a workaround. Note this is a *Shopify* constraint, not a HotWax routing gap.
 7. **Knowledge-transfer risk** — staff departure leaves gaps (Agape).
 8. **Replenishment skip-reason bypass** — users can skip items without a reason in production (SoC).
 
@@ -220,6 +220,7 @@ From the meetings, HotWax is moving toward:
 1. **Reactive, non-standard implementation** — no go-live checklist, weak roll-off → Nexus can win on **predictable, self-serve onboarding**.
 2. **Legacy OFBiz complexity** — sync conflicts, production resets → Nexus's **modern, honest data model** is a differentiator.
 3. **Import performance** — 2–3 min/order is a blocker → Nexus's **fast import engine** wins.
-4. **Shopify routing gaps** — can't reroute on stockout → Nexus's **DOM routing** is stronger.
-5. **Consulting dependency** — HotWax needs consultants to implement → Nexus can be **self-serve**.
-6. **Per-order pricing complexity** — Nexus can offer **simpler, transparent pricing**.
+4. **Consulting dependency** — HotWax needs consultants to implement → Nexus can be **self-serve**.
+5. **Per-order pricing complexity** — Nexus can offer **simpler, transparent pricing**.
+
+**Routing is not in this list — and the earlier claim that it was is withdrawn.** This doc originally inferred "can't reroute on stockout → Nexus's DOM routing is stronger." A source-code audit disproved it: HotWax's allocator is stock-aware SQL with facility caps, substitute-item resolution, and distance ranking, while Nexus's allocation path has live defects (T-17) and less depth (T-14). See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md) and §4.6 of [`nexus-vs-hotwax-competitive.md`](./nexus-vs-hotwax-competitive.md).

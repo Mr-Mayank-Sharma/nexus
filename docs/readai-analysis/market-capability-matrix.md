@@ -48,8 +48,8 @@ This matrix maps the **operational capabilities** that real HotWax customers act
 | Shipping-label generation (carrier integrations) | SoC (Jitsu), SIMKHAI | 🟡 | Label generation is connector work |
 | Pick waves & shipping-priority filters | SIMKHAI | ❌ | No wave/pick planning module |
 | Pick tickets & customer receipts (mobile/Epson) | Lovers, SIMKHAI | ❌ | No printing/receipt subsystem |
-| Fulfillment routing / order brokering | gorjana, Rails, RFID, SoC | ❌ | **Biggest gap** — no routing engine |
-| Rejected-order rerouting | gorjana, Rails | ❌ | No automated reroute on rejection |
+| Fulfillment routing / order brokering | gorjana, Rails, RFID, SoC | 🟡 | **Superseded** — a routing engine does ship, but the allocation path has live defects (T-17) and less depth than HotWax's stock-aware SQL allocator (T-14). Not demo-ready; see [`../hotwax/nexus-order-routing-comparison.md`](../hotwax/nexus-order-routing-comparison.md) |
+| Rejected-order rerouting | gorjana, Rails | 🟡 | Fallback/override exists but is not stock-checked — a rejected order can land on a warehouse that cannot fulfill |
 | Fulfillment status counts (pending/queued/completed) | Shopify/NetSuite | ❌ | No fulfillment sync dashboard |
 | Days-in-transit / transit-time filtering | SoC | ❌ | No transit-time model |
 
@@ -99,7 +99,7 @@ This matrix maps the **operational capabilities** that real HotWax customers act
 **Nexus strengths:** order lifecycle, inventory, shipments, returns, generic import engine, EDI, webhooks, analytics, AI.
 
 **Biggest real-market gaps (in order of market demand):**
-1. **Fulfillment routing / order brokering** — appears in nearly every meeting; it's the heart of an OMS.
+1. **Fulfillment routing / order brokering** — appears in nearly every meeting; it's the heart of an OMS. It ships, but **allocation correctness (T-17) and allocator depth (T-14) are P0 blockers** before it can be demoed.
 2. **Store operations (BOPIS, DoorDash, pick tickets, store sessions)** — Lovers, gorjana.
 3. **Bidirectional channel sync (Shopify/NetSuite) with conflict handling** — Rails, Shopify/NetSuite, Chelan.
 4. **Transfer orders & cycle counting** — SIMKHAI, RFID.

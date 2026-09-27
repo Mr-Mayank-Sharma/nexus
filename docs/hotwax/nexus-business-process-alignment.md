@@ -181,9 +181,8 @@ Each business process below is a **real operational flow** a HotWax client runs.
 4. **The Shopify limitation:** if a store is the **last location with inventory, Shopify won't natively allow rerouting** → HotWax is building a workaround (flag order in Shopify POS → OMS picks it up → reroutes)
 5. **Two approaches being evaluated:** (a) real-time API call from Shopify POS to OMS, or (b) meta-field flag synced in 10–15 min → OMS reads and reassigns
 
-**Nexus status:** ✅ **Covered (and stronger).** Nexus's DOM routing handles capacity limits, priority rules, and **can reroute on stockout** — which HotWax explicitly cannot do natively. **This is Nexus's #1 competitive advantage.** 
-- **Verify:** Nexus supports the "last location with inventory" reroute case (HotWax's gap).
-- **Opportunity:** Nexus's `canFulfill` demand checks + auto-allocation already beat HotWax here.
+**Nexus status:** ⚠ **Withdrawn — was rated "covered and stronger."** This conclusion was inferred from the Rails meeting, but the source-code audit showed the opposite: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, brokering, distance ranking), while Nexus's allocation path has three live defects (T-17) and lacks that depth (T-14). HotWax's "last location with inventory" behavior is a *Shopify* constraint they work around — not a HotWax routing gap.
+- **Action:** Treat routing as a P0 blocker, not a differentiator. See §9 note in [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), T-14/T-17 in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md).
 
 ---
 
@@ -305,7 +304,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 | 6 | Packing mid-pack box change (concurrency) | 🟡 Partial | P0 |
 | 7 | **Holiday planning / transit-time model** | ❌ Missing | **P0** |
 | 8 | BOPIS + DoorDash store ops | 🟡 Partial | P0 |
-| 9 | Order routing (capacity + reroute) | ✅ **Stronger** | — |
+| 9 | Order routing (capacity + reroute) | ⚠ **Defective** | **P0** (T-14, T-17) |
 | 10 | Serialized / RFID | ❌ Missing | P1 |
 | 11 | Bidirectional sync + conflict handling | 🟡 Partial | P1 |
 | 12 | Returns / exchange complexity | 🟡 Partial | P1 |
@@ -314,7 +313,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 | 15 | International routing | ✅ Covered | — |
 | 16 | Shopify fulfillment → NetSuite | ✅ Covered | — |
 
-**Bottom line:** Nexus already covers or beats HotWax on **routing (9), 3PL (13), cycle counting (3), international routing (15), and Shopify→NetSuite (16)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, and the **integration/data-integrity layer (11)**.
+**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), and Shopify→NetSuite (16)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, the **integration/data-integrity layer (11)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
 
 ---
 
@@ -328,7 +327,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 
 4. **Sync conflicts are the #1 integration pain.** Every integration account (Chelan, Rails, gorjana) hits "one overrides the other." Nexus's clean data model + webhooks is a foundation, but needs explicit conflict detection.
 
-5. **Routing is the heart.** It appears in every account. Nexus's DOM routing (with stockout reroute) is genuinely stronger than HotWax. **Lead every demo with it.**
+5. **Routing is the heart — and it is where HotWax leads.** It appears in every account. An earlier draft of this doc called Nexus's DOM routing "genuinely stronger" and said to lead every demo with it. **That was withdrawn** after a source-code audit found three live allocation defects (T-17) and a shallower allocator (T-14). Close them first; do not demo routing until they land.
 
 6. **Store ops is a distinct product surface.** BOPIS + DoorDash + receipts + associate tracking is a store-facing app, different from warehouse ops. Nexus needs this store surface.
 
