@@ -241,6 +241,12 @@ export interface RoutingQueueItem {
   confidence: number
   agentName: string
   agentId?: string
+  /** Raw OMS order status, e.g. ALLOCATED / PARTIALLY_ALLOCATED / FAILED. */
+  status?: string
+  /** True when allocation did not complete and the order needs a routing decision. */
+  needsAttention?: boolean
+  /** Human-readable explanation, present only when needsAttention is true. */
+  attentionReason?: string
 }
 
 export async function getRoutingQueue(limit?: number): Promise<ApiResponse<RoutingQueueItem[]>> {

@@ -35,6 +35,15 @@ import java.util.UUID;
 public class AiAgentService {
 
     private static final List<String> PENDING_STATUSES = List.of("PENDING", "CONFIRMED", "ALLOCATED");
+
+    /**
+     * Orders whose allocation did not complete. These are open work, not closed orders, and they
+     * are the ones that most need a routing decision — so they belong in the routing queue. Before
+     * this was split out they were filtered out entirely, which is exactly backwards: a
+     * PARTIALLY_ALLOCATED or FAILED order disappeared from the agent's queue and from the
+     * briefing's open-order count, leaving the shortfall invisible to whoever reviews the AI.
+     */
+    private static final List<String> NEEDS_ATTENTION_STATUSES = List.of("PARTIALLY_ALLOCATED", "FAILED");
     private static final List<String> TERMINAL_STATUSES = List.of("SHIPPED", "DELIVERED", "CANCELLED", "CANCELLED");
     private static final String[] POSITIONS = {
             "front-left", "front-right", "center", "rear-left", "rear-right"
@@ -90,9 +99,14 @@ public class AiAgentService {
         List<NxOrder> orders = orderRepository.findRecentByTenantId(tenantId, PageRequest.of(0, 30));
         List<Map<String, Object>> queue = new ArrayList<>();
         for (NxOrder order : orders) {
-            if (order.getStatus() == null || !PENDING_STATUSES.contains(order.getStatus().toUpperCase())) {
+            if (order.getStatus() == null) {
                 continue;
             }
+            String status = order.getStatus().toUpperCase();
+            if (!PENDING_STATUSES.contains(status) && !NEEDS_ATTENTION_STATUSES.contains(status)) {
+                continue;
+            }
+            boolean needsAttention = NEEDS_ATTENTION_STATUSES.contains(status);
             Map<String, Object> entry = new LinkedHashMap<>();
             entry.put("id", order.getId().toString());
             entry.put("orderNumber", order.getExternalId() != null ? order.getExternalId() : order.getId().toString());
@@ -100,6 +114,15 @@ public class AiAgentService {
             entry.put("items", totalItems(order.getId()));
             entry.put("value", order.getTotal() != null ? order.getTotal().doubleValue() : 0);
             entry.put("slaRemaining", slaRemaining(order));
+            // Surfaced so a short allocation is visibly short, rather than sitting in the queue
+            // looking identical to a healthy order that just has not been picked yet.
+            entry.put("status", status);
+            entry.put("needsAttention", needsAttention);
+            if (needsAttention) {
+                entry.put("attentionReason", "PARTIALLY_ALLOCATED".equals(status)
+                        ? "Backordered lines remain — routing did not cover the full order"
+                        : "Allocation failed — no stock could be assigned");
+            }
             String decision = decisionFor(order);
             entry.put("aiDecision", decision);
             entry.put("confidence", order.getPromisedDelivery() != null ? 90 : 75);
@@ -507,7 +530,12 @@ public class AiAgentService {
     }
 
     private boolean isPending(String status) {
-        return status != null && PENDING_STATUSES.contains(status.toUpperCase());
+        if (status == null) return false;
+        String s = status.toUpperCase();
+        // PENDING_STATUSES already counts ALLOCATED, so this is an "open work" measure rather
+        // than "awaiting allocation". A short allocation is open work too — leaving it out made
+        // the briefing understate how many orders actually need attention.
+        return PENDING_STATUSES.contains(s) || NEEDS_ATTENTION_STATUSES.contains(s);
     }
 
     private boolean isLate(NxOrder order) {
