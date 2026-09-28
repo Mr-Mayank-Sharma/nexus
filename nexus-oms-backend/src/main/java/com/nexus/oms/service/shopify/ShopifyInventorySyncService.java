@@ -68,9 +68,7 @@ public class ShopifyInventorySyncService {
                     List<NxInventory> invList = inventoryRepository.findByTenantIdAndSku(store.getTenantId(), mapping.getNexusSku());
                     if (invList.isEmpty()) continue;
 
-                    int totalOnHand = invList.stream().mapToInt(NxInventory::getQuantityOnHand).sum();
-                    int totalAllocated = invList.stream().mapToInt(NxInventory::getQuantityAllocated).sum();
-                    int available = totalOnHand - totalAllocated;
+                    int available = sellableToStorefront(invList);
 
                     Long inventoryItemId = inventoryItemIds.get(mapping.getBcVariantId());
                     if (inventoryItemId != null) {
@@ -153,6 +151,36 @@ public class ShopifyInventorySyncService {
             log.warn("getLocationId: failed for item {}: {}", inventoryItemId, e.getMessage(), e);
         }
         return 1;
+    }
+
+    /**
+     * Quantity Shopify is allowed to offer for sale, aggregated across every holding row.
+     *
+     * <p>On hand minus already-allocated minus already-reserved minus safety stock. The previous
+     * {@code onHand - allocated} ignored {@code quantityReserved} and safety stock, so it
+     * over-reported sellable stock and let the storefront oversell units Nexus had already earmarked.
+     * It also unboxed {@code Integer} straight to {@code int} via
+     * {@code mapToInt(NxInventory::getQuantityOnHand)}, throwing NPE on a null quantity column.
+     *
+     * <p>Clamped at zero — a negative result is the correct answer when reservations and safety stock
+     * exceed on-hand, and Shopify must never be told to sell fewer than nothing.
+     */
+    static int sellableToStorefront(List<NxInventory> rows) {
+        int onHand = 0;
+        int allocated = 0;
+        int reserved = 0;
+        int safetyStock = 0;
+        for (NxInventory row : rows) {
+            onHand += nz(row.getQuantityOnHand());
+            allocated += nz(row.getQuantityAllocated());
+            reserved += nz(row.getQuantityReserved());
+            safetyStock += nz(row.getSafetyStock());
+        }
+        return Math.max(0, onHand - allocated - reserved - safetyStock);
+    }
+
+    private static int nz(Integer value) {
+        return value != null ? value : 0;
     }
 
     private void updateSyncConfig(UUID storeId, String syncType, String status, int processed, int succeeded, int failed, List<String> errors) {

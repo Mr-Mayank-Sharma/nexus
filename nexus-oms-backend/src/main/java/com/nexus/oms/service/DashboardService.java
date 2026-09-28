@@ -136,7 +136,12 @@ public class DashboardService {
     @Cacheable(value = "dashboard", key = "'status-dist:' + #tenantId")
     public List<Map<String, Object>> getOrderStatusDistribution(UUID tenantId) {
         List<Map<String, Object>> distribution = new ArrayList<>();
-        String[] statuses = {"PENDING", "CONFIRMED", "ALLOCATED", "PICKING", "PACKING", "SHIPPED", "DELIVERED", "CANCELLED"};
+        // T-17: a short order lands in PARTIALLY_ALLOCATED and an unsourceable one in FAILED.
+        // Those two states used to be reported as ALLOCATED, so they never appeared here. Now
+        // that allocation is honest, they must be enumerated too — otherwise the shortfall
+        // silently disappears from the distribution instead of showing as under-allocation.
+        String[] statuses = {"PENDING", "CONFIRMED", "ALLOCATED", "PICKING", "PACKING",
+                "PARTIALLY_ALLOCATED", "FAILED", "SHIPPED", "DELIVERED", "CANCELLED"};
         for (String status : statuses) {
             long count = orderRepository.countByTenantIdAndStatus(tenantId, status);
             if (count > 0) {
@@ -154,6 +159,10 @@ public class DashboardService {
             case "PENDING" -> "Pending";
             case "CONFIRMED" -> "Processing";
             case "ALLOCATED", "PICKING", "PACKING" -> "In Progress";
+            // Deliberately NOT folded into "In Progress" — these two mean demand went unsourced,
+            // which is the signal an operator has to act on. T-17 stopped hiding it.
+            case "PARTIALLY_ALLOCATED" -> "Partially Allocated";
+            case "FAILED" -> "Failed Allocation";
             case "SHIPPED" -> "Shipped";
             case "DELIVERED" -> "Delivered";
             case "CANCELLED" -> "Cancelled";

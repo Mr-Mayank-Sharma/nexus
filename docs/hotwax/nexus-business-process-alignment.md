@@ -327,7 +327,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 
 4. **Sync conflicts are the #1 integration pain.** Every integration account (Chelan, Rails, gorjana) hits "one overrides the other." Nexus's clean data model + webhooks is a foundation, but needs explicit conflict detection.
 
-5. **Routing is the heart — and it is where HotWax leads.** It appears in every account. An earlier draft of this doc called Nexus's DOM routing "genuinely stronger" and said to lead every demo with it. **That was withdrawn** after a source-code audit found three live allocation defects (T-17) and a shallower allocator (T-14). Close them first; do not demo routing until they land.
+5. **Routing is the heart — and it is where HotWax leads.** It appears in every account. An earlier draft of this doc called Nexus's DOM routing "genuinely stronger" and said to lead every demo with it. **That was withdrawn** after a source-code audit found three live allocation defects (T-17) and a shallower allocator (T-14). Both are now implemented on `fix/t17-allocation-correctness`, so the gate has moved from *build* to *merge-and-deepen*: do not demo routing until that branch lands and the depth gaps (substitutes, facility caps, brokering groups, real distance/cost/confidence) close.
 
 6. **Store ops is a distinct product surface.** BOPIS + DoorDash + receipts + associate tracking is a store-facing app, different from warehouse ops. Nexus needs this store surface.
 

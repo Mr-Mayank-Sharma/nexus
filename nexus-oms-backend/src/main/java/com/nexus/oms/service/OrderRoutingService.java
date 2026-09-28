@@ -129,6 +129,23 @@ public class OrderRoutingService {
                 .map(a -> a.getCostEstimated() != null ? a.getCostEstimated() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // T-17 invariant: committed units must never exceed ordered units, and any shortfall must
+        // be visible as an explicit backorder rather than being papered over with an over-quantity
+        // or wrongly-located allocation. The allocator is written to satisfy this, so a violation
+        // here is a programming error and must abort the transaction rather than corrupt stock.
+        int demandTotal = totalDemand(collectOrderDemand(order));
+        int allocatedTotal = sumAllocated(allocations);
+        NxOrderAllocation backorder = findBackorder(allocations);
+
+        if (allocatedTotal > demandTotal) {
+            throw new BadRequestException("Allocation invariant violated: allocated " + allocatedTotal
+                    + " exceeds ordered " + demandTotal);
+        }
+        if (allocatedTotal < demandTotal && backorder == null) {
+            throw new BadRequestException("Allocation invariant violated: allocated " + allocatedTotal
+                    + " of " + demandTotal + " with no backorder raised");
+        }
+
         if (!dryRun) {
             // Winning node = first allocation that actually holds quantity. The routing plan
             // can contain 0-qty rows (e.g. small orders split across nodes), so allocated_node
@@ -139,25 +156,33 @@ public class OrderRoutingService {
                     .findFirst()
                     .orElse(allocations.isEmpty() ? null : allocations.get(0).getNodeId());
 
-            List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
-
-            // Consume stock on the winning node so brokered orders can't oversell. Runs inside the
-            // caller's transaction: a failed reservation throws BadRequestException and rolls back
-            // the entire allocation. If a multi-item order fails partway, release the already-reserved
-            // items so no stock leaks before the order is retried.
-            if (primaryNode != null) {
-                List<NxOrderItem> reservedItems = new ArrayList<>();
-                try {
-                    for (NxOrderItem item : items) {
-                        inventoryService.reserveInventory(tenantId, item.getSku(), primaryNode, item.getQuantity());
-                        reservedItems.add(item);
+            // Consume stock so brokered orders can't oversell. Runs inside the caller's
+            // transaction: a failed reservation throws BadRequestException and rolls back the
+            // entire allocation.
+            //
+            // T-17: reserve PER ALLOCATION NODE against the per-SKU quantities that node was
+            // actually given. The old code reserved every order item in full against
+            // primaryNode, which contradicted any split plan — node B could be recorded as
+            // holding half the order while all of it was consumed from node A. If any node's
+            // reservation fails, everything already reserved in this attempt is released so no
+            // stock leaks before the order is retried.
+            List<Reservation> reserved = new ArrayList<>();
+            try {
+                for (NxOrderAllocation allocation : allocations) {
+                    if (!"ALLOCATED".equals(allocation.getStatus()) || allocation.getNodeId() == null) {
+                        continue;
                     }
-                } catch (Exception e) {
-                    for (NxOrderItem item : reservedItems) {
-                        inventoryService.releaseInventory(tenantId, item.getSku(), primaryNode, item.getQuantity());
-                    }
-                    throw e;
+                    skuQuantitiesOf(allocation).forEach((sku, qty) -> {
+                        if (qty <= 0) return;
+                        inventoryService.reserveInventory(tenantId, sku, allocation.getNodeId(), qty);
+                        reserved.add(new Reservation(allocation.getNodeId(), sku, qty));
+                    });
                 }
+            } catch (Exception e) {
+                for (Reservation r : reserved) {
+                    inventoryService.releaseInventory(tenantId, r.sku(), r.nodeId(), r.qty());
+                }
+                throw e;
             }
 
             allocations.forEach(a -> {
@@ -170,12 +195,17 @@ public class OrderRoutingService {
             order.setAllocationRule(strategy);
             order.setAllocationConfidence(confidenceScore);
             order.setPromisedDelivery(deliveryPromise);
-            order.setStatus("ALLOCATED");
+            // Honest terminal state: a short order is PARTIALLY_ALLOCATED, and an order nothing
+            // could cover is FAILED. Marking either ALLOCATED overstates what was actually sourced.
+            order.setStatus(resolveOrderStatus(demandTotal, allocatedTotal, backorder != null));
             orderRepository.save(order);
 
             // Persist item-level allocation so nx_order_items reflects the allocation
-            // (allocated_node_id / allocated_qty were previously left NULL).
-            if (primaryNode != null) {
+            // (allocated_node_id / allocated_qty were previously left NULL). Only safe when a
+            // SINGLE node covers the whole order; for a genuine split the per-SKU truth lives in
+            // the allocation metadata, and claiming one node holds every item would be a lie.
+            if (primaryNode != null && backorder == null && isSingleNodeAllocation(allocations)) {
+                List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
                 for (NxOrderItem item : items) {
                     item.setAllocatedNodeId(primaryNode);
                     item.setAllocatedQty(item.getQuantity());
@@ -183,11 +213,28 @@ public class OrderRoutingService {
                 orderItemRepository.saveAll(items);
             }
 
+            // A backorder is a correctness signal, not an optional nicety: always raise it, even
+            // when exception detection is disabled in tenant config.
+            if (backorder != null) {
+                exceptions.add(buildException(order.getId(), backorder.getId(), tenantId,
+                        "INVENTORY_SHORTAGE", "HIGH",
+                        "Order partially allocated - backorder raised",
+                        "Allocated " + allocatedTotal + " of " + demandTotal
+                                + " ordered units; " + (demandTotal - allocatedTotal)
+                                + " units could not be sourced.",
+                        strategy, true));
+            }
+
             if (configHasExceptionDetection(tenantId)) {
-                exceptions = detectFulfillmentExceptions(order, allocations, tenantId);
-                if (!exceptions.isEmpty()) {
-                    exceptionRepository.saveAll(exceptions);
-                }
+                exceptions.addAll(detectFulfillmentExceptions(order, allocations, tenantId));
+            }
+
+            // Saved outside the config gate on purpose: a backorder is a correctness signal, and
+            // the operator has to see it even when automatic detection is switched off. Gating the
+            // save on that flag meant the shortage was computed, appended to `exceptions`, reported
+            // in the response, and then silently thrown away on the floor.
+            if (!exceptions.isEmpty()) {
+                exceptionRepository.saveAll(exceptions);
             }
         }
 
@@ -199,7 +246,8 @@ public class OrderRoutingService {
         return AllocationResult.builder()
                 .orderId(order.getId())
                 .strategy(strategy)
-                .status(dryRun ? "SIMULATED" : "ALLOCATED")
+                .status(dryRun ? "SIMULATED"
+                        : resolveOrderStatus(demandTotal, allocatedTotal, backorder != null))
                 .allocations(allocations)
                 .estimatedDeliveryDate(deliveryPromise)
                 .confidenceScore(confidenceScore)
@@ -210,48 +258,124 @@ public class OrderRoutingService {
                 .build();
     }
 
+    /** A stock reservation already taken during this attempt, for compensating release on failure. */
+    private record Reservation(UUID nodeId, String sku, int qty) {}
+
+    private static int sumAllocated(List<NxOrderAllocation> allocations) {
+        return allocations.stream()
+                .filter(a -> "ALLOCATED".equals(a.getStatus()))
+                .mapToInt(a -> a.getQuantityAllocated() == null ? 0 : a.getQuantityAllocated())
+                .sum();
+    }
+
+    /**
+     * Maps an allocation outcome onto the order lifecycle state that actually describes it.
+     *
+     * <p>T-17: this used to be a hardcoded {@code "ALLOCATED"} regardless of outcome. The only way
+     * to reach PARTIALLY_ALLOCATED/FAILED is a backorder row, which {@code allocateStockAware}
+     * always raises when demand is short, so a shortfall can never be reported as a success.
+     */
+    private static String resolveOrderStatus(int demandTotal, int allocatedTotal, boolean hasBackorder) {
+        if (demandTotal == 0 || allocatedTotal == demandTotal) return "ALLOCATED";
+        if (!hasBackorder) return "PARTIALLY_ALLOCATED";
+        return allocatedTotal == 0 ? "FAILED" : "PARTIALLY_ALLOCATED";
+    }
+
+    private static NxOrderAllocation findBackorder(List<NxOrderAllocation> allocations) {
+        return allocations.stream()
+                .filter(a -> "FAILED".equals(a.getStatus()) && "BACKORDER".equals(a.getNodeName()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static boolean isSingleNodeAllocation(List<NxOrderAllocation> allocations) {
+        return allocations.stream()
+                .filter(a -> "ALLOCATED".equals(a.getStatus()) && a.getQuantityAllocated() != null
+                        && a.getQuantityAllocated() > 0)
+                .map(NxOrderAllocation::getNodeId)
+                .distinct()
+                .limit(2)
+                .count() <= 1;
+    }
+
+    /**
+     * Reads back the per-SKU split recorded on an allocation by {@code buildAllocation}. This is
+     * what reservation and downstream fulfillment act on, so a malformed/missing breakdown must
+     * fail loudly rather than silently reserving the wrong thing.
+     */
+    @SuppressWarnings("unchecked")
+    static Map<String, Integer> skuQuantitiesOf(NxOrderAllocation allocation) {
+        String metadata = allocation.getMetadata();
+        if (metadata == null || metadata.isBlank()) {
+            throw new BadRequestException("Allocation " + allocation.getNodeName()
+                    + " has no SKU breakdown and cannot be reserved");
+        }
+        try {
+            JsonNode node = MAPPER.readTree(metadata).get("skuQuantities");
+            if (node == null || !node.isObject()) {
+                throw new BadRequestException("Allocation " + allocation.getNodeName()
+                        + " is missing its SKU breakdown");
+            }
+            Map<String, Integer> quantities = new LinkedHashMap<>();
+            node.fields().forEachRemaining(f -> quantities.put(f.getKey(), f.getValue().asInt()));
+            return quantities;
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BadRequestException("Allocation " + allocation.getNodeName()
+                    + " has an unreadable SKU breakdown: " + e.getMessage());
+        }
+    }
+
     List<NxOrderAllocation> ruleBasedAllocation(NxOrder order, UUID tenantId) {
         List<NxRoutingRule> rules = routingRuleRepository.findByTenantIdAndIsActiveTrue(tenantId);
         List<Warehouse> warehouses = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE");
-        List<NxOrderAllocation> allocations = new ArrayList<>();
 
         if (rules.isEmpty() || warehouses.isEmpty()) {
             return createDefaultAllocation(order, tenantId, warehouses);
         }
 
+        // T-17 Bug A: the old loop called buildAllocation() once per node in the rule, and
+        // buildAllocation() assigned the FULL order quantity to each — so a rule listing three
+        // nodes over-committed the order 3x and blew up at reservation time. Rules are now only
+        // used to produce an ORDERED candidate list; the shared allocator decides how much each
+        // node actually gets, bounded by real stock.
         for (NxRoutingRule rule : rules) {
             if (!conditionEvaluator.evaluate(rule, order)) continue;
 
             JsonNode actions = conditionEvaluator.parseJson(rule.getActions());
             if (actions == null || !actions.has("nodeIds")) continue;
 
-            List<UUID> targetNodeIds = new ArrayList<>();
-            actions.get("nodeIds").forEach(n -> targetNodeIds.add(UUID.fromString(n.asText())));
+            List<Candidate> candidates = new ArrayList<>();
+            actions.get("nodeIds").forEach(n -> {
+                UUID nodeId = UUID.fromString(n.asText());
+                warehouseRepository.findById(nodeId)
+                        // Rule actions are tenant data; never let a rule reach another tenant's node.
+                        .filter(wh -> tenantId.equals(wh.getTenantId()))
+                        .ifPresent(wh -> candidates.add(new Candidate(wh, rule)));
+            });
 
-            for (UUID nodeId : targetNodeIds) {
-                warehouseRepository.findById(nodeId).ifPresent(wh -> {
-                    allocations.add(buildAllocation(order, tenantId, wh, rule, "RULE_BASED"));
-                });
+            if (!candidates.isEmpty()) {
+                return allocateStockAware(order, tenantId, candidates, "RULE_BASED").allocations();
             }
-            if (!allocations.isEmpty()) break;
         }
 
-        if (allocations.isEmpty()) {
-            allocations.addAll(createDefaultAllocation(order, tenantId, warehouses));
-        }
-
-        return allocations;
+        return createDefaultAllocation(order, tenantId, warehouses);
     }
 
     List<NxOrderAllocation> aiOptimizedAllocation(NxOrder order, UUID tenantId) {
         List<Warehouse> warehouses = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE");
-        List<NxOrderAllocation> allocations = new ArrayList<>();
 
-        if (warehouses.isEmpty()) return allocations;
+        if (warehouses.isEmpty()) {
+            return List.of(backorderAllocation(order, tenantId, "AI_OPTIMIZED",
+                    collectOrderDemand(order), "No active warehouses available for routing"));
+        }
 
         String shipRegion = conditionEvaluator.extractRegion(order.getShipToAddress());
         Map<String, Integer> demanded = collectOrderDemand(order);
 
+        // Scoring still decides node PREFERENCE (and therefore priority), but the score no longer
+        // decides QUANTITIES.
         List<Warehouse> scored = warehouses.stream()
                 .map(wh -> {
                     boolean fulfillsAll = canFulfill(order, wh, demanded);
@@ -270,36 +394,15 @@ public class OrderRoutingService {
                 .map(Map.Entry::getKey)
                 .toList();
 
-        int totalQty = estimateOrderQuantity(order);
-        int remaining = totalQty;
+        // T-17 Bug B: the old code split quantity as `remaining / remainingNodes` with a
+        // Math.max(1, ...) floor, so a node that FAILED its stock check still received an
+        // allocation and the split could exceed what any node actually holds. The score now only
+        // orders the candidates; the shared allocator caps every node at its real availability.
+        List<Candidate> candidates = scored.stream()
+                .map(wh -> new Candidate(wh, null))
+                .toList();
 
-        for (int i = 0; i < scored.size() && remaining > 0; i++) {
-            Warehouse wh = scored.get(i);
-            int allocQty = (i == scored.size() - 1) ? remaining : Math.max(1, remaining / (scored.size() - i));
-            BigDecimal cost = estimateShippingCost(wh, order, allocQty);
-            BigDecimal distance = estimateDistance(wh, shipRegion);
-
-            NxOrderAllocation allocation = NxOrderAllocation.builder()
-                    .orderId(order.getId())
-                    .tenantId(tenantId)
-                    .nodeId(wh.getId())
-                    .nodeName(wh.getName())
-                    .nodeType(wh.getType() != null ? wh.getType() : "WAREHOUSE")
-                    .priority(i + 1)
-                    .quantityAllocated(allocQty)
-                    .quantityRequested(allocQty)
-                    .status("ALLOCATED")
-                    .allocationStrategy("AI_OPTIMIZED")
-                    .costEstimated(cost)
-                    .distanceKm(distance)
-                    .deliveryPromiseConfidence(calculateNodeConfidence(wh, order))
-                    .build();
-
-            allocations.add(allocation);
-            remaining -= allocQty;
-        }
-
-        return allocations;
+        return allocateStockAware(order, tenantId, candidates, "AI_OPTIMIZED").allocations();
     }
 
     @Transactional
@@ -401,41 +504,178 @@ public class OrderRoutingService {
 
     // ---- Private helpers ----
 
-    private List<NxOrderAllocation> createDefaultAllocation(NxOrder order, UUID tenantId, List<Warehouse> warehouses) {
-        if (warehouses.isEmpty()) {
-            NxOrderAllocation failed = NxOrderAllocation.builder()
-                    .orderId(order.getId())
-                    .tenantId(tenantId)
-                    .status("FAILED")
-                    .allocationStrategy("RULE_BASED")
-                    .nodeName("No active warehouses")
-                    .build();
-            return List.of(failed);
+    // ---- Shared stock-aware allocation ----
+
+    /** A node eligible to receive demand, plus the rule that nominated it (if any). */
+    private record Candidate(Warehouse warehouse, NxRoutingRule rule) {}
+
+    /**
+     * Outcome of a stock-aware allocation pass, plus the bookkeeping the persistence boundary needs
+     * to enforce the T-17 invariant.
+     */
+    static final class AllocationPlan {
+        private final List<NxOrderAllocation> allocations = new ArrayList<>();
+        private final Map<String, Integer> unallocated = new LinkedHashMap<>();
+
+        List<NxOrderAllocation> allocations() { return allocations; }
+
+        Map<String, Integer> unallocated() { return unallocated; }
+
+        /** Units actually committed to nodes (excludes the backorder row). */
+        int allocatedTotal() {
+            return allocations.stream()
+                    .filter(a -> "ALLOCATED".equals(a.getStatus()))
+                    .mapToInt(a -> a.getQuantityAllocated() == null ? 0 : a.getQuantityAllocated())
+                    .sum();
         }
 
-        Map<String, Integer> demanded = collectOrderDemand(order);
-        Warehouse best = warehouses.stream()
-                .filter(wh -> canFulfill(order, wh, demanded))
-                .findFirst()
-                .orElse(warehouses.get(0));
+        /** Units that could not be sourced anywhere and are raised as a backorder. */
+        int unallocatedTotal() { return unallocated.values().stream().mapToInt(Integer::intValue).sum(); }
 
-        int qty = estimateOrderQuantity(order);
-        NxOrderAllocation alloc = NxOrderAllocation.builder()
+        boolean hasBackorder() { return !unallocated.isEmpty(); }
+    }
+
+    /**
+     * Single stock-aware allocation path shared by RULE_BASED, AI_OPTIMIZED and the default path.
+     *
+     * <p>Greedy in candidate order: each node takes as much of the still-outstanding demand as it can
+     * actually source, then the next node gets what's left. Nothing is allocated without a positive
+     * stock check, and demand that no candidate can cover becomes an explicit backorder row instead
+     * of being silently assigned to an arbitrary node.
+     *
+     * <p>Shared pools need care: a node with no inventory row of its own resolves to the same
+     * tenant+SKU shared row as every other such node. Without tracking what earlier candidates already
+     * drew from that pool, two nodes would each see the full shared quantity and plan to commit it
+     * twice — so draws against the shared row are netted out as candidates are walked.
+     */
+    private AllocationPlan allocateStockAware(NxOrder order, UUID tenantId,
+                                              List<Candidate> candidates, String strategy) {
+        AllocationPlan plan = new AllocationPlan();
+
+        Map<String, Integer> remaining = new LinkedHashMap<>(collectOrderDemand(order));
+        remaining.values().removeIf(q -> q == null || q <= 0);
+        if (remaining.isEmpty()) {
+            return plan;
+        }
+
+        Map<String, Integer> sharedDrawn = new HashMap<>();
+        int priority = 1;
+
+        for (Candidate candidate : candidates) {
+            if (remaining.isEmpty()) break;
+
+            Warehouse wh = candidate.warehouse();
+            Map<String, Integer> take = new LinkedHashMap<>();
+            Map<String, Boolean> drawnFromShared = new HashMap<>();
+            int nodeTotal = 0;
+
+            for (Map.Entry<String, Integer> entry : remaining.entrySet()) {
+                int outstanding = entry.getValue();
+                if (outstanding <= 0) continue;
+
+                InventoryService.StockPosition position =
+                        inventoryService.resolveStock(tenantId, entry.getKey(), wh.getId());
+                drawnFromShared.put(entry.getKey(), position.fromSharedPool());
+
+                int effective = position.available();
+                if (position.fromSharedPool()) {
+                    // Net out what earlier candidates already drew from this same shared row.
+                    effective = Math.max(0, effective - sharedDrawn.getOrDefault(entry.getKey(), 0));
+                }
+
+                int grant = Math.min(outstanding, effective);
+                if (grant <= 0) continue;
+
+                take.put(entry.getKey(), grant);
+                nodeTotal += grant;
+            }
+
+            if (nodeTotal <= 0) {
+                // This node can source nothing — emit no row at all rather than a 0-qty or
+                // over-quantity allocation. T-17: never mark ALLOCATED without a stock check.
+                continue;
+            }
+
+            take.forEach((sku, qty) -> {
+                remaining.merge(sku, -qty, Integer::sum);
+                if (Boolean.TRUE.equals(drawnFromShared.get(sku))) {
+                    sharedDrawn.merge(sku, qty, Integer::sum);
+                }
+            });
+
+            plan.allocations.add(buildAllocation(order, tenantId, wh, candidate.rule(), strategy,
+                    nodeTotal, take, priority++, "ALLOCATED"));
+        }
+
+        remaining.values().removeIf(q -> q <= 0);
+        if (!remaining.isEmpty()) {
+            plan.unallocated.putAll(remaining);
+            plan.allocations.add(backorderAllocation(order, tenantId, strategy, remaining,
+                    "No node can supply " + describeDemand(remaining)));
+        }
+
+        return plan;
+    }
+
+    private List<NxOrderAllocation> createDefaultAllocation(NxOrder order, UUID tenantId, List<Warehouse> warehouses) {
+        if (warehouses.isEmpty()) {
+            return List.of(backorderAllocation(order, tenantId, "RULE_BASED",
+                    collectOrderDemand(order), "No active warehouses available for routing"));
+        }
+
+        // T-17 Bug C: the old code did `.orElse(warehouses.get(0))`, so an order no warehouse could
+        // fulfil was still committed to warehouse #1 as a full ALLOCATED row and only failed later,
+        // at reservation time. Every active node is now a candidate and the allocator falls back to
+        // a backorder when none of them can cover demand.
+        List<Candidate> candidates = warehouses.stream()
+                .map(wh -> new Candidate(wh, null))
+                .toList();
+
+        return allocateStockAware(order, tenantId, candidates, "RULE_BASED").allocations();
+    }
+
+    /**
+     * Explicit unmet-demand row. Carries the outstanding quantity as {@code quantityRequested} with
+     * {@code quantityAllocated = 0} so the accounting stays honest: nothing is claimed to be
+     * allocated that was not.
+     *
+     * <p>T-17: {@code unmet} must be the quantity still missing AFTER the successful candidates
+     * have been allocated. Recomputing the whole order demand here would make a 60%-covered order
+     * report 100 units backordered on top of the 60 already allocated, and the exception text would
+     * claim a shortfall that is larger than the real one.
+     */
+    private NxOrderAllocation backorderAllocation(NxOrder order, UUID tenantId, String strategy,
+                                                 Map<String, Integer> unmet, String reason) {
+        return NxOrderAllocation.builder()
                 .orderId(order.getId())
                 .tenantId(tenantId)
-                .nodeId(best.getId())
-                .nodeName(best.getName())
-                .nodeType(best.getType() != null ? best.getType() : "WAREHOUSE")
-                .priority(1)
-                .quantityAllocated(qty)
-                .quantityRequested(qty)
-                .status("ALLOCATED")
-                .allocationStrategy("RULE_BASED")
-                .costEstimated(estimateShippingCost(best, order, 1))
-                .distanceKm(estimateDistance(best, conditionEvaluator.extractRegion(order.getShipToAddress())))
-                .deliveryPromiseConfidence(new BigDecimal("0.6500"))
+                .nodeId(null)
+                .nodeName("BACKORDER")
+                .priority(0)
+                .quantityAllocated(0)
+                .quantityRequested(totalDemand(unmet))
+                .status("FAILED")
+                .allocationStrategy(strategy)
+                .metadata(demandJson(Map.of("backorderReason", reason, "unmetDemand", unmet)))
                 .build();
-        return List.of(alloc);
+    }
+
+    private static int totalDemand(Map<String, Integer> demand) {
+        return demand.values().stream().filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
+    }
+
+    private static String describeDemand(Map<String, Integer> demand) {
+        return demand.entrySet().stream()
+                .map(e -> e.getKey() + " x" + e.getValue())
+                .collect(Collectors.joining(", "));
+    }
+
+    private static String demandJson(Map<String, Object> payload) {
+        try {
+            return MAPPER.writeValueAsString(payload);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Map<String, Integer> collectOrderDemand(NxOrder order) {
@@ -534,10 +774,24 @@ public class OrderRoutingService {
         return confidence.min(BigDecimal.ONE).max(BigDecimal.ZERO).setScale(4, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Earliest date the order can be promised, derived from the nodes actually fulfilling it.
+     *
+     * <p>T-17: the promise is computed from real {@code ALLOCATED} rows only. The previous guard
+     * returned {@code null} if <em>any</em> row was {@code FAILED}, and since T-17 deliberately
+     * emits a {@code FAILED} backorder row for every shortfall, that made the promise
+     * unconditionally {@code null} for every partially-allocated order — exactly the orders a
+     * promise date matters most for. A promise is still withheld when nothing is being fulfilled
+     * (no {@code ALLOCATED} rows), because there is then no node to promise from.
+     */
     private LocalDateTime calculateDeliveryPromise(NxOrder order, List<NxOrderAllocation> allocations) {
         LocalDateTime now = LocalDateTime.now();
 
-        if (allocations.isEmpty() || allocations.stream().anyMatch(a -> "FAILED".equals(a.getStatus()))) {
+        List<NxOrderAllocation> fulfilling = allocations.stream()
+                .filter(a -> "ALLOCATED".equals(a.getStatus()))
+                .toList();
+
+        if (fulfilling.isEmpty()) {
             return null;
         }
 
@@ -545,7 +799,7 @@ public class OrderRoutingService {
         int transitDays = 3;
 
         String shipRegion = conditionEvaluator.extractRegion(order.getShipToAddress());
-        for (NxOrderAllocation alloc : allocations) {
+        for (NxOrderAllocation alloc : fulfilling) {
             String nodeRegion = extractNodeRegion(alloc.getNodeName());
             if (shipRegion != null && shipRegion.equalsIgnoreCase(nodeRegion)) {
                 transitDays = 1;
@@ -596,20 +850,27 @@ public class OrderRoutingService {
         return exceptions;
     }
 
+    /**
+     * Chooses between the rule-based and AI candidate plans.
+     *
+     * <p>T-17: coverage is compared BEFORE confidence. Previously the winner was picked on
+     * delivery-confidence alone, so a plan that could only source part of the order could be
+     * preferred over one that could source all of it, purely on a routing score. A shorter plan
+     * can never be the better outcome when a fuller one is on the table.
+     */
     private List<NxOrderAllocation> selectBestAllocations(
             List<NxOrderAllocation> ruleAllocs, List<NxOrderAllocation> aiAllocs, BigDecimal threshold) {
         if (aiAllocs.isEmpty()) return ruleAllocs;
         if (ruleAllocs.isEmpty()) return aiAllocs;
 
-        BigDecimal ruleConfidence = ruleAllocs.stream()
-                .map(a -> a.getDeliveryPromiseConfidence() != null ? a.getDeliveryPromiseConfidence() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(Math.max(1, ruleAllocs.size())), 4, RoundingMode.HALF_UP);
+        int ruleCovered = sumAllocated(ruleAllocs);
+        int aiCovered = sumAllocated(aiAllocs);
+        if (ruleCovered != aiCovered) {
+            return ruleCovered > aiCovered ? ruleAllocs : aiAllocs;
+        }
 
-        BigDecimal aiConfidence = aiAllocs.stream()
-                .map(a -> a.getDeliveryPromiseConfidence() != null ? a.getDeliveryPromiseConfidence() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(Math.max(1, aiAllocs.size())), 4, RoundingMode.HALF_UP);
+        BigDecimal ruleConfidence = averageConfidence(ruleAllocs);
+        BigDecimal aiConfidence = averageConfidence(aiAllocs);
 
         if (aiConfidence.compareTo(threshold) >= 0 && aiConfidence.compareTo(ruleConfidence) >= 0) {
             return aiAllocs;
@@ -617,17 +878,36 @@ public class OrderRoutingService {
         return ruleAllocs;
     }
 
+    /**
+     * Mean delivery confidence across a plan's real allocations. Backorder rows are excluded —
+     * they represent an absence of stock, not a routing decision, and folding their null/zero
+     * confidence in would arbitrarily penalise every plan that reports a shortfall.
+     */
+    private static BigDecimal averageConfidence(List<NxOrderAllocation> allocations) {
+        List<NxOrderAllocation> real = allocations.stream()
+                .filter(a -> "ALLOCATED".equals(a.getStatus()))
+                .toList();
+        if (real.isEmpty()) return BigDecimal.ZERO;
+        return real.stream()
+                .map(a -> a.getDeliveryPromiseConfidence() != null ? a.getDeliveryPromiseConfidence() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(real.size()), 4, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Blends the rule-based and AI plan confidences 40/60.
+     *
+     * <p>T-17: both sides go through {@link #averageConfidence(List)} rather than dividing by
+     * {@code list.size()}. Dividing by the raw list size counted the backorder row in the
+     * denominator while contributing a null (therefore zero) confidence to the numerator, so a
+     * plan that fulfilled most of an order was scored as if every one of its rows were uncertain.
+     * That is the exact defect {@code averageConfidence}'s own Javadoc warns against, and it made
+     * hybrid confidence systematically fall as soon as any shortfall was reported.
+     */
     private BigDecimal calculateHybridConfidence(
             List<NxOrderAllocation> ruleAllocs, List<NxOrderAllocation> aiAllocs) {
-        BigDecimal ruleConf = ruleAllocs.stream()
-                .map(a -> a.getDeliveryPromiseConfidence() != null ? a.getDeliveryPromiseConfidence() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(Math.max(1, ruleAllocs.size())), 4, RoundingMode.HALF_UP);
-
-        BigDecimal aiConf = aiAllocs.stream()
-                .map(a -> a.getDeliveryPromiseConfidence() != null ? a.getDeliveryPromiseConfidence() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(Math.max(1, aiAllocs.size())), 4, RoundingMode.HALF_UP);
+        BigDecimal ruleConf = averageConfidence(ruleAllocs);
+        BigDecimal aiConf = averageConfidence(aiAllocs);
 
         return ruleConf.multiply(new BigDecimal("0.4"))
                 .add(aiConf.multiply(new BigDecimal("0.6")))
@@ -640,25 +920,38 @@ public class OrderRoutingService {
                 .orElse(true);
     }
 
+    /**
+     * Builds one allocation row for a node.
+     *
+     * <p>T-17: {@code allocatedQty} and the per-SKU breakdown are supplied by the caller, which has
+     * already verified them against real stock. This method previously called
+     * {@code estimateOrderQuantity(order)} internally and unconditionally set status to ALLOCATED,
+     * which is what let a node that could not fulfil anything still be recorded as fully allocated.
+     */
     private NxOrderAllocation buildAllocation(NxOrder order, UUID tenantId, Warehouse wh,
-                                               NxRoutingRule rule, String strategy) {
-        int qty = estimateOrderQuantity(order);
+                                              NxRoutingRule rule, String strategy,
+                                              int allocatedQty, Map<String, Integer> skuQuantities,
+                                              int priority, String status) {
         return NxOrderAllocation.builder()
                 .orderId(order.getId())
                 .tenantId(tenantId)
                 .nodeId(wh.getId())
                 .nodeName(wh.getName())
                 .nodeType(wh.getType() != null ? wh.getType() : "WAREHOUSE")
-                .priority(1)
-                .quantityAllocated(qty)
-                .quantityRequested(qty)
-                .status("ALLOCATED")
+                .priority(priority)
+                .quantityAllocated(allocatedQty)
+                .quantityRequested(allocatedQty)
+                .status(status)
                 .allocationStrategy(strategy)
-                .ruleId(rule.getId())
-                .ruleName(rule.getName())
-                .costEstimated(estimateShippingCost(wh, order, qty))
-                    .distanceKm(estimateDistance(wh, conditionEvaluator.extractRegion(order.getShipToAddress())))
+                .ruleId(rule != null ? rule.getId() : null)
+                .ruleName(rule != null ? rule.getName() : null)
+                .costEstimated(estimateShippingCost(wh, order, allocatedQty))
+                .distanceKm(estimateDistance(wh, conditionEvaluator.extractRegion(order.getShipToAddress())))
                 .deliveryPromiseConfidence(calculateNodeConfidence(wh, order))
+                // nx_order_allocations has scalar quantity columns, so the per-SKU split — which is
+                // what actually makes a multi-node split auditable — is recorded in the JSONB
+                // metadata column rather than being discarded.
+                .metadata(demandJson(Map.of("skuQuantities", skuQuantities)))
                 .build();
     }
 
@@ -670,6 +963,10 @@ public class OrderRoutingService {
                 .allocationId(allocationId)
                 .tenantId(tenantId)
                 .type(type)
+                // `exception_type` (V67) is the column the dashboard reads first. It used to be left
+                // NULL here, so routing exceptions were rendered as "UNKNOWN" on that view even
+                // though the type was known. Both fields carry the same value for routing errors.
+                .exceptionType(type)
                 .severity(severity)
                 .status("OPEN")
                 .title(title)

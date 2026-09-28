@@ -15,7 +15,7 @@ import { PermissionGate } from '../components/rbac'
 import { useToast } from '../hooks/useToast'
 import * as ordersApi from '../api/orders'
 
-const STATUS_ORDER = ['PENDING', 'CONFIRMED', 'ALLOCATED', 'SHIPPED', 'DELIVERED', 'EXCEPTION', 'CANCELLED']
+const STATUS_ORDER = ['PENDING', 'CONFIRMED', 'ALLOCATED', 'PARTIALLY_ALLOCATED', 'FAILED', 'SHIPPED', 'DELIVERED', 'EXCEPTION', 'CANCELLED']
 
 export default function OrdersPage() {
   const navigate = useNavigate()

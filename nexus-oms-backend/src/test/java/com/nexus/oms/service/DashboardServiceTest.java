@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -178,5 +179,43 @@ class DashboardServiceTest {
         List<Map<String, Object>> events = dashboardService.getActivity(tenantId);
 
         assertEquals(1, events.size());
+    }
+
+    @Test
+    void getOrderStatusDistribution_surfacesUnderAllocatedStates() {
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "PENDING")).thenReturn(1L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "CONFIRMED")).thenReturn(1L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "ALLOCATED")).thenReturn(4L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "PICKING")).thenReturn(0L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "PACKING")).thenReturn(0L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "PARTIALLY_ALLOCATED")).thenReturn(2L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "FAILED")).thenReturn(1L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "SHIPPED")).thenReturn(0L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "DELIVERED")).thenReturn(0L);
+        when(orderRepository.countByTenantIdAndStatus(tenantId, "CANCELLED")).thenReturn(0L);
+
+        List<Map<String, Object>> distribution = dashboardService.getOrderStatusDistribution(tenantId);
+
+        Map<Object, Object> byName = new LinkedHashMap<>();
+        for (Map<String, Object> entry : distribution) {
+            byName.put(entry.get("name"), entry.get("value"));
+        }
+
+        // T-17 regression guard: an order that could not be fully sourced must be visible as its
+        // own bucket. Folding these into "In Progress" is the bug — it hides the shortfall that
+        // PARTIALLY_ALLOCATED / FAILED exist to report.
+        assertEquals(4L, byName.get("In Progress"), "only genuine in-flight orders belong in 'In Progress'");
+        assertEquals(2L, byName.get("Partially Allocated"));
+        assertEquals(1L, byName.get("Failed Allocation"));
+        assertFalse(byName.containsKey("Failed"), "FAILED must use its own allocation-specific label");
+        // PENDING(1) + CONFIRMED(1) + ALLOCATED(4) + PARTIALLY_ALLOCATED(2) + FAILED(1)
+        assertEquals(5, distribution.size(), "zero-count statuses are omitted");
+    }
+
+    @Test
+    void getOrderStatusDistribution_emptyTenant() {
+        when(orderRepository.countByTenantIdAndStatus(any(), anyString())).thenReturn(0L);
+
+        assertTrue(dashboardService.getOrderStatusDistribution(tenantId).isEmpty());
     }
 }

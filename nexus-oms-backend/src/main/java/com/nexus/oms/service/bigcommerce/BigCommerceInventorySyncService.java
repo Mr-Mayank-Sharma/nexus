@@ -61,9 +61,7 @@ public class BigCommerceInventorySyncService {
                     List<NxInventory> invList = inventoryRepository.findByTenantIdAndSku(tenantId, mapping.getNexusSku());
                     if (invList.isEmpty()) continue;
 
-                    int totalOnHand = invList.stream().mapToInt(NxInventory::getQuantityOnHand).sum();
-                    int totalAllocated = invList.stream().mapToInt(NxInventory::getQuantityAllocated).sum();
-                    int available = totalOnHand - totalAllocated;
+                    int available = sellableToStorefront(invList);
 
                     Map<String, Object> inventoryData = new HashMap<>();
                     inventoryData.put("inventory_level", available);
@@ -131,9 +129,7 @@ public class BigCommerceInventorySyncService {
                 List<NxInventory> invList = inventoryRepository.findByTenantIdAndSku(tenantId, mapping.getNexusSku());
                 if (invList.isEmpty()) continue;
 
-                int totalOnHand = invList.stream().mapToInt(NxInventory::getQuantityOnHand).sum();
-                int totalAllocated = invList.stream().mapToInt(NxInventory::getQuantityAllocated).sum();
-                int available = totalOnHand - totalAllocated;
+                int available = sellableToStorefront(invList);
 
                 Map<String, Object> inventoryData = new HashMap<>();
                 inventoryData.put("inventory_level", available);
@@ -149,5 +145,41 @@ public class BigCommerceInventorySyncService {
         } catch (Exception e) {
             log.warn("Real-time inventory push to BigCommerce failed for sku {}: {}", sku, e.getMessage());
         }
+    }
+
+    /**
+     * Quantity BigCommerce is allowed to offer for sale, aggregated across every holding row.
+     *
+     * <p>On hand minus already-allocated minus already-reserved minus safety stock. The two reasons
+     * this matters beyond the obvious:
+     *
+     * <ul>
+     *   <li>The previous {@code onHand - allocated} ignored {@code quantityReserved} as well as
+     *       safety stock, so it over-reported sellable stock and let the storefront oversell units
+     *       that Nexus had already reserved for an order.
+     *   <li>{@code mapToInt(NxInventory::getQuantityOnHand)} unboxed an {@code Integer} straight into
+     *       an {@code int} and threw NPE on a null quantity column. Seeded inventory can carry nulls,
+     *       so this is a real failure mode, not a theoretical one.
+     * </ul>
+     *
+     * <p>Clamped at zero: BigCommerce rejects a negative {@code inventory_level}, and a negative sum
+     * is the correct answer when reservations and safety stock exceed on-hand.
+     */
+    static int sellableToStorefront(List<NxInventory> rows) {
+        int onHand = 0;
+        int allocated = 0;
+        int reserved = 0;
+        int safetyStock = 0;
+        for (NxInventory row : rows) {
+            onHand += nz(row.getQuantityOnHand());
+            allocated += nz(row.getQuantityAllocated());
+            reserved += nz(row.getQuantityReserved());
+            safetyStock += nz(row.getSafetyStock());
+        }
+        return Math.max(0, onHand - allocated - reserved - safetyStock);
+    }
+
+    private static int nz(Integer value) {
+        return value != null ? value : 0;
     }
 }
