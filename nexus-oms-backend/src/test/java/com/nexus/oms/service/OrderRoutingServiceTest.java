@@ -16,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -486,37 +485,85 @@ class OrderRoutingServiceTest {
     }
 
     /**
-     * T-17: hybrid confidence averaged every row of each plan into the denominator while only
-     * real allocations contributed a value to the numerator, so the backorder row counted as a
-     * row but scored zero. Confidence therefore decayed roughly by half on every short order,
-     * making partial plans look maximally uncertain. The blended score must never fall below the
-     * weakest genuine allocation it is built from.
+     * T-17: the reported plan confidence used to be an average of the per-node confidence scores,
+     * with a fixed prior per strategy. Two consequences followed, and both were wrong in the
+     * direction that hides risk:
+     *
+     * <ol>
+     *   <li>the same strategy reported the same number regardless of whether it had actually
+     *       sourced the order, so a 1-of-2-unit plan scored like a 2-of-2-unit plan; and</li>
+     *   <li>averaging node scores into the order score conflated "is this node sound" with "is
+     *       this order safe to promise". A short order sourced from two perfect nodes is still a
+     *       short order.</li>
+     * </ol>
+     *
+     * <p>The previous test here asserted the plan score must never fall below the weakest node
+     * score, which is exactly that conflation stated as a rule. It is replaced rather than
+     * relaxed: the invariant is now that coverage moves the score, which is the property the
+     * heuristic could not produce.
      */
     @Test
-    void hybrid_confidenceIsNotDeflatedByTheBackorderRow() {
-        // Only 1 of 2 units exists, so both plans are partial and both carry a backorder row.
-        stock(empty.getId(), 0, false);
-        stock(stocked.getId(), 1, false);
-        when(warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE"))
-                .thenReturn(List.of(stocked), List.of(stocked));
+    void planConfidenceRisesWithCoverageAndIsCappedByTheBackorder() {
         when(routingRuleRepository.findByTenantIdAndIsActiveTrue(tenantId))
                 .thenReturn(List.of(ruleWithNodes(stocked.getId())));
 
-        var result = service.allocateOrder(request("HYBRID", false));
+        // --- Fully sourced: 2 of 2 units from one healthy node with headroom. ---
+        stock(stocked.getId(), 2, false);
+        var full = service.allocateOrder(request("RULE_BASED", true));
+        assertEquals(2, allocatedTotal(full.getAllocations()));
+        assertNull(backorder(full.getAllocations()), "fully-stocked scenario must not backorder");
 
-        assertNotNull(backorder(result.getAllocations()), "scenario must produce a backorder row");
+        // --- Half sourced: 1 of 2 units, remainder explicitly backordered. ---
+        stock(stocked.getId(), 1, false);
+        var partial = service.allocateOrder(request("RULE_BASED", true));
+        assertEquals(1, allocatedTotal(partial.getAllocations()));
+        assertNotNull(backorder(partial.getAllocations()), "scenario must produce a backorder row");
 
-        BigDecimal weakestRealAllocation = result.getAllocations().stream()
+        assertNotNull(full.getConfidenceScore());
+        assertNotNull(partial.getConfidenceScore());
+
+        assertTrue(partial.getConfidenceScore().compareTo(full.getConfidenceScore()) < 0,
+                "a half-sourced order must score below a fully-sourced one: partial="
+                        + partial.getConfidenceScore() + " full=" + full.getConfidenceScore());
+
+        // The node is identical and healthy in both runs, so this difference can only come from
+        // coverage. Under the old prior both runs returned 0.7500 and this assertion failed.
+        assertTrue(full.getConfidenceScore().compareTo(new BigDecimal("0.4000")) > 0,
+                "a fully-sourced order from a healthy node should not be reported as risky: "
+                        + full.getConfidenceScore());
+
+        // A backorder is a hard signal that the order is not fully sourced, so it caps the score
+        // no matter how healthy the sourcing node is.
+        assertTrue(partial.getConfidenceScore().compareTo(new BigDecimal("0.4000")) <= 0,
+                "a backordered plan must be capped at 0.4000 regardless of node health: "
+                        + partial.getConfidenceScore());
+    }
+
+    /**
+     * T-17: guards the separation the previous test used to blur. The per-node score answers "is
+     * this node sound", the plan score answers "how risky is this order's delivery". They are
+     * different measures and must not be reported as the same number.
+     */
+    @Test
+    void nodeConfidenceAndPlanConfidenceAreDistinctMeasures() {
+        when(routingRuleRepository.findByTenantIdAndIsActiveTrue(tenantId))
+                .thenReturn(List.of(ruleWithNodes(stocked.getId())));
+
+        stock(stocked.getId(), 1, false);
+        var result = service.allocateOrder(request("RULE_BASED", true));
+
+        BigDecimal nodeScore = result.getAllocations().stream()
                 .filter(a -> "ALLOCATED".equals(a.getStatus()))
                 .map(NxOrderAllocation::getDeliveryPromiseConfidence)
-                .min(Comparator.naturalOrder())
-                .orElseThrow(() -> new AssertionError("expected at least one fulfilled allocation"));
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("expected a fulfilled allocation"));
 
-        assertNotNull(result.getConfidenceScore());
-        assertTrue(result.getConfidenceScore().compareTo(weakestRealAllocation) >= 0,
-                "hybrid confidence " + result.getConfidenceScore()
-                        + " must not be dragged below the weakest genuine allocation "
-                        + weakestRealAllocation + " by the backorder row");
+        assertTrue(nodeScore.compareTo(new BigDecimal("0.4000")) > 0,
+                "the sourcing node is ACTIVE with 10% utilisation, so it should sound healthy: "
+                        + nodeScore);
+        assertTrue(result.getConfidenceScore().compareTo(nodeScore) < 0,
+                "a half-sourced plan must report more risk than its healthiest node implies: plan="
+                        + result.getConfidenceScore() + " node=" + nodeScore);
     }
 
     // --------------------------------------------------------------------------- helpers
