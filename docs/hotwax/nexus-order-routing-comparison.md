@@ -23,14 +23,15 @@
 > | 3.6, summary | Backorder flag: **No** | Explicit backorder rows via `findBackorder` / `backorderAllocation`, plus `PARTIALLY_ALLOCATED` / `FAILED` order resolution and a raised exception |
 > | 3.6, summary | Inventory decrement / reservation: **No — nothing reserves stock** | Consumed on the winning node (commit `90bde84`) |
 > | 3.2, 3.3 | `createDefaultAllocation` is a no-op `findFirst()` | Retained at `:620`, but is now a **fallback** — both `RULE_BASED` (`:359`) and `AI_OPTIMIZED` (`:405`) route through `allocateStockAware` first |
-> | 3.4, 3.5 | Delivery confidence is hardcoded `0.65` / `0.75` / `0.85` | `calculateNodeConfidence` still exists (`:761`) and is still formula-based; the **hybrid** path no longer averages backorder rows (see below) |
+> | 3.4, 3.5 | Delivery confidence is hardcoded `0.65` / `0.75` / `0.85` | **Superseded** — the order-level `confidenceScore` is no longer a per-strategy constant at all. It is derived by `derivePlanConfidence` (`:795`) from coverage, node health, capacity saturation and promise slack. The per-node `deliveryPromiseConfidence` remains formula-based (`calculateNodeConfidence`, `:893`) and is still synthetic — see §3.6 |
 >
 > ### Still-valid claims (do **not** discount these)
 >
 > Not everything in §3.1–3.6 is obsolete. Two findings survive on this branch unchanged:
 >
 > - **§3.3 "there is no AI" is still true.** `AI_OPTIMIZED` only reorders candidates before handing them to `allocateStockAware` (`:405`); the router contains no model call, no `AiService`, no inference. The only "AI" in `OrderRoutingService.java` is the cosmetic explanation string `"Allocated using AI optimization model"` (`:107`). Despite the strategy name, the scoring is the same hand-tuned `scoreNodeForOrder` heuristic.
-> - **§3.5's synthetic distance / cost / node-confidence criticism still stands** — `calculateNodeConfidence` (`:761`) is unchanged and still formula-based. Only the *hybrid averaging* was corrected.
+> - **§3.5's synthetic distance / cost criticism still stands.** `estimateDistance` (`:762`) still returns a hardcoded `50.00` / `500.00` and `estimateShippingCost` (`:753`) a flat rate, neither consulting a carrier. Unchanged by T-17.
+> - **§3.6's *node*-confidence criticism still stands, in a narrower form.** `calculateNodeConfidence` (`:893`) is still a hand-tuned formula over status and capacity. T-17 stopped letting that synthetic number stand in for the order-level score — but it is still what populates `deliveryPromiseConfidence` on each allocation row, so it is still persisted and still shown.
 >
 > ### T-17 bug inventory (all fixed on this branch)
 >
@@ -42,16 +43,44 @@
 > | **Bug B** | `:397` | AI path split demand as `remaining / remainingNodes` with a `Math.max(1, …)` floor, so a node that **failed** its stock check still received an allocation and the split could exceed what any node held | Score only orders candidates; `allocateStockAware` caps every node at real availability |
 > | **Bug C** | `:626` | Fallback used `.orElse(warehouses.get(0))`, so an order **no warehouse could fulfil** was still committed to warehouse #1 as a full `ALLOCATED` row and only failed at reservation time | All active nodes become candidates; falls back to an explicit backorder |
 > | *(unlabelled)* | `calculateDeliveryPromise` `:787` | Any `FAILED` row suppressed the promise, so **every partial allocation** shipped a null delivery date | Filter to `status == "ALLOCATED"` |
-> | *(unlabelled)* | `calculateHybridConfidence` `:907` | Backorder row entered the confidence **denominator** while contributing a null (→ `0`) numerator value, so any reported shortfall depressed confidence proportionally. Worked example: one real allocation at `0.85` plus one backorder → `0.85 / 2 = 0.4250` | `averageConfidence` (`:886`) filters to `ALLOCATED` at `:888`; `:892` now null-guards defensively |
+> | *(unlabelled)* | `confidenceScore` (former `calculateHybridConfidence`) | **Resolved by removal, not by patching.** The first fix filtered the backorder row out of `averageConfidence`'s denominator. The better fix was to delete the blend: the 40/60 hybrid re-used the same `calculateNodeConfidence` evidence that `derivePlanConfidence` already consumes, so node health was counted twice while the two real risks — how much of the order is sourced, and how much slack the promise has — were counted not at all | `calculateHybridConfidence` deleted. `confidenceScore` is now `derivePlanConfidence` (`:795`), which scores coverage, node health, capacity saturation and promise slack directly. `averageConfidence` (`:1045`) survives **only** as an internal tie-break in `selectBestAllocations` (`:1006`) |
 >
 > Bugs A and C are the "over-allocation" and "fallback picks a warehouse that cannot fulfil" defects flagged in `docs/hotwax/README.md`.
 >
-> ### Verified fixes landed on this branch (2026-09-27)
+> ### Verified fixes landed on this branch (2026-09-27, confidence revised 2026-09-29)
 >
-> - `calculateDeliveryPromise` (`:787`) now filters to `status == "ALLOCATED"`. Previously any `FAILED` row suppressed the promise, so **every partial allocation shipped a null delivery date** even though a node was fulfilling part of the order.
-> - `calculateHybridConfidence` (`:907`) now derives both sides via `averageConfidence(...)` (`:886`), which **itself filters to `status == "ALLOCATED"`** (`:888`) before averaging. That is what keeps the backorder row out of the denominator; the null-safe confidence mapping at `:892` is only a secondary guard. Before the fix a single 50% backorder row **halved** reported confidence (`0.85 → 0.4250`).
-> - Regression tests: `partialAllocation_stillReportsAnEstimatedDeliveryDate`, `orderThatBackordersInFull_reportsNoEstimatedDeliveryDate`, `hybrid_confidenceIsNotDeflatedByTheBackorderRow`.
-> - Both fixes were **mutation-verified**: temporarily restoring the old logic fails `partialAllocation_stillReportsAnEstimatedDeliveryDate` and `hybrid_confidenceIsNotDeflatedByTheBackorderRow` (2 failures / 20 tests). The third test guards the unchanged full-backorder behaviour and passes either way.
+> - `calculateDeliveryPromise` (`:932`) now filters to `status == "ALLOCATED"`. Previously any `FAILED` row suppressed the promise, so **every partial allocation shipped a null delivery date** even though a node was fulfilling part of the order.
+> - Regression test: `partialAllocation_stillReportsAnEstimatedDeliveryDate` (plus `orderThatBackordersInFull_reportsNoEstimatedDeliveryDate`, which guards the unchanged full-backorder behaviour).
+> - That fix was **mutation-verified**: temporarily restoring the old logic fails `partialAllocation_stillReportsAnEstimatedDeliveryDate`.
+>
+> #### Confidence: fixed twice, then replaced
+>
+> The confidence fix went through three iterations, and only the last one is in the tree. The history matters because the earlier iterations are easy to mistake for the current design.
+>
+> | Iteration | Design | Why it was not good enough |
+> |-----------|--------|----------------------------|
+> | 1 | Keep the 40/60 hybrid, but fix `averageConfidence` to filter the backorder row out of the denominator | Fixed a real arithmetic bug — a 50% backorder row was halving reported confidence (`0.85 → 0.4250`) — but the blend itself was still the problem: it averaged in the *previous* decision's confidence and fixed the *current* plan's score, so a higher-stakes plan could land on a lower number than a lower-stakes one |
+> | 2 | Keep the blend, replace the per-strategy constants (`0.75` RULE_BASED / `0.85` AI_OPTIMIZED) with an averaged node score | Still double-counted node health: `derivePlanConfidence` consumed the same `calculateNodeConfidence` values that the blend averaged. Two real risks — how much of the order is sourced, and how much slack the promise has — still had no term at all |
+> | **3 (shipped)** | Delete `calculateHybridConfidence`. `confidenceScore` = `derivePlanConfidence` (`:795`) | One score, computed once, from the order's actual risk surface. Nothing is averaged into it that is not evidence about *this* plan |
+>
+> `derivePlanConfidence` starts from a neutral `0.9000` prior and moves it with four evidence terms:
+>
+> | Term | Penalty | Notes |
+> |------|---------|-------|
+> | Coverage | `0.40 × (1 − allocated/demand)` | The dominant term. A half-sourced order is half a promise |
+> | Backorder | **cap at `0.4000`** | Capped, not subtracted — no number of healthy nodes makes a short order a confident full delivery |
+> | Node health | `0.30 × unhealthy share`, `0.15 × saturated share` | Weighted by *quantity held*, not row count, so a 1-unit row on a bad node cannot dilute a 50-unit row on a healthy one. A vanished node counts as unverified, not healthy |
+> | Promise slack | `−0.4000` if already past, `−0.1500` if under 24h | Computed from the same `ALLOCATED` rows that set the promise date, so the two can never disagree |
+>
+> The result is clamped to `[0, 1]`, rounded to 4dp, and stored on `order.allocationConfidence` (and, per node, on `deliveryPromiseConfidence`).
+>
+> `averageConfidence` (`:1045`) still exists but has a **much narrower job**: it is the tie-break inside `selectBestAllocations` (`:1006`), used only among plans that already tie on coverage. It filters to `ALLOCATED` rows and divides by `real.size()`. Because every candidate reaching that comparison has the same coverage, the backorder-row exclusion is now correctness and defense-in-depth rather than an observable change in plan selection — a weaker claim than the iteration-1 doc made, and deliberately stated as such.
+>
+> Regression tests: `planConfidenceRisesWithCoverageAndIsCappedByTheBackorder`, `nodeConfidenceAndPlanConfidenceAreDistinctMeasures`.
+>
+> `planConfidenceRisesWithCoverageAndIsCappedByTheBackorder` is **mutation-verified** against the exact regression it guards: restoring a fixed `0.7500` score makes a half-sourced order and a fully-sourced one both report `0.7500`, failing the assertion with `partial=0.7500 full=0.7500`.
+>
+> A third test, `backorderRowDoesNotDeflateTheAverageUsedToChooseBetweenPlans`, was **deleted rather than kept**. It asserted against `derivePlanConfidence(...)` while its name claimed to cover `averageConfidence(...)`; and since it exercised the public API, it could not actually observe the private averaging at all. Adding reflection to force the distinction would have tested the JUnit setup, not the router.
 >
 > ### Second pass — what counts as *available* (2026-09-28)
 >
@@ -98,7 +127,7 @@
 | Candidate breadth | All qualifying facilities | **`.limit(3)`** in `AI_OPTIMIZED` | HotWax |
 | Distance | `ST_Distance_Sphere` on real lat/long | Hardcoded `50.00` or `500.00` km | HotWax |
 | Shipping cost | Real carrier rate-shopping result | `$5.00 + 5% of order total × qty` | HotWax |
-| Delivery confidence | Derived from allocator state | `0.75` base ± status/capacity | HotWax |
+| Delivery confidence | Derived from allocator state | `0.75` base ± status/capacity, **and** a separate order-level score that now tracks coverage, backorder, node health and promise slack | **Partial** |
 | Rules expressiveness | Data-driven filter + sort + rules | 3 hardcoded conditions in code | HotWax |
 | Configurability | Admin UI, no deploy | Code change + redeploy | HotWax |
 | Shopify integration | Config-driven component | 1,637 LOC, real Admin API + webhooks | **Nexus wins** |
@@ -419,13 +448,16 @@ could source 2 of 3 items could beat a plan that could source all 3 — on a rou
 plan is never the better outcome when a fuller one exists, so coverage is now the primary key and
 confidence is only the tiebreaker between equally-covering plans.
 
-`averageConfidence` (`:886`) averages only `ALLOCATED` rows, excluding backorder rows so that a plan
+`averageConfidence` (`:1045`) averages only `ALLOCATED` rows, excluding backorder rows so that a plan
 is not penalised for the very shortfall it honestly reported.
 
 **Still weak:** the threshold comes from `NxRoutingConfig.aiConfidenceThreshold`, defaulting to
-`0.7000` (`:114-117`) — that part is properly tenant-configurable. But the confidences being compared
-are still the heuristics in §3.6, so HYBRID is choosing between two synthetic numbers. The tiebreak
-is only as meaningful as the score underneath it.
+`0.7000` (`entity/NxRoutingConfig.java:68`) — that part is properly tenant-configurable. But the
+quantity being compared is
+now the **mean per-node `deliveryPromiseConfidence`**, i.e. the §3.6 heuristic — not the order-level
+score. HYBRID is choosing between two synthetic numbers, and the tiebreak is only as meaningful as
+the score underneath it. The coverage key above is the part of this fix that genuinely improved
+behaviour; the threshold comparison is untouched by the confidence refactor.
 
 ### 3.6 The fabricated measurements — still fabricated
 
@@ -434,17 +466,34 @@ they are persisted to the allocation row and shown to users as if they were meas
 
 | Field | Implementation | Line |
 |-------|----------------|------|
-| `estimateDistance` → `distanceKm` | `50.00` if same state, else `500.00` | `:754` |
-| `estimateShippingCost` → `costEstimated` | `$5.00 + 5% of order total`, × quantity | `:745` |
-| `calculateNodeConfidence` → `deliveryPromiseConfidence` | `0.7500` base, `+0.10` if ACTIVE, `−0.15` if util > 90% | `:761` |
+| `estimateDistance` → `distanceKm` | `50.00` if same state, else `500.00` | `:762` |
+| `estimateShippingCost` → `costEstimated` | `$5.00 + 5% of order total`, × quantity | `:753` |
+| `calculateNodeConfidence` → `deliveryPromiseConfidence` | `0.7500` base, `+0.10` if ACTIVE, `−0.15` if util > 90% | `:893` |
 
 None of these consult the carrier, a real distance, or the allocator's own state. A 40 km node and a
 400 km node both report `500.00`. `costEstimated` is a flat rate that does not reflect zone, weight,
 service level, or the split it is being charged against.
 
-**Also synthetic:** `confidenceScore` is a hardcoded per-strategy constant — `0.8500` for
-`AI_OPTIMIZED` (`:108`), and the hybrid figure comes from `calculateHybridConfidence`, a fixed
-40/60 weighting. These land on `order.allocationConfidence` and are presented as routing confidence.
+**Partially resolved — the order-level score.** This paragraph originally read that
+`confidenceScore` was a hardcoded per-strategy constant (`0.8500` for `AI_OPTIMIZED`) blended
+through `calculateHybridConfidence` at a fixed 40/60 weighting. That is no longer true, and the
+original text is kept here deliberately so the gap is not mistaken for an open one.
+
+| | Before | Now |
+|---|---|---|
+| Order-level `confidenceScore` | Per-strategy constant, or a 40/60 blend of a fixed prior with a *previously returned* plan's node average | `derivePlanConfidence` (`:795`) — coverage, backorder cap, quantity-weighted node health, promise slack |
+| Is it a measurement? | No — but it also carried no information | **Still no.** It is a triage indicator derived from allocation state, not carrier performance or historical on-time rates |
+
+So the *shape* of the lie changed, not the fact of it. `order.allocationConfidence` is now
+defensible as "how risky is this plan, given what we know about the plan" and is **not** defensible
+as "how likely is this to arrive on time." The two distance and cost fields above remain entirely
+uninformed by reality and are the sharper problem.
+
+**Still synthetic at the node level:** `calculateNodeConfidence` (`:893`) continues to populate
+`deliveryPromiseConfidence` on every allocation row. Its `0.7500` base is a constant, and the
+`−0.15` saturation term duplicates a capacity check that `derivePlanConfidence` now also performs
+(it uses `isSaturated`, `:875`, with a `0.15` weight). The order-level score no longer trusts this
+number, but it is still persisted per node and shown in the UI.
 
 ### 3.7 What is missing entirely vs HotWax
 

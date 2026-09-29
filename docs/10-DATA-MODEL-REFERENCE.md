@@ -2327,11 +2327,13 @@ Every table in Nexus follows the same house style:
         'WEATHER_DELAY','SHIPPING_ADDRESS_ISSUE','PAYMENT_HOLD','CREDIT_HOLD',
         'FRAUD_FLAG','CUSTOMER_REQUEST','SYSTEM_ERROR','OTHER'
     ))` |
+| `exception_type` | `VARCHAR(50)` — added by `V67__schema_drift_fix.sql`. Nullable mirror of `type`, kept for dashboard/BI readers that bind to this name. Writers must set both: `DashboardService` reads `exception_type` first and renders `UNKNOWN` when it is null. `NxFulfillmentException.onCreate()` backfills it on insert, but that `@PrePersist` hook does not run on update. |
 | `severity` | `VARCHAR(20) NOT NULL DEFAULT 'MEDIUM' CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL'))` |
 | `status` | `VARCHAR(30) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN','IN_PROGRESS','RESOLVED','ESCALATED','CLOSED'))` |
 | `title` | `VARCHAR(255) NOT NULL` |
 | `description` | `TEXT` |
 | `resolution` | `TEXT` |
+| `message` | `TEXT` — added by `V67__schema_drift_fix.sql`. Human-readable detail field. Note that routing exceptions raised by `OrderRoutingService.buildException` populate `description`, **not** `message`; readers that want the detail for inventory-shortage errors must read `description`. |
 | `suggested_action` | `TEXT` |
 | `auto_resolvable` | `BOOLEAN DEFAULT false` |
 | `resolution_strategy` | `VARCHAR(50) CHECK (resolution_strategy IN (
