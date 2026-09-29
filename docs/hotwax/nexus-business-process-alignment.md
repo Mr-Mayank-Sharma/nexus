@@ -214,12 +214,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 6. **Field-level mapping control** (gross vs. rate)
 7. **Sync-status surfacing** on order pages
 
-**Nexus status:** 🟡 **Partial.** Nexus has webhooks/Kafka events, but needs:
-- **Conflict detection** (stale flags, versioning, locks) — prevent silent overwrites
-- **Idempotent, retryable sync jobs** + recovery job
-- **Reconciliation reporting** (pending/queued/completed)
-- **Field-level mapping control**
-- **Sync-status surfacing** on order pages
+**Nexus status:** ✅ **Built.** Webhooks/Kafka events + **conflict detection** (`SyncConflictService` — stale flags, versioning, locks), **idempotent retryable sync jobs** (`IdempotencyService`, `WebhookDedupLedgerService`), **CDC** (`CDCProcessor`), **reconciliation reporting**, **field-level mapping control**, and **sync-status surfacing** on order pages. See `nexus-oms-backend/src/main/java/com/nexus/oms/service/SyncConflictService.java`.
 
 ---
 
@@ -263,7 +258,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 3. Order debugging, reconciliation, test validation via AI agents
 4. **API-key (internal)** + **OAuth/SSO (client-facing)**
 
-**Nexus status:** 🟡 **Partial.** Nexus has an AI platform, but needs an **MCP server** exposing OMS tools. P1 strategic gap.
+**Nexus status:** ✅ **Built.** `McpController` + `McpToolExecutor` expose OMS tools to AI agents, wired through `AiAgentService`/`AiAgentController` with per-agent budgets (`NxMcpAgentBudget`) and tool registry (`NxMcpTool`). See `nexus-oms-backend/src/main/java/com/nexus/oms/controller/McpController.java`.
 
 ---
 
@@ -306,14 +301,14 @@ Each business process below is a **real operational flow** a HotWax client runs.
 | 8 | BOPIS + DoorDash store ops | 🟡 Partial | P0 |
 | 9 | Order routing (capacity + reroute) | ⚠ **Defective** | **P0** (T-14, T-17) |
 | 10 | Serialized / RFID | ❌ Missing | P1 |
-| 11 | Bidirectional sync + conflict handling | 🟡 Partial | P1 |
+| 11 | Bidirectional sync + conflict handling | ✅ Covered | — |
 | 12 | Returns / exchange complexity | 🟡 Partial | P1 |
 | 13 | 3PL / WES operations | ✅ **Stronger** | — |
-| 14 | MCP / AI-agent access | 🟡 Partial | P1 |
+| 14 | MCP / AI-agent access | ✅ Covered | — |
 | 15 | International routing | ✅ Covered | — |
 | 16 | Shopify fulfillment → NetSuite | ✅ Covered | — |
 
-**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), and Shopify→NetSuite (16)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, the **integration/data-integrity layer (11)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
+**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), Shopify→NetSuite (16), bidirectional sync (11), and MCP/AI-agent access (14)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
 
 ---
 
