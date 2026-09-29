@@ -343,4 +343,101 @@ React 19 + Vite + TypeScript + Tailwind, 93 pages under `src/pages/`.
 
 ---
 
-*Verified against: `hotwaxoms/moqui2/runtime/component/{oms,order-routing,shopify-connector,ofbiz-oms-udm}/` and `hotwaxoms/moqui2/framework/src/main/groovy/org/moqui/impl/`; `nexus-p0/nexus-oms-backend/src/main/java/com/nexus/oms/` and `nexus-p0/nexus-oms-frontend/src/`.*
+## Appendix A — Complete HotWax Service Surface (verified, all 16 XMLs)
+
+> Every `<service verb="X" noun="Y">` in the deployed HotWax snapshot, extracted via `grep -rhoE 'verb="[^"]+" noun="[^"]+"'`. Paths relative to `hotwaxoms/moqui2/runtime/component/`. **108 services enumerated across 14 XMLs** below; the `order-routing` and `poorti` FulfillmentServices surfaces are covered in §3/§4.
+
+### Core `oms` component
+
+**`oms/service/co/hotwax/oms/order/OrderServices.xml`** — **42 services** (order lifecycle, parking, funnel analytics, tasks, pre-order/POS):
+`add SalesOrderItem`, `approve Order`, `change OrderItemStatus`, `change OrderStatus`, `change WorkEffortTaskStatus`, `check OrderItemAndCapturePayment`, `checkCancelComplete Order`, `complete SalesOrderItemByShipment`, `create CommunicationEventWorkEffort`, `create OrderTask`, `create POSOrderReservationAndIssuance`, `create SalesOrder`, `delete OrderItemReservations`, `find OrderItemShipGroup`, `get FacilityFulfillmentVelocity`, `get FacilityOrderVolume`, `get FacilityPartialFulfillments`, `get FacilityRejections`, `get FulfillmentProgress`, `get FunnelDashboardOpenOrders`, `get FunnelDashboardUnfillable`, `get InflightSalesOrders`, `get OpenSalesOrders`, `get OrderFulfillmentTimeline`, `get OrderHoldTaskCounts`, `get OrderItemSalesTaxTotal`, `get OrderTask`, `get PackedSalesOrders`, `move ItemToParking`, `park Order`, `prepare SalesOrderShipGroups`, `reject OrderItem`, `reject OrderItems`, `reserve OrderItems`, `resolve OpenOrderTasks`, `send OrderWebhook`, `set PreOrderPromisedDate`, `split OrderASNItems`, `swap SalesOrderShipGroupProduct`, `update OrderItemShipGroup`, `update ShippingInformationOfShipGroup`, `update ShippingMethod`
+
+**`oms/service/co/hotwax/oms/search/SearchServices.xml`** — **12 index-build services** (Solr/OpenSearch index population):
+`create ApplicationUsersIndex`, `create CustomerIndex`, `create CustomersIndex`, `create EmployeeIndex`, `create OISGIRIndex`, `create OISGIRsIndex`, `create OrderIndex`, `create OrderItemIndex`, `create OrdersIndex`, `create PickersIndex`, `create ProductIndex`, `create ProductsIndex`
+
+**`oms/service/co/hotwax/oms/facility/FacilityServices.xml`** — **12 services** (facility master data + contact mechs):
+`create FacilityAddress`, `create FacilityEmail`, `create FacilityMapUrl`, `create FacilityPhone`, `delete FacilityMapUrl`, `get FacilityContactMechs`, `store Facility`, `update FacilityAddress`, `update FacilityEmail`, `update FacilityIdentification`, `update FacilityMapUrl`, `update FacilityPhone`
+
+**`oms/service/co/hotwax/oms/carrier/CarrierServices.xml`** — **1 service**: `create Carrier`
+
+**`oms/service/co/hotwax/oms/recon/OrderReconServices.xml`** — **1 service** (the Darpan contract, see §2): `get ReconciliationOrders`
+
+**`oms/service/co/hotwax/orderledger/order/OrderServices.xml`** — **5 services**:
+`cancel SalesOrderItem`, `cancel SalesOrderItems`, `get OrderShipGroup`, `get PickupOrders`, `get SalesOrder`
+
+**`oms/service/co/hotwax/rule/DecisionRuleServices.xml`** — **5 services** (rules-engine scheduling):
+`clean RuleGroupRun`, `get RuleGroupSchedule`, `run RuleGroup`, `scheduleNow RuleGroup`, `store RuleGroupSchedule`
+
+### `order-routing` component
+**`order-routing/service/co/hotwax/order/routing/OrderRoutingServices.xml`** — see §3 (run/schedule/clone/delete OrderRoutingGroup, run OrderRouting, eval OrderRoutingActions, reject OrderItems, get OrderFilterSql, get OrderRoutingRuleSql, get RecentRoutingHistory, clean OrderRoutingRun).
+
+### `poorti` component
+**`poorti/service/co/hotwax/poorti/FulfillmentServices.xml`** — see §4 (do RateShopping, get ShippingRates, get/void/retry ShippingLabel, generate Manifest, etc.).
+**`poorti/service/co/hotwax/poorti/oms/connector/OrderServices.xml`** — **1 service**: `update TOItemStatusAndReservation`
+
+### `maarg-util` component
+**`maarg-util/service/co/hotwax/search/SearchServices.xml`** — **4 services** (Solr query + lookup):
+`autoComplete SolrFacet`, `lookup PostalCode`, `lookup Stores`, `run SolrQuery`
+
+**`maarg-util/service/co/hotwax/auth/AuthServices.xml`** — **4 services**:
+`check LoginOptions`, `generate JwtToken`, `login User`, `logout User`
+
+**`maarg-util/service/co/hotwax/job/JobServices.xml`** — **5 services**:
+`clone ServiceJob`, `get ServiceJobDetail`, `get ServiceJobs`, `run ServiceJob`, `update ServiceJob`
+
+### Connectors
+**`netsuite-connector/service/co/hotwax/netsuite/OrderServices.xml`** — **8 services** (feed generation + import):
+`generate FulfilledOrderItemsFeed`, `generate NetsuiteBrokeredOrderItemsFeed`, `generate NetSuiteItemCancellationFeed`, `generate NetSuiteOrderCancellationFeed`, `generate NewOrdersSyncFeed`, `import WarehouseOrderFulfillment`, `run NetSuiteDMOrderFeed`, `run NetSuiteOrderFeedRule`
+
+**`shopify-connector/service/co/hotwax/shopify/search/SearchServices.xml`** — **2 services**: `create StoreIndex`, `create StoresIndex`
+
+**`shopify-connector/service/co/hotwax/soblegacy/order/OrderServices.xml`** — **6 services**:
+`create ShopifyOrder`, `generate FulfillmentOrdersFeedFromShopify`, `queue FulfillmentOrdersFeedFromShopify`, `run ShopifyAllocation`, `send CreateOrderRequest`, `transform OrderJson`
+
+---
+
+## Appendix B — Complete Nexus Service Surface (120 services)
+
+`nexus-t17/nexus-oms-backend/src/main/java/com/nexus/oms/service/` — **120 classes: 75 root + 28 `ai/` + 9 `bigcommerce/` + 8 `shopify/`** (verified by file count).
+
+### Root — by domain (75)
+
+**Order lifecycle (15):** `OrderService`, `OrderApprovalService`, `OrderRoutingService`, `RoutingRuleService`, `ParkedOrderService`, `PickupOrderService`, `TransferOrderService`, `ReturnService`, `ReturnFinanceService`, `RejectionService`, `EmailOrderParsingService`, `EmailOrderTextParser`, `PromotionService`, `ProcurementService`, `KittingService`
+
+**Inventory & ATP (10):** `ATPCalculationEngine`, `InventoryService`, `InventoryReceiptService`, `ReplenishmentService`, `CycleCountService`, `SlottingService`, `StorageService`, `FulfillmentLimitService`, `EndlessAisleService`, `BoxRecommendationService`
+
+**Fulfillment & WMS (14):** `WaveService`, `PickingService`, `PickerService`, `PackingService`, `ShipmentService`, `ShipmentServiceEnhanced`, `ManifestService`, `ShippingLabelService`, `TrailerService`, `YardService`, `LaborService`, `WarehouseService`, `AsnService`, `RfidIngestionService`
+
+**Carrier & rates (5):** `CarrierService`, `RateCardService`, `RateCacheService`, `RateShoppingService`, `FreightAuditService`
+
+**Finance & billing (2):** `BillingService`, `InvoicingService`
+
+**Integrations & data (14):** `IntegrationPlatformService`, `IntegrationStoreService`, `SyncConflictService`, `WebhookDedupLedgerService`, `WebSocketEventService`, `EdiAutomationService`, `DocumentService`, `TransformationEngine`, `ImportExportEngine`, `GenericImportService`, `ImportTokenService`, `SampleDataGenerator`, `CDCProcessor`, `DLQManager`
+
+**Platform & governance (12):** `AuthService`, `PermissionService`, `RbacService`, `CompanySettingsService`, `NotificationService`, `DashboardService`, `IdempotencyService`, `McpToolExecutor`, `AutomationService`, `AutomationEmulatorService`, `WorkflowService`, `ValidationEngine`
+
+**Brokering & rules (3):** `BrokeringService`, `RuleConditionEvaluator`, `ProductService`
+
+### `ai/` — AI platform (28)
+`AiAgentService`, `AiAnalyticsService`, `AiArtifactService`, `AiCalibrationService`, `AiCostTrackingService`, `AiDeploymentGateService`, `AiExperimentService`, `AiFeatureStoreService`, `AiGateBlockedException`, `AiGatewayService`, `AiInferenceService`, `AiModelRegistryService`, `AiMonitoringService`, `AiOnnxRuntimeService`, `AiOrderActionService`, `AiPackingService`, `AiRuleEngineService`, `AiTrainingDataService`, `AiTrainingOrchestrationService`, `AiTrainingPipelineService`, `AiWarehouseResolutionService`, `DemandForecastService`, `HybridSearchService`, `LlmChatService`, `ProcessTrainingScriptExecutor`, `SemanticCacheService`, `ShapExplainerService`, `TrainingScriptExecutor`
+
+### `bigcommerce/` — BigCommerce connector (9)
+`BigCommerceClient`, `BigCommerceCustomerImportService`, `BigCommerceInventorySyncService`, `BigCommerceOrderImportService`, `BigCommerceOrderStatusPushService`, `BigCommerceProductSyncService`, `BigCommerceRefundSyncService`, `BigCommerceShipmentPushService`, `BigCommerceWebhookService`
+
+### `shopify/` — Shopify connector (8)
+`ShopifyClient`, `ShopifyFulfillmentPushService`, `ShopifyInventorySyncService`, `ShopifyOrderImportService`, `ShopifyProductSyncService`, `ShopifyRefundSyncService`, `ShopifyTokenService`, `ShopifyWebhookService`
+
+### Notable surfaces captured this pass (new evidence)
+- **`McpToolExecutor`** (T-11, at `service/` root — not `service/ai/`): executes OMS tools via REST/GraphQL layer, enforces `NxMcpTool` permissions + `NxMcpAgentBudget` (usage/cost/budget tracking), logs to `AiCostLog`/`AiInferenceLog`.
+- **`GenericImportService`** (1,576 lines, only 5 public members): `importFile(entityType, file, format[, importMode])`, `parseFile(file, format)`, `VALID_ENTITY_TYPES`, `VALID_IMPORT_MODES`.
+- **`EndlessAisleService`**: full CRUD + `getEndlessAisleStats`, `getOrdersByCustomer/Status/Store`.
+- **`TransferOrderService`**: create/ship/receive/approve/cancel/submit + `getTransfersInTransit`, `getTransferStats`.
+- **`OrderApprovalService`**: `evaluateOrder` — auto-approval rule engine (`NxApprovalRule`), `manualReview`.
+- **`WebhookDedupLedgerService`**: `tryClaimProcessing`, `isAlreadyProcessed` (JdbcTemplate-based dedup).
+- **`AiInferenceService`**: `execute`, `generatePrediction`, `onnxPredict`/`llmPredict`/`ruleBasedPredict` (predictDemandForecast, predictSmartAllocator, predictCarrierOptimizer, predictReturns, predictInventory, predictAnomaly, predictAssistant, predictDocumentAi).
+- **`AiRuleEngineService`**: `executeFallback`, `llmEnhancedFallback`, `executeRule`, `applyFormula`/`applyLookup`/`applyThreshold`.
+- **Connector pattern**: all BigCommerce/Shopify sync services use the drop-sync `SyncResult syncX(UUID tenantId)` shape (importOrders, syncProducts, pushShipments, pushRefunds).
+
+---
+
+*Verified against: `hotwaxoms/moqui2/runtime/component/{oms,order-routing,poorti,shopify-connector,netsuite-connector,maarg-util,ofbiz-oms-udm}/` and `hotwaxoms/moqui2/framework/src/main/groovy/org/moqui/impl/`; `nexus-t17/nexus-oms-backend/src/main/java/com/nexus/oms/` and `nexus-t17/nexus-oms-frontend/src/`.*
