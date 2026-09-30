@@ -1,5 +1,18 @@
 import client from './client'
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export interface ParkedOrder {
   id: string
   tenantId: string
@@ -35,31 +48,31 @@ export interface ParkOrderRequest {
 
 export const parkedOrdersApi = {
   getParkedOrders: () =>
-    client.get<ParkedOrder[]>('/parked-orders'),
+    unwrap<ParkedOrder[]>(client.get<ParkedOrder[]>('/parked-orders')),
 
   getParkedOrder: (id: string) =>
-    client.get<ParkedOrder>(`/parked-orders/${id}`),
+    unwrap<ParkedOrder>(client.get<ParkedOrder>(`/parked-orders/${id}`)),
 
   getParkedOrdersByReason: (reason: string) =>
-    client.get<ParkedOrder[]>(`/parked-orders/reason/${reason}`),
+    unwrap<ParkedOrder[]>(client.get<ParkedOrder[]>(`/parked-orders/reason/${reason}`)),
 
   getParkedOrdersBySku: (sku: string) =>
-    client.get<ParkedOrder[]>(`/parked-orders/sku/${sku}`),
+    unwrap<ParkedOrder[]>(client.get<ParkedOrder[]>(`/parked-orders/sku/${sku}`)),
 
   parkOrder: (data: ParkOrderRequest) =>
-    client.post<ParkedOrder>('/parked-orders', data),
+    unwrap<ParkedOrder>(client.post<ParkedOrder>('/parked-orders', data)),
 
   releaseOrder: (id: string, reason?: string) =>
-    client.post<ParkedOrder>(`/parked-orders/${id}/release`, null, { params: { reason } }),
+    unwrap<ParkedOrder>(client.post<ParkedOrder>(`/parked-orders/${id}/release`, null, { params: { reason } })),
 
   cancelOrder: (id: string, reason?: string) =>
-    client.post<ParkedOrder>(`/parked-orders/${id}/cancel`, null, { params: { reason } }),
+    unwrap<ParkedOrder>(client.post<ParkedOrder>(`/parked-orders/${id}/cancel`, null, { params: { reason } })),
 
   updatePriority: (id: string, priority: number) =>
-    client.put<ParkedOrder>(`/parked-orders/${id}/priority`, null, { params: { priority } }),
+    unwrap<ParkedOrder>(client.put<ParkedOrder>(`/parked-orders/${id}/priority`, null, { params: { priority } })),
 
   updateNotes: (id: string, notes: string) =>
-    client.put<ParkedOrder>(`/parked-orders/${id}/notes`, null, { params: { notes } }),
+    unwrap<ParkedOrder>(client.put<ParkedOrder>(`/parked-orders/${id}/notes`, null, { params: { notes } })),
 }
 
 export default parkedOrdersApi

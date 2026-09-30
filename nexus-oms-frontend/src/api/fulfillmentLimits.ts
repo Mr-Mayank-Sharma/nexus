@@ -43,37 +43,50 @@ export interface CapacityCheck {
   atCapacity: boolean
 }
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export const fulfillmentLimitsApi = {
   getLimits: () =>
-    client.get<FulfillmentLimit[]>('/fulfillment-limits'),
+    unwrap<FulfillmentLimit[]>(client.get<FulfillmentLimit[]>('/fulfillment-limits')),
 
   getLimit: (nodeId: string) =>
-    client.get<FulfillmentLimit>(`/fulfillment-limits/${nodeId}`),
+    unwrap<FulfillmentLimit>(client.get<FulfillmentLimit>(`/fulfillment-limits/${nodeId}`)),
 
   createLimit: (limit: Partial<FulfillmentLimit>) =>
-    client.post<FulfillmentLimit>('/fulfillment-limits', limit),
+    unwrap<FulfillmentLimit>(client.post<FulfillmentLimit>('/fulfillment-limits', limit)),
 
   updateLimit: (id: string, limit: Partial<FulfillmentLimit>) =>
-    client.put<FulfillmentLimit>(`/fulfillment-limits/${id}`, limit),
+    unwrap<FulfillmentLimit>(client.put<FulfillmentLimit>(`/fulfillment-limits/${id}`, limit)),
 
   checkCapacity: (nodeId: string) =>
-    client.get<CapacityCheck>(`/fulfillment-limits/${nodeId}/capacity`),
+    unwrap<CapacityCheck>(client.get<CapacityCheck>(`/fulfillment-limits/${nodeId}/capacity`)),
 
   toggleFulfillment: (nodeId: string, enabled: boolean) =>
-    client.put<FulfillmentLimit>(`/fulfillment-limits/${nodeId}/toggle`, null, {
+    unwrap<FulfillmentLimit>(client.put<FulfillmentLimit>(`/fulfillment-limits/${nodeId}/toggle`, null, {
       params: { enabled },
-    }),
+    })),
 
   getCapacityAlerts: () =>
-    client.get<CapacityLog[]>('/fulfillment-limits/alerts'),
+    unwrap<CapacityLog[]>(client.get<CapacityLog[]>('/fulfillment-limits/alerts')),
 
   getCapacityHistory: (nodeId: string, start?: string, end?: string) =>
-    client.get<CapacityLog[]>(`/fulfillment-limits/history/${nodeId}`, {
+    unwrap<CapacityLog[]>(client.get<CapacityLog[]>(`/fulfillment-limits/history/${nodeId}`, {
       params: { start, end },
-    }),
+    })),
 
   resetDailyCounts: () =>
-    client.post<void>('/fulfillment-limits/reset'),
+    unwrap<void>(client.post<void>('/fulfillment-limits/reset')),
 }
 
 export default fulfillmentLimitsApi

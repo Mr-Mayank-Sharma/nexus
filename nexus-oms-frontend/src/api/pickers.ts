@@ -1,5 +1,18 @@
 import client from './client'
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export interface Picker {
   id: string
   tenantId: string
@@ -48,47 +61,47 @@ export interface PickerStats {
 
 export const pickersApi = {
   getPickers: (nodeId: string) =>
-    client.get<Picker[]>(`/pickers/${nodeId}`),
+    unwrap<Picker[]>(client.get<Picker[]>(`/pickers/${nodeId}`)),
 
   getAvailablePickers: (nodeId: string) =>
-    client.get<Picker[]>(`/pickers/${nodeId}/available`),
+    unwrap<Picker[]>(client.get<Picker[]>(`/pickers/${nodeId}/available`)),
 
   getPicker: (id: string) =>
-    client.get<Picker>(`/pickers/detail/${id}`),
+    unwrap<Picker>(client.get<Picker>(`/pickers/detail/${id}`)),
 
   createPicker: (picker: Partial<Picker>) =>
-    client.post<Picker>('/pickers', picker),
+    unwrap<Picker>(client.post<Picker>('/pickers', picker)),
 
   updatePicker: (id: string, picker: Partial<Picker>) =>
-    client.put<Picker>(`/pickers/${id}`, picker),
+    unwrap<Picker>(client.put<Picker>(`/pickers/${id}`, picker)),
 
   updateStatus: (id: string, status: string) =>
-    client.put<Picker>(`/pickers/${id}/status`, null, { params: { status } }),
+    unwrap<Picker>(client.put<Picker>(`/pickers/${id}/status`, null, { params: { status } })),
 
   assignNextAvailable: (nodeId: string, pickupOrderId: string, orderNumber: string) =>
-    client.post<PickerAssignment>('/pickers/assign/next', null, {
+    unwrap<PickerAssignment>(client.post<PickerAssignment>('/pickers/assign/next', null, {
       params: { nodeId, pickupOrderId, orderNumber },
-    }),
+    })),
 
   assignPicker: (pickerId: string, pickupOrderId: string, orderNumber: string, nodeId: string) =>
-    client.post<PickerAssignment>(`/pickers/assign/${pickerId}`, null, {
+    unwrap<PickerAssignment>(client.post<PickerAssignment>(`/pickers/assign/${pickerId}`, null, {
       params: { pickupOrderId, orderNumber, nodeId },
-    }),
+    })),
 
   startAssignment: (id: string) =>
-    client.post<PickerAssignment>(`/pickers/assignments/${id}/start`),
+    unwrap<PickerAssignment>(client.post<PickerAssignment>(`/pickers/assignments/${id}/start`)),
 
   completeAssignment: (id: string) =>
-    client.post<PickerAssignment>(`/pickers/assignments/${id}/complete`),
+    unwrap<PickerAssignment>(client.post<PickerAssignment>(`/pickers/assignments/${id}/complete`)),
 
   getActiveAssignments: (nodeId: string) =>
-    client.get<PickerAssignment[]>(`/pickers/assignments/active/${nodeId}`),
+    unwrap<PickerAssignment[]>(client.get<PickerAssignment[]>(`/pickers/assignments/active/${nodeId}`)),
 
   getPickerAssignments: (pickerId: string) =>
-    client.get<PickerAssignment[]>(`/pickers/assignments/picker/${pickerId}`),
+    unwrap<PickerAssignment[]>(client.get<PickerAssignment[]>(`/pickers/assignments/picker/${pickerId}`)),
 
   getPickerStats: (nodeId: string) =>
-    client.get<PickerStats>(`/pickers/stats/${nodeId}`),
+    unwrap<PickerStats>(client.get<PickerStats>(`/pickers/stats/${nodeId}`)),
 }
 
 export default pickersApi

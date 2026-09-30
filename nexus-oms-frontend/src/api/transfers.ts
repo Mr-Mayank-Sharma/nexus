@@ -1,5 +1,18 @@
 import client from './client'
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export interface TransferOrderItem {
   id?: string
   transferOrderId?: string
@@ -53,37 +66,37 @@ export interface TransferStats {
 
 export const transfersApi = {
   createTransfer: (data: CreateTransferRequest) =>
-    client.post<TransferOrder>('/transfers', data),
+    unwrap<TransferOrder>(client.post<TransferOrder>('/transfers', data)),
 
   getTransfers: (status?: string) =>
-    client.get<TransferOrder[]>('/transfers', { params: { status } }),
+    unwrap<TransferOrder[]>(client.get<TransferOrder[]>('/transfers', { params: { status } })),
 
   getTransfer: (id: string) =>
-    client.get<TransferOrder>(`/transfers/${id}`),
+    unwrap<TransferOrder>(client.get<TransferOrder>(`/transfers/${id}`)),
 
   getTransferItems: (id: string) =>
-    client.get<TransferOrderItem[]>(`/transfers/${id}/items`),
+    unwrap<TransferOrderItem[]>(client.get<TransferOrderItem[]>(`/transfers/${id}/items`)),
 
   approveTransfer: (id: string) =>
-    client.put<TransferOrder>(`/transfers/${id}/approve`),
+    unwrap<TransferOrder>(client.put<TransferOrder>(`/transfers/${id}/approve`)),
 
   shipTransfer: (id: string, items?: TransferOrderItem[]) =>
-    client.put<TransferOrder>(`/transfers/${id}/ship`, items),
+    unwrap<TransferOrder>(client.put<TransferOrder>(`/transfers/${id}/ship`, items)),
 
   receiveTransfer: (id: string, items?: TransferOrderItem[]) =>
-    client.put<TransferOrder>(`/transfers/${id}/receive`, items),
+    unwrap<TransferOrder>(client.put<TransferOrder>(`/transfers/${id}/receive`, items)),
 
   cancelTransfer: (id: string) =>
-    client.put<TransferOrder>(`/transfers/${id}/cancel`),
+    unwrap<TransferOrder>(client.put<TransferOrder>(`/transfers/${id}/cancel`)),
 
   getTransfersInTransit: () =>
-    client.get<TransferOrder[]>('/transfers/in-transit'),
+    unwrap<TransferOrder[]>(client.get<TransferOrder[]>('/transfers/in-transit')),
 
   getTransfersByNode: (nodeId: string) =>
-    client.get<TransferOrder[]>(`/transfers/node/${nodeId}`),
+    unwrap<TransferOrder[]>(client.get<TransferOrder[]>(`/transfers/node/${nodeId}`)),
 
   getTransferStats: () =>
-    client.get<TransferStats>('/transfers/stats'),
+    unwrap<TransferStats>(client.get<TransferStats>('/transfers/stats')),
 }
 
 export default transfersApi

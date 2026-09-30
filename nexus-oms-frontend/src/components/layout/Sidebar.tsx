@@ -94,6 +94,7 @@ const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> 
   'rejections': { resource: 'orders', action: 'view' },
   'transfers': { resource: 'orders', action: 'view' },
   'fulfillment-limits': { resource: 'orders', action: 'view' },
+  'reconciliation': { resource: 'orders', action: 'view' },
   'pickers': { resource: 'orders', action: 'view' },
   'replenishment': { resource: 'inventory', action: 'edit' },
   'freight-audit': { resource: 'returns', action: 'view' },
