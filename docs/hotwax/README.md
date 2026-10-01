@@ -45,7 +45,7 @@ HotWax Commerce is a **real, revenue-generating OMS** with a live customer base 
 
 2. **HotWax's pricing is per-order + consulting.** ~$750/mo for >2,500 orders, $1k implementation, $10k customizations, plus paid consulting (routing, RFID, implementation coordination). Nexus needs a **commercial model**, not just a product.
 
-3. **Routing is the heart of the OMS — but Nexus's is not ready to demo.** Routing/brokering appears in *every* account, and HotWax's SQL allocator is genuinely deeper than Nexus's. However, a source-level read of `OrderRoutingService.java` found live correctness bugs (over-allocation, a fallback that picks a warehouse that cannot fulfill). Fix T-17/T-14 *before* leading with routing — see [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
+3. **Routing is the heart of the OMS — but Nexus's is not ready to demo.** Routing/brokering appears in *every* account, and HotWax's SQL allocator is genuinely deeper than Nexus's. However, a source-level read of `OrderRoutingService.java` found live correctness bugs on `main` — the DOM rule path multiplies full order quantity across candidate nodes, the AI path splits quantity without a stock check, and a fallback allocates to a node just proven incapable — all accepted by `OrderService.confirmOrder`. All are fixed on branch `fix/t17-allocation-correctness`. Merge T-17 and close T-14 *before* leading with routing — see [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
 
 4. **HotWax's weaknesses are Nexus's openings.** Reactive config, no go-live checklist, weak client roll-off, import performance, sync conflicts. Nexus can win on **predictability, self-serve onboarding, and honest data**.
 

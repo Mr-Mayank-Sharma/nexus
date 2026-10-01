@@ -228,10 +228,12 @@ Build the **standard go-live checklist** HotWax lacks:
 
 *Goal: win on HotWax's weaknesses.*
 
-### D1. Do NOT Lead with Routing (yet)
-Routing/brokering is the heart of the OMS and shows up in *every* account — which makes it tempting to lead with. A source-code audit disproved the earlier "Nexus wins here" claim: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, shipment-group brokering, distance ranking), while Nexus's allocation path has **live defects (T-17)** and less depth (T-14).
+### D1. Do NOT Lead with Routing Depth (yet) — Correctness Is Fixed on a Branch
+Routing/brokering is the heart of the OMS and shows up in *every* account — which makes it tempting to lead with. A source-code audit disproved the earlier "Nexus wins here" claim: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, shipment-group brokering, distance ranking), while Nexus's `OrderRoutingService` has **less depth (T-14)** and, **on `main`, live correctness defects (T-17)** — the DOM rule path over-allocates across every candidate node, the AI path splits quantity without a stock check, and a fallback allocates to a node just proven incapable, with `OrderService.confirmOrder` accepting the corrupt result.
 
-**Do not demo or lead with Nexus routing until T-17 and T-14 land** (T-18 rule expressiveness is P1). The Shopify "won't reroute when the last location holds the inventory" behavior is a *Shopify* constraint that HotWax works around — not a HotWax gap, and not a Nexus win. See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
+**Correctness is no longer a reason to withhold routing: T-17 is fixed on `fix/t17-allocation-correctness`** (worktree `nexus-t17`, commits `a7ea7d2` + `cac85c8`, 768 tests passing). **Merge it.** There is no alternative path to route around it — `BrokeringService` is a persisted work queue whose every allocation calls `orderRoutingService.allocateOrder(...)`.
+
+**Do not demo or lead with Nexus routing *depth* until T-14 lands** (T-18 rule expressiveness is P1). After the T-17 merge, routing is stock-correct and can be demoed honestly as a correctness win, without claiming HotWax's depth. The Shopify "won't reroute when the last location holds the inventory" behavior is a *Shopify* constraint that HotWax works around — not a HotWax gap, and not a Nexus win. See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
 
 ### D2. Lead with Honest Data
 Nexus's **honest, auditable data** — no silent overwrites, no sync conflicts, every number real or clearly labelled — is a genuine differentiator vs. HotWax's reactive fixes.
@@ -250,7 +252,7 @@ Nexus's **go-live checklist + self-serve onboarding** beats HotWax's reactive im
 
 | Week | Track A (Product) | Track B (Sales) | Track C (Onboarding) |
 |------|-------------------|-----------------|----------------------|
-| 1–2 | **Routing correctness T-17 (P0, blocking)**, stock-aware allocator depth T-14 (P0), Replenishment drop-off, Picker analytics | Demo scripts (4 personas) | — |
+| 1–2 | **Routing correctness T-17 (P0, blocking)**, stock-aware allocator depth T-14 (P0), **Fulfillment reconciliation T-09 (shipped)**, **Carrier labels T-12 (shipped)**, Replenishment drop-off, Picker analytics | Demo scripts (4 personas) | — |
 | 3–4 | Transit-time model, Store ops (DoorDash) | Pricing model, Demo env | Self-serve onboarding |
 | 5–6 | Store printing, Bidirectional sync | — | Go-live checklist |
 | 7–8 | Returns/exchange, Serialized/RFID | — | Roll-off process |
@@ -297,3 +299,23 @@ Nexus is **one step from market-ready**. The product already has the core OMS/WM
 4. **Predictable onboarding** (go-live checklist, self-serve) — beating HotWax's #1 weakness.
 
 **Execute Tracks A–D in parallel — routing correctness (T-17) and allocator depth (T-14) first, since they are P0 blockers gating the demo — then lead with fast import + honest data + EDI + predictable onboarding, and close a real deal within 12 weeks.**
+
+---
+
+## 10. Shipped Since This Plan Was Written — Re-Audited 2026-10-01
+
+Two P0 tickets from the gap-ticket rounds have landed. They are **not** on the roadmap above because they were already implemented when the plan was authored. Track their status here so the roadmap table and this section never disagree.
+
+| Ticket | Commit / Date | Status | What it actually gives us | What it does **not** give us |
+|---|---|---|---|---|
+| **T-09** fulfillment reconciliation | `27887ba` · 2026-09-30 | ✅ **Shipped** | `FulfillmentReconciliationService` with persisted `MatchType`/`Resolution` outcomes, Shopify fulfillment DTOs, an accept endpoint for inbound fulfillment writes, webhook ingestion, `V61__fulfillment_reconciliation.sql`, and `FulfillmentReconciliationPage.tsx` | HotWax's **external windowed order-feed contract** (`get ReconciliationOrders`/`get ReconciliationReturns`) — half-open windows, `isExchange`, `originalOrderId`, deterministic ordering. Return-side parity is absent. |
+| **T-12** carrier label adapters | `2d0456c` · 2026-09-26 | ✅ **Shipped** | `CarrierLabelAdapter` interface with real `RestTemplate` adapters for **Jitsu and SAPI**, `SimulatedCarrierAdapter`, `NxCarrierLabelConfig` CRUD, `V62__carrier_label_adapter.sql`, and `LabelPrintingPage.tsx`. Adapters self-register as Spring beans into a `Map<String, CarrierLabelAdapter>` (`CarrierLabelConfigService:33-36`) and are validated against the live bean set (`:50-52`) — no runtime string dispatch. | **FedEx is still unwired**, `labelSource` is hardcoded `"SIMULATED"` on three of four paths, and there is no manifest/void/retry parity. T-12 did **not** close T-16. |
+
+**Sales impact:** T-12 makes the *architectural* carrier claim safe to make — injectable adapters, self-hostable credentials, one `@Component` per carrier. It does **not** make a *capability* claim safe. Keep saying "our abstraction is cleaner and your credentials stay in your database," and keep conceding carrier coverage is partial. See [`nexus-vs-hotwax-technical.md`](./nexus-vs-hotwax-technical.md) §4 and §14 for the source-level detail.
+
+**Engineering follow-ups:**
+1. Wire `FedExConnector` into the label seam; remove the hardcoded `"SIMULATED"` defaults in `ShippingLabelService`.
+2. Add return-side reconciliation (T-09's remaining gap) if a prospect expects the HotWax reconciliation contract.
+3. Neither ticket touches routing. **T-17 and T-14 remain the P0 blockers on the demo**, exactly as §1.2 and §6 say.
+
+**Note on scope:** this section supersedes any statement elsewhere in this plan that reconciliation or carrier labels are wholly unbuilt. This plan was authored before both tickets landed.

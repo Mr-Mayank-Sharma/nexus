@@ -157,7 +157,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 
 | Dream (2030) | Current | Missing |
 |---|---|---|
-| AI routes orders in <1s | Deterministic, rule-based DOM routing with `canFulfill`; unit-tested | Real trained models + online inference, **and allocation correctness** — T-17 over-allocation / infeasible fallback, T-14 allocator depth vs HotWax's stock-aware SQL allocator (see [`hotwax/nexus-order-routing-comparison.md`](./hotwax/nexus-order-routing-comparison.md)) |
+| AI routes orders in <1s | Deterministic, rule-based DOM routing with `canFulfill`; unit-tested | Real trained models + online inference, **and allocation correctness** — T-17 (DOM over-allocation across candidate nodes; AI split without a stock check; incapable-node fallback), T-14 allocator depth vs HotWax's stock-aware SQL allocator (see [`hotwax/nexus-order-routing-comparison.md`](./hotwax/nexus-order-routing-comparison.md)) |
 | Self-optimizing warehouse | Wave plan/release + task queue + WES schema (V56) + putaway recommendation | Closed-loop slotting/labor optimization (G8) |
 | Trustworthy AI platform | Model registry, experiments, drift, fallbacks, audit; demand forecast (Holt + WAPE) shipped | Real training data → **no production model yet** (G3) |
 | One-touch integrations | 15+ connectors + EDI 850/856/810 + iPaaS-lite + outbound retry/idempotency/DLQ + **856 → inbound ASN** | Depth (auth refresh, carrier EDI bulk) |

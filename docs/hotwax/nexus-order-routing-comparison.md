@@ -9,6 +9,15 @@
 
 ---
 
+> ## ⚠️ Re-audit note — 2026-10-01
+>
+> Sections 1–7 below were source-audited 2026-09-27 and **their routing verdicts still hold**. Since then, `BrokeringService` was added as a **brokering work queue** (commits `0b91a0a` / `90bde84`) with chain coverage (`5619719`), and stock-aware allocation was built directly into `OrderRoutingService` on `fix/t17-allocation-correctness`.
+>
+> **There is only one allocation engine: `OrderRoutingService`.** `BrokeringService` is a queue in front of it — it calls `orderRoutingService.allocateOrder(...)` and does not allocate independently.
+>
+> **This did close T-17 — but only on the branch, not on `main`.** The defects described in §3.1–§3.2 are still present in `OrderRoutingService` on `main`, and `OrderService.confirmOrder` (`:286`) calls that defective path. Routing to brokering does not escape the defects; it re-enters the same code.
+> Read **§8** for the current, verified T-17 status before acting on §3.
+
 ## 1. Executive Summary
 
 | Area | HotWax | Nexus | Verdict |
@@ -321,7 +330,93 @@ A `netsuite-connector` Moqui component with 3 source files, including a custom d
 ## 7. Conclusions
 
 1. **The routing engine is the critical gap.** HotWax runs a stock-aware, config-driven, multi-warehouse allocator. Nexus has a rule short-circuit, a `findFirst()`, and a constant-scoring function that splits quantities without checking stock — and marks everything `ALLOCATED` regardless.
-2. **Two allocation bugs ship today.** The rule path multiplies full order quantity across every node in `nodeIds`; the AI path splits by arithmetic after scoring, bypassing the stock check it just performed.
+2. **Allocation bugs ship today** (re-audited 2026-10-01: two of three are still live, one mitigated — see §8). The rule path multiplies full order quantity across every node in `nodeIds`; the AI path splits by arithmetic after scoring, bypassing the stock check it just performed. There is no correct alternative path — `BrokeringService` is a work queue that calls the same `OrderRoutingService`. All three are fixed on `fix/t17-allocation-correctness`.
 3. **Three of Nexus's four routing measurements are constants.** Distance, cost, and confidence are not derived from anything the system knows.
 4. **NetSuite is a P0 lie of omission.** A registry slot, a comment about a past bug, and 345 lines of conflict resolution with no connector behind them. Any "we support NetSuite" claim is currently unsupportable.
 5. **Shopify is the counter-example.** It proves the team can build real integrations when scoped to one system — the connector framework works and is used (`WebhookIntegrationController`, `IntegrationHubController`, `BatchJobService`). The routing gap is about algorithm depth, not architectural incapacity.
+
+---
+
+## 8. T-17 Status — Re-Audited 2026-10-01
+
+This section supersedes the T-17 status as stated in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md) and every doc that inherits its "do not lead with routing" conclusion.
+
+### What changed
+
+| Date | Commit | Effect on T-17 |
+|------|--------|-----------------|
+| 2026-09-27 | `da7bb5e` | T-17 documented as **open P0**; three defects catalogued from source |
+| 2026-09-05 | `0b91a0a` | Shared inventory pool + auto-allocation on confirm — first partial stock-awareness, spread across `InventoryRepository`, `InventoryService`, `OrderRoutingService`, `OrderService`, `BrokeringService`. Defects A/B/C survive |
+| 2026-09-08 | `90bde84` | Per-order brokering transactions, null-safe inventory reads, stock consumption on winning node — again touching `OrderRoutingService`. Still not a fix |
+| 2026-10-01 | `5619719` | `BrokeringServiceTest` — 12 cases over the enqueue→scheduler→allocate chain; JDK 17 enforcer |
+| 2026-10-01 | `a7ea7d2` | **Stock-aware allocation inside `OrderRoutingService`** — defects A, B, C fixed at the source |
+| 2026-10-01 | `cac85c8` | Shortfalls surfaced as `PARTIALLY_ALLOCATED`/`FAILED` instead of being confirmed anyway |
+
+**`BrokeringService` is a queue, not a second allocator.** It is a persisted work queue with `WAITING`/`RUNNING` states, priority processing, and `NxBrokeringQueue` persistence (see §3, line 232). Every allocation it performs is a call to `orderRoutingService.allocateOrder(...)`. It therefore inherits whatever correctness the router has — it cannot be "more correct" than the engine underneath it.
+
+### T-17 is fixed on a branch — not on `main`
+
+All three catalogued defects are unresolved **on `main`** — two verbatim-live (A, C), one mitigated but ungated (B, see the status table below). They are all fixed on branch `fix/t17-allocation-correctness` (worktree `nexus-t17`), commits `a7ea7d2` + `cac85c8`:
+
+- `OrderRoutingService` allocates **stock-aware**, capping every node at real per-SKU availability.
+- Shortfalls land as `PARTIALLY_ALLOCATED` / `FAILED` (`cac85c8`) rather than being confirmed as allocated.
+- The incapable-node `.findFirst()` fallback is gone; unfulfillable demand is flagged, not force-assigned.
+- `OrderRoutingServiceTest` grew from 5 tests / 180 lines on `main` to **21 tests / 586 lines**, covering the acceptance criteria in this section.
+
+Verified on that branch: **`mvn clean test`, JDK 17 — 768 tests, 0 failures, 0 errors, 0 skipped.**
+
+### Why the fix had to go into the router
+
+> **Corrected 2026-10-01.** An earlier draft of this section recommended making `confirmOrder` prefer `BrokeringService`. That advice was wrong on two counts, and is **withdrawn**.
+>
+> First, it would not have worked: `BrokeringService.processQueueEntry` (`BrokeringService.java:264`) calls `orderRoutingService.allocateOrder(...)` at `BrokeringService.java:310` on the branch, so "prefer brokering" re-enters the very same defective code. `manualBrokeringRun` (`:225`) calls it too — there is no brokering entry point that avoids the router. It would have relabelled the bugs, not fixed them.
+>
+> Second, even had it worked, it would have been the wrong layer — for the wrong reason. The correct reason is not that brokering "bypasses the DOM routing engine" (it does not; it invokes it). It is that `OrderRoutingService` is the *only* allocator, so a fix anywhere else is a fix that leaves the engine broken.
+
+**Recommended action: merge `fix/t17-allocation-correctness`.** The fix is already in the right layer — the router keeps its strategies and gains stock correctness. There is no call-reordering, no gating, and no second path required.
+
+### How `main` reaches the defective engine
+
+`OrderService.confirmOrder` (`OrderService.java:274-310`) allocates inline:
+
+```java
+AllocationResult result = orderRoutingService.allocateOrder(request);   // :286  the only allocator
+allocated = "ALLOCATED".equals(result.getStatus())
+        && !result.getAllocations().isEmpty()
+        && result.getAllocations().stream().allMatch(a -> "ALLOCATED".equals(a.getStatus()));
+// ...
+if (!allocated) {
+    order.setStatus("CONFIRMED");
+    brokeringService.enqueueOrder(id, "NORMAL");                        // :305  enqueue for retry
+}
+```
+
+Because T-17's defects produce rows that are *individually* `ALLOCATED`, the `allMatch` check **accepts** the corrupt result, so the order is confirmed and the queue is never populated.
+
+The enqueue at `:305` is a **retry** path, not a better one. When it does run, `BrokeringService` calls the same `orderRoutingService.allocateOrder(...)` — so the defect is reachable from both entry points. There is no order of calls that avoids it.
+
+### Defect status against `main`'s `OrderRoutingService`
+
+> Line references below are against `main`, where all three defects are present. On `fix/t17-allocation-correctness` all three are fixed — see the table in that branch's copy of this doc.
+
+| Defect | Location | Status | Evidence |
+|--------|----------|--------|----------|
+| **A — N× over-allocation on rule path** | `:230-235` → `buildAllocation` `:643` | 🔴 **Live** | Loop over `targetNodeIds` calls `buildAllocation(...)` per node with no stock check; `quantityAllocated(qty)` uses the full order quantity. A 3-node rule still yields 3 full-order allocations. |
+| **B — unchecked split on AI path** | `:281` | 🟡 **Mitigated, not fixed** | `canFulfill`/`canFulfillAny` now feed the score (`:257-266`, +40/+10/−50), but there is no hard gate — a node scored −50 still receives quantity and is marked `ALLOCATED` at `:289`. |
+| **C — incapable-node fallback** | `:416-420` | 🔴 **Live** | `.filter(wh -> canFulfill(...)).findFirst().orElse(warehouses.get(0))`, then `status("ALLOCATED")` with the full order quantity. |
+
+### Updated verdict
+
+- **T-17 is open on `main` and closed on `fix/t17-allocation-correctness`.** Two of three defects are verbatim-present at the cited lines on `main`; the third is mitigated but ungated. The branch fixes all three in the router and passes 768 tests.
+- **Do not re-implement.** Merge `fix/t17-allocation-correctness`. There is no second path to route through — `BrokeringService` is a queue over the same engine — so a call-ordering workaround is not available. See the withdrawn recommendation above.
+- **The "do not lead with routing" conclusion no longer stands as a blocker** once the branch is merged. On `main` there is a single allocator whose guarantee is wrong, reached from both the confirm path and the retry queue — it fails silently under load, which is a worse demo risk than a known gap. After the merge, routing is stock-correct and becomes a legitimate demo strength.
+- **T-14 (stock-aware allocator depth) is still genuinely open, even after the T-17 merge.** `OrderRoutingService` does not implement HotWax's 11 allocation dimensions; the T-17 fix closes correctness, not depth. Do not conflate T-14 with T-17.
+
+### Required acceptance (unchanged)
+
+1. `sum(quantityAllocated) == sum(demand)`, or a backorder is raised — enforced in code, asserted at the persistence boundary.
+2. No `ALLOCATED` status without a successful stock check, on **any** strategy.
+3. Split orders route to capable nodes or flag backorder — never to an arbitrary fallback.
+4. Property-based suite: 0-node, 1-node, exact-fit, split-required, oversubscribed, no-capable-node.
+
+> **Coverage of the existing tests.** `BrokeringServiceTest` (12 cases) covers the brokering path only. On `main`, `OrderRoutingServiceTest` is 5 tests / 180 lines and does **not** exercise defects A–C, so the live bugs are unguarded. On `fix/t17-allocation-correctness` that file is **21 tests / 586 lines** and covers the acceptance criteria above.

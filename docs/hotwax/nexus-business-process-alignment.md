@@ -181,8 +181,8 @@ Each business process below is a **real operational flow** a HotWax client runs.
 4. **The Shopify limitation:** if a store is the **last location with inventory, Shopify won't natively allow rerouting** → HotWax is building a workaround (flag order in Shopify POS → OMS picks it up → reroutes)
 5. **Two approaches being evaluated:** (a) real-time API call from Shopify POS to OMS, or (b) meta-field flag synced in 10–15 min → OMS reads and reassigns
 
-**Nexus status:** ⚠ **Withdrawn — was rated "covered and stronger."** This conclusion was inferred from the Rails meeting, but the source-code audit showed the opposite: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, brokering, distance ranking), while Nexus's allocation path has three live defects (T-17) and lacks that depth (T-14). HotWax's "last location with inventory" behavior is a *Shopify* constraint they work around — not a HotWax routing gap.
-- **Action:** Treat routing as a P0 blocker, not a differentiator. See §9 note in [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), T-14/T-17 in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md).
+**Nexus status:** ⚠ **Withdrawn — was rated "covered and stronger."** This conclusion was inferred from the Rails meeting, but the source-code audit showed the opposite: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, brokering, distance ranking), while Nexus's `OrderRoutingService` lacks that depth (T-14) and, **on `main`, has live correctness defects (T-17)** — DOM rule over-allocation, an AI path that splits quantity without a stock check, and a fallback that allocates to a node just proven incapable, with `OrderService.confirmOrder` accepting the corrupt result. HotWax's "last location with inventory" behavior is a *Shopify* constraint they work around — not a HotWax routing gap.
+- **Action:** Treat routing *depth* as a P0 blocker, not a differentiator. **Correctness is not a blocker once `fix/t17-allocation-correctness` merges** (commits `a7ea7d2` + `cac85c8`) — merge it; there is no alternative allocator to route around (`BrokeringService` is a queue over the same engine). See §9 note in [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), T-14/T-17 in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md).
 
 ---
 
@@ -214,12 +214,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 6. **Field-level mapping control** (gross vs. rate)
 7. **Sync-status surfacing** on order pages
 
-**Nexus status:** 🟡 **Partial.** Nexus has webhooks/Kafka events, but needs:
-- **Conflict detection** (stale flags, versioning, locks) — prevent silent overwrites
-- **Idempotent, retryable sync jobs** + recovery job
-- **Reconciliation reporting** (pending/queued/completed)
-- **Field-level mapping control**
-- **Sync-status surfacing** on order pages
+**Nexus status:** ✅ **Built.** Webhooks/Kafka events + **conflict detection** (`SyncConflictService` — stale flags, versioning, locks), **idempotent retryable sync jobs** (`IdempotencyService`, `WebhookDedupLedgerService`), **CDC** (`CDCProcessor`), **reconciliation reporting**, **field-level mapping control**, and **sync-status surfacing** on order pages. See `nexus-oms-backend/src/main/java/com/nexus/oms/service/SyncConflictService.java`.
 
 ---
 
@@ -263,7 +258,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 3. Order debugging, reconciliation, test validation via AI agents
 4. **API-key (internal)** + **OAuth/SSO (client-facing)**
 
-**Nexus status:** 🟡 **Partial.** Nexus has an AI platform, but needs an **MCP server** exposing OMS tools. P1 strategic gap.
+**Nexus status:** 🟡 **Partial — the scaffold shipped, the bridge did not.** `McpController` (`/mcp/execute`, `/mcp/tools`, `/mcp/agents/budgets`, `/mcp/agents/{name}/usage`) and `McpToolExecutor` expose the tool registry (`NxMcpTool`) and per-agent budgets (`NxMcpAgentBudget`), but execution stops at `McpToolExecutor.executeViaBridge` — a **placeholder that returns the resolved endpoint descriptor instead of invoking the service** (`:208-216`, its own comment says "In production, call the underlying service"). So tools are registerable and budgeted, but **not actually executable**. Also: MCP is *not* wired into `AiAgentService`/`AiAgentController`; `McpController` has no `AiAgentService` dependency. Remaining work: implement the bridge, and bind MCP tools to agent execution.
 
 ---
 
@@ -306,14 +301,14 @@ Each business process below is a **real operational flow** a HotWax client runs.
 | 8 | BOPIS + DoorDash store ops | 🟡 Partial | P0 |
 | 9 | Order routing (capacity + reroute) | ⚠ **Defective** | **P0** (T-14, T-17) |
 | 10 | Serialized / RFID | ❌ Missing | P1 |
-| 11 | Bidirectional sync + conflict handling | 🟡 Partial | P1 |
+| 11 | Bidirectional sync + conflict handling | ✅ Covered | — |
 | 12 | Returns / exchange complexity | 🟡 Partial | P1 |
 | 13 | 3PL / WES operations | ✅ **Stronger** | — |
 | 14 | MCP / AI-agent access | 🟡 Partial | P1 |
 | 15 | International routing | ✅ Covered | — |
 | 16 | Shopify fulfillment → NetSuite | ✅ Covered | — |
 
-**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), and Shopify→NetSuite (16)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, the **integration/data-integrity layer (11)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
+**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), Shopify→NetSuite (16), and bidirectional sync (11)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, **MCP/AI-agent access (14, P1 — the tool registry ships but execution is a placeholder)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
 
 ---
 

@@ -16,10 +16,20 @@
 | T-14 | Stock-aware multi-warehouse allocation engine | **P0** | `OrderRoutingService.java:404-640` vs `InventorySourceSelector.sql.ftl` |
 | T-15 | NetSuite ERP connector (does not exist) | **P0** | `ConnectorFactoryConfiguration.java:64` is a placeholder only |
 | T-16 | Wire orphaned carrier connectors into rates + labels | **P0** | `FedExConnector` registered at `:93`, never called |
-| T-17 | Allocation correctness bugs (N× over-allocation) | **P0** | `OrderRoutingService.java:232`, `:272` |
+| T-17 | Allocation correctness bugs (N× over-allocation, unchecked AI split, incapable-node fallback) | **P0** | `OrderRoutingService.java:232`, `:272`, `:418-420` |
 | T-18 | Routing rule expressiveness (3 conditions → 11+) | P1 | `RuleConditionEvaluator.java:40-72` |
 
 > **Why these matter:** T-14, T-15, T-16, and T-17 are P0 because they are not "missing features" — they are **actively incorrect or entirely absent** in code that already exists and returns `200 OK`. A customer splitting an order across two warehouses today gets double-allocated inventory. A customer told they have NetSuite integration has a registry entry and nothing else. T-18 is P1 because it is a depth gap, not a correctness one.
+
+> ## ⚠️ Status re-verified 2026-10-01
+>
+> **T-17 is still an open P0 on `main` — and a verified fix now exists on a branch.** Since this doc was written, partial stock-awareness and queue plumbing landed (`0b91a0a`, `90bde84`) along with `BrokeringServiceTest` (`5619719`). The defects catalogued below remain unresolved in `OrderRoutingService` **on `main`** (two verbatim-live, one mitigated but ungated), and `OrderService.confirmOrder` (`:286`) still accepts its corrupt output.
+>
+> **A complete fix is already built and verified on `fix/t17-allocation-correctness`** (worktree `nexus-t17`, commits `a7ea7d2` + `cac85c8`). It makes `OrderRoutingService` stock-aware, caps every allocation at real availability, routes shortfalls to `PARTIALLY_ALLOCATED`/`FAILED` instead of `CONFIRMED`, and has a full regression suite. Verified: **768 tests, 0 failures** (`mvn clean test`, JDK 17).
+>
+> **Recommended action: merge `fix/t17-allocation-correctness` — do not re-implement.** The fix belongs *in the router* because `OrderRoutingService` is the **only** allocator: `BrokeringService` is a persisted work queue whose every allocation is a call to `orderRoutingService.allocateOrder(...)`, so there is no alternative path to route through and no call ordering that avoids the defect. **Defect-by-defect status: [`nexus-order-routing-comparison.md` §8](./nexus-order-routing-comparison.md#8-t-17-status--re-audited-2026-10-01).**
+>
+> **T-14 and T-18 remain genuinely open.** Do not read the brokering queue work as progress on T-14 — `OrderRoutingService` still does not implement HotWax's allocation dimensions.
 
 ---
 

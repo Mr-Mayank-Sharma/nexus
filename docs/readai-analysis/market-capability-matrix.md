@@ -49,7 +49,7 @@ This matrix maps the **operational capabilities** that real HotWax customers act
 | Pick waves & shipping-priority filters | SIMKHAI | ❌ | No wave/pick planning module |
 | Pick tickets & customer receipts (mobile/Epson) | Lovers, SIMKHAI | ❌ | No printing/receipt subsystem |
 | Fulfillment routing / order brokering | gorjana, Rails, RFID, SoC | 🟡 | **Superseded** — a routing engine does ship, but the allocation path has live defects (T-17) and less depth than HotWax's stock-aware SQL allocator (T-14). Not demo-ready; see [`../hotwax/nexus-order-routing-comparison.md`](../hotwax/nexus-order-routing-comparison.md) |
-| Rejected-order rerouting | gorjana, Rails | 🟡 | Fallback/override exists but is not stock-checked — a rejected order can land on a warehouse that cannot fulfill |
+| Rejected-order rerouting | gorjana, Rails | 🟡 | **Superseded** — manual override exists, but it routes through the same unfixed `OrderRoutingService` allocation path as T-17, so a rerouted order is not stock-checked either. See [`../hotwax/nexus-order-routing-comparison.md`](../hotwax/nexus-order-routing-comparison.md) |
 | Fulfillment status counts (pending/queued/completed) | Shopify/NetSuite | ❌ | No fulfillment sync dashboard |
 | Days-in-transit / transit-time filtering | SoC | ❌ | No transit-time model |
 
