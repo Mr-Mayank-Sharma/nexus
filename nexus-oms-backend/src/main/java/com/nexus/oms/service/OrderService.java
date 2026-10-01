@@ -296,10 +296,19 @@ public class OrderService {
         }
 
         if (!allocated) {
-            // Order is still PENDING/CREATED here — mark CONFIRMED first, then enqueue
-            // for brokering so the scheduler allocates it. (enqueue guard requires
-            // PENDING/CONFIRMED, so the status must be set before the call.)
-            order.setStatus("CONFIRMED");
+            // Routing already persisted its honest outcome (PARTIALLY_ALLOCATED / FAILED), and
+            // `order` was re-read from the DB after the allocation above. Do NOT stomp that to
+            // CONFIRMED: T-17 made these states the truthful record of a short allocation, and
+            // overwriting them here re-hides the shortfall from every downstream consumer
+            // (dashboard, Orders UI, AI agent queue, backorder exception) on the main
+            // confirmation path — the one path every order takes.
+            // CONFIRMED is still right when routing had no opinion: auto-allocation is off, or
+            // allocateOrder threw before saving anything (order is still PENDING).
+            boolean routingReportedShortfall = "PARTIALLY_ALLOCATED".equals(order.getStatus())
+                    || "FAILED".equals(order.getStatus());
+            if (!routingReportedShortfall) {
+                order.setStatus("CONFIRMED");
+            }
             order = orderRepository.save(order);
             try {
                 brokeringService.enqueueOrder(id, "NORMAL");

@@ -209,7 +209,18 @@ export default function AiOrderRoutingPage() {
                 <tbody className="divide-y divide-[var(--border-subtle)]">
                   {queueItems.map(order => (
                     <tr key={order.id} className="enterprise-table-row">
-                      <td className="px-4 py-3 text-sm font-mono font-medium text-[var(--color-primary)]">{order.orderNumber}</td>
+                      <td className="px-4 py-3 text-sm font-mono font-medium text-[var(--color-primary)]">
+                        <div>{order.orderNumber}</div>
+                        {order.needsAttention && (
+                          <span
+                            title={order.attentionReason}
+                            className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-sans font-semibold uppercase text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)]"
+                          >
+                            <AlertTriangle className="w-3 h-3" />
+                            {order.status === 'FAILED' ? 'Alloc failed' : 'Partial'}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-[var(--text-primary)]">{order.customer}</td>
                       <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)]">{order.items}</td>
                       <td className="px-4 py-3 text-right text-sm font-medium text-[var(--text-primary)]">

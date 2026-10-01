@@ -50,8 +50,13 @@ public class BrokeringService {
         NxOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", orderId));
 
-        if (!"PENDING".equals(order.getStatus()) && !"CONFIRMED".equals(order.getStatus())) {
-            throw new BadRequestException("Order must be PENDING or CONFIRMED to enqueue for brokering");
+        // PARTIALLY_ALLOCATED / FAILED are accepted deliberately: those are precisely the orders
+        // that still need brokering, and OrderService.confirmOrder now preserves the status
+        // instead of hiding it behind CONFIRMED. Without them here the enqueue would throw and
+        // every short-allocated order would be stranded with no queue entry and no retry.
+        if (!List.of("PENDING", "CONFIRMED", "PARTIALLY_ALLOCATED", "FAILED").contains(order.getStatus())) {
+            throw new BadRequestException(
+                    "Order must be PENDING, CONFIRMED, PARTIALLY_ALLOCATED, or FAILED to enqueue for brokering");
         }
 
         List<NxBrokeringQueue> existing = brokeringQueueRepository.findByOrderId(orderId);
@@ -262,16 +267,34 @@ public class BrokeringService {
             return "SKIPPED";
         }
 
-        // Skip orders already allocated elsewhere (e.g. manual allocate) — prevents double allocation
+        // Skip orders already allocated elsewhere (e.g. manual allocate) — prevents double allocation.
+        //
+        // PARTIALLY_ALLOCATED is the exception, and it has to be handled in BOTH directions:
+        //  - It must not be stamped ALLOCATED. Routing left a backorder, so the order is short
+        //    and claiming success here hid real shortfalls behind a green queue entry.
+        //  - It must also not fall through to allocateOrder. Routing only persists item-level
+        //    allocatedNodeId/allocatedQty when the whole order lands in a single node, so a
+        //    partial order's covered quantity exists in inventory with no item-level record.
+        //    Re-running allocateOrder recomputes demand from the full order lines and would
+        //    reserve the covered lines a second time — a genuine double reservation.
+        // So it is recorded as FAILED, inside the existing queue vocabulary so it still appears
+        // in getQueueStats, with the reason attached. Allocating only the remainder is a
+        // separate feature (partial re-allocation), not something to fake here.
         NxOrder queuedOrder = orderRepository.findById(queueEntry.getOrderId()).orElse(null);
         if (queuedOrder != null && ("ALLOCATED".equals(queuedOrder.getStatus()) || queuedOrder.getAllocatedNode() != null)) {
-            queueEntry.setStatus("ALLOCATED");
+            boolean partial = "PARTIALLY_ALLOCATED".equals(queuedOrder.getStatus());
+            queueEntry.setStatus(partial ? "FAILED" : "ALLOCATED");
+            if (partial) {
+                queueEntry.setFailureReason(
+                        "Partially allocated: backordered lines remain. Covered lines stay reserved; "
+                                + "re-routing would double-reserve them, so the shortfall needs manual resolution.");
+            }
             queueEntry.setExitedAt(LocalDateTime.now());
             if (queuedOrder.getAllocatedNode() != null) {
                 queueEntry.setAllocatedNodeId(queuedOrder.getAllocatedNode());
             }
             brokeringQueueRepository.save(queueEntry);
-            return "ALLOCATED";
+            return partial ? "FAILED" : "ALLOCATED";
         }
 
         try {

@@ -109,7 +109,7 @@ HotWax's Moki is live. Nexus needs an MCP server. **Close this in Track A4.**
 HotWax wins here today, on two separate axes:
 
 1. **Allocator depth.** HotWax's SQL allocator handles facility caps, substitute-item resolution, shipment-group brokering, and distance ranking. Nexus's DOM path has no equivalent.
-2. **Allocation correctness.** On `main`, Nexus breaks allocation three ways: the DOM rule path multiplies full order quantity across candidate nodes, the AI path splits quantity arithmetically after scoring without re-checking stock, and a fallback allocates to a node `canFulfill` just rejected — and `OrderService.confirmOrder` accepts the corrupt result (T-17). **Fixed on `fix/t17-allocation-correctness`** (commits `a7ea7d2` + `cac85c8`, 768 tests green); merge it.
+2. **Allocation correctness.** On `main`, Nexus breaks allocation three ways: the DOM rule path multiplies full order quantity across candidate nodes, the AI path splits quantity arithmetically after scoring without re-checking stock, and a fallback allocates to a node `canFulfill` just rejected — and `OrderService.confirmOrder` accepts the corrupt result (T-17). **Fixed and merged into `main`** (commits `a7ea7d2` + `cac85c8`, 768 tests green).
 
 Correctness is a **P0 blocker on `main` today** and clears on merge — it is not a reason to route around `OrderRoutingService`, since `BrokeringService` is a queue over that same engine. Depth (T-14) remains a genuine gap. **Merge T-17 and close T-14 in Track A1; T-18 (rule expressiveness) is P1.** See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
 
@@ -125,7 +125,7 @@ Lead every demo with:
 2. **Honest data** (auditable, no silent overwrites or sync conflicts)
 3. **EDI** (native X12)
 4. **3PL billing + client portal**
-5. ~~DOM routing~~ — **held back.** Routing is not demo-ready, but the reason changed: correctness (T-17) clears on merge of `fix/t17-allocation-correctness`; what still holds it back is depth (T-14).
+5. ~~DOM routing~~ — **held back.** Routing is not demo-ready, but the reason changed: correctness (T-17) has landed on `main`; what still holds it back is depth (T-14).
 
 ### Phase 2 — Close the Gaps (8–12 weeks)
 Build the P0/P1 gaps from the market-readiness plan:

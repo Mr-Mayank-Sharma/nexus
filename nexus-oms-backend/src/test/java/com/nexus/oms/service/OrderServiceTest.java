@@ -310,6 +310,104 @@ class OrderServiceTest {
     }
 
     @Test
+    void testConfirmOrder_WhenAllocationPartial_PreservesPartialStatus() {
+        when(routingConfigRepository.findByTenantId(tenantId)).thenReturn(Optional.of(autoAllocationConfig()));
+
+        NxOrder partial = NxOrder.builder()
+                .id(orderId)
+                .tenantId(tenantId)
+                .status("PENDING")
+                .build();
+
+        // Routing runs, decides the order can only be partly covered, and persists that verdict.
+        AllocationResult result = new AllocationResult();
+        result.setOrderId(orderId);
+        result.setStatus("PARTIALLY_ALLOCATED");
+        result.setAllocations(List.of(allocationWithStatus("ALLOCATED")));
+        when(orderRoutingService.allocateOrder(any(AllocationRequest.class))).thenReturn(result);
+
+        // The re-read after allocation reflects what routing persisted.
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(partial))
+                .thenReturn(Optional.of(orderWithStatus("PARTIALLY_ALLOCATED")));
+
+        when(orderRepository.save(any(NxOrder.class))).thenAnswer(i -> i.getArgument(0));
+        when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));
+
+        OrderResponse response = orderService.confirmOrder(orderId);
+
+        // The whole point: a short allocation must not be reported as a clean confirmation,
+        // or the backorder stops existing everywhere downstream.
+        assertEquals("PARTIALLY_ALLOCATED", response.getStatus());
+        verify(brokeringService).enqueueOrder(orderId, "NORMAL");
+    }
+
+    @Test
+    void testConfirmOrder_WhenAllocationFailed_PreservesFailedStatus() {
+        when(routingConfigRepository.findByTenantId(tenantId)).thenReturn(Optional.of(autoAllocationConfig()));
+
+        NxOrder pending = NxOrder.builder()
+                .id(orderId)
+                .tenantId(tenantId)
+                .status("PENDING")
+                .build();
+
+        AllocationResult result = new AllocationResult();
+        result.setOrderId(orderId);
+        result.setStatus("FAILED");
+        result.setAllocations(List.of(allocationWithStatus("FAILED")));
+        when(orderRoutingService.allocateOrder(any(AllocationRequest.class))).thenReturn(result);
+
+        when(orderRepository.findById(orderId))
+                .thenReturn(Optional.of(pending))
+                .thenReturn(Optional.of(orderWithStatus("FAILED")));
+
+        when(orderRepository.save(any(NxOrder.class))).thenAnswer(i -> i.getArgument(0));
+        when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));
+
+        OrderResponse response = orderService.confirmOrder(orderId);
+
+        assertEquals("FAILED", response.getStatus());
+    }
+
+    @Test
+    void testConfirmOrder_WhenAllocationThrows_FallsBackToConfirmed() {
+        when(routingConfigRepository.findByTenantId(tenantId)).thenReturn(Optional.of(autoAllocationConfig()));
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(testOrder));
+        when(orderRoutingService.allocateOrder(any(AllocationRequest.class)))
+                .thenThrow(new RuntimeException("routing blew up before saving anything"));
+        when(orderRepository.save(any(NxOrder.class))).thenAnswer(i -> i.getArgument(0));
+        when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));
+
+        OrderResponse response = orderService.confirmOrder(orderId);
+
+        // Nothing was persisted by routing, so there is no shortfall to report — CONFIRMED stands.
+        assertEquals("CONFIRMED", response.getStatus());
+    }
+
+    private NxRoutingConfig autoAllocationConfig() {
+        return NxRoutingConfig.builder()
+                .tenantId(tenantId)
+                .enableAutoAllocation(true)
+                .build();
+    }
+
+    private NxOrder orderWithStatus(String status) {
+        return NxOrder.builder()
+                .id(orderId)
+                .tenantId(tenantId)
+                .status(status)
+                .build();
+    }
+
+    private NxOrderAllocation allocationWithStatus(String status) {
+        NxOrderAllocation allocation = new NxOrderAllocation();
+        allocation.setOrderId(orderId);
+        allocation.setStatus(status);
+        return allocation;
+    }
+
+    @Test
     void testCancelOrder_WithoutAllocation_Cancels() {
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(testOrder));
         when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));

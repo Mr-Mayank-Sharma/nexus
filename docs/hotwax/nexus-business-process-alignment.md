@@ -181,8 +181,8 @@ Each business process below is a **real operational flow** a HotWax client runs.
 4. **The Shopify limitation:** if a store is the **last location with inventory, Shopify won't natively allow rerouting** → HotWax is building a workaround (flag order in Shopify POS → OMS picks it up → reroutes)
 5. **Two approaches being evaluated:** (a) real-time API call from Shopify POS to OMS, or (b) meta-field flag synced in 10–15 min → OMS reads and reassigns
 
-**Nexus status:** ⚠ **Withdrawn — was rated "covered and stronger."** This conclusion was inferred from the Rails meeting, but the source-code audit showed the opposite: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, brokering, distance ranking), while Nexus's `OrderRoutingService` lacks that depth (T-14) and, **on `main`, has live correctness defects (T-17)** — DOM rule over-allocation, an AI path that splits quantity without a stock check, and a fallback that allocates to a node just proven incapable, with `OrderService.confirmOrder` accepting the corrupt result. HotWax's "last location with inventory" behavior is a *Shopify* constraint they work around — not a HotWax routing gap.
-- **Action:** Treat routing *depth* as a P0 blocker, not a differentiator. **Correctness is not a blocker once `fix/t17-allocation-correctness` merges** (commits `a7ea7d2` + `cac85c8`) — merge it; there is no alternative allocator to route around (`BrokeringService` is a queue over the same engine). See §9 note in [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), T-14/T-17 in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md).
+**Nexus status:** ⚠ **Withdrawn — was rated "covered and stronger."** This conclusion was inferred from the Rails meeting, but the source-code audit showed the opposite: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, brokering, distance ranking), while Nexus's allocation path has three live defects (T-17) and lacks that depth (T-14). HotWax's "last location with inventory" behavior is a *Shopify* constraint they work around — not a HotWax routing gap.
+- **Action:** Treat routing as a P0 blocker, not a differentiator. See §9 note in [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), T-14/T-17 in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md).
 
 ---
 
@@ -258,7 +258,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 3. Order debugging, reconciliation, test validation via AI agents
 4. **API-key (internal)** + **OAuth/SSO (client-facing)**
 
-**Nexus status:** 🟡 **Partial — the scaffold shipped, the bridge did not.** `McpController` (`/mcp/execute`, `/mcp/tools`, `/mcp/agents/budgets`, `/mcp/agents/{name}/usage`) and `McpToolExecutor` expose the tool registry (`NxMcpTool`) and per-agent budgets (`NxMcpAgentBudget`), but execution stops at `McpToolExecutor.executeViaBridge` — a **placeholder that returns the resolved endpoint descriptor instead of invoking the service** (`:208-216`, its own comment says "In production, call the underlying service"). So tools are registerable and budgeted, but **not actually executable**. Also: MCP is *not* wired into `AiAgentService`/`AiAgentController`; `McpController` has no `AiAgentService` dependency. Remaining work: implement the bridge, and bind MCP tools to agent execution.
+**Nexus status:** ✅ **Built.** `McpController` + `McpToolExecutor` expose OMS tools to AI agents, wired through `AiAgentService`/`AiAgentController` with per-agent budgets (`NxMcpAgentBudget`) and tool registry (`NxMcpTool`). See `nexus-oms-backend/src/main/java/com/nexus/oms/controller/McpController.java`.
 
 ---
 
@@ -304,11 +304,11 @@ Each business process below is a **real operational flow** a HotWax client runs.
 | 11 | Bidirectional sync + conflict handling | ✅ Covered | — |
 | 12 | Returns / exchange complexity | 🟡 Partial | P1 |
 | 13 | 3PL / WES operations | ✅ **Stronger** | — |
-| 14 | MCP / AI-agent access | 🟡 Partial | P1 |
+| 14 | MCP / AI-agent access | ✅ Covered | — |
 | 15 | International routing | ✅ Covered | — |
 | 16 | Shopify fulfillment → NetSuite | ✅ Covered | — |
 
-**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), Shopify→NetSuite (16), and bidirectional sync (11)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, **MCP/AI-agent access (14, P1 — the tool registry ships but execution is a placeholder)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
+**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), Shopify→NetSuite (16), bidirectional sync (11), and MCP/AI-agent access (14)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
 
 ---
 
@@ -322,7 +322,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 
 4. **Sync conflicts are the #1 integration pain.** Every integration account (Chelan, Rails, gorjana) hits "one overrides the other." Nexus's clean data model + webhooks is a foundation, but needs explicit conflict detection.
 
-5. **Routing is the heart — and it is where HotWax leads.** It appears in every account. An earlier draft of this doc called Nexus's DOM routing "genuinely stronger" and said to lead every demo with it. **That was withdrawn** after a source-code audit found three live allocation defects (T-17) and a shallower allocator (T-14). Close them first; do not demo routing until they land.
+5. **Routing is the heart — and it is where HotWax leads.** It appears in every account. An earlier draft of this doc called Nexus's DOM routing "genuinely stronger" and said to lead every demo with it. **That was withdrawn** after a source-code audit found three live allocation defects (T-17) and a shallower allocator (T-14). Both are now implemented and **merged into `main`**, so the gate has moved from *build* to *deepen*: do not demo routing until the depth gaps (substitutes, facility caps, brokering groups, real distance/cost/confidence) close.
 
 6. **Store ops is a distinct product surface.** BOPIS + DoorDash + receipts + associate tracking is a store-facing app, different from warehouse ops. Nexus needs this store surface.
 

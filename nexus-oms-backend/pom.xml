@@ -24,6 +24,7 @@
         <logstash.version>7.4</logstash.version>
         <jacoco.version>0.8.11</jacoco.version>
         <owasp.version>9.0.9</owasp.version>
+        <enforcer.version>3.4.1</enforcer.version>
         <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
     </properties>
     <dependencies>
@@ -178,6 +179,34 @@
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${enforcer.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java-version</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[17,18)</version>
+                                    <message>
+This project targets Java 17. Building or testing on another JDK fails with confusing
+Mockito errors such as "Mockito cannot mock this class" - the bundled Mockito/Byte Buddy
+cannot instrument a JVM newer than the project targets.
+Point JAVA_HOME at a JDK 17 install, e.g. export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+CI pins Java 17 in .github/workflows/ci.yml.
+                                    </message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
