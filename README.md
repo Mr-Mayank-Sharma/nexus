@@ -50,15 +50,15 @@ nexus/
 
 ### Prerequisites
 
-- **Java 17** (required — the build enforces it)
+- Java 17 — the backend targets 17 and the Maven enforcer rejects any other JDK
+  ```bash
+  export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS
+  # Linux: export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+  ```
+  Verify with `mvn -version`; Homebrew's `mvn` otherwise picks its own bundled
+  JDK (currently 26), which compiles fine but breaks every Mockito mock at runtime.
 - Node.js 18+
 - Docker & Docker Compose
-
-Point `JAVA_HOME` at a JDK 17 install:
-
-```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 17)   # macOS
-```
 
 The backend build runs `maven-enforcer-plugin` at `validate` and fails immediately on any other
 JDK, because Mockito/Byte Buddy bundled with this project cannot instrument a newer JVM — the
@@ -73,7 +73,7 @@ docker compose up -d postgres redis kafka
 ### 2. Start the backend
 
 ```bash
-java -jar nexus-oms-backend/target/oms-1.0.0.jar \
+$JAVA_HOME/bin/java -jar nexus-oms-backend/target/oms-1.0.0.jar \
   --spring.jpa.hibernate.ddl-auto=validate
 ```
 

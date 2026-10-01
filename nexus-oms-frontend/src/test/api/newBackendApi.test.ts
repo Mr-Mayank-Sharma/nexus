@@ -26,6 +26,12 @@ import {
   fetchCarrierRates,
   generateLabel,
   generateBulkLabels,
+  generateCarrierLabel,
+  validateCarrierLabel,
+  downloadLabel,
+  fetchCarrierLabelConfigs,
+  upsertCarrierLabelConfig,
+  fetchCarrierAdapters,
   fetchLabels,
   fetchManifests,
   createManifest,
@@ -405,10 +411,10 @@ describe('New Backend API', () => {
 
   // ─── Labels & Manifests ────────────────────────────────────
   describe('generateLabel', () => {
-    it('should POST /labels/generate', async () => {
+    it('should POST /labels', async () => {
       const data = { orderId: 'ORD-1', carrier: 'UPS' }
       await generateLabel(data)
-      expect(mockPost).toHaveBeenCalledWith('/labels/generate', data)
+      expect(mockPost).toHaveBeenCalledWith('/labels', data)
     })
 
     it('should return null on error', async () => {
@@ -418,14 +424,93 @@ describe('New Backend API', () => {
   })
 
   describe('generateBulkLabels', () => {
-    it('should POST /labels/generate with bulk flag', async () => {
-      await generateBulkLabels(5)
-      expect(mockPost).toHaveBeenCalledWith('/labels/generate', { bulk: true, count: 5 })
+    it('should POST /labels/bulk with orderId & orderNumber params', async () => {
+      const labels = [{ orderId: 'ORD-1', carrier: 'UPS' }]
+      await generateBulkLabels('ORD-1', 'ORD-1001', labels)
+      expect(mockPost).toHaveBeenCalledWith('/labels/bulk', labels, { params: { orderId: 'ORD-1', orderNumber: 'ORD-1001' } })
     })
 
     it('should return null on error', async () => {
       mockPost.mockRejectedValueOnce(new Error('fail'))
-      expect(await generateBulkLabels(1)).toBeNull()
+      expect(await generateBulkLabels('ORD-1', 'ORD-1001', [])).toBeNull()
+    })
+  })
+
+  describe('generateCarrierLabel', () => {
+    it('should POST /labels/carrier', async () => {
+      const data = { orderId: 'ORD-1', carrier: 'JITSU', serviceType: 'STANDARD' }
+      await generateCarrierLabel(data)
+      expect(mockPost).toHaveBeenCalledWith('/labels/carrier', data)
+    })
+
+    it('should return error body on failure', async () => {
+      mockPost.mockRejectedValueOnce({ response: { data: { message: 'No carrier label config for carrier JITSU' } } })
+      const res = await generateCarrierLabel({})
+      expect(res?.message).toBe('No carrier label config for carrier JITSU')
+    })
+  })
+
+  describe('validateCarrierLabel', () => {
+    it('should GET /labels/:id/validate', async () => {
+      await validateCarrierLabel('LBL-1')
+      expect(mockGet).toHaveBeenCalledWith('/labels/LBL-1/validate')
+    })
+
+    it('should return error body on failure', async () => {
+      mockGet.mockRejectedValueOnce({ response: { data: { message: 'Label not found' } } })
+      const res = await validateCarrierLabel('LBL-1')
+      expect(res?.message).toBe('Label not found')
+    })
+  })
+
+  describe('downloadLabel', () => {
+    it('should GET /labels/:id/download', async () => {
+      await downloadLabel('LBL-1')
+      expect(mockGet).toHaveBeenCalledWith('/labels/LBL-1/download')
+    })
+
+    it('should return error body on failure', async () => {
+      mockGet.mockRejectedValueOnce({ response: { data: { message: 'Label not found' } } })
+      const res = await downloadLabel('LBL-1')
+      expect(res?.message).toBe('Label not found')
+    })
+  })
+
+  describe('fetchCarrierLabelConfigs', () => {
+    it('should GET /carrier-label-config', async () => {
+      await fetchCarrierLabelConfigs()
+      expect(mockGet).toHaveBeenCalledWith('/carrier-label-config')
+    })
+
+    it('should return null on error', async () => {
+      mockGet.mockRejectedValueOnce(new Error('fail'))
+      expect(await fetchCarrierLabelConfigs()).toBeNull()
+    })
+  })
+
+  describe('upsertCarrierLabelConfig', () => {
+    it('should POST /carrier-label-config', async () => {
+      const data = { carrierCode: 'JITSU', adapterName: 'JitsuCarrierAdapter', labelFormat: 'PDF' }
+      await upsertCarrierLabelConfig(data)
+      expect(mockPost).toHaveBeenCalledWith('/carrier-label-config', data)
+    })
+
+    it('should return error body on failure', async () => {
+      mockPost.mockRejectedValueOnce({ response: { data: { message: 'Invalid adapter' } } })
+      const res = await upsertCarrierLabelConfig({})
+      expect(res?.message).toBe('Invalid adapter')
+    })
+  })
+
+  describe('fetchCarrierAdapters', () => {
+    it('should GET /carrier-label-config/adapters', async () => {
+      await fetchCarrierAdapters()
+      expect(mockGet).toHaveBeenCalledWith('/carrier-label-config/adapters')
+    })
+
+    it('should return null on error', async () => {
+      mockGet.mockRejectedValueOnce(new Error('fail'))
+      expect(await fetchCarrierAdapters()).toBeNull()
     })
   })
 

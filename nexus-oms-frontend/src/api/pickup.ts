@@ -1,5 +1,18 @@
 import client from './client'
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export interface PickupOrder {
   id: string
   tenantId: string
@@ -65,55 +78,55 @@ export interface PickupStatusCounts {
 
 export const pickupApi = {
   getPendingPickups: (nodeId: string) =>
-    client.get<PickupOrder[]>(`/pickup/pending/${nodeId}`),
+    unwrap<PickupOrder[]>(client.get<PickupOrder[]>(`/pickup/pending/${nodeId}`)),
 
   getPickupOrder: (id: string) =>
-    client.get<PickupOrder>(`/pickup/${id}`),
+    unwrap<PickupOrder>(client.get<PickupOrder>(`/pickup/${id}`)),
 
   getByPickupCode: (pickupCode: string) =>
-    client.get<PickupOrder>(`/pickup/code/${pickupCode}`),
+    unwrap<PickupOrder>(client.get<PickupOrder>(`/pickup/code/${pickupCode}`)),
 
   getPickupsByPicker: (pickerId: string) =>
-    client.get<PickupOrder[]>(`/pickup/picker/${pickerId}`),
+    unwrap<PickupOrder[]>(client.get<PickupOrder[]>(`/pickup/picker/${pickerId}`)),
 
   getReadyForHandoff: () =>
-    client.get<PickupOrder[]>('/pickup/ready'),
+    unwrap<PickupOrder[]>(client.get<PickupOrder[]>('/pickup/ready')),
 
   getPickupItems: (pickupOrderId: string) =>
-    client.get<PickupOrderItem[]>(`/pickup/${pickupOrderId}/items`),
+    unwrap<PickupOrderItem[]>(client.get<PickupOrderItem[]>(`/pickup/${pickupOrderId}/items`)),
 
   assignPicker: (pickupOrderId: string, pickerId: string, pickerName: string) =>
-    client.post<PickupOrder>(`/pickup/${pickupOrderId}/assign?pickerId=${pickerId}&pickerName=${encodeURIComponent(pickerName)}`),
+    unwrap<PickupOrder>(client.post<PickupOrder>(`/pickup/${pickupOrderId}/assign?pickerId=${pickerId}&pickerName=${encodeURIComponent(pickerName)}`)),
 
   startPicking: (pickupOrderId: string) =>
-    client.post<PickupOrder>(`/pickup/${pickupOrderId}/start`),
+    unwrap<PickupOrder>(client.post<PickupOrder>(`/pickup/${pickupOrderId}/start`)),
 
   pickItem: (itemId: string, quantity: number, notes?: string) =>
-    client.post<PickupOrderItem>(`/pickup/items/${itemId}/pick?quantity=${quantity}${notes ? `&notes=${encodeURIComponent(notes)}` : ''}`),
+    unwrap<PickupOrderItem>(client.post<PickupOrderItem>(`/pickup/items/${itemId}/pick?quantity=${quantity}${notes ? `&notes=${encodeURIComponent(notes)}` : ''}`)),
 
   substituteItem: (itemId: string, substitutedSku: string, quantity: number) =>
-    client.post<PickupOrderItem>(`/pickup/items/${itemId}/substitute?substitutedSku=${substitutedSku}&quantity=${quantity}`),
+    unwrap<PickupOrderItem>(client.post<PickupOrderItem>(`/pickup/items/${itemId}/substitute?substitutedSku=${substitutedSku}&quantity=${quantity}`)),
 
   completePicking: (pickupOrderId: string) =>
-    client.post<PickupOrder>(`/pickup/${pickupOrderId}/complete-picking`),
+    unwrap<PickupOrder>(client.post<PickupOrder>(`/pickup/${pickupOrderId}/complete-picking`)),
 
   packOrder: (pickupOrderId: string) =>
-    client.post<PickupOrder>(`/pickup/${pickupOrderId}/pack`),
+    unwrap<PickupOrder>(client.post<PickupOrder>(`/pickup/${pickupOrderId}/pack`)),
 
   markReadyForHandoff: (pickupOrderId: string) =>
-    client.post<PickupOrder>(`/pickup/${pickupOrderId}/ready`),
+    unwrap<PickupOrder>(client.post<PickupOrder>(`/pickup/${pickupOrderId}/ready`)),
 
   handoffOrder: (pickupOrderId: string) =>
-    client.post<PickupOrder>(`/pickup/${pickupOrderId}/handoff`),
+    unwrap<PickupOrder>(client.post<PickupOrder>(`/pickup/${pickupOrderId}/handoff`)),
 
   collectOrder: (pickupOrderId: string, pod: Partial<ProofOfDelivery>) =>
-    client.post<ProofOfDelivery>(`/pickup/${pickupOrderId}/collect`, pod),
+    unwrap<ProofOfDelivery>(client.post<ProofOfDelivery>(`/pickup/${pickupOrderId}/collect`, pod)),
 
   getPOD: (pickupOrderId: string) =>
-    client.get<ProofOfDelivery>(`/pickup/${pickupOrderId}/pod`),
+    unwrap<ProofOfDelivery>(client.get<ProofOfDelivery>(`/pickup/${pickupOrderId}/pod`)),
 
   getStatusCounts: (nodeId: string) =>
-    client.get<PickupStatusCounts>(`/pickup/status/${nodeId}`),
+    unwrap<PickupStatusCounts>(client.get<PickupStatusCounts>(`/pickup/status/${nodeId}`)),
 }
 
 export default pickupApi

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.repository.*;
+import com.nexus.oms.service.FulfillmentReconciliationService;
 import com.nexus.oms.service.IntegrationStoreService;
 import com.nexus.oms.service.WebhookDedupLedgerService;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ public class ShopifyWebhookService {
     private final NxShopifyWebhookRepository webhookRepository;
     private final ShopifyOrderImportService orderImportService;
     private final WebhookDedupLedgerService dedupLedger;
+    private final FulfillmentReconciliationService fulfillmentReconciliationService;
     private final ObjectMapper objectMapper;
 
     public ShopifyWebhookService(ShopifyClient shopifyClient,
@@ -34,6 +36,7 @@ public class ShopifyWebhookService {
                                   NxShopifyWebhookRepository webhookRepository,
                                   ShopifyOrderImportService orderImportService,
                                   WebhookDedupLedgerService dedupLedger,
+                                  FulfillmentReconciliationService fulfillmentReconciliationService,
                                   ObjectMapper objectMapper) {
         this.shopifyClient = shopifyClient;
         this.storeService = storeService;
@@ -42,6 +45,7 @@ public class ShopifyWebhookService {
         this.webhookRepository = webhookRepository;
         this.orderImportService = orderImportService;
         this.dedupLedger = dedupLedger;
+        this.fulfillmentReconciliationService = fulfillmentReconciliationService;
         this.objectMapper = objectMapper;
     }
 
@@ -88,6 +92,14 @@ public class ShopifyWebhookService {
     @Transactional
     public void handleWebhook(Map<String, Object> payload, UUID storeId) {
         String topic = (String) payload.get("topic");
+
+        if ("orders/fulfilled".equals(topic)) {
+            // Shopify is the system of truth for fulfillment — reconcile directly.
+            // The reconciliation service sets its own tenant context from the store.
+            NxIntegrationStore store = storeService.getStore(storeId);
+            fulfillmentReconciliationService.handleFulfillmentWebhook(store, payload);
+            return;
+        }
 
         if (topic != null && topic.startsWith("orders/")) {
             // Deduplication: extract external order ID and check ledger

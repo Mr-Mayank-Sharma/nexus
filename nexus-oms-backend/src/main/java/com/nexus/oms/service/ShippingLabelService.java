@@ -1,8 +1,13 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.entity.NxCarrierLabelConfig;
 import com.nexus.oms.entity.NxShippingLabel;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.integration.carrier.CarrierLabelAdapter;
+import com.nexus.oms.integration.carrier.CarrierShipmentRequest;
+import com.nexus.oms.integration.carrier.CarrierShipmentResponse;
+import com.nexus.oms.kafka.KafkaProducerService;
 import com.nexus.oms.repository.ShippingLabelRepository;
 import com.nexus.oms.security.TenantContext;
 import org.slf4j.Logger;
@@ -19,9 +24,15 @@ public class ShippingLabelService {
     private static final Logger log = LoggerFactory.getLogger(ShippingLabelService.class);
 
     private final ShippingLabelRepository shippingLabelRepository;
+    private final CarrierLabelConfigService carrierLabelConfigService;
+    private final KafkaProducerService kafkaProducerService;
 
-    public ShippingLabelService(ShippingLabelRepository shippingLabelRepository) {
+    public ShippingLabelService(ShippingLabelRepository shippingLabelRepository,
+                                CarrierLabelConfigService carrierLabelConfigService,
+                                KafkaProducerService kafkaProducerService) {
         this.shippingLabelRepository = shippingLabelRepository;
+        this.carrierLabelConfigService = carrierLabelConfigService;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @Transactional
@@ -129,6 +140,97 @@ public class ShippingLabelService {
     public List<NxShippingLabel> getAllLabels() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         return shippingLabelRepository.findByTenantId(tenantId);
+    }
+
+    /**
+     * Real carrier purchase path (T-12). Resolves the tenant's carrier config,
+     * calls the configured adapter, persists the purchased label and emits
+     * the {@code order.label_generated} Kafka event. Idempotent: re-posting
+     * the same order returns the existing label instead of re-purchasing.
+     */
+    @Transactional
+    public NxShippingLabel generateCarrierLabel(NxShippingLabel label) {
+        UUID tenantId = TenantContext.getCurrentTenantId();
+        label.setTenantId(tenantId);
+
+        if (label.getCarrier() == null || label.getCarrier().isBlank()) {
+            throw new BadRequestException("carrier is required for carrier label generation");
+        }
+
+        // Idempotency: existing label for this order+carrier is returned as-is.
+        if (label.getOrderId() != null) {
+            List<NxShippingLabel> existing = shippingLabelRepository.findByOrderId(label.getOrderId());
+            Optional<NxShippingLabel> sameCarrier = existing.stream()
+                    .filter(l -> l.getCarrier().equalsIgnoreCase(label.getCarrier()))
+                    .filter(l -> "CARRIER".equals(l.getLabelSource()))
+                    .findFirst();
+            if (sameCarrier.isPresent()) {
+                log.info("Carrier label already exists for order {} carrier {} — returning existing",
+                        label.getOrderNumber(), label.getCarrier());
+                return sameCarrier.get();
+            }
+        }
+
+        NxCarrierLabelConfig config = carrierLabelConfigService.getConfigForCarrier(label.getCarrier());
+        CarrierLabelAdapter adapter = carrierLabelConfigService.resolveAdapter(config.getAdapterName());
+
+        CarrierShipmentRequest shipmentRequest = CarrierShipmentRequest.builder()
+                .tenantId(tenantId)
+                .orderId(label.getOrderId())
+                .orderNumber(label.getOrderNumber())
+                .carrierCode(label.getCarrier())
+                .serviceType(label.getServiceType())
+                .fromName(label.getFromName())
+                .fromAddress(label.getFromAddress())
+                .toName(label.getToName())
+                .toAddress(label.getToAddress())
+                .weight(label.getWeight())
+                .dimensions(label.getDimensions())
+                .build();
+
+        CarrierShipmentResponse response = adapter.createShipment(shipmentRequest);
+        if (!response.isSuccess()) {
+            throw new BadRequestException("Carrier " + label.getCarrier() + " rejected shipment: "
+                    + response.getRawResponse());
+        }
+
+        label.setTrackingNumber(response.getTrackingNumber());
+        label.setLabelBase64(response.getLabelBase64());
+        label.setLabelFormat(response.getLabelFormat() != null ? response.getLabelFormat() : adapter.getLabelFormat());
+        label.setAdapterName(adapter.getName());
+        label.setLabelSource("CARRIER");
+        label.setStatus("GENERATED");
+        if (label.getGeneratedAt() == null) {
+            label.setGeneratedAt(LocalDateTime.now());
+        }
+        if (label.getLabelUrl() == null) {
+            label.setLabelUrl("/api/v1/labels/" + label.getId() + "/download");
+        }
+
+        shippingLabelRepository.save(label);
+        log.info("Carrier label purchased for order {}: carrier={} tracking={} adapter={}",
+                label.getOrderNumber(), label.getCarrier(), label.getTrackingNumber(), adapter.getName());
+
+        kafkaProducerService.publish("order.label_generated",
+                "{\"orderId\":\"" + label.getOrderId() + "\",\"orderNumber\":\"" + label.getOrderNumber()
+                        + "\",\"carrier\":\"" + label.getCarrier() + "\",\"trackingNumber\":\""
+                        + label.getTrackingNumber() + "\",\"labelSource\":\"CARRIER\"}");
+        return label;
+    }
+
+    /** Required-field validation for a label against its carrier adapter. */
+    public List<String> validateLabelForCarrier(UUID id) {
+        NxShippingLabel label = getLabel(id);
+        if (label.getAdapterName() == null) {
+            throw new BadRequestException("Label " + id + " has no adapter (not a carrier label)");
+        }
+        CarrierLabelAdapter adapter = carrierLabelConfigService.resolveAdapter(label.getAdapterName());
+        return adapter.validateLabel(label);
+    }
+
+    /** Full label payload (incl. base64) for download/preview. */
+    public NxShippingLabel getLabelWithData(UUID id) {
+        return getLabel(id);
     }
 
     private String generateTrackingNumber(String carrier) {

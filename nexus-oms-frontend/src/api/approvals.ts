@@ -1,5 +1,18 @@
 import client from './client'
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export interface ApprovalRule {
   id: string
   tenantId: string
@@ -42,42 +55,42 @@ export interface ApprovalStats {
 export const approvalsApi = {
   // Rules
   getRules: () =>
-    client.get<ApprovalRule[]>('/approvals/rules'),
+    unwrap<ApprovalRule[]>(client.get<ApprovalRule[]>('/approvals/rules')),
 
   getRule: (id: string) =>
-    client.get<ApprovalRule>(`/approvals/rules/${id}`),
+    unwrap<ApprovalRule>(client.get<ApprovalRule>(`/approvals/rules/${id}`)),
 
   createRule: (rule: Partial<ApprovalRule>) =>
-    client.post<ApprovalRule>('/approvals/rules', rule),
+    unwrap<ApprovalRule>(client.post<ApprovalRule>('/approvals/rules', rule)),
 
   updateRule: (id: string, rule: Partial<ApprovalRule>) =>
-    client.put<ApprovalRule>(`/approvals/rules/${id}`, rule),
+    unwrap<ApprovalRule>(client.put<ApprovalRule>(`/approvals/rules/${id}`, rule)),
 
   deleteRule: (id: string) =>
-    client.delete(`/approvals/rules/${id}`),
+    unwrap<void>(client.delete(`/approvals/rules/${id}`)),
 
   // Approvals
   evaluateOrder: (orderId: string, orderNumber: string, orderTotal: number, customerId?: string) =>
-    client.post<OrderApproval>('/approvals/evaluate', null, {
+    unwrap<OrderApproval>(client.post<OrderApproval>('/approvals/evaluate', null, {
       params: { orderId, orderNumber, orderTotal, customerId },
-    }),
+    })),
 
   manualReview: (id: string, decision: string, reviewer: string, notes?: string) =>
-    client.post<OrderApproval>(`/approvals/${id}/review`, null, {
+    unwrap<OrderApproval>(client.post<OrderApproval>(`/approvals/${id}/review`, null, {
       params: { decision, reviewer, notes },
-    }),
+    })),
 
   getPendingReviews: () =>
-    client.get<OrderApproval[]>('/approvals/pending'),
+    unwrap<OrderApproval[]>(client.get<OrderApproval[]>('/approvals/pending')),
 
   getAllApprovals: () =>
-    client.get<OrderApproval[]>('/approvals'),
+    unwrap<OrderApproval[]>(client.get<OrderApproval[]>('/approvals')),
 
   getApprovalByOrder: (orderId: string) =>
-    client.get<OrderApproval>(`/approvals/order/${orderId}`),
+    unwrap<OrderApproval>(client.get<OrderApproval>(`/approvals/order/${orderId}`)),
 
   getApprovalStats: () =>
-    client.get<ApprovalStats>('/approvals/stats'),
+    unwrap<ApprovalStats>(client.get<ApprovalStats>('/approvals/stats')),
 }
 
 export default approvalsApi

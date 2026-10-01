@@ -69,6 +69,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'rejections', label: 'Rejections', path: '/rejections', icon: 'AlertTriangle' },
         { id: 'transfers', label: 'Transfer Orders', path: '/transfers', icon: 'ArrowRightLeft' },
         { id: 'fulfillment-limits', label: 'Fulfillment Limits', path: '/fulfillment-limits', icon: 'Gauge' },
+        { id: 'reconciliation', label: 'Reconciliation', path: '/reconciliation', icon: 'RefreshCcw' },
         { id: 'customers', label: 'Customers', path: '/customers', icon: 'Users' },
       ]
     },
@@ -254,7 +255,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     OPS_MANAGER: [
       'launch-pad', 'analytics-dashboard', 'dashboard', 'notifications',
       'orders', 'find-order', 'create-order', 'order-approvals', 'order-routing',
-      'brokering', 'rejections', 'transfers', 'fulfillment-limits',
+      'brokering', 'rejections', 'transfers', 'fulfillment-limits', 'reconciliation',
       'fulfillment', 'picking', 'packing', 'shipping',
       'wave-planning', 'labor-management', 'pickers', 'label-printing',
       'inventory', 'inventory-enhanced', 'receiving', 'cycle-counts', 'rfid', 'replenishment',

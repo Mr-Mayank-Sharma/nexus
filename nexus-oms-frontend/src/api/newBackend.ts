@@ -137,11 +137,42 @@ export async function fetchCarrierRates(): Promise<any> {
 }
 
 export async function generateLabel(labelData: Record<string, any>): Promise<any> {
-  try { const { data } = await client.post('/labels/generate', labelData); return data } catch { return null }
+  try { const { data } = await client.post('/labels', labelData); return data } catch { return null }
 }
 
-export async function generateBulkLabels(count: number): Promise<any> {
-  try { const { data } = await client.post('/labels/generate', { bulk: true, count }); return data } catch { return null }
+export async function generateBulkLabels(orderId: string, orderNumber: string, labels: Record<string, any>[]): Promise<any> {
+  try { const { data } = await client.post('/labels/bulk', labels, { params: { orderId, orderNumber } }); return data } catch { return null }
+}
+
+/** T-12: purchase a real carrier label through the configured carrier adapter. */
+export async function generateCarrierLabel(labelData: Record<string, any>): Promise<any> {
+  try { const { data } = await client.post('/labels/carrier', labelData); return data }
+  catch (err: any) { return err?.response?.data || null }
+}
+
+/** T-12: validate a carrier label against its adapter's required fields. */
+export async function validateCarrierLabel(id: string): Promise<any> {
+  try { const { data } = await client.get(`/labels/${id}/validate`); return data }
+  catch (err: any) { return err?.response?.data || null }
+}
+
+/** Full label payload (incl. base64) for download / preview. */
+export async function downloadLabel(id: string): Promise<any> {
+  try { const { data } = await client.get(`/labels/${id}/download`); return data }
+  catch (err: any) { return err?.response?.data || null }
+}
+
+export async function fetchCarrierLabelConfigs(): Promise<any> {
+  try { const { data } = await client.get('/carrier-label-config'); return data } catch { return null }
+}
+
+export async function upsertCarrierLabelConfig(config: Record<string, any>): Promise<any> {
+  try { const { data } = await client.post('/carrier-label-config', config); return data }
+  catch (err: any) { return err?.response?.data || null }
+}
+
+export async function fetchCarrierAdapters(): Promise<any> {
+  try { const { data } = await client.get('/carrier-label-config/adapters'); return data } catch { return null }
 }
 
 export async function fetchLabels(): Promise<any> {

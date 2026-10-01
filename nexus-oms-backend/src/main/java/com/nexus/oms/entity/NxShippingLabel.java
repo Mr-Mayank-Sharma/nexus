@@ -77,6 +77,12 @@ public class NxShippingLabel {
     @Column(name = "dimensions")
     private String dimensions;
 
+    @Column(name = "label_format")
+    private String labelFormat; // ZPL | PDF
+
+    @Column(name = "adapter_name")
+    private String adapterName; // JitsuCarrierAdapter, SapiCarrierAdapter, SimulatedCarrierAdapter
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

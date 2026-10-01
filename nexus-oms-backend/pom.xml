@@ -185,13 +185,19 @@
                 <version>${enforcer.version}</version>
                 <executions>
                     <execution>
-                        <id>enforce-java-version</id>
+                        <id>enforce-build-environment</id>
                         <phase>validate</phase>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
+                        <goals><goal>enforce</goal></goals>
                         <configuration>
                             <rules>
+                                <!--
+                                  The build targets Java 17 and is only validated on 17.
+                                  Without this, a newer JDK (e.g. Homebrew's default JDK 26)
+                                  compiles fine but every Mockito mock dies at runtime with
+                                  "Mockito cannot mock this class / Could not modify all classes",
+                                  because the Byte Buddy version pinned by the Spring Boot parent
+                                  cannot read the newer class file format. Fail fast here instead.
+                                -->
                                 <requireJavaVersion>
                                     <version>[17,18)</version>
                                     <message>
@@ -202,7 +208,11 @@ Point JAVA_HOME at a JDK 17 install, e.g. export JAVA_HOME=$(/usr/libexec/java_h
 CI pins Java 17 in .github/workflows/ci.yml.
                                     </message>
                                 </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.6.3,)</version>
+                                </requireMavenVersion>
                             </rules>
+                            <fail>true</fail>
                         </configuration>
                     </execution>
                 </executions>

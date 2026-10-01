@@ -1,5 +1,18 @@
 import client from './client'
 
+const WRAPPER_KEYS = ['success', 'data', 'message', 'error', 'errors', 'pagination']
+
+/** Client normalizes every body to {success, data, message, ...}; unwrap back to the payload. */
+async function unwrap<T>(promise: Promise<{ data: unknown }>): Promise<{ data: T }> {
+  const res = await promise
+  const body = res.data
+  if (body && typeof body === 'object' && !Array.isArray(body) && 'data' in body) {
+    const obj = body as Record<string, unknown>
+    if (Object.keys(obj).every(k => WRAPPER_KEYS.includes(k))) return { data: obj.data as T }
+  }
+  return { data: body as T }
+}
+
 export interface NxATPRule {
   id?: string
   tenantId?: string
@@ -73,46 +86,46 @@ export interface BulkATPResult {
 export const atpApi = {
   // Rules
   getRules: () =>
-    client.get<NxATPRule[]>('/atp/rules'),
+    unwrap<NxATPRule[]>(client.get<NxATPRule[]>('/atp/rules')),
 
   getRule: (id: string) =>
-    client.get<NxATPRule>(`/atp/rules/${id}`),
+    unwrap<NxATPRule>(client.get<NxATPRule>(`/atp/rules/${id}`)),
 
   createRule: (data: NxATPRule) =>
-    client.post<NxATPRule>('/atp/rules', data),
+    unwrap<NxATPRule>(client.post<NxATPRule>('/atp/rules', data)),
 
   updateRule: (id: string, data: NxATPRule) =>
-    client.put<NxATPRule>(`/atp/rules/${id}`, data),
+    unwrap<NxATPRule>(client.put<NxATPRule>(`/atp/rules/${id}`, data)),
 
   deleteRule: (id: string) =>
-    client.delete(`/atp/rules/${id}`),
+    unwrap<void>(client.delete(`/atp/rules/${id}`)),
 
   // Calculation
   calculateATP: (nodeId: string, sku: string) =>
-    client.get<ATPCalculationResult>(`/atp/calculate/${nodeId}/${sku}`),
+    unwrap<ATPCalculationResult>(client.get<ATPCalculationResult>(`/atp/calculate/${nodeId}/${sku}`)),
 
   calculateBulkATP: (nodeId: string, skus: string[]) =>
-    client.post<BulkATPResult>(`/atp/calculate/${nodeId}/bulk`, skus),
+    unwrap<BulkATPResult>(client.post<BulkATPResult>(`/atp/calculate/${nodeId}/bulk`, skus)),
 
   findNodesWithATP: (sku: string, requiredQuantity: number) =>
-    client.get<NodeATPResult[]>('/atp/find-nodes', { params: { sku, requiredQuantity } }),
+    unwrap<NodeATPResult[]>(client.get<NodeATPResult[]>('/atp/find-nodes', { params: { sku, requiredQuantity } })),
 
   // Reservations
   reserveStock: (nodeId: string, sku: string, quantity: number) =>
-    client.post<{ success: boolean }>('/atp/reserve', null, { params: { nodeId, sku, quantity } }),
+    unwrap<{ success: boolean }>(client.post<{ success: boolean }>('/atp/reserve', null, { params: { nodeId, sku, quantity } })),
 
   releaseReservation: (nodeId: string, sku: string, quantity: number) =>
-    client.post('/atp/release', null, { params: { nodeId, sku, quantity } }),
+    unwrap<void>(client.post('/atp/release', null, { params: { nodeId, sku, quantity } })),
 
   allocateStock: (nodeId: string, sku: string, quantity: number) =>
-    client.post('/atp/allocate', null, { params: { nodeId, sku, quantity } }),
+    unwrap<void>(client.post('/atp/allocate', null, { params: { nodeId, sku, quantity } })),
 
   // Snapshots
   getSnapshots: (nodeId?: string, sku?: string) =>
-    client.get<NxATPSnapshot[]>('/atp/snapshots', { params: { nodeId, sku } }),
+    unwrap<NxATPSnapshot[]>(client.get<NxATPSnapshot[]>('/atp/snapshots', { params: { nodeId, sku } })),
 
   updateSnapshot: (nodeId: string, sku: string, physicalStock: number) =>
-    client.post<NxATPSnapshot>('/atp/snapshots', null, { params: { nodeId, sku, physicalStock } }),
+    unwrap<NxATPSnapshot>(client.post<NxATPSnapshot>('/atp/snapshots', null, { params: { nodeId, sku, physicalStock } })),
 }
 
 export default atpApi

@@ -52,4 +52,7 @@ public class NxOrderItem {
 
     @Column(name = "allocated_qty")
     private Integer allocatedQty;
+
+    @Column(name = "fulfilled_qty")
+    private Integer fulfilledQty;
 }

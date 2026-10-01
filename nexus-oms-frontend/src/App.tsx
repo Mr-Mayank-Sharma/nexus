@@ -81,6 +81,7 @@ const RejectionsPage = lazy(() => import('./pages/RejectionsPage'))
 const PickersPage = lazy(() => import('./pages/PickersPage'))
 const OrderApprovalsPage = lazy(() => import('./pages/OrderApprovalsPage'))
 const FulfillmentLimitsPage = lazy(() => import('./pages/FulfillmentLimitsPage'))
+const FulfillmentReconciliationPage = lazy(() => import('./pages/FulfillmentReconciliationPage'))
 const BopisAppPage = lazy(() => import('./pages/BopisAppPage'))
 const ReplenishmentPage = lazy(() => import('./pages/ReplenishmentPage'))
 const FreightAuditPage = lazy(() => import('./pages/FreightAuditPage'))
@@ -201,6 +202,7 @@ export default function App() {
           <Route path="pickers" element={<PickersPage />} />
           <Route path="order-approvals" element={<OrderApprovalsPage />} />
           <Route path="fulfillment-limits" element={<FulfillmentLimitsPage />} />
+          <Route path="reconciliation" element={<FulfillmentReconciliationPage />} />
           <Route path="bopis-app" element={<BopisAppPage />} />
           <Route path="replenishment" element={<ReplenishmentPage />} />
           <Route path="rate-cards" element={<RateCardsPage />} />
