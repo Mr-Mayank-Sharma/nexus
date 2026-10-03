@@ -138,9 +138,20 @@ jobs:
             cd /opt/nexus-ship
             docker compose pull
             docker compose up -d --remove-orphans
-            docker compose exec -T backend java -jar /app/app.jar --spring.profiles.active=staging &
-            sleep 15
-            curl -sf http://localhost:8080/api/v1/actuator/health || exit 1
+            # The backend container ENTRYPOINT already runs `java -jar app.jar`.
+            # Spawning a second JVM here could never bind :8080, and since each JVM
+            # requests MaxRAMPercentage=75.0 it risked OOM-killing the container.
+            # The active profile comes from SPRING_PROFILES_ACTIVE in the compose
+            # env, so do not re-add a `java -jar` here — just wait for health.
+            for i in $(seq 1 30); do
+              curl -sf http://localhost:8080/api/v1/actuator/health >/dev/null && break
+              sleep 5
+            done
+            curl -sf http://localhost:8080/api/v1/actuator/health || {
+              echo "❌ Backend unhealthy after 150s"
+              docker compose logs --tail=50 backend || true
+              exit 1
+            }
             echo "✅ Staging deployment successful"
 
       - name: Notify deployment
