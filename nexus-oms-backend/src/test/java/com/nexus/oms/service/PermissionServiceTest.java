@@ -13,7 +13,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -164,6 +168,70 @@ class PermissionServiceTest {
         assertEquals("products", permissionService.resolveResource("/products/"));
         assertEquals("import", permissionService.resolveResource("/import/orders"));
         assertNull(permissionService.resolveResource("/unknown/path"));
+    }
+
+    /**
+     * Regression guard: {@code /yard/}, {@code /yards/} and {@code /trailers/} are dock/trailer
+     * routes and must resolve to the {@code shipping} permission group.
+     *
+     * <p>These three prefixes were previously registered twice in
+     * {@code PermissionService.PATH_TO_RESOURCE} — first as {@code shipping}, then overwritten as
+     * {@code warehouse}. Because {@code resolveResource} returns the FIRST prefix match in
+     * {@code LinkedHashMap} insertion order, the duplicate {@code put} kept the original slot but
+     * replaced its value, so yard and trailer requests were authorized against {@code warehouse}.
+     * That denied the {@code LOADER} role, which is granted {@code shipping} but not
+     * {@code warehouse}.
+     */
+    @Test
+    void testYardAndTrailerRoutesResolveToShipping() {
+        assertEquals("shipping", permissionService.resolveResource("/yard/"));
+        assertEquals("shipping", permissionService.resolveResource("/yard/42"));
+        assertEquals("shipping", permissionService.resolveResource("/yards/"));
+        assertEquals("shipping", permissionService.resolveResource("/yards/42"));
+        assertEquals("shipping", permissionService.resolveResource("/trailers/"));
+        assertEquals("shipping", permissionService.resolveResource("/trailers/7/dock-door"));
+    }
+
+    /**
+     * Guards the structural invariant that {@code resolveResource} depends on: every registered
+     * prefix must be reachable, i.e. no EARLIER prefix may also match a path under it.
+     *
+     * <p>The current table stays correct only because every key ends with {@code "/"} — that stops
+     * a broad prefix from swallowing a narrower one ({@code /inventory/} does not match
+     * {@code /inventory-receipts/}, {@code /routing/} does not match {@code /routing-rules/}).
+     * That is a subtle, easy-to-break property, and it is exactly what a duplicated {@code put}
+     * defeated. This test also pins the mapping count so the figure quoted in the docs
+     * (74) cannot silently drift again.
+     */
+    @Test
+    void testEveryPathPrefixIsReachableUnderFirstPrefixMatch() throws Exception {
+        LinkedHashMap<String, String> map = pathToResourceMap();
+
+        assertEquals(74, map.size(),
+                "expected 74 unique route-prefix mappings; update the documented count when adding one");
+
+        List<String> keys = new ArrayList<>(map.keySet());
+        for (int i = 0; i < keys.size(); i++) {
+            final String current = keys.get(i);
+            final String probe = current + "probe";
+
+            for (int j = 0; j < i; j++) {
+                final String earlier = keys.get(j);
+                assertFalse(probe.startsWith(earlier),
+                        () -> "prefix " + current + " is unreachable — shadowed by earlier " + earlier);
+            }
+
+            assertEquals(map.get(current), permissionService.resolveResource(probe),
+                    () -> "prefix " + current + " does not resolve to its registered resource");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private LinkedHashMap<String, String> pathToResourceMap() throws Exception {
+        Field field = PermissionService.class.getDeclaredField("PATH_TO_RESOURCE");
+        field.setAccessible(true);
+        Map<String, String> map = (Map<String, String>) field.get(null);
+        return (LinkedHashMap<String, String>) map;
     }
 
     @Test

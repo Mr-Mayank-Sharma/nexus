@@ -109,8 +109,6 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/slotting/", "warehouse");
         PATH_TO_RESOURCE.put("/labor/", "warehouse");
         PATH_TO_RESOURCE.put("/automation/", "warehouse");
-        PATH_TO_RESOURCE.put("/yards/", "warehouse");
-        PATH_TO_RESOURCE.put("/trailers/", "warehouse");
     }
 
     private static final Map<String, String> METHOD_TO_ACTION = Map.of(
