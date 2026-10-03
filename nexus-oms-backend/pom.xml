@@ -296,6 +296,17 @@ CI pins Java 17 in .github/workflows/ci.yml.
                 </configuration>
                 <executions>
                     <execution>
+                        <!-- Unbound from the `verify` lifecycle on purpose (2026-10-03).
+                             The `check` goal defaults to phase `verify`, so a third-party
+                             NVD outage (HTTP 403/404 without an API key) failed
+                             `mvn verify` outright and, in CI, skipped the
+                             documented-test-count guard behind it. `mvn verify` now
+                             means compile + test only. CI invokes the scan explicitly
+                             as a non-blocking step (`continue-on-error: true`).
+
+                             Run it deliberately:  mvn dependency-check:check
+                             Supply a key to get real data:  NVD_API_KEY=... mvn dependency-check:check -->
+                        <phase>none</phase>
                         <goals><goal>check</goal></goals>
                     </execution>
                 </executions>

@@ -82,6 +82,13 @@ jobs:
       - name: OWASP dependency-check
         run: mvn dependency-check:check -B
         continue-on-error: true
+        env:
+          # Optional: add an NVD_API_KEY repo secret and the scan starts using
+          # real advisory data. Without it NVD answers 403/404 and the goal
+          # aborts with NoDataException -- which is why this step is
+          # continue-on-error. It must never gate the build; `mvn verify` no
+          # longer runs this goal (see <phase>none</phase> in the pom).
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
 
       - name: Upload OWASP report
         uses: actions/upload-artifact@v4
