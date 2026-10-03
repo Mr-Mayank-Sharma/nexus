@@ -357,9 +357,9 @@ All 65+ pages in `src/pages/` have been audited and gated with `PermissionGate`.
 
 | Test Class | Tests | Coverage |
 |-----------|-------|----------|
-| `PermissionServiceTest.java` | 12 | Resource resolution, action mapping, cache behavior |
+| `PermissionServiceTest.java` | 14 | Resource resolution, action mapping, cache behavior |
 | `PermissionAuthorizationFilterTest.java` | 10 | Public paths, bypass roles, permission checks, 403 responses |
-| `PermissionMatrixIntegrationTest.java` | 22 | All 14 roles, 31+ resources, all HTTP methods, public endpoints, auth-permissions field |
+| `PermissionMatrixIntegrationTest.java` | 13 | All 14 roles, 31+ resources, all HTTP methods, public endpoints, auth-permissions field |
 
 ### 4.2 Integration Test Coverage
 
