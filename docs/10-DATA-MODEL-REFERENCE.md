@@ -1,6 +1,6 @@
 # Nexus OMS — Data Model Reference (Field-by-Field)
 
-> The exhaustive, field-level catalog of every table in the Nexus OMS database — all **177 tables**, every column, every constraint, plus the data flows that connect them.
+> The exhaustive, field-level catalog of every table in the Nexus OMS database — all **179 tables**, every column, every constraint, plus the data flows that connect them.
 >
 > **Companion docs:** [03-ER-DIAGRAM.md](./03-ER-DIAGRAM.md) (entity relationships at a glance) · [05-DATA-FLOW.md](./05-DATA-FLOW.md) (how data moves through the system) · [02-TECHNICAL-ARCHITECTURE.md](./02-TECHNICAL-ARCHITECTURE.md) (services & infra)
 
@@ -58,7 +58,7 @@ Each table is documented as:
 
 ---
 
-## 🗺️ Domain Catalog (177 tables)
+## 🗺️ Domain Catalog (179 tables)
 
 | # | Domain | Tables | What it does |
 |---|---|---|---|
@@ -67,9 +67,9 @@ Each table is documented as:
 | 3 | [Core Commerce & Customers](#core-commerce--customers) | 13 | Products, customers, promotions, payments, invoices, billing |
 | 4 | [Orders & Order Lifecycle](#orders--order-lifecycle) | 16 | Orders, items, allocations, approvals, routing, brokering |
 | 5 | [Inventory & Network](#inventory--network) | 17 | Stock, warehouses, zones, bins, ATP, transfers, replenishment |
-| 6 | [Fulfillment](#fulfillment) | 16 | Waves, picklists, pickers, packages, shipments, tracking |
+| 6 | [Fulfillment](#fulfillment) | 17 | Waves, picklists, pickers, packages, shipments, tracking |
 | 7 | [Slotting, Engineering & Labor](#slotting-engineering--labor) | 6 | Slotting rules, engineered standards, labor, productivity |
-| 8 | [Shipping, Carriers & Yard](#shipping-carriers--yard) | 13 | Carriers, rate shopping, trailers, dock doors, appointments |
+| 8 | [Shipping, Carriers & Yard](#shipping-carriers--yard) | 14 | Carriers, rate shopping, trailers, dock doors, appointments |
 | 9 | [Returns (RMA)](#returns-rma) | 4 | Returns, return items, return reasons, proof of delivery |
 | 10 | [Procurement & Suppliers](#procurement--suppliers) | 11 | Purchase requests/orders, RFQs, suppliers, ASNs, approvals |
 | 11 | [Automation & Alerting](#automation--alerting) | 5 | Automation systems/commands, alerts |
@@ -78,7 +78,7 @@ Each table is documented as:
 | 14 | [Identity, RBAC & Tenancy](#identity-rbac--tenancy) | 6 | Users, roles, permissions, teams, company settings, audit |
 | 15 | [Platform & Workflow](#platform--workflow) | 10 | Workflows, notifications, documents, MCP tools |
 
-> **Note on table count:** the ER diagram (`03-ER-DIAGRAM.md`) documents ~157 JPA entities. This reference covers **177 tables** — the delta is tables added since the ER doc was written (e.g., `ai_*` platform tables, `nx_integration_*` hub tables, `nx_slotting_*`, `nx_workflow_*`, `nx_mcp_*`).
+> **Note on table count:** the database has **179 tables**. Of these, **167** have a JPA entity and are catalogued in the ER diagram (`03-ER-DIAGRAM.md`); the remaining **12** are infrastructure/infra-managed tables with no entity: `ai_cost_tracking`, `ai_rag_documents`, `ai_semantic_cache`, `ai_shap_explanations`, `nx_batch_jobs`, `nx_connector_credentials`, `nx_connector_health`, `nx_connector_instances`, `nx_data_mappings`, `nx_return_reasons`, `nx_webhook_endpoints`, `webhook_dedup_ledger`. This reference covers all 179.
 
 ---
 
@@ -755,7 +755,7 @@ Every table in Nexus follows the same house style:
 - `idx_import_record_log_row (import_history_id, row_number)`
 
 
-### nxfreight_invoices — Freight invoices
+### nx_freight_invoices — Freight invoices
 
 | Column | Definition |
 |---|---|
@@ -790,7 +790,7 @@ Every table in Nexus follows the same house style:
 - `idx_freight_invoices_status (tenant_id, status)`
 
 
-### nxfreight_invoice_lines — Freight invoice line items
+### nx_freight_invoice_lines — Freight invoice line items
 
 | Column | Definition |
 |---|---|
@@ -816,7 +816,7 @@ Every table in Nexus follows the same house style:
 - `idx_freight_invoice_lines_invoice (invoice_id)`
 
 
-### nxfreight_audit_logs — Freight invoice audit records
+### nx_freight_audit_logs — Freight invoice audit records
 
 | Column | Definition |
 |---|---|
@@ -2322,11 +2322,7 @@ Every table in Nexus follows the same house style:
 | `order_id` | `UUID NOT NULL REFERENCES nx_orders(id) ON DELETE CASCADE` |
 | `allocation_id` | `UUID REFERENCES nx_order_allocations(id) ON DELETE SET NULL` |
 | `tenant_id` | `UUID NOT NULL` |
-| `type` | `VARCHAR(50) NOT NULL CHECK (type IN (
-        'INVENTORY_SHORTAGE','CARRIER_FAILURE','CAPACITY_EXCEEDED','WORKER_ABSENT',
-        'WEATHER_DELAY','SHIPPING_ADDRESS_ISSUE','PAYMENT_HOLD','CREDIT_HOLD',
-        'FRAUD_FLAG','CUSTOMER_REQUEST','SYSTEM_ERROR','OTHER'
-    ))` |
+| `type` | `VARCHAR(50) NOT NULL CHECK (type IN ('INVENTORY_SHORTAGE','CARRIER_FAILURE','CAPACITY_EXCEEDED','WORKER_ABSENT','WEATHER_DELAY','SHIPPING_ADDRESS_ISSUE','PAYMENT_HOLD','CREDIT_HOLD','FRAUD_FLAG','CUSTOMER_REQUEST','SYSTEM_ERROR','OTHER'))` |
 | `exception_type` | `VARCHAR(50)` — added by `V67__schema_drift_fix.sql`. Nullable mirror of `type`, kept for dashboard/BI readers that bind to this name. Writers must set both: `DashboardService` reads `exception_type` first and renders `UNKNOWN` when it is null. `NxFulfillmentException.onCreate()` backfills it on insert, but that `@PrePersist` hook does not run on update. |
 | `severity` | `VARCHAR(20) NOT NULL DEFAULT 'MEDIUM' CHECK (severity IN ('LOW','MEDIUM','HIGH','CRITICAL'))` |
 | `status` | `VARCHAR(30) NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN','IN_PROGRESS','RESOLVED','ESCALATED','CLOSED'))` |
@@ -2336,10 +2332,7 @@ Every table in Nexus follows the same house style:
 | `message` | `TEXT` — added by `V67__schema_drift_fix.sql`. Human-readable detail field. Note that routing exceptions raised by `OrderRoutingService.buildException` populate `description`, **not** `message`; readers that want the detail for inventory-shortage errors must read `description`. |
 | `suggested_action` | `TEXT` |
 | `auto_resolvable` | `BOOLEAN DEFAULT false` |
-| `resolution_strategy` | `VARCHAR(50) CHECK (resolution_strategy IN (
-        'REALLOCATE','OVERRIDE','CONTACT_CUSTOMER','ESCALATE_MANAGER',
-        'SPLIT_ORDER','BACKORDER','SUBSTITUTE','CANCEL_ORDER'
-    ))` |
+| `resolution_strategy` | `VARCHAR(50) CHECK (resolution_strategy IN ('REALLOCATE','OVERRIDE','CONTACT_CUSTOMER','ESCALATE_MANAGER','SPLIT_ORDER','BACKORDER','SUBSTITUTE','CANCEL_ORDER'))` |
 | `detected_at` | `TIMESTAMP DEFAULT now()` |
 | `resolved_at` | `TIMESTAMP` |
 | `resolved_by` | `UUID` |
@@ -2462,6 +2455,40 @@ Every table in Nexus follows the same house style:
 
 **Indexes:**
 - `uq_kit_templates_tenant_sku (tenant_id, kit_sku) UNIQUE`
+
+
+### nx_fulfillment_reconciliation — Shopify↔OMS fulfillment reconciliation ledger
+
+Cross-system fulfillment truth-acceptance & repair ledger (T-09). One row per Shopify
+fulfillment matched against an OMS order. `match_type` is one of
+`EXACT` / `PARTIAL` / `LOCATION_CHANGE` / `QUANTITY_DELTA` / `ANOMALY`;
+`resolution` is one of `ACCEPTED` / `PARTIAL_ACCEPTED` / `FLAGGED` / `REPAIRED`.
+
+| Column | Definition |
+|---|---|
+| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `tenant_id` | `UUID NOT NULL` |
+| `order_id` | `UUID NOT NULL REFERENCES nx_orders(id)` |
+| `order_number` | `VARCHAR(64) NOT NULL` |
+| `shopify_fulfillment_id` | `VARCHAR(64)` |
+| `match_type` | `VARCHAR(20) NOT NULL` |
+| `fulfilled_location` | `VARCHAR(64)` |
+| `routed_location` | `VARCHAR(64)` |
+| `fulfilled_items` | `JSONB` |
+| `remaining_items` | `JSONB` |
+| `resolution` | `VARCHAR(20) NOT NULL` |
+| `netsuite_sync_status` | `VARCHAR(20) DEFAULT 'PENDING'` |
+| `inventory_delta` | `INTEGER` |
+| `notes` | `TEXT` |
+| `created_at` | `TIMESTAMP NOT NULL DEFAULT now()` |
+| `updated_at` | `TIMESTAMP NOT NULL DEFAULT now()` |
+
+**Indexes:**
+- `idx_fulfill_recon_order (tenant_id, order_id)`
+- `idx_fulfill_recon_status (netsuite_sync_status)`
+
+**Also added by V61:** `nx_order_items` gains `fulfilled_qty INTEGER DEFAULT 0`, tracking
+per-line fulfillment progress without destroying the originally ordered quantity.
 
 
 ---
@@ -2986,6 +3013,33 @@ Every table in Nexus follows the same house style:
 **Indexes:**
 - `idx_manifest_shipments_manifest (manifest_id)`
 - `idx_manifest_shipments_tenant (tenant_id)`
+
+
+### nx_carrier_label_config — Per-tenant carrier label adapter config
+
+Which adapter and label format a carrier uses. Adding a carrier becomes a config row
+plus an adapter bean rather than a code change (T-12).
+
+| Column | Definition |
+|---|---|
+| `id` | `UUID PRIMARY KEY DEFAULT gen_random_uuid()` |
+| `tenant_id` | `UUID NOT NULL` |
+| `carrier_code` | `VARCHAR(32) NOT NULL` — JITSU, SAPI, VHO, FEDEX, UPS… |
+| `adapter_name` | `VARCHAR(64) NOT NULL` — e.g. `JitsuCarrierAdapter`, `SapiCarrierAdapter` |
+| `label_format` | `VARCHAR(8) NOT NULL DEFAULT 'PDF'` — ZPL or PDF |
+| `required_fields` | `JSONB` — fields that must appear on the label (ship-from, ship-to, service, tracking, weight, dimensions); validated before print |
+| `is_active` | `BOOLEAN NOT NULL DEFAULT TRUE` |
+| `created_at` | `TIMESTAMP NOT NULL DEFAULT now()` |
+| `updated_at` | `TIMESTAMP NOT NULL DEFAULT now()` |
+
+**Table-level constraints:**
+- `UNIQUE(tenant_id, carrier_code)`
+
+**Indexes:**
+- `idx_carrier_label_config_tenant (tenant_id, is_active)`
+
+**Also added by V62:** `nx_shipping_labels` gains `label_format VARCHAR(8) DEFAULT 'PDF'`
+and `adapter_name VARCHAR(64)`, recording the adapter and format that produced each label.
 
 
 ---

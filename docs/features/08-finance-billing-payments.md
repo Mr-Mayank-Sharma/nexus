@@ -31,7 +31,7 @@ flowchart LR
     SHIP[Shipment/Order] --> INV[NxInvoice + Items]
     INV --> PAY[NxPayments via Stripe]
     RET[Return] --> CM[NxCreditMemo]
-    FINV[Carrier invoice] --> AUDIT[nxFreight_audit_logs]
+    FINV[Carrier invoice] --> AUDIT[nx_freight_audit_logs]
     INV --> ANA[Analytics]
     PROMO[NxPromotion] --> USAGE[NxPromotionUsage]
 ```
@@ -44,7 +44,7 @@ erDiagram
     NX_ORDERS ||--o{ NX_PAYMENTS : paid_by
     NX_PROMOTIONS ||--o{ NX_PROMOTION_USAGE : consumed_by
 ```
-Tables: `nx_invoices` · `nx_invoice_items` · `nx_payments` · `nx_credit_memos` · `nx_promotions` · `nx_promotion_usage` · `nxFreight_invoices` · `nxFreight_invoice_lines` · `nxFreight_audit_logs`
+Tables: `nx_invoices` · `nx_invoice_items` · `nx_payments` · `nx_credit_memos` · `nx_promotions` · `nx_promotion_usage` · `nx_freight_invoices` · `nx_freight_invoice_lines` · `nx_freight_audit_logs`
 
 ## Who can access what
 | Stage | Roles |

@@ -44,7 +44,7 @@ erDiagram
     NX_ALERT_RULES ||--o{ NX_AUTOMATION_ALERTS : triggers
     NX_SHIPMENTS ||--o{ NX_TRACKING_EVENTS : timed
 ```
-Tables: `nx_productivity_log` · `nx_labor_entries` · `nx_rate_shopping_log` · `nx_fulfillment_capacity_log` · `nxFreight_audit_logs` · `nx_alert_rules` · `nx_automation_alerts`
+Tables: `nx_productivity_log` · `nx_labor_entries` · `nx_rate_shopping_log` · `nx_fulfillment_capacity_log` · `nx_freight_audit_logs` · `nx_alert_rules` · `nx_automation_alerts`
 
 ## Who can access what
 | Stage | Roles |

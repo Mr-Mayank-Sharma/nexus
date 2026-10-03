@@ -1,6 +1,6 @@
 # Nexus OMS vs. HotWax Commerce — Technical Architecture Comparison
 
-Source-grounded comparison of the HotWax Commerce OMS (Moqui-based, `hotwaxoms/moqui2/`) against Nexus OMS (Spring Boot 3 + React). Every HotWax claim below is verified against the actual source in the HotWax repo; Nexus claims are verified against `nexus-p0/`.
+Source-grounded comparison of the HotWax Commerce OMS (Moqui-based, `hotwaxoms/moqui2/`) against Nexus OMS (Spring Boot 3 + React). Every HotWax claim below is verified against the actual source in the HotWax repo; Nexus claims are verified against this repository at commit `45f389d` (post-merge of T-17, T-09, and T-12).
 
 Companion to `nexus-vs-hotwax-competitive.md` (strategic positioning). This document is the technical evidence base.
 
@@ -14,8 +14,8 @@ Companion to `nexus-vs-hotwax-competitive.md` (strategic positioning). This docu
 | Service layer | XML service definitions (`<service verb="X" noun="Y">`) executed by framework runners | Java `@Service` classes invoked by `@RestController`s |
 | Business logic | Groovy scripts + `<actions>` XML blocks | Java methods |
 | REST exposure | Declarative `*.rest.xml` mapping services/entities to HTTP verbs | Explicit `@GetMapping`/`@PostMapping` annotations |
-| UI | XML screens (`screen/Oms/Order/FindOrder.xml`) rendered by Moqui ScreenFacade | React 19 + Vite + TypeScript + Tailwind (93 pages) |
-| Schema | Auto-created at startup from entity definitions (`EntityDbMeta.groovy`) | 57 Flyway migrations |
+| UI | XML screens (`screen/Oms/Order/FindOrder.xml`) rendered by Moqui ScreenFacade | React 19 + Vite + TypeScript + Tailwind (94 pages) |
+| Schema | Auto-created at startup from entity definitions (`EntityDbMeta.groovy`) | 59 Flyway migrations |
 | Data access | `EntityFacade`/`EntityFind`/`EntityValue` (dynamic, no compile-time model) | JPA repositories + DTOs |
 
 **Key structural difference:** HotWax is a *declarative framework* — services, REST endpoints, screens, and even the database schema are all generated from XML/Groovy definitions. Nexus is a *conventional codebase* — everything is explicit Java/TypeScript.
@@ -39,7 +39,7 @@ Companion to `nexus-vs-hotwax-competitive.md` (strategic positioning). This docu
   - Also emits Liquibase changeSets (~line 1203) so schema changes are tracked.
 - Entities live in `runtime/component/*/entity/*.xml` (e.g. `ofbiz-oms-udm/entity/DatamodelOrderEntitymodel.xml`).
 
-**Implication:** HotWax has no migration files to review — schema is derived from entity XML at startup. Nexus's 57 Flyway migrations are explicit, reviewable, and rollback-aware. For a sales pitch: Nexus migrations are auditable; HotWax schema changes are implicit and can drift between environments.
+**Implication:** HotWax has no migration files to review — schema is derived from entity XML at startup. Nexus's 59 Flyway migrations are explicit, reviewable, and rollback-aware. For a sales pitch: Nexus migrations are auditable; HotWax schema changes are implicit and can drift between environments.
 
 ---
 
@@ -128,13 +128,13 @@ Entity model: `OrderRoutingGroup`, `OrderRouting`, `OrderRoutingRule`, `OrderRou
 
 **Assessment:** Concept-level parity only (groups, rules, conditions, actions, runs, reject) — **and that is where the comparison stops.** HotWax's routing is a *scheduled batch* engine (`run OrderRoutingGroup` with 10-hour transaction timeouts, `scheduleNow`, `clean OrderRoutingRun`); Nexus's is request-driven. HotWax's `get OrderFilterSql` / `get OrderRoutingRuleSql` — exposing the generated SQL for a routing rule — is a distinctive debugging feature worth noting.
 
-⚠ **Nexus is behind on allocation, not ahead.** A line-level read of `OrderRoutingService.java` (see [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md)) found that HotWax's allocator is **stock-aware SQL** with facility caps, substitute-item resolution, shipment-group brokering, and distance ranking, while Nexus's allocation path has **live correctness defects** (over-allocation; a fallback that selects a warehouse that cannot fulfill) and lacks that depth. This is a **P0 blocker** — T-17 (correctness) and T-14 (allocator depth) must land before routing is demo-ready; T-18 (rule expressiveness) is P1. Do not lead with Nexus routing.
+⚠ **Nexus is behind on allocation depth, not ahead — and no longer on correctness.** A line-level read of `OrderRoutingService.java` (see [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md)) found HotWax's allocator is **stock-aware SQL** with facility caps, substitute-item resolution, shipment-group brokering, and distance ranking, while Nexus's allocator was shallower on those dimensions. The three **correctness defects** it originally had (over-allocation; an unchecked AI quantity split; a fallback that selected a warehouse that could not fulfill) are **fixed and merged into `main`** — T-17 is closed. The remaining gap is **depth (T-14, P0)**, which must land before routing is demo-ready; T-18 (rule expressiveness) is P1. Do not lead with Nexus routing.
 
 *Note: the Shopify "won't reroute when the last location holds the inventory" constraint is a **Shopify** limitation HotWax works around — not a HotWax routing gap, and not a Nexus win.*
 
 ---
 
-## 4. Carrier Labels — a real but *unfinished* Nexus area
+## 4. Carrier Labels — a real Nexus seam, *partially* wired
 
 ### HotWax (verified — core `oms/service/`, four files)
 
@@ -157,18 +157,21 @@ Entity model: `OrderRoutingGroup`, `OrderRouting`, `OrderRoutingRule`, `OrderRou
 - Frontend: `LabelPrintingPage.tsx`
 - Carrier rate-shopping migrations: `V15__carrier_rate_shopping.sql`, `V22__carriers.sql`
 
-**How it actually behaves:**
+**The legacy local path still exists:**
 - `ShippingLabelService.generateLabel` / `generateLabelsForOrder` / `generateBopisLabel` synthesize labels locally
-- `labelSource` is **hardcoded to `"SIMULATED"` in all three code paths** — the field is *documented* as `SIMULATED (local) or CARRIER (real connector purchase)`, but **no code path ever sets `CARRIER`**
-- `generateTrackingNumber(carrier)` fabricates tracking numbers from a carrier prefix (`FEDEX`→`FX`, `UPS`→`UP`, `USPS`→`US`, `DHL`→`DH`, `LOCAL`→`LC`, else `GN`) — **not carrier-issued numbers**
+- Those three methods still hardcode `labelSource = "SIMULATED"` (`ShippingLabelService.java:44,69,93`), and `generateTrackingNumber(carrier)` still fabricates tracking numbers from a carrier prefix (`FEDEX`→`FX`, `UPS`→`UP`, `USPS`→`US`, `DHL`→`DH`, `LOCAL`→`LC`, else `GN`) — **not carrier-issued numbers**
+- So the honest statement is: *simulated is the default, not the only option.*
 
-**But a real carrier integration exists, just not wired to labels:**
-- `integration/connector/shipping/FedExConnector.java` extends `BaseApiConnector` and implements `getRates`, `createShipment`, `track`, `pushFulfillments`, `registerWebhooks` — a genuine FedEx REST integration
-- It is **not connected** to the label-generation path. There is a designed-but-unimplemented seam at `labelSource`.
+**T-12 shipped the real-purchase path (merged in `45f389d`):**
+- `ShippingLabelService.generateCarrierLabel` (`:152-219`) resolves the tenant's adapter config, calls `adapter.createShipment(...)`, and on success sets `labelSource = "CARRIER"` with the **carrier-issued** tracking number and base64 label payload (`:197-201`)
+- It is idempotent per order+carrier — an existing `CARRIER`-sourced label for that pair is returned as-is rather than re-purchased (`:161-172`), which is the billing-safety property HotWax's path does not document
+- It emits an `order.label_generated` Kafka event with `labelSource: "CARRIER"` (`:214-217`)
+- A compile-time `CarrierLabelAdapter` interface exists (`integration/carrier/CarrierLabelAdapter.java`) with `getName`, `getLabelFormat`, `createShipment`, `validateLabel`, plus request/response DTOs (`CarrierShipmentRequest`/`Response`)
+- Implemented adapters: `SimulatedCarrierAdapter`, `SapiCarrierAdapter`, `JitsuCarrierAdapter` — the latter two issue real HTTP calls
+- Per-carrier configuration is tenant-owned and self-hosted: `NxCarrierLabelConfig` entity, `CarrierLabelConfigController`, and `V62__carrier_label_adapter.sql`
+- A separate genuine FedEx REST integration also exists at `integration/connector/shipping/FedExConnector.java` (rates, createShipment, track, pushFulfillments, registerWebhooks) — still **not** bridged to the `CarrierLabelAdapter` layer
 
-**Not yet built** (specified in `nexus-p0-implementation-specs.md` as ticket T-12 / Flyway V61–V62, but **no such files exist in the repo**): `CarrierLabelAdapter`, `JitsuCarrierAdapter`, `SapiCarrierAdapter`, `SimulatedCarrierAdapter`, `CarrierShipmentRequest`/`Response`, `NxCarrierLabelConfig`, `CarrierLabelConfigController`/`Service`/`Repository`, `V62__carrier_label_adapter.sql`.
-
-**Assessment:** ⚠ **Nexus is behind here, not ahead.** HotWax runs the full live label lifecycle in production at multiple customers; Nexus is simulated end to end and has no working carrier connectivity. There is no "opportunity" to claim a win here — this is a **catch-up item**. The only genuine Nexus advantage is *architectural*: a compile-time `CarrierLabelAdapter` interface and injectable service versus HotWax's runtime string dispatch, plus self-hostable credentials (HotWax holds them on the gateway). That is a real but modest differentiator, and it is **planned, not shipped**. Frame it as: *"our abstraction is cleaner and your credentials stay in your database — but we owe you the integration work HotWax already charges for."* Shipping T-12 (wiring real label purchase through `FedExConnector`, flipping `labelSource` to `CARRIER`) is what makes the claim true. See §11, §12, §13.
+**Assessment:** ⚠ **Closer, but still behind — and the honest gap is FedEx.** The abstraction and the real-purchase path are shipped and demonstrable, which was previously untrue. What remains: (a) no `FedExCarrierAdapter` implements `CarrierLabelAdapter`, so FedEx — the highest-volume parcel carrier — still cannot buy a label through the new path; (b) the three legacy entry points still default to `SIMULATED`, so an operator can unknowingly produce a fake tracking number that a customer will later find invalid. Frame it as: *"carrier-issued labels, purchased through a pluggable adapter your team configures in your own database — bring a FedEx adapter and we're on parity with what you already charge HotWax clients for."* Do not claim FedEx label purchase. See §11, §12, §13.
 
 ---
 
@@ -302,7 +305,7 @@ Supporting entities: `OrderItem`, `OrderItemShipGroup`, `OrderRole`, `OrderIdent
 
 ### Nexus (verified)
 
-React 19 + Vite + TypeScript + Tailwind, 93 pages under `src/pages/`.
+React 19 + Vite + TypeScript + Tailwind, 94 pages under `src/pages/`.
 
 **Assessment:** No contest on UX velocity and modern tooling — Nexus's React stack is a selling point against Moqui's XML screens. HotWax's screens are functional but dated; every UI change is an XML edit + framework render.
 
@@ -310,9 +313,9 @@ React 19 + Vite + TypeScript + Tailwind, 93 pages under `src/pages/`.
 
 ## 11. Where Nexus Wins (technical evidence)
 
-1. **Explicit carrier abstraction — but no working integration** (⚠ partial at best) — Nexus models the carrier seam as a Java interface + injectable service; HotWax resolves it at runtime by *service-name string* (`ShipmentRequest` row, else `SystemProperty`) with no compile-time contract — see §12. That is a real architectural difference. **But Nexus has no live carrier connectivity**: `labelSource` is hardcoded `"SIMULATED"`, tracking numbers are synthesized locally (`ShippingLabelService.generateTrackingNumber`), and the real `FedExConnector` (rates/shipments/tracking/fulfillments) is **not wired to labels**. HotWax by contrast runs the full label lifecycle against a live gateway (get / void / retry + manifests + label PDFs). The pluggable `CarrierLabelAdapter` architecture is **spec'd (T-12) but not built**. Sell the abstraction; **do not claim carrier capability** — see §12.
+1. **Explicit carrier abstraction, now with a live purchase path** (⚠ partial) — Nexus models the carrier seam as a Java interface + injectable service (`CarrierLabelAdapter`, `CarrierShipmentRequest`/`Response`, per-tenant `NxCarrierLabelConfig`); HotWax resolves it at runtime by *service-name string* (`ShipmentRequest` row, else `SystemProperty`) with no compile-time contract — see §12. That is a real architectural difference, and it is now **backed by working code**: `ShippingLabelService.generateCarrierLabel` purchases real labels through the adapter and stamps `labelSource = "CARRIER"` with carrier-issued tracking, idempotently, with `SimulatedCarrierAdapter` / `SapiCarrierAdapter` / `JitsuCarrierAdapter` shipped (`V62__carrier_label_adapter.sql`). **But the abstraction is not yet the wider win it could be**: no `FedExCarrierAdapter` implements the interface, the three legacy label paths still default to `"SIMULATED"` with synthesized tracking numbers, and the real `FedExConnector` (rates/shipments/tracking/fulfillments) is **not bridged** into the adapter layer. HotWax by contrast runs the full live label lifecycle against a live gateway (get / void / retry + manifests + label PDFs). Sell the abstraction and the SAPI/Jitsu connectivity; **do not claim FedEx label capability** — see §12.
 2. **Explicit, auditable API surface** — Nexus controllers are self-documenting; HotWax's auto-generated entity CRUD is implicit.
-3. **Schema governance** — 57 explicit Flyway migrations vs. implicit auto-create from entity XML.
+3. **Schema governance** — 59 explicit Flyway migrations vs. implicit auto-create from entity XML.
 4. **Modern UI** — React/TypeScript vs. Moqui XML screens.
 5. **Connector abstraction** — `BaseApiConnector`/`GenericHttpConnector` + sync-conflict/reconciliation layer vs. Shopify-specific services.
 6. **Sync conflict management** — `SyncConflictService` + `GET /sync/conflicts` + resolve workflow; HotWax has no equivalent.
@@ -338,7 +341,7 @@ React 19 + Vite + TypeScript + Tailwind, 93 pages under `src/pages/`.
 1. **Build a Darpan-compatible reconciliation endpoint** (`GET /reconciliation/orders`, `GET /reconciliation/returns`) matching the HotWax contract: half-open `[from, thru)` windows, `isExchange`/`originalOrderId`/`originalExternalId`, count fields (`excludedNonSalesOrderCount`, `missingExternalIdCount`), deterministic `ORDER BY orderDate, orderId`, and machine-distinguishable errors (`INVALID_WINDOW`, `PAGE_SIZE_TOO_LARGE`). This is the single highest-value compatibility item — it lets Nexus drop into existing Darpan pipelines.
 2. **Add multi-identifier order lookup (confirmed gap)** — Nexus stores a single `channelOrderId`/`externalId` per order; HotWax's typed, temporal `OrderIdentification` model (composite PK + `thruDate`, `ReturnIdentification` companion, GQL `orderByIdentification`) supports channel-order-number, order-name, and legacy identifiers with history. Add a typed identifier table + lookup endpoint (see §8).
 3. **Replace mock analytics and add facility-level funnel metrics (confirmed gap)** — HotWax exposes server-side funnel services (`get FunnelDashboard*`, `get FacilityOrderVolume`, `get FacilityFulfillmentVelocity`, `get FacilityPartialFulfillments`, `get FacilityRejections`) backed by view entities. Nexus's `AnalyticsController` serves 3 hardcoded mocks (`/carrier-performance`, `/cost-breakdown`, `/lanes`) and `onTimeDelivery` is a delivery rate rather than true on-time. Replace mocks with real queries and add per-facility funnel KPIs (see §7).
-4. **Build real carrier connectivity — this is the actual gap, not a talking point.** ⚠ Do **not** lead with carrier labels: HotWax completes the full live label lifecycle (rate shop → label → void/retry → manifest → label PDFs) via Unigate/maarg/shiphawk, and Nexus is simulated end to end. Ship T-12 as an *adapter interface plus a first real connector*, then lead with the explicitness of the abstraction (compile-time interface, injectable, no runtime string dispatch) and self-hostable credentials — not with a capability HotWax already runs in production.
+4. **Close the carrier gap — this is the actual remaining work, not a talking point.** ⚠ Do **not** lead with carrier labels: HotWax completes the full live label lifecycle (rate shop → label → void/retry → manifest → label PDFs) via Unigate/maarg/shiphawk, and Nexus's real-purchase path only covers SAPI/Jitsu behind a per-tenant adapter. The two concrete follow-ups are (a) implement `FedExCarrierAdapter` on the existing `FedExConnector` so FedEx volume can buy labels through the same seam, and (b) make the legacy `generateLabel`/`generateLabelsForOrder`/`generateBopisLabel` paths delegate to the adapter layer (or fail loudly) instead of silently shipping `SIMULATED` tracking numbers. Until both land, lead with the explicitness of the abstraction (compile-time interface, injectable, self-hostable credentials) and the idempotent, event-emitting `generateCarrierLabel` path — not with a capability HotWax already runs in production.
 5. **Use the reconciliation contract as a sales artifact** — it shows Nexus understands the integration reality (exchange orders, non-unique externalIds, boundary windows) better than a generic "sync status" report does.
 
 ---
@@ -398,7 +401,7 @@ React 19 + Vite + TypeScript + Tailwind, 93 pages under `src/pages/`.
 
 ## Appendix B — Complete Nexus Service Surface (120 services)
 
-`nexus-t17/nexus-oms-backend/src/main/java/com/nexus/oms/service/` — **120 classes: 75 root + 28 `ai/` + 9 `bigcommerce/` + 8 `shopify/`** (verified by file count).
+`nexus-oms-backend/src/main/java/com/nexus/oms/service/` — **122 classes: 77 root + 28 `ai/` + 9 `bigcommerce/` + 8 `shopify/`** (verified by file count).
 
 ### Root — by domain (75)
 
@@ -440,4 +443,4 @@ React 19 + Vite + TypeScript + Tailwind, 93 pages under `src/pages/`.
 
 ---
 
-*Verified against: `hotwaxoms/moqui2/runtime/component/{oms,order-routing,poorti,shopify-connector,netsuite-connector,maarg-util,ofbiz-oms-udm}/` and `hotwaxoms/moqui2/framework/src/main/groovy/org/moqui/impl/`; `nexus-t17/nexus-oms-backend/src/main/java/com/nexus/oms/` and `nexus-t17/nexus-oms-frontend/src/`.*
+*Verified against: `hotwaxoms/moqui2/runtime/component/{oms,order-routing,poorti,shopify-connector,netsuite-connector,maarg-util,ofbiz-oms-udm}/` and `hotwaxoms/moqui2/framework/src/main/groovy/org/moqui/impl/`; `nexus-oms-backend/src/main/java/com/nexus/oms/` and `nexus-oms-frontend/src/`.*

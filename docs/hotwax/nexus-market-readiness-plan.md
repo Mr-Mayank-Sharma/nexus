@@ -229,9 +229,9 @@ Build the **standard go-live checklist** HotWax lacks:
 *Goal: win on HotWax's weaknesses.*
 
 ### D1. Do NOT Lead with Routing (yet)
-Routing/brokering is the heart of the OMS and shows up in *every* account — which makes it tempting to lead with. A source-code audit disproved the earlier "Nexus wins here" claim: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, shipment-group brokering, distance ranking), while Nexus's allocation path has **live defects (T-17)** and less depth (T-14).
+Routing/brokering is the heart of the OMS and shows up in *every* account — which makes it tempting to lead with. A source-code audit disproved the earlier "Nexus wins here" claim: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, shipment-group brokering, distance ranking), while Nexus's allocation path has less depth (T-14). Its **correctness defects (T-17) are fixed and merged into `main`** (`a7ea7d2` + `cac85c8`, merge `3bda395`; 787 tests green).
 
-**Do not demo or lead with Nexus routing until T-17 and T-14 land** (T-18 rule expressiveness is P1). Both are implemented and **merged into `main`** — stock-aware allocation, per-node/SKU reservation with rollback, honest `PARTIALLY_ALLOCATED` / `FAILED` states — so this is no longer a build or merge gate. It stays shut until the remaining depth gaps close (substitutes, facility caps, brokering groups, real distance/cost/confidence), because the allocator is correct but its inputs are still heuristics. The Shopify "won't reroute when the last location holds the inventory" behavior is a *Shopify* constraint that HotWax works around — not a HotWax gap, and not a Nexus win. See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
+**Do not demo or lead with Nexus routing until T-14 lands** (T-18 rule expressiveness is P1). T-17 is no longer a gate — stock-aware allocation, per-node/SKU reservation with rollback, and honest `PARTIALLY_ALLOCATED` / `FAILED` states are on `main`. Routing stays shut until the remaining *depth* gaps close (substitutes, facility caps, brokering groups, real distance/cost/confidence), because the allocator is correct but its inputs are still heuristics. The Shopify "won't reroute when the last location holds the inventory" behavior is a *Shopify* constraint that HotWax works around — not a HotWax gap, and not a Nexus win. See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
 
 ### D2. Lead with Honest Data
 Nexus's **honest, auditable data** — no silent overwrites, no sync conflicts, every number real or clearly labelled — is a genuine differentiator vs. HotWax's reactive fixes.
@@ -250,7 +250,7 @@ Nexus's **go-live checklist + self-serve onboarding** beats HotWax's reactive im
 
 | Week | Track A (Product) | Track B (Sales) | Track C (Onboarding) |
 |------|-------------------|-----------------|----------------------|
-| 1–2 | **Routing correctness T-17 (P0, blocking)**, stock-aware allocator depth T-14 (P0), Replenishment drop-off, Picker analytics | Demo scripts (4 personas) | — |
+| 1–2 | **Stock-aware allocator depth T-14 (P0, blocking)** — T-17 correctness is already merged; Replenishment drop-off, Picker analytics | Demo scripts (4 personas) | — |
 | 3–4 | Transit-time model, Store ops (DoorDash) | Pricing model, Demo env | Self-serve onboarding |
 | 5–6 | Store printing, Bidirectional sync | — | Go-live checklist |
 | 7–8 | Returns/exchange, Serialized/RFID | — | Roll-off process |

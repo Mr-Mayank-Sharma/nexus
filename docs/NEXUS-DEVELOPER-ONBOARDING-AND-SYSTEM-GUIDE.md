@@ -13,20 +13,12 @@
 2. [Nexus Technology Stack & Architecture Deep-Dive](#2-nexus-technology-stack--architecture-deep-dive)
    - [Backend: Java 17 & Spring Boot 3](#backend-java-17--spring-boot-3)
    - [Database: PostgreSQL 16 & pgvector](#database-postgresql-16--pgvector)
-   - [Cache & High-Speed State: Redis 7](#cache--high-speed-state-redis-7)
-   - [Event-Driven Streaming: Apache Kafka](#event-driven-streaming-apache-kafka)
+   - [Cache & High-Speed State: Redis 7](#cache-redis-7)
+   - [Event-Driven Streaming: Apache Kafka](#event-bus-apache-kafka)
    - [Frontend: React 19, Vite, TypeScript & Tailwind CSS](#frontend-react-19-vite-typescript--tailwind-css)
    - [AI & Intelligence Layer: Python, ONNX & MCP](#ai--intelligence-layer-python-onnx--mcp)
 3. [End-to-End System & Business Flows](#3-end-to-end-system--business-flows)
-   - [Order Ingestion & Channel Normalization](#step-1-order-ingestion--channel-normalization)
-   - [Validation, Fraud Check & Approvals](#step-2-validation-fraud-check--approvals)
-   - [Distributed Order Management (DOM) & AI Routing](#step-3-distributed-order-management-dom--ai-routing)
-   - [Warehouse Fulfillment (Waves, Picking, Packing)](#step-4-warehouse-fulfillment-waves-picking-packing)
-   - [Carrier Rate Shopping, Label Printing & Manifesting](#step-5-carrier-rate-shopping-label-printing--manifesting)
-   - [BOPIS & Endless Aisle Flow](#step-6-bopis--endless-aisle-flow)
-   - [Inbound Logistics: Purchase Orders, ASNs & Slotting](#step-7-inbound-logistics-purchase-orders-asns--slotting)
-   - [Reverse Logistics: Returns (RMA) & Financial Reconciliation](#step-8-reverse-logistics-returns-rma--financial-reconciliation)
-   - [3PL Multi-Client Billing](#step-9-3pl-multi-client-billing)
+   - [Comprehensive Order Lifecycle Sequence](#comprehensive-order-lifecycle-sequence)
 4. [Backend Codebase Tour & Key Class Map](#4-backend-codebase-tour--key-class-map)
 5. [Frontend Application Architecture](#5-frontend-application-architecture)
 6. [Local Development & First Contribution Quickstart](#6-local-development--first-contribution-quickstart)
@@ -124,7 +116,7 @@ The customer orders online and selects "Pick up at Store #14". The OMS sends a p
                                         ▼
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │                        SPRING BOOT 3 (JAVA 17) BACKEND                         │
-│  74 REST Controllers  ·  111 Business Services  ·  157 Hibernate Entities      │
+│  81 REST Controllers  ·  124 Business Services  ·  167 Hibernate Entities      │
 ├───────────────────────┬────────────────────────┬───────────────────────────────┤
 │ PostgreSQL 16 DB      │ Redis 7 Cache          │ Apache Kafka Event Bus        │
 │ • Multi-tenant RLS    │ • Distributed Rate-Lim │ • order.created               │
@@ -156,6 +148,17 @@ The customer orders online and selects "Pick up at Store #14". The OMS sends a p
 - **Vite**: Ultra-fast build and Hot Module Replacement (HMR).
 - **Tailwind CSS**: Custom modern UI styling with responsive layouts, dark mode, and glassmorphism.
 - **Mobile RF PWA**: Offline-first warehouse scanning interface (`src/rf`) supporting camera and hardware laser barcode scanners.
+
+### AI & Intelligence Layer: Python, ONNX & MCP
+- **Two Python microservices** (FastAPI, outside the JVM) do the actual ML work:
+  - `supply_chain_ai/` → **port 5000** (`nexus.ai.base-url-ops`). Four models: `model1_order_routing.py`, `model2_shipping_aggregator.py`, `model3_box_optimizer.py`, `model4_pick_pack_ship.py`. Endpoints: `/api/health`, `/api/warmup`, `/api/predict/route`, `/api/predict/carrier`, `/api/predict/box`, `/api/predict/pick-pack`. A 30-second watcher hot-reloads models when the files change on disk.
+  - `supply_chain_ai2/` → **port 5001** (`nexus.ai.base-url-intel`). Two models: `model5_demand_forecasting.py`, `model6_inventory_optimization.py`. Endpoints: `/api/health-extended`, `/api/warmup`, `/api/predict/demand`, `/api/predict/inventory`.
+- **The Java outbound gateway is tiny**: `com.nexus.oms.ai` contains only `AiService` (calls the predict endpoints over `RestTemplate`) and `AiHealthCheck`.
+- **ONNX runs in-process, not in Python**: the `com.microsoft.onnxruntime:onnxruntime:1.19.0` dependency plus `AiOnnxRuntimeService` execute models inside the JVM. Exported artifacts land in `nexus-oms-backend/ai-artifacts/*.onnx`.
+- **`service/ai/` holds 28 classes** spanning the lifecycle: registry (`AiModelRegistryService`), artifacts (`AiArtifactService`), features (`AiFeatureStoreService`), inference (`AiInferenceService`), training (`AiTrainingPipelineService`, `AiTrainingOrchestrationService`, `TrainingScriptExecutor`), release gates (`AiDeploymentGateService`), observability (`AiMonitoringService`, `ShapExplainerService`, `AiCalibrationService`, `AiExperimentService`, `AiCostTrackingService`), and domain AI (`DemandForecastService`, `AiPackingService`, `AiOrderActionService`, `AiWarehouseResolutionService`, `AiAnalyticsService`, `AiRuleEngineService`).
+- **MCP tool layer** (`service/McpToolExecutor.java`): tools are rows in `NxMcpTool`, resolved per tenant; disabled tools are rejected with 400, and every call records latency and usage against `NxAiModel`. Note that read-only access is inferred from the agent **name** (starting `read`/`view`, or containing `readonly`) — a naming convention, not an enforced permission.
+- **External LLM calls** go through `LlmChatService` (`RestTemplate` + `@CircuitBreaker`).
+- **Semantic retrieval** combines `HybridSearchService` and `SemanticCacheService` over the pgvector embeddings.
 
 ---
 
@@ -206,8 +209,8 @@ sequenceDiagram
 
 | Package Path | Purpose | Key Classes to Inspect |
 |---|---|---|
-| `com.nexus.oms.controller` | REST API endpoints receiving HTTP requests from frontend & webhooks. | [OrderController.java](file:///Users/mayanksharma/Desktop/nexus/nexus-oms-backend/src/main/java/com/nexus/oms/controller/OrderController.java), [InventoryController.java](file:///Users/mayanksharma/Desktop/nexus/nexus-oms-backend/src/main/java/com/nexus/oms/controller/InventoryController.java) |
-| `com.nexus.oms.service` | Core business logic, orchestration, and algorithms. | [OrderService.java](file:///Users/mayanksharma/Desktop/nexus/nexus-oms-backend/src/main/java/com/nexus/oms/service/OrderService.java), [OrderRoutingService.java](file:///Users/mayanksharma/Desktop/nexus/nexus-oms-backend/src/main/java/com/nexus/oms/service/OrderRoutingService.java), [ATPCalculationEngine.java](file:///Users/mayanksharma/Desktop/nexus/nexus-oms-backend/src/main/java/com/nexus/oms/service/ATPCalculationEngine.java) |
+| `com.nexus.oms.controller` | REST API endpoints receiving HTTP requests from frontend & webhooks. | [OrderController.java](../nexus-oms-backend/src/main/java/com/nexus/oms/controller/OrderController.java), [InventoryController.java](../nexus-oms-backend/src/main/java/com/nexus/oms/controller/InventoryController.java) |
+| `com.nexus.oms.service` | Core business logic, orchestration, and algorithms. | [OrderService.java](../nexus-oms-backend/src/main/java/com/nexus/oms/service/OrderService.java), [OrderRoutingService.java](../nexus-oms-backend/src/main/java/com/nexus/oms/service/OrderRoutingService.java), [ATPCalculationEngine.java](../nexus-oms-backend/src/main/java/com/nexus/oms/service/ATPCalculationEngine.java) |
 | `com.nexus.oms.entity` | JPA Database entities mapping to PostgreSQL tables. | `NxOrder.java`, `NxInventory.java`, `NxShipment.java`, `NxReturn.java` |
 | `com.nexus.oms.repository` | Spring Data JPA database query interfaces. | `OrderRepository.java`, `InventoryRepository.java` |
 | `com.nexus.oms.security` | JWT token authentication, user claims, and tenant context. | `JwtAuthenticationFilter.java`, `TenantContext.java` |

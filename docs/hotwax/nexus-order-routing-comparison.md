@@ -13,7 +13,7 @@
 >
 > Every line reference below was verified against `OrderRoutingService.java` **at commit `da7bb5e`** (732 lines). It was accurate as written for that baseline.
 >
-> Work **`fix/t17-allocation-correctness`** rewrote large parts of the router — `OrderRoutingService.java` grew **732 → 1029 lines** (+421/−124) — and is now **merged into `main`** (verified: 768 tests, 0 failures, JDK 17). The rewrite sat on top of `da7bb5e`, which already included `90bde84`. **Sections 1, 3.1–3.6, 4 and the summary table describe the pre-T-17 baseline and are superseded** — do not cite them as current Nexus behaviour.
+> Work **`fix/t17-allocation-correctness`** rewrote large parts of the router — `OrderRoutingService.java` grew **732 → 1029 lines** (+421/−124) — and is now **merged into `main`** (verified: 787 tests, 0 failures, JDK 17). The rewrite sat on top of `da7bb5e`, which already included `90bde84`. **Sections 1, 3.1–3.6, 4 and the summary table describe the pre-T-17 baseline and are superseded** — do not cite them as current Nexus behaviour.
 >
 > ### Claims that T-17 invalidates
 >

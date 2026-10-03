@@ -23,11 +23,11 @@
 
 > ## ⚠️ Status re-verified 2026-10-01
 >
-> **T-17 is still an open P0 on `main` — and a verified fix now exists on a branch.** Since this doc was written, partial stock-awareness and queue plumbing landed (`0b91a0a`, `90bde84`) along with `BrokeringServiceTest` (`5619719`). The defects catalogued below remain unresolved in `OrderRoutingService` **on `main`** (two verbatim-live, one mitigated but ungated), and `OrderService.confirmOrder` (`:286`) still accepts its corrupt output.
+> **Historical (pre-fix state, kept for traceability):** when this doc was written, T-17 was an open P0 on `main` and the defects catalogued below were live — two verbatim-live, one mitigated but ungated, with `OrderService.confirmOrder` (`:286`) still accepting the corrupt output. Partial stock-awareness and queue plumbing had landed (`0b91a0a`, `90bde84`) along with `BrokeringServiceTest` (`5619719`).
 >
-> **A complete fix was built, verified and merged into `main`** (commits `a7ea7d2` + `cac85c8`). It makes `OrderRoutingService` stock-aware, caps every allocation at real availability, routes shortfalls to `PARTIALLY_ALLOCATED`/`FAILED` instead of `CONFIRMED`, and has a full regression suite. Verified: **768 tests, 0 failures** (`mvn clean test`, JDK 17).
+> **A complete fix was built, verified and merged into `main`** (commits `a7ea7d2` + `cac85c8`). It makes `OrderRoutingService` stock-aware, caps every allocation at real availability, routes shortfalls to `PARTIALLY_ALLOCATED`/`FAILED` instead of `CONFIRMED`, and has a full regression suite. Verified: **787 tests, 0 failures** (`mvn clean test`, JDK 17).
 >
-> **Status: merged — do not re-implement.** The fix belongs *in the router* because `OrderRoutingService` is the **only** allocator: `BrokeringService` is a persisted work queue whose every allocation is a call to `orderRoutingService.allocateOrder(...)`, so there is no alternative path to route through and no call ordering that avoids the defect. **Defect-by-defect status: [`nexus-order-routing-comparison.md` §8](./nexus-order-routing-comparison.md#8-t-17-status--re-audited-2026-10-01).**
+> **Status: merged — do not re-implement.** The fix belongs *in the router* because `OrderRoutingService` is the **only** allocator: `BrokeringService` is a persisted work queue whose every allocation is a call to `orderRoutingService.allocateOrder(...)`, so there is no alternative path to route through and no call ordering that avoids the defect. **Defect-by-defect status: see the "Status re-verified 2026-10-01" note above.**
 >
 > **T-14 and T-18 remain genuinely open.** Do not read the brokering queue work as progress on T-14 — `OrderRoutingService` still does not implement HotWax's allocation dimensions.
 

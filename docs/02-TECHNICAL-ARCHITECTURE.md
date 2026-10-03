@@ -108,15 +108,15 @@ Nexus OMS is a **cloud-native, multi-tenant** commerce-to-dispatch platform with
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ CONTROLLER LAYER   — 74 controllers, REST + WebSocket        │
+│ CONTROLLER LAYER   — 81 controllers, REST + WebSocket        │
 │   /api/** · /ws/** · openapi at /v3/api-docs, /swagger-ui    │
 ├─────────────────────────────────────────────────────────────┤
-│ APPLICATION LAYER — 111 services                            │
+│ APPLICATION LAYER — 124 services                            │
 │   Order orchestration · Inventory · Fulfillment · Shipping   │
 │   Returns · Procurement · Warehouse/Yard · Finance ·       │
 │   AI platform · Integrations · Import/Export · Auth/RBAC     │
 ├─────────────────────────────────────────────────────────────┤
-│ DOMAIN LAYER      — ~190 JPA entities (tenant-scoped)        │
+│ DOMAIN LAYER      — 167 JPA entities (tenant-scoped)         │
 │   @ManyToOne / @OneToMany / @OneToOne / @ElementCollection   │
 │   jsonb columns for flexible payloads                        │
 ├─────────────────────────────────────────────────────────────┤
@@ -135,7 +135,7 @@ Nexus OMS is a **cloud-native, multi-tenant** commerce-to-dispatch platform with
 
 | Service | Responsibility | Plain-English |
 |---|---|---|
-| `PermissionService` | 39 path→resource mappings; role-permission lookup, 60s cache, allow-by-default | The list that says *which key opens which door* |
+| `PermissionService` | 74 path→resource mappings; role-permission lookup, 60s cache, allow-by-default | The list that says *which key opens which door* |
 | `PermissionAuthorizationFilter` | Resolves path→resource→permission before controllers | The guard checking keys before you enter |
 | `AuthService` | Login, JWT issuance, `ALLOWED_ROLES` (14 roles) | The ID-card office |
 | `ImportTokenService` | Signed, expiring tokens for bulk import | The signed permission slip for big deliveries |
@@ -248,7 +248,7 @@ collect → prepare → train (job) → evaluate (real metrics) → register (mo
 > 3. You enter only allowed rooms (data is also filtered to *your* school only — tenant scoping).
 
 - **RBAC**: 14 roles, role↔permission rows in `nx_role_permissions`, tenant-scoped.
-- **Authorization model**: `PermissionService.PATH_TO_RESOURCE` (39 mappings), first-prefix-match, `*:*` for ADMIN, **allow-by-default** (documented trade-off — see `06-BUSINESS-FLOW-RBAC.md`).
+- **Authorization model**: `PermissionService.PATH_TO_RESOURCE` (74 mappings), first-prefix-match, `*:*` for ADMIN, **allow-by-default** (documented trade-off — see `06-BUSINESS-FLOW-RBAC.md`).
 - **Multi-tenancy**: every entity carries tenant scope.
 - **Import security**: signed import tokens with expiry; idempotency keys.
 - **External credentials**: encrypted `CredentialVault`; Okta SSO; MFA-ready.
@@ -259,7 +259,7 @@ collect → prepare → train (job) → evaluate (real metrics) → register (mo
 
 | Store | Use | Plain-English |
 |---|---|---|
-| PostgreSQL | System of record; Flyway `V1…V58`; JPA | The permanent fridge |
+| PostgreSQL | System of record; Flyway `V1…V67`; JPA | The permanent fridge |
 | Redis | Cache (RBAC 60s, hot lookups) | The speed rack |
 | Kafka | Domain events, integration ingestion, async automation | The walkie-talkie network |
 | In-memory/WS | STOMP push of live updates | Live "order just arrived" screen refreshes |

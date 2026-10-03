@@ -17,7 +17,7 @@ Carrier management (accounts, rates, zones), deterministic rate shopping, labels
 2. Best/guaranteed carrier selected; `NxShippingLabel` generated; manifest created.
 3. Tracking events (`NxTrackingEvent`) feed status; POD captured.
 4. Trailers checked into yard (`NxYardLocation`), dock assigned (`NxDockDoor`), events logged.
-5. Carrier invoices (`nxFreight_invoices`) audited against rate card; overcharges flagged.
+5. Carrier invoices (`nx_freight_invoices`) audited against rate card; overcharges flagged.
 
 ## Use cases
 - **UC-14** Load & ship
@@ -40,7 +40,7 @@ flowchart LR
     TRAIL[NxTrailer] --> YARD[NxYardLocation]
     YARD --> DOOR[NxDockDoor]
     DOOR --> LOAD[Loading]
-    FINV[nxFreight_invoices] --> AUDIT[nxFreight_audit_logs]
+    FINV[nx_freight_invoices] --> AUDIT[nx_freight_audit_logs]
 ```
 
 ## Key entities (ER subset)
@@ -53,7 +53,7 @@ erDiagram
     NX_MANIFESTS ||--o{ NX_MANIFEST_SHIPMENTS : includes
     NX_YARD_LOCATIONS ||--o{ NX_TRAILERS : parks
 ```
-Tables: `nx_carriers` · `nx_carrier_accounts` · `nx_carrier_rates` · `nx_carrier_zones` · `nx_rate_shopping_log` · `nx_shipments` · `nx_shipping_labels` · `nx_manifests` · `nx_manifest_shipments` · `nx_tracking_events` · `nx_proof_of_delivery` · `nx_trailers` · `nx_trailer_events` · `nx_yard_locations` · `nx_dock_doors` · `nx_appointments` · `nxFreight_invoices` · `nxFreight_invoice_lines` · `nxFreight_audit_logs`
+Tables: `nx_carriers` · `nx_carrier_accounts` · `nx_carrier_rates` · `nx_carrier_zones` · `nx_rate_shopping_log` · `nx_shipments` · `nx_shipping_labels` · `nx_manifests` · `nx_manifest_shipments` · `nx_tracking_events` · `nx_proof_of_delivery` · `nx_trailers` · `nx_trailer_events` · `nx_yard_locations` · `nx_dock_doors` · `nx_appointments` · `nx_freight_invoices` · `nx_freight_invoice_lines` · `nx_freight_audit_logs`
 
 ## Who can access what
 | Stage | Roles |

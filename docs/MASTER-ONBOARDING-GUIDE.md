@@ -770,10 +770,10 @@ public class NexusOmsApplication {
 nexus-oms-backend/
 ├── src/main/java/com/nexus/oms/
 │   ├── NexusOmsApplication.java      ← entry point
-│   ├── controller/                   ← 74 REST controllers
-│   ├── service/                      ← 111 services (business logic)
+│   ├── controller/                   ← 81 REST controllers
+│   ├── service/                      ← 124 services (business logic)
 │   ├── repository/                   ← Spring Data JPA repositories
-│   ├── entity/                       ← ~157 JPA entities
+│   ├── entity/                       ← 167 JPA entities
 │   ├── dto/                          ← request/response objects
 │   ├── security/                     ← JWT auth, tenant context, RBAC
 │   ├── config/                       ← app configuration
@@ -1133,7 +1133,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │
 ├── NexusOmsApplication.java          ← Spring Boot entry point
 │
-├── controller/                       ← 74 REST controllers (HTTP layer)
+├── controller/                       ← 81 REST controllers (HTTP layer)
 │   ├── OrderController.java          ← /api/v1/orders
 │   ├── InventoryController.java      ← /api/v1/inventory
 │   ├── ATPController.java            ← /api/v1/atp
@@ -1158,7 +1158,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │   │   └── AiAgentController.java
 │   └── ... (74 total)
 │
-├── service/                          ← 111 services (business logic)
+├── service/                          ← 124 services (business logic)
 │   ├── OrderService.java             ← order lifecycle
 │   ├── OrderRoutingService.java      ← DOM routing
 │   ├── ATPCalculationEngine.java     ← ATP math
@@ -1199,7 +1199,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │   ├── InventoryRepository.java
 │   └── ... (one per entity)
 │
-├── entity/                           ← ~157 JPA entities
+├── entity/                           ← 167 JPA entities
 │   ├── NxOrder.java
 │   ├── NxOrderItem.java
 │   ├── NxInventory.java
@@ -1209,7 +1209,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │   ├── NxShipment.java
 │   ├── NxReturn.java
 │   ├── NxAsn.java
-│   └── ... (157 total)
+│   └── ... (167 total)
 │
 ├── dto/                              ← request/response objects
 ├── security/                         ← JWT, tenant context, RBAC
@@ -1578,16 +1578,16 @@ The frontend starts on `http://localhost:5173`.
 
 ## 5.5 Run the test suites
 
-### Backend (704 unit tests)
+### Backend (789 unit tests)
 
 ```bash
 cd nexus-oms-backend
 mvn test
 ```
 
-Expected: **704 tests, 0 failures, 0 errors**.
+Expected: **789 tests, 0 failures, 0 errors**.
 
-### Frontend (391 vitest tests)
+### Frontend (403 vitest tests)
 
 ```bash
 cd nexus-oms-frontend
@@ -1597,7 +1597,7 @@ npx tsc --noEmit  # type check
 npm run build     # production build check
 ```
 
-Expected: **391 passing, 0 failures, 0 errors**; lint, type-check, and build all green.
+Expected: **403 passing, 0 failures, 0 errors**; lint, type-check, and build all green.
 
 ---
 

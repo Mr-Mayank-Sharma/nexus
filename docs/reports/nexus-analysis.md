@@ -1,5 +1,7 @@
 # Nexus OMS — Full Repository Analysis
 
+> ⚠️ **Historical snapshot — undated.** Counts in this report (e.g. 37 controllers, 52 services, 92 entities) were accurate when written and are **not** current. For live inventory see [`01-CURRENT-STATE.md`](../01-CURRENT-STATE.md) (167 JPA entities, 81 controllers, 124 services) and [`10-DATA-MODEL-REFERENCE.md`](../10-DATA-MODEL-REFERENCE.md) (179 tables).
+
 ## Part 1: What's Working Correctly
 
 ### 1.1 Backend (Spring Boot 3.2.5, Java 17)

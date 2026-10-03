@@ -1,6 +1,6 @@
 # Nexus OMS — Entity Relationship Diagram (ER)
 
-> The authoritative catalog of the ~157 JPA entities. Diagrams use **Mermaid** (`erDiagram`). Relationships are **logical FKs** — most associations are plain `UUID` columns (e.g. `customerId`, `warehouseId`, `tenantId`) rather than JPA object graphs (only ~6 JPA associations exist).
+> The authoritative catalog of the 167 JPA entities. Diagrams use **Mermaid** (`erDiagram`). Relationships are **logical FKs** — most associations are plain `UUID` columns (e.g. `customerId`, `warehouseId`, `tenantId`) rather than JPA object graphs (only ~6 JPA associations exist).
 
 ---
 
@@ -36,12 +36,12 @@ An **ER diagram** is just the **floor plan** of the storage room: which shelf co
 - `PK` — `UUID` (Hibernate `GenerationType.UUID`) unless noted.
 - `tenant_id` — multi-tenancy scope column (present on virtually every table).
 - Timestamps `LocalDateTime`; money `BigDecimal`; flexible payloads `jsonb`.
-- Three tables use legacy casing `nxFreight_*` (kept; **do not rename without a migration**).
+- The three freight tables are named `nx_freight_*`. V45 originally created them as `nxFreight_*` (which Postgres folded to `nxfreight_*`); V67 renamed them to the canonical `nx_freight_*` to match the entities.
 - Naming: `nx_<domain>`, `ai_*` (AI), `import_*` (import/export).
 
 ---
 
-## 1. Domain Catalog (all ~157 tables)
+## 1. Domain Catalog (all 167 tables)
 
 ### Core commerce & customers
 `nx_customers` · `nx_addresses` · `nx_contacts` · `products` · `nx_product_mappings` · `nx_promotions` · `nx_promotion_usage` · `nx_payments` · `nx_invoices` · `nx_invoice_items` · `nx_credit_memos`
@@ -59,7 +59,7 @@ An **ER diagram** is just the **floor plan** of the storage room: which shelf co
 `nx_slotting_rules` · `nx_slotting_assignments` · `nx_slotting_audits` · `nx_engineered_standards` · `nx_workload_rules` · `nx_labor_entries` · `nx_productivity_log` · `nx_shift_schedules`
 
 ### Shipping, carriers & yard
-`nx_carriers` · `nx_carrier_accounts` · `nx_carrier_rates` · `nx_carrier_zones` · `nx_rate_shopping_log` · `nx_trailers` · `nx_trailer_events` · `nx_yard_locations` · `nx_dock_doors` · `nx_appointments` · `nxFreight_invoices` · `nxFreight_invoice_lines` · `nxFreight_audit_logs`
+`nx_carriers` · `nx_carrier_accounts` · `nx_carrier_rates` · `nx_carrier_zones` · `nx_rate_shopping_log` · `nx_trailers` · `nx_trailer_events` · `nx_yard_locations` · `nx_dock_doors` · `nx_appointments` · `nx_freight_invoices` · `nx_freight_invoice_lines` · `nx_freight_audit_logs`
 
 ### Returns (RMA)
 `nx_returns` · `nx_return_items`
@@ -603,8 +603,8 @@ erDiagram
 | `@JoinColumn` insertable/updatable=false | Read-only navigation (e.g. `NxOrder → Address`) | A reference card you can read but not change |
 | jsonb columns | Workflow/config/integration payload tables | Flexible pockets for "anything goes" data |
 | Tenant scoping | `tenant_id` on all tenant tables; enforced in services | Every box is labelled with its school |
-| Schema migrations | 58 Flyway files `V1…V58` (idempotent) | Every drawer change is recorded in history |
-| Legacy naming | `nxFreight_*` (3 tables) — requires migration to normalize | Old labels on 3 drawers; renaming needs care |
+| Schema migrations | 59 Flyway files `V1…V67` (idempotent) | Every drawer change is recorded in history |
+| Legacy naming | `nx_freight_*` (3 tables) — requires migration to normalize | Old labels on 3 drawers; renaming needs care |
 
 ---
 

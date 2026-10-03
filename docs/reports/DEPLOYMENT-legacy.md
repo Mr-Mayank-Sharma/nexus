@@ -1,5 +1,7 @@
 # NexusShip Deployment Guide
 
+> ⚠️ **Superseded / legacy.** Use [`../DEPLOYMENT.md`](../DEPLOYMENT.md) instead (compose + Kubernetes/Helm + backup/PITR). Retained for history only.
+
 ## Backend Environment Variables (Render)
 
 | NAME | VALUE | Required |

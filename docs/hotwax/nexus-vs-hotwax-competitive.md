@@ -4,7 +4,7 @@
 >
 > **Technical evidence base:** [`nexus-vs-hotwax-technical.md`](./nexus-vs-hotwax-technical.md) — source-verified comparison of the HotWax Moqui architecture (services, reconciliation API, order routing, carrier labels, data model) against Nexus's Spring Boot stack.
 >
-> **Routing evidence base:** [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md) + [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md) — source-verified routing read of `OrderRoutingService.java`, including the live defects tracked as T-14/T-17.
+> **Routing evidence base:** [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md) + [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md) — source-verified routing read of `OrderRoutingService.java`. It found three genuine allocation-correctness defects; those are **fixed and merged** (T-17), and **allocator depth (T-14)** is the remaining routing gap.
 >
 > ⚠️ **Claims in this document that were later disproven by a source read are marked `[WITHDRAWN]`. Do not reuse them in a pitch or demo.**
 
@@ -25,7 +25,7 @@ Both Nexus and HotWax target the same buyer: **a Shopify merchant (or multi-stor
 
 | Capability | HotWax | Nexus | Advantage |
 |-----------|--------|-------|-----------|
-| **Fulfillment routing / brokering** | ✅ (stock-aware SQL allocator) | 🟡 (routing surface exists; **allocation is defective**) | **HotWax** — see [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md) |
+| **Fulfillment routing / brokering** | ✅ (stock-aware SQL allocator) | 🟡 (**correct** since T-17; **allocator depth** still behind) | **HotWax** on depth — see [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md) |
 | **BOPIS** | ✅ | ✅ | Tie |
 | **DoorDash / on-demand** | ✅ | 🟡 (planned) | HotWax (for now) |
 | **Store printing (receipts/pick tickets)** | ✅ | 🟡 (planned) | HotWax |
@@ -51,17 +51,19 @@ Both Nexus and HotWax target the same buyer: **a Shopify merchant (or multi-stor
 
 ## 3. Where Nexus Wins (lead with these)
 
-### 3.1 Fulfillment Routing (DOM) — `[WITHDRAWN]`, not a win today
-> **Correction (source-verified).** An earlier version of this doc claimed Nexus routing was **stronger** than HotWax's because HotWax "can't reroute when Shopify's final location can't fulfill" (Rails meeting). **That claim is withdrawn.** A read of `OrderRoutingService.java` shows the comparison does not hold up: HotWax's allocator is a **stock-aware SQL** implementation with facility caps, substitute-item resolution, shipment-group brokering, and distance ranking, while Nexus's DOM path has **live allocation defects**.
+### 3.1 Fulfillment Routing (DOM) — `[WITHDRAWN]`, and still not a win today
+> **Correction (source-verified).** An earlier version of this doc claimed Nexus routing was **stronger** than HotWax's because HotWax "can't reroute when Shopify's final location can't fulfill" (Rails meeting). **That claim is withdrawn, and nothing replaces it.** A read of `OrderRoutingService.java` found three genuine allocation-correctness defects, and HotWax's allocator is a **stock-aware SQL** implementation with facility caps, substitute-item resolution, shipment-group brokering, and distance ranking, while Nexus's DOM path has no equivalent.
 
-**What the source actually shows in Nexus:**
-- `ruleBasedAllocation` (`:229-234`) calls `buildAllocation` (`:643`) once per candidate UUID with the **full order quantity**, and never calls `canFulfill` on that path.
-- The AI path (`:272`) splits quantity arithmetically after scoring, **ignoring the `canFulfill` result** — a node that failed the stock check can still receive units and be marked `ALLOCATED`.
-- The fallback `.orElse(warehouses.get(0))` (`:418-420`) can pick a node just proven incapable, because `canFulfill` uses `allMatch` (`:462`).
+**What the source read found in Nexus — all three now fixed under T-17:**
+- `ruleBasedAllocation` called `buildAllocation` once per candidate UUID with the **full order quantity**, so every candidate node was each promised the whole order.
+- The AI path split quantity arithmetically after scoring, **ignoring the `canFulfill` result** — a node that failed the stock check could still receive units and be marked `ALLOCATED`.
+- The fallback `.orElse(warehouses.get(0))` could pick a node just proven incapable, because `canFulfill` used `allMatch`.
 
-**Interim position:** do not demo or lead with Nexus routing. Fix **T-17** (P0 allocation correctness) and **T-14** (P0 stock-aware multi-warehouse allocator) first; **T-18** (P1) covers rule expressiveness. Full read: [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
+**Status:** T-17 is **fixed and merged into `main`** (`a7ea7d2` + `cac85c8`, merge `3bda395`, 787 tests green). Every active node is now a candidate, the default path allocates stock-aware, and unmet demand is reported honestly as a `BACKORDER` row with `quantityAllocated = 0` instead of a false full allocation.
 
-**No sales message for this item until T-14/T-17 are closed.**
+**Interim position:** correctness is no longer the reason to hold routing back. **T-14** (P0 stock-aware multi-warehouse allocator *depth*) is; **T-18** (P1) covers rule expressiveness. Full read: [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
+
+**No sales message for this item until T-14 is closed.**
 
 ### 3.2 Fast Import Engine
 HotWax's BlackBrick import takes **2–3 min/order** (Agape). Nexus's import engine is fast and handles CSV/JSON/XML/EDI/XLSX.
@@ -109,15 +111,15 @@ HotWax's Moki is live. Nexus needs an MCP server. **Close this in Track A4.**
 HotWax wins here today, on two separate axes:
 
 1. **Allocator depth.** HotWax's SQL allocator handles facility caps, substitute-item resolution, shipment-group brokering, and distance ranking. Nexus's DOM path has no equivalent.
-2. **Allocation correctness.** On `main`, Nexus breaks allocation three ways: the DOM rule path multiplies full order quantity across candidate nodes, the AI path splits quantity arithmetically after scoring without re-checking stock, and a fallback allocates to a node `canFulfill` just rejected — and `OrderService.confirmOrder` accepts the corrupt result (T-17). **Fixed and merged into `main`** (commits `a7ea7d2` + `cac85c8`, 768 tests green).
+2. **Allocation correctness.** A source read found Nexus broke allocation three ways: the DOM rule path multiplied full order quantity across candidate nodes, the AI path split quantity arithmetically after scoring without re-checking stock, and a fallback allocated to a node `canFulfill` just rejected — and `OrderService.confirmOrder` accepted the corrupt result. All three are **fixed and merged into `main`** (T-17: `a7ea7d2` + `cac85c8`, merge `3bda395`, 787 tests green).
 
-Correctness is a **P0 blocker on `main` today** and clears on merge — it is not a reason to route around `OrderRoutingService`, since `BrokeringService` is a queue over that same engine. Depth (T-14) remains a genuine gap. **Merge T-17 and close T-14 in Track A1; T-18 (rule expressiveness) is P1.** See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
+Correctness is **no longer a gap**. Depth (T-14) remains a genuine one: the default path now allocates stock-aware with honest partial/backorder states, but it still has no facility caps, substitute-item resolution, shipment-group brokering, or distance ranking. **Close T-14 in Track A1; T-18 (rule expressiveness) is P1.** See [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md).
 
 ---
 
 ## 5. The Winning Strategy
 
-**Don't fight HotWax on their turf (routing, store ops, RFID, WMS depth). Win on your turf (fast import, EDI, 3PL, honest data, predictability) while closing the gaps — starting with routing correctness, which is a P0 blocker, not a talking point.**
+**Don't fight HotWax on their turf (routing, store ops, RFID, WMS depth). Win on your turf (fast import, EDI, 3PL, honest data, predictability) while closing the gaps — starting with routing depth (T-14), the remaining P0, not a talking point.**
 
 ### Phase 1 — Win on Strengths (now)
 Lead every demo with:
@@ -129,7 +131,7 @@ Lead every demo with:
 
 ### Phase 2 — Close the Gaps (8–12 weeks)
 Build the P0/P1 gaps from the market-readiness plan:
-- **Routing correctness (T-17, P0) + stock-aware allocator (T-14, P0)** — blocking; see 4.6
+- **Stock-aware allocator depth (T-14, P0)** — the remaining routing blocker; correctness (T-17) is done. See 4.6
 - WMS depth (replenishment, picker analytics, transit-time)
 - Store ops (DoorDash, printing)
 - Returns/exchange complexity
@@ -157,4 +159,4 @@ Build the P0/P1 gaps from the market-readiness plan:
 
 Nexus is **technically competitive or superior** on the core OMS capabilities (import, EDI, 3PL, honest data). HotWax leads on **routing/brokering depth and correctness**, store ops depth, WMS depth, returns complexity, RFID, and MCP.
 
-**The path to market-ready:** close the HotWax-leading gaps (Tracks A1–A4) — **routing correctness (T-17) and allocator depth (T-14) first**, because they are P0 blockers — then build the sales motion (Track B) and win on predictability (Track C). Lead with fast import + honest data + EDI. **Nexus can win.**
+**The path to market-ready:** close the HotWax-leading gaps (Tracks A1–A4) — **allocator depth (T-14) first**, because it is the remaining P0 routing blocker (T-17 correctness is closed) — then build the sales motion (Track B) and win on predictability (Track C). Lead with fast import + honest data + EDI. **Nexus can win.**

@@ -2,11 +2,12 @@
 
 **Purpose:** A single, straight answer to "who is better, feature by feature", scored out of 10 for **code** (what actually exists and works) and separately for **business process** (how completely the workflow is covered).
 
-**Audit date:** 2026-10-01 · **Nexus commit:** `10a092f` · **HotWax:** `moqui2` runtime snapshot, 159 `*Services.xml` across 14 components
+**Audit date:** 2026-10-02 · **Nexus commit:** `45f389d` (was `10a092f` on 2026-10-01) · **HotWax:** `moqui2` runtime snapshot, 159 `*Services.xml` across 14 components
 
 **Method — read this before the numbers:**
 
-- Every Nexus score below was **verified against source in this repo at `10a092f`**, not copied from an existing doc. Where code contradicts a prior doc, I say so in §5.
+- Every Nexus score below was **verified against source in this repo at `45f389d`**, not copied from an existing doc. Where code contradicts a prior doc, I say so in §5.
+- **Changed since the `10a092f` audit (2026-10-01 → 2026-10-02):** T-17 (allocation correctness), T-09 (fulfillment reconciliation), and T-12 (real carrier label purchase) have landed on `main` via merge `45f389d`. Rows 1, 2, 3 and process row 2 are re-scored below; every other score is unchanged and was **not** re-litigated.
 - HotWax scores are grounded in the verified source audits already recorded in [`nexus-vs-hotwax-technical.md`](./nexus-vs-hotwax-technical.md) (service counts, `EligibleOrdersQuery.sql.ftl` / `InventorySourceSelector.sql.ftl`, reconciliation contract, funnel services).
 - **Score = code, not marketing.** A `POST /mcp/execute` that returns a descriptor instead of calling the service is not a working feature, so it scores low no matter how good the design is. A placeholder scores as a placeholder.
 - HotWax is scored **as the open-source `moqui2` runtime snapshot**, not as a vendor's full commercial product. HotWax Commerce the *company* sells things not present here (Moki AI, Manhattan-scale add-ons). Scoring the company higher would be dishonest without the code to prove it, and scoring the code lower would be equally dishonest. Same for Nexus: no production uptime history, so track record scores low regardless of feature count.
@@ -19,9 +20,9 @@
 
 | # | Feature | HotWax | Nexus | Winner | Evidence / why |
 |---|---------|:-------:|:-----:|:------:|----------------|
-| 1 | **Order routing / brokering** | 9 | **4** | 🔴 HotWax | HotWax: stock-aware SQL allocator, facility caps, substitute-item resolution, distance ranking. Nexus `OrderRoutingService`: routes, but 3 live correctness defects on `main` (T-17) and no stock-aware SQL allocator (T-14). |
-| 2 | **Order reconciliation API** | 9 | 4 | 🔴 HotWax | HotWax `OrderReconServices.xml` / `ReturnReconServices.xml`: real contract, half-open `[from,thru)` windows, exchange-aware. Nexus `SyncController.java:53` `/sync/reconciliation` returns **job counts, not order records**. |
-| 3 | **Carrier labels / rating** | 9 | 4 | 🔴 HotWax | HotWax `poorti` runs the full live lifecycle (rate shop → label → void/retry → manifest → PDFs). Nexus `ShippingLabelService.java:33,58,82` hardcode `labelSource="SIMULATED"` on 3 of 4 paths; tracking numbers synthesized locally. Real adapters exist for Jitsu + SAPI; **FedEx unwired**. |
+| 1 | **Order routing / brokering** | 9 | **5** | 🔴 HotWax | HotWax: stock-aware SQL allocator, facility caps, substitute-item resolution, distance ranking. Nexus `OrderRoutingService`: T-17's three allocation defects are **fixed on `main`** (a pre-existing partial order with an allocated node is now failed instead of stamped `ALLOCATED` and re-routed — 17 tests pin it). Still **no stock-aware SQL allocator (T-14)**, so allocation quality is basic-path only. |
+| 2 | **Order reconciliation API** | 9 | **6** | 🔴 HotWax | ⚠️ **Raised 4 → 6 on T-09.** `FulfillmentReconciliationService` is now real: `EXACT` / `PARTIAL` / `QUANTITY_DELTA` / `LOCATION_CHANGE` / `ANOMALY` classification, idempotent `acceptFulfillment`, webhook-driven reconciliation, mismatch report + per-order history, `V61`, 9 tests. **Still not equivalent to HotWax:** this is Shopify-fulfillment-scoped matching, not a generic contract-based recon API with half-open `[from,thru)` windows and exchange awareness. `SyncController.java:53` `/sync/reconciliation` still returns job counts, not order records. |
+| 3 | **Carrier labels / rating** | 9 | **6** | 🔴 HotWax | ⚠️ **Raised 4 → 6 on T-12.** A real adapter path now exists — `CarrierLabelConfigService.resolveAdapter` wires Jitsu/SAPI from tenant config and **throws** on missing/unknown adapter instead of faking success, with `SimulatedCarrierAdapter` opt-in only, idempotent on order+carrier, publishing `order.label_generated`. **Still throttled:** legacy `ShippingLabelService.java:44,69` still default `labelSource` to `SIMULATED` and synthesize a tracking number when the caller omits one, BOPIS is local-only (correctly), and **FedEx remains unwired**. |
 | 4 | **Import engine** | 3 | **9** | 🟢 Nexus | HotWax ~2–3 min/order. Nexus fast bulk import. The one unambiguous, large Nexus win. |
 | 5 | **EDI** | 5 | **9** | 🟢 Nexus | `EdiAutomationService.java` (714 lines): parse `850/856/810/940`, generate `855` + `997` acks, unit-tested. HotWax has EDI but no comparable self-serve parser surface. |
 | 6 | **3PL billing + client portal** | 5 | **8** | 🟢 Nexus | `BillingService.java` real (statement generation, lines, status) + `ClientPortalPage.tsx`. HotWax core OSS has no billing engine. |
@@ -33,7 +34,7 @@
 | 12 | **MCP / AI-agent execution** | 8 | 4 | 🔴 HotWax | Nexus `McpToolExecutor.java:208-216` — `executeViaBridge` is a **placeholder returning the endpoint descriptor**, own comment: "In production, call the underlying service". Registerable and budgeted, **not executable**. |
 | 13 | **Sync conflict handling** | 4 | **8** | 🟢 Nexus | `SyncConflictService` — stale flags, versioning, locks, `GET /sync/conflicts` + resolve workflow. HotWax overwrites. Genuine differentiator. |
 | 14 | **Idempotency / CDC / DLQ** | 5 | **8** | 🟢 Nexus | `IdempotencyService`, `WebhookDedupLedgerService`, `CDCProcessor`, retry + backoff + DLQ parking. Nexus engineering discipline. |
-| 15 | **Schema governance** | 5 | **9** | 🟢 Nexus | 57 explicit Flyway migrations vs. implicit entity auto-create (`EntityAutoServiceRunner` is HotWax's zero-config strength but weak governance). |
+| 15 | **Schema governance** | 5 | **9** | 🟢 Nexus | 59 explicit Flyway migrations (was 57 at `10a092f`; T-09/T-12 added V61/V62) vs. implicit entity auto-create (`EntityAutoServiceRunner` is HotWax's zero-config strength but weak governance). |
 | 16 | **Multi-identifier orders** | 9 | 4 | 🔴 HotWax | HotWax typed temporal `OrderIdentification` (composite PK, `thruDate`, history). Nexus single `channelOrderId`/`externalId` — last-write-wins, no history. |
 | 17 | **Cycle counting** | 9 | 8 | 🟡 HotWax | Both real. Nexus adds serialized counting via RFID. |
 | 18 | **Transfer orders** | 9 | 7 | 🔴 HotWax | Nexus has transfers + receiving; discrepancy workflow is partial. |
@@ -44,15 +45,15 @@
 | 23 | **Store printing (pick tickets)** | 9 | 2 | 🔴 HotWax | **No pick-ticket / packing-slip PDF generation in backend.** Absent. Doc correct here. |
 | 24 | **DoorDash / on-demand** | 8 | 2 | 🔴 HotWax | **Zero `doordash`/`curbside` references in backend Java.** Absent. Doc correct here. |
 | 25 | **Warehouse / WMS depth** | 9 | 6 | 🔴 HotWax | Nexus has waves, slots, receiving, putaway. HotWax has slotting rules engine, batch-wave, labor optimization. |
-| 26 | **UI / operator experience** | 6 | **8** | 🟢 Nexus | React/TypeScript SPA, **93 pages** vs. Moqui XML screens. HotWax screens are functional, dated. |
+| 26 | **UI / operator experience** | 6 | **8** | 🟢 Nexus | React/TypeScript SPA, **94 pages** (was 93; T-09 added `FulfillmentReconciliationPage`) vs. Moqui XML screens. HotWax screens are functional, dated. |
 | 27 | **API explicitness** | 5 | **9** | 🟢 Nexus | Self-documenting controllers, typed DTOs, OpenAPI-shaped surface vs. implicit entity CRUD. |
 | 28 | **Infrastructure / deploy** | 6 | **8** | 🟢 Nexus | Helm chart, `docker-compose.prod.yml` with healthchecks, Postgres/Redis/Kafka, backup CronJob. |
-| 29 | **Testing depth** | 7 | 7 | ⚪ Tie | Nexus 86 test files incl. `OrderRoutingServiceTest`, `AutomationEmulatorServiceTest`, `EdiAutomationServiceTest`. Neither is at enterprise CI rigor. |
+| 29 | **Testing depth** | 7 | 7 | ⚪ Tie | Nexus 91 test files / 789 tests incl. `OrderRoutingServiceTest`, `AutomationEmulatorServiceTest`, `EdiAutomationServiceTest`, `FulfillmentReconciliationServiceTest`. Neither is at enterprise CI rigor — the count grew, the rigor didn't. |
 | 30 | **Production track record** | **10** | **3** | 🔴 HotWax | Not fixable by code. Needs real customers + uptime history. Nexus has none. |
 | 31 | **Honesty of data** | 7 | **10** | 🟢 Nexus | Nexus is the only one that marks simulated results `simulated:true` and refuses to invent metrics. Real differentiator. |
 | 32 | **Cost & time-to-value** | 9 | **9** | ⚪ Tie | HotWax OSS $0 license. Nexus self-host ≈$76–110/mo all-in. Both beat enterprise vendors. |
 
-**Code tally:** HotWax wins **18**, Nexus wins **12**, ties **4** (2 judged on shared ground).
+**Code tally:** HotWax wins **18**, Nexus wins **11**, ties **3** — 32 rows, counted from the winner column above. (The previous revision of this doc claimed "18 / 12 / 4", which does not add up to 32; that was an arithmetic error, now corrected.)
 
 ---
 
@@ -63,7 +64,7 @@ Scored on **process completeness** (is the whole loop closed?), independent of h
 | # | Business process | HotWax | Nexus | Winner | Nexus gap |
 |---|------------------|:-------:|:-----:|:------:|------------|
 | 1 | **Order-to-cash (happy path)** | 9 | **8** | 🟢 Nexus | Both close. Nexus import/EDI speed is the better small-order experience. |
-| 2 | **Multi-node allocation** | 9 | 4 | 🔴 HotWax | T-14 + T-17. Allocation correctness is the #1 blocker. |
+| 2 | **Multi-node allocation** | 9 | **5** | 🔴 HotWax | T-17's correctness bugs are **fixed**; T-14 (stock-aware SQL allocator) is still the blocker. |
 | 3 | **Inventory accuracy loop** | 9 | 6 | 🔴 HotWax | No system-directed replenishment drop-off; replenishment is manual-approve. |
 | 4 | **Inbound → available-to-promise** | 9 | 7 | 🔴 HotWax | ASN/856 + receive exist; dock scheduling and bulk EDI depth differ. |
 | 5 | **Wave → pick → pack → ship** | 9 | 7 | 🔴 HotWax | Missing pick-ticket printing; labor optimization absent. |
@@ -78,13 +79,13 @@ Scored on **process completeness** (is the whole loop closed?), independent of h
 | 14 | **Auditability & trust** | 6 | **9** | 🟢 Nexus | Sync audit, AI audit trail, explicit conflict records. |
 | 15 | **Cost & ownership economics** | 9 | **9** | ⚪ Tie | Both self-hostable at $0 license. |
 
-**Process tally:** HotWax wins **10**, Nexus wins **5** (incl. 2 ties at the margin).
+**Process tally:** HotWax wins **9**, Nexus wins **5**, ties **1** — 15 rows, counted from the winner column above. (Previously claimed "10 / 5", which does not add up to 15; corrected.)
 
 ---
 
 ## 3. The honest one-paragraph version
 
-HotWax is the more **complete** system: it closes more warehouse loops, its routing allocator is genuinely stock-aware, and it has years of production reality behind it. Nexus is the better **engineered** system: clean typed APIs, 57 migrations, real EDI, fast import, conflict handling, 3PL billing, and a modern UI — at a fraction of the cost, with honest data labelling. **Nexus's single biggest problem is that its most important feature (order routing) is currently defective on `main`** — T-17 ships three allocation bugs, and T-14 lacks the stock-aware allocator that is the entire reason brokering works in HotWax. That single gap costs Nexus more than every architectural advantage it holds, because routing is what an OMS is *for*. Fix T-17 and merge it, then T-14, and this comparison changes materially.
+HotWax is the more **complete** system: it closes more warehouse loops, its routing allocator is genuinely stock-aware, and it has years of production reality behind it. Nexus is the better **engineered** system: clean typed APIs, 59 migrations, real EDI, fast import, conflict handling, 3PL billing, and a modern UI — at a fraction of the cost, with honest data labelling. **T-17 has removed the correctness blocker**: routing no longer silently corrupts partial orders on `main`, and the three allocation defects are pinned by tests. Nexus's single biggest remaining problem in order routing is **T-14** — the absence of a stock-aware SQL allocator, which is the entire reason brokering works in HotWax. Build T-14 and this comparison changes materially. The same honesty rule applies to the two newest wins: T-09's reconciliation is real but scoped to Shopify fulfillment rather than a generic exchange/contract API, and T-12's carrier purchase is real but coexists with a legacy `SIMULATED` default and no FedEx.
 
 ---
 
@@ -92,11 +93,12 @@ HotWax is the more **complete** system: it closes more warehouse loops, its rout
 
 Honesty requires flagging this — I verified against code and found prior docs out of date:
 
-| Claim in existing docs | Reality in this repo at `10a092f` | Fix |
+| Claim in existing docs | Reality in this repo at `45f389d` | Fix |
 |---|---|---|
 | Replenishment = "❌ Missing" / "planned" | `ReplenishmentService.java` exists (168 lines, rule CRUD + suggestion generation + approve/reject + stats) | Raise Nexus process score; call it "manual-approve, not system-directed" |
 | Serialized/RFID = "❌ Missing (P1 planned)" | `RfidIngestionService.java` exists (391 lines: EPC decode, receive, serialized cycle count, retag, sessions) + `NxSerializedInventory`, `SerializedInventoryRepository`, `RfidController` | Raise Nexus score; stop calling it planned |
-| Fulfillment reconciliation controller "shipped" | `FulfillmentReconciliationController.java` and `V61__fulfillment_reconciliation.sql` exist in **`nexus-p0`**, **not this repo** | Scope the claim to the right repository |
+| ~~Fulfillment reconciliation controller exists only in `nexus-p0`~~ | **Resolved.** `FulfillmentReconciliationController.java` + `V61__fulfillment_reconciliation.sql` are on `main` via `45f389d` | Claim is now accurate; scope caveat no longer needed |
+| "T-17 ships three allocation bugs on `main`" | **Resolved.** Defects fixed in `OrderRoutingService`; pinned by `BrokeringServiceTest` (17 tests) | Score row 1 raised 4 → 5; T-14 is the remaining gap |
 | `/analytics/carrier-performance`, `/cost-breakdown`, `/lanes` "real" | All three return hardcoded literals in `AnalyticsController.java` | Existing docs already correct here — keep |
 
 ---
@@ -113,6 +115,16 @@ Scores are **capability today on `main` / in the `moqui2` snapshot** — not roa
 
 ## 6. Source files cited
 
-- Nexus: `OrderRoutingService.java` (T-17 at `:232`, `:272`, `:418-420`), `ShippingLabelService.java`, `McpToolExecutor.java`, `AnalyticsController.java`, `SyncController.java`, `EdiAutomationService.java`, `BillingService.java`, `ReplenishmentService.java`, `RfidIngestionService.java`, `AutomationEmulatorService.java`, `SyncConflictService.java`
-- HotWax: `oms/service/co/hotwax/oms/recon/{OrderReconServices,ReturnReconServices}.xml`, `order-routing/sql/{EligibleOrdersQuery,InventorySourceSelector}.sql.ftl`, `poorti/service/co/hotwax/poorti/FulfillmentServices.xml`, `OrderServices.xml` (42 services)
+All Nexus paths below are in **this** repo at `45f389d` (not `nexus-p0` / `nexus-t17` worktrees).
+
+**Re-scored this revision** (T-17 / T-09 / T-12 evidence):
+
+- `service/OrderRoutingService.java` — T-17's three fixes: `resolveOrderStatus(...)` at `:286` (was a hardcoded `ALLOCATED`; a short order is now `PARTIALLY_ALLOCATED`, a fully-uncovered one `FAILED`), the single-node guard `isSingleNodeAllocation(allocations)` at `:215` + `:299` (per-item `allocatedNodeId`/`allocatedQty` are only stamped when one node truly covers the whole order), and the unconditional backorder raise at `:226` (a shortfall is a correctness signal, not gated on exception-detection config). Shared allocator `allocateStockAware` at `:559`.
+- `controller/FulfillmentReconciliationController.java` + `service/FulfillmentReconciliationService.java` + `db/migration/V61__fulfillment_reconciliation.sql` — T-09, on `main`. Scoped to Shopify fulfillments.
+- `service/ShippingLabelService.java` + `db/migration/V62__carrier_label_adapter.sql` — T-12, on `main`. Real carrier purchase, but the legacy `SIMULATED` default is still reachable and FedEx is not implemented.
+- `test/java/com/nexus/oms/service/BrokeringServiceTest.java` — 17 tests pinning the allocation behaviour.
+
+**Unchanged rows still rest on:** `McpToolExecutor.java` (bridge `executeViaBridge` is a descriptor placeholder), `AnalyticsController.java` (hardcoded `/carrier-performance`, `/cost-breakdown`, `/lanes`), `SyncController.java`, `EdiAutomationService.java`, `BillingService.java`, `ReplenishmentService.java`, `RfidIngestionService.java`, `AutomationEmulatorService.java`, `SyncConflictService.java`.
+
+- HotWax: `oms/service/co/hotwax/oms/recon/{OrderReconServices,ReturnReconServices}.xml`, `order-routing/service/co/hotwax/order/routing/OrderRoutingServices.xml`, `order-routing/sql/{EligibleOrdersQuery,InventorySourceSelector}.sql.ftl`, `poorti/service/co/hotwax/poorti/FulfillmentServices.xml`, `OrderServices.xml` (42 services)
 - Cross-references: [`nexus-vs-hotwax-technical.md`](./nexus-vs-hotwax-technical.md), [`nexus-vs-hotwax-competitive.md`](./nexus-vs-hotwax-competitive.md), [`nexus-business-process-alignment.md`](./nexus-business-process-alignment.md), [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), [`../07-SCM-COMPARISON.md`](../07-SCM-COMPARISON.md)

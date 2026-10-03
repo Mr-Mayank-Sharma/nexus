@@ -141,7 +141,7 @@
 
 ### UC-20 — Freight audit
 - **Actor:** FINANCE
-- **Flow:** Carrier invoice → `nxFreight_invoices` → lines matched vs rate card → overcharge flagged
+- **Flow:** Carrier invoice → `nx_freight_invoices` → lines matched vs rate card → overcharge flagged
 - **Result:** Payable amounts verified
 - 🧾 **Real life:** FastVan bills you $12 for a zone-2 box that should cost $8. Nexus flags the $4 difference automatically. Finance approves or disputes.
 

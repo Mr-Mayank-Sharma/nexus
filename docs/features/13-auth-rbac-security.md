@@ -14,7 +14,7 @@ JWT-based authentication, 14-role RBAC enforced server-side via a path→resourc
 
 ## Business process
 1. User logs in (`AuthService`) → JWT issued (jjwt). **SSO** (`POST /auth/sso/{provider}` + provider authorize/callback, Okta-style) and **MFA** (`POST /auth/mfa/verify`, TOTP-style) are live endpoints, unit + integration tested.
-2. Every request passes `PermissionAuthorizationFilter` → `PermissionService` resolves path → resource → permission (73 mappings, first-prefix-match).
+2. Every request passes `PermissionAuthorizationFilter` → `PermissionService` resolves path → resource → permission (74 mappings, first-prefix-match).
 3. Role permissions resolved from `nx_role_permissions` (tenant override → global default; 60s cache).
 4. Frontend `ProtectedRoute` + `PermissionGate` mirror the same model for UI.
 5. Sensitive actions write `NxAuditLog`.

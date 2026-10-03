@@ -181,8 +181,8 @@ Each business process below is a **real operational flow** a HotWax client runs.
 4. **The Shopify limitation:** if a store is the **last location with inventory, Shopify won't natively allow rerouting** → HotWax is building a workaround (flag order in Shopify POS → OMS picks it up → reroutes)
 5. **Two approaches being evaluated:** (a) real-time API call from Shopify POS to OMS, or (b) meta-field flag synced in 10–15 min → OMS reads and reassigns
 
-**Nexus status:** ⚠ **Withdrawn — was rated "covered and stronger."** This conclusion was inferred from the Rails meeting, but the source-code audit showed the opposite: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, brokering, distance ranking), while Nexus's allocation path has three live defects (T-17) and lacks that depth (T-14). HotWax's "last location with inventory" behavior is a *Shopify* constraint they work around — not a HotWax routing gap.
-- **Action:** Treat routing as a P0 blocker, not a differentiator. See §9 note in [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), T-14/T-17 in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md).
+**Nexus status:** ⚠ **Withdrawn — was rated "covered and stronger."** This conclusion was inferred from the Rails meeting, but the source-code audit showed the opposite: HotWax's allocator is stock-aware SQL (facility caps, substitute-item resolution, brokering, distance ranking), while Nexus's allocation path lacked that depth (T-14). Its three **correctness defects (T-17)** have since been **fixed and merged into `main`** (`3bda395`); the depth gap is what remains. HotWax's "last location with inventory" behavior is a *Shopify* constraint they work around — not a HotWax routing gap.
+- **Action:** Treat routing as a P0 blocker on **T-14 depth** (T-17 is closed), not a differentiator. See §9 note in [`nexus-order-routing-comparison.md`](./nexus-order-routing-comparison.md), T-14/T-17 in [`nexus-market-gap-tickets-3.md`](./nexus-market-gap-tickets-3.md).
 
 ---
 
@@ -322,7 +322,7 @@ Each business process below is a **real operational flow** a HotWax client runs.
 
 4. **Sync conflicts are the #1 integration pain.** Every integration account (Chelan, Rails, gorjana) hits "one overrides the other." Nexus's clean data model + webhooks is a foundation, but needs explicit conflict detection.
 
-5. **Routing is the heart — and it is where HotWax leads.** It appears in every account. An earlier draft of this doc called Nexus's DOM routing "genuinely stronger" and said to lead every demo with it. **That was withdrawn** after a source-code audit found three live allocation defects (T-17) and a shallower allocator (T-14). Both are now implemented and **merged into `main`**, so the gate has moved from *build* to *deepen*: do not demo routing until the depth gaps (substitutes, facility caps, brokering groups, real distance/cost/confidence) close.
+5. **Routing is the heart — and it is where HotWax leads.** It appears in every account. An earlier draft of this doc called Nexus's DOM routing "genuinely stronger" and said to lead every demo with it. **That was withdrawn** after a source-code audit found three live allocation defects (T-17) and a shallower allocator (T-14). T-17 is now **fixed and merged into `main`**, so the gate has moved from *correct* to *deepen*: do not demo routing until the depth gaps (substitutes, facility caps, brokering groups, real distance/cost/confidence) close. T-14 itself remains **open**.
 
 6. **Store ops is a distinct product surface.** BOPIS + DoorDash + receipts + associate tracking is a store-facing app, different from warehouse ops. Nexus needs this store surface.
 

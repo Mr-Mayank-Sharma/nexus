@@ -27,7 +27,7 @@
 16. [API Reference](#16-api-reference)
 17. [AI / ML Services](#17-ai--ml-services)
 18. [Operations & Troubleshooting](#18-operations--troubleshooting)
-19. [Schema Validation (ddl-auto=validate)](#19-schema-validation)
+19. [Schema Validation (ddl-auto=validate)](#19-schema-validation-ddl-autovalidate)
 20. [FAQ](#20-faq)
 
 ---
@@ -725,7 +725,7 @@ This is the **most important operational guarantee** in the platform.
 `spring.jpa.hibernate.ddl-auto=validate` makes Hibernate **verify** the DB schema matches the JPA entities on every startup. If there's any drift, the app **fails to start** — preventing silent data corruption from schema mismatches.
 
 ### The Three DB States V67 Handles
-1. **Fresh DB** — all 57 migrations run from scratch
+1. **Fresh DB** — all migrations run from scratch
 2. **Existing dev DB** — Hibernate previously created schema (`update`), drift present
 3. **Existing prod DB** — V45 applied, no Hibernate additions
 

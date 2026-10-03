@@ -13,7 +13,7 @@
 4. [Feature Inventory & Capability Matrix](#4-feature-inventory--capability-matrix)
 5. [Business Process Engineering](#5-business-process-engineering)
 6. [Integration Architecture](#6-integration-architecture)
-7. [Data Architecture & Canonical Model](#7-data-architecture--canonical-model)
+7. [Data Architecture](#7-data-architecture)
 8. [ML/AI Engine](#8-mlai-engine)
 9. [UX & UI Architecture](#9-ux--ui-architecture)
 10. [Implementation Roadmap](#10-implementation-roadmap)
