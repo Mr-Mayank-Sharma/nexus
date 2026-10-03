@@ -2,11 +2,11 @@
 
 **Purpose:** A single, straight answer to "who is better, feature by feature", scored out of 10 for **code** (what actually exists and works) and separately for **business process** (how completely the workflow is covered).
 
-**Audit date:** 2026-10-02 · **Nexus commit:** `45f389d` (was `10a092f` on 2026-10-01) · **HotWax:** `moqui2` runtime snapshot, 159 `*Services.xml` across 14 components
+**Audit date:** 2026-10-03 · **Nexus commit:** `67d2753` (scores last re-litigated at `45f389d`; since then only `83fcc18` permissions, `08741b3` docs and the `0b04f19`/`67d2753` doc guard landed — **no capability change, so no score moved**) · **HotWax:** `moqui2` runtime snapshot, 159 `*Services.xml` across 14 components
 
 **Method — read this before the numbers:**
 
-- Every Nexus score below was **verified against source in this repo at `45f389d`**, not copied from an existing doc. Where code contradicts a prior doc, I say so in §5.
+- Every Nexus score below was **verified against source in this repo at `45f389d`, spot-re-verified at `67d2753`**, not copied from an existing doc. Where code contradicts a prior doc, I say so in §5.
 - **Changed since the `10a092f` audit (2026-10-01 → 2026-10-02):** T-17 (allocation correctness), T-09 (fulfillment reconciliation), and T-12 (real carrier label purchase) have landed on `main` via merge `45f389d`. Rows 1, 2, 3 and process row 2 are re-scored below; every other score is unchanged and was **not** re-litigated.
 - HotWax scores are grounded in the verified source audits already recorded in [`nexus-vs-hotwax-technical.md`](./nexus-vs-hotwax-technical.md) (service counts, `EligibleOrdersQuery.sql.ftl` / `InventorySourceSelector.sql.ftl`, reconciliation contract, funnel services).
 - **Score = code, not marketing.** A `POST /mcp/execute` that returns a descriptor instead of calling the service is not a working feature, so it scores low no matter how good the design is. A placeholder scores as a placeholder.
@@ -100,6 +100,9 @@ Honesty requires flagging this — I verified against code and found prior docs 
 | ~~Fulfillment reconciliation controller exists only in `nexus-p0`~~ | **Resolved.** `FulfillmentReconciliationController.java` + `V61__fulfillment_reconciliation.sql` are on `main` via `45f389d` | Claim is now accurate; scope caveat no longer needed |
 | "T-17 ships three allocation bugs on `main`" | **Resolved.** Defects fixed in `OrderRoutingService`; pinned by `BrokeringServiceTest` (17 tests) | Score row 1 raised 4 → 5; T-14 is the remaining gap |
 | `/analytics/carrier-performance`, `/cost-breakdown`, `/lanes` "real" | All three return hardcoded literals in `AnalyticsController.java` | Existing docs already correct here — keep |
+| `nexus-business-process-alignment.md` row 14: MCP = "✅ Covered" (`fa40aff`) | `executeViaBridge` (`McpToolExecutor.java:208`) returns a descriptor; comment at `:210` says "In production, call the underlying service" | **Corrected to 🟡 Partial** — registry/RBAC/budgets are real, execution is not. `fa40aff`'s T-13 half was correct and is retained |
+| `nexus-business-process-alignment.md` rows 4 / 9 / 10: replenishment "❌ Missing", routing "⚠ Defective (T-14, T-17)", Serialized/RFID "❌ Missing" | `ReplenishmentService` (168 lines) exists but is manual-approve; T-17 is fixed on `main`; `RfidIngestionService` (391 lines) + `RfidController` + `NxSerializedInventory` + `SerializedInventoryRepository` all exist | **Corrected** to 🟡 Partial in all three rows; routing's only remaining gap is T-14 |
+| `nexus-vs-hotwax-technical.md` evidence appendix: `McpToolExecutor` "executes OMS tools via REST/GraphQL layer" | Same placeholder bridge as above | **Corrected** — now states registry/authz/budgeting are real, the bridge is not |
 
 ---
 
@@ -115,7 +118,7 @@ Scores are **capability today on `main` / in the `moqui2` snapshot** — not roa
 
 ## 6. Source files cited
 
-All Nexus paths below are in **this** repo at `45f389d` (not `nexus-p0` / `nexus-t17` worktrees).
+All Nexus paths below are in **this** repo at `45f389d`, spot-re-verified at `67d2753` (not `nexus-p0` / `nexus-t17` worktrees — **both are fully merged into `main`; `5619719` and `fd054bc` already appear in this repo's history**).
 
 **Re-scored this revision** (T-17 / T-09 / T-12 evidence):
 

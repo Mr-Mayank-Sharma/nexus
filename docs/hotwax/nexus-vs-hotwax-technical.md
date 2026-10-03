@@ -431,7 +431,7 @@ React 19 + Vite + TypeScript + Tailwind, 94 pages under `src/pages/`.
 `ShopifyClient`, `ShopifyFulfillmentPushService`, `ShopifyInventorySyncService`, `ShopifyOrderImportService`, `ShopifyProductSyncService`, `ShopifyRefundSyncService`, `ShopifyTokenService`, `ShopifyWebhookService`
 
 ### Notable surfaces captured this pass (new evidence)
-- **`McpToolExecutor`** (T-11, at `service/` root — not `service/ai/`): executes OMS tools via REST/GraphQL layer, enforces `NxMcpTool` permissions + `NxMcpAgentBudget` (usage/cost/budget tracking), logs to `AiCostLog`/`AiInferenceLog`.
+- **`McpToolExecutor`** (T-11, at `service/` root — not `service/ai/`): enforces `NxMcpTool` permissions + `NxMcpAgentBudget` (usage/cost/budget tracking), logs to `AiCostLog`/`AiInferenceLog`. ⚠️ **Tool execution is a placeholder** — `executeViaBridge` (`:208`) returns a descriptor of the resolved endpoint, not a service call; its own comment at `:210` reads "In production, call the underlying service". Registry/authz/budgeting are real; the bridge is not. Scored 4/10 in the honest scorecard.
 - **`GenericImportService`** (1,576 lines, only 5 public members): `importFile(entityType, file, format[, importMode])`, `parseFile(file, format)`, `VALID_ENTITY_TYPES`, `VALID_IMPORT_MODES`.
 - **`EndlessAisleService`**: full CRUD + `getEndlessAisleStats`, `getOrdersByCustomer/Status/Store`.
 - **`TransferOrderService`**: create/ship/receive/approve/cancel/submit + `getTransfersInTransit`, `getTransferStats`.

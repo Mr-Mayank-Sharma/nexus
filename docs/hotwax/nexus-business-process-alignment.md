@@ -258,7 +258,9 @@ Each business process below is a **real operational flow** a HotWax client runs.
 3. Order debugging, reconciliation, test validation via AI agents
 4. **API-key (internal)** + **OAuth/SSO (client-facing)**
 
-**Nexus status:** ✅ **Built.** `McpController` + `McpToolExecutor` expose OMS tools to AI agents, wired through `AiAgentService`/`AiAgentController` with per-agent budgets (`NxMcpAgentBudget`) and tool registry (`NxMcpTool`). See `nexus-oms-backend/src/main/java/com/nexus/oms/controller/McpController.java`.
+**Nexus status:** 🟡 **Partial — the surface is real, execution is not.** `McpController` + `McpToolExecutor` provide the tool registry (`NxMcpTool`), per-agent budgets (`NxMcpAgentBudget`), and RBAC enforcement, wired through `AiAgentService`/`AiAgentController` — that part is built. **But the tools do not actually run:** `McpToolExecutor.executeViaBridge` (`:208`) returns a descriptor of the resolved endpoint instead of invoking it, and its own comment at `:210` reads *"In production, call the underlying service"*. So an agent can register, budget and authorize a tool, then receive a description of what it *would* call. Closing this = executing the bridge against the service layer. See `nexus-oms-backend/src/main/java/com/nexus/oms/controller/McpController.java`.
+
+> **Corrected 2026-10-03.** An earlier revision (commit `fa40aff`) marked this **✅ Built**. Re-verified against source at `67d2753`: the bridge path is still a placeholder, so the honest score stays 4/10 in [`nexus-vs-hotwax-honest-scorecard.md`](./nexus-vs-hotwax-honest-scorecard.md) row 12. `fa40aff`'s T-13 (bidirectional sync) half **is** correct and is retained.
 
 ---
 
@@ -294,21 +296,21 @@ Each business process below is a **real operational flow** a HotWax client runs.
 | 1 | Transfer order receiving (discrepancy workflow) | 🟡 Partial | P0 |
 | 2 | Transfer order fulfillment (close-items, live labels) | 🟡 Partial | P0 |
 | 3 | Cycle counting | ✅ Covered | — |
-| 4 | **Replenishment system-directed drop-off** | ❌ Missing | **P0** |
+| 4 | **Replenishment system-directed drop-off** | 🟡 Partial | **P0** |
 | 5 | **Picker-performance / labor analytics** | ❌ Missing | **P0** |
 | 6 | Packing mid-pack box change (concurrency) | 🟡 Partial | P0 |
 | 7 | **Holiday planning / transit-time model** | ❌ Missing | **P0** |
 | 8 | BOPIS + DoorDash store ops | 🟡 Partial | P0 |
-| 9 | Order routing (capacity + reroute) | ⚠ **Defective** | **P0** (T-14, T-17) |
-| 10 | Serialized / RFID | ❌ Missing | P1 |
+| 9 | Order routing (capacity + reroute) | 🟡 Partial | **P0** (T-14 only) |
+| 10 | Serialized / RFID | 🟡 Partial | P1 (thinner than HotWax) |
 | 11 | Bidirectional sync + conflict handling | ✅ Covered | — |
 | 12 | Returns / exchange complexity | 🟡 Partial | P1 |
 | 13 | 3PL / WES operations | ✅ **Stronger** | — |
-| 14 | MCP / AI-agent access | ✅ Covered | — |
+| 14 | MCP / AI-agent access | 🟡 Partial | P1 (bridge not executable) |
 | 15 | International routing | ✅ Covered | — |
 | 16 | Shopify fulfillment → NetSuite | ✅ Covered | — |
 
-**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), Shopify→NetSuite (16), bidirectional sync (11), and MCP/AI-agent access (14)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, and — added after the source audit — **order routing (9), which is a P0 defect, not a win**.
+**Bottom line:** Nexus already covers or beats HotWax on **3PL (13), cycle counting (3), international routing (15), Shopify→NetSuite (16), and bidirectional sync (11)**. The market-defining gaps to close are the **WMS depth (4, 5, 7)**, **store ops (8)**, **receiving/fulfillment nuance (1, 2, 6)**, and — added after the source audit — **order routing (9), which is still short of HotWax because of T-14**. **MCP (14) is not on the win list**: the registry and budgets are built, but `executeViaBridge` returns a descriptor instead of calling the service.
 
 ---
 
