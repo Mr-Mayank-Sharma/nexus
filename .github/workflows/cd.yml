@@ -21,7 +21,6 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/nexus-oms
 
 permissions:
   contents: read
@@ -55,9 +54,13 @@ jobs:
             echo "environment=staging" >> "$GITHUB_OUTPUT"
             echo "image_tag=sha-${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
           fi
-          echo "backend_image=${REGISTRY}/${IMAGE_PREFIX}-backend" >> "$GITHUB_OUTPUT"
-          echo "frontend_image=${REGISTRY}/${IMAGE_PREFIX}-frontend" >> "$GITHUB_OUTPUT"
-          echo "ai_image=${REGISTRY}/${IMAGE_PREFIX}-ai" >> "$GITHUB_OUTPUT"
+          # Container registry references must be lowercase. github.repository_owner
+          # preserves the owner's capitalisation (Mr-Mayank-Sharma), which buildx
+          # rejects as an invalid tag: "repository name must be lowercase".
+          owner="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "backend_image=${REGISTRY}/${owner}/nexus-oms-backend" >> "$GITHUB_OUTPUT"
+          echo "frontend_image=${REGISTRY}/${owner}/nexus-oms-frontend" >> "$GITHUB_OUTPUT"
+          echo "ai_image=${REGISTRY}/${owner}/nexus-oms-ai" >> "$GITHUB_OUTPUT"
 
   # ──────────────────────────────────────────────
   # Build and push all container images to GHCR
