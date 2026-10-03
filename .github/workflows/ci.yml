@@ -24,6 +24,26 @@ permissions:
 
 jobs:
   # ──────────────────────────────────────────────
+  # Docs: documented counts must match the source tree
+  # Runs first and needs no build; the backend job repeats the full check
+  # after `mvn verify`, where surefire reports make the test-count claims
+  # checkable too.
+  # ──────────────────────────────────────────────
+  docs:
+    name: Docs Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Verify documented claims against source
+        run: python3 scripts/verify_docs.py --no-surefire
+
+  # ──────────────────────────────────────────────
   # Backend: build, test, coverage, SAST, dependency audit
   # ──────────────────────────────────────────────
   backend:
@@ -44,6 +64,12 @@ jobs:
 
       - name: Compile and run tests with JaCoCo
         run: mvn verify -B
+
+      # Full check, including the documented test counts: surefire reports
+      # only exist once the suite has run.
+      - name: Verify documented test counts against surefire
+        working-directory: .
+        run: python3 scripts/verify_docs.py
 
       - name: Upload JaCoCo coverage report
         uses: actions/upload-artifact@v4
