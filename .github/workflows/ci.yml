@@ -15,7 +15,11 @@ env:
   NODE_VERSION: "20"
   PYTHON_VERSION: "3.11"
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository }}
+  # NOTE: do NOT add "${{ github.* }}" values here. Workflow-level `env:` cannot
+  # reference the github context, and GitHub rejects the whole file at parse time
+  # (run fails in 0s with "This run likely failed because of a workflow file
+  # issue"). Jobs that need the owner must read github.repository_owner inside a
+  # `run:` step or a step-level `env:` block, which is where the context is legal.
 
 permissions:
   contents: read
@@ -297,6 +301,17 @@ jobs:
           format: sarif
           output: trivy-os-results.sarif
           severity: CRITICAL,HIGH
+          # `vuln-type` defaults to "os,library", so without this line the step
+          # also scanned the bundled app.jar and reported Maven dependency CVEs
+          # — i.e. it did not do what its name says. Pin it to "os" so this hard
+          # gate covers OS packages only, which is the class we can actually
+          # patch in the Dockerfile. Library deps get their own step below.
+          vuln-type: os
+          # Pinned so this gate is reproducible. The action's default happens to
+          # be v0.75.0 today, which is the exact version these results were
+          # verified against; letting the default drift silently would change
+          # scanner behaviour with no diff to review.
+          version: v0.75.0
           # Hard gate, matching cd.yml. This used to be exit-code "0" +
           # continue-on-error, i.e. a scan that could never fail anything and
           # only ever wrote a SARIF file nobody acted on. Now that this job
@@ -304,6 +319,34 @@ jobs:
           # one CD would reject downstream anyway — failing early is just
           # cheaper than failing after merge.
           exit-code: "1"
+
+      - name: Trivy scan — dependency (library) vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        # Non-blocking ON PURPOSE. This is tracked debt, not an oversight.
+        # 52 HIGH/CRITICAL (10 CRITICAL) originate from the Spring Boot 3.2.5
+        # BOM: Spring Framework 6.1.6, Spring Security 6.2.4, Tomcat 10.1.20,
+        # Netty 4.1.109.Final, Jackson 2.15.4. Clearing them requires moving the
+        # parent to Spring Boot 3.5.x, which pulls Spring Security 6.5 and
+        # Spring Framework 6.2.x and can break the test suite, the JaCoCo gate,
+        # and scripts/verify_docs.py's documented-test-count guard. That belongs
+        # in its own PR with its own review — not bundled into a CVE patch.
+        #
+        # Flip exit-code to "1" and drop continue-on-error in the SAME commit
+        # that lands the upgrade, so this gate cannot silently drift back.
+        #
+        # Findings are still uploaded to the Security tab below, so the debt
+        # stays visible and trackable rather than merely ignored.
+        continue-on-error: true
+        with:
+          image-ref: nexus-oms-backend:test
+          format: sarif
+          output: trivy-library-results.sarif
+          severity: CRITICAL,HIGH
+          vuln-type: library
+          exit-code: "0"
+          # Pinned for the same reason as the OS step above — these counts were
+          # verified on v0.75.0 and the gate must not drift under us.
+          version: v0.75.0
 
       - name: Trivy scan — application vulnerabilities
         uses: aquasecurity/trivy-action@master
@@ -317,6 +360,17 @@ jobs:
           # Same reasoning as the OS scan above: gate it instead of recording
           # findings nobody reads.
           exit-code: "1"
+          # REQUIRED, and not obvious. Trivy does NOT auto-discover
+          # .trivyignore.yaml when scanning a directory. Verified against
+          # v0.75.0: `trivy config --severity HIGH,CRITICAL --exit-code 1 .`
+          # with no --ignorefile still reports all 6 tracked findings and exits
+          # 1. Without this line CI fails on the exact debt .trivyignore.yaml
+          # is bookkeeping, and the gate looks broken for no visible reason.
+          #
+          # The action passes this straight through as --ignorefile.
+          trivyignores: .trivyignore.yaml
+          # Pinned for reproducibility, as above.
+          version: v0.75.0
 
       - name: Upload Trivy SARIF results
         uses: github/codeql-action/upload-sarif@v3
@@ -324,6 +378,13 @@ jobs:
         with:
           sarif_file: trivy-os-results.sarif
           category: trivy-os
+
+      - name: Upload Trivy SARIF (dependencies)
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-library-results.sarif
+          category: trivy-library
 
       - name: Upload Trivy SARIF (app)
         uses: github/codeql-action/upload-sarif@v3

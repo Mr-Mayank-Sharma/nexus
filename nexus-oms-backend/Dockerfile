@@ -20,6 +20,14 @@ RUN mvn package -Dmaven.test.skip=true -q
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
+# Patch OS packages in the runtime layer.
+# Trivy gates on HIGH/CRITICAL and the JRE image ships Debian/Ubuntu packages with
+# upstream fixes, so upgrade explicitly instead of depending on when the floating
+# :17-jre tag was last republished. `--no-install-recommends` keeps the layer lean.
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/*
+
 # Non-root user for security
 RUN groupadd -r nexus && useradd -r -g nexus nexus
 
