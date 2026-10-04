@@ -9,6 +9,17 @@
 #   cp .env.template .env   # then edit .env with real secrets
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
+# Two image-modes, both supported:
+#   --build        local builds (uses the `build:` blocks; no registry needed)
+#   pull + up      deployed mode — `image:` pulls the pinned GHCR artifacts built
+#                  by .github/workflows/cd.yml
+# For deployed mode set the image coordinates (cd.yml writes these into .env):
+#   NEXUS_IMAGE_OWNER=<lowercase ghcr owner>
+#   NEXUS_IMAGE_TAG=<release tag, or sha-xxxxxxxx>
+# Without them compose falls back to ghcr.io/nexus/*:latest — fine for a smoke
+# test, but never use :latest for a real production deploy: every build pushes
+# :latest, so it is not a rollback target.
+#
 # All secrets come from .env (gitignored). No secrets are hardcoded here.
 # =============================================================================
 
@@ -88,6 +99,12 @@ services:
   # Backend — Spring Boot OMS API
   # ---------------------------------------------------------------------------
   backend:
+    # Canonical artifact, published by cd.yml from nexus-oms-backend/Dockerfile.
+    # `image:` is required because CD deploys via `docker compose pull`; with only
+    # `build:` compose invented a local image name and the GHCR image was ignored.
+    # `build:` is kept as the local fallback so `up --build` still works offline.
+    # NEXUS_IMAGE_OWNER/NEXUS_IMAGE_TAG are set by cd.yml at deploy time.
+    image: ghcr.io/${NEXUS_IMAGE_OWNER:-nexus}/nexus-oms-backend:${NEXUS_IMAGE_TAG:-latest}
     build:
       context: ./nexus-oms-backend
       dockerfile: Dockerfile
@@ -159,6 +176,7 @@ services:
   # Frontend — React SPA served by nginx
   # ---------------------------------------------------------------------------
   frontend:
+    image: ghcr.io/${NEXUS_IMAGE_OWNER:-nexus}/nexus-oms-frontend:${NEXUS_IMAGE_TAG:-latest}
     build:
       context: ./nexus-oms-frontend
       dockerfile: Dockerfile

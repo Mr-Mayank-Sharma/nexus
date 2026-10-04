@@ -128,10 +128,17 @@ nexus/
 │   └── local/                  # macOS launchd plists
 ├── docs/                       # Documentation & blueprints
 ├── docker-compose.yml          # Dev compose (infra only)
-├── Dockerfile                  # Backend container
+├── nexus-oms-backend/Dockerfile  # Backend container (built by CI and CD)
+├── nexus-oms-frontend/Dockerfile # Frontend container (built by CI and CD)
 ├── render.yaml                 # Render.com cloud config
 └── .env.template               # Environment variable template
 ```
+
+> **Note:** there is deliberately **no root-level `Dockerfile`** — it was a
+> duplicate of the backend build and has been removed. Both CI and CD build from
+> the component Dockerfiles (`nexus-oms-backend/Dockerfile`,
+> `nexus-oms-frontend/Dockerfile`), so the scanned image is exactly the image
+> that gets deployed.
 
 ---
 

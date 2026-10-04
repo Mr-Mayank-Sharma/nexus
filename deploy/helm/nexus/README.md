@@ -14,9 +14,11 @@ Deploys the full NexusShip OMS stack on Kubernetes, mirroring
 
 - Kubernetes 1.25+
 - Helm 3
-- Container images pushed to a registry reachable by the cluster
-  (`nexus/oms-backend:1.0.0`, `nexus/oms-frontend:1.0.0` — override
-  `image.*.repository` / `image.*.tag` in `values.yaml`)
+- Container images pushed to a registry reachable by the cluster. The chart
+  defaults to the GHCR coordinates that CI/CD publishes
+  (`ghcr.io/nexus/nexus-oms-backend`, `ghcr.io/nexus/nexus-oms-frontend`), but
+  those are placeholders — you must override `image.*.repository` with your own
+  GHCR owner and set `image.*.tag` to a real release.
 
 ## Install
 
@@ -24,8 +26,18 @@ Deploys the full NexusShip OMS stack on Kubernetes, mirroring
 helm repo add nexus-local ./deploy/helm/nexus   # optional
 helm install nexus ./deploy/helm/nexus \
   --namespace nexus \
-  --create-namespace
+  --create-namespace \
+  --set image.backend.repository=ghcr.io/<owner>/nexus-oms-backend \
+  --set image.frontend.repository=ghcr.io/<owner>/nexus-oms-frontend \
+  --set image.backend.tag=sha-xxxxxxxx \
+  --set image.frontend.tag=sha-xxxxxxxx
 ```
+
+> **Pin an immutable `sha-*` tag, never `:latest`.** Every CI build pushes
+> `:latest`, so it is not a rollback target. This mirrors the Compose path,
+> where `.github/workflows/cd.yml` writes `NEXUS_IMAGE_OWNER` /
+> `NEXUS_IMAGE_TAG` into `.env` before `docker compose pull`. Helm does not
+> interpolate environment variables, so pass the same two values via `--set`.
 
 ### Secrets
 
@@ -76,7 +88,7 @@ Key `values.yaml` settings:
 | Parameter | Default | Description |
 |---|---|---|
 | `replicaCount` | `2` | Backend/frontend replicas |
-| `image.*.repository` / `image.*.tag` | `nexus/*:1.0.0` | Container images |
+| `image.*.repository` / `image.*.tag` | `ghcr.io/nexus/nexus-oms-{backend,frontend}:latest` | Container images — **override both**; the defaults are placeholders |
 | `postgres.storage` / `redis.storage` / `kafka.storage` | `20Gi`/`5Gi`/`20Gi` | PVC sizes |
 | `env.corsOrigins` / `env.frontendUrl` | `https://oms.example.com` | Backend CORS / frontend URL |
 | `ingress.enabled` | `true` | Create Ingress |

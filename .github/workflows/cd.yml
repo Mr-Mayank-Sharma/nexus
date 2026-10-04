@@ -38,6 +38,7 @@ jobs:
     outputs:
       environment: ${{ steps.env.outputs.environment }}
       image_tag: ${{ steps.env.outputs.image_tag }}
+      image_owner: ${{ steps.env.outputs.image_owner }}
       backend_image: ${{ steps.env.outputs.backend_image }}
       frontend_image: ${{ steps.env.outputs.frontend_image }}
       ai_image: ${{ steps.env.outputs.ai_image }}
@@ -58,6 +59,7 @@ jobs:
           # preserves the owner's capitalisation (Mr-Mayank-Sharma), which buildx
           # rejects as an invalid tag: "repository name must be lowercase".
           owner="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "image_owner=${owner}" >> "$GITHUB_OUTPUT"
           echo "backend_image=${REGISTRY}/${owner}/nexus-oms-backend" >> "$GITHUB_OUTPUT"
           echo "frontend_image=${REGISTRY}/${owner}/nexus-oms-frontend" >> "$GITHUB_OUTPUT"
           echo "ai_image=${REGISTRY}/${owner}/nexus-oms-ai" >> "$GITHUB_OUTPUT"
@@ -74,8 +76,13 @@ jobs:
       matrix:
         include:
           - name: backend
-            context: .
-            dockerfile: ./Dockerfile
+            # nexus-oms-backend/Dockerfile is the single source of truth for
+            # the backend image — it is what compose builds locally and what the
+            # CI docker job scans. The old root ./Dockerfile produced a
+            # different (root-user, no-cache) image that was pushed to GHCR but
+            # never deployed, so GHCR and production silently diverged.
+            context: ./nexus-oms-backend
+            dockerfile: ./nexus-oms-backend/Dockerfile
             image: ${{ needs.prepare.outputs.backend_image }}
           - name: frontend
             context: ./nexus-oms-frontend
@@ -135,24 +142,67 @@ jobs:
           username: ${{ secrets.STAGING_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           script: |
+            set -eu
             cd /opt/nexus-ship
-            docker compose pull
-            docker compose up -d --remove-orphans
+
+            # Upsert (never truncate) so the secrets already in .env survive.
+            set_env() {
+              key="$1"; val="$2"
+              if [ -f .env ]; then grep -vE "^${key}=" .env > .env.tmp || true
+              else : > .env.tmp; fi
+              printf '%s=%s\n' "$key" "$val" >> .env.tmp
+              mv .env.tmp .env
+            }
+
+            # Remember what is running NOW so we can actually go back to it.
+            PREV_TAG="$(sed -n 's/^NEXUS_IMAGE_TAG=//p' .env 2>/dev/null | tail -1)"
+            # Clear first, then record. Otherwise a .rollback-tag left by an
+            # earlier deploy survives this run and a failure would roll back to
+            # whatever that older deploy happened to record -- not to the version
+            # that is actually live right now.
+            : > .rollback-tag
+            if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "${{ needs.prepare.outputs.image_tag }}" ]; then
+              printf '%s' "$PREV_TAG" > .rollback-tag
+            fi
+
+            # Pin the artifacts built by this run. Without this compose falls back
+            # to :latest, which every build overwrites.
+            set_env NEXUS_IMAGE_OWNER "${{ needs.prepare.outputs.image_owner }}"
+            set_env NEXUS_IMAGE_TAG "${{ needs.prepare.outputs.image_tag }}"
+            echo "📦 ghcr.io/${{ needs.prepare.outputs.image_owner }} : ${{ needs.prepare.outputs.image_tag }}"
+
+            docker compose pull backend frontend
+            docker compose up -d --remove-orphans --no-build
+
             # The backend container ENTRYPOINT already runs `java -jar app.jar`.
             # Spawning a second JVM here could never bind :8080, and since each JVM
             # requests MaxRAMPercentage=75.0 it risked OOM-killing the container.
             # The active profile comes from SPRING_PROFILES_ACTIVE in the compose
             # env, so do not re-add a `java -jar` here — just wait for health.
+            healthy=0
             for i in $(seq 1 30); do
-              curl -sf http://localhost:8080/api/v1/actuator/health >/dev/null && break
+              if curl -sf http://localhost:8080/api/v1/actuator/health >/dev/null 2>&1; then
+                healthy=1; break
+              fi
               sleep 5
             done
-            curl -sf http://localhost:8080/api/v1/actuator/health || {
-              echo "❌ Backend unhealthy after 150s"
+
+            if [ "$healthy" -ne 1 ]; then
+              echo "❌ Backend unhealthy after 150s — rolling backend+frontend back"
               docker compose logs --tail=50 backend || true
+              if [ -s .rollback-tag ]; then
+                set_env NEXUS_IMAGE_TAG "$(cat .rollback-tag)"
+                docker compose pull backend frontend || true
+                # Service-scoped: never `docker compose down`, that would take
+                # postgres/redis/kafka and the observability stack down too.
+                docker compose up -d --no-build backend frontend || true
+                echo "↩️ Rolled back to $PREV_TAG"
+              else
+                echo "⚠️  No previous tag recorded; leaving stack up for inspection"
+              fi
               exit 1
-            }
-            echo "✅ Staging deployment successful"
+            fi
+            echo "✅ Staging deployment successful: ${{ needs.prepare.outputs.image_tag }}"
 
       - name: Notify deployment
         if: success()
@@ -180,21 +230,71 @@ jobs:
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           script: |
+            set -eu
             cd /opt/nexus-ship
-            # Tag current images for rollback
-            docker compose exec -T backend cat /app/app.jar.md5 > /opt/nexus-ship/.rollback-tag 2>/dev/null || true
-            docker compose pull
-            docker compose up -d --remove-orphans
-            sleep 20
-            curl -sf http://localhost:8080/api/v1/actuator/health || {
-              echo "❌ Health check failed — initiating rollback"
-              docker compose down
-              # Restore previous image tags if rollback tag exists
-              if [ -f /opt/nexus-ship/.rollback-tag ]; then
-                docker compose up -d
+
+            # Upsert (never truncate) so the secrets already in .env survive.
+            set_env() {
+              key="$1"; val="$2"
+              if [ -f .env ]; then grep -vE "^${key}=" .env > .env.tmp || true
+              else : > .env.tmp; fi
+              printf '%s=%s\n' "$key" "$val" >> .env.tmp
+              mv .env.tmp .env
+            }
+
+            # Record what is actually running before we touch .env. Previously
+            # this read /app/app.jar.md5 out of the backend container, but no
+            # Dockerfile ever writes that file — the capture was always empty
+            # and the rollback silently did nothing.
+            PREV_TAG="$(sed -n 's/^NEXUS_IMAGE_TAG=//p' .env 2>/dev/null | tail -1)"
+            if [ -z "$PREV_TAG" ]; then
+              PREV_TAG="$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.image" }}' \
+                "$(docker compose ps -q backend)" 2>/dev/null \
+                | sed -n 's/.*://p' | tail -1 || true)"
+            fi
+            # Clear first, then record. Otherwise a .rollback-tag left by an
+            # earlier deploy survives this run and a failure would roll back to
+            # whatever that older deploy happened to record -- not to the version
+            # that is actually live right now.
+            : > .rollback-tag
+            if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "${{ needs.prepare.outputs.image_tag }}" ]; then
+              printf '%s' "$PREV_TAG" > .rollback-tag
+              echo "📌 rollback target: $PREV_TAG"
+            fi
+
+            # Pin the artifacts built by this run. The old `docker compose pull`
+            # had no image: reference to pull, so it resolved nothing useful.
+            set_env NEXUS_IMAGE_OWNER "${{ needs.prepare.outputs.image_owner }}"
+            set_env NEXUS_IMAGE_TAG "${{ needs.prepare.outputs.image_tag }}"
+            echo "📦 ghcr.io/${{ needs.prepare.outputs.image_owner }} : ${{ needs.prepare.outputs.image_tag }}"
+
+            docker compose pull backend frontend
+            docker compose up -d --remove-orphans --no-build
+
+            healthy=0
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:8080/api/v1/actuator/health >/dev/null 2>&1; then
+                healthy=1; break
+              fi
+              sleep 5
+            done
+
+            if [ "$healthy" -ne 1 ]; then
+              echo "❌ Production health check failed — rolling backend+frontend back"
+              docker compose logs --tail=100 backend || true
+              if [ -s .rollback-tag ]; then
+                set_env NEXUS_IMAGE_TAG "$(cat .rollback-tag)"
+                docker compose pull backend frontend || true
+                # Service-scoped on purpose. `docker compose down` would also
+                # stop postgres/redis/kafka and wipe the diagnostic state we
+                # just need, and takes the whole site down for a bad backend.
+                docker compose up -d --no-build backend frontend || true
+                echo "↩️ Rolled back to $PREV_TAG"
+              else
+                echo "⚠️  No previous tag recorded; leaving stack up for inspection"
               fi
               exit 1
-            }
+            fi
             echo "✅ Production deployment successful: ${{ needs.prepare.outputs.image_tag }}"
 
       - name: Create GitHub release

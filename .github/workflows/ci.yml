@@ -118,8 +118,23 @@ jobs:
           cache-dependency-path: nexus-oms-frontend/package-lock.json
 
       - run: npm ci
+      - run: npm run lint
+      - run: npm test -- --run
       - run: npm run build
-      - run: npm audit --audit-level=high
+
+      # Gate on what actually reaches the browser. Clean as of 83710fa:
+      # the previous 6 production highs were an artifact of
+      # tailwindcss-animate being misfiled under dependencies, which dragged
+      # tailwindcss -> chokidar -> braces/micromatch/fast-glob into the
+      # shipped graph.
+      - name: Audit shipped dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      # Build toolchain only: tailwindcss 3, vite 5, vite-plugin-pwa 0.19
+      # and their transitives. None of it ships. Reported so it stays
+      # visible, non-blocking until the major upgrades land.
+      - name: Audit build toolchain (non-blocking)
+        run: npm audit --audit-level=high
         continue-on-error: true
 
   # ──────────────────────────────────────────────
@@ -263,8 +278,12 @@ jobs:
       - name: Build backend image (no push)
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          # MUST match the backend entry in cd.yml. This job used to scan the
+          # root ./Dockerfile while production deployed the image built from
+          # nexus-oms-backend/Dockerfile, so the artifact that actually shipped
+          # was never scanned.
+          context: ./nexus-oms-backend
+          file: ./nexus-oms-backend/Dockerfile
           push: false
           load: true
           tags: nexus-oms-backend:test
@@ -278,8 +297,13 @@ jobs:
           format: sarif
           output: trivy-os-results.sarif
           severity: CRITICAL,HIGH
-          exit-code: "0"
-        continue-on-error: true
+          # Hard gate, matching cd.yml. This used to be exit-code "0" +
+          # continue-on-error, i.e. a scan that could never fail anything and
+          # only ever wrote a SARIF file nobody acted on. Now that this job
+          # builds the exact image CD deploys, a CRITICAL/HIGH finding here is
+          # one CD would reject downstream anyway — failing early is just
+          # cheaper than failing after merge.
+          exit-code: "1"
 
       - name: Trivy scan — application vulnerabilities
         uses: aquasecurity/trivy-action@master
@@ -290,8 +314,9 @@ jobs:
           scan-type: config
           scan-ref: .
           severity: CRITICAL,HIGH
-          exit-code: "0"
-        continue-on-error: true
+          # Same reasoning as the OS scan above: gate it instead of recording
+          # findings nobody reads.
+          exit-code: "1"
 
       - name: Upload Trivy SARIF results
         uses: github/codeql-action/upload-sarif@v3

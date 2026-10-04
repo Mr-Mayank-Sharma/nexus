@@ -1,3 +1,17 @@
+# ---------------------------------------------------------------------------
+# WARNING: this is NOT on the hardened deployment path.
+#
+# Factual differences from .github/workflows/cd.yml + docker-compose.prod.yml:
+#   - Builds from source instead of pulling the image CI built and Trivy-scanned,
+#     so nothing here is ever vulnerability-scanned.
+#   - `-DskipTests` means the backend test suite does not run on this build.
+#   - `SPRING_PROFILES_ACTIVE=dev`, Kafka/Redis disabled, cache off: this is a
+#     reduced single-service configuration, not the production topology.
+#   - No immutable tag, no `.rollback-tag`, no health-gated rollback.
+#
+# Treat it as a demo/preview target. Anything production-facing must go through
+# the CD workflow so the deployed image is the scanned one.
+# ---------------------------------------------------------------------------
 services:
   - type: web
     name: nexus-oms-backend

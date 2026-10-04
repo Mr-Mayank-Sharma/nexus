@@ -2,14 +2,29 @@
 # Mirrors docker-compose.prod.yml. Secrets come from Kubernetes Secrets (not these values).
 replicaCount: 2
 
+# Image coordinates MUST match the GHCR artifacts built and pushed by
+# .github/workflows/ci.yml + cd.yml (nexus-oms-backend / nexus-oms-frontend).
+# The previous defaults were `nexus/oms-backend:1.0.0` with no registry host,
+# which silently resolved to Docker Hub and could never pull.
+#
+# Unlike docker-compose.prod.yml, Helm does NOT interpolate environment
+# variables, so you must supply the release coordinates at install time —
+# use the same values cd.yml writes into .env for the Compose path:
+#   helm upgrade --install nexus deploy/helm/nexus \
+#     --set image.backend.repository=ghcr.io/<owner>/nexus-oms-backend \
+#     --set image.frontend.repository=ghcr.io/<owner>/nexus-oms-frontend \
+#     --set image.backend.tag=sha-xxxxxxxx \
+#     --set image.frontend.tag=sha-xxxxxxxx
+# Pin an immutable sha-* tag, never :latest — every CI build pushes :latest,
+# so it is not a rollback target.
 image:
   backend:
-    repository: nexus/oms-backend
-    tag: "1.0.0"
+    repository: ghcr.io/nexus/nexus-oms-backend
+    tag: "latest"
     pullPolicy: IfNotPresent
   frontend:
-    repository: nexus/oms-frontend
-    tag: "1.0.0"
+    repository: ghcr.io/nexus/nexus-oms-frontend
+    tag: "latest"
     pullPolicy: IfNotPresent
 
 backend:
@@ -90,6 +105,10 @@ secrets:
   dbPassword: ""
   redisPassword: ""
   jwtSecret: ""
+  # templates/secret.yaml reads this as
+  # `.Values.secrets.openaiApiKey | default ""`. Declared here so `helm show
+  # values` documents it and `--set secrets.openaiApiKey=...` is a known key.
+  openaiApiKey: ""
 
 backup:
   enabled: false
