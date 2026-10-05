@@ -14,13 +14,24 @@ class ApiIntegrationTest extends AbstractIntegrationTest {
 
     private static String viewerToken;
     private static UUID viewerTenantId;
+    private static boolean initialized;
 
     @BeforeEach
     void setUp() throws Exception {
-        if (adminToken == null) {
-            registerAdminUser();
+        // Guard on this class's own sentinel, not on adminToken. adminToken is
+        // static and shared with every other AbstractIntegrationTest subclass,
+        // so an alphabetically earlier sibling (AnalyticsControllerIntegrationTest)
+        // may already have registered an admin by the time this class runs. Keying
+        // off adminToken then skipped this method's body entirely and left
+        // viewerToken null, failing the three viewer tests with a bare
+        // "expected: not <null>". Order-dependent test, invisible in isolation.
+        if (!initialized) {
+            if (adminToken == null) {
+                registerAdminUser();
+            }
             registerViewerUser();
             seedViewerPermissions();
+            initialized = true;
         }
     }
 
