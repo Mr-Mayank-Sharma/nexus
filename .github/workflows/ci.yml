@@ -51,7 +51,13 @@ jobs:
   # Backend: build, test, coverage, SAST, dependency audit
   # ──────────────────────────────────────────────
   backend:
-    name: Backend (Java ${{ env.JAVA_VERSION }})
+    # Literal, not `${{ env.JAVA_VERSION }}`. The `env` context is NOT available
+    # at `jobs.<id>.name` evaluation time, and referencing it here is a FATAL
+    # workflow-file parse error: GitHub rejects the entire file, the workflow is
+    # registered with its path instead of its `name:`, and every run fails
+    # instantly with total_jobs=0. This silently broke 100/100 CI runs from the
+    # initial commit through 931f2e1. Keep this in sync with env.JAVA_VERSION.
+    name: Backend (Java 17)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -106,7 +112,9 @@ jobs:
   # Frontend: install, lint, build, audit
   # ──────────────────────────────────────────────
   frontend:
-    name: Frontend (Node ${{ env.NODE_VERSION }})
+    # Same constraint as the backend job name above. Keep in sync with
+    # env.NODE_VERSION.
+    name: Frontend (Node 20)
     runs-on: ubuntu-latest
     defaults:
       run:
