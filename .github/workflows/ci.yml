@@ -207,6 +207,10 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      # Job-level permissions override the workflow-level block, so this must
+      # be repeated here: CodeQL's analysis step calls the workflow-runs API
+      # and fails with "Resource not accessible by integration" without it.
+      actions: read
     strategy:
       fail-fast: false
       matrix:
