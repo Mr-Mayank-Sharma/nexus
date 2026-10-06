@@ -6,7 +6,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.5</version>
+        <!-- 3.5.16 is the last release of the 3.5.x line (verified against
+             maven-metadata.xml: 3.5.16 is the highest, there is no 3.5.17+ and no
+             3.6.x). It lifts the floor from 3.2.5's tomcat 10.1.20 / kafka 3.6.2 to
+             tomcat 10.1.55 / kafka-clients 3.9.2, but it is frozen there — the
+             remaining CVEs need versions this BOM can never ship, so they are
+             pinned via the override properties below. -->
+        <version>3.5.16</version>
         <relativePath/>
     </parent>
     <groupId>com.nexus</groupId>
@@ -18,7 +24,27 @@
         <java.version>17</java.version>
         <lombok.version>1.18.48</lombok.version>
         <jjwt.version>0.12.5</jjwt.version>
-        <springdoc.version>2.3.0</springdoc.version>
+        <!-- 2.8.x is the springdoc line built against Spring Boot 3.4/3.5; 2.3.0
+             targets the Boot 3.0 era and will not load on Spring Framework 6.2. -->
+        <springdoc.version>2.8.17</springdoc.version>
+
+        <!-- ── Security overrides ──────────────────────────────────────────────
+             3.5.16 is the final 3.5.x release and its BOM pins versions that
+             Trivy (CRITICAL/HIGH, exit 1 in cd.yml) still rejects. Overriding
+             these BOM properties is Spring's supported mechanism; every bump
+             below stays inside the same minor line, so none of them crosses an
+             API boundary.
+
+               tomcat   10.1.55 -> 10.1.60  CVE-2026-65182 / -65905 / -68525
+               netty    4.1.135 -> 4.1.138 CVE-2026-75595 (CRITICAL), CVE-2026-59901
+               jackson  2.21.4  -> 2.21.7  CVE-2026-68497 / -89407 / -89425
+                                        / -91776 / -91777
+               pgjdbc   42.7.11 -> 42.7.13 CVE-2026-54291
+             ──────────────────────────────────────────────────────────────── -->
+        <tomcat.version>10.1.60</tomcat.version>
+        <netty.version>4.1.138.Final</netty.version>
+        <jackson-bom.version>2.21.7</jackson-bom.version>
+        <postgresql.version>42.7.13</postgresql.version>
         <resilience4j.version>2.2.0</resilience4j.version>
         <onnxruntime.version>1.19.0</onnxruntime.version>
         <logstash.version>7.4</logstash.version>

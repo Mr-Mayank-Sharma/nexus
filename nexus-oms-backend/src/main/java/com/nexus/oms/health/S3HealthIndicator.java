@@ -24,7 +24,8 @@ public class S3HealthIndicator implements HealthIndicator {
             s3Client.listBuckets();
             return Health.up().build();
         } catch (Exception e) {
-            return Health.down(e).build();
+            // Spring Boot 3.4 removed Health.down(Throwable); the exception is attached via withException().
+            return Health.down().withException(e).build();
         }
     }
 }
