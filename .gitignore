@@ -56,3 +56,4 @@ ai-artifacts/
 **/.venv/
 supply_chain_ai2/models/
 .credentials
+.trivy-cache/

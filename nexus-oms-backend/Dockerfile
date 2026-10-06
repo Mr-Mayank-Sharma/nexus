@@ -17,16 +17,16 @@ RUN mvn package -Dmaven.test.skip=true -q
 
 # ---- Stage 2: Runtime (slim JRE) ----
 # NOTE: use non-alpine JRE — the -alpine variant has no arm64 build
-FROM eclipse-temurin:17-jre
+# Digest-pinned base for a deterministic OS layer. The floating :17-jre tag
+# drifts between Ubuntu releases (moved to 26.04 in Oct 2026), and a live
+# `apt-get upgrade` layer made the Trivy OS gate non-reproducible: results
+# depended on the Ubuntu repo state at build time and on the Actions build
+# cache, so the same Dockerfile could scan clean or fail depending on when the
+# layer was last cached. Temurin republishes this tag regularly with patched
+# packages; Dependabot opens digest-bump PRs to keep it fresh, and the Trivy
+# gate verifies each bump before merge.
+FROM eclipse-temurin:17-jre@sha256:207ecae0b2b104dfc6dfa763d1e9cd2041cb344800a180e24cb1a28ed533ff90
 WORKDIR /app
-
-# Patch OS packages in the runtime layer.
-# Trivy gates on HIGH/CRITICAL and the JRE image ships Debian/Ubuntu packages with
-# upstream fixes, so upgrade explicitly instead of depending on when the floating
-# :17-jre tag was last republished. `--no-install-recommends` keeps the layer lean.
-RUN apt-get update \
- && apt-get upgrade -y --no-install-recommends \
- && rm -rf /var/lib/apt/lists/*
 
 # Non-root user for security
 RUN groupadd -r nexus && useradd -r -g nexus nexus

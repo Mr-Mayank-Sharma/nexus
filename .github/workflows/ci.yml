@@ -25,6 +25,10 @@ permissions:
   contents: read
   security-events: write
   pull-requests: write
+  # Required by github/codeql-action/upload-sarif: it calls the workflow-runs
+  # API (get-a-workflow-run) to resolve the head SHA, and without this scope it
+  # fails every upload with "Resource not accessible by integration".
+  actions: read
 
 jobs:
   # ──────────────────────────────────────────────
@@ -203,6 +207,10 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      # Job-level permissions override the workflow-level block, so this must
+      # be repeated here: CodeQL's analysis step calls the workflow-runs API
+      # and fails with "Resource not accessible by integration" without it.
+      actions: read
     strategy:
       fail-fast: false
       matrix:
@@ -309,6 +317,13 @@ jobs:
           format: sarif
           output: trivy-os-results.sarif
           severity: CRITICAL,HIGH
+          # REQUIRED for SARIF format. trivy-action's entrypoint UNSETS
+          # TRIVY_SEVERITY when format=sarif unless this is true, so the scan
+          # runs with ALL severities and exit-code 1 trips on LOW/MEDIUM
+          # findings. Verified on v0.75.0: this image has 0 CRITICAL/0 HIGH but
+          # 43 LOW/MEDIUM OS vulns — without this line the gate fails on
+          # findings it explicitly says it ignores.
+          limit-severities-for-sarif: true
           # `vuln-type` defaults to "os,library", so without this line the step
           # also scanned the bundled app.jar and reported Maven dependency CVEs
           # — i.e. it did not do what its name says. Pin it to "os" so this hard
@@ -359,12 +374,20 @@ jobs:
       - name: Trivy scan — application vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: nexus-oms-backend:test
+          # NOTE: no `image-ref` here ON PURPOSE. This is a config scan of the
+          # repo (scan-ref: .), and trivy-action uses image-ref as the scan
+          # target when it is set — even for scan-type: config — so trivy tried
+          # to `lstat nexus-oms-backend:test` as a filesystem path and died with
+          # "no such file or directory". Verified in CI run 37505346989.
           format: sarif
           output: trivy-app-results.sarif
           scan-type: config
           scan-ref: .
           severity: CRITICAL,HIGH
+          # Same as the OS scan: SARIF format unsets the severity filter unless
+          # this is true, so the gate would fail on LOW/MEDIUM config findings
+          # (verified: 11-12 LOW/MEDIUM, 0 HIGH/CRITICAL).
+          limit-severities-for-sarif: true
           # Same reasoning as the OS scan above: gate it instead of recording
           # findings nobody reads.
           exit-code: "1"
