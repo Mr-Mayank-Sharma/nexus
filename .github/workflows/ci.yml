@@ -25,6 +25,10 @@ permissions:
   contents: read
   security-events: write
   pull-requests: write
+  # Required by github/codeql-action/upload-sarif: it calls the workflow-runs
+  # API (get-a-workflow-run) to resolve the head SHA, and without this scope it
+  # fails every upload with "Resource not accessible by integration".
+  actions: read
 
 jobs:
   # ──────────────────────────────────────────────
