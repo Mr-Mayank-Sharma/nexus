@@ -23,7 +23,7 @@
     <properties>
         <java.version>17</java.version>
         <lombok.version>1.18.48</lombok.version>
-        <jjwt.version>0.12.5</jjwt.version>
+        <jjwt.version>0.13.0</jjwt.version>
         <!-- 2.8.x is the springdoc line built against Spring Boot 3.4/3.5; 2.3.0
              targets the Boot 3.0 era and will not load on Spring Framework 6.2. -->
         <springdoc.version>2.8.17</springdoc.version>
@@ -45,11 +45,11 @@
         <netty.version>4.1.138.Final</netty.version>
         <jackson-bom.version>2.21.7</jackson-bom.version>
         <postgresql.version>42.7.13</postgresql.version>
-        <resilience4j.version>2.2.0</resilience4j.version>
+        <resilience4j.version>2.4.0</resilience4j.version>
         <onnxruntime.version>1.19.0</onnxruntime.version>
         <logstash.version>7.4</logstash.version>
-        <jacoco.version>0.8.11</jacoco.version>
-        <owasp.version>9.0.9</owasp.version>
+        <jacoco.version>0.8.15</jacoco.version>
+        <owasp.version>9.2.0</owasp.version>
         <enforcer.version>3.4.1</enforcer.version>
         <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
     </properties>
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
-            <version>10.10.0</version>
+            <version>10.22.0</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -125,7 +125,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>5.2.5</version>
+            <version>5.5.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.pdfbox</groupId>
@@ -161,7 +161,7 @@
         <dependency>
             <groupId>com.sun.xml.messaging.saaj</groupId>
             <artifactId>saaj-impl</artifactId>
-            <version>3.0.3</version>
+            <version>3.0.6</version>
         </dependency>
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -180,7 +180,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-s3</artifactId>
-            <version>1.12.765</version>
+            <version>1.12.797</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.onnxruntime</groupId>
