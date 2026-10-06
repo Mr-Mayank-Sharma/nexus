@@ -366,7 +366,11 @@ jobs:
       - name: Trivy scan — application vulnerabilities
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: nexus-oms-backend:test
+          # NOTE: no `image-ref` here ON PURPOSE. This is a config scan of the
+          # repo (scan-ref: .), and trivy-action uses image-ref as the scan
+          # target when it is set — even for scan-type: config — so trivy tried
+          # to `lstat nexus-oms-backend:test` as a filesystem path and died with
+          # "no such file or directory". Verified in CI run 37505346989.
           format: sarif
           output: trivy-app-results.sarif
           scan-type: config
