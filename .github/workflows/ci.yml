@@ -296,7 +296,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image (no push)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # MUST match the backend entry in cd.yml. This job used to scan the
           # root ./Dockerfile while production deployed the image built from
