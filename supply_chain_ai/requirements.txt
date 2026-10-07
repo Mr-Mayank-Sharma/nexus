@@ -1,5 +1,5 @@
 numpy>=1.24.0
-pandas>=2.0.0
+pandas>=3.0.6
 scikit-learn>=1.9.1
 xgboost>=3.4.1
 joblib>=1.6.0
