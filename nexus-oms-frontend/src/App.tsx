@@ -9,6 +9,7 @@ const LaunchPadPage = lazy(() => import('./pages/LaunchPadPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const WarehouseTwinPage = lazy(() => import('./features/twin/warehouse/WarehouseTwinPage'))
 const OrderFlowTwinPage = lazy(() => import('./features/twin/orders/OrderFlowTwinPage'))
+const SecurityPage = lazy(() => import('./features/account/SecurityPage'))
 const OrdersPage = lazy(() => import('./pages/OrdersPage'))
 const OrderDetailPage = lazy(() => import('./pages/OrderDetailPage'))
 const InventoryPage = lazy(() => import('./pages/InventoryPage'))
@@ -125,6 +126,7 @@ export default function App() {
           <Route index element={<LaunchPadPage />} />          <Route path="analytics-dashboard" element={<AnalyticsDashboardPage />} />
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="order-twin" element={<OrderFlowTwinPage />} />
+          <Route path="account/security" element={<SecurityPage />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/search" element={<FindOrderPage />} />
           <Route path="orders/new" element={<CreateOrderPage />} />

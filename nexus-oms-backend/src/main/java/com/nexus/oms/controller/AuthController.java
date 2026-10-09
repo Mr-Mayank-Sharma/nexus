@@ -51,6 +51,15 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(authService.verifyMfa(request)));
     }
 
+    @GetMapping("/mfa/status")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> mfaStatus() {
+        String username = currentUsernameOrNull();
+        if (username == null) {
+            return unauthorized();
+        }
+        return ResponseEntity.ok(ApiResponse.success(authService.mfaStatus(username)));
+    }
+
     @PostMapping("/mfa/enroll")
     public ResponseEntity<ApiResponse<MfaEnrollmentResponse>> beginMfaEnrollment() {
         String username = currentUsernameOrNull();

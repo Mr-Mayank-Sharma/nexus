@@ -86,6 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!mfaToken) throw new Error('No MFA session')
     setError(null)
     const response = await authApi.verifyMfa({ mfaToken, totpCode: code })
+    if (!response.success || !response.data) {
+      // A wrong code must surface as an error, not store an empty session.
+      const msg = response.message || response.error || 'Invalid verification code'
+      setError(msg)
+      throw new Error(msg)
+    }
     storeAuth(response.data)
     setMfaRequired(false)
     setMfaToken(null)
@@ -130,6 +136,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('nexus_refresh_token', refreshToken)
     }
     localStorage.setItem('nexus_user', JSON.stringify(user))
+    // Tenant policy requires MFA but this user has not enrolled: the login page sends them to setup.
+    if (authData.mfaEnrollmentRequired) sessionStorage.setItem('nexus_mfa_enrollment_required', '1')
+    else sessionStorage.removeItem('nexus_mfa_enrollment_required')
     localStorage.setItem('nexus_permissions', JSON.stringify(permissions))
     localStorage.setItem('nexus_security_groups', JSON.stringify(securityGroups))
     if (tenantId) localStorage.setItem('nexus_tenant_id', tenantId)

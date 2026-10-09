@@ -120,11 +120,11 @@ export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuT
 
                 {/* Menu items */}
                 <div className="py-1.5">
-                  <button className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-colors" role="menuitem">
+                  <button onClick={() => { setShowUserMenu(false); navigate('/account/security') }} className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-colors" role="menuitem">
                     <User className="w-4 h-4 text-[var(--text-tertiary)]" />
-                    Profile
+                    Account &amp; security
                   </button>
-                  <button className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-colors" role="menuitem">
+                  <button onClick={() => { setShowUserMenu(false); navigate('/settings') }} className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--interactive-hover)] transition-colors" role="menuitem">
                     <Settings className="w-4 h-4 text-[var(--text-tertiary)]" />
                     Settings
                   </button>

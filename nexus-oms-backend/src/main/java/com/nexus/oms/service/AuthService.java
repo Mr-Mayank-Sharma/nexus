@@ -183,6 +183,18 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+    /** For the account security screen: is MFA on, and does the tenant's policy require it? */
+    public Map<String, Object> mfaStatus(String username) {
+        NxUser user = requireUser(username);
+        int remainingCodes = user.getMfaRecoveryCodes() == null || user.getMfaRecoveryCodes().isBlank()
+                ? 0 : user.getMfaRecoveryCodes().split(",").length;
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("enabled", user.isMfaEnabled());
+        status.put("requiredByTenant", tenantRequiresMfa(user.getTenantId()));
+        status.put("recoveryCodesRemaining", user.isMfaEnabled() ? remainingCodes : 0);
+        return status;
+    }
+
     /** Starts (or restarts) enrolment: stores a pending secret; MFA stays off until activated. */
     @Transactional
     public MfaEnrollmentResponse beginMfaEnrollment(String username) {

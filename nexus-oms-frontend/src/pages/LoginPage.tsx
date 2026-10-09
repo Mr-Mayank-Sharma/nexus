@@ -133,7 +133,7 @@ export default function LoginPage() {
         rememberMe,
       })
       if (!mfaNeeded) {
-        navigate('/', { replace: true })
+        navigate(sessionStorage.getItem('nexus_mfa_enrollment_required') ? '/account/security' : '/', { replace: true })
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -319,33 +319,22 @@ export default function LoginPage() {
               Unify orders, inventory, warehouse operations, and carrier management
               across your entire enterprise in one intelligent platform.
             </p>
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-3xl font-bold text-white">50K+</div>
-                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Orders Daily</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-3xl font-bold text-white">99.9%</div>
-                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Uptime SLA</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-3xl font-bold text-white">150+</div>
-                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Integrations</div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <div className="text-3xl font-bold text-white">40%</div>
-                <div className="text-sm text-[var(--nexus-primary-200)] mt-1">Cost Reduction</div>
-              </div>
-            </div>
+            <ul className="space-y-3 pt-4 text-[15px] text-[var(--nexus-primary-100)]">
+              {[
+                'Orders, inventory and fulfilment in one place',
+                'Live 3D views of every warehouse and your order network',
+                'Tenant data isolated at the database level',
+              ].map(point => (
+                <li key={point} className="flex items-center gap-3">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--nexus-primary-200)]" />
+                  {point}
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div className="flex items-center gap-4 text-[var(--nexus-primary-200)] text-sm">
-            <a href="#" className="hover:text-white transition-colors">Documentation</a>
-            <div className="w-1 h-1 bg-[var(--nexus-primary-300)] rounded-full" />
-            <a href="#" className="hover:text-white transition-colors">API Status</a>
-            <div className="w-1 h-1 bg-[var(--nexus-primary-300)] rounded-full" />
-            <a href="#" className="hover:text-white transition-colors">Support</a>
-            <div className="flex-1 text-right text-[var(--nexus-primary-300)]">
+            <div className="flex-1 text-[var(--nexus-primary-300)]">
               &copy; 2026 Nexus Technologies
             </div>
           </div>
@@ -566,7 +555,7 @@ export default function LoginPage() {
               </div>
 
               <p className="mt-4 text-xs text-[var(--text-tertiary)] text-center">
-                NexusShip OMS v5.0 &middot; Enterprise Edition
+                NexusShip
               </p>
             </div>
           )}
@@ -840,7 +829,7 @@ export default function LoginPage() {
 
           {!mfaRequired && step !== 'forgot-password' && step !== 'forgot-sent' && (
             <p className="mt-6 text-xs text-[var(--text-secondary)] text-center lg:hidden">
-              NexusShip OMS v5.0 &middot; Enterprise Edition &middot; &copy; 2026
+              NexusShip &middot; &copy; 2026
             </p>
           )}
         </div>

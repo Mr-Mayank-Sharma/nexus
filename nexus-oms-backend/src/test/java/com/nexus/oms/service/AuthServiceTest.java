@@ -253,6 +253,20 @@ class AuthServiceTest {
     }
 
     @Test
+    void mfaStatus_ReflectsEnrolmentAndTenantPolicy() throws Exception {
+        assertEquals(false, authService.mfaStatus("testuser").get("enabled"));
+        CompanySettings settings = new CompanySettings();
+        settings.setSecurityPolicy("{\"mfaEnabled\":true}");
+        when(companySettingsRepository.findByTenantId(tenantId)).thenReturn(Optional.of(settings));
+        enableMfaForTestUser();
+
+        var status = authService.mfaStatus("testuser");
+        assertEquals(true, status.get("enabled"));
+        assertEquals(true, status.get("requiredByTenant"));
+        assertEquals(10, status.get("recoveryCodesRemaining"));
+    }
+
+    @Test
     void mfa_ActivateWithWrongCode_Throws() {
         authService.beginMfaEnrollment("testuser");
 

@@ -110,3 +110,23 @@ export async function refreshToken(token: string): Promise<ApiResponse<{ token: 
     return { success: false, error: msg } as any
   }
 }
+
+// ---------------------------------------------------------------- MFA (authenticator app)
+
+export interface MfaStatus { enabled: boolean; requiredByTenant: boolean; recoveryCodesRemaining: number }
+export interface MfaEnrollment { secret: string; otpauthUri: string }
+
+async function authCall<T>(method: 'get' | 'post', url: string, body?: unknown): Promise<T> {
+  try {
+    const { data } = method === 'get' ? await client.get(url) : await client.post(url, body ?? {})
+    if (data && data.success === false) throw new Error(data.message || 'Request failed')
+    return data.data as T
+  } catch (err: any) {
+    throw new Error(err?.response?.data?.message || err?.message || 'Request failed')
+  }
+}
+
+export const getMfaStatus = () => authCall<MfaStatus>('get', '/auth/mfa/status')
+export const beginMfaEnrollment = () => authCall<MfaEnrollment>('post', '/auth/mfa/enroll')
+export const activateMfa = (code: string) => authCall<string[]>('post', '/auth/mfa/activate', { code })
+export const disableMfa = (code: string) => authCall<null>('post', '/auth/mfa/disable', { code })
