@@ -16,6 +16,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 > - "How do I run the whole thing today?" → [08-SELF-HOST-BOOT.md](./08-SELF-HOST-BOOT.md)
 > - "What does it cost?" → [09-COST-TCO.md](./09-COST-TCO.md)
 > - "Show me the architecture as diagrams — C4, sequences, state machines, topology?" → [11-SYSTEM-DESIGN.md](./11-SYSTEM-DESIGN.md)
+> - "How do I set up the AWS dev server and auto-deploy from GitHub?" → [14-AWS-DEV-SERVER-SETUP.md](./14-AWS-DEV-SERVER-SETUP.md)
 
 ## Library map
 
