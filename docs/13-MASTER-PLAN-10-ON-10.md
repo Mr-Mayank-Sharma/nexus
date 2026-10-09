@@ -34,6 +34,7 @@ references it reaches **≈ 9.8–10**. Treat any claim of "10/10 NR" before tha
 | 2026-10-09 | **Inventory per location** (`f1ad8b3`) | V20's UNIQUE (tenant, sku) blocked multi-location stock on every Flyway-built DB; V70 keys on (tenant, sku, node, lot); the import is location-aware |
 | 2026-10-09 | **Warehouse Twin** (`f8285f7`) | `/warehouse-twin`: 3D site from real docks, appointments, trailers, equipment, stock and shipments; verified in a browser on Postgres with RLS on |
 | 2026-10-09 | **Order Flow Twin** | `/order-twin`: channels → nodes → regions on a 3D Sankey board with live flows, routing explanation per order, lifecycle, queue and exceptions; 1h/6h/24h/7d windows. Tests 828 ✅ / 414 ✅ |
+| 2026-10-09 | **Phase A hardening** | ShedLock on all 15 jobs (V71); UTC end to end with `Z` timestamps; transactional outbox for Kafka (V72); `@Version` on 7 aggregates with 409s (V73); order transition table (fixes cancel-after-ship, shipping cancelled orders, arbitrary status jumps); Testcontainers Postgres suite proving tenant isolation through the API; Flyway always runs unscoped; coverage gate ratcheted to 43%/31% (gated packages) and 33%/22% (whole codebase). Tests 866 ✅. **Open:** Spring Boot 4 migration (removes the two time-boxed Spring CVEs before 2026-12-31). |
 
 Security row NR: **2 → 7**
 

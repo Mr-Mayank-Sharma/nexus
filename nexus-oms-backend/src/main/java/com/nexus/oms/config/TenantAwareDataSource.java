@@ -78,6 +78,11 @@ public class TenantAwareDataSource implements DataSource {
         return wrapConnection(connection);
     }
 
+    /** The unscoped pool, for schema migrations, which must never run as a tenant. */
+    public DataSource getDelegate() {
+        return delegate;
+    }
+
     private void applyTenantContext(Connection connection) throws SQLException {
         UUID tenantId;
         try {

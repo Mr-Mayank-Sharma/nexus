@@ -231,6 +231,17 @@
             <artifactId>spring-kafka-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Real-Postgres integration tests (RLS, Flyway, JSONB): versions managed by Spring Boot -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -332,9 +343,20 @@ CI pins Java 17 in .github/workflows/ci.yml.
                                         <include>com.nexus.oms.health</include>
                                         <include>com.nexus.oms.config</include>
                                     </includes>
+                                    <!-- Ratchet: set just below the weakest gated package
+                                         (service: 44.5% line / 32.2% branch on 2026-10-09).
+                                         Raise as coverage grows; never lower. -->
                                     <limits>
-                                        <limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.27</minimum></limit>
-                                        <limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.15</minimum></limit>
+                                        <limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.43</minimum></limit>
+                                        <limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.31</minimum></limit>
+                                    </limits>
+                                </rule>
+                                <!-- Whole-codebase floor (34.3% line / 23.1% branch measured). -->
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit><counter>LINE</counter><value>COVEREDRATIO</value><minimum>0.33</minimum></limit>
+                                        <limit><counter>BRANCH</counter><value>COVEREDRATIO</value><minimum>0.22</minimum></limit>
                                     </limits>
                                 </rule>
                             </rules>
