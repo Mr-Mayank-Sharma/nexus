@@ -11,6 +11,9 @@ import { useWebSocket } from '../../hooks/useWebSocket'
 import { useToast } from '../../hooks/useToast'
 import ConnectivityBanner from './ConnectivityBanner'
 
+/** Control-room pages that render edge to edge (no page padding, no max width, no scroll). */
+const FULL_BLEED_ROUTES = new Set(['/warehouse-twin', '/order-twin'])
+
 export default function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
@@ -115,12 +118,13 @@ export default function AppLayout() {
         <main
           id="main-content"
           className={clsx(
-            'flex-1 overflow-y-auto transition-all duration-300',
+            'flex-1 transition-all duration-300',
+            FULL_BLEED_ROUTES.has(location.pathname) ? 'overflow-hidden' : 'overflow-y-auto',
             aiPanelOpen ? 'lg:mr-[var(--ai-panel-width)]' : ''
           )}
           style={{ transitionTimingFunction: 'var(--ease-default)' }}
         >
-          <div className="p-6 lg:p-8 max-w-[1440px] mx-auto w-full">
+          <div className={FULL_BLEED_ROUTES.has(location.pathname) ? 'h-full w-full' : 'p-6 lg:p-8 max-w-[1440px] mx-auto w-full'}>
             <Suspense fallback={
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />

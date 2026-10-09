@@ -22,6 +22,8 @@
     "@radix-ui/react-dropdown-menu": "^2.1.24",
     "@radix-ui/react-select": "^2.3.7",
     "@radix-ui/react-tabs": "^1.1.21",
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.10",
     "@stomp/stompjs": "^7.3.0",
     "@tanstack/react-query": "^5.101.4",
     "@types/dompurify": "^3.0.5",
@@ -37,7 +39,8 @@
     "react-router-dom": "^6.26.0",
     "recharts": "^2.12.7",
     "sockjs-client": "^1.6.1",
-    "tailwind-merge": "^2.4.0"
+    "tailwind-merge": "^2.4.0",
+    "three": "^0.169.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
@@ -46,6 +49,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.7",
     "@types/sockjs-client": "^1.5.4",
+    "@types/three": "^0.169.0",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.5.4",
     "eslint": "^9.39.5",

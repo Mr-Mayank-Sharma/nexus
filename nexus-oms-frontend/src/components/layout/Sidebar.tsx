@@ -33,6 +33,7 @@ const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> 
   'returns': { resource: 'returns', action: 'view' },
   'warehouse': { resource: 'warehouse', action: 'view' },
   'warehouse-dashboard': { resource: 'warehouse', action: 'view' },
+  'warehouse-twin': { resource: 'warehouse', action: 'view' },
   'packer': { resource: 'orders', action: 'edit' },
   'loader': { resource: 'orders', action: 'edit' },
   'store-dashboard': { resource: 'orders', action: 'view' },

@@ -140,6 +140,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     {
       id: 'warehouse-group', label: 'Warehouse Operations', path: '/warehouse-dashboard', icon: 'Building2',
       children: [
+        { id: 'warehouse-twin', label: 'Warehouse Twin', path: '/warehouse-twin', icon: 'Layers' },
         { id: 'warehouse-dashboard', label: 'WH Dashboard', path: '/warehouse-dashboard', icon: 'BarChart3' },
         { id: 'warehouse', label: 'Warehouse Mgmt', path: '/warehouse', icon: 'Building2' },
         { id: 'slotting-optimization', label: 'Slotting Optimization', path: '/slotting-optimization', icon: 'Target' },
@@ -260,7 +261,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       'wave-planning', 'labor-management', 'pickers', 'label-printing',
       'inventory', 'inventory-enhanced', 'receiving', 'cycle-counts', 'rfid', 'replenishment',
       'returns', 'returns-enhanced', 'returns-finance', 'freight-audit',
-      'warehouse-dashboard', 'warehouse', 'slotting-optimization', 'yard-dock', 'automation-systems',
+      'warehouse-twin', 'warehouse-dashboard', 'warehouse', 'slotting-optimization', 'yard-dock', 'automation-systems',
       'products', 'customers',
       'procurement', 'purchase-requests', 'suppliers',
       'carriers', 'rate-shopping', 'routing',
@@ -275,7 +276,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     ],
     WAREHOUSE_MANAGER: [
       'launch-pad', 'analytics-dashboard', 'dashboard', 'notifications',
-      'warehouse-dashboard', 'warehouse',
+      'warehouse-twin', 'warehouse-dashboard', 'warehouse',
       'inventory', 'inventory-enhanced', 'receiving', 'cycle-counts', 'rfid', 'replenishment',
       'fulfillment', 'picking', 'packing', 'shipping',
       'wave-planning', 'labor-management', 'pickers', 'packer', 'loader',

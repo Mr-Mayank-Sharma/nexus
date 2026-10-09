@@ -16,6 +16,8 @@ public interface ShipmentRepository extends JpaRepository<NxShipment, UUID> {
 
     List<NxShipment> findByTenantId(UUID tenantId);
 
+    List<NxShipment> findTop50ByTenantIdAndOriginNodeIdOrderByCreatedAtDesc(UUID tenantId, UUID originNodeId);
+
     @Query(value = "SELECT * FROM nx_shipments WHERE tenant_id = :tenantId " +
             "AND (CAST(id AS varchar) LIKE CONCAT('%', :q, '%') OR CAST(order_id AS varchar) LIKE CONCAT('%', :q, '%') " +
             "OR LOWER(COALESCE(tracking_number,'')) LIKE CONCAT('%', LOWER(:q), '%')) " +
