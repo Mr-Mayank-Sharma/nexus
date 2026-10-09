@@ -35,7 +35,7 @@ Imagine a **football (soccer) tournament** with 13 teams. Nexus is one of the te
 | 9 | **Cin7 Omni (DEAR)** | Cin7 | Omnichannel inventory + OMS | SMB/mid retailers, multi-entity | 700+ integrations |
 | 10 | **Extensiv 3PL Warehouse Manager** | Extensiv (ex-3PL Central) | 3PL WMS | Small/mid 3PLs | 3PL-focused |
 | 11 | **Brightpearl by Sage** | Sage | Retail operating system (OMS+acct) | D2C + wholesale retailers | Built-in accounting |
-| 12 | **Nexus (us)** | — | Omnichannel OMS + WMS + 3PL + AI | Mid-market omnichannel | Self-built, 80+ commits, **789 tests green**, RF + 3PL billing shipped |
+| 12 | **Nexus (us)** | — | Omnichannel OMS + WMS + 3PL + AI | Mid-market omnichannel | Self-built, 204 commits, **789 tests green**, RF + 3PL billing shipped |
 
 **Methodology.** Each feature is scored **0–10** (0 = absent, 10 = best-in-class) using: (a) official product pages & docs, (b) Gartner MQ positioning, (c) analyst/partner write-ups, and (d) Nexus's own committed, honest current-state. Scores are *evidence-based judgment*, not vendor marketing. A score of 8+ means "shipping, credible, used widely." 6–7 = "real but limited/young." Below 5 = "weak, niche, or planned."
 

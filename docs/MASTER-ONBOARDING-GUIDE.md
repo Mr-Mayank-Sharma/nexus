@@ -25,7 +25,7 @@
    - [2.1 Java 17 & Spring Boot 3](#21-java-17--spring-boot-3)
    - [2.2 PostgreSQL 16 & pgvector](#22-postgresql-16--pgvector)
    - [2.3 Redis 7 & Apache Kafka](#23-redis-7--apache-kafka)
-   - [2.4 React 19, TypeScript, Vite & Tailwind CSS](#24-react-19-typescript-vite--tailwind-css)
+   - [2.4 React 18, TypeScript, Vite & Tailwind CSS](#24-react-18-typescript-vite--tailwind-css)
    - [2.5 Python & ONNX / MCP](#25-python--onnx--mcp)
 4. [Part 3 — End-to-End System & Sequence Flows](#part-3--end-to-end-system--sequence-flows)
    - [3.1 The Big Picture](#31-the-big-picture)
@@ -770,10 +770,10 @@ public class NexusOmsApplication {
 nexus-oms-backend/
 ├── src/main/java/com/nexus/oms/
 │   ├── NexusOmsApplication.java      ← entry point
-│   ├── controller/                   ← 81 REST controllers
-│   ├── service/                      ← 124 services (business logic)
+│   ├── controller/                   ← 82 REST controllers
+│   ├── service/                      ← 129 services (business logic)
 │   ├── repository/                   ← Spring Data JPA repositories
-│   ├── entity/                       ← 167 JPA entities
+│   ├── entity/                       ← 169 JPA entities
 │   ├── dto/                          ← request/response objects
 │   ├── security/                     ← JWT auth, tenant context, RBAC
 │   ├── config/                       ← app configuration
@@ -891,11 +891,11 @@ public void onOrderCreated(String orderId) {
 
 ---
 
-## 2.4 React 19, TypeScript, Vite & Tailwind CSS
+## 2.4 React 18, TypeScript, Vite & Tailwind CSS
 
 ### What it is
 
-- **React 19** — the UI library: components, state, hooks.
+- **React 18** — the UI library: components, state, hooks.
 - **TypeScript** — JavaScript with types (catches bugs at compile time).
 - **Vite** — the build tool + dev server (fast hot reload).
 - **Tailwind CSS** — utility-first styling (classes like `flex`, `p-4`, `text-sm`).
@@ -995,7 +995,7 @@ scripts/fulfill.py     ← fulfillment helper
 ```
 ┌─────────────────────────────┐        ┌──────────────────────────────┐
 │         FRONTEND            │        │       EXTERNAL WORLD         │
-│  React 19 + Vite (SPA)     │        │  Shopify · BigCommerce · Amazon│
+│  React 18 + Vite (SPA)     │        │  Shopify · BigCommerce · Amazon│
 │  HashRouter · React Query   │        │  eBay · Walmart · Magento     │
 │  WebSockets (STOMP/SockJS)  │        │  Stripe · FedEx · QuickBooks  │
 │  Tailwind + Radix + Recharts│        │  Salesforce · SAP · Twilio    │
@@ -1133,7 +1133,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │
 ├── NexusOmsApplication.java          ← Spring Boot entry point
 │
-├── controller/                       ← 81 REST controllers (HTTP layer)
+├── controller/                       ← 82 REST controllers (HTTP layer)
 │   ├── OrderController.java          ← /api/v1/orders
 │   ├── InventoryController.java      ← /api/v1/inventory
 │   ├── ATPController.java            ← /api/v1/atp
@@ -1158,7 +1158,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │   │   └── AiAgentController.java
 │   └── ... (74 total)
 │
-├── service/                          ← 124 services (business logic)
+├── service/                          ← 129 services (business logic)
 │   ├── OrderService.java             ← order lifecycle
 │   ├── OrderRoutingService.java      ← DOM routing
 │   ├── ATPCalculationEngine.java     ← ATP math
@@ -1199,7 +1199,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │   ├── InventoryRepository.java
 │   └── ... (one per entity)
 │
-├── entity/                           ← 167 JPA entities
+├── entity/                           ← 169 JPA entities
 │   ├── NxOrder.java
 │   ├── NxOrderItem.java
 │   ├── NxInventory.java

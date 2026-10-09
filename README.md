@@ -39,7 +39,7 @@ nexus/
 | Layer       | Technology                              |
 |-------------|-----------------------------------------|
 | Backend     | Java 17, Spring Boot 3, Spring Security |
-| Frontend    | React 19, Vite, TypeScript, Tailwind CSS|
+| Frontend    | React 18.3.1, Vite, TypeScript, Tailwind CSS|
 | Database    | PostgreSQL 16                           |
 | Cache       | Redis 7                                 |
 | Messaging   | Apache Kafka                            |

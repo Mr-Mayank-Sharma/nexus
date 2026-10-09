@@ -3,6 +3,11 @@
 This guide documents the **Nexus OMS & Supply Chain Platform** architecture —
 the services, data flows, integrations, and how everything fits together.
 
+> Prefer pictures over prose? [`11-SYSTEM-DESIGN.md`](./11-SYSTEM-DESIGN.md)
+> carries the diagram set for this material: C4 views, deployment and network
+> topology, CI/CD pipelines, request-path sequences, state machines and the
+> Kafka topic map.
+
 ---
 
 ## Table of Contents

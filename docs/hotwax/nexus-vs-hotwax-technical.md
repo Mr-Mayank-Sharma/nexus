@@ -14,7 +14,7 @@ Companion to `nexus-vs-hotwax-competitive.md` (strategic positioning). This docu
 | Service layer | XML service definitions (`<service verb="X" noun="Y">`) executed by framework runners | Java `@Service` classes invoked by `@RestController`s |
 | Business logic | Groovy scripts + `<actions>` XML blocks | Java methods |
 | REST exposure | Declarative `*.rest.xml` mapping services/entities to HTTP verbs | Explicit `@GetMapping`/`@PostMapping` annotations |
-| UI | XML screens (`screen/Oms/Order/FindOrder.xml`) rendered by Moqui ScreenFacade | React 19 + Vite + TypeScript + Tailwind (94 pages) |
+| UI | XML screens (`screen/Oms/Order/FindOrder.xml`) rendered by Moqui ScreenFacade | React 18 + Vite + TypeScript + Tailwind (94 pages) |
 | Schema | Auto-created at startup from entity definitions (`EntityDbMeta.groovy`) | 59 Flyway migrations |
 | Data access | `EntityFacade`/`EntityFind`/`EntityValue` (dynamic, no compile-time model) | JPA repositories + DTOs |
 
@@ -305,7 +305,7 @@ Supporting entities: `OrderItem`, `OrderItemShipGroup`, `OrderRole`, `OrderIdent
 
 ### Nexus (verified)
 
-React 19 + Vite + TypeScript + Tailwind, 94 pages under `src/pages/`.
+React 18 + Vite + TypeScript + Tailwind, 94 pages under `src/pages/`.
 
 **Assessment:** No contest on UX velocity and modern tooling — Nexus's React stack is a selling point against Moqui's XML screens. HotWax's screens are functional but dated; every UI change is an XML edit + framework render.
 

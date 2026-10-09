@@ -15,6 +15,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 > - "How do we compare vs Manhattan, SAP, HotWax?" → [07-SCM-COMPARISON.md](./07-SCM-COMPARISON.md)
 > - "How do I run the whole thing today?" → [08-SELF-HOST-BOOT.md](./08-SELF-HOST-BOOT.md)
 > - "What does it cost?" → [09-COST-TCO.md](./09-COST-TCO.md)
+> - "Show me the architecture as diagrams — C4, sequences, state machines, topology?" → [11-SYSTEM-DESIGN.md](./11-SYSTEM-DESIGN.md)
 
 ## Library map
 
@@ -32,6 +33,8 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`07-SCM-COMPARISON.md`](./07-SCM-COMPARISON.md) | Deep-research comparison vs **12 SCM/OMS/WMS systems** (Manhattan, HotWax, SAP, Oracle, Blue Yonder…), feature scores /10, weighted rankings, Nexus gap analysis | All, exec, investors |
 | [`08-SELF-HOST-BOOT.md`](./08-SELF-HOST-BOOT.md) | **Production in under 1 hour** — step-by-step boot of the full stack, monitoring, teardown | Ops, buyers, evaluation teams |
 | [`09-COST-TCO.md`](./09-COST-TCO.md) | **Cost & TCO** — $0 license, self-host math (~$76–110/mo), vs enterprise vendors | Buyers, CFOs, investors |
+| [`10-DATA-MODEL-REFERENCE.md`](./10-DATA-MODEL-REFERENCE.md) | **Field-by-field table catalog** — every column and constraint across all 179 tables, plus the flows joining them | Engineering, DBA |
+| [`11-SYSTEM-DESIGN.md`](./11-SYSTEM-DESIGN.md) | **Diagram companion** — C4 context/container/component, deployment & network topology, CI/CD pipelines, auth/webhook/import sequences, order-to-return state machines, Kafka topic map | Engineering |
 | [`features/`](./features/) | Per-feature deep dives (overview, process, use cases, data flow, ER subset, access) | All |
 
 ### Feature docs

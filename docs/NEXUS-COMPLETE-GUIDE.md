@@ -3,7 +3,7 @@
 **The single source of truth for setting up, connecting, deploying, and operating the Nexus Order Management System (OMS) & Supply Chain Platform in production.**
 
 > **Version:** 1.0.0 · **Last updated:** 2026-09-02
-> **Stack:** Spring Boot 3 (Java 17) · React 19 (Vite + TypeScript) · PostgreSQL 16 (pgvector) · Redis 7 · Apache Kafka 3.7 (KRaft) · Flyway
+> **Stack:** Spring Boot 3 (Java 17) · React 18 (Vite + TypeScript) · PostgreSQL 16 (pgvector) · Redis 7 · Apache Kafka 3.7 (KRaft) · Flyway
 
 ---
 
@@ -112,7 +112,7 @@ nexus/
 │   │   ├── application-ai.yml          # AI service config
 │   │   └── db/migration/               # Flyway migrations (V1–V67)
 │   └── target/oms-1.0.0.jar   # Compiled fat JAR
-├── nexus-oms-frontend/         # React 19 + Vite + TypeScript
+├── nexus-oms-frontend/         # React 18 + Vite + TypeScript
 │   ├── src/pages/              # Page components
 │   ├── src/components/         # Reusable UI components
 │   ├── src/api/                # API client modules

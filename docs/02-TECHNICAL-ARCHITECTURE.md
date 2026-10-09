@@ -1,6 +1,6 @@
 # Nexus OMS — Technical Architecture
 
-> Companion: [`01-CURRENT-STATE.md`](./01-CURRENT-STATE.md) · [`03-ER-DIAGRAM.md`](./03-ER-DIAGRAM.md)
+> Companion: [`01-CURRENT-STATE.md`](./01-CURRENT-STATE.md) · [`03-ER-DIAGRAM.md`](./03-ER-DIAGRAM.md) · [`11-SYSTEM-DESIGN.md`](./11-SYSTEM-DESIGN.md) (C4, sequence, state-machine and topology diagrams)
 
 ---
 

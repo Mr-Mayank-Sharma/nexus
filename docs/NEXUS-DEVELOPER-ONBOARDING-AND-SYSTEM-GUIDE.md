@@ -15,7 +15,7 @@
    - [Database: PostgreSQL 16 & pgvector](#database-postgresql-16--pgvector)
    - [Cache & High-Speed State: Redis 7](#cache-redis-7)
    - [Event-Driven Streaming: Apache Kafka](#event-bus-apache-kafka)
-   - [Frontend: React 19, Vite, TypeScript & Tailwind CSS](#frontend-react-19-vite-typescript--tailwind-css)
+   - [Frontend: React 18, Vite, TypeScript & Tailwind CSS](#frontend-react-18-vite-typescript--tailwind-css)
    - [AI & Intelligence Layer: Python, ONNX & MCP](#ai--intelligence-layer-python-onnx--mcp)
 3. [End-to-End System & Business Flows](#3-end-to-end-system--business-flows)
    - [Comprehensive Order Lifecycle Sequence](#comprehensive-order-lifecycle-sequence)
@@ -116,7 +116,7 @@ The customer orders online and selects "Pick up at Store #14". The OMS sends a p
                                         ▼
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │                        SPRING BOOT 3 (JAVA 17) BACKEND                         │
-│  81 REST Controllers  ·  124 Business Services  ·  167 Hibernate Entities      │
+│  81 REST Controllers  ·  124 Business Services  ·  169 Hibernate Entities      │
 ├───────────────────────┬────────────────────────┬───────────────────────────────┤
 │ PostgreSQL 16 DB      │ Redis 7 Cache          │ Apache Kafka Event Bus        │
 │ • Multi-tenant RLS    │ • Distributed Rate-Lim │ • order.created               │
@@ -143,8 +143,8 @@ The customer orders online and selects "Pick up at Store #14". The OMS sends a p
 - Decouples high-volume storefront ingestion from downstream warehouse processing.
 - Topics include: `order.created`, `order.confirmed`, `order.allocated`, `order.shipped`, and `order.delivered`.
 
-### Frontend: React 19, Vite, TypeScript & Tailwind CSS
-- **React 19 & TypeScript**: Provides strict client-side type checking matching backend DTO contracts.
+### Frontend: React 18, Vite, TypeScript & Tailwind CSS
+- **React 18 & TypeScript**: Provides strict client-side type checking matching backend DTO contracts.
 - **Vite**: Ultra-fast build and Hot Module Replacement (HMR).
 - **Tailwind CSS**: Custom modern UI styling with responsive layouts, dark mode, and glassmorphism.
 - **Mobile RF PWA**: Offline-first warehouse scanning interface (`src/rf`) supporting camera and hardware laser barcode scanners.
