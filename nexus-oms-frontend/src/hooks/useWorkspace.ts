@@ -60,6 +60,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     {
       id: 'order-management', label: 'Order Management', path: '/orders', icon: 'Package',
       children: [
+        { id: 'order-twin', label: 'Order Flow Twin', path: '/order-twin', icon: 'Route' },
         { id: 'orders', label: 'All Orders', path: '/orders', icon: 'Package' },
         { id: 'find-order', label: 'Find Orders', path: '/orders/search', icon: 'Search' },
         { id: 'create-order', label: 'Create Order', path: '/orders/new', icon: 'Plus' },
@@ -255,7 +256,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     ],
     OPS_MANAGER: [
       'launch-pad', 'analytics-dashboard', 'dashboard', 'notifications',
-      'orders', 'find-order', 'create-order', 'order-approvals', 'order-routing',
+      'order-twin', 'orders', 'find-order', 'create-order', 'order-approvals', 'order-routing',
       'brokering', 'rejections', 'transfers', 'fulfillment-limits', 'reconciliation',
       'fulfillment', 'picking', 'packing', 'shipping',
       'wave-planning', 'labor-management', 'pickers', 'label-printing',
@@ -304,7 +305,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     ],
     CUSTOMER_SUPPORT: [
       'launch-pad', 'notifications',
-      'orders', 'find-order', 'order-approvals',
+      'order-twin', 'orders', 'find-order', 'order-approvals',
       'customers',
       'returns', 'returns-enhanced', 'returns-finance',
       'products',

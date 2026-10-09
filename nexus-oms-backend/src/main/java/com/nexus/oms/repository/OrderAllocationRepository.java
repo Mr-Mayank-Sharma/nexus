@@ -8,6 +8,8 @@ import java.util.UUID;
 
 public interface OrderAllocationRepository extends JpaRepository<NxOrderAllocation, UUID> {
     List<NxOrderAllocation> findByOrderId(UUID orderId);
+
+    List<NxOrderAllocation> findByTenantIdAndOrderIdIn(UUID tenantId, java.util.Collection<UUID> orderIds);
     List<NxOrderAllocation> findByTenantId(UUID tenantId, Sort sort);
     List<NxOrderAllocation> findByTenantIdAndStatus(UUID tenantId, String status);
     List<NxOrderAllocation> findByNodeId(UUID nodeId);

@@ -2,6 +2,7 @@ package com.nexus.oms.controller;
 
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.security.TenantContext;
+import com.nexus.oms.service.twin.OrderNetworkTwinService;
 import com.nexus.oms.service.twin.WarehouseTwinService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,9 +19,18 @@ import java.util.UUID;
 public class TwinController {
 
     private final WarehouseTwinService warehouseTwinService;
+    private final OrderNetworkTwinService orderNetworkTwinService;
 
-    public TwinController(WarehouseTwinService warehouseTwinService) {
+    public TwinController(WarehouseTwinService warehouseTwinService, OrderNetworkTwinService orderNetworkTwinService) {
         this.warehouseTwinService = warehouseTwinService;
+        this.orderNetworkTwinService = orderNetworkTwinService;
+    }
+
+    @Operation(summary = "Order network flows for a window: channels → nodes → regions, lifecycle, queue, exceptions")
+    @GetMapping("/orders")
+    public ResponseEntity<ApiResponse<OrderNetworkTwinService.Snapshot>> orderNetwork(
+            @RequestParam(defaultValue = "24") int hours) {
+        return ResponseEntity.ok(ApiResponse.success(orderNetworkTwinService.snapshot(TenantContext.getCurrentTenantId(), hours)));
     }
 
     @Operation(summary = "Sites for the twin site switcher, with fill % and dock occupancy")

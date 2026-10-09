@@ -31,8 +31,16 @@ references it reaches **≈ 9.8–10**. Treat any claim of "10/10 NR" before tha
 |---|---|---|
 | 2026-10-09 | Doc 12 benchmark | NP 8.4 / NR 5.7 baseline, verified by running the suites |
 | 2026-10-09 | **Phase 0 security** (commit `749562d`) | SSO JWKS verification, real TOTP, DB-backed one-time tokens, RLS forced on 163/163 tenant tables + `nexus_app` role (proven on Postgres 16), tenant-scoped caches, constant-time HMAC, working prod secret checks. Tests 816 ✅ / 403 ✅ |
+| 2026-10-09 | **Inventory per location** (`f1ad8b3`) | V20's UNIQUE (tenant, sku) blocked multi-location stock on every Flyway-built DB; V70 keys on (tenant, sku, node, lot); the import is location-aware |
+| 2026-10-09 | **Warehouse Twin** (`f8285f7`) | `/warehouse-twin`: 3D site from real docks, appointments, trailers, equipment, stock and shipments; verified in a browser on Postgres with RLS on |
+| 2026-10-09 | **Order Flow Twin** | `/order-twin`: channels → nodes → regions on a 3D Sankey board with live flows, routing explanation per order, lifecycle, queue and exceptions; 1h/6h/24h/7d windows. Tests 828 ✅ / 414 ✅ |
 
-Security row NR: **2 → 7** (the remaining points come from P0-10 HttpOnly refresh cookie, a pen-test and SOC 2 controls in §6).
+Security row NR: **2 → 7**
+
+**New findings while building (added to the backlog):**
+- **Time zones:** timestamps are stored without a zone and written in the JVM's local zone. Pin the JVM and DB to UTC (`-Duser.timezone=UTC`) and migrate to `timestamptz` (Phase A).
+- **Login page claims:** the sign-in screen shows "50K+ orders daily", "99.9% uptime SLA", "150+ integrations" and "40% cost reduction", none of which is backed by data. Remove them in the shell rebuild (Phase B).
+- **Test blind spot:** H2 without Flyway hid the V20 inventory bug, which is one more reason for Testcontainers (Phase A). (the remaining points come from P0-10 HttpOnly refresh cookie, a pen-test and SOC 2 controls in §6).
 
 ---
 

@@ -26,6 +26,9 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
 
     Optional<NxOrder> findByIdAndTenantId(UUID id, UUID tenantId);
 
+    /** Bounded window read for the Order Flow Twin. */
+    List<NxOrder> findTop5000ByTenantIdAndCreatedAtAfterOrderByCreatedAtDesc(UUID tenantId, LocalDateTime after);
+
     List<NxOrder> findByCustomerId(UUID customerId);
 
     List<NxOrder> findByTenantIdAndChannel(UUID tenantId, String channel);

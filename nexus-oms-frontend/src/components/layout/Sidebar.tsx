@@ -18,6 +18,7 @@ import type { UserRole } from '../../types'
 
 const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> = {
   'orders': { resource: 'orders', action: 'view' },
+  'order-twin': { resource: 'orders', action: 'view' },
   'order-search': { resource: 'orders', action: 'view' },
   'create-order': { resource: 'orders', action: 'create' },
   'customers': { resource: 'customers', action: 'view' },
