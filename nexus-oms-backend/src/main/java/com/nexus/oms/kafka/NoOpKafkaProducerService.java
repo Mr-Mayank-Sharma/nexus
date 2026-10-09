@@ -14,7 +14,7 @@ public class NoOpKafkaProducerService extends KafkaProducerService {
     private static final Logger log = LoggerFactory.getLogger(NoOpKafkaProducerService.class);
 
     public NoOpKafkaProducerService() {
-        super(null);
+        super(null);  // no outbox: Kafka is disabled
     }
 
     @Override

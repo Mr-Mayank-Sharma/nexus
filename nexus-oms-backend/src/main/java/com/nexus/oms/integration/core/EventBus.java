@@ -3,7 +3,7 @@ package com.nexus.oms.integration.core;
 import com.nexus.oms.integration.dto.IntegrationEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
+import com.nexus.oms.kafka.KafkaProducerService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -15,12 +15,11 @@ public class EventBus {
     private static final Logger log = LoggerFactory.getLogger(EventBus.class);
 
     private final List<EventHandler> handlers = new CopyOnWriteArrayList<>();
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final boolean kafkaEnabled;
+    private final KafkaProducerService producer;
 
-    public EventBus(java.util.Optional<KafkaTemplate<String, String>> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate.orElse(null);
-        this.kafkaEnabled = this.kafkaTemplate != null;
+    /** Kafka delivery goes through the transactional outbox (NoOp when Kafka is disabled). */
+    public EventBus(java.util.Optional<KafkaProducerService> producer) {
+        this.producer = producer.orElse(null);
     }
 
     public void registerHandler(EventHandler handler) {
@@ -40,10 +39,10 @@ public class EventBus {
             }
         }
 
-        if (kafkaEnabled) {
+        if (producer != null) {
             try {
                 String topic = "integration." + event.getEventType().toLowerCase().replace("_", ".");
-                kafkaTemplate.send(topic, event.getEventId(), event.toJson());
+                producer.publish(topic, event.getEventId(), event.toJson());
             } catch (Exception e) {
                 log.error("Failed to publish event to Kafka", e);
             }

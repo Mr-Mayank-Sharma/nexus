@@ -4,13 +4,9 @@ import com.nexus.oms.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @ConditionalOnProperty(name = "nexus.kafka.enabled", havingValue = "true", matchIfMissing = true)
@@ -18,42 +14,23 @@ public class KafkaProducerService {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaProducerService.class);
 
-    private static final long PUBLISH_TIMEOUT_MS = 30000;
+    private final OutboxWriter outbox;
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
-
-    public KafkaProducerService(KafkaTemplate<String, String> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
+    public KafkaProducerService(OutboxWriter outbox) {
+        this.outbox = outbox;
     }
 
+    /**
+     * Records the event in the transactional outbox; {@link OutboxRelay} delivers it to Kafka
+     * after the surrounding transaction commits. Never blocks on Kafka.
+     */
     public void publish(String topic, String message) {
-        log.info("Publishing event to topic {}: {}", topic, message);
-        CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, message);
-        if (future == null) {
-            log.warn("KafkaTemplate.send returned null; Kafka may not be configured. Skipping publish to topic {}", topic);
-            return;
-        }
-        try {
-            future.get(PUBLISH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            log.error("Failed to publish event to topic {}: {}", topic, e.getMessage(), e);
-            throw new RuntimeException("Kafka publish to " + topic + " failed", e);
-        }
+        publish(topic, null, message);
     }
 
     public void publish(String topic, String key, String message) {
-        log.info("Publishing event to topic {} with key {}: {}", topic, key, message);
-        CompletableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, key, message);
-        if (future == null) {
-            log.warn("KafkaTemplate.send returned null; Kafka may not be configured. Skipping publish to topic {}", topic);
-            return;
-        }
-        try {
-            future.get(PUBLISH_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            log.error("Failed to publish event to topic {} with key {}: {}", topic, key, e.getMessage(), e);
-            throw new RuntimeException("Kafka publish to " + topic + " failed", e);
-        }
+        UUID id = outbox.enqueue(topic, key, message);
+        log.debug("Queued event {} for topic {} (key {})", id, topic, key);
     }
 
     public void publishEvent(String topic, String eventType, String data) {
