@@ -851,11 +851,33 @@ public class GenericImportService {
                 }
 
                 String sku = strVal(row, "sku", "SKU");
-                List<NxInventory> existing = inventoryRepository.findByTenantIdAndSku(tenantId, sku);
+                // Stock is per location: an optional warehouse/location column (warehouse code)
+                // places the row at that node; without it the row is tenant-level (node_id NULL).
+                String warehouseCode = strVal(row, "warehouse", "warehouse_code", "location", "Warehouse");
+                UUID nodeId = null;
+                if (!warehouseCode.isBlank()) {
+                    Optional<Warehouse> wh = warehouseRepository.findByTenantIdAndCode(tenantId, warehouseCode);
+                    if (wh.isEmpty()) {
+                        recordLogs.add(createRecordLog(historyId, tenantId, i, "ERROR", "UNKNOWN_WAREHOUSE",
+                            "No warehouse with code " + warehouseCode, "Create the warehouse first or fix the code", row, "import"));
+                        errors++;
+                        continue;
+                    }
+                    nodeId = wh.get().getId();
+                }
+                Optional<NxInventory> existing = nodeId == null
+                    ? inventoryRepository.findByTenantIdAndSkuAndNodeIdIsNull(tenantId, sku)
+                    : inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId);
 
-                if (!existing.isEmpty() && isMode(importMode, "INSERT_ONLY")) {
+                if (existing.isPresent() && isMode(importMode, "INSERT_ONLY")) {
                     recordLogs.add(createRecordLog(historyId, tenantId, i, "SKIPPED", "DUPLICATE",
                         "Inventory for SKU " + sku + " already exists", "Use UPSERT mode", row, "import"));
+                    skipped++;
+                    continue;
+                }
+                if (existing.isEmpty() && isMode(importMode, "UPDATE_ONLY")) {
+                    recordLogs.add(createRecordLog(historyId, tenantId, i, "SKIPPED", "NOT_FOUND",
+                        "No inventory for SKU " + sku + " at this location to update", "Use UPSERT mode", row, "import"));
                     skipped++;
                     continue;
                 }
@@ -866,11 +888,15 @@ public class GenericImportService {
                 int allocated = intVal(row, 0, "allocated", "quantityAllocated");
                 int inTransit = intVal(row, 0, "in_transit", "quantityInTransit");
 
-                NxInventory inv = NxInventory.builder()
-                    .tenantId(tenantId).sku(sku).nodeId(null)
-                    .quantityOnHand(qty).quantityAllocated(allocated)
-                    .quantityInTransit(inTransit).safetyStock(safetyStock).reorderPoint(reorder)
-                    .build();
+                // UPSERT/UPDATE_ONLY update the existing location row instead of inserting a duplicate.
+                NxInventory inv = existing.orElseGet(() -> NxInventory.builder()
+                    .tenantId(tenantId).sku(sku).build());
+                inv.setNodeId(nodeId);
+                inv.setQuantityOnHand(qty);
+                inv.setQuantityAllocated(allocated);
+                inv.setQuantityInTransit(inTransit);
+                inv.setSafetyStock(safetyStock);
+                inv.setReorderPoint(reorder);
                 transactionTemplate.execute(s -> inventoryRepository.save(inv));
 
                 success++;

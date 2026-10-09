@@ -15,6 +15,9 @@ public interface InventoryRepository extends JpaRepository<NxInventory, UUID> {
 
     Optional<NxInventory> findByTenantIdAndSkuAndNodeId(UUID tenantId, String sku, UUID nodeId);
 
+    /** Tenant-level (location-less) stock row; a derived query with a null param would never match. */
+    Optional<NxInventory> findByTenantIdAndSkuAndNodeIdIsNull(UUID tenantId, String sku);
+
     List<NxInventory> findByTenantIdAndNodeId(UUID tenantId, UUID nodeId);
 
     List<NxInventory> findByTenantIdAndSku(UUID tenantId, String sku);
