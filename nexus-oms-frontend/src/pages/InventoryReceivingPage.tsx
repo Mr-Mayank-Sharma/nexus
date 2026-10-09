@@ -9,6 +9,7 @@ import type { Warehouse, Product } from '../types'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
 import StatusBadge from '../components/common/StatusBadge'
+import { downloadCsv } from '../utils/csv'
 
 export default function InventoryReceivingPage() {
   const [receipts, setReceipts] = useState<InventoryReceipt[]>([])
@@ -80,7 +81,11 @@ export default function InventoryReceivingPage() {
           <option value="PENDING">Pending</option>
           <option value="RECEIVED">Received</option>
         </select>
-        <button type="button" className="enterprise-btn enterprise-btn-secondary text-sm"><Download className="w-4 h-4" /> Export</button>
+        <button type="button" disabled={filtered.length === 0} className="enterprise-btn enterprise-btn-secondary text-sm"
+          onClick={() => downloadCsv(`receipts-${new Date().toISOString().slice(0, 10)}.csv`,
+            ['Reference', 'SKU', 'Product', 'Quantity', 'Unit cost', 'Lot', 'Expiry', 'Status', 'Received by', 'Created'],
+            filtered.map(r => [r.referenceNumber, r.sku, r.productName, r.quantity, r.unitCost, r.lotNumber, r.expiryDate, r.status, r.receivedBy, r.createdAt]))}>
+          <Download className="w-4 h-4" /> Export</button>
       </div>
 
       {loading ? (

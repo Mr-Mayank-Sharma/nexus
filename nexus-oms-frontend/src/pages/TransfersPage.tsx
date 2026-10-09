@@ -9,6 +9,7 @@ import { transfersApi, TransferOrder, TransferStats } from '../api/transfers'
 import { EnterpriseTabs, EnterpriseKPICard } from '../components/enterprise'
 import type { Tab } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
+import NewTransferDialog from '../features/transfers/NewTransferDialog'
 
 type TransferTab = 'active' | 'in-transit' | 'received' | 'all'
 
@@ -40,6 +41,7 @@ export default function TransfersPage() {
   const [activeTab, setActiveTab] = useState<TransferTab>('active')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTransfer, setSelectedTransfer] = useState<TransferOrder | null>(null)
+  const [showNew, setShowNew] = useState(false)
 
   const tabs: Tab[] = [
     { id: 'active', label: 'Active', icon: <Clock className="w-4 h-4" /> },
@@ -129,11 +131,12 @@ export default function TransfersPage() {
           <p className="text-[var(--text-secondary)] mt-1">Manage inventory transfers between locations</p>
         </div>
         <PermissionGate resource="transfers" action="create">
-          <button type="button" className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
+          <button type="button" onClick={() => setShowNew(true)} className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
             <Plus className="w-4 h-4" />
             New Transfer
           </button>
         </PermissionGate>
+        {showNew && <NewTransferDialog onClose={() => setShowNew(false)} />}
       </div>
 
       <div className="grid grid-cols-4 gap-4">

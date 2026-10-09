@@ -137,7 +137,7 @@ export default function FulfillmentPage() {
           title="Completed Today"
           value={completedToday}
           icon={<CheckCircle className="w-5 h-5" />}
-          trend={{ value: 12, isPositive: true }}
+          trend={null}
           color="green"
         />
       </div>

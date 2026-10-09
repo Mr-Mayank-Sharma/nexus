@@ -10,6 +10,7 @@ import { fetchAllStatus } from '../api/connectors/connectorRegistry'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { downloadCsv } from '../utils/csv'
 
 interface AmazonOrder {
   id: string
@@ -364,7 +365,11 @@ export default function AmazonIntegrationPage() {
         </div>
         <div className="px-6 py-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-[var(--text-tertiary)]">
           <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
-          <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs"><Download className="w-3.5 h-3.5" /> Export</button>
+          <button type="button" disabled={filteredOrders.length === 0} className="enterprise-btn enterprise-btn-ghost text-xs"
+            onClick={() => downloadCsv(`amazon-orders-${new Date().toISOString().slice(0, 10)}.csv`,
+              ['Amazon order', 'Marketplace', 'Status', 'Items', 'Amount', 'Sync status', 'Placed'],
+              filteredOrders.map(o => [o.orderId, o.marketplace, o.status, o.items, o.amount, o.syncStatus, o.placedAt]))}>
+            <Download className="w-3.5 h-3.5" /> Export</button>
         </div>
       </div>
     </div>

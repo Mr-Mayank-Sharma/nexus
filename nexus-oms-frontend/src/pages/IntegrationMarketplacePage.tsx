@@ -10,6 +10,7 @@ import { useToast } from '../hooks/useToast'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { fetchAllStatus } from '../api/connectors/connectorRegistry'
+import { getStores } from '../api/integrationStores'
 
 interface IntegrationCard {
   id: string
@@ -18,6 +19,8 @@ interface IntegrationCard {
   icon: React.ReactNode
   color: string
   status: 'connected' | 'available' | 'coming_soon'
+  /** Connector exists but is not live against the real marketplace API yet. */
+  preview?: boolean
   category: string
   docsUrl?: string
 }
@@ -48,6 +51,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     icon: <ShoppingBag className="w-6 h-6" />,
     color: 'bg-[var(bg-[var(--nexus-ai-500)])]',
     status: 'available',
+    preview: true,
     category: 'Marketplace',
   },
   {
@@ -57,6 +61,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     icon: <Store className="w-6 h-6" />,
     color: 'bg-sky-500',
     status: 'available',
+    preview: true,
     category: 'Marketplace',
   },
   {
@@ -65,7 +70,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
     description: 'Sync orders, products, and inventory from your Shopify stores in real-time',
     icon: <ShoppingBag className="w-6 h-6" />,
     color: 'bg-[var(--nexus-success-500)]',
-    status: 'coming_soon',
+    status: 'available',
     category: 'E-Commerce',
   },
   {
@@ -109,7 +114,7 @@ const ALL_INTEGRATIONS: IntegrationCard[] = [
 const STATUS_CONFIG = {
   connected: { label: 'Connected', icon: <CheckCircle className="w-3.5 h-3.5" />, className: 'bg-[var(--nexus-success-50)] text-[var(--nexus-success-700)] border-[var(--nexus-success-200)]' },
   available: { label: 'Available', icon: <Wifi className="w-3.5 h-3.5" />, className: 'bg-[var(--nexus-primary-50)] text-[var(--nexus-primary-700)] border-[var(--nexus-primary-200)]' },
-  coming_soon: { label: 'Coming Soon', icon: <Clock className="w-3.5 h-3.5" />, className: 'bg-[var(--surface-sunken)] text-[var(--text-secondary)] border-[var(--border-default)]' },
+  coming_soon: { label: 'Planned', icon: <Clock className="w-3.5 h-3.5" />, className: 'bg-[var(--surface-sunken)] text-[var(--text-secondary)] border-[var(--border-default)]' },
 }
 
 export default function IntegrationMarketplacePage() {
@@ -117,19 +122,24 @@ export default function IntegrationMarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [categoryFilter, setCategoryFilter] = useState<string>('ALL')
-  const [connecting, setConnecting] = useState<string | null>(null)
+  const connecting = null as string | null // connecting navigates immediately; no simulated delay
   const [connectorStatuses, setConnectorStatuses] = useState<Record<string, boolean>>({})
   const { addToast } = useToast()
 
   useEffect(() => {
-    fetchAllStatus().then(status => {
+    Promise.all([
+      fetchAllStatus().catch(() => ({} as Awaited<ReturnType<typeof fetchAllStatus>>)),
+      getStores('SHOPIFY').catch(() => ({ success: false, data: [] as unknown[] })),
+    ]).then(([status, shopify]) => {
+      const shopifyStores = (shopify && Array.isArray(shopify.data) ? shopify.data : []) as { active?: boolean; isActive?: boolean }[]
       setConnectorStatuses({
         bigcommerce: status.bigcommerce?.active || false,
         amazon: status.amazon?.active || false,
         ebay: status.ebay?.active || false,
         walmart: status.walmart?.active || false,
+        shopify: shopifyStores.some(st => st.active ?? st.isActive ?? true),
       })
-    }).catch(() => {})
+    })
   }, [])
 
   const integrationsWithStatus = ALL_INTEGRATIONS.map(i => {
@@ -152,7 +162,7 @@ export default function IntegrationMarketplacePage() {
     if (!integration) return
 
     if (integration.status === 'coming_soon') {
-      addToast({ type: 'info', title: `${integration.name} integration is coming soon` })
+      addToast({ type: 'info', title: `${integration.name}{integration.preview && <span className="ml-2 rounded bg-[var(--nexus-warning-50)] px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-[var(--nexus-warning-700)]" title="Connector not live against the marketplace API yet">Preview</span>} connector is planned and not available yet` })
       return
     }
 
@@ -161,16 +171,15 @@ export default function IntegrationMarketplacePage() {
       amazon: '/integrations/amazon',
       ebay: '/integrations/ebay',
       walmart: '/integrations/walmart',
+      shopify: '/integrations/shopify',
     }
     const path = pathMap[id]
     if (path) {
       navigate(path)
     } else {
-      setConnecting(id)
-      setTimeout(() => {
-        setConnecting(null)
-        addToast({ type: 'success', title: `${integration.name} integration enabled` })
-      }, 1000)
+      // No dedicated page: connections are created in Integration Stores. (This used to show an
+      // "integration enabled" toast after a timer without connecting anything.)
+      navigate('/integrations/stores')
     }
   }
 
@@ -180,6 +189,7 @@ export default function IntegrationMarketplacePage() {
       amazon: '/integrations/amazon',
       ebay: '/integrations/ebay',
       walmart: '/integrations/walmart',
+      shopify: '/integrations/shopify',
     }
     const path = pathMap[id]
     if (path) navigate(path)
@@ -210,7 +220,7 @@ export default function IntegrationMarketplacePage() {
           </div>
           <div className="flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
-            <span className="font-medium text-[var(--text-secondary)]">{statusCounts.coming_soon}</span> Coming Soon
+            <span className="font-medium text-[var(--text-secondary)]">{statusCounts.coming_soon}</span> Planned
           </div>
         </div>
       </div>
@@ -227,7 +237,7 @@ export default function IntegrationMarketplacePage() {
               <option value="ALL">All Statuses</option>
               <option value="connected">Connected</option>
               <option value="available">Available</option>
-              <option value="coming_soon">Coming Soon</option>
+              <option value="coming_soon">Planned</option>
             </select>
             <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} className="input text-xs w-36">
               <option value="ALL">All Categories</option>
@@ -331,7 +341,7 @@ export default function IntegrationMarketplacePage() {
                     </PermissionGate>
                   ) : (
                     <button type="button" disabled className="enterprise-btn enterprise-btn-secondary text-xs flex-1 opacity-50 cursor-not-allowed">
-                      <Clock className="w-3.5 h-3.5" /> Coming Soon
+                      <Clock className="w-3.5 h-3.5" /> Planned
                     </button>
                   )}
                   {integration.docsUrl && (

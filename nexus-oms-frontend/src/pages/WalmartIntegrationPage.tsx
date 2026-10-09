@@ -39,11 +39,7 @@ interface ConnectorOrder {
   customerName: string
 }
 
-const PRICING_RULES = [
-  { id: '1', name: 'Standard Markup', type: 'percentage', value: '15%', minPrice: '$10.00', maxPrice: '$500.00', active: true },
-  { id: '2', name: 'Clearance', type: 'percentage', value: '-30%', minPrice: '$0.00', maxPrice: '$50.00', active: false },
-  { id: '3', name: 'Premium Electronics', type: 'fixed', value: '+$25.00', minPrice: '$100.00', maxPrice: '$2000.00', active: true },
-]
+interface PricingRule { id: string; name: string; type: string; value: string; minPrice: string; maxPrice: string; active: boolean }
 
 export default function WalmartIntegrationPage() {
   const [connected, setConnected] = useState(false)
@@ -85,7 +81,8 @@ export default function WalmartIntegrationPage() {
     handlingTimeDays: 2,
   })
 
-  const [pricingRules, setPricingRules] = useState(PRICING_RULES)
+  // Repricing rules are not stored by the backend yet; start empty rather than show invented rules.
+  const [pricingRules, setPricingRules] = useState<PricingRule[]>([])
 
   async function handleConnect() {
     if (!form.clientId.trim() || !form.clientSecret.trim()) {
@@ -178,6 +175,9 @@ export default function WalmartIntegrationPage() {
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-sky-500" /> Walmart Integration</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect Walmart Marketplace to manage orders, fulfillment, and pricing</p>
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-md bg-[var(--nexus-warning-50)] px-2 py-1 text-xs font-medium text-[var(--nexus-warning-700)]">
+            Preview: the Walmart connector is not live yet, so orders and pricing here are not synced with Walmart.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {connected ? (
@@ -331,6 +331,9 @@ export default function WalmartIntegrationPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--surface-sunken)]">
+                  {pricingRules.length === 0 && (
+                    <tr><td colSpan={6} className="py-6 text-center text-sm text-[var(--text-tertiary)]">No repricing rules yet.</td></tr>
+                  )}
                   {pricingRules.map(rule => (
                     <tr key={rule.id} className="hover:bg-[var(--surface-sunken)]">
                       <td className="px-6 py-3 text-sm font-medium text-[var(--text-primary)]">{rule.name}</td>
@@ -353,7 +356,7 @@ export default function WalmartIntegrationPage() {
             </div>
             <div className="px-6 py-3 border-t border-[var(--border-subtle)]">
               <PermissionGate resource="integrations" action="create">
-                <button type="button" className="enterprise-btn enterprise-btn-secondary text-xs"><DollarSign className="w-3.5 h-3.5" /> Add Pricing Rule</button>
+                <button disabled title="Available once the Walmart connector is live" type="button" className="enterprise-btn enterprise-btn-secondary text-xs"><DollarSign className="w-3.5 h-3.5" /> Add Pricing Rule</button>
               </PermissionGate>
             </div>
           </div>

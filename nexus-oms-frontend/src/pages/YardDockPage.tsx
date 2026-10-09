@@ -1096,8 +1096,7 @@ return (
           value={`${stats?.dockUtilization ?? 0}%`}
           icon={<BarChart3 className="w-5 h-5" />}
           color={(stats?.dockUtilization ?? 0) > 80 ? 'warning' : (stats?.dockUtilization ?? 0) > 50 ? 'primary' : 'success'}
-          trend={(stats?.dockUtilization ?? 0) > 70 ? 'up' : 'down'}
-          trendValue={`${(stats?.dockUtilization ?? 0) > 70 ? '+5%' : '-3%'}`}
+          subtitle="Doors occupied right now"
         />
         <EnterpriseKPICard
           title="Appointments Today"
@@ -1122,8 +1121,6 @@ return (
           value={stats?.noShows ?? 0}
           icon={<AlertTriangle className="w-5 h-5" />}
           color={(stats?.noShows ?? 0) > 0 ? 'error' : 'success'}
-          trend={(stats?.noShows ?? 0) > 0 ? 'up' : 'neutral'}
-          trendValue={(stats?.noShows ?? 0) > 0 ? '+1' : '0'}
         />
       </div>
 

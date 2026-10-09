@@ -1,243 +1,205 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
-  Building2, Users, Package, ClipboardCheck, PackagePlus, Truck, Clock, TrendingUp, AlertTriangle, ArrowRight,
-  UserCheck, Target,
+  AlertTriangle, ArrowRight, Boxes, Building2, ClipboardCheck, Clock, Layers, Package, PackagePlus, Truck, UserCheck,
 } from 'lucide-react'
-import clsx from 'clsx'
 import { EnterpriseKPICard, EnterpriseStatusBadge } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
+import { fetchTwinSites, fetchTwinSnapshot } from '../features/twin/warehouse/api'
+import { getPickingKPIs } from '../api/picking'
+import { getPackingKPIs } from '../api/packing'
+import { pickersApi } from '../api/pickers'
 
+const card = 'rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5'
+
+function tone(status: string | null | undefined): 'success' | 'warning' | 'error' | 'info' | 'neutral' {
+  const s = (status ?? '').toUpperCase()
+  if (['AVAILABLE', 'IDLE', 'COMPLETED', 'IN_STOCK'].includes(s)) return 'success'
+  if (['IN_PROGRESS', 'LOADING', 'UNLOADING', 'OCCUPIED', 'PICKING', 'CHECKED_IN'].includes(s)) return 'info'
+  if (['SCHEDULED', 'CONFIRMED', 'ON_BREAK', 'LOW_STOCK'].includes(s)) return 'warning'
+  if (['OFFLINE', 'OUT_OF_STOCK', 'NO_SHOW', 'CANCELLED'].includes(s)) return 'error'
+  return 'neutral'
+}
+
+const human = (s: string | null | undefined) => (s ? s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, ' ') : '—')
+
+/**
+ * Warehouse manager home. Every figure comes from the API: the site snapshot used by the
+ * Warehouse Twin, picking/packing KPIs and the site's pickers. Nothing is hardcoded.
+ */
 export default function WarehouseDashboardPage() {
   const navigate = useNavigate()
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'labor' | 'dock'>('overview')
+  const [params, setParams] = useSearchParams()
 
-  const kpis = [
-    { title: 'Active Pickers', value: '12', icon: <UserCheck className="w-5 h-5" />, color: 'primary' as const, trend: { value: 8, isUp: true } },
-    { title: 'Pick Rate', value: '148/hr', icon: <Target className="w-5 h-5" />, color: 'success' as const, trend: { value: 12, isUp: true } },
-    { title: 'Open Picklists', value: '24', icon: <ClipboardCheck className="w-5 h-5" />, color: 'warning' as const, trend: null },
-    { title: 'Packing Queue', value: '18', icon: <PackagePlus className="w-5 h-5" />, color: 'info' as const, trend: { value: 5, isUp: false } },
-  ]
+  const sites = useQuery({ queryKey: ['twin', 'sites'], queryFn: fetchTwinSites })
+  const siteId = params.get('site') ?? sites.data?.[0]?.id ?? null
+  const snap = useQuery({ queryKey: ['twin', 'warehouse', siteId], queryFn: () => fetchTwinSnapshot(siteId!), enabled: Boolean(siteId), refetchInterval: 30_000 })
+  const picking = useQuery({ queryKey: ['picking-kpis'], queryFn: async () => (await getPickingKPIs()).data ?? {}, refetchInterval: 30_000 })
+  const packing = useQuery({ queryKey: ['packing-kpis'], queryFn: async () => (await getPackingKPIs()).data ?? {}, refetchInterval: 30_000 })
+  const pickers = useQuery({ queryKey: ['pickers', siteId], queryFn: async () => (await pickersApi.getPickers(siteId!)).data ?? [], enabled: Boolean(siteId) })
 
-  const laborData = [
-    { name: 'Alex M.', role: 'Picker', status: 'active', picks: 47, hours: 6.5, efficiency: 98 },
-    { name: 'Sarah K.', role: 'Picker', status: 'active', picks: 52, hours: 7.0, efficiency: 104 },
-    { name: 'James R.', role: 'Packer', status: 'active', packs: 38, hours: 6.5, efficiency: 95 },
-    { name: 'Maria G.', role: 'Packer', status: 'break', packs: 22, hours: 4.0, efficiency: 88 },
-    { name: 'Tom W.', role: 'Loader', status: 'active', loads: 6, hours: 6.0, efficiency: 100 },
-    { name: 'Lisa C.', role: 'Picker', status: 'idle', picks: 15, hours: 5.0, efficiency: 50 },
-  ]
+  const s = snap.data
+  const k = s?.kpis
+  const pk = picking.data ?? {}
+  const pa = packing.data ?? {}
+  const activePickers = (pickers.data ?? []).filter(p => p.active && p.status !== 'OFFLINE')
+  const lowStock = (s?.topInventory ?? []).filter(i => i.stockStatus !== 'IN_STOCK')
 
-  const dockData = [
-    { door: 'D1', carrier: 'UPS', status: 'loading', eta: '—', orders: 42, driver: 'John D.' },
-    { door: 'D2', carrier: 'FedEx', status: 'arrived', eta: '10:30', orders: 28, driver: 'Mike S.' },
-    { door: 'D3', carrier: 'USPS', status: 'scheduled', eta: '11:00', orders: 15, driver: '—' },
-    { door: 'D4', carrier: 'OnTrac', status: 'available', eta: '—', orders: 0, driver: '—' },
-  ]
+  if (sites.isSuccess && sites.data.length === 0) {
+    return (
+      <div className="grid min-h-[60vh] place-items-center">
+        <div className={`${card} max-w-md text-center`}>
+          <Building2 className="mx-auto mb-3 h-10 w-10 text-[var(--text-tertiary)]" />
+          <h1 className="text-lg font-semibold text-[var(--text-primary)]">No warehouses yet</h1>
+          <p className="mt-1 text-sm text-[var(--text-tertiary)]">Add your first site to see live operations here.</p>
+          <button type="button" onClick={() => navigate('/warehouse')} className="enterprise-btn-primary mt-4 px-4 py-2 text-sm">Add a warehouse</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <PermissionGate resource="warehouse" action="view">
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
-            <Building2 className="w-7 h-7 text-[var(--nexus-warning-500)]" />
-            Warehouse Dashboard
-          </h1>
-          <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">Main Distribution Center · Operations overview</p>
-        </div>
-        <button type="button" onClick={() => navigate('/warehouse')} className="enterprise-btn-secondary text-sm flex items-center gap-1.5 px-4 py-2">
-          <Building2 className="w-4 h-4" /> Full Warehouse
-        </button>
-      </div>
-
-      {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-4">
-        {kpis.map(k => (
-          <EnterpriseKPICard key={k.title} title={k.title} value={k.value} icon={k.icon} color={k.color} trend={k.trend} />
-        ))}
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-0.5 w-fit">
-        {(['overview', 'labor', 'dock'] as const).map(t => (
-          <button type="button" key={t} onClick={() => setSelectedTab(t)}
-            className={clsx('px-4 py-2 text-sm font-medium rounded-md capitalize transition-all',
-              selectedTab === t ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm' : 'text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]')}>
-            {t === 'overview' ? 'Overview' : t === 'labor' ? 'Labor Tracking' : 'Dock Management'}
-          </button>
-        ))}
-      </div>
-
-      {/* Overview Tab */}
-      {selectedTab === 'overview' && (
-        <div className="grid grid-cols-3 gap-6">
-          <div className="col-span-2 space-y-4">
-            <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-                <Target className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Fulfillment Pipeline
-              </h3>
-              <div className="relative">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Picked Today</span>
-                  <span className="text-xs font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">1,247 / 1,500</span>
-                </div>
-                <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
-                  <div className="bg-[var(--nexus-primary-600)] h-2.5 rounded-full" style={{ width: '83%' }} />
-                </div>
-                <div className="flex items-center justify-between mt-4 mb-2">
-                  <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Packed Today</span>
-                  <span className="text-xs font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">892 / 1,200</span>
-                </div>
-                <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
-                  <div className="bg-[var(--nexus-success-500)] h-2.5 rounded-full" style={{ width: '74%' }} />
-                </div>
-                <div className="flex items-center justify-between mt-4 mb-2">
-                  <span className="text-xs font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">Shipped Today</span>
-                  <span className="text-xs font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">756 / 1,000</span>
-                </div>
-                <div className="w-full bg-[var(--surface-muted)] rounded-full h-2.5">
-                  <div className="bg-[var(--nexus-primary-600)] h-2.5 rounded-full" style={{ width: '76%' }} />
-                </div>
-              </div>
-            </div>
-
-            <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-[var(--nexus-warning-500)]" /> Active Alerts
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { severity: 'high', message: 'Pick wave W-1023 behind schedule by 45 min' },
-                  { severity: 'medium', message: 'Packing station P-4 low on tape supplies' },
-                  { severity: 'low', message: 'Dock D2 scheduled carrier arriving shortly' },
-                ].map((a, i) => (
-                  <div key={i} className={clsx('flex items-center gap-3 p-2.5 rounded-lg text-sm',
-                    a.severity === 'high' ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/10 text-[var(--nexus-error-700)] dark:text-[var(--nexus-error-400)]' :
-                    a.severity === 'medium' ? 'bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/10 text-[var(--nexus-warning-700)] dark:text-[var(--nexus-warning-400)]' :
-                    'bg-[var(--nexus-primary-50)] dark:bg-[var(--nexus-primary-900)]/10 text-[var(--nexus-primary-700)] dark:text-[var(--nexus-primary-400)]')}>
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>{a.message}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="flex items-center gap-2.5 text-2xl font-bold text-[var(--text-primary)]">
+              <Building2 className="h-7 w-7 text-[var(--nexus-warning-500)]" /> Warehouse Dashboard
+            </h1>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+              {s ? `${s.site.name} · ${s.address || s.site.code}` : 'Loading site…'}
+            </p>
           </div>
+          <div className="flex items-center gap-2">
+            {sites.data && sites.data.length > 1 && (
+              <select aria-label="Site" value={siteId ?? ''} onChange={e => setParams({ site: e.target.value })}
+                      className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-sm text-[var(--text-primary)]">
+                {sites.data.map(x => <option key={x.id} value={x.id}>{x.code} · {x.name}</option>)}
+              </select>
+            )}
+            <button type="button" onClick={() => navigate(siteId ? `/warehouse-twin?site=${siteId}` : '/warehouse-twin')}
+                    className="enterprise-btn-secondary flex items-center gap-1.5 px-4 py-2 text-sm">
+              <Layers className="h-4 w-4" /> Open 3D twin
+            </button>
+          </div>
+        </div>
 
-          <div className="space-y-4">
-            <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[var(--text-tertiary)]" /> Quick Actions
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { label: 'Picking Board', path: '/picking', icon: <ClipboardCheck className="w-4 h-4" /> },
-                  { label: 'Packing Stations', path: '/packing', icon: <PackagePlus className="w-4 h-4" /> },
-                  { label: 'Dock Schedule', path: '/shipping', icon: <Truck className="w-4 h-4" /> },
-                  { label: 'Inventory Check', path: '/inventory', icon: <Package className="w-4 h-4" /> },
-                  { label: 'Task Queues', path: '/task-queues', icon: <AlertTriangle className="w-4 h-4" /> },
-                ].map((a, i) => (
-                  <button type="button" key={i} onClick={() => navigate(a.path)}
-                    className="w-full flex items-center justify-between p-2.5 rounded-lg bg-[var(--surface-sunken)]/50 hover:bg-[var(--surface-muted)] transition-colors text-left">
-                    <span className="flex items-center gap-2 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
-                      {a.icon} {a.label}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <EnterpriseKPICard title="Active pickers" value={pickers.isSuccess ? activePickers.length : '—'} icon={<UserCheck className="h-5 w-5" />} color="primary"
+                             subtitle={pickers.isSuccess ? `${(pickers.data ?? []).length} on the roster` : undefined} loading={pickers.isLoading} />
+          <EnterpriseKPICard title="Active picklists" value={pk.activePicklists ?? '—'} icon={<ClipboardCheck className="h-5 w-5" />} color="warning"
+                             subtitle={`All sites · ${pk.completedToday ?? 0} completed today · ${pk.pendingItems ?? 0} items to pick`} loading={picking.isLoading} />
+          <EnterpriseKPICard title="Packing queue" value={(pa.pendingPack ?? 0) + (pa.packing ?? 0)} icon={<PackagePlus className="h-5 w-5" />} color="info"
+                             subtitle={`All sites · ${pa.packed ?? 0} packed · ${pa.shipped ?? 0} shipped`} loading={packing.isLoading} />
+          <EnterpriseKPICard title="Docks in use" value={s ? `${s.site.doorsOccupied}/${s.site.doorsTotal}` : '—'} icon={<Truck className="h-5 w-5" />} color="success"
+                             subtitle={k ? `${k.trucksOnSite} trucks on site · ${k.arrivalsToday} arrivals today` : undefined} loading={snap.isLoading} />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <section className={`${card} lg:col-span-2`} aria-labelledby="dock-heading">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 id="dock-heading" className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]"><Truck className="h-4 w-4" /> Dock doors</h2>
+              <button type="button" onClick={() => navigate('/yard-dock')} className="flex items-center gap-1 text-xs font-semibold text-[var(--text-brand)] hover:underline">
+                Yard &amp; Dock <ArrowRight className="h-3 w-3" />
+              </button>
+            </div>
+            {s && s.docks.length === 0 && <p className="py-6 text-center text-sm text-[var(--text-tertiary)]">No dock doors configured for this site.</p>}
+            {s && s.docks.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--border-subtle)] text-left text-xs uppercase tracking-wide text-[var(--text-tertiary)]">
+                      <th className="py-2 pr-4 font-medium">Door</th><th className="py-2 pr-4 font-medium">Vehicle</th>
+                      <th className="py-2 pr-4 font-medium">Carrier</th><th className="py-2 pr-4 font-medium">Pallets</th><th className="py-2 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {s.docks.map(d => {
+                      const t = s.trucks.find(x => x.dockDoorNumber === d.doorNumber)
+                      return (
+                        <tr key={d.id} className="border-b border-[var(--border-subtle)] last:border-0">
+                          <td className="py-2.5 pr-4 font-medium text-[var(--text-primary)]">{d.doorNumber}</td>
+                          <td className="py-2.5 pr-4 text-[var(--text-secondary)]">{d.vehicleLabel ?? '—'}</td>
+                          <td className="py-2.5 pr-4 text-[var(--text-secondary)]">{t?.carrier ?? '—'}</td>
+                          <td className="py-2.5 pr-4 tabular-nums text-[var(--text-secondary)]">{t?.palletCount ?? '—'}</td>
+                          <td className="py-2.5"><EnterpriseStatusBadge status={tone(t?.status ?? d.status)} label={human(t?.status ?? d.status)} /></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {s && s.trucks.some(t => !t.dockDoorNumber) && (
+              <div className="mt-4 border-t border-[var(--border-subtle)] pt-3">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">Arriving / in yard</div>
+                <div className="flex flex-wrap gap-2">
+                  {s.trucks.filter(t => !t.dockDoorNumber).map(t => (
+                    <span key={t.id} className="rounded-lg bg-[var(--surface-sunken)] px-2.5 py-1 text-xs text-[var(--text-secondary)]">
+                      <span className="font-semibold text-[var(--text-primary)]">{t.label}</span> · {t.carrier ?? '—'} · {human(t.status)}
+                      {t.eta ? ` · ETA ${new Date(t.eta).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
                     </span>
-                    <ArrowRight className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="enterprise-card p-5">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Today's Summary</h3>
-              <div className="space-y-3">
-                {[
-                  { label: 'Orders Fulfilled', value: '756', icon: <Package className="w-4 h-4 text-[var(--nexus-success-500)]" /> },
-                  { label: 'Active Workers', value: '14', icon: <Users className="w-4 h-4 text-[var(--nexus-primary-500)]" /> },
-                  { label: 'On-Time Rate', value: '96.2%', icon: <TrendingUp className="w-4 h-4 text-[var(--nexus-success-500)]" /> },
-                  { label: 'Avg Pick Time', value: '4.2 min', icon: <Clock className="w-4 h-4 text-[var(--nexus-warning-500)]" /> },
-                ].map((s, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{s.icon} {s.label}</span>
-                    <span className="text-sm font-semibold text-[var(--text-primary)]">{s.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Labor Tab */}
-      {selectedTab === 'labor' && (
-        <div className="enterprise-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="enterprise-table w-full">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Worker</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Role</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Output</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Hours</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Efficiency</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--surface-sunken)] dark:divide-gray-800">
-                {laborData.map((w, i) => (
-                  <tr key={i} className="enterprise-table-row">
-                    <td className="px-4 py-3 text-sm font-medium text-[var(--text-primary)]">{w.name}</td>
-                    <td className="px-4 py-3 text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{w.role}</td>
-                    <td className="px-4 py-3 text-center">
-                      <EnterpriseStatusBadge status={w.status === 'active' ? 'success' : w.status === 'break' ? 'warning' : 'error'} label={w.status} />
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm font-semibold text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">
-                      {w.picks || w.packs || w.loads || 0}
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{w.hours}h</td>
-                    <td className="px-4 py-3 text-center">
-                      <span className={clsx('text-sm font-semibold', w.efficiency >= 90 ? 'text-[var(--nexus-success-600)]' : w.efficiency >= 70 ? 'text-[var(--nexus-warning-600)]' : 'text-[var(--nexus-error-600)]')}>
-                        {w.efficiency}%
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Dock Tab */}
-      {selectedTab === 'dock' && (
-        <div className="grid grid-cols-2 gap-4">
-          {dockData.map((d, i) => (
-            <div key={i} className={clsx('enterprise-card p-4 border-l-4',
-              d.status === 'loading' ? 'border-l-green-500' :
-              d.status === 'arrived' ? 'border-l-blue-500' :
-              d.status === 'scheduled' ? 'border-l-amber-500' :
-              'border-l-gray-300 dark:border-l-gray-600')}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Truck className={clsx('w-5 h-5',
-                    d.status === 'loading' ? 'text-[var(--nexus-success-500)]' :
-                    d.status === 'arrived' ? 'text-[var(--nexus-primary-500)]' :
-                    d.status === 'scheduled' ? 'text-[var(--nexus-warning-500)]' :
-                    'text-[var(--text-tertiary)]')} />
-                  <span className="text-sm font-semibold text-[var(--text-primary)]">Door {d.door}</span>
+                  ))}
                 </div>
-                <EnterpriseStatusBadge status={d.status === 'loading' ? 'success' : d.status === 'arrived' ? 'info' : d.status === 'scheduled' ? 'warning' : 'pending'} label={d.status} />
               </div>
-              <div className="grid grid-cols-3 gap-3 text-xs text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-3">
-                <div><span className="block font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{d.carrier}</span>Carrier</div>
-                <div><span className="block font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{d.orders}</span>Orders</div>
-                <div><span className="block font-medium text-[var(--text-secondary)] dark:text-[var(--text-tertiary)]">{d.driver !== '—' ? d.driver : d.eta}</span>{d.driver !== '—' ? 'Driver' : 'ETA'}</div>
-              </div>
-            </div>
-          ))}
+            )}
+          </section>
+
+          <div className="space-y-6">
+            <section className={card} aria-labelledby="today-heading">
+              <h2 id="today-heading" className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Today</h2>
+              {[
+                { label: 'Outbound shipments', value: k?.outboundShipmentsToday, icon: <Package className="h-4 w-4 text-[var(--nexus-success-500)]" /> },
+                { label: 'Truck arrivals', value: k?.arrivalsToday, icon: <Truck className="h-4 w-4 text-[var(--nexus-primary-500)]" /> },
+                { label: 'Picklists completed (all sites)', value: pk.completedToday, icon: <ClipboardCheck className="h-4 w-4 text-[var(--nexus-primary-500)]" /> },
+                { label: 'On-time delivery (30 d)', value: k?.onTimeDeliveryPct30d != null ? `${k.onTimeDeliveryPct30d}%` : undefined, icon: <Clock className="h-4 w-4 text-[var(--nexus-warning-500)]" /> },
+              ].map(row => (
+                <div key={row.label} className="flex items-center justify-between py-1.5">
+                  <span className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">{row.icon} {row.label}</span>
+                  <span className="text-sm font-semibold tabular-nums text-[var(--text-primary)]">{row.value ?? '—'}</span>
+                </div>
+              ))}
+            </section>
+
+            <section className={card} aria-labelledby="stock-heading">
+              <h2 id="stock-heading" className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]"><Boxes className="h-4 w-4" /> Stock attention</h2>
+              {s && lowStock.length === 0 && <p className="text-sm text-[var(--text-tertiary)]">No low-stock SKUs among the top items at this site.</p>}
+              {lowStock.map(i => (
+                <div key={i.sku} className="flex items-center justify-between py-1.5 text-sm">
+                  <span className="flex items-center gap-2 text-[var(--text-secondary)]"><AlertTriangle className="h-4 w-4 text-[var(--nexus-warning-500)]" />{i.sku}</span>
+                  <span className="flex items-center gap-2"><span className="tabular-nums text-[var(--text-primary)]">{i.available}</span>
+                    <EnterpriseStatusBadge status={tone(i.stockStatus)} label={human(i.stockStatus)} /></span>
+                </div>
+              ))}
+            </section>
+          </div>
         </div>
-      )}
-    </div>
+
+        <section className={card} aria-labelledby="team-heading">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 id="team-heading" className="flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]"><UserCheck className="h-4 w-4" /> Pickers on this site</h2>
+            <button type="button" onClick={() => navigate('/pickers')} className="flex items-center gap-1 text-xs font-semibold text-[var(--text-brand)] hover:underline">
+              Manage pickers <ArrowRight className="h-3 w-3" />
+            </button>
+          </div>
+          {pickers.isSuccess && (pickers.data ?? []).length === 0 && (
+            <p className="py-4 text-center text-sm text-[var(--text-tertiary)]">No pickers registered for this site yet.</p>
+          )}
+          {(pickers.data ?? []).length > 0 && (
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {(pickers.data ?? []).map(p => (
+                <div key={p.id} className="flex items-center justify-between rounded-lg bg-[var(--surface-sunken)] px-3 py-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-[var(--text-primary)]">{p.name}</div>
+                    <div className="text-xs text-[var(--text-tertiary)]">{p.ordersCompletedToday} orders · {p.itemsPickedToday} items today</div>
+                  </div>
+                  <EnterpriseStatusBadge status={tone(p.status)} label={human(p.status)} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </PermissionGate>
   )
 }

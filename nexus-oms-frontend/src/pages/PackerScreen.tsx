@@ -10,19 +10,22 @@ import * as packingApi from '../api/packing'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { EnterpriseKPICard } from '../components/enterprise'
+import { useAuth } from '../context/AuthContext'
 
 export default function PackerScreen() {
   const navigate = useNavigate()
   const { addToast } = useToast()
   const queryClient = useQueryClient()
   const [scanInput, setScanInput] = useState('')
+  const [found, setFound] = useState<any | null>(null)
+  const { user } = useAuth()
 
   const { data: packages = [] } = useQuery({
     queryKey: ['packer-packages'],
     queryFn: async () => {
       const res = await packingApi.getPackages({})
       const d = res.data
-      return (Array.isArray(d) ? d : (d?.content ?? [])).slice(0, 20)
+      return (Array.isArray(d) ? d : (d?.content ?? [])).slice(0, 200)
     },
   })
 
@@ -33,10 +36,22 @@ export default function PackerScreen() {
   })
 
   const completePacking = useMutation({
-    mutationFn: async (id: string) => await packingApi.completePacking(id, 'packer-station-1'),
+    mutationFn: async (id: string) => await packingApi.completePacking(id, user?.username || 'unknown'),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['packer-packages'] }); addToast({ type: 'success', title: 'Package completed' }) },
     onError: (e: any) => addToast({ type: 'error', title: e?.message || 'Failed to complete packing' }),
   })
+
+  // Find by package id, order id, package number or tracking number among this station's packages.
+  function findPackage() {
+    const q = scanInput.trim().toLowerCase()
+    if (!q) return
+    const match = packages.find((p: any) => [p.id, p.orderId, p.packageNumber, p.trackingNumber]
+      .some(v => typeof v === 'string' && v.toLowerCase() === q))
+      ?? packages.find((p: any) => [p.id, p.orderId, p.packageNumber, p.trackingNumber]
+        .some(v => typeof v === 'string' && v.toLowerCase().includes(q)))
+    setFound(match ?? null)
+    if (!match) addToast({ type: 'warning', title: 'No package matches that scan' })
+  }
 
   const pendingPacks = packages.filter((p: any) => p.status === 'PENDING_PACK' || p.status === 'PENDING')
   const inProgress = packages.filter((p: any) => p.status === 'PACKING' || p.status === 'IN_PROGRESS')
@@ -86,10 +101,27 @@ export default function PackerScreen() {
             />
             <QrCode className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--nexus-success-400)]" />
           </div>
-          <button type="button" className="enterprise-btn-primary text-sm px-6 py-3 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)]">
+          <button type="button" onClick={findPackage} disabled={!scanInput.trim()} className="enterprise-btn-primary text-sm px-6 py-3 bg-[var(--nexus-success-600)] hover:bg-[var(--nexus-success-700)] disabled:opacity-50">
             <Search className="w-4 h-4" /> Find
           </button>
         </div>
+        {found && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[var(--surface-sunken)] px-4 py-3 text-sm">
+            <div>
+              <div className="font-semibold text-[var(--text-primary)]">{found.packageNumber || found.id?.slice(0, 8)}</div>
+              <div className="text-xs text-[var(--text-tertiary)]">Order {found.orderId?.slice(0, 8) ?? '—'} · {String(found.status).toLowerCase().replace(/_/g, ' ')}</div>
+            </div>
+            <div className="flex gap-2">
+              {['PENDING_PACK', 'PENDING'].includes(found.status) && (
+                <button type="button" onClick={() => { startPacking.mutate(found.id); setFound(null) }} className="enterprise-btn-primary px-3 py-1.5 text-xs">Start packing</button>
+              )}
+              {['PACKING', 'IN_PROGRESS'].includes(found.status) && (
+                <button type="button" onClick={() => { completePacking.mutate(found.id); setFound(null) }} className="enterprise-btn-primary px-3 py-1.5 text-xs">Complete</button>
+              )}
+              <button type="button" onClick={() => setFound(null)} className="enterprise-btn-secondary px-3 py-1.5 text-xs">Close</button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-6">

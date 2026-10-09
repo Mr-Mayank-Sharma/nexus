@@ -83,6 +83,18 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void dataIntegrityViolation_returns409NotServerError() throws Exception {
+        when(shippingLabelService.generateCarrierLabel(any()))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("null value in column user_id"));
+
+        mockMvc.perform(post("/labels/carrier")
+                        .contentType("application/json")
+                        .content("{\"carrier\":\"FEDEX\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
+    @Test
     void notFound_returns404ApiError() throws Exception {
         when(shippingLabelService.getLabel(any())).thenThrow(new ResourceNotFoundException("Label not found"));
 

@@ -293,8 +293,6 @@ export default function CarriersPage() {
           subtitle="All time"
           icon={<Truck className="w-5 h-5" />}
           color="success"
-          trend="up"
-          trendValue="+12.3% vs last month"
         />
         <EnterpriseKPICard
           title="Avg On-Time Rate"
@@ -311,8 +309,6 @@ export default function CarriersPage() {
           subtitle="Fleet average"
           icon={<DollarSign className="w-5 h-5" />}
           color="info"
-          trend="down"
-          trendValue={`-$${(0.15).toFixed(2)} vs last month`}
         />
       </div>
 

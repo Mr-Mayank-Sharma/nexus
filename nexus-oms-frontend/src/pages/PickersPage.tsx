@@ -6,6 +6,7 @@ import {
 import clsx from 'clsx'
 import { useToast } from '../hooks/useToast'
 import { pickersApi, Picker, PickerStats } from '../api/pickers'
+import { fetchTwinSites } from '../features/twin/warehouse/api'
 import { EnterpriseTabs, EnterpriseKPICard } from '../components/enterprise'
 import PermissionGate from '../components/rbac/PermissionGate'
 import type { Tab } from '../components/enterprise'
@@ -27,7 +28,6 @@ const ASSIGNMENT_STATUS_COLORS: Record<string, string> = {
 }
 
 // Default node ID — in production this would come from context
-const DEFAULT_NODE_ID = '00000000-0000-0000-0000-000000000001'
 
 export default function PickersPage() {
   const queryClient = useQueryClient()
@@ -35,7 +35,13 @@ export default function PickersPage() {
   const [activeTab, setActiveTab] = useState<PickerTab>('pickers')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedPicker, setSelectedPicker] = useState<Picker | null>(null)
-  const [nodeId] = useState(DEFAULT_NODE_ID)
+  // Pickers belong to a site. This page used a fixed placeholder id, so it never showed a real
+  // site's pickers; it now lists the tenant's warehouses and defaults to the first.
+  const { data: sites = [] } = useQuery({ queryKey: ['twin', 'sites'], queryFn: fetchTwinSites })
+  const [pickedSite, setPickedSite] = useState<string | null>(null)
+  const nodeId = pickedSite ?? sites[0]?.id ?? ''
+  const [showAdd, setShowAdd] = useState(false)
+  const [draft, setDraft] = useState({ name: '', employeeId: '', maxConcurrentOrders: 3 })
 
   const tabs: Tab[] = [
     { id: 'pickers', label: 'Pickers', icon: <Users className="w-4 h-4" /> },
@@ -49,7 +55,7 @@ export default function PickersPage() {
       const res = await pickersApi.getPickers(nodeId)
       return Array.isArray(res.data) ? res.data : []
     },
-    enabled: activeTab === 'pickers',
+    enabled: activeTab === 'pickers' && Boolean(nodeId),
   })
 
   const { data: assignments = [], isLoading: loadingAssignments } = useQuery({
@@ -58,7 +64,7 @@ export default function PickersPage() {
       const res = await pickersApi.getActiveAssignments(nodeId)
       return Array.isArray(res.data) ? res.data : []
     },
-    enabled: activeTab === 'assignments',
+    enabled: activeTab === 'assignments' && Boolean(nodeId),
   })
 
   const { data: stats } = useQuery({
@@ -67,7 +73,7 @@ export default function PickersPage() {
       const res = await pickersApi.getPickerStats(nodeId)
       return res.data as PickerStats
     },
-    enabled: activeTab === 'stats',
+    enabled: activeTab === 'stats' && Boolean(nodeId),
   })
 
   const statusMutation = useMutation({
@@ -79,6 +85,22 @@ export default function PickersPage() {
       addToast({ type: 'success', title: 'Picker status updated' })
     },
     onError: () => addToast({ type: 'error', title: 'Failed to update status' }),
+  })
+
+  const createMutation = useMutation({
+    mutationFn: () => pickersApi.createPicker({
+      nodeId, name: draft.name.trim(), employeeId: draft.employeeId.trim() || undefined,
+      maxConcurrentOrders: draft.maxConcurrentOrders, status: 'AVAILABLE', active: true,
+      ordersCompletedToday: 0, itemsPickedToday: 0,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pickers'] })
+      queryClient.invalidateQueries({ queryKey: ['picker-stats'] })
+      setShowAdd(false)
+      setDraft({ name: '', employeeId: '', maxConcurrentOrders: 3 })
+      addToast({ type: 'success', title: 'Picker added' })
+    },
+    onError: () => addToast({ type: 'error', title: 'Could not add picker' }),
   })
 
   const completeMutation = useMutation({
@@ -109,13 +131,56 @@ export default function PickersPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Picker Management</h1>
           <p className="text-[var(--text-secondary)] mt-1">Assign and track picker workload</p>
         </div>
-        <PermissionGate resource="pickers" action="create">
-          <button type="button" className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)]">
-            <Plus className="w-4 h-4" />
-            Add Picker
-          </button>
-        </PermissionGate>
+        <div className="flex items-center gap-3">
+          {sites.length > 0 && (
+            <select aria-label="Site" value={nodeId} onChange={e => setPickedSite(e.target.value)}
+                    className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-sm text-[var(--text-primary)]">
+              {sites.map(site => <option key={site.id} value={site.id}>{site.code} · {site.name}</option>)}
+            </select>
+          )}
+          <PermissionGate resource="pickers" action="create">
+            <button type="button" onClick={() => setShowAdd(true)} disabled={!nodeId}
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--nexus-primary-600)] text-white rounded-lg hover:bg-[var(--nexus-primary-700)] disabled:opacity-50">
+              <Plus className="w-4 h-4" />
+              Add Picker
+            </button>
+          </PermissionGate>
+        </div>
       </div>
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="add-picker-title"
+             onClick={() => setShowAdd(false)}>
+          <form className="w-full max-w-md space-y-4 rounded-2xl bg-[var(--surface-raised)] p-6 shadow-xl" onClick={e => e.stopPropagation()}
+                onSubmit={e => { e.preventDefault(); if (draft.name.trim()) createMutation.mutate() }}>
+            <h2 id="add-picker-title" className="text-lg font-semibold text-[var(--text-primary)]">Add picker</h2>
+            <label className="block text-sm">
+              <span className="text-[var(--text-secondary)]">Name</span>
+              <input autoFocus required value={draft.name} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))}
+                     className="mt-1 w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-[var(--text-primary)]" />
+            </label>
+            <label className="block text-sm">
+              <span className="text-[var(--text-secondary)]">Employee ID (optional)</span>
+              <input value={draft.employeeId} onChange={e => setDraft(d => ({ ...d, employeeId: e.target.value }))}
+                     className="mt-1 w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-[var(--text-primary)]" />
+            </label>
+            <label className="block text-sm">
+              <span className="text-[var(--text-secondary)]">Max concurrent orders</span>
+              <input type="number" min={1} max={20} value={draft.maxConcurrentOrders}
+                     onChange={e => setDraft(d => ({ ...d, maxConcurrentOrders: Math.max(1, Number(e.target.value) || 1) }))}
+                     className="mt-1 w-28 rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-[var(--text-primary)]" />
+            </label>
+            <p className="text-xs text-[var(--text-tertiary)]">Site: {sites.find(x => x.id === nodeId)?.name ?? '—'}</p>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setShowAdd(false)} className="rounded-lg border border-[var(--border-default)] px-4 py-2 text-sm text-[var(--text-secondary)]">Cancel</button>
+              <button type="submit" disabled={!draft.name.trim() || createMutation.isPending}
+                      className="rounded-lg bg-[var(--nexus-primary-600)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                {createMutation.isPending ? 'Adding…' : 'Add picker'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-4">
         <EnterpriseKPICard

@@ -450,8 +450,6 @@ export default function NotificationsCenter() {
           value={kpis.totalToday}
           icon={<Bell className="w-5 h-5" />}
           color="primary"
-          trend={kpis.totalToday > 10 ? 'up' : 'down'}
-          trendValue={kpis.totalToday > 10 ? '+12% vs yesterday' : '-8% vs yesterday'}
         />
         <EnterpriseKPICard
           title="Unread"

@@ -486,8 +486,6 @@ export default function AutomationSystemsPage() {
           value={healthData.online}
           icon={<Wifi className="w-5 h-5" />}
           color="success"
-          trend="up"
-          trendValue="+1 today"
           loading={loading}
         />
         <EnterpriseKPICard
@@ -495,8 +493,6 @@ export default function AutomationSystemsPage() {
           value={commandStats.totalToday}
           icon={<Terminal className="w-5 h-5" />}
           color="primary"
-          trend="up"
-          trendValue="+12%"
           loading={loading}
         />
         <EnterpriseKPICard
@@ -504,8 +500,6 @@ export default function AutomationSystemsPage() {
           value={`${commandStats.avgExecutionMs}ms`}
           icon={<Clock className="w-5 h-5" />}
           color="info"
-          trend="down"
-          trendValue="-8%"
           loading={loading}
         />
         <EnterpriseKPICard
@@ -518,12 +512,10 @@ export default function AutomationSystemsPage() {
         />
         <EnterpriseKPICard
           title="Throughput"
-          value={`${Math.round(commandStats.totalToday / 14)}c/hr`}
+          value={`${Math.round(commandStats.totalToday / Math.max(1, (Date.now() - new Date().setHours(0, 0, 0, 0)) / 3_600_000))}c/hr`}
           icon={<Zap className="w-5 h-5" />}
           color="ai"
-          trend="up"
-          trendValue="+5%"
-          subtitle="Simulated rate"
+          subtitle="Commands per hour so far today"
           loading={loading}
         />
       </div>
