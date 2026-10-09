@@ -69,6 +69,13 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("This record was changed by someone else. Reload it and try again."));
     }
 
+    /** Illegal order lifecycle move, e.g. cancelling a delivered order. */
+    @ExceptionHandler(com.nexus.oms.domain.OrderStatusPolicy.IllegalOrderTransitionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalTransition(RuntimeException ex) {
+        log.warn("Illegal order transition: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
         log.warn("Bad request: {}", ex.getMessage());

@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.domain.OrderStatusPolicy;
 import com.nexus.oms.entity.NxOrderItem;
 import com.nexus.oms.entity.NxPackage;
 import com.nexus.oms.entity.WarehouseStaff;
@@ -184,8 +185,8 @@ public class PackingService {
         // Transition the related order to SHIPPED and sync to BigCommerce
         if (pkg.getOrderId() != null) {
             orderRepository.findById(pkg.getOrderId()).ifPresent(order -> {
-                if (!"SHIPPED".equals(order.getStatus()) && !"DELIVERED".equals(order.getStatus())) {
-                    order.setStatus("SHIPPED");
+                if (!"SHIPPED".equals(order.getStatus()) && !"DELIVERED".equals(order.getStatus())
+                        && OrderStatusPolicy.transitionIfAllowed(order, OrderStatusPolicy.SHIPPED, "PackingService")) {
                     order.setCarrierId(pkg.getCarrierId() != null ? pkg.getCarrierId().toString() : order.getCarrierId());
                     if (pkg.getTrackingNumber() != null) {
                         order.setTrackingNumber(pkg.getTrackingNumber());

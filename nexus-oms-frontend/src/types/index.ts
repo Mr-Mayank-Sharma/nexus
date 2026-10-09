@@ -51,7 +51,11 @@ export interface Address {
 }
 
 export type OrderChannel = 'SHOPIFY' | 'AMAZON' | 'WOOCOMMERCE' | 'MANUAL' | 'API'
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'ALLOCATED' | 'PARTIALLY_ALLOCATED' | 'FAILED' | 'SHIPPED' | 'IN_TRANSIT' | 'DELIVERED' | 'CANCELLED' | 'EXCEPTION' | 'RETURNED'
+/** Mirrors the backend transition table in domain/OrderStatusPolicy.java. */
+export type OrderStatus =
+  | 'PENDING' | 'CONFIRMED' | 'ALLOCATED' | 'PARTIALLY_ALLOCATED' | 'FAILED'
+  | 'PICKING' | 'PACKING' | 'SHIPPED' | 'IN_TRANSIT' | 'DELIVERED' | 'FULFILLED'
+  | 'RETURNED' | 'EXCEPTION' | 'CANCELLED' | 'MERGED' | 'SPLIT'
 export type FulfillmentType = 'STANDARD' | 'EXPRESS' | 'SAME_DAY' | 'CROSS_BORDER'
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
 

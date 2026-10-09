@@ -123,7 +123,7 @@ class OrderControllerIntegrationTest extends AbstractIntegrationTest {
         assertNotNull(orderId);
 
         String body = """
-                {"status": "PROCESSING"}
+                {"status": "CONFIRMED"}
                 """;
 
         ResponseEntity<String> response = restTemplate.exchange(
@@ -134,7 +134,7 @@ class OrderControllerIntegrationTest extends AbstractIntegrationTest {
 
         JsonNode json = objectMapper.readTree(response.getBody());
         assertTrue(json.get("success").asBoolean());
-        assertEquals("PROCESSING", json.get("data").get("status").asText());
+        assertEquals("CONFIRMED", json.get("data").get("status").asText());
     }
 
     @Test
@@ -224,5 +224,28 @@ class OrderControllerIntegrationTest extends AbstractIntegrationTest {
                 new HttpEntity<>(body, new HttpHeaders()), String.class);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+    }
+
+    @Test
+    @Order(12)
+    void cancelShippedOrder_IsRejectedWith409() throws Exception {
+        assertNotNull(orderId);
+        ResponseEntity<String> response = restTemplate.exchange(
+                baseUrl() + "/orders/" + orderId + "/cancel", HttpMethod.POST,
+                new HttpEntity<>(authHeaders()), String.class);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertTrue(response.getBody().contains("SHIPPED"), response.getBody());
+    }
+
+    @Test
+    @Order(13)
+    void statusCannotJumpBackwards() throws Exception {
+        assertNotNull(orderId);
+        ResponseEntity<String> response = restTemplate.exchange(
+                baseUrl() + "/orders/" + orderId + "/status", HttpMethod.PUT,
+                new HttpEntity<>("{\"status\": \"PENDING\"}", authHeaders()), String.class);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
 }

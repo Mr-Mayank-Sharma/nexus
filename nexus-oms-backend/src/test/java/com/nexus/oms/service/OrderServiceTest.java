@@ -321,7 +321,7 @@ class OrderServiceTest {
 
         OrderResponse result = orderService.confirmOrder(orderId);
 
-        assertEquals("CONFIRMED", result.getStatus());
+        assertEquals("ALLOCATED", result.getStatus(), "confirming must not downgrade an allocated order");
         verify(orderRoutingService, never()).allocateOrder(any());
     }
 

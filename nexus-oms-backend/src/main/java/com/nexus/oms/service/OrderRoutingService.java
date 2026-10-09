@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.domain.OrderStatusPolicy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.AllocationRequest;
@@ -205,7 +206,7 @@ public class OrderRoutingService {
             order.setPromisedDelivery(deliveryPromise);
             // Honest terminal state: a short order is PARTIALLY_ALLOCATED, and an order nothing
             // could cover is FAILED. Marking either ALLOCATED overstates what was actually sourced.
-            order.setStatus(resolveOrderStatus(demandTotal, allocatedTotal, backorder != null));
+            OrderStatusPolicy.transitionIfAllowed(order, resolveOrderStatus(demandTotal, allocatedTotal, backorder != null), "OrderRoutingService");
             orderRepository.save(order);
 
             // Persist item-level allocation so nx_order_items reflects the allocation

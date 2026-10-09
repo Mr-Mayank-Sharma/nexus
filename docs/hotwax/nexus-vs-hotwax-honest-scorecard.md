@@ -48,7 +48,7 @@
 | 26 | **UI / operator experience** | 6 | **8** | 🟢 Nexus | React/TypeScript SPA, **94 pages** (was 93; T-09 added `FulfillmentReconciliationPage`) vs. Moqui XML screens. HotWax screens are functional, dated. |
 | 27 | **API explicitness** | 5 | **9** | 🟢 Nexus | Self-documenting controllers, typed DTOs, OpenAPI-shaped surface vs. implicit entity CRUD. |
 | 28 | **Infrastructure / deploy** | 6 | **8** | 🟢 Nexus | Helm chart, `docker-compose.prod.yml` with healthchecks, Postgres/Redis/Kafka, backup CronJob. |
-| 29 | **Testing depth** | 7 | 7 | ⚪ Tie | Nexus 99 test files / 830 tests incl. `OrderRoutingServiceTest`, `AutomationEmulatorServiceTest`, `EdiAutomationServiceTest`, `FulfillmentReconciliationServiceTest`. Neither is at enterprise CI rigor — the count grew, the rigor didn't. |
+| 29 | **Testing depth** | 7 | 7 | ⚪ Tie | Nexus 100 test files / 830 tests incl. `OrderRoutingServiceTest`, `AutomationEmulatorServiceTest`, `EdiAutomationServiceTest`, `FulfillmentReconciliationServiceTest`. Neither is at enterprise CI rigor — the count grew, the rigor didn't. |
 | 30 | **Production track record** | **10** | **3** | 🔴 HotWax | Not fixable by code. Needs real customers + uptime history. Nexus has none. |
 | 31 | **Honesty of data** | 7 | **10** | 🟢 Nexus | Nexus is the only one that marks simulated results `simulated:true` and refuses to invent metrics. Real differentiator. |
 | 32 | **Cost & time-to-value** | 9 | **9** | ⚪ Tie | HotWax OSS $0 license. Nexus self-host ≈$76–110/mo all-in. Both beat enterprise vendors. |

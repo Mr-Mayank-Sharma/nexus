@@ -1,6 +1,7 @@
 package com.nexus.oms.service;
 
 import com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService;
+import com.nexus.oms.domain.OrderStatusPolicy;
 import com.nexus.oms.dto.*;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.BadRequestException;
@@ -187,7 +188,8 @@ public class OrderService {
     public OrderResponse updateStatus(UUID id, String status, String subStatus, String trackingNumber, String carrierId) {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
-        order.setStatus(status);
+        // PUT /orders/{id}/status used to accept any jump (e.g. DELIVERED -> PENDING).
+        OrderStatusPolicy.requireTransition(order, status);
         if (subStatus != null) order.setSubStatus(subStatus);
         if (trackingNumber != null) order.setTrackingNumber(trackingNumber);
         if (carrierId != null) order.setCarrierId(carrierId);
@@ -256,7 +258,7 @@ public class OrderService {
         order.setAllocatedNode(selectedNode);
         order.setAllocationRule("NEAREST_AVAILABLE");
         order.setAllocationConfidence(new BigDecimal("0.95"));
-        order.setStatus("ALLOCATED");
+        OrderStatusPolicy.requireTransition(order, OrderStatusPolicy.ALLOCATED);
         order = orderRepository.save(order);
 
         kafkaProducerService.publish("order.allocated", order.getId().toString());
@@ -308,7 +310,7 @@ public class OrderService {
             boolean routingReportedShortfall = "PARTIALLY_ALLOCATED".equals(order.getStatus())
                     || "FAILED".equals(order.getStatus());
             if (!routingReportedShortfall) {
-                order.setStatus("CONFIRMED");
+                OrderStatusPolicy.transitionIfAllowed(order, OrderStatusPolicy.CONFIRMED, "confirmOrder");
             }
             order = orderRepository.save(order);
             try {
@@ -333,7 +335,8 @@ public class OrderService {
     public OrderResponse shipOrder(UUID id, String carrierId, String trackingNumber) {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
-        order.setStatus("SHIPPED");
+        // Previously shipped orders in any state, including CANCELLED.
+        OrderStatusPolicy.requireTransition(order, OrderStatusPolicy.SHIPPED);
         order.setCarrierId(carrierId);
         order.setTrackingNumber(trackingNumber);
         order.setShippedAt(LocalDateTime.now());
@@ -480,7 +483,7 @@ public class OrderService {
 
         List<NxOrderItem> remaining = orderItemRepository.findByOrderId(id);
         if (remaining.isEmpty()) {
-            order.setStatus("SPLIT");
+            OrderStatusPolicy.requireTransition(order, OrderStatusPolicy.SPLIT);
             orderRepository.save(order);
         } else {
             BigDecimal remainingSubtotal = remaining.stream()
@@ -538,7 +541,7 @@ public class OrderService {
                 additionalSubtotal = additionalSubtotal.add(item.getTotalPrice());
             }
             orderItemRepository.deleteAll(items);
-            src.setStatus("MERGED");
+            OrderStatusPolicy.requireTransition(src, OrderStatusPolicy.MERGED);
             orderRepository.save(src);
         }
 
@@ -555,6 +558,12 @@ public class OrderService {
     public OrderResponse cancelOrder(UUID id) {
         NxOrder order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
+        // Check before touching inventory: cancelling a SHIPPED/DELIVERED order used to succeed
+        // and put its already-shipped units back into available stock.
+        if (!OrderStatusPolicy.isAllowed(order.getStatus(), OrderStatusPolicy.CANCELLED)) {
+            throw new OrderStatusPolicy.IllegalOrderTransitionException(
+                    OrderStatusPolicy.normalise(order.getStatus()), OrderStatusPolicy.CANCELLED);
+        }
 
         List<NxOrderItem> items = orderItemRepository.findByOrderId(id);
         for (NxOrderItem item : items) {
@@ -564,7 +573,7 @@ public class OrderService {
             }
         }
 
-        order.setStatus("CANCELLED");
+        OrderStatusPolicy.requireTransition(order, OrderStatusPolicy.CANCELLED);
         order = orderRepository.save(order);
         bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "CANCELLED");
         kafkaProducerService.publish("order.cancelled", order.getId().toString());

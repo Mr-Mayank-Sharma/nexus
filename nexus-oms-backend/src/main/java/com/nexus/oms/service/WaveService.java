@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.domain.OrderStatusPolicy;
 import com.nexus.oms.entity.NxOrder;
 import com.nexus.oms.entity.NxOrderItem;
 import com.nexus.oms.entity.NxPicklist;
@@ -364,8 +365,7 @@ public class WaveService {
                     .status("PENDING")
                     .build());
         }
-        if (!items.isEmpty()) {
-            order.setStatus("ALLOCATED");
+        if (!items.isEmpty() && OrderStatusPolicy.transitionIfAllowed(order, OrderStatusPolicy.ALLOCATED, "WaveService")) {
             orderRepository.save(order);
         }
     }

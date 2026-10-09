@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import com.nexus.oms.domain.OrderStatusPolicy;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -262,8 +263,7 @@ public class FulfillmentReconciliationService {
         }
 
         boolean allFulfilled = items.stream().allMatch(i -> nz(i.getFulfilledQty()) >= i.getQuantity());
-        if (allFulfilled && !"CANCELLED".equalsIgnoreCase(order.getStatus())) {
-            order.setStatus("FULFILLED");
+        if (allFulfilled && OrderStatusPolicy.transitionIfAllowed(order, OrderStatusPolicy.FULFILLED, "FulfillmentReconciliation")) {
             order.setSubStatus("FULFILLED");
             if (order.getShippedAt() == null) {
                 order.setShippedAt(LocalDateTime.now());
