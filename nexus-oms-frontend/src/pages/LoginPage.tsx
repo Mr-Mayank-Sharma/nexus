@@ -66,16 +66,22 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const ssoToken = params.get('token')
-    const ssoUser = params.get('user')
+    const ssoCode = params.get('sso_code')
     const ssoError = params.get('error')
 
-    if (ssoToken && ssoUser) {
-      localStorage.setItem('nexus_token', ssoToken)
-      const ssoRefresh = params.get('refreshToken')
-      if (ssoRefresh) localStorage.setItem('nexus_refresh_token', ssoRefresh)
-      localStorage.setItem('nexus_user', JSON.stringify({ username: ssoUser }))
-      window.location.href = '/'
+    if (ssoCode) {
+      // Tokens never travel in the URL: the callback hands us a 60-second, single-use code.
+      window.history.replaceState({}, '', '/login')
+      authApi.exchangeSsoCode(ssoCode).then(res => {
+        if (res.success && res.data?.accessToken) {
+          localStorage.setItem('nexus_token', res.data.accessToken)
+          if (res.data.refreshToken) localStorage.setItem('nexus_refresh_token', res.data.refreshToken)
+          localStorage.setItem('nexus_user', JSON.stringify(res.data))
+          window.location.href = '/'
+        } else {
+          setError('SSO sign-in expired. Please try again.')
+        }
+      })
       return
     }
 
@@ -87,6 +93,9 @@ export default function LoginPage() {
         sso_token_exchange_failed: 'Failed to complete SSO authentication.',
         sso_userinfo_failed: 'Failed to retrieve user information.',
         sso_no_email: 'Could not retrieve email from SSO provider.',
+        sso_no_identity: 'The SSO provider did not return an identity.',
+        sso_invalid_token: 'The SSO provider returned a token we could not verify.',
+        sso_no_account: 'No Nexus account is linked to this sign-in. Ask your administrator for an invite.',
         sso_callback_failed: 'SSO authentication failed. Please try again.',
       }
       setError(errorMessages[ssoError] || 'SSO authentication failed.')

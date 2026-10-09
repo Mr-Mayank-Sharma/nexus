@@ -42,15 +42,15 @@ class ProductServiceTest {
         p1.setTenantId(tenantId);
         Product p2 = new Product();
         p2.setTenantId(tenantId);
-        Product p3 = new Product();
-        p3.setTenantId(UUID.randomUUID());
 
-        when(productRepository.findAll()).thenReturn(List.of(p1, p2, p3));
+        // Tenant filtering happens in the query, not by loading every tenant's catalogue.
+        when(productRepository.findByTenantId(tenantId)).thenReturn(List.of(p1, p2));
 
         try (MockedStatic<TenantContext> ctx = mockStatic(TenantContext.class)) {
             ctx.when(TenantContext::getCurrentTenantId).thenReturn(tenantId);
             List<Product> result = productService.getProducts();
             assertEquals(2, result.size());
+            verify(productRepository, never()).findAll();
         }
     }
 

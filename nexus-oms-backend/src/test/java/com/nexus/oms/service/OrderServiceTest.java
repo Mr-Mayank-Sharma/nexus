@@ -101,21 +101,37 @@ class OrderServiceTest {
 
     @Test
     void testGetOrder_WhenExists_ReturnsOrderResponse() {
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(testOrder));
+        when(orderRepository.findByIdAndTenantId(orderId, tenantId)).thenReturn(Optional.of(testOrder));
         when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));
 
-        OrderResponse result = orderService.getOrder(orderId);
+        OrderResponse result = withTenant(() -> orderService.getOrder(orderId));
 
         assertEquals(orderId, result.getId());
         assertEquals("PENDING", result.getStatus());
-        verify(orderRepository).findById(orderId);
+        verify(orderRepository, never()).findById(any());
+    }
+
+    @Test
+    void testGetOrder_OtherTenantsOrder_IsNotFound() {
+        when(orderRepository.findByIdAndTenantId(orderId, tenantId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> withTenant(() -> orderService.getOrder(orderId)));
+    }
+
+    private <T> T withTenant(java.util.function.Supplier<T> body) {
+        com.nexus.oms.security.TenantContext.setCurrentTenantId(tenantId);
+        try {
+            return body.get();
+        } finally {
+            com.nexus.oms.security.TenantContext.clear();
+        }
     }
 
     @Test
     void testGetOrder_WhenNotExists_ThrowsException() {
-        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+        when(orderRepository.findByIdAndTenantId(orderId, tenantId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> orderService.getOrder(orderId));
+        assertThrows(ResourceNotFoundException.class, () -> withTenant(() -> orderService.getOrder(orderId)));
     }
 
     @Test

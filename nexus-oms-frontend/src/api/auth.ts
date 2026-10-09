@@ -40,6 +40,17 @@ export async function ssoLogin(request: SsoLoginRequest): Promise<ApiResponse<Au
   }
 }
 
+/** Swaps the one-time `sso_code` from the SSO callback redirect for tokens. */
+export async function exchangeSsoCode(code: string): Promise<ApiResponse<AuthResponse>> {
+  try {
+    const { data } = await client.post('/auth/sso/exchange', { code })
+    return data
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || 'SSO sign-in failed'
+    return { success: false, error: msg } as any
+  }
+}
+
 export async function forgotPassword(request: ForgotPasswordRequest): Promise<ApiResponse<null>> {
   try {
     const { data } = await client.post('/auth/forgot-password', request)

@@ -36,11 +36,32 @@ public class TenantAwareDataSource implements DataSource {
     private static final String SET_H2_SQL = "SET @app_current_tenant_id = '%s'";
     private static final String RESET_H2_SQL = "SET @app_current_tenant_id = NULL";
 
+    /** Non-superuser role (created by V69) that tenant-scoped connections switch to. */
+    public static final String DEFAULT_APP_ROLE = "nexus_app";
+    private static final java.util.regex.Pattern ROLE_NAME = java.util.regex.Pattern.compile("[a-z_][a-z0-9_]{0,62}");
+
     private final DataSource delegate;
+    /**
+     * Superusers and table owners without FORCE bypass Row-Level Security, so policies alone
+     * protect nothing when the app logs in as the database owner. Every connection used on
+     * behalf of a tenant therefore runs {@code SET ROLE <appRole>}; RLS then applies to
+     * every query, including the ~280 {@code findById} lookups that carry no tenant filter.
+     * Empty disables role switching (only for databases where the login role is already
+     * a non-owner, non-superuser).
+     */
+    private final String appRole;
     private Boolean isH2; // null = not yet determined
 
     public TenantAwareDataSource(DataSource delegate) {
+        this(delegate, DEFAULT_APP_ROLE);
+    }
+
+    public TenantAwareDataSource(DataSource delegate, String appRole) {
         this.delegate = delegate;
+        if (appRole != null && !appRole.isBlank() && !ROLE_NAME.matcher(appRole).matches()) {
+            throw new IllegalArgumentException("Invalid nexus.rls.app-role: " + appRole);
+        }
+        this.appRole = appRole == null ? "" : appRole;
     }
 
     @Override
@@ -57,22 +78,30 @@ public class TenantAwareDataSource implements DataSource {
         return wrapConnection(connection);
     }
 
-    private void applyTenantContext(Connection connection) {
+    private void applyTenantContext(Connection connection) throws SQLException {
+        UUID tenantId;
         try {
-            UUID tenantId = TenantContext.getCurrentTenantId();
-            if (tenantId != null) {
-                String sql = isH2(connection) ? String.format(SET_H2_SQL, tenantId)
-                                              : String.format(SET_SESSION_SQL, tenantId);
-                try (Statement stmt = connection.createStatement()) {
-                    stmt.execute(sql);
-                }
-                log.trace("Set tenant context on connection: {}", tenantId);
-            }
+            tenantId = TenantContext.getCurrentTenantId();
         } catch (IllegalStateException e) {
             log.trace("No tenant context available – leaving connection unscoped");
-        } catch (Exception e) {
-            log.warn("Failed to set tenant context on connection", e);
+            return;
         }
+        if (tenantId == null) {
+            return;
+        }
+        boolean h2 = isH2(connection);
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(h2 ? String.format(SET_H2_SQL, tenantId) : String.format(SET_SESSION_SQL, tenantId));
+            if (!h2 && !appRole.isEmpty()) {
+                stmt.execute("SET ROLE " + appRole);
+            }
+        } catch (SQLException e) {
+            // Fail closed: a tenant request must never run on an unscoped, RLS-bypassing session.
+            connection.close();
+            throw new SQLException("Could not scope connection to tenant " + tenantId
+                    + " (is role '" + appRole + "' created by migration V69?)", e);
+        }
+        log.trace("Set tenant context on connection: {}", tenantId);
     }
 
     private Connection wrapConnection(Connection connection) {
@@ -84,9 +113,12 @@ public class TenantAwareDataSource implements DataSource {
     }
 
     private void resetTenantContext(Connection connection) {
-        String sql = isH2(connection) ? RESET_H2_SQL : RESET_SESSION_SQL;
+        boolean h2 = isH2(connection);
         try (Statement stmt = connection.createStatement()) {
-            stmt.execute(sql);
+            if (!h2 && !appRole.isEmpty()) {
+                stmt.execute("RESET ROLE");
+            }
+            stmt.execute(h2 ? RESET_H2_SQL : RESET_SESSION_SQL);
         } catch (SQLException e) {
             log.debug("Could not reset tenant context on connection return", e);
         }

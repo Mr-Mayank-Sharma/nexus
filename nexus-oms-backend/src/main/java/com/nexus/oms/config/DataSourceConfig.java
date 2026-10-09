@@ -4,7 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import javax.sql.DataSource;
 
@@ -21,15 +23,22 @@ import javax.sql.DataSource;
  * registered).</p>
  */
 @Configuration
-public class DataSourceConfig implements BeanPostProcessor {
+public class DataSourceConfig implements BeanPostProcessor, EnvironmentAware {
 
     private static final Logger log = LoggerFactory.getLogger(DataSourceConfig.class);
+
+    private String appRole = TenantAwareDataSource.DEFAULT_APP_ROLE;
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        appRole = environment.getProperty("nexus.rls.app-role", TenantAwareDataSource.DEFAULT_APP_ROLE);
+    }
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
         if (bean instanceof DataSource ds && !(bean instanceof TenantAwareDataSource)) {
             log.info("Wrapping DataSource '{}' with TenantAwareDataSource for RLS enforcement", beanName);
-            return new TenantAwareDataSource(ds);
+            return new TenantAwareDataSource(ds, appRole);
         }
         return bean;
     }

@@ -79,7 +79,7 @@ class WarehouseServiceTest {
     void getWarehouse_found() {
         Warehouse wh = new Warehouse();
         wh.setId(warehouseId);
-        when(warehouseRepository.findById(warehouseId)).thenReturn(Optional.of(wh));
+        when(warehouseRepository.findByIdAndTenantId(warehouseId, tenantId)).thenReturn(Optional.of(wh));
 
         Warehouse result = warehouseService.getWarehouse(warehouseId);
 
@@ -88,7 +88,7 @@ class WarehouseServiceTest {
 
     @Test
     void getWarehouse_notFound_throws() {
-        when(warehouseRepository.findById(warehouseId)).thenReturn(Optional.empty());
+        when(warehouseRepository.findByIdAndTenantId(warehouseId, tenantId)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> warehouseService.getWarehouse(warehouseId));
     }
 

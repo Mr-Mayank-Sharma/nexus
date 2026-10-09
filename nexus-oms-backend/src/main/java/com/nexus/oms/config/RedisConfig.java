@@ -74,9 +74,10 @@ public class RedisConfig {
         cacheConfigs.put("warehouseStaff", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigs.put("warehouseEquipment", defaultConfig.entryTtl(Duration.ofMinutes(5)));
 
-        return RedisCacheManager.builder(connectionFactory)
+        // Tenant-scoped so no @Cacheable key can leak data across tenants.
+        return new TenantScopedCacheManager(RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(defaultConfig)
             .withInitialCacheConfigurations(cacheConfigs)
-            .build();
+            .build());
     }
 }

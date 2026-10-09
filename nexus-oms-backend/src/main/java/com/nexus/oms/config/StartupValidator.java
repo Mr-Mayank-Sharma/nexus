@@ -3,26 +3,38 @@ package com.nexus.oms.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Refuses to start a production instance with missing or well-known default secrets.
+ *
+ * <p>Previously annotated {@code @Lazy} with nothing injecting it, so it never ran. It is now
+ * an eager, prod-only bean that throws on startup, which aborts the context.</p>
+ */
 @Component
-@Lazy
+@Profile("prod")
 public class StartupValidator {
 
     private static final Logger log = LoggerFactory.getLogger(StartupValidator.class);
 
-    private final ApplicationContext applicationContext;
+    /** Values shipped as defaults in this repo or in common images. */
+    static final Set<String> KNOWN_DEFAULTS = Set.of("nexus", "minioadmin", "changeme", "password", "postgres", "secret");
 
     @Value("${app.jwt.secret:}")
     private String jwtSecret;
 
-    @Value("${storage.s3.endpoint:}")
-    private String s3Endpoint;
+    @Value("${spring.datasource.password:}")
+    private String dbPassword;
+
+    @Value("${storage.s3.enabled:true}")
+    private boolean s3Enabled;
 
     @Value("${storage.s3.access-key:}")
     private String s3AccessKey;
@@ -30,58 +42,39 @@ public class StartupValidator {
     @Value("${storage.s3.secret-key:}")
     private String s3SecretKey;
 
-    public StartupValidator(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
-    }
-
     @PostConstruct
     public void validate() {
-        boolean failed = false;
-
-        String dbPassword = System.getenv("DB_PASSWORD");
-        String nexusDbPassword = System.getenv("NEXUS_DB_PASSWORD");
-        if ((dbPassword == null || dbPassword.isBlank()) && (nexusDbPassword == null || nexusDbPassword.isBlank())) {
-            log.error("FATAL: Neither DB_PASSWORD nor NEXUS_DB_PASSWORD environment variable is set.");
-            failed = true;
+        List<String> problems = findProblems(jwtSecret, dbPassword, s3Enabled ? s3AccessKey : "disabled", s3Enabled ? s3SecretKey : "disabled", System.getenv());
+        if (!problems.isEmpty()) {
+            problems.forEach(p -> log.error("FATAL: {}", p));
+            throw new IllegalStateException("Startup validation failed: " + String.join("; ", problems));
         }
+        log.info("Startup validation passed: all required secrets are configured.");
+    }
 
-        String jwtEnv = System.getenv("JWT_SECRET");
-        if (jwtEnv == null || jwtEnv.isBlank()) {
-            log.warn("JWT_SECRET environment variable is not set; using default (not for production).");
-        }
-
+    static List<String> findProblems(String jwtSecret, String dbPassword, String s3AccessKey,
+                                     String s3SecretKey, Map<String, String> env) {
+        List<String> problems = new ArrayList<>();
         if (jwtSecret == null || jwtSecret.isBlank()) {
-            log.error("FATAL: app.jwt.secret property is not set (JWT_SECRET).");
-            failed = true;
+            problems.add("app.jwt.secret (NEXUS_JWT_SECRET) is not set");
         } else if (jwtSecret.length() < 32) {
-            log.error("FATAL: app.jwt.secret must be at least 32 characters, but was {} characters.", jwtSecret.length());
-            failed = true;
+            problems.add("app.jwt.secret must be at least 32 characters, was " + jwtSecret.length());
         }
+        if (isWeak(dbPassword)) {
+            problems.add("spring.datasource.password (NEXUS_DB_PASSWORD) is empty or a known default");
+        }
+        if (isWeak(s3AccessKey) || isWeak(s3SecretKey)) {
+            problems.add("storage.s3 access/secret key is empty or a known default (minioadmin)");
+        }
+        if (!isCredentialKeyValid(env.get("APP_CREDENTIAL_ENCRYPTION_KEY"))) {
+            problems.add("APP_CREDENTIAL_ENCRYPTION_KEY must be at least 16 characters; otherwise integration "
+                    + "credentials are encrypted with a hardcoded fallback key");
+        }
+        return problems;
+    }
 
-        String credentialKey = System.getenv("APP_CREDENTIAL_ENCRYPTION_KEY");
-        if (!isCredentialKeyValid(credentialKey)) {
-            log.error("FATAL: APP_CREDENTIAL_ENCRYPTION_KEY must be set to at least 16 characters. "
-                    + "Without it, integration credentials are encrypted with a hardcoded fallback key, "
-                    + "and any credentials already encrypted with a different key become unreadable.");
-            failed = true;
-        }
-
-        if (s3Endpoint == null || s3Endpoint.isBlank() || s3Endpoint.contains("localhost")) {
-            log.warn("S3 endpoint is localhost; not suitable for production.");
-        }
-        if (s3AccessKey == null || s3AccessKey.isBlank() || "minioadmin".equals(s3AccessKey)) {
-            log.warn("S3 access key is default value; not suitable for production.");
-        }
-        if (s3SecretKey == null || s3SecretKey.isBlank() || "minioadmin".equals(s3SecretKey)) {
-            log.warn("S3 secret key is default value; not suitable for production.");
-        }
-
-        if (failed) {
-            log.error("Startup validation failed. Set all required environment variables and restart.");
-            SpringApplication.exit(applicationContext, () -> 1);
-        } else {
-            log.info("Startup validation passed: all required secrets are configured.");
-        }
+    private static boolean isWeak(String value) {
+        return value == null || value.isBlank() || KNOWN_DEFAULTS.contains(value.toLowerCase());
     }
 
     /**

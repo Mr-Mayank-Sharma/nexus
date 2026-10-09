@@ -41,14 +41,14 @@ public class WarehouseService {
 
     // ---- Warehouse CRUD ----
 
-    @Cacheable(value = "warehouses", key = "'page:' + #pageable.pageNumber + ':' + #pageable.pageSize")
+    @Cacheable(value = "warehouses", key = "'page:' + T(com.nexus.oms.security.TenantContext).getCurrentTenantId() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")
     public Page<Warehouse> getAllWarehouses(Pageable pageable) {
         return warehouseRepository.findByTenantId(TenantContext.getCurrentTenantId(), pageable);
     }
 
     @Cacheable(value = "warehouses", key = "#id")
     public Warehouse getWarehouse(UUID id) {
-        return warehouseRepository.findById(id)
+        return warehouseRepository.findByIdAndTenantId(id, TenantContext.getCurrentTenantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Warehouse", id));
     }
 
@@ -253,7 +253,7 @@ public class WarehouseService {
 
     // ---- Dashboard / Summary ----
 
-    @Cacheable(value = "warehouses", key = "'all-summary'")
+    @Cacheable(value = "warehouses", key = "'all-summary:' + T(com.nexus.oms.security.TenantContext).getCurrentTenantId()")
     public List<Map<String, Object>> getAllWarehousesSummary() {
         UUID tenantId = TenantContext.getCurrentTenantId();
         List<Warehouse> warehouses = warehouseRepository.findByTenantId(tenantId, PageRequest.of(0, 50)).getContent();

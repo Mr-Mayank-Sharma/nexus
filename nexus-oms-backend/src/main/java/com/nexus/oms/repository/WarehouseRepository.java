@@ -16,6 +16,8 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, UUID> {
 
     Optional<Warehouse> findByTenantIdAndCode(UUID tenantId, String code);
 
+    Optional<Warehouse> findByIdAndTenantId(UUID id, UUID tenantId);
+
     List<Warehouse> findByTenantIdAndStatus(UUID tenantId, String status);
 
     long countByTenantId(UUID tenantId);

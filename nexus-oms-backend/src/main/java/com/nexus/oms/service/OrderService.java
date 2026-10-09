@@ -4,6 +4,7 @@ import com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService;
 import com.nexus.oms.dto.*;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.BadRequestException;
+import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.exception.ResourceNotFoundException;
 import com.nexus.oms.kafka.KafkaProducerService;
 import com.nexus.oms.repository.*;
@@ -153,12 +154,12 @@ public class OrderService {
 
     @Cacheable(value = "orders", key = "#id")
     public OrderResponse getOrder(UUID id) {
-        NxOrder order = orderRepository.findById(id)
+        NxOrder order = orderRepository.findByIdAndTenantId(id, TenantContext.getCurrentTenantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order", id));
         return toOrderResponse(order);
     }
 
-    @Cacheable(value = "orders", key = "#id")
+    @Cacheable(value = "orders", key = "#tenantId + ':' + #id")
     public OrderResponse getOrder(UUID tenantId, String id) {
         try {
             return getOrder(UUID.fromString(id));

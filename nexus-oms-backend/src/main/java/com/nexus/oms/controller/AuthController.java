@@ -1,6 +1,9 @@
 package com.nexus.oms.controller;
 
 import com.nexus.oms.dto.*;
+import com.nexus.oms.security.TenantAwarePrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.nexus.oms.service.AuthService;
 import com.nexus.oms.service.CompanySettingsService;
 import jakarta.validation.Valid;
@@ -48,6 +51,40 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(authService.verifyMfa(request)));
     }
 
+    @PostMapping("/mfa/enroll")
+    public ResponseEntity<ApiResponse<MfaEnrollmentResponse>> beginMfaEnrollment() {
+        String username = currentUsernameOrNull();
+        if (username == null) {
+            return unauthorized();
+        }
+        return ResponseEntity.ok(ApiResponse.success(authService.beginMfaEnrollment(username)));
+    }
+
+    @PostMapping("/mfa/activate")
+    public ResponseEntity<ApiResponse<List<String>>> activateMfa(@Valid @RequestBody MfaCodeRequest request) {
+        String username = currentUsernameOrNull();
+        if (username == null) {
+            return unauthorized();
+        }
+        return ResponseEntity.ok(ApiResponse.success(authService.activateMfa(username, request.getCode()),
+                "MFA enabled. Store these recovery codes somewhere safe; they are shown once."));
+    }
+
+    @PostMapping("/mfa/disable")
+    public ResponseEntity<ApiResponse<Void>> disableMfa(@Valid @RequestBody MfaCodeRequest request) {
+        String username = currentUsernameOrNull();
+        if (username == null) {
+            return unauthorized();
+        }
+        authService.disableMfa(username, request.getCode());
+        return ResponseEntity.ok(ApiResponse.success(null, "MFA disabled"));
+    }
+
+    @PostMapping("/sso/exchange")
+    public ResponseEntity<ApiResponse<AuthResponse>> exchangeSsoCode(@Valid @RequestBody SsoExchangeRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authService.exchangeSsoCode(request.getCode())));
+    }
+
     @PostMapping("/sso/{provider}")
     public ResponseEntity<ApiResponse<AuthResponse>> ssoLogin(
             @PathVariable String provider,
@@ -75,13 +112,13 @@ public class AuthController {
 
     @GetMapping("/tenants")
     public ResponseEntity<ApiResponse<List<TenantResponse>>> listTenants() {
-        List<TenantResponse> tenants = authService.getAllTenants().stream()
+        // Anonymous callers get an empty list; signed-in users see only their own tenant.
+        List<TenantResponse> tenants = authService.getTenantsFor(currentPrincipal().map(TenantAwarePrincipal::tenantId).orElse(null)).stream()
                 .map(settings -> TenantResponse.builder()
                         .id(settings.getTenantId().toString())
                         .name(settings.getCompanyName() != null ? settings.getCompanyName() : "Unnamed Company")
                         .logoUrl(settings.getCompanyLogo())
                         .isActive(true)
-                        .plan("enterprise")
                         .build())
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(tenants));
@@ -109,5 +146,23 @@ public class AuthController {
             HttpServletResponse response) throws IOException {
         String frontendUrl = authService.handleSsoCallback(provider, code, state);
         response.sendRedirect(frontendUrl);
+    }
+
+    /** /auth/** is public at the filter level, so endpoints that need a user check it here. */
+    private static java.util.Optional<TenantAwarePrincipal> currentPrincipal() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof TenantAwarePrincipal principal) {
+            return java.util.Optional.of(principal);
+        }
+        return java.util.Optional.empty();
+    }
+
+    private static String currentUsernameOrNull() {
+        return currentPrincipal().map(TenantAwarePrincipal::username).orElse(null);
+    }
+
+    private static <T> ResponseEntity<ApiResponse<T>> unauthorized() {
+        return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error("Sign in to manage MFA"));
     }
 }

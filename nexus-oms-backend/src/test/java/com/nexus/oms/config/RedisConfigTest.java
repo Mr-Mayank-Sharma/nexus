@@ -14,14 +14,15 @@ class RedisConfigTest {
     private final RedisConfig redisConfig = new RedisConfig();
 
     @Test
-    void cacheManager_ReturnsNonNullRedisCacheManager() {
+    void cacheManager_IsTenantScopedRedisCacheManager() {
         RedisConnectionFactory connectionFactory = mock(RedisConnectionFactory.class);
         ObjectMapper objectMapper = new ObjectMapper();
 
         CacheManager cacheManager = redisConfig.cacheManager(connectionFactory, objectMapper);
 
         assertNotNull(cacheManager);
-        assertInstanceOf(org.springframework.data.redis.cache.RedisCacheManager.class, cacheManager);
+        TenantScopedCacheManager scoped = assertInstanceOf(TenantScopedCacheManager.class, cacheManager);
+        assertInstanceOf(org.springframework.data.redis.cache.RedisCacheManager.class, scoped.getDelegate());
     }
 
     @Test

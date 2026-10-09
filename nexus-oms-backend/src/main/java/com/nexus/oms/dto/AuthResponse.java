@@ -25,6 +25,8 @@ public class AuthResponse {
     private String email;
     private String fullName;
     private boolean passwordResetRequired;
+    /** The tenant requires MFA and this user has not enrolled an authenticator yet. */
+    private boolean mfaEnrollmentRequired;
     private String ssoProvider;
     private List<String> permissions;
     private String refreshToken;

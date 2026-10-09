@@ -7,6 +7,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -36,11 +38,11 @@ public class WebhookSecurityService {
         if (shopifySecret.isEmpty() || signatureHeader == null) return false;
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secret = new SecretKeySpec(shopifySecret.getBytes(), "HmacSHA256");
+            SecretKeySpec secret = new SecretKeySpec(shopifySecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(secret);
-            byte[] hmac = mac.doFinal(body.getBytes());
+            byte[] hmac = mac.doFinal(body.getBytes(StandardCharsets.UTF_8));
             String computed = Base64.getEncoder().encodeToString(hmac);
-            return computed.equals(signatureHeader);
+            return constantTimeEquals(computed, signatureHeader.trim());
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             log.error("HMAC verification failed", e);
             return false;
@@ -54,12 +56,11 @@ public class WebhookSecurityService {
         if (bigCommerceSecret.isEmpty() || signatureHeader == null) return false;
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secret = new SecretKeySpec(bigCommerceSecret.getBytes(), "HmacSHA256");
+            SecretKeySpec secret = new SecretKeySpec(bigCommerceSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(secret);
-            byte[] hmac = mac.doFinal(body.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hmac) sb.append(String.format("%02x", b));
-            return sb.toString().equals(signatureHeader);
+            byte[] hmac = mac.doFinal(body.getBytes(StandardCharsets.UTF_8));
+            String computed = java.util.HexFormat.of().formatHex(hmac);
+            return constantTimeEquals(computed, signatureHeader.trim().toLowerCase());
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             log.error("HMAC verification failed", e);
             return false;
@@ -83,5 +84,10 @@ public class WebhookSecurityService {
      */
     public void logWebhookAttempt(String source, String eventId, boolean valid, String details) {
         log.info("WEBHOOK: source={} eventId={} valid={} details={}", source, eventId, valid, details);
+    }
+
+    /** {@link MessageDigest#isEqual} does not short-circuit, so timing does not leak the signature. */
+    static boolean constantTimeEquals(String expected, String actual) {
+        return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), actual.getBytes(StandardCharsets.UTF_8));
     }
 }

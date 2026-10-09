@@ -24,6 +24,8 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
 
     Page<NxOrder> findByTenantId(UUID tenantId, Pageable pageable);
 
+    Optional<NxOrder> findByIdAndTenantId(UUID id, UUID tenantId);
+
     List<NxOrder> findByCustomerId(UUID customerId);
 
     List<NxOrder> findByTenantIdAndChannel(UUID tenantId, String channel);

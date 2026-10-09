@@ -20,11 +20,9 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
-    @Cacheable(value = "products", key = "'list'")
+    @Cacheable(value = "products", key = "'list:' + T(com.nexus.oms.security.TenantContext).getCurrentTenantId()")
     public List<Product> getProducts() {
-        return productRepository.findAll().stream()
-                .filter(p -> p.getTenantId().equals(TenantContext.getCurrentTenantId()))
-                .toList();
+        return productRepository.findByTenantId(TenantContext.getCurrentTenantId());
     }
 
     public List<Product> searchProducts(String query, String category, BigDecimal minPrice, BigDecimal maxPrice, Boolean active) {

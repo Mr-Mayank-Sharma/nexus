@@ -29,9 +29,7 @@ public class CustomerController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<NxCustomer>>> getCustomers() {
         return ResponseEntity.ok(ApiResponse.success(
-                customerRepository.findAll().stream()
-                        .filter(c -> c.getTenantId().equals(TenantContext.getCurrentTenantId()))
-                        .toList()));
+                customerRepository.findByTenantId(TenantContext.getCurrentTenantId())));
     }
 
     @Operation(summary = "Get customer by ID")

@@ -18,6 +18,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     boolean existsByTenantIdAndSku(UUID tenantId, String sku);
     Optional<Product> findByTenantIdAndSku(UUID tenantId, String sku);
 
+    List<Product> findByTenantId(UUID tenantId);
+
     @Query("""
             SELECT p FROM Product p WHERE p.tenantId = :tenantId
               AND (:query IS NULL OR :query = '' OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :query, '%'))
