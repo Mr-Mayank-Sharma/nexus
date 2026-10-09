@@ -1,5 +1,6 @@
 package com.nexus.oms.scheduler;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.dto.SyncResult;
 import com.nexus.oms.entity.NxIntegrationStore;
 import com.nexus.oms.entity.NxIntegrationSyncConfig;
@@ -74,6 +75,7 @@ public class SyncSchedulerService {
     }
 
     @Scheduled(fixedRate = 30000)
+    @SchedulerLock(name = "SyncSchedulerService.processDueSyncs", lockAtMostFor = "PT2M", lockAtLeastFor = "PT1S")
     public void processDueSyncs() {
         List<NxIntegrationSyncConfig> allEnabled = syncConfigRepository.findByEnabledTrue();
         LocalDateTime now = LocalDateTime.now();

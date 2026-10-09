@@ -1,5 +1,6 @@
 package com.nexus.oms.config;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.service.FulfillmentLimitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ public class FulfillmentLimitScheduler {
     }
 
     @Scheduled(cron = "0 0 0 * * ?")
+    @SchedulerLock(name = "FulfillmentLimitScheduler.resetDailyCounts", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void resetDailyCounts() {
         try {
             fulfillmentLimitService.resetDailyCounts();
@@ -27,6 +29,7 @@ public class FulfillmentLimitScheduler {
     }
 
     @Scheduled(cron = "0 0 0 * * MON")
+    @SchedulerLock(name = "FulfillmentLimitScheduler.resetWeeklyCounts", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void resetWeeklyCounts() {
         try {
             fulfillmentLimitService.resetWeeklyCounts();

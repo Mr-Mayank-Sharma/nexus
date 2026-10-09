@@ -1,5 +1,6 @@
 package com.nexus.oms.integration.batch;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.integration.core.Connector;
 import com.nexus.oms.integration.core.ConnectorRegistry;
 import com.nexus.oms.integration.core.IntegrationLog;
@@ -69,6 +70,7 @@ public class BatchJobService {
     }
 
     @Scheduled(fixedRate = 60000)
+    @SchedulerLock(name = "BatchJobService.cleanupOldJobs", lockAtMostFor = "PT2M", lockAtLeastFor = "PT1S")
     public void cleanupOldJobs() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
         activeJobs.values().removeIf(j -> j.getCompletedAt() != null && j.getCompletedAt().isBefore(cutoff));

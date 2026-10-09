@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.reconciliation.*;
@@ -338,6 +339,7 @@ public class FulfillmentReconciliationService {
      * fulfillment the OMS hasn't recorded yet. Runs in the tenant context of each store.
      */
     @Scheduled(cron = "${nexus.reconciliation.cron:0 */15 * * * *}")
+    @SchedulerLock(name = "FulfillmentReconciliationService.repairCrossSystemMismatches", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void repairCrossSystemMismatches() {
         List<NxIntegrationStore> stores = storeRepository.findAll().stream()
                 .filter(this::isShopifyStore)

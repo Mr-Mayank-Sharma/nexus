@@ -1,5 +1,6 @@
 package com.nexus.oms.config;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.entity.NxParkedOrder;
 import com.nexus.oms.repository.ParkedOrderRepository;
 import com.nexus.oms.service.ParkedOrderService;
@@ -34,6 +35,7 @@ public class PreOrderReleaseScheduler {
      * Only processes orders with status PARKED and reason PREORDER or BACKORDER.
      */
     @Scheduled(cron = "0 0 * * * ?")
+    @SchedulerLock(name = "PreOrderReleaseScheduler.releaseExpiredPreOrders", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void releaseExpiredPreOrders() {
         try {
             // Find all PARKED orders with expectedDate in the past

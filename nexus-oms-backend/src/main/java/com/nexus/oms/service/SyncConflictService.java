@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.dto.SyncReconciliationReport;
@@ -176,6 +177,7 @@ public class SyncConflictService {
      * records. Idempotent: keyed on job name, only touches FAILED/PENDING.
      */
     @Scheduled(cron = "${nexus.sync.recovery.cron:0 */15 * * * *}")
+    @SchedulerLock(name = "SyncConflictService.recoveryJob", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void recoveryJob() {
         // Scheduled jobs run without a security context — iterate tenants explicitly
         // (same pattern as BrokeringScheduler) instead of reading the tenant from

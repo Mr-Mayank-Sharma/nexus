@@ -1,5 +1,6 @@
 package com.nexus.oms.service.ai;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -198,6 +199,7 @@ public class AiTrainingOrchestrationService {
 
     /** Weekly retraining: create a pending job for each active demand-forecast model. */
     @Scheduled(cron = "0 0 3 * * MON")
+    @SchedulerLock(name = "AiTrainingOrchestrationService.scheduleWeeklyRetraining", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void scheduleWeeklyRetraining() {
         try {
             List<AiModel> demandModels = modelRepository.findAvailableForTenant(

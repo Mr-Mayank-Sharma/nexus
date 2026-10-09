@@ -1,5 +1,6 @@
 package com.nexus.oms.service.auth;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.entity.NxAuthToken;
 import com.nexus.oms.repository.AuthTokenRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -98,6 +99,7 @@ public class AuthTokenStore {
     }
 
     @Scheduled(cron = "0 */30 * * * *")
+    @SchedulerLock(name = "AuthTokenStore.purgeExpired", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     @Transactional
     public void purgeExpired() {
         repository.deleteExpired(LocalDateTime.now());

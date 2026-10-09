@@ -1,5 +1,6 @@
 package com.nexus.oms.service.ai;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -145,6 +146,7 @@ public class SemanticCacheService {
      * Evict expired cache entries (runs every 10 minutes).
      */
     @Scheduled(fixedDelay = 600000, initialDelay = 60000)
+    @SchedulerLock(name = "SemanticCacheService.evictExpired", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void evictExpired() {
         if (!enabled) return;
         try {
@@ -163,6 +165,7 @@ public class SemanticCacheService {
      * Runs daily at 3 AM. Removes the oldest 10% of entries when over cap.
      */
     @Scheduled(cron = "0 0 3 * * ?")
+    @SchedulerLock(name = "SemanticCacheService.enforceLruCap", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void enforceLruCap() {
         if (!enabled) return;
         try {

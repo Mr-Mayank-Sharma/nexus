@@ -1,5 +1,6 @@
 package com.nexus.oms.config;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.service.BrokeringService;
 import com.nexus.oms.security.TenantContext;
 import org.slf4j.Logger;
@@ -33,6 +34,7 @@ public class BrokeringScheduler {
     }
 
     @Scheduled(cron = "0 */5 * * * ?")
+    @SchedulerLock(name = "BrokeringScheduler.processBrokeringQueue", lockAtMostFor = "PT10M", lockAtLeastFor = "PT30S")
     public void processBrokeringQueue() {
         for (UUID tenantId : getActiveTenantIds()) {
             try {
@@ -47,6 +49,7 @@ public class BrokeringScheduler {
     }
 
     @Scheduled(cron = "0 */2 * * * ?")
+    @SchedulerLock(name = "BrokeringScheduler.processPriorityQueue", lockAtMostFor = "PT10M", lockAtLeastFor = "PT30S")
     public void processPriorityQueue() {
         for (UUID tenantId : getActiveTenantIds()) {
             try {
@@ -61,6 +64,7 @@ public class BrokeringScheduler {
     }
 
     @Scheduled(cron = "0 0 1 * * ?")
+    @SchedulerLock(name = "BrokeringScheduler.expireStaleOrders", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
     public void expireStaleOrders() {
         for (UUID tenantId : getActiveTenantIds()) {
             try {

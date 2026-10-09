@@ -1,5 +1,6 @@
 package com.nexus.oms.service;
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.entity.NxAutomationCommand;
@@ -51,6 +52,7 @@ public class AutomationEmulatorService {
     }
 
     @Scheduled(fixedDelay = 3000)
+    @SchedulerLock(name = "AutomationEmulatorService.advanceEmulatorSystems", lockAtMostFor = "PT2M", lockAtLeastFor = "PT1S")
     @Transactional
     public void advanceEmulatorSystems() {
         List<NxAutomationSystem> emulators = new ArrayList<>();
