@@ -70,6 +70,19 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void concurrentUpdate_returns409ApiError() throws Exception {
+        when(shippingLabelService.generateCarrierLabel(any()))
+                .thenThrow(new org.springframework.orm.ObjectOptimisticLockingFailureException("NxShipment", UUID.randomUUID()));
+
+        mockMvc.perform(post("/labels/carrier")
+                        .contentType("application/json")
+                        .content("{\"carrier\":\"FEDEX\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("This record was changed by someone else. Reload it and try again."));
+    }
+
+    @Test
     void notFound_returns404ApiError() throws Exception {
         when(shippingLabelService.getLabel(any())).thenThrow(new ResourceNotFoundException("Label not found"));
 

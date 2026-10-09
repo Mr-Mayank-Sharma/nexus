@@ -14,6 +14,11 @@ public class NxPicklist {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    /** Optimistic lock: concurrent updates fail with 409 instead of silently overwriting. */
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
 
