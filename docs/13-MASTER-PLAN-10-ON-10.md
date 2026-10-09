@@ -40,6 +40,7 @@ Security row NR: **2 → 7**
 **New findings while building (added to the backlog):**
 - **Time zones:** timestamps are stored without a zone and written in the JVM's local zone. Pin the JVM and DB to UTC (`-Duser.timezone=UTC`) and migrate to `timestamptz` (Phase A).
 - **Login page claims:** the sign-in screen shows "50K+ orders daily", "99.9% uptime SLA", "150+ integrations" and "40% cost reduction", none of which is backed by data. Remove them in the shell rebuild (Phase B).
+- **Spring CVE-2026-47884 (CRITICAL, spring-webmvc XsltView):** fixed only in Spring Framework 7. It is time-boxed in `.trivyignore.yaml` until 2026-12-31 because Nexus uses no XSLT views. Migrate to Spring Boot 4 in Phase A.
 - **Test blind spot:** H2 without Flyway hid the V20 inventory bug, which is one more reason for Testcontainers (Phase A). (the remaining points come from P0-10 HttpOnly refresh cookie, a pen-test and SOC 2 controls in §6).
 
 ---

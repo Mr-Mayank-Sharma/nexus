@@ -16,7 +16,8 @@ COPY . .
 RUN npm run build
 
 # ---- Stage 2: Serve with nginx ----
-FROM nginx:alpine
+# Named so CD can rebuild it without the layer cache (see no-cache-filters in cd.yml).
+FROM nginx:alpine AS runtime
 
 # Patch OS packages in the runtime layer.
 # Trivy gates on HIGH/CRITICAL, and nginx:alpine ships Alpine packages that carry

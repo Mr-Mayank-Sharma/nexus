@@ -112,6 +112,10 @@ jobs:
             ${{ matrix.image }}:latest
           cache-from: type=gha,scope=${{ matrix.name }}
           cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          # Always rebuild the frontend runtime stage: its `apk upgrade` layer was
+          # being served from the Actions cache, so OS CVE fixes never landed and
+          # the Trivy gate failed on already-fixed packages (libtiff CVE-2026-4775).
+          no-cache-filters: ${{ matrix.name == 'frontend' && 'runtime' || '' }}
 
       - name: Trivy scan — ${{ matrix.name }}
         uses: aquasecurity/trivy-action@master
@@ -120,6 +124,8 @@ jobs:
           format: table
           severity: CRITICAL,HIGH
           exit-code: "1"
+          # Same time-boxed suppression policy as ci.yml; entries expire.
+          trivyignores: .trivyignore.yaml
 
   # ──────────────────────────────────────────────
   # Deploy to Staging

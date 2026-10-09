@@ -93,3 +93,23 @@ misconfigurations:
       capabilities.add: [NET_BIND_SERVICE] to the frontend container, since nginx
       needs it to bind port 80 as a non-root user. Both halves are required.
     expired_at: 2027-01-03T00:00:00Z
+
+vulnerabilities:
+  # ---------------------------------------------------------------------------
+  # CVE-2026-47884 — spring-webmvc: RCE via improper path limitation in XsltView.
+  #
+  # Installed: 6.2.19 (via spring-boot-starter-parent 3.5.16, the last 3.5.x).
+  # Trivy lists the fix only in 7.0.9; no 6.2.x release newer than 6.2.19 exists
+  # on Maven Central (checked 2026-10-09), so the only real fix is the Spring Boot
+  # 4 / Spring Framework 7 migration (docs/13 roadmap, Phase A).
+  #
+  # Exposure: the vulnerable code path is org.springframework.web.servlet.view.xslt
+  # .XsltView. Nexus registers no XSLT views and has no xslt templates
+  # (grep -ri "XsltView\|xslt" nexus-oms-backend/src/main returns nothing); it is
+  # a JSON REST API. Short expiry so the migration cannot slip silently.
+  # ---------------------------------------------------------------------------
+  - id: CVE-2026-47884
+    statement: |
+      Not reachable: no XsltView is configured or used. Fixed only in Spring
+      Framework 7.0.9; remove this entry in the Spring Boot 4 migration commit.
+    expired_at: 2026-12-31T00:00:00Z
