@@ -162,6 +162,20 @@ class EdiAutomationServiceTest {
     }
 
     @Test
+    void uploadAndParse_singleLine850_readsEnvelopeControlNumbers() {
+        when(ediDocumentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        String singleLine = "ISA*00*          *00*          *ZZ*SENDER         *ZZ*RECEIVER       *261009*1200*U*00401*000000001*0*P*>~"
+                + "GS*PO*SENDER*RECEIVER*20261009*1200*7*X*004010~ST*850*0001~BEG*00*SA*PO-777**20261009~"
+                + "PO1*1*5*EA*9.99**VP*SKU-1~CTT*1~SE*5*0001~GE*1*7~IEA*1*000000001~";
+
+        NxEdiDocument doc = service.uploadAndParse("one-line.850", singleLine, "850");
+
+        assertEquals("0001", doc.getControlNumber(), "ST02 must stop at the segment terminator");
+        assertEquals("7", doc.getGroupControlNumber());
+        assertEquals("000000001", doc.getInterchangeControlNumber());
+    }
+
+    @Test
     void dryRun_856_bulkParsesEveryShipment() {
         Map<String, Object> result = service.dryRun(EDI_856_BULK, "856");
 

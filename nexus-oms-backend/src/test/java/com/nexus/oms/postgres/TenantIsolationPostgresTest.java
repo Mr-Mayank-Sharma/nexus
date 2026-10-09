@@ -60,6 +60,7 @@ class TenantIsolationPostgresTest {
     @Autowired TestRestTemplate rest;
     @Autowired ObjectMapper mapper;
     @Autowired JdbcTemplate jdbc;
+    @Autowired jakarta.persistence.EntityManagerFactory emf;
 
     private String tokenA;
     private String tokenB;
@@ -78,6 +79,37 @@ class TenantIsolationPostgresTest {
                   ON col.table_name = c.relname AND col.column_name = 'tenant_id' AND col.table_schema = 'public'
                 WHERE c.relkind = 'r' AND NOT (c.relrowsecurity AND c.relforcerowsecurity)""", Integer.class);
         assertEquals(0, unprotected, "every tenant_id table must have FORCE ROW LEVEL SECURITY");
+    }
+
+    /**
+     * Every NOT NULL column without a default must be written by its entity. A required column
+     * that no entity maps makes every insert fail (pickers.user_id, edi_documents.document_type
+     * were both found this way). Uses Hibernate's own metamodel, so it sees what JPA writes.
+     */
+    @Test
+    void everyRequiredColumnIsMappedByItsEntity() {
+        java.util.Map<String, java.util.Set<String>> mapped = new java.util.HashMap<>();
+        emf.unwrap(org.hibernate.engine.spi.SessionFactoryImplementor.class).getMappingMetamodel()
+                .forEachEntityDescriptor(entity -> {
+                    if (!(entity instanceof org.hibernate.persister.entity.AbstractEntityPersister p)) return;
+                    String table = p.getTableName().toLowerCase();
+                    java.util.Set<String> columns = mapped.computeIfAbsent(table, t -> new java.util.HashSet<>());
+                    entity.forEachSelectable((i, sel) -> columns.add(sel.getSelectionExpression().toLowerCase()));
+                    for (String id : p.getIdentifierColumnNames()) columns.add(id.toLowerCase());
+                });
+
+        java.util.List<String> unmapped = jdbc.queryForList("""
+                SELECT table_name || '.' || column_name FROM information_schema.columns
+                WHERE table_schema = 'public' AND is_nullable = 'NO' AND column_default IS NULL""", String.class)
+                .stream()
+                .filter(tc -> {
+                    String[] parts = tc.split("\\.");
+                    java.util.Set<String> cols = mapped.get(parts[0]);
+                    return cols != null && !cols.contains(parts[1]);
+                })
+                .toList();
+        assertTrue(mapped.size() > 100, "metamodel should list the entities, got " + mapped.size());
+        assertTrue(unmapped.isEmpty(), "required columns no entity writes (inserts will fail): " + unmapped);
     }
 
     @Test

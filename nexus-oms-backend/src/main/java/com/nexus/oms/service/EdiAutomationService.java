@@ -610,19 +610,21 @@ public class EdiAutomationService {
     }
 
     private void extractControlNumbers(String content, NxEdiDocument doc) {
-        Pattern isaPattern = Pattern.compile("ISA\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*([^*]+)");
+        Pattern isaPattern = Pattern.compile("ISA\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*([^*~\\r\\n]+)");  // ISA13 interchange control number
         Matcher isaMatcher = isaPattern.matcher(content);
         if (isaMatcher.find()) {
             doc.setInterchangeControlNumber(isaMatcher.group(1));
         }
 
-        Pattern gsPattern = Pattern.compile("GS\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*([^*]+)");
+        Pattern gsPattern = Pattern.compile("GS\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*[^*]*\\*([^*~\\r\\n]+)");  // GS06 group control number
         Matcher gsMatcher = gsPattern.matcher(content);
         if (gsMatcher.find()) {
             doc.setGroupControlNumber(gsMatcher.group(1));
         }
 
-        Pattern stPattern = Pattern.compile("ST\\*[^*]*\\*([^*]+)");
+        // Values stop at the element separator AND the segment terminator: single-line files
+        // ("...ST*850*0001~BEG*...") previously captured "0001~BEG" as the control number.
+        Pattern stPattern = Pattern.compile("ST\\*[^*~]*\\*([^*~\\r\\n]+)");
         Matcher stMatcher = stPattern.matcher(content);
         if (stMatcher.find()) {
             doc.setControlNumber(stMatcher.group(1));
