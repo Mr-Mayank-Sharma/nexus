@@ -131,6 +131,9 @@ class AuthServiceTest {
 
         assertEquals("test-token", result.getAccessToken());
         verify(userRepository).save(any(NxUser.class));
+        ArgumentCaptor<CompanySettings> settings = ArgumentCaptor.forClass(CompanySettings.class);
+        verify(companySettingsRepository).save(settings.capture());
+        assertEquals("newuser", settings.getValue().getCompanyName(), "company name defaults to the username");
     }
 
     @Test

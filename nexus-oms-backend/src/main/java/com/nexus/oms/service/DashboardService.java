@@ -96,12 +96,15 @@ public class DashboardService {
         Map<String, Object> exceptions = new LinkedHashMap<>();
         List<Map<String, Object>> items = new ArrayList<>();
         exceptionRepository.findByTenantIdAndStatus(tenantId, "OPEN", PageRequest.of(0, 10))
-                .forEach(ex -> items.add(Map.of(
-                        "type", ex.getExceptionType() != null ? ex.getExceptionType() : "UNKNOWN",
-                        "orderId", ex.getOrderId() != null ? ex.getOrderId().toString() : null,
-                        "severity", ex.getSeverity() != null ? ex.getSeverity() : "MEDIUM",
-                        "message", ex.getMessage()
-                )));
+                .forEach(ex -> {
+                    // Map.of rejects nulls; exceptions without an order or message crashed this endpoint.
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("type", ex.getExceptionType() != null ? ex.getExceptionType() : "UNKNOWN");
+                    item.put("orderId", ex.getOrderId() != null ? ex.getOrderId().toString() : null);
+                    item.put("severity", ex.getSeverity() != null ? ex.getSeverity() : "MEDIUM");
+                    item.put("message", ex.getMessage() != null ? ex.getMessage() : ex.getTitle());
+                    items.add(item);
+                });
         exceptions.put("total", items.size());
         exceptions.put("items", items);
         return exceptions;

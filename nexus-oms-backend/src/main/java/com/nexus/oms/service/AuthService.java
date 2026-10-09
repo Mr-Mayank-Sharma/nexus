@@ -565,6 +565,21 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        // A new tenant gets its settings record at sign-up (it used to be created lazily by the
+        // Settings page, which failed validation and returned 500).
+        String companyName = request.getCompanyName() != null && !request.getCompanyName().isBlank()
+                ? request.getCompanyName().trim() : request.getUsername();
+        companySettingsRepository.save(CompanySettings.builder()
+                .tenantId(tenantId)
+                .companyName(companyName)
+                .defaultCurrency("USD")
+                .defaultLanguage("en")
+                .defaultTimezone("UTC")
+                .dateFormat("YYYY-MM-DD")
+                .timeFormat("HH:mm:ss")
+                .featureFlags("{}")
+                .securityPolicy("{}")
+                .build());
 
         return buildAuthResponse(user);
     }

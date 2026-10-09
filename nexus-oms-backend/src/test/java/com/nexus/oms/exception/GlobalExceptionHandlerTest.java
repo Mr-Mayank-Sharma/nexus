@@ -95,6 +95,20 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void illegalArgument_returns400_andIllegalState_returns409() throws Exception {
+        when(shippingLabelService.generateCarrierLabel(any()))
+                .thenThrow(new IllegalArgumentException("warehouseId is required"))
+                .thenThrow(new IllegalStateException("Only DRAFT waves can be updated"));
+
+        mockMvc.perform(post("/labels/carrier").contentType("application/json").content("{\"carrier\":\"FEDEX\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("warehouseId is required"));
+        mockMvc.perform(post("/labels/carrier").contentType("application/json").content("{\"carrier\":\"FEDEX\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Only DRAFT waves can be updated"));
+    }
+
+    @Test
     void notFound_returns404ApiError() throws Exception {
         when(shippingLabelService.getLabel(any())).thenThrow(new ResourceNotFoundException("Label not found"));
 

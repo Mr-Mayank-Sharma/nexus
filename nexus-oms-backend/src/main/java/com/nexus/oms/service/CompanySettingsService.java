@@ -31,8 +31,11 @@ public class CompanySettingsService {
         UUID tenantId = TenantContext.getCurrentTenantId();
         return companySettingsRepository.findByTenantId(tenantId)
                 .orElseGet(() -> {
+                    // Tenants registered before settings were created at sign-up have no row; the
+                    // fallback must satisfy the entity's own validation (companyName is required).
                     CompanySettings defaults = CompanySettings.builder()
                             .tenantId(tenantId)
+                            .companyName("My company")
                             .defaultCurrency("USD")
                             .defaultLanguage("en")
                             .defaultTimezone("UTC")

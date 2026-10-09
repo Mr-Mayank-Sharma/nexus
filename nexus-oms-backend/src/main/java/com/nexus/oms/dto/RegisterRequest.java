@@ -28,4 +28,6 @@ public class RegisterRequest {
     @Email(message = "Must be a valid email address")
     private String email;
     private String role;
+    /** Optional; defaults to the username. Becomes the tenant's company name. */
+    private String companyName;
 }

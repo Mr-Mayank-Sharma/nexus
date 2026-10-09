@@ -390,7 +390,7 @@ class WarehouseControllerIntegrationTest extends AbstractIntegrationTest {
                 baseUrl() + "/warehouses/" + warehouseId, HttpMethod.DELETE,
                 new HttpEntity<>(authHeaders()), String.class);
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
 
     @Test

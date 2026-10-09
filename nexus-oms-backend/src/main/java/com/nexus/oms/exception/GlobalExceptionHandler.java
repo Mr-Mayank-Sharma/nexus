@@ -84,6 +84,24 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("The request is missing required data or conflicts with an existing record."));
     }
 
+    /** Services signal invalid input with IllegalArgumentException ("warehouseId is required"). */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Invalid request: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    /**
+     * Services signal "not allowed in the current state" with IllegalStateException ("Only DRAFT
+     * waves can be updated"). Logged with the stack trace so genuine programming errors that use
+     * the same type stay visible.
+     */
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalState(IllegalStateException ex) {
+        log.warn("Rejected in current state: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
         log.warn("Bad request: {}", ex.getMessage());
