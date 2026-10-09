@@ -113,3 +113,19 @@ vulnerabilities:
       Not reachable: no XsltView is configured or used. Fixed only in Spring
       Framework 7.0.9; remove this entry in the Spring Boot 4 migration commit.
     expired_at: 2026-12-31T00:00:00Z
+
+  # ---------------------------------------------------------------------------
+  # CVE-2026-47890 — spring-webmvc/webflux: stream corruption in Server-Sent
+  # Events when rendering views. Same situation as CVE-2026-47884: fixed only in
+  # Spring Framework 7.0.9, no newer 6.2.x exists.
+  #
+  # Exposure: Nexus emits no SSE (no SseEmitter / ServerSentEvent /
+  # text/event-stream) and renders no views (no ModelAndView); verified with
+  # grep over nexus-oms-backend/src/main on 2026-10-09. Live updates use STOMP
+  # over WebSocket. Remove together with CVE-2026-47884 in the Spring Boot 4 move.
+  # ---------------------------------------------------------------------------
+  - id: CVE-2026-47890
+    statement: |
+      Not reachable: no Server-Sent Events and no view rendering in Nexus.
+      Fixed only in Spring Framework 7.0.9; remove in the Spring Boot 4 migration.
+    expired_at: 2026-12-31T00:00:00Z

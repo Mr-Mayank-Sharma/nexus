@@ -53,6 +53,19 @@
         <enforcer.version>3.4.1</enforcer.version>
         <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- CVE-2026-106451 (HIGH): lz4-java < 1.11.4 runs code via insecure temp
+                 files. Pulled in transitively by kafka-clients 3.9.2 at 1.10.1; same
+                 API, patch-level upgrade. Drop once kafka-clients ships >= 1.11.4. -->
+            <dependency>
+                <groupId>at.yawk.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>1.11.4</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
