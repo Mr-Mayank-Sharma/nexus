@@ -145,6 +145,9 @@ function getInitials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
+import { moduleForRoute } from '../features/entitlements/modules'
+import { useEntitlements } from '../features/entitlements/useEntitlements'
+
 export default function LaunchPadPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -153,11 +156,14 @@ export default function LaunchPadPage() {
     '/orders', '/picking', '/packing', '/shipping', '/inventory', '/dashboard'
   ])
 
+  const { allows } = useEntitlements()
+  const licensedApps = useMemo(() => apps.filter(a => allows(moduleForRoute(a.path))), [allows])
+
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return apps
+    if (!searchQuery.trim()) return licensedApps
     const q = searchQuery.toLowerCase()
-    return apps.filter(a => a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q) || a.category.toLowerCase().includes(q))
-  }, [searchQuery])
+    return licensedApps.filter(a => a.name.toLowerCase().includes(q) || a.description.toLowerCase().includes(q) || a.category.toLowerCase().includes(q))
+  }, [searchQuery, licensedApps])
 
   const grouped = useMemo(() => {
     const map = new Map<string, AppCard[]>()
@@ -169,7 +175,7 @@ export default function LaunchPadPage() {
     return Array.from(map.entries())
   }, [filtered])
 
-  const favorites = useMemo(() => apps.filter(a => favoriteApps.includes(a.path)), [favoriteApps])
+  const favorites = useMemo(() => licensedApps.filter(a => favoriteApps.includes(a.path)), [favoriteApps, licensedApps])
 
   const toggleFavorite = (path: string) => {
     setFavoriteApps(prev =>

@@ -23,6 +23,16 @@ public final class TenantContext {
         throw new IllegalStateException("No tenant context found in security context");
     }
 
+    /** The current tenant, or null on unauthenticated requests (sign-in, sign-up, health). */
+    public static UUID findCurrentTenantId() {
+        UUID override = OVERRIDE_TENANT_ID.get();
+        if (override != null) {
+            return override;
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getPrincipal() instanceof TenantAwarePrincipal principal ? principal.tenantId() : null;
+    }
+
     public static UUID getCurrentUserId() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof TenantAwarePrincipal principal) {

@@ -17,6 +17,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 > - "What does it cost?" → [09-COST-TCO.md](./09-COST-TCO.md)
 > - "Show me the architecture as diagrams — C4, sequences, state machines, topology?" → [11-SYSTEM-DESIGN.md](./11-SYSTEM-DESIGN.md)
 > - "How do I set up the AWS dev server and auto-deploy from GitHub?" → [14-AWS-DEV-SERVER-SETUP.md](./14-AWS-DEV-SERVER-SETUP.md)
+> - "How are OMS and WMS sold separately, and how do I change a tenant's plan?" → [15-EDITIONS-AND-ENTITLEMENTS.md](./15-EDITIONS-AND-ENTITLEMENTS.md)
 
 ## Library map
 

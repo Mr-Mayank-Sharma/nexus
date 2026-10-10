@@ -68,7 +68,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'order-routing', label: 'Order Routing', path: '/order-routing', icon: 'GitBranch' },
         { id: 'brokering', label: 'Brokering Queue', path: '/brokering', icon: 'Activity' },
         { id: 'rejections', label: 'Rejections', path: '/rejections', icon: 'AlertTriangle' },
-        { id: 'transfers', label: 'Transfer Orders', path: '/transfers', icon: 'ArrowRightLeft' },
         { id: 'fulfillment-limits', label: 'Fulfillment Limits', path: '/fulfillment-limits', icon: 'Gauge' },
         { id: 'reconciliation', label: 'Reconciliation', path: '/reconciliation', icon: 'RefreshCcw' },
         { id: 'customers', label: 'Customers', path: '/customers', icon: 'Users' },
@@ -103,6 +102,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'cycle-counts', label: 'Cycle Counts', path: '/inventory/cycle-counts', icon: 'ClipboardCheck' },
         { id: 'rfid', label: 'RFID & Serialized', path: '/inventory/rfid', icon: 'Radio' },
         { id: 'replenishment', label: 'Replenishment', path: '/replenishment', icon: 'RefreshCw' },
+        { id: 'transfers', label: 'Transfer Orders', path: '/transfers', icon: 'ArrowRightLeft' },
         { id: 'products', label: 'Products', path: '/products', icon: 'Tags' },
       ]
     },
@@ -115,7 +115,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'returns', label: 'Returns', path: '/returns', icon: 'RotateCcw' },
         { id: 'returns-enhanced', label: 'Returns Command Center', path: '/returns-enhanced', icon: 'RotateCcw' },
         { id: 'returns-finance', label: 'Returns Finance', path: '/returns-finance', icon: 'DollarSign' },
-        { id: 'freight-audit', label: 'Freight Audit', path: '/freight-audit', icon: 'Receipt' },
       ]
     },
     // ──────────────────────────────────────────────
@@ -170,6 +169,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       children: [
         { id: 'carriers', label: 'Carriers', path: '/carriers', icon: 'Ship' },
         { id: 'rate-shopping', label: 'Rate Shopping', path: '/rate-shopping', icon: 'TrendingDown' },
+        { id: 'freight-audit', label: 'Freight Audit', path: '/freight-audit', icon: 'Receipt' },
         { id: 'routing', label: 'Routing Rules', path: '/routing-rules', icon: 'GitBranch' },
       ]
     },

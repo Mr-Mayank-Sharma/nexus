@@ -158,6 +158,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 const STATIC_LINKS: { label: string; path: string; icon: React.ReactNode }[] = []
 
 import { getModulesForRole } from '../../hooks/useWorkspace'
+import { moduleForRoute } from '../../features/entitlements/modules'
+import { useEntitlements } from '../../features/entitlements/useEntitlements'
 
 function iconForModule(id: string): React.ReactNode {
   return ICON_MAP[id] || <LayoutDashboard className="w-[18px] h-[18px]" />
@@ -266,6 +268,11 @@ export default function Sidebar() {
 
   const modules = getModulesForRole(user?.role || 'VIEWER')
 
+  const { allows, entitlements } = useEntitlements()
+  const editionLabel = entitlements?.edition === 'OMS' ? 'Order Management'
+    : entitlements?.edition === 'WMS' ? 'Warehouse Management' : 'OMS + WMS Suite'
+  const inPlan = (path: string) => allows(moduleForRoute(path))
+
   const hasModulePermission = (moduleId: string): boolean => {
     const perm = MODULE_PERMISSIONS[moduleId]
     if (!perm) return true
@@ -273,13 +280,17 @@ export default function Sidebar() {
   }
 
   const moduleLinks = modules
-    .filter(m => hasModulePermission(m.id))
+    // A section shows when it is shared, or when the plan includes at least one of its
+    // module pages: an OMS section is not kept alive by the shared pages inside it.
+    .filter(m => hasModulePermission(m.id) && (moduleForRoute(m.path) === 'PLATFORM'
+      ? m.children?.some(c => inPlan(c.path))
+      : m.children?.some(c => moduleForRoute(c.path) !== 'PLATFORM' && inPlan(c.path))))
     .map(m => ({
       label: m.label,
       path: m.path,
       icon: iconForModule(m.icon),
       children: m.children
-        ?.filter(c => hasModulePermission(c.id))
+        ?.filter(c => hasModulePermission(c.id) && inPlan(c.path))
         .map(c => ({
           label: c.label,
           path: c.path,
@@ -317,7 +328,7 @@ export default function Sidebar() {
         {!collapsed && (
           <div className="flex flex-col">
             <span className="font-bold text-[15px] text-[var(--sidebar-text)] tracking-[-0.02em] leading-tight">NexusShip</span>
-            <span className="text-[10px] font-medium text-[var(--sidebar-text-muted)] tracking-wide uppercase">OMS Platform</span>
+            <span className="text-[10px] font-medium text-[var(--sidebar-text-muted)] tracking-wide uppercase">{editionLabel}</span>
           </div>
         )}
       </div>
