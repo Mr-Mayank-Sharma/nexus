@@ -28,8 +28,10 @@ RUN mvn package -Dmaven.test.skip=true -q
 FROM eclipse-temurin:17-jre@sha256:207ecae0b2b104dfc6dfa763d1e9cd2041cb344800a180e24cb1a28ed533ff90
 WORKDIR /app
 
-# Non-root user for security
-RUN groupadd -r nexus && useradd -r -g nexus nexus
+# Non-root user for security. Also drop /usr/bin/pebble: the base image ships Canonical's
+# service manager (a Go binary whose stdlib CVEs block the Trivy gate) and nothing here uses it,
+# because the container runs java directly.
+RUN groupadd -r nexus && useradd -r -g nexus nexus && rm -f /usr/bin/pebble
 
 # Copy the built JAR
 COPY --from=builder /app/target/oms-1.0.0.jar app.jar
