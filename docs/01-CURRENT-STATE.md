@@ -162,7 +162,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 | Trustworthy AI platform | Model registry, experiments, drift, fallbacks, audit; demand forecast (Holt + WAPE) shipped | Real training data → **no production model yet** (G3) |
 | One-touch integrations | 15+ connectors + EDI 850/856/810 + iPaaS-lite + outbound retry/idempotency/DLQ + **856 → inbound ASN** | Depth (auth refresh, carrier EDI bulk) |
 | 3PL-grade billing | Rate cards + statements + read-only client portal; AR aging report | Self-serve portal, credit/payment workflows (G9) |
-| GA quality | 69 migrations, 82 controllers, 103 routes, 936 backend tests green | Real provider wiring (G4), curated ML dataset + deployed model (G3) |
+| GA quality | 69 migrations, 82 controllers, 103 routes, 929 backend tests green | Real provider wiring (G4), curated ML dataset + deployed model (G3) |
 
 **Bottom line:** the *architecture* and *surface* of the dream product exist, the locks work (RBAC gates), and the practice exams all pass. The remaining distance is **trust**: real data for ML, real provider wiring, and closed-loop automation.
 
