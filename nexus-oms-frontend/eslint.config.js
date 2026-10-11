@@ -31,5 +31,12 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
+  {
+    // Build and tooling scripts run in Node, not the browser.
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly' },
+    },
+  },
   prettier,
 )
