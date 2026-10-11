@@ -143,6 +143,49 @@ class TenantIsolationPostgresTest {
 
     // ------------------------------------------------------------------ helpers
 
+    /** What H2 cannot prove: the guards on inventory publishing are enforced by PostgreSQL itself. */
+    @Test
+    void inventoryPublishingGuardsAreEnforcedByTheDatabase() {
+        UUID tenant = UUID.randomUUID(), store = UUID.randomUUID(), nodeA = UUID.randomUUID(), nodeB = UUID.randomUUID();
+        com.nexus.oms.security.TenantContext.setCurrentTenantId(tenant);   // row-level security applies to this connection
+        try {
+            inventoryPublishingGuards(tenant, store, nodeA, nodeB);
+        } finally {
+            com.nexus.oms.security.TenantContext.clear();
+        }
+    }
+
+    private void inventoryPublishingGuards(UUID tenant, UUID store, UUID nodeA, UUID nodeB) {
+        String insertMapping = "INSERT INTO nx_channel_location_mappings (id, tenant_id, integration_store_id, node_id, external_location_id) VALUES (?,?,?,?,?)";
+
+        // A node feeds one channel location per store: offering its stock at two would count it twice.
+        jdbc.update(insertMapping, UUID.randomUUID(), tenant, store, nodeA, "111");
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> jdbc.update(insertMapping, UUID.randomUUID(), tenant, store, nodeA, "222"));
+        // Several nodes may share one channel location (a pooled location).
+        jdbc.update(insertMapping, UUID.randomUUID(), tenant, store, nodeB, "111");
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> jdbc.update("INSERT INTO nx_channel_location_mappings (id, tenant_id, integration_store_id, node_id, external_location_id, buffer_units) VALUES (?,?,?,?,?,-1)",
+                        UUID.randomUUID(), tenant, store, UUID.randomUUID(), "333"));
+
+        // At most one run in flight per store, but any number of finished ones.
+        String insertRun = "INSERT INTO nx_inventory_publish_runs (id, tenant_id, integration_store_id, status) VALUES (?,?,?,?)";
+        UUID running = UUID.randomUUID();
+        jdbc.update(insertRun, running, tenant, store, "RUNNING");
+        assertThrows(org.springframework.dao.DataIntegrityViolationException.class,
+                () -> jdbc.update(insertRun, UUID.randomUUID(), tenant, store, "RUNNING"));
+        jdbc.update(insertRun, UUID.randomUUID(), tenant, store, "COMPLETED");
+        jdbc.update(insertRun, UUID.randomUUID(), tenant, UUID.randomUUID(), "RUNNING");   // another store is independent
+        jdbc.update("UPDATE nx_inventory_publish_runs SET status = 'COMPLETED' WHERE id = ?", running);
+        jdbc.update(insertRun, UUID.randomUUID(), tenant, store, "RUNNING");               // the slot is free again
+
+        // Deleting a run removes its report lines.
+        jdbc.update("INSERT INTO nx_inventory_publish_lines (id, tenant_id, run_id, sku, external_location_id, calculated_qty, outcome) VALUES (?,?,?,?,?,?,?)",
+                UUID.randomUUID(), tenant, running, "SKU-1", "111", 5, "PUBLISHED");
+        jdbc.update("DELETE FROM nx_inventory_publish_runs WHERE id = ?", running);
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM nx_inventory_publish_lines WHERE run_id = ?", Integer.class, running));
+    }
+
     private String register(String username) throws Exception {
         ResponseEntity<String> r = call(HttpMethod.POST, "/auth/register", null,
                 "{\"username\":\"" + username + "\",\"password\":\"Test1234!\",\"role\":\"ADMIN\"}");

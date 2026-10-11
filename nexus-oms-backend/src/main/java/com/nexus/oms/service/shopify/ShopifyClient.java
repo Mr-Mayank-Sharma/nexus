@@ -75,6 +75,11 @@ public class ShopifyClient {
         return doPost(buildClient(shopDomain, accessToken), "/inventory_levels/adjust.json", data);
     }
 
+    /** Stocks an inventory item at a location; required before a quantity can be set there. */
+    public JsonNode connectInventoryLevel(String shopDomain, String accessToken, Map<String, Object> data) {
+        return doPost(buildClient(shopDomain, accessToken), "/inventory_levels/connect.json", data);
+    }
+
     public JsonNode setInventoryLevel(String shopDomain, String accessToken, Map<String, Object> data) {
         return doPost(buildClient(shopDomain, accessToken), "/inventory_levels/set.json", data);
     }

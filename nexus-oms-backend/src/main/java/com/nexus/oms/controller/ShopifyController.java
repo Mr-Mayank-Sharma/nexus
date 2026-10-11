@@ -66,8 +66,9 @@ public class ShopifyController {
 
     @PostMapping("/stores/{storeId}/sync/inventory")
     public ResponseEntity<ApiResponse<SyncResult>> pushInventory(@PathVariable UUID storeId) {
-        return ResponseEntity.ok(ApiResponse.success(
-                inventorySyncService.pushInventory(storeId), "Shopify inventory pushed"));
+        SyncResult result = inventorySyncService.pushInventory(storeId);
+        return ResponseEntity.ok(ApiResponse.success(result,
+                result.getMessage() != null ? result.getMessage() : "Shopify inventory pushed"));
     }
 
     @PostMapping("/stores/{storeId}/sync/fulfillments")

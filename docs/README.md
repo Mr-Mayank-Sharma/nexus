@@ -18,6 +18,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 > - "Show me the architecture as diagrams — C4, sequences, state machines, topology?" → [11-SYSTEM-DESIGN.md](./11-SYSTEM-DESIGN.md)
 > - "How do I set up the AWS dev server and auto-deploy from GitHub?" → [14-AWS-DEV-SERVER-SETUP.md](./14-AWS-DEV-SERVER-SETUP.md)
 > - "How are OMS and WMS sold separately, and how do I change a tenant's plan?" → [15-EDITIONS-AND-ENTITLEMENTS.md](./15-EDITIONS-AND-ENTITLEMENTS.md)
+> - "How is Shopify inventory calculated and published, and how do I run the first real test?" → [16-SHOPIFY-INVENTORY-PUBLISHING.md](./16-SHOPIFY-INVENTORY-PUBLISHING.md)
 
 ## Library map
 

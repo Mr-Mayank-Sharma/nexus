@@ -111,7 +111,7 @@ class EntitlementTest {
                 "/documents", "/entitlements", "/import", "/integration-hub", "/integration/webhooks", "/integration-platform", "/integration-stores",
                 "/integrations/bigcommerce", "/inventory", "/invoicing", "/notifications", "/procurement",
                 "/products", "/rbac", "/replenishment", "/reports", "/sample-data", "/settings", "/shipments",
-                "/shopify", "/sync", "/transfers", "/twin", "/warehouses", "/webhooks", "/workflows");
+                "/shopify", "/shopify/stores", "/sync", "/transfers", "/twin", "/warehouses", "/webhooks", "/workflows");
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AnnotationTypeFilter(RestController.class));
         Set<String> unclassified = scanner.findCandidateComponents("com.nexus.oms").stream()
@@ -121,6 +121,7 @@ class EntitlementTest {
                 })
                 .filter(Objects::nonNull)
                 .flatMap(rm -> Arrays.stream(rm.value().length > 0 ? rm.value() : rm.path()))
+                .map(p -> p.contains("/{") ? p.substring(0, p.indexOf("/{")) : p)   // drop path variables
                 .filter(p -> forApiPath(p) == PLATFORM && !platform.contains(p))
                 .collect(Collectors.toCollection(TreeSet::new));
         assertEquals(Set.of(), unclassified, "assign these to a module in ProductModule or list them as platform");

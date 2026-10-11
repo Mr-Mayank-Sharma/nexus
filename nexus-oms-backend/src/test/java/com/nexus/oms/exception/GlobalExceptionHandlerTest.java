@@ -109,6 +109,21 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void malformedBody_returns400_notA500() throws Exception {
+        mockMvc.perform(post("/labels/carrier").contentType("application/json").content("{not json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed or unreadable request body"));
+    }
+
+    @Test
+    void wrongMethodAndWrongContentType_return405And415() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/labels/carrier"))
+                .andExpect(status().isMethodNotAllowed());
+        mockMvc.perform(post("/labels/carrier").contentType("text/plain").content("x"))
+                .andExpect(status().isUnsupportedMediaType());
+    }
+
+    @Test
     void notFound_returns404ApiError() throws Exception {
         when(shippingLabelService.getLabel(any())).thenThrow(new ResourceNotFoundException("Label not found"));
 

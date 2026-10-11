@@ -25,8 +25,8 @@ That is exactly where Nexus stands: **broad, real surface + a short, honest list
 |---|---|
 | **Codebase** | Monorepo: `nexus-oms-backend` (Java/Spring Boot) + `nexus-oms-frontend` (React/Vite) |
 | **Git history** | 204 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
-| **Migrations** | 68 Flyway migrations (`V1`–`V76`, non-contiguous) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
-| **Backend surface** | **170 JPA entities**, **83 controllers**, 131 services, 14 RBAC roles |
+| **Migrations** | 69 Flyway migrations (`V1`–`V77`, non-contiguous) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
+| **Backend surface** | **173 JPA entities**, **84 controllers**, 132 services, 14 RBAC roles |
 | **Frontend surface** | **103 routes**, hash-routed, role/resource-gated, React Query + WebSockets |
 | **Infra (docker-compose)** | Postgres, Redis, Kafka, backend, frontend, **ai-ops**, **ai-intel**, Prometheus, Grafana |
 | **Testing** | Backend: **789 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest **403 passing, 0 failures, 0 errors** (`tsc --noEmit`, `npm run build`, and `npm run lint` green); Playwright smoke-tested on live dev stack |
@@ -162,7 +162,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 | Trustworthy AI platform | Model registry, experiments, drift, fallbacks, audit; demand forecast (Holt + WAPE) shipped | Real training data → **no production model yet** (G3) |
 | One-touch integrations | 15+ connectors + EDI 850/856/810 + iPaaS-lite + outbound retry/idempotency/DLQ + **856 → inbound ASN** | Depth (auth refresh, carrier EDI bulk) |
 | 3PL-grade billing | Rate cards + statements + read-only client portal; AR aging report | Self-serve portal, credit/payment workflows (G9) |
-| GA quality | 68 migrations, 82 controllers, 103 routes, 901 backend tests green | Real provider wiring (G4), curated ML dataset + deployed model (G3) |
+| GA quality | 69 migrations, 82 controllers, 103 routes, 936 backend tests green | Real provider wiring (G4), curated ML dataset + deployed model (G3) |
 
 **Bottom line:** the *architecture* and *surface* of the dream product exist, the locks work (RBAC gates), and the practice exams all pass. The remaining distance is **trust**: real data for ML, real provider wiring, and closed-loop automation.
 
