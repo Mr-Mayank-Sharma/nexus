@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class GenericImportInventoryTest {
 
+    @Mock InventoryLedger inventoryLedger;
     @Mock ImportHistoryRepository importHistoryRepository;
     @Mock ImportRecordLogRepository importRecordLogRepository;
     @Mock OrderRepository orderRepository;
@@ -72,7 +73,7 @@ class GenericImportInventoryTest {
         service = new GenericImportService(importHistoryRepository, importRecordLogRepository, orderRepository,
                 customerRepository, productRepository, orderItemRepository, addressRepository, inventoryRepository,
                 shipmentRepository, returnRepository, supplierRepository, purchaseOrderRepository, invoiceRepository,
-                warehouseRepository, transactionManager);
+                warehouseRepository, transactionManager, inventoryLedger);
     }
 
     @AfterEach

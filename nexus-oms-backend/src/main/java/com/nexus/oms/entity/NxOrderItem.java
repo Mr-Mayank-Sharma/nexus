@@ -55,4 +55,9 @@ public class NxOrderItem {
 
     @Column(name = "fulfilled_qty")
     private Integer fulfilledQty;
+
+    /** Units already taken off stock for this line; makes shipping idempotent (see OrderStockCommit). */
+    @Column(name = "consumed_qty", nullable = false)
+    @Builder.Default
+    private Integer consumedQty = 0;
 }

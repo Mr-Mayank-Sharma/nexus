@@ -323,7 +323,7 @@ class ReturnServiceTest {
         assertEquals("DISPOSED", result.get(0).getStatus());
         assertEquals("RESTOCK", result.get(0).getDisposition());
         assertEquals(BigDecimal.valueOf(30.00), result.get(0).getRefundAmount());
-        verify(inventoryService).adjustInventoryBySku(tenantId, "SKU-1", 3);
+        verify(inventoryService).restockReturn(eq(tenantId), eq("SKU-1"), any(), eq(3), any());
     }
 
     @Test
@@ -350,7 +350,7 @@ class ReturnServiceTest {
 
         assertEquals("SCRAPPED", result.get(0).getCondition());
         assertEquals(BigDecimal.ZERO, result.get(0).getRefundAmount());
-        verify(inventoryService, never()).adjustInventoryBySku(any(), any(), anyInt());
+        verify(inventoryService, never()).restockReturn(any(), any(), any(), anyInt(), any());
     }
 
     @Test

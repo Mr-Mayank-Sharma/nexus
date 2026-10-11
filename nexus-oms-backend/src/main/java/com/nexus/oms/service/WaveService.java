@@ -84,7 +84,7 @@ public class WaveService {
         wave.setStatus("DRAFT");
         if (wave.getWarehouseId() == null) {
             UUID tenantId = TenantContext.getCurrentTenantId();
-            List<Warehouse> warehouses = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE");
+            List<Warehouse> warehouses = warehouseRepository.findOperational(tenantId);
             if (!warehouses.isEmpty()) {
                 wave.setWarehouseId(warehouses.get(0).getId());
             }

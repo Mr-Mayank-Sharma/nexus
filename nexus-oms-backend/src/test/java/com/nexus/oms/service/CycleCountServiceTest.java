@@ -31,13 +31,16 @@ class CycleCountServiceTest {
     @Mock
     private InventoryRepository inventoryRepository;
 
+    @Mock
+    private InventoryService inventoryService;
+
     private CycleCountService cycleCountService;
     private UUID tenantId;
     private UUID countId;
 
     @BeforeEach
     void setUp() {
-        cycleCountService = new CycleCountService(cycleCountRepository, inventoryRepository);
+        cycleCountService = new CycleCountService(cycleCountRepository, inventoryRepository, inventoryService);
         tenantId = UUID.randomUUID();
         countId = UUID.randomUUID();
     }

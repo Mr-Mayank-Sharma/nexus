@@ -44,10 +44,13 @@ class PackingServiceTest {
     private UUID tenantId;
     private UUID packageId;
 
+    @org.mockito.Mock
+    private OrderStockCommit orderStockCommit;
+
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         packingService = new PackingService(packageRepository, warehouseStaffRepository,
-                boxRecommendationService, orderRepository, orderItemRepository, bigCommerceOrderStatusPushService);
+                boxRecommendationService, orderRepository, orderItemRepository, bigCommerceOrderStatusPushService, orderStockCommit);
         tenantId = UUID.randomUUID();
         packageId = UUID.randomUUID();
     }

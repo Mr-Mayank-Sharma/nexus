@@ -94,7 +94,7 @@ class OrderRoutingServiceTest {
                 .usedCapacitySqm(new BigDecimal("100"))
                 .build();
 
-        when(warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE"))
+        when(warehouseRepository.findOperational(tenantId))
                 .thenReturn(List.of(empty, stocked));
         when(warehouseRepository.findById(stocked.getId())).thenReturn(Optional.of(stocked));
         when(warehouseRepository.findById(empty.getId())).thenReturn(Optional.of(empty));
@@ -171,7 +171,7 @@ class OrderRoutingServiceTest {
         assertEquals(stocked.getId(), result.getAllocations().get(0).getNodeId());
         verify(allocationRepository, never()).save(any());
         verify(orderRepository, never()).save(any());
-        verify(inventoryService, never()).reserveInventory(any(), any(), any(), anyInt());
+        verify(inventoryService, never()).reserveInventory(any(), any(), any(), anyInt(), any(), any());
         assertEquals("PENDING", order.getStatus());
     }
 
@@ -198,7 +198,7 @@ class OrderRoutingServiceTest {
         assertEquals("ALLOCATED", result.getStatus());
         assertEquals("ALLOCATED", order.getStatus());
         assertEquals(stocked.getId(), order.getAllocatedNode());
-        verify(inventoryService).reserveInventory(tenantId, "SKU-001", stocked.getId(), 2);
+        verify(inventoryService).reserveInventory(eq(tenantId), eq("SKU-001"), eq(stocked.getId()), eq(2), eq("ORDER"), any());
         verify(allocationRepository, atLeastOnce()).save(any());
         verify(orderRepository, atLeastOnce()).save(order);
     }
@@ -351,13 +351,13 @@ class OrderRoutingServiceTest {
                 .thenReturn(List.of(ruleWithNodes(empty.getId(), stocked.getId())));
 
         doThrow(new IllegalStateException("inventory row locked"))
-                .when(inventoryService).reserveInventory(tenantId, "SKU-001", stocked.getId(), 1);
+                .when(inventoryService).reserveInventory(eq(tenantId), eq("SKU-001"), eq(stocked.getId()), eq(1), eq("ORDER"), any());
 
         assertThrows(IllegalStateException.class,
                 () -> service.allocateOrder(request("RULE_BASED", false)));
 
         // The first node's unit must be handed back rather than left stranded.
-        verify(inventoryService).releaseInventory(tenantId, "SKU-001", empty.getId(), 1);
+        verify(inventoryService).releaseInventory(eq(tenantId), eq("SKU-001"), eq(empty.getId()), eq(1), eq("ORDER"), any());
     }
 
     @Test
@@ -369,8 +369,8 @@ class OrderRoutingServiceTest {
 
         service.allocateOrder(request("RULE_BASED", false));
 
-        verify(inventoryService).reserveInventory(tenantId, "SKU-001", empty.getId(), 1);
-        verify(inventoryService).reserveInventory(tenantId, "SKU-001", stocked.getId(), 1);
+        verify(inventoryService).reserveInventory(eq(tenantId), eq("SKU-001"), eq(empty.getId()), eq(1), eq("ORDER"), any());
+        verify(inventoryService).reserveInventory(eq(tenantId), eq("SKU-001"), eq(stocked.getId()), eq(1), eq("ORDER"), any());
     }
 
     /** A rule is tenant data; it must not be able to route into another tenant's node. */
@@ -385,7 +385,7 @@ class OrderRoutingServiceTest {
                 .type("WAREHOUSE")
                 .build();
         when(warehouseRepository.findById(foreign.getId())).thenReturn(Optional.of(foreign));
-        when(warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE")).thenReturn(List.of(stocked));
+        when(warehouseRepository.findOperational(tenantId)).thenReturn(List.of(stocked));
         when(routingRuleRepository.findByTenantIdAndIsActiveTrue(tenantId))
                 .thenReturn(List.of(ruleWithNodes(foreign.getId())));
 
@@ -428,7 +428,7 @@ class OrderRoutingServiceTest {
         // The rule path reads the active list first and the AI path second, so consecutive returns
         // give the two strategies different candidate sets. The rule's own candidates come from its
         // nodeIds, so the first list only has to be non-empty.
-        when(warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE"))
+        when(warehouseRepository.findOperational(tenantId))
                 .thenReturn(List.of(stocked, empty), List.of(shortNode));
         when(routingRuleRepository.findByTenantIdAndIsActiveTrue(tenantId))
                 .thenReturn(List.of(ruleWithNodes(stocked.getId(), empty.getId())));

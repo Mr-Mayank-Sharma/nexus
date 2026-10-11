@@ -24,11 +24,14 @@ public class TransferOrderService {
 
     private final TransferOrderRepository transferOrderRepository;
     private final TransferOrderItemRepository transferOrderItemRepository;
+    private final InventoryService inventoryService;
 
     public TransferOrderService(TransferOrderRepository transferOrderRepository,
-                                 TransferOrderItemRepository transferOrderItemRepository) {
+                                 TransferOrderItemRepository transferOrderItemRepository,
+                                 InventoryService inventoryService) {
         this.transferOrderRepository = transferOrderRepository;
         this.transferOrderItemRepository = transferOrderItemRepository;
+        this.inventoryService = inventoryService;
     }
 
     public List<NxTransferOrder> getTransferOrders(UUID tenantId, String status) {
@@ -130,7 +133,8 @@ public class TransferOrderService {
                         .filter(item -> item.getSku().equals(shippedItem.getSku()))
                         .findFirst()
                         .ifPresent(item -> {
-                            item.setQuantityShipped(shippedItem.getQuantityShipped());
+                            item.setQuantityShipped(shippedItem.getQuantityShipped() != null
+                                    ? shippedItem.getQuantityShipped() : item.getQuantityRequested());
                             item.setStatus("SHIPPED");
                             transferOrderItemRepository.save(item);
                         });
@@ -143,6 +147,15 @@ public class TransferOrderService {
             }
         }
 
+        if (transferOrder.getSourceNodeId() == null || transferOrder.getDestinationNodeId() == null) {
+            throw new BadRequestException("A transfer needs a source and a destination location before it can ship");
+        }
+        for (NxTransferOrderItem item : existingItems) {
+            if ("SHIPPED".equals(item.getStatus()) && item.getQuantityShipped() != null && item.getQuantityShipped() > 0) {
+                inventoryService.transferOut(transferOrder.getTenantId(), item.getSku(), transferOrder.getSourceNodeId(),
+                        transferOrder.getDestinationNodeId(), item.getQuantityShipped(), transferOrder.getId().toString());
+            }
+        }
         transferOrder.setStatus("IN_TRANSIT");
         transferOrder = transferOrderRepository.save(transferOrder);
 
@@ -179,6 +192,14 @@ public class TransferOrderService {
             }
         }
 
+        for (NxTransferOrderItem item : existingItems) {
+            if ("RECEIVED".equals(item.getStatus())) {
+                int shipped = item.getQuantityShipped() != null ? item.getQuantityShipped() : 0;
+                int received = item.getQuantityReceived() != null ? item.getQuantityReceived() : shipped;
+                inventoryService.transferIn(transferOrder.getTenantId(), item.getSku(), transferOrder.getDestinationNodeId(),
+                        received, shipped, transferOrder.getId().toString());
+            }
+        }
         transferOrder.setStatus("RECEIVED");
         transferOrder.setActualArrival(LocalDateTime.now());
         transferOrder = transferOrderRepository.save(transferOrder);

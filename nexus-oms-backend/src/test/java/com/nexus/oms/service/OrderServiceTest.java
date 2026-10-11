@@ -41,6 +41,8 @@ class OrderServiceTest {
     @Mock
     private InventoryService inventoryService;
     @Mock
+    private OrderStockCommit orderStockCommit;
+    @Mock
     private KafkaProducerService kafkaProducerService;
     @Mock
     private ObjectMapper objectMapper;
@@ -71,7 +73,7 @@ class OrderServiceTest {
     void setUp() {
         orderService = new OrderService(orderRepository, orderItemRepository, customerRepository,
                 addressRepository, inventoryService, kafkaProducerService, objectMapper, nodeRepository,
-                warehouseRepository, orderRoutingService, routingConfigRepository, kittingService, brokeringService, bigCommerceStatusPushService);
+                warehouseRepository, orderRoutingService, routingConfigRepository, kittingService, brokeringService, bigCommerceStatusPushService, orderStockCommit);
         tenantId = UUID.randomUUID();
         orderId = UUID.randomUUID();
 
@@ -433,7 +435,7 @@ class OrderServiceTest {
 
         assertEquals("CANCELLED", result.getStatus());
         verify(kafkaProducerService).publish("order.cancelled", orderId.toString());
-        verify(inventoryService, never()).releaseInventory(any(), any(), any(), anyInt());
+        verify(inventoryService, never()).releaseInventory(any(), any(), any(), anyInt(), any(), any());
     }
 
     @Test
@@ -448,7 +450,7 @@ class OrderServiceTest {
         OrderResponse result = orderService.cancelOrder(orderId);
 
         assertEquals("CANCELLED", result.getStatus());
-        verify(inventoryService).releaseInventory(tenantId, "SKU-001", testItem.getAllocatedNodeId(), 2);
+        verify(inventoryService).releaseInventory(tenantId, "SKU-001", testItem.getAllocatedNodeId(), 2, "ORDER", orderId.toString());
         verify(kafkaProducerService).publish("order.cancelled", orderId.toString());
     }
 }

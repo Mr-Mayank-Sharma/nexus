@@ -82,7 +82,7 @@ public class AiWarehouseResolutionService {
             return List.of();
         }
         try {
-            List<Warehouse> byStatus = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE");
+            List<Warehouse> byStatus = warehouseRepository.findOperational(tenantId);
             if (byStatus != null && !byStatus.isEmpty()) {
                 return byStatus;
             }

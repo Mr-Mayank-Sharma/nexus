@@ -1,6 +1,7 @@
 package com.nexus.oms.service;
 
 import com.nexus.oms.dto.ReturnResponse;
+import com.nexus.oms.entity.NxOrder;
 import com.nexus.oms.entity.NxCustomer;
 import com.nexus.oms.entity.NxReturn;
 import com.nexus.oms.entity.NxReturnItem;
@@ -199,6 +200,10 @@ public class ReturnService {
     @Transactional
     public List<NxReturnItem> applyDisposition(UUID returnId, List<NxReturnItem> decisions) {
         List<NxReturnItem> updated = new ArrayList<>();
+        // Restocked units go back to the location the order shipped from.
+        final UUID originNode = returnRepository.findById(returnId)
+                .flatMap(r -> r.getOrderId() == null ? java.util.Optional.<NxOrder>empty() : orderRepository.findById(r.getOrderId()))
+                .map(NxOrder::getAllocatedNode).orElse(null);
         for (NxReturnItem decision : decisions) {
             NxReturnItem item = returnItemRepository.findById(decision.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("ReturnItem", decision.getId()));
@@ -216,14 +221,14 @@ public class ReturnService {
                 case "RESTOCK", "REPACKAGE" -> {
                     int qty = item.getQuantity() != null ? item.getQuantity() : 0;
                     if (qty > 0) {
-                        inventoryService.adjustInventoryBySku(item.getTenantId(), item.getSku(), qty);
+                        inventoryService.restockReturn(item.getTenantId(), item.getSku(), originNode, qty, returnId.toString());
                     }
                 }
                 case "REFURBISH" -> {
                     item.setCondition("REFURBISHED");
                     int qty = item.getQuantity() != null ? item.getQuantity() : 0;
                     if (qty > 0) {
-                        inventoryService.adjustInventoryBySku(item.getTenantId(), item.getSku(), qty);
+                        inventoryService.restockReturn(item.getTenantId(), item.getSku(), originNode, qty, returnId.toString());
                     }
                 }
                 case "SCRAP", "DONATE" -> {

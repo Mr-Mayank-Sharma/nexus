@@ -19,6 +19,8 @@ import java.util.*;
 
 @Service
 public class PackingService {
+    private final OrderStockCommit orderStockCommit;
+
 
     private final PackageRepository packageRepository;
     private final WarehouseStaffRepository warehouseStaffRepository;
@@ -32,13 +34,15 @@ public class PackingService {
                           BoxRecommendationService boxRecommendationService,
                           OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
-                          com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService bigCommerceOrderStatusPushService) {
+                          com.nexus.oms.service.bigcommerce.BigCommerceOrderStatusPushService bigCommerceOrderStatusPushService,
+                          OrderStockCommit orderStockCommit) {
         this.packageRepository = packageRepository;
         this.warehouseStaffRepository = warehouseStaffRepository;
         this.boxRecommendationService = boxRecommendationService;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.bigCommerceOrderStatusPushService = bigCommerceOrderStatusPushService;
+        this.orderStockCommit = orderStockCommit;
     }
 
     public List<NxPackage> getPackages(UUID tenantId) {
@@ -193,6 +197,7 @@ public class PackingService {
                     }
                     order.setShippedAt(LocalDateTime.now());
                     orderRepository.save(order);
+                    orderStockCommit.consumeOnShip(order);
                     bigCommerceOrderStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "SHIPPED");
                 }
             });

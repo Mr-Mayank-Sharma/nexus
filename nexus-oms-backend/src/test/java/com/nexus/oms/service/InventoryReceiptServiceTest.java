@@ -33,13 +33,16 @@ class InventoryReceiptServiceTest {
     @Mock
     private InventoryRepository inventoryRepository;
 
+    @Mock
+    private InventoryService inventoryService;
+
     private InventoryReceiptService inventoryReceiptService;
     private UUID tenantId;
     private UUID receiptId;
 
     @BeforeEach
     void setUp() {
-        inventoryReceiptService = new InventoryReceiptService(receiptRepository, inventoryRepository);
+        inventoryReceiptService = new InventoryReceiptService(receiptRepository, inventoryRepository, inventoryService);
         tenantId = UUID.randomUUID();
         receiptId = UUID.randomUUID();
     }

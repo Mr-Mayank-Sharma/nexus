@@ -183,13 +183,13 @@ public class OrderRoutingService {
                     }
                     skuQuantitiesOf(allocation).forEach((sku, qty) -> {
                         if (qty <= 0) return;
-                        inventoryService.reserveInventory(tenantId, sku, allocation.getNodeId(), qty);
+                        inventoryService.reserveInventory(tenantId, sku, allocation.getNodeId(), qty, "ORDER", order.getId().toString());
                         reserved.add(new Reservation(allocation.getNodeId(), sku, qty));
                     });
                 }
             } catch (Exception e) {
                 for (Reservation r : reserved) {
-                    inventoryService.releaseInventory(tenantId, r.sku(), r.nodeId(), r.qty());
+                    inventoryService.releaseInventory(tenantId, r.sku(), r.nodeId(), r.qty(), "ORDER", order.getId().toString());
                 }
                 throw e;
             }
@@ -231,7 +231,7 @@ public class OrderRoutingService {
                         "Allocated " + allocatedTotal + " of " + demandTotal
                                 + " ordered units; " + (demandTotal - allocatedTotal)
                                 + " units could not be sourced.",
-                        strategy, true));
+                        "BACKORDER", true));
             }
 
             if (configHasExceptionDetection(tenantId)) {
@@ -338,7 +338,7 @@ public class OrderRoutingService {
 
     List<NxOrderAllocation> ruleBasedAllocation(NxOrder order, UUID tenantId) {
         List<NxRoutingRule> rules = routingRuleRepository.findByTenantIdAndIsActiveTrue(tenantId);
-        List<Warehouse> warehouses = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE");
+        List<Warehouse> warehouses = warehouseRepository.findOperational(tenantId);
 
         if (rules.isEmpty() || warehouses.isEmpty()) {
             return createDefaultAllocation(order, tenantId, warehouses);
@@ -373,7 +373,7 @@ public class OrderRoutingService {
     }
 
     List<NxOrderAllocation> aiOptimizedAllocation(NxOrder order, UUID tenantId) {
-        List<Warehouse> warehouses = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE");
+        List<Warehouse> warehouses = warehouseRepository.findOperational(tenantId);
 
         if (warehouses.isEmpty()) {
             return List.of(backorderAllocation(order, tenantId, "AI_OPTIMIZED",
@@ -464,6 +464,11 @@ public class OrderRoutingService {
             throw new BadRequestException("Tenant mismatch");
         }
 
+        if (request.getResolutionStrategy() != null
+                && !NxFulfillmentException.RESOLUTION_STRATEGIES.contains(request.getResolutionStrategy())) {
+            throw new BadRequestException("Unknown resolution strategy '" + request.getResolutionStrategy()
+                    + "'; use one of " + new java.util.TreeSet<>(NxFulfillmentException.RESOLUTION_STRATEGIES));
+        }
         exception.setStatus("RESOLVED");
         exception.setResolution(request.getResolution());
         exception.setResolutionStrategy(request.getResolutionStrategy());
@@ -1098,6 +1103,9 @@ public class OrderRoutingService {
     private NxFulfillmentException buildException(UUID orderId, UUID allocationId, UUID tenantId,
                                                     String type, String severity, String title,
                                                     String description, String strategy, boolean autoResolvable) {
+        if (strategy != null && !NxFulfillmentException.RESOLUTION_STRATEGIES.contains(strategy)) {
+            throw new IllegalArgumentException("Not a resolution strategy: " + strategy);
+        }
         return NxFulfillmentException.builder()
                 .orderId(orderId)
                 .allocationId(allocationId)

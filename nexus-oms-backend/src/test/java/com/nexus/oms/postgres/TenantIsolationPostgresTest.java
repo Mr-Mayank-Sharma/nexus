@@ -186,6 +186,24 @@ class TenantIsolationPostgresTest {
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM nx_inventory_publish_lines WHERE run_id = ?", Integer.class, running));
     }
 
+    /** The ledger is append-only: the database refuses to edit or delete a line, whoever asks. */
+    @Test
+    void inventoryLedgerCannotBeEditedOrDeleted() {
+        UUID tenant = UUID.randomUUID(), id = UUID.randomUUID();
+        com.nexus.oms.security.TenantContext.setCurrentTenantId(tenant);
+        try {
+            jdbc.update("INSERT INTO nx_inventory_movements (id, tenant_id, sku, movement_type, on_hand_delta) VALUES (?,?,?,?,?)",
+                    id, tenant, "SKU-L", "RECEIPT", 5);
+            Exception update = assertThrows(Exception.class, () -> jdbc.update("UPDATE nx_inventory_movements SET on_hand_delta = 999 WHERE id = ?", id));
+            assertTrue(String.valueOf(update.getMessage()).contains("append-only"), update.getMessage());
+            Exception delete = assertThrows(Exception.class, () -> jdbc.update("DELETE FROM nx_inventory_movements WHERE id = ?", id));
+            assertTrue(String.valueOf(delete.getMessage()).contains("append-only"), delete.getMessage());
+            assertEquals(5, jdbc.queryForObject("SELECT on_hand_delta FROM nx_inventory_movements WHERE id = ?", Integer.class, id));
+        } finally {
+            com.nexus.oms.security.TenantContext.clear();
+        }
+    }
+
     private String register(String username) throws Exception {
         ResponseEntity<String> r = call(HttpMethod.POST, "/auth/register", null,
                 "{\"username\":\"" + username + "\",\"password\":\"Test1234!\",\"role\":\"ADMIN\"}");

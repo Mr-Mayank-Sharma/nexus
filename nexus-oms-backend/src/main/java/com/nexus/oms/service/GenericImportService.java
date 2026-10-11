@@ -61,6 +61,7 @@ public class GenericImportService {
     private final OrderItemRepository orderItemRepository;
     private final AddressRepository addressRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventoryLedger inventoryLedger;
     private final ShipmentRepository shipmentRepository;
     private final ReturnRepository returnRepository;
     private final SupplierRepository supplierRepository;
@@ -83,7 +84,8 @@ public class GenericImportService {
                                 PurchaseOrderRepository purchaseOrderRepository,
                                 InvoiceRepository invoiceRepository,
                                 WarehouseRepository warehouseRepository,
-                                PlatformTransactionManager transactionManager) {
+                                PlatformTransactionManager transactionManager,
+                                InventoryLedger inventoryLedger) {
         this.importHistoryRepository = importHistoryRepository;
         this.importRecordLogRepository = importRecordLogRepository;
         this.orderRepository = orderRepository;
@@ -98,6 +100,7 @@ public class GenericImportService {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.invoiceRepository = invoiceRepository;
         this.warehouseRepository = warehouseRepository;
+        this.inventoryLedger = inventoryLedger;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -892,12 +895,19 @@ public class GenericImportService {
                 NxInventory inv = existing.orElseGet(() -> NxInventory.builder()
                     .tenantId(tenantId).sku(sku).build());
                 inv.setNodeId(nodeId);
+                final int onHandBefore = inv.getQuantityOnHand() == null ? 0 : inv.getQuantityOnHand();
+                final int allocatedBefore = inv.getQuantityAllocated() == null ? 0 : inv.getQuantityAllocated();
                 inv.setQuantityOnHand(qty);
                 inv.setQuantityAllocated(allocated);
                 inv.setQuantityInTransit(inTransit);
                 inv.setSafetyStock(safetyStock);
                 inv.setReorderPoint(reorder);
-                transactionTemplate.execute(s -> inventoryRepository.save(inv));
+                transactionTemplate.execute(s -> {
+                    NxInventory saved = inventoryRepository.save(inv);
+                    inventoryLedger.record(saved, com.nexus.oms.entity.NxInventoryMovement.ADJUSTMENT, qty - onHandBefore,
+                            allocated - allocatedBefore, 0, "IMPORT", null, "Bulk import");
+                    return saved;
+                });
 
                 success++;
                 recordLogs.add(createRecordLog(historyId, tenantId, i, "SUCCESS", null, null, null, row, "import"));

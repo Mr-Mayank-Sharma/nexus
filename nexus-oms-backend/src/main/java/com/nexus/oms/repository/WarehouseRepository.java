@@ -20,6 +20,22 @@ public interface WarehouseRepository extends JpaRepository<Warehouse, UUID> {
 
     List<Warehouse> findByTenantIdAndStatus(UUID tenantId, String status);
 
+    List<Warehouse> findByTenantIdAndStatusIn(UUID tenantId, java.util.Collection<String> statuses);
+
+    /** Statuses of a warehouse that can take work. The product uses both: ACTIVE (the default) and OPERATIONAL. */
+    java.util.List<String> OPERATIONAL_STATUSES = java.util.List.of("ACTIVE", "OPERATIONAL");
+
+    /**
+     * Warehouses allocation, routing and waves may use: ACTIVE or OPERATIONAL, and not switched off.
+     * Callers used to ask for exactly "ACTIVE", so a tenant whose warehouses are OPERATIONAL could
+     * not allocate a single order ("No active warehouse nodes found").
+     */
+    default List<Warehouse> findOperational(UUID tenantId) {
+        return findByTenantIdAndStatusIn(tenantId, OPERATIONAL_STATUSES).stream()
+                .filter(w -> !Boolean.FALSE.equals(w.getIsActive()))
+                .toList();
+    }
+
     long countByTenantId(UUID tenantId);
 
     @Query("SELECT w FROM Warehouse w WHERE w.tenantId = :tenantId AND " +

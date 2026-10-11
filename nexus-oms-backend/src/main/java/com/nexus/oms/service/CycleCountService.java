@@ -20,11 +20,14 @@ public class CycleCountService {
 
     private final NxCycleCountRepository cycleCountRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventoryService inventoryService;
 
     public CycleCountService(NxCycleCountRepository cycleCountRepository,
-                              InventoryRepository inventoryRepository) {
+                              InventoryRepository inventoryRepository,
+                              InventoryService inventoryService) {
         this.cycleCountRepository = cycleCountRepository;
         this.inventoryRepository = inventoryRepository;
+        this.inventoryService = inventoryService;
     }
 
     public Page<NxCycleCount> getCycleCounts(UUID tenantId, String status, Pageable pageable) {
@@ -71,8 +74,11 @@ public class CycleCountService {
                 .findByTenantIdAndSkuAndNodeId(count.getTenantId(), count.getSku(), count.getNodeId());
         if (existing.isPresent()) {
             NxInventory inv = existing.get();
+            int before = inv.getQuantityOnHand() == null ? 0 : inv.getQuantityOnHand();
             inv.setQuantityOnHand(countedQty);
-            inventoryRepository.save(inv);
+            NxInventory savedRow = inventoryRepository.save(inv);
+            inventoryService.recordMovement(savedRow != null ? savedRow : inv, com.nexus.oms.entity.NxInventoryMovement.CYCLE_COUNT, countedQty - before, 0, 0,
+                    "CYCLE_COUNT", count.getId() != null ? count.getId().toString() : null, match ? "count matched" : "count differed from expected");
         }
 
         return cycleCountRepository.save(count);

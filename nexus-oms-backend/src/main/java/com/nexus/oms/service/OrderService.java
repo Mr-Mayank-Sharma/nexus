@@ -44,6 +44,7 @@ public class OrderService {
     private final KittingService kittingService;
     private final BrokeringService brokeringService;
     private final BigCommerceOrderStatusPushService bigCommerceStatusPushService;
+    private final OrderStockCommit orderStockCommit;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
@@ -58,7 +59,8 @@ public class OrderService {
                         RoutingConfigRepository routingConfigRepository,
                         KittingService kittingService,
                         BrokeringService brokeringService,
-                        BigCommerceOrderStatusPushService bigCommerceStatusPushService) {
+                        BigCommerceOrderStatusPushService bigCommerceStatusPushService,
+                        OrderStockCommit orderStockCommit) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.customerRepository = customerRepository;
@@ -73,6 +75,7 @@ public class OrderService {
         this.kittingService = kittingService;
         this.brokeringService = brokeringService;
         this.bigCommerceStatusPushService = bigCommerceStatusPushService;
+        this.orderStockCommit = orderStockCommit;
     }
 
     @Transactional
@@ -201,6 +204,9 @@ public class OrderService {
         }
 
         order = orderRepository.save(order);
+        if (java.util.Set.of("SHIPPED", "IN_TRANSIT", "DELIVERED", "FULFILLED").contains(status.toUpperCase())) {
+            orderStockCommit.consumeOnShip(order);   // idempotent: a no-op if it already shipped
+        }
         bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), status);
         kafkaProducerService.publish("order." + status.toLowerCase(), order.getId().toString());
         return toOrderResponse(order);
@@ -222,8 +228,8 @@ public class OrderService {
                 .map(NxNode::getId)
                 .collect(Collectors.toList());
         if (candidateNodeIds.isEmpty()) {
-            // Fall back to ACTIVE warehouses — inventory is a shared tenant+SKU pool (node_id NULL)
-            candidateNodeIds = warehouseRepository.findByTenantIdAndStatus(tenantId, "ACTIVE").stream()
+            // Fall back to the operational warehouses — inventory is a shared tenant+SKU pool (node_id NULL)
+            candidateNodeIds = warehouseRepository.findOperational(tenantId).stream()
                     .map(Warehouse::getId)
                     .collect(Collectors.toList());
         }
@@ -249,7 +255,7 @@ public class OrderService {
                 .sorted(java.util.Comparator.comparing(NxOrderItem::getSku, java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
                 .toList();
         for (NxOrderItem item : sortedItems) {
-            inventoryService.reserveInventory(tenantId, item.getSku(), selectedNode, item.getQuantity());
+            inventoryService.reserveInventory(tenantId, item.getSku(), selectedNode, item.getQuantity(), "ORDER", order.getId().toString());
             item.setAllocatedNodeId(selectedNode);
             item.setAllocatedQty(item.getQuantity());
             orderItemRepository.save(item);
@@ -341,6 +347,7 @@ public class OrderService {
         order.setTrackingNumber(trackingNumber);
         order.setShippedAt(LocalDateTime.now());
         order = orderRepository.save(order);
+        orderStockCommit.consumeOnShip(order);   // the stock leaves the books with the parcel
         bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "SHIPPED");
         kafkaProducerService.publish("order.shipped", order.getId().toString());
         return toOrderResponse(order);
@@ -567,9 +574,13 @@ public class OrderService {
 
         List<NxOrderItem> items = orderItemRepository.findByOrderId(id);
         for (NxOrderItem item : items) {
-            if (item.getAllocatedNodeId() != null && item.getAllocatedQty() > 0) {
+            // Only the part still reserved: units already shipped were taken off stock when they
+            // shipped, and releasing them again would free another order's allocation.
+            int stillReserved = (item.getAllocatedQty() == null ? 0 : item.getAllocatedQty())
+                    - (item.getConsumedQty() == null ? 0 : item.getConsumedQty());
+            if (item.getAllocatedNodeId() != null && stillReserved > 0) {
                 inventoryService.releaseInventory(order.getTenantId(), item.getSku(),
-                        item.getAllocatedNodeId(), item.getAllocatedQty());
+                        item.getAllocatedNodeId(), stillReserved, "ORDER", order.getId().toString());
             }
         }
 

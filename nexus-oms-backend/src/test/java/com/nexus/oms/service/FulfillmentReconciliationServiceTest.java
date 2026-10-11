@@ -34,6 +34,9 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -61,6 +64,9 @@ class FulfillmentReconciliationServiceTest {
 
     @BeforeEach
     void setUp() {
+        // consumeAllocated reports how many units it really took off on-hand
+        lenient().when(inventoryService.consumeAllocated(any(), any(), any(), anyInt(), any(), any()))
+                .thenAnswer(inv -> inv.getArgument(3));
         service = new FulfillmentReconciliationService(
                 reconciliationRepository, orderRepository, orderItemRepository, inventoryService,
                 kafkaProducerService, storeRepository, storeService, tokenService, shopifyClient,
@@ -91,7 +97,7 @@ class FulfillmentReconciliationServiceTest {
         assertEquals(-2, result.getInventoryDelta());
         assertEquals(2, item.getFulfilledQty());
         assertEquals("FULFILLED", order.getStatus());
-        verify(inventoryService).adjustInventoryBySkuAtNode(TENANT_ID, "SKU-1", NODE_ID, -2);
+        verify(inventoryService).consumeAllocated(eq(TENANT_ID), eq("SKU-1"), eq(NODE_ID), eq(2), eq("ORDER_FULFILLMENT"), any());
         verify(kafkaProducerService).publish("order.fulfilled", ORDER_ID.toString());
         verify(reconciliationRepository).save(any(NxFulfillmentReconciliation.class));
         verify(orderRepository).save(order);
@@ -110,7 +116,7 @@ class FulfillmentReconciliationServiceTest {
         assertEquals(MatchType.QUANTITY_DELTA, result.getMatchType());
         assertEquals(1, item.getFulfilledQty());
         assertEquals("PROCESSING", order.getStatus());
-        verify(inventoryService).adjustInventoryBySkuAtNode(TENANT_ID, "SKU-1", NODE_ID, -1);
+        verify(inventoryService).consumeAllocated(eq(TENANT_ID), eq("SKU-1"), eq(NODE_ID), eq(1), eq("ORDER_FULFILLMENT"), any());
         verify(kafkaProducerService).publish("order.fulfilled", ORDER_ID.toString());
         verify(orderRepository, never()).save(any());
     }
@@ -212,7 +218,7 @@ class FulfillmentReconciliationServiceTest {
 
         assertEquals("FULFILLED", order.getStatus());
         verify(reconciliationRepository).save(any(NxFulfillmentReconciliation.class));
-        verify(inventoryService).adjustInventoryBySkuAtNode(TENANT_ID, "SKU-1", NODE_ID, -2);
+        verify(inventoryService).consumeAllocated(eq(TENANT_ID), eq("SKU-1"), eq(NODE_ID), eq(2), eq("ORDER_FULFILLMENT"), any());
     }
 
     // ====================================================================

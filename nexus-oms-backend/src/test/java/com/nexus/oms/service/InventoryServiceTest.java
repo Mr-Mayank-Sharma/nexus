@@ -25,13 +25,19 @@ class InventoryServiceTest {
     @Mock
     private com.nexus.oms.service.bigcommerce.BigCommerceInventorySyncService bigCommerceInventorySyncService;
 
+    @Mock
+    private com.nexus.oms.repository.InventoryMovementRepository movementRepository;
+    @Mock
+    private InventoryLedger inventoryLedger;
+
     private InventoryService inventoryService;
     private UUID tenantId;
     private NxInventory testInventory;
 
     @BeforeEach
     void setUp() {
-        inventoryService = new InventoryService(inventoryRepository, bigCommerceInventorySyncService);
+        inventoryService = new InventoryService(inventoryRepository, bigCommerceInventorySyncService, movementRepository, inventoryLedger,
+                org.mockito.Mockito.mock(org.springframework.transaction.PlatformTransactionManager.class));
         tenantId = UUID.randomUUID();
         testInventory = NxInventory.builder()
                 .id(UUID.randomUUID())

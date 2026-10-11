@@ -20,11 +20,14 @@ public class InventoryReceiptService {
 
     private final NxInventoryReceiptRepository receiptRepository;
     private final InventoryRepository inventoryRepository;
+    private final InventoryService inventoryService;
 
     public InventoryReceiptService(NxInventoryReceiptRepository receiptRepository,
-                                    InventoryRepository inventoryRepository) {
+                                    InventoryRepository inventoryRepository,
+                                    InventoryService inventoryService) {
         this.receiptRepository = receiptRepository;
         this.inventoryRepository = inventoryRepository;
+        this.inventoryService = inventoryService;
     }
 
     public Page<NxInventoryReceipt> getReceipts(UUID tenantId, String status, Pageable pageable) {
@@ -89,7 +92,9 @@ public class InventoryReceiptService {
             inv.setQuantityOnHand(inv.getQuantityOnHand() + receipt.getQuantity());
             if (receipt.getLotNumber() != null) inv.setLotNumber(receipt.getLotNumber());
         }
-        inventoryRepository.save(inv);
+        NxInventory savedRow = inventoryRepository.save(inv);
+        inventoryService.recordMovement(savedRow != null ? savedRow : inv, com.nexus.oms.entity.NxInventoryMovement.RECEIPT, receipt.getQuantity(), 0, 0,
+                "RECEIPT", receipt.getId() != null ? receipt.getId().toString() : null, receipt.getReferenceNumber());
 
         receipt.setStatus("RECEIVED");
         receipt.setReceivedBy(receivedBy);

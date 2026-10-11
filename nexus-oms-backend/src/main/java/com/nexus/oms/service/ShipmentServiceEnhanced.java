@@ -2,6 +2,8 @@ package com.nexus.oms.service;
 
 import com.nexus.oms.entity.NxShipment;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.domain.OrderStatusPolicy;
+import com.nexus.oms.repository.OrderRepository;
 import com.nexus.oms.repository.ShipmentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,9 +15,14 @@ import java.util.*;
 public class ShipmentServiceEnhanced {
 
     private final ShipmentRepository shipmentRepository;
+    private final OrderRepository orderRepository;
+    private final OrderStockCommit orderStockCommit;
 
-    public ShipmentServiceEnhanced(ShipmentRepository shipmentRepository) {
+    public ShipmentServiceEnhanced(ShipmentRepository shipmentRepository, OrderRepository orderRepository,
+                                   OrderStockCommit orderStockCommit) {
         this.shipmentRepository = shipmentRepository;
+        this.orderRepository = orderRepository;
+        this.orderStockCommit = orderStockCommit;
     }
 
     public List<NxShipment> getShipments(UUID tenantId) {
@@ -53,7 +60,21 @@ public class ShipmentServiceEnhanced {
         NxShipment s = getShipment(shipmentId);
         s.setStatus("SHIPPED");
         s.setShippedAt(LocalDateTime.now());
-        return shipmentRepository.save(s);
+        NxShipment saved = shipmentRepository.save(s);
+        // A shipped parcel means the order has shipped and its stock has left: marking a shipment
+        // shipped used to leave the order's status and the stock untouched.
+        if (s.getOrderId() != null) {
+            orderRepository.findById(s.getOrderId()).ifPresent(order -> {
+                if (!"SHIPPED".equals(order.getStatus()) && !"DELIVERED".equals(order.getStatus())
+                        && OrderStatusPolicy.transitionIfAllowed(order, OrderStatusPolicy.SHIPPED, "ShipmentService")) {
+                    order.setShippedAt(LocalDateTime.now());
+                    if (s.getTrackingNumber() != null) order.setTrackingNumber(s.getTrackingNumber());
+                    orderRepository.save(order);
+                }
+                orderStockCommit.consumeOnShip(order);
+            });
+        }
+        return saved;
     }
 
     @Transactional

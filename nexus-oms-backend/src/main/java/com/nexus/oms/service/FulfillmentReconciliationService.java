@@ -249,12 +249,12 @@ public class FulfillmentReconciliationService {
             orderItemRepository.save(item);
 
             try {
-                if (item.getAllocatedNodeId() != null) {
-                    inventoryService.adjustInventoryBySkuAtNode(tenantId, item.getSku(), item.getAllocatedNodeId(), -fi.getQuantity());
-                } else {
-                    inventoryService.adjustInventoryBySku(tenantId, item.getSku(), -fi.getQuantity());
-                }
-                inventoryDelta -= fi.getQuantity();
+                // Takes the units off on-hand AND off the order's allocation, and writes the ledger line.
+                int taken = inventoryService.consumeAllocated(tenantId, item.getSku(), item.getAllocatedNodeId(),
+                        fi.getQuantity(), "ORDER_FULFILLMENT", orderId.toString());
+                item.setConsumedQty(nz(item.getConsumedQty()) + fi.getQuantity());
+                orderItemRepository.save(item);
+                inventoryDelta -= taken;
             } catch (Exception e) {
                 // Truth-acceptance must not be blocked by inventory edge cases — defer and record.
                 log.warn("Inventory adjustment deferred for SKU {} (order {}): {}", item.getSku(), orderId, e.getMessage());

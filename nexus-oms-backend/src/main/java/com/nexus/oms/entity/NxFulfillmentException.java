@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 import org.hibernate.annotations.JdbcTypeCode;
@@ -13,6 +14,16 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "nx_fulfillment_exceptions")
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class NxFulfillmentException {
+
+    /**
+     * The values nx_fulfillment_exceptions.resolution_strategy accepts (CHECK constraint, V14). This is
+     * about how an exception is resolved, not how an order was allocated: passing an allocation
+     * strategy name here violated the constraint and lost the exception. A test keeps this in step
+     * with the migration.
+     */
+    public static final Set<String> RESOLUTION_STRATEGIES = Set.of(
+            "REALLOCATE", "OVERRIDE", "CONTACT_CUSTOMER", "ESCALATE_MANAGER",
+            "SPLIT_ORDER", "BACKORDER", "SUBSTITUTE", "CANCEL_ORDER");
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
