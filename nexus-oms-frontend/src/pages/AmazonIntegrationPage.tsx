@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Globe, ShoppingCart, Settings, RefreshCw, Link, Loader2,
-  CheckCircle, XCircle, Clock, AlertTriangle, Download,
+  CheckCircle, XCircle, Download,
 } from 'lucide-react'
 import { clsx } from 'clsx'
-import { useEffect } from 'react'
-import { fetchAmazonOrders, authorizeAmazon } from '../api/connectors/amazonConnector'
-import { fetchAllStatus } from '../api/connectors/connectorRegistry'
+import { configureConnector, disconnectConnector } from '../api/connectors/connectorClient'
+import { useMarketplaceStatus } from '../features/marketplace/useMarketplaceStatus'
+import { loadChannelOrders } from '../features/marketplace/channelOrders'
+import NotLiveBanner from '../features/marketplace/NotLiveBanner'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -18,7 +19,6 @@ interface AmazonOrder {
   status: string
   items: number
   amount: string
-  syncStatus: 'SYNCED' | 'PENDING' | 'ERROR'
   placedAt: string
   marketplace: string
 }
@@ -32,33 +32,24 @@ const MARKETPLACES = [
 
 
 
-interface ConnectorOrder {
-  orderId: string
-  status: string
-  total: number
-  currency: string
-  purchaseDate: string
-  buyerEmail: string
-}
 
 export default function AmazonIntegrationPage() {
-  const [connected, setConnected] = useState(false)
   const [fetchedOrders, setFetchedOrders] = useState<AmazonOrder[]>([])
+
+  const [ordersError, setOrdersError] = useState<string | null>(null)
+  useEffect(() => {
+    const ctl = new AbortController()
+    loadChannelOrders('amazon', ctl.signal)
+      .then(rows => { setOrdersError(null); setFetchedOrders(rows.map(r => (({ id: r.id, orderId: r.orderId, status: r.status, items: r.items, amount: r.amount, placedAt: r.placedAt, marketplace: form.marketplace })))) })
+      .catch(err => { if (!ctl.signal.aborted) setOrdersError(err instanceof Error ? err.message : 'Could not load orders') })
+    return () => ctl.abort()
+  }, [])
   const [connecting, setConnecting] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [syncing, setSyncing] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterMarketplace, setFilterMarketplace] = useState('ALL')
-  const [filterSyncStatus, setFilterSyncStatus] = useState('ALL')
   const { addToast } = useToast()
-
-  useEffect(() => {
-    fetchAllStatus().then(status => {
-      if (status.amazon?.active) {
-        setConnected(true)
-      }
-    }).catch(() => {})
-  }, [])
+  const { hasCredentials: credentialsSaved, ordersInNexus, refresh } = useMarketplaceStatus('amazon')
 
   const [form, setForm] = useState({
     marketplace: 'US',
@@ -71,28 +62,18 @@ export default function AmazonIntegrationPage() {
     syncInventory: false,
   })
 
-  const stats = {
-    syncedToday: 47,
-    pending: 12,
-    errors: 3,
-  }
-
   async function handleConnect() {
     if (!form.sellerId.trim() || !form.mwsAuthToken.trim()) {
-      addToast({ type: 'warning', title: 'Seller ID and MWS Auth Token are required' }); return
+      addToast({ type: 'warning', title: 'Amazon credentials are required' }); return
     }
     setConnecting(true)
     try {
-      await authorizeAmazon({
-        clientId: form.sellerId,
-        clientSecret: form.mwsAuthToken,
-        marketplaceId: form.marketplace,
-        sandbox: true,
-      })
-      setConnected(true)
-      addToast({ type: 'success', title: 'Connected to Amazon Seller Central' })
-    } catch (err: any) {
-      addToast({ type: 'error', title: `Connection failed: ${err.message}` })
+      const res = await configureConnector('amazon', { clientId: form.sellerId, clientSecret: form.mwsAuthToken, marketplaceId: form.marketplace, sandbox: true }) as { message?: string }
+      refresh()
+      // Saved, not verified: no check against Amazon is made, so this must not read as "credentialsSaved".
+      addToast({ type: 'info', title: res.message ?? 'Credentials saved (not verified)' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not save credentials: ${err instanceof Error ? err.message : 'the server did not respond'}` })
     } finally {
       setConnecting(false)
     }
@@ -100,50 +81,25 @@ export default function AmazonIntegrationPage() {
 
   async function handleDisconnect() {
     try {
-      const { disconnectConnector } = await import('../api/connectors/connectorClient')
       await disconnectConnector('amazon')
-      setConnected(false)
       setFetchedOrders([])
-      addToast({ type: 'info', title: 'Disconnected from Amazon Seller Central' })
-    } catch {
-      setConnected(false)
-      addToast({ type: 'info', title: 'Disconnected' })
+      refresh()
+      addToast({ type: 'info', title: 'Disconnected from Amazon' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not disconnect: ${err instanceof Error ? err.message : 'the server did not respond'}` })
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving(true)
-    setTimeout(() => {
-      setSaving(false)
-      addToast({ type: 'success', title: 'Amazon integration settings saved' })
-    }, 800)
-  }
-
-  async function handleForceSync() {
-    if (!connected) return
-    setSyncing(true)
     try {
-      const { syncAmazonOrders } = await import('../api/connectors/amazonConnector')
-      await syncAmazonOrders()
-      const ordersRes = await fetchAmazonOrders()
-      if (ordersRes.orders && Array.isArray(ordersRes.orders)) {
-        const mapped: AmazonOrder[] = ordersRes.orders.map((o: ConnectorOrder, i: number) => ({
-          id: String(i + 1),
-          orderId: o.orderId,
-          status: o.status,
-          items: o.items?.length || 1,
-          amount: `$${(o.total || 0).toFixed(2)}`,
-          syncStatus: 'SYNCED' as const,
-          placedAt: o.purchaseDate ? new Date(o.purchaseDate).toLocaleString() : new Date().toLocaleString(),
-          marketplace: form.marketplace,
-        }))
-        setFetchedOrders(mapped)
-      }
-      addToast({ type: 'success', title: 'Sync completed — orders fetched from connector' })
-    } catch {
-      addToast({ type: 'success', title: 'Force sync completed — 47 orders imported, 0 failed' })
+      const res = await configureConnector('amazon', { marketplaceId: form.marketplace, sandbox: true }) as { message?: string }
+      refresh()
+      addToast({ type: 'success', title: res.message ?? 'Amazon settings saved' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not save settings: ${err instanceof Error ? err.message : 'the server did not respond'}` })
     } finally {
-      setSyncing(false)
+      setSaving(false)
     }
   }
 
@@ -151,8 +107,7 @@ export default function AmazonIntegrationPage() {
   const filteredOrders = displayOrders.filter(o => {
     const matchesSearch = !searchTerm || o.orderId.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesMarketplace = filterMarketplace === 'ALL' || o.marketplace === filterMarketplace
-    const matchesSync = filterSyncStatus === 'ALL' || o.syncStatus === filterSyncStatus
-    return matchesSearch && matchesMarketplace && matchesSync
+    return matchesSearch && matchesMarketplace
   })
 
   return (
@@ -163,19 +118,22 @@ export default function AmazonIntegrationPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect Amazon Seller Central to sync orders, inventory, and fulfillment data</p>
         </div>
         <div className="flex items-center gap-3">
-          {connected ? (
+          {credentialsSaved ? (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)] rounded-lg">
               <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />
-              <span className="text-xs font-medium text-[var(--nexus-success-700)]">Connected</span>
+              <span className="text-xs font-medium text-[var(--nexus-success-700)]">Credentials saved</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface-sunken)] border border-[var(--border-default)] rounded-lg">
               <XCircle className="w-4 h-4 text-[var(--text-tertiary)]" />
-              <span className="text-xs font-medium text-[var(--text-secondary)]">Disconnected</span>
+              <span className="text-xs font-medium text-[var(--text-secondary)]">Not configured</span>
             </div>
           )}
         </div>
       </div>
+
+      <NotLiveBanner marketplace="Amazon" credentialsSaved={credentialsSaved} />
+      {ordersError && <p role="alert" className="text-sm text-[var(--nexus-error-600)]">Could not load orders: {ordersError}</p>}
 
       {/* Connection Card */}
       <div className="card">
@@ -186,13 +144,13 @@ export default function AmazonIntegrationPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm text-[var(--text-secondary)]">
-                Status: <span className={clsx('font-semibold', connected ? 'text-[var(--nexus-success-600)]' : 'text-[var(--text-secondary)]')}>{connected ? 'Connected' : 'Disconnected'}</span>
+                Status: <span className={clsx('font-semibold', credentialsSaved ? 'text-[var(--nexus-success-600)]' : 'text-[var(--text-secondary)]')}>{credentialsSaved ? 'Credentials saved (not verified)' : 'Not configured'}</span>
               </p>
-              {connected && (
+              {credentialsSaved && (
                 <p className="text-xs text-[var(--text-tertiary)]">Marketplace: {MARKETPLACES.find(m => m.value === form.marketplace)?.label} · Seller ID: {form.sellerId}</p>
               )}
             </div>
-            {connected ? (
+            {credentialsSaved ? (
               <PermissionGate resource="integrations" action="delete">
                 <button type="button" onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
@@ -267,9 +225,9 @@ export default function AmazonIntegrationPage() {
         </div>
         <div className="card-footer flex justify-between">
           <PermissionGate resource="integrations" action="create">
-            <button type="button" onClick={handleForceSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
-              {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              {syncing ? 'Syncing...' : 'Force Sync'}
+            <button type="button" disabled title="Live sync with Amazon is not available yet" className="enterprise-btn enterprise-btn-secondary text-sm">
+              <RefreshCw className="w-4 h-4" />
+              Force Sync
             </button>
           </PermissionGate>
           <PermissionGate resource="integrations" action="edit">
@@ -282,22 +240,10 @@ export default function AmazonIntegrationPage() {
       </div>
 
       {/* Order Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="card p-5 text-center">
-          <ShoppingCart className="w-6 h-6 text-[var(--nexus-primary-500)] mx-auto mb-2" />
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.syncedToday}</p>
-          <p className="text-xs text-[var(--text-secondary)]">Synced Today</p>
-        </div>
-        <div className="card p-5 text-center">
-          <Clock className="w-6 h-6 text-[var(--nexus-warning-500)] mx-auto mb-2" />
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.pending}</p>
-          <p className="text-xs text-[var(--text-secondary)]">Pending Sync</p>
-        </div>
-        <div className="card p-5 text-center">
-          <AlertTriangle className="w-6 h-6 text-[var(--nexus-error-500)] mx-auto mb-2" />
-          <p className="text-2xl font-bold text-[var(--text-primary)]">{stats.errors}</p>
-          <p className="text-xs text-[var(--text-secondary)]">Sync Errors</p>
-        </div>
+      <div className="card p-5 text-center sm:max-w-xs">
+        <ShoppingCart className="w-6 h-6 text-[var(--nexus-primary-500)] mx-auto mb-2" />
+        <p className="text-2xl font-bold text-[var(--text-primary)]">{ordersInNexus}</p>
+        <p className="text-xs text-[var(--text-secondary)]">Amazon-channel orders in Nexus</p>
       </div>
 
       {/* Orders Table */}
@@ -311,12 +257,6 @@ export default function AmazonIntegrationPage() {
                 <option value="ALL">All Markets</option>
                 {MARKETPLACES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
-              <select value={filterSyncStatus} onChange={e => setFilterSyncStatus(e.target.value)} className="input text-xs w-28">
-                <option value="ALL">All Sync</option>
-                <option value="SYNCED">Synced</option>
-                <option value="PENDING">Pending</option>
-                <option value="ERROR">Error</option>
-              </select>
             </div>
           </div>
         </div>
@@ -329,14 +269,13 @@ export default function AmazonIntegrationPage() {
                 <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Items</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Amount</th>
-                <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Sync</th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Placed At</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--surface-sunken)]">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
                 </tr>
               ) : filteredOrders.map(order => (
                 <tr key={order.id} className="hover:bg-[var(--surface-sunken)]">
@@ -352,11 +291,6 @@ export default function AmazonIntegrationPage() {
                   </td>
                   <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{order.items}</td>
                   <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium">{order.amount}</td>
-                  <td className="px-6 py-3 text-center">
-                    {order.syncStatus === 'SYNCED' ? <CheckCircle className="w-4 h-4 text-[var(--nexus-success-500)] mx-auto" /> :
-                     order.syncStatus === 'PENDING' ? <Clock className="w-4 h-4 text-[var(--nexus-warning-400)] mx-auto" /> :
-                     <XCircle className="w-4 h-4 text-[var(--nexus-error-500)] mx-auto" />}
-                  </td>
                   <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] text-right">{order.placedAt}</td>
                 </tr>
               ))}
@@ -367,8 +301,8 @@ export default function AmazonIntegrationPage() {
           <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
           <button type="button" disabled={filteredOrders.length === 0} className="enterprise-btn enterprise-btn-ghost text-xs"
             onClick={() => downloadCsv(`amazon-orders-${new Date().toISOString().slice(0, 10)}.csv`,
-              ['Amazon order', 'Marketplace', 'Status', 'Items', 'Amount', 'Sync status', 'Placed'],
-              filteredOrders.map(o => [o.orderId, o.marketplace, o.status, o.items, o.amount, o.syncStatus, o.placedAt]))}>
+              ['Amazon order', 'Marketplace', 'Status', 'Items', 'Amount', 'Placed'],
+              filteredOrders.map(o => [o.orderId, o.marketplace, o.status, o.items, o.amount, o.placedAt]))}>
             <Download className="w-3.5 h-3.5" /> Export</button>
         </div>
       </div>

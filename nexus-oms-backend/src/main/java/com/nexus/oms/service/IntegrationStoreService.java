@@ -47,7 +47,7 @@ public class IntegrationStoreService {
         this.vault = vault;
     }
 
-    static boolean isSecretKey(String settingType) {
+    public static boolean isSecretKey(String settingType) {
         String k = settingType == null ? "" : settingType.toLowerCase(Locale.ROOT);
         return k.contains("token") || k.contains("secret") || k.contains("password")
                 || k.contains("api_key") || k.contains("apikey") || k.endsWith("_key");

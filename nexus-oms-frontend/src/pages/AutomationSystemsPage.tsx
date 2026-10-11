@@ -13,6 +13,7 @@ import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumb
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import { useActiveWarehouse } from '../hooks/useActiveWarehouse'
 import WarehouseSelect from '../components/common/WarehouseSelect'
+import { useAuth } from '../context/AuthContext'
 
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -166,6 +167,7 @@ function timeAgo(iso: string) {
 
 export default function AutomationSystemsPage() {
   const { addToast } = useToast()
+  const { user } = useAuth()
 
   // Data
   const [systems, setSystems] = useState<AutomationSystem[]>([])
@@ -288,14 +290,19 @@ export default function AutomationSystemsPage() {
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 
+  /** The server's reason when there is one; a failed action must say so, never pretend it worked. */
+  function reason(err: unknown): string {
+    const e = err as { response?: { data?: { message?: string } }; message?: string }
+    return e?.response?.data?.message || e?.message || 'the server did not respond'
+  }
+
   async function handleToggleSystem(id: string, isActive: boolean) {
     try {
       await automationApi.toggleAutomationSystem(id, isActive)
       setSystems(prev => prev.map(s => s.id === id ? { ...s, isActive, status: isActive ? 'ONLINE' : 'OFFLINE' } : s))
       addToast({ type: 'success', title: `System ${isActive ? 'enabled' : 'disabled'}` })
-    } catch {
-      setSystems(prev => prev.map(s => s.id === id ? { ...s, isActive, status: isActive ? 'ONLINE' : 'OFFLINE' } : s))
-      addToast({ type: 'info', title: `System ${isActive ? 'enabled' : 'disabled'} (local)` })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not ${isActive ? 'enable' : 'disable'} the system: ${reason(err)}` })
     }
   }
 
@@ -303,8 +310,8 @@ export default function AutomationSystemsPage() {
     try {
       await automationApi.getAutomationStatus(systemId)
       addToast({ type: 'success', title: 'Status check sent' })
-    } catch {
-      addToast({ type: 'info', title: 'Status check sent (simulated)' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Status check failed: ${reason(err)}` })
     }
   }
 
@@ -330,21 +337,9 @@ export default function AutomationSystemsPage() {
       setShowCommandModal(false)
       setCommandForm({ systemId: '', commandType: 'PICK', priority: 3, timeout: 30000, parameters: [{ key: '', value: '' }] })
       fetchCommands()
-    } catch {
-      const sys = systems.find(s => s.id === commandForm.systemId)
-      const newCmd: Command = {
-        id: `CMD-${String(commands.length + 1).padStart(3, '0')}`,
-        systemId: commandForm.systemId,
-        systemName: sys?.name || 'Unknown',
-        commandType: commandForm.commandType,
-        status: 'PENDING',
-        priority: commandForm.priority,
-        sentAt: new Date().toISOString(),
-      }
-      setCommands(prev => [newCmd, ...prev])
-      addToast({ type: 'success', title: 'Command queued (simulated)' })
-      setShowCommandModal(false)
-      setCommandForm({ systemId: '', commandType: 'PICK', priority: 3, timeout: 30000, parameters: [{ key: '', value: '' }] })
+    } catch (err) {
+      // Keep the dialog open so the command can be corrected and sent again; nothing was queued.
+      addToast({ type: 'error', title: `Command was not sent: ${reason(err)}` })
     } finally {
       setCmdLoading(false)
     }
@@ -355,9 +350,8 @@ export default function AutomationSystemsPage() {
       await automationApi.cancelCommand(id)
       setCommands(prev => prev.map(c => c.id === id ? { ...c, status: 'FAILED' as const } : c))
       addToast({ type: 'success', title: 'Command cancelled' })
-    } catch {
-      setCommands(prev => prev.map(c => c.id === id ? { ...c, status: 'FAILED' as const } : c))
-      addToast({ type: 'info', title: 'Command cancelled (simulated)' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not cancel the command: ${reason(err)}` })
     }
   }
 
@@ -366,20 +360,18 @@ export default function AutomationSystemsPage() {
       await automationApi.retryCommand(id)
       setCommands(prev => prev.map(c => c.id === id ? { ...c, status: 'SENT' as const } : c))
       addToast({ type: 'success', title: 'Command retried' })
-    } catch {
-      setCommands(prev => prev.map(c => c.id === id ? { ...c, status: 'SENT' as const } : c))
-      addToast({ type: 'info', title: 'Command retried (simulated)' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not retry the command: ${reason(err)}` })
     }
   }
 
   async function handleAcknowledgeAlert(id: string) {
     try {
-      await automationApi.acknowledgeAlert(id, 'current-user')
+      await automationApi.acknowledgeAlert(id, user?.username ?? 'unknown')
       setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'ACKNOWLEDGED' as const } : a))
       addToast({ type: 'success', title: 'Alert acknowledged' })
-    } catch {
-      setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'ACKNOWLEDGED' as const } : a))
-      addToast({ type: 'info', title: 'Alert acknowledged (simulated)' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not acknowledge the alert: ${reason(err)}` })
     }
   }
 
@@ -388,12 +380,11 @@ export default function AutomationSystemsPage() {
       await automationApi.resolveAlert(id, resolveNotes)
       setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'RESOLVED' as const } : a))
       addToast({ type: 'success', title: 'Alert resolved' })
-    } catch {
-      setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'RESOLVED' as const } : a))
-      addToast({ type: 'info', title: 'Alert resolved (simulated)' })
+      setShowResolveModal(null)
+      setResolveNotes('')
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not resolve the alert: ${reason(err)}` })
     }
-    setShowResolveModal(null)
-    setResolveNotes('')
   }
 
   function addParameter() {

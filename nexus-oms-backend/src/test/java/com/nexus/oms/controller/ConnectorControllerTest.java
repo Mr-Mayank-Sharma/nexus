@@ -13,6 +13,7 @@ import com.nexus.oms.repository.OrderItemRepository;
 import com.nexus.oms.repository.OrderRepository;
 import com.nexus.oms.repository.ProductRepository;
 import com.nexus.oms.security.TenantContext;
+import com.nexus.oms.service.IntegrationStoreService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ class ConnectorControllerTest {
     @Mock private OrderItemRepository orderItemRepository;
     @Mock private InventoryRepository inventoryRepository;
     @Mock private ProductRepository productRepository;
+    @Mock private IntegrationStoreService storeService;
 
     private ConnectorController controller;
     private UUID tenantId;
@@ -48,7 +50,7 @@ class ConnectorControllerTest {
     @BeforeEach
     void setUp() {
         controller = new ConnectorController(storeRepository, settingRepository, syncLogRepository,
-                orderRepository, orderItemRepository, inventoryRepository, productRepository);
+                orderRepository, orderItemRepository, inventoryRepository, productRepository, storeService);
         tenantId = UUID.randomUUID();
         TenantContext.setCurrentTenantId(tenantId);
     }
@@ -59,24 +61,36 @@ class ConnectorControllerTest {
     }
 
     @Test
-    void status_unconfiguredConnectorReportsInactive() {
-        when(storeRepository.findByTenantIdAndStoreCode(any(), any())).thenReturn(Optional.empty());
-        when(orderRepository.countByTenantIdAndChannelIgnoreCase(any(), any())).thenReturn(0L);
+    void status_neverClaimsAConnection_evenWhenCredentialsAreSaved() {
+        NxIntegrationStore store = new NxIntegrationStore();
+        store.setId(UUID.randomUUID());
+        store.setIsActive(true);
+        store.setStatus("ACTIVE");
+        NxIntegrationStoreSetting marker = new NxIntegrationStoreSetting();
+        marker.setSettingType("credentials");
+        marker.setSettingValue("saved");
+        when(storeRepository.findByTenantIdAndStoreCode(any(), eq("amazon"))).thenReturn(Optional.of(store));
+        when(storeRepository.findByTenantIdAndStoreCode(any(), argThat(m -> !"amazon".equals(m)))).thenReturn(Optional.empty());
+        when(settingRepository.findByStoreId(store.getId())).thenReturn(List.of(marker));
+        when(orderRepository.countByTenantIdAndChannelIgnoreCase(any(), any())).thenReturn(3L);
 
         Map<String, Object> res = controller.status().getBody();
-        assertTrue((Boolean) res.get("success"));
+
         Map<?, ?> connectors = (Map<?, ?>) res.get("connectors");
-        assertTrue(connectors.containsKey("amazon"));
-        assertTrue(connectors.containsKey("ebay"));
-        assertTrue(connectors.containsKey("walmart"));
-        assertTrue(connectors.containsKey("bigcommerce"));
+        assertEquals(4, connectors.size());
         Map<?, ?> amazon = (Map<?, ?>) connectors.get("amazon");
-        assertEquals(false, amazon.get("active"));
-        assertEquals(false, amazon.get("hasCredentials"));
+        assertEquals(false, amazon.get("connected"), "nothing can verify a marketplace connection");
+        assertEquals(true, amazon.get("hasCredentials"));
+        assertEquals("CREDENTIALS_SAVED_UNVERIFIED", amazon.get("state"));
+        assertEquals(false, amazon.get("liveSync"));
+        assertEquals(3L, amazon.get("ordersInNexus"));
+        Map<?, ?> ebay = (Map<?, ?>) connectors.get("ebay");
+        assertEquals("NOT_CONFIGURED", ebay.get("state"));
+        assertEquals(false, ebay.get("hasCredentials"));
     }
 
     @Test
-    void configure_upsertsStoreAndAddsCredentialSetting() {
+    void configure_sealsSecrets_andKeepsThemOutOfTheStoredConfig() {
         when(storeRepository.findByTenantIdAndStoreCode(any(), any())).thenReturn(Optional.empty());
         when(storeRepository.save(any())).thenAnswer(inv -> {
             NxIntegrationStore s = inv.getArgument(0);
@@ -86,11 +100,36 @@ class ConnectorControllerTest {
         when(settingRepository.findByStoreIdAndSettingType(any(), any())).thenReturn(Optional.empty());
         when(settingRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        ResponseEntity<Map<String, Object>> resp = controller.configure(Map.of("marketplace", "amazon", "endpoint", "https://api.amazon.test"));
+        ResponseEntity<Map<String, Object>> resp = controller.configure(Map.of(
+                "marketplace", "amazon", "endpoint", "https://api.amazon.test", "marketplaceId", "ATVPDKIKX0DER",
+                "clientSecret", "super-secret", "refreshToken", "rt-123"));
 
         assertTrue((Boolean) resp.getBody().get("success"));
-        verify(storeRepository).save(any());
-        verify(settingRepository).save(any(NxIntegrationStoreSetting.class));
+        assertEquals(false, resp.getBody().get("verified"));
+        org.mockito.ArgumentCaptor<NxIntegrationStore> saved = org.mockito.ArgumentCaptor.forClass(NxIntegrationStore.class);
+        verify(storeRepository).save(saved.capture());
+        String config = saved.getValue().getConfigJson();
+        assertTrue(config.contains("ATVPDKIKX0DER"));
+        assertFalse(config.contains("super-secret"), "a secret must not be stored in the plain config");
+        assertFalse(config.contains("rt-123"));
+        verify(storeService).updateSetting(any(), eq("clientSecret"), eq("super-secret"));
+        verify(storeService).updateSetting(any(), eq("refreshToken"), eq("rt-123"));
+        assertEquals("PENDING_VERIFICATION", saved.getValue().getStatus());
+    }
+
+    @Test
+    void configure_withoutSecrets_doesNotPretendCredentialsExist() {
+        when(storeRepository.findByTenantIdAndStoreCode(any(), any())).thenReturn(Optional.empty());
+        when(storeRepository.save(any())).thenAnswer(inv -> {
+            NxIntegrationStore s = inv.getArgument(0);
+            if (s.getId() == null) s.setId(UUID.randomUUID());
+            return s;
+        });
+
+        controller.configure(Map.of("marketplace", "walmart", "channelType", "WFS"));
+
+        verify(storeService, never()).updateSetting(any(), any(), any());
+        verify(settingRepository, never()).save(any(NxIntegrationStoreSetting.class));
     }
 
     @Test
@@ -103,7 +142,7 @@ class ConnectorControllerTest {
     }
 
     @Test
-    void authorize_setsActiveAndStoresCredentials() {
+    void authorize_savesTheTokenSealed_butDoesNotMarkItConnectedOrVerified() {
         NxIntegrationStore store = new NxIntegrationStore();
         store.setId(UUID.randomUUID());
         store.setTenantId(tenantId);
@@ -118,10 +157,21 @@ class ConnectorControllerTest {
         ResponseEntity<Map<String, Object>> resp = controller.authorize("amazon", Map.of("accessToken", "tok-123"));
 
         assertEquals(true, resp.getBody().get("success"));
-        assertEquals(true, store.getIsActive());
-        assertEquals("ACTIVE", store.getStatus());
-        assertEquals(true, resp.getBody().get("hasCredentials"));
-        verify(settingRepository).save(any(NxIntegrationStoreSetting.class));
+        assertEquals(false, resp.getBody().get("verified"));
+        assertEquals("PENDING_VERIFICATION", store.getStatus(), "saving a token is not a verified connection");
+        verify(storeService).updateSetting(store.getId(), "access_token", "tok-123");
+        org.mockito.ArgumentCaptor<NxIntegrationStoreSetting> marker = org.mockito.ArgumentCaptor.forClass(NxIntegrationStoreSetting.class);
+        verify(settingRepository).save(marker.capture());
+        assertEquals("saved", marker.getValue().getSettingValue(), "the marker is a flag, never the token");
+    }
+
+    @Test
+    void authorize_requiresAToken_insteadOfRecordingAFictionalOne() {
+        ResponseEntity<Map<String, Object>> resp = controller.authorize("amazon", Map.of());
+
+        assertEquals(400, resp.getStatusCode().value());
+        verify(storeService, never()).updateSetting(any(), any(), any());
+        verify(storeRepository, never()).save(any());
     }
 
     @Test
@@ -143,28 +193,16 @@ class ConnectorControllerTest {
     }
 
     @Test
-    void sync_recordsRealSyncLogAndCountsChannelOrders() {
-        NxOrder o1 = new NxOrder();
-        o1.setId(UUID.randomUUID());
-        o1.setTenantId(tenantId);
-        o1.setChannel("amazon");
-        o1.setChannelOrderId("amz-1");
-        o1.setStatus("ACTIVE");
-        o1.setTotal(new BigDecimal("12.50"));
-        when(orderRepository.findByTenantIdAndChannelIgnoreCase(tenantId, "amazon")).thenReturn(List.of(o1));
-        when(storeRepository.findByTenantIdAndStoreCode(tenantId, "amazon")).thenReturn(Optional.empty());
-        when(storeRepository.save(any())).thenAnswer(inv -> {
-            NxIntegrationStore s = inv.getArgument(0);
-            if (s.getId() == null) s.setId(UUID.randomUUID());
-            return s;
-        });
-        when(syncLogRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
+    void sync_isHonestlyUnavailable_andRecordsNothing() {
         ResponseEntity<Map<String, Object>> resp = controller.sync("amazon");
 
-        assertEquals(true, resp.getBody().get("success"));
-        assertEquals(1, resp.getBody().get("orderCount"));
-        verify(syncLogRepository).save(any(NxSyncLog.class));
+        assertEquals(501, resp.getStatusCode().value());
+        assertEquals(false, resp.getBody().get("success"));
+        assertEquals(false, resp.getBody().get("implemented"));
+        assertTrue(String.valueOf(resp.getBody().get("error")).contains("not available"));
+        verifyNoInteractions(syncLogRepository);      // no fabricated SUCCESS history
+        verify(storeRepository, never()).save(any());  // and no connector record created by a sync
+        verifyNoInteractions(orderRepository);
     }
 
     @Test
@@ -189,6 +227,22 @@ class ConnectorControllerTest {
         assertEquals("wmt-301", first.get("orderId"));
         assertEquals("SHIPPED", first.get("status"));
         assertEquals(o.getId(), first.get("id"));
+        assertEquals("NEXUS_RECORDS", resp.getBody().get("source"), "these are Nexus's own orders, and the response says so");
+        assertEquals(false, resp.getBody().get("live"));
+    }
+
+    @Test
+    void inventoryAndListings_areLabelledAsNexusOwnData() {
+        when(inventoryRepository.findByTenantId(tenantId)).thenReturn(List.of());
+        when(productRepository.findByTenantId(any(), any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of()));
+
+        Map<String, Object> inventory = controller.getInventory("amazon").getBody();
+        Map<String, Object> listings = controller.getListings("amazon").getBody();
+
+        assertEquals("NEXUS_RECORDS", inventory.get("source"));
+        assertEquals(false, inventory.get("live"));
+        assertEquals("NEXUS_RECORDS", listings.get("source"));
+        assertEquals(false, listings.get("live"));
     }
 
     @Test

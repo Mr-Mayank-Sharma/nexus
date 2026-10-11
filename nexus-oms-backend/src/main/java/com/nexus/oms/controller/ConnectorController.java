@@ -6,6 +6,7 @@ import com.nexus.oms.entity.NxInventory;
 import com.nexus.oms.entity.NxOrder;
 import com.nexus.oms.entity.NxSyncLog;
 import com.nexus.oms.entity.Product;
+import com.nexus.oms.service.IntegrationStoreService;
 import com.nexus.oms.repository.InventoryRepository;
 import com.nexus.oms.repository.NxIntegrationStoreRepository;
 import com.nexus.oms.repository.NxIntegrationStoreSettingRepository;
@@ -29,7 +30,20 @@ import java.util.stream.Collectors;
 @Tag(name = "Marketplace Connectors", description = "Marketplace connector endpoints backed by the configured integration store registry")
 @RestController
 @RequestMapping("/connectors")
+/**
+ * Marketplace connector endpoints for Amazon, eBay, Walmart and BigCommerce.
+ *
+ * <p>Nothing here calls a marketplace. No live API client is wired to these endpoints, so they
+ * report that plainly instead of simulating a connection: status never says "connected", sync
+ * answers 501, and the order, inventory and listing endpoints return Nexus's own records, labelled
+ * as such. Credentials are saved sealed and marked unverified. (A Shopify integration with a live
+ * client exists separately under /shopify.)
+ */
 public class ConnectorController {
+
+    static final String SOURCE = "NEXUS_RECORDS";
+    static final String NOT_LIVE_NOTE = "These are records already held in Nexus, not data fetched from the marketplace: "
+            + "no live marketplace API client is connected in this build.";
 
     private static final Set<String> MARKETPLACES = Set.of("amazon", "ebay", "walmart", "bigcommerce");
     private static final Map<String, String> LABELS = Map.of(
@@ -45,6 +59,7 @@ public class ConnectorController {
     private final OrderItemRepository orderItemRepository;
     private final InventoryRepository inventoryRepository;
     private final ProductRepository productRepository;
+    private final IntegrationStoreService storeService;
 
     public ConnectorController(NxIntegrationStoreRepository storeRepository,
                                NxIntegrationStoreSettingRepository settingRepository,
@@ -52,7 +67,8 @@ public class ConnectorController {
                                OrderRepository orderRepository,
                                OrderItemRepository orderItemRepository,
                                InventoryRepository inventoryRepository,
-                               ProductRepository productRepository) {
+                               ProductRepository productRepository,
+                               IntegrationStoreService storeService) {
         this.storeRepository = storeRepository;
         this.settingRepository = settingRepository;
         this.syncLogRepository = syncLogRepository;
@@ -60,6 +76,7 @@ public class ConnectorController {
         this.orderItemRepository = orderItemRepository;
         this.inventoryRepository = inventoryRepository;
         this.productRepository = productRepository;
+        this.storeService = storeService;
     }
 
     @Operation(summary = "Get connector status for all marketplaces")
@@ -78,29 +95,25 @@ public class ConnectorController {
 
     private Map<String, Object> buildStatus(UUID tenantId, String marketplace) {
         Optional<NxIntegrationStore> store = storeRepository.findByTenantIdAndStoreCode(tenantId, marketplace);
-        long ordersSynced = orderRepository.countByTenantIdAndChannelIgnoreCase(tenantId, marketplace);
+        long ordersInNexus = orderRepository.countByTenantIdAndChannelIgnoreCase(tenantId, marketplace);
+        boolean hasCredentials = store.isPresent() && settingRepository.findByStoreId(store.get().getId()).stream()
+                .anyMatch(st -> "credentials".equalsIgnoreCase(st.getSettingType()) && st.getSettingValue() != null && !st.getSettingValue().isBlank());
         Map<String, Object> c = new LinkedHashMap<>();
-        if (store.isEmpty()) {
-            c.put("active", false);
-            c.put("connected", false);
-            c.put("configured", false);
-            c.put("sandbox", true);
-            c.put("lastSync", null);
-            c.put("ordersSynced", ordersSynced);
-            c.put("error", null);
-            c.put("hasCredentials", false);
-            return c;
-        }
-        NxIntegrationStore s = store.get();
-        c.put("active", Boolean.TRUE.equals(s.getIsActive()));
-        c.put("connected", "ACTIVE".equals(s.getStatus()) && Boolean.TRUE.equals(s.getIsActive()));
-        c.put("configured", true);
+        c.put("active", store.isPresent() && Boolean.TRUE.equals(store.get().getIsActive()));
+        // Never true: nothing here can verify a connection, so none is claimed.
+        c.put("connected", false);
+        c.put("configured", hasCredentials);
+        c.put("state", hasCredentials ? "CREDENTIALS_SAVED_UNVERIFIED" : "NOT_CONFIGURED");
+        c.put("liveSync", false);
+        c.put("source", SOURCE);
         c.put("sandbox", true);
-        c.put("lastSync", s.getUpdatedAt() != null ? s.getUpdatedAt().toString() : null);
-        c.put("ordersSynced", ordersSynced);
+        c.put("lastSync", null);
+        // Kept under the old name for the existing screens; it counts orders already in Nexus.
+        c.put("ordersSynced", ordersInNexus);
+        c.put("ordersInNexus", ordersInNexus);
         c.put("error", null);
-        List<NxIntegrationStoreSetting> settings = settingRepository.findByStoreId(s.getId());
-        c.put("hasCredentials", settings.stream().anyMatch(st -> "credentials".equalsIgnoreCase(st.getSettingType()) && st.getSettingValue() != null));
+        c.put("hasCredentials", hasCredentials);
+        c.put("note", NOT_LIVE_NOTE);
         return c;
     }
 
@@ -113,74 +126,59 @@ public class ConnectorController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("success", false, "error", "Unknown marketplace: " + marketplaceObj));
         }
-        NxIntegrationStore store = storeRepository.findByTenantIdAndStoreCode(tenantId, m)
-                .orElseGet(() -> {
-                    NxIntegrationStore ns = new NxIntegrationStore();
-                    ns.setTenantId(tenantId);
-                    ns.setStoreCode(m);
-                    ns.setStoreName(LABELS.get(m));
-                    ns.setPlatform(m);
-                    ns.setPlatformType("MARKETPLACE");
-                    ns.setStatus("ACTIVE");
-                    ns.setCurrency("USD");
-                    ns.setDefaultLocale("en_US");
-                    ns.setTimezone("UTC");
-                    ns.setIsActive(true);
-                    return ns;
-                });
+        NxIntegrationStore store = storeRepository.findByTenantIdAndStoreCode(tenantId, m).orElseGet(() -> newStore(tenantId, m));
         Object endpoint = body.get("endpoint");
         if (endpoint != null) {
             store.setExternalDomain(String.valueOf(endpoint));
         }
-        store.setConfigJson(writeJson(body));
+        // Secrets go to sealed settings; the stored config keeps only the non-secret fields.
+        Map<String, Object> plain = new LinkedHashMap<>();
+        Map<String, String> secrets = new LinkedHashMap<>();
+        body.forEach((key, value) -> {
+            if (value == null) return;
+            if (IntegrationStoreService.isSecretKey(key)) secrets.put(key, String.valueOf(value));
+            else plain.put(key, value);
+        });
+        store.setConfigJson(writeJson(plain));
         NxIntegrationStore saved = storeRepository.save(store);
-        settingRepository.findByStoreIdAndSettingType(saved.getId(), "credentials").ifPresentOrElse(
-                existing -> { /* keep existing credentials */ },
-                () -> {
-                    NxIntegrationStoreSetting setting = new NxIntegrationStoreSetting();
-                    setting.setStoreId(saved.getId());
-                    setting.setSettingType("credentials");
-                    setting.setSettingValue("configured");
-                    setting.setDescription("Connector configured at " + LocalDateTime.now());
-                    setting.setIsEncrypted(false);
-                    settingRepository.save(setting);
-                });
+        secrets.forEach((key, value) -> {
+            if (!IntegrationStoreService.MASK.equals(value) && !value.isBlank()) storeService.updateSetting(saved.getId(), key, value);
+        });
+        if (!secrets.isEmpty()) markCredentialsSaved(saved.getId());
+
         Map<String, Object> res = new HashMap<>();
         res.put("success", true);
-        res.put("message", capitalize(m) + " connector configuration saved");
+        res.put("verified", false);
+        res.put("message", capitalize(m) + " settings saved. The connection has not been verified: " + NOT_LIVE_NOTE);
         res.put("storeId", saved.getId());
         return ResponseEntity.ok(res);
     }
 
-    @Operation(summary = "Authorize a connector")
+    @Operation(summary = "Save an access token for a connector (not verified)")
     @PostMapping("/{marketplace}/authorize")
     public ResponseEntity<Map<String, Object>> authorize(@PathVariable String marketplace, @RequestBody Map<String, Object> body) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (!MARKETPLACES.contains(marketplace)) {
             return notFound(marketplace);
         }
+        Object token = body.get("accessToken");
+        if (token == null || String.valueOf(token).isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("success", false, "error", "An accessToken is required"));
+        }
         NxIntegrationStore store = storeRepository.findByTenantIdAndStoreCode(tenantId, marketplace)
                 .orElseThrow(() -> new com.nexus.oms.exception.ResourceNotFoundException("Connector", marketplace));
-        store.setStatus("ACTIVE");
+        store.setStatus("PENDING_VERIFICATION");
         store.setIsActive(true);
         storeRepository.save(store);
-        NxIntegrationStoreSetting setting = settingRepository.findByStoreIdAndSettingType(store.getId(), "credentials")
-                .orElseGet(() -> {
-                    NxIntegrationStoreSetting ns = new NxIntegrationStoreSetting();
-                    ns.setStoreId(store.getId());
-                    ns.setSettingType("credentials");
-                    ns.setIsEncrypted(true);
-                    return ns;
-                });
-        Object token = body.get("accessToken");
-        setting.setSettingValue(token != null ? String.valueOf(token) : "authorized");
-        setting.setDescription("Authorized at " + LocalDateTime.now());
-        settingRepository.save(setting);
+        storeService.updateSetting(store.getId(), "access_token", String.valueOf(token));   // sealed at rest
+        markCredentialsSaved(store.getId());
 
         Map<String, Object> res = new HashMap<>();
         res.put("success", true);
-        res.put("note", capitalize(marketplace) + " connector authorized");
+        res.put("verified", false);
         res.put("hasCredentials", true);
+        res.put("note", "Token saved, but it has not been checked against " + capitalize(marketplace) + ": " + NOT_LIVE_NOTE);
         return ResponseEntity.ok(res);
     }
 
@@ -202,53 +200,20 @@ public class ConnectorController {
         return ResponseEntity.ok(res);
     }
 
-    @Operation(summary = "Trigger a sync with a marketplace")
+    @Operation(summary = "Trigger a sync with a marketplace (not available)")
     @PostMapping("/{marketplace}/sync")
     public ResponseEntity<Map<String, Object>> sync(@PathVariable String marketplace) {
-        UUID tenantId = TenantContext.getCurrentTenantId();
         if (!MARKETPLACES.contains(marketplace)) {
             return notFound(marketplace);
         }
-        List<NxOrder> channelOrders = orderRepository.findByTenantIdAndChannelIgnoreCase(tenantId, marketplace);
-        NxIntegrationStore store = storeRepository.findByTenantIdAndStoreCode(tenantId, marketplace)
-                .orElseGet(() -> {
-                    NxIntegrationStore ns = new NxIntegrationStore();
-                    ns.setTenantId(tenantId);
-                    ns.setStoreCode(marketplace);
-                    ns.setStoreName(LABELS.get(marketplace));
-                    ns.setPlatform(marketplace);
-                    ns.setPlatformType("MARKETPLACE");
-                    ns.setStatus("ACTIVE");
-                    ns.setCurrency("USD");
-                    ns.setDefaultLocale("en_US");
-                    ns.setTimezone("UTC");
-                    ns.setIsActive(true);
-                    return ns;
-                });
-        NxIntegrationStore saved = storeRepository.save(store);
-        saved.setUpdatedAt(LocalDateTime.now());
-        storeRepository.save(saved);
-
-        NxSyncLog log = NxSyncLog.builder()
-                .tenantId(tenantId)
-                .integrationType(marketplace.toUpperCase() + "_" + marketplace)
-                .syncType("ORDER")
-                .status("SUCCESS")
-                .startedAt(LocalDateTime.now())
-                .completedAt(LocalDateTime.now())
-                .itemsProcessed(channelOrders.size())
-                .itemsSucceeded(channelOrders.size())
-                .itemsFailed(0)
-                .details(writeJson(Map.of("ordersSynced", channelOrders.size())))
-                .build();
-        syncLogRepository.save(log);
-
+        // Deliberately does nothing else: no sync log, no store record, no "success". The previous
+        // implementation counted local orders and reported a completed sync it never performed.
         Map<String, Object> res = new HashMap<>();
-        res.put("success", true);
-        res.put("message", capitalize(marketplace) + " sync completed");
-        res.put("orderCount", channelOrders.size());
-        res.put("lastSyncAt", LocalDateTime.now().toString());
-        return ResponseEntity.ok(res);
+        res.put("success", false);
+        res.put("implemented", false);
+        res.put("error", capitalize(marketplace) + " sync is not available: " + NOT_LIVE_NOTE);
+        res.put("message", capitalize(marketplace) + " sync is not available in this build");
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).body(res);
     }
 
     @Operation(summary = "Fetch orders from a marketplace connector")
@@ -264,6 +229,9 @@ public class ConnectorController {
         res.put("success", true);
         res.put("orders", orders);
         res.put("orderCount", orders.size());
+        res.put("source", SOURCE);
+        res.put("live", false);
+        res.put("note", NOT_LIVE_NOTE);
         return ResponseEntity.ok(res);
     }
 
@@ -307,6 +275,9 @@ public class ConnectorController {
         res.put("success", true);
         res.put("listings", inventory);
         res.put("itemCount", inventory.size());
+        res.put("source", SOURCE);
+        res.put("live", false);
+        res.put("note", "This is Nexus's own stock, not inventory reported by the marketplace.");
         return ResponseEntity.ok(res);
     }
 
@@ -330,6 +301,9 @@ public class ConnectorController {
         res.put("success", true);
         res.put("listings", listings);
         res.put("listingCount", listings.size());
+        res.put("source", SOURCE);
+        res.put("live", false);
+        res.put("note", "These are Nexus's own products, not listings reported by the marketplace.");
         return ResponseEntity.ok(res);
     }
 
@@ -372,6 +346,35 @@ public class ConnectorController {
         }).collect(Collectors.toList());
         map.put("items", items);
         return map;
+    }
+
+    private NxIntegrationStore newStore(UUID tenantId, String marketplace) {
+        NxIntegrationStore ns = new NxIntegrationStore();
+        ns.setTenantId(tenantId);
+        ns.setStoreCode(marketplace);
+        ns.setStoreName(LABELS.get(marketplace));
+        ns.setPlatform(marketplace);
+        ns.setPlatformType("MARKETPLACE");
+        ns.setStatus("PENDING_VERIFICATION");
+        ns.setCurrency("USD");
+        ns.setDefaultLocale("en_US");
+        ns.setTimezone("UTC");
+        ns.setIsActive(true);
+        return ns;
+    }
+
+    /** Marks that some credentials exist; the value is a flag, never the secret itself. */
+    private void markCredentialsSaved(UUID storeId) {
+        NxIntegrationStoreSetting marker = settingRepository.findByStoreIdAndSettingType(storeId, "credentials").orElseGet(() -> {
+            NxIntegrationStoreSetting ns = new NxIntegrationStoreSetting();
+            ns.setStoreId(storeId);
+            ns.setSettingType("credentials");
+            ns.setIsEncrypted(false);
+            return ns;
+        });
+        marker.setSettingValue("saved");
+        marker.setDescription("Credentials saved " + LocalDateTime.now() + " (not verified)");
+        settingRepository.save(marker);
     }
 
     private ResponseEntity<Map<String, Object>> notFound(String marketplace) {

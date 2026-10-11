@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ShoppingBag, Settings, RefreshCw, Link, Loader2,
-  CheckCircle, XCircle, Clock, Tag, ArrowRight,
+  CheckCircle, XCircle, Tag, ArrowRight,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import PermissionGate from '../components/rbac/PermissionGate'
-import { useEffect } from 'react'
-import { fetchEbayOrders, authorizeEbay } from '../api/connectors/ebayConnector'
-import { fetchAllStatus } from '../api/connectors/connectorRegistry'
+import { configureConnector, disconnectConnector } from '../api/connectors/connectorClient'
+import { useMarketplaceStatus } from '../features/marketplace/useMarketplaceStatus'
+import { loadChannelOrders } from '../features/marketplace/channelOrders'
+import NotLiveBanner from '../features/marketplace/NotLiveBanner'
 
 interface EbayOrder {
   id: string
@@ -18,7 +19,6 @@ interface EbayOrder {
   status: string
   items: number
   amount: string
-  syncStatus: 'SYNCED' | 'PENDING' | 'ERROR'
   placedAt: string
   site: string
 }
@@ -38,35 +38,28 @@ const EBAY_SITES = [
 
 
 
-interface ConnectorOrder {
-  orderId: string
-  status: string
-  total: number
-  currency: string
-  creationDate: string
-  buyerUsername: string
-}
 
 
 
 export default function EbayIntegrationPage() {
-  const [connected, setConnected] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'settings' | 'categories' | 'orders'>('settings')
   const [filterSite, setFilterSite] = useState('ALL')
-  const [filterSync, setFilterSync] = useState('ALL')
   const { addToast } = useToast()
-
-  useEffect(() => {
-    fetchAllStatus().then(status => {
-      if (status.ebay?.active) setConnected(true)
-    }).catch(() => {})
-  }, [])
+  const { hasCredentials: credentialsSaved, ordersInNexus, refresh } = useMarketplaceStatus('ebay')
 
   const [fetchedOrders, setFetchedOrders] = useState<EbayOrder[]>([])
+
+  const [ordersError, setOrdersError] = useState<string | null>(null)
+  useEffect(() => {
+    const ctl = new AbortController()
+    loadChannelOrders('ebay', ctl.signal)
+      .then(rows => { setOrdersError(null); setFetchedOrders(rows.map(r => (({ id: r.id, orderId: r.orderId, buyer: r.customer, status: r.status, items: r.items, amount: r.amount, placedAt: r.placedAt, site: form.site })))) })
+      .catch(err => { if (!ctl.signal.aborted) setOrdersError(err instanceof Error ? err.message : 'Could not load orders') })
+    return () => ctl.abort()
+  }, [])
   const [connecting, setConnecting] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [syncing, setSyncing] = useState(false)
 
   const [form, setForm] = useState({
     site: 'US',
@@ -90,15 +83,16 @@ export default function EbayIntegrationPage() {
 
   async function handleConnect() {
     if (!form.apiKey.trim() || !form.authToken.trim()) {
-      addToast({ type: 'warning', title: 'API Key and Auth Token are required' }); return
+      addToast({ type: 'warning', title: 'eBay credentials are required' }); return
     }
     setConnecting(true)
     try {
-      await authorizeEbay({ clientId: form.apiKey, clientSecret: form.authToken, siteId: 0, sandbox: true })
-      setConnected(true)
-      addToast({ type: 'success', title: 'Connected to eBay API' })
-    } catch (err: any) {
-      addToast({ type: 'error', title: `Connection failed: ${err.message}` })
+      const res = await configureConnector('ebay', { clientId: form.apiKey, clientSecret: form.authToken, siteId: form.site, sandbox: true }) as { message?: string }
+      refresh()
+      // Saved, not verified: no check against eBay is made, so this must not read as "credentialsSaved".
+      addToast({ type: 'info', title: res.message ?? 'Credentials saved (not verified)' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not save credentials: ${err instanceof Error ? err.message : 'the server did not respond'}` })
     } finally {
       setConnecting(false)
     }
@@ -106,51 +100,25 @@ export default function EbayIntegrationPage() {
 
   async function handleDisconnect() {
     try {
-      const { disconnectConnector } = await import('../api/connectors/connectorClient')
       await disconnectConnector('ebay')
-      setConnected(false)
       setFetchedOrders([])
+      refresh()
       addToast({ type: 'info', title: 'Disconnected from eBay' })
-    } catch {
-      setConnected(false)
-      addToast({ type: 'info', title: 'Disconnected' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not disconnect: ${err instanceof Error ? err.message : 'the server did not respond'}` })
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving(true)
-    setTimeout(() => {
-      setSaving(false)
-      addToast({ type: 'success', title: 'eBay integration settings saved' })
-    }, 800)
-  }
-
-  async function handleSync() {
-    if (!connected) return
-    setSyncing(true)
     try {
-      const { syncEbayOrders } = await import('../api/connectors/ebayConnector')
-      await syncEbayOrders()
-      const ordersRes = await fetchEbayOrders()
-      if (ordersRes.orders && Array.isArray(ordersRes.orders)) {
-        const mapped: EbayOrder[] = ordersRes.orders.map((o: ConnectorOrder, i: number) => ({
-          id: String(i + 1),
-          orderId: o.orderId,
-          buyer: o.buyerUsername,
-          status: o.status === 'COMPLETED' ? 'Shipped' : o.status === 'ACTIVE' ? 'Paid' : o.status,
-          items: o.items?.length || 1,
-          amount: `$${(o.total || 0).toFixed(2)}`,
-          syncStatus: 'SYNCED' as const,
-          placedAt: o.creationDate ? new Date(o.creationDate).toLocaleString() : new Date().toLocaleString(),
-          site: form.site,
-        }))
-        setFetchedOrders(mapped)
-      }
-      addToast({ type: 'success', title: 'eBay sync completed — orders fetched from connector' })
-    } catch {
-      addToast({ type: 'success', title: 'eBay sync completed — 23 orders imported, 2 errors' })
+      const res = await configureConnector('ebay', { siteId: form.site, sandbox: true }) as { message?: string }
+      refresh()
+      addToast({ type: 'success', title: res.message ?? 'eBay settings saved' })
+    } catch (err) {
+      addToast({ type: 'error', title: `Could not save settings: ${err instanceof Error ? err.message : 'the server did not respond'}` })
     } finally {
-      setSyncing(false)
+      setSaving(false)
     }
   }
 
@@ -173,8 +141,7 @@ export default function EbayIntegrationPage() {
   const filteredOrders = displayOrders.filter(o => {
     const matchesSearch = !searchTerm || o.orderId.toLowerCase().includes(searchTerm.toLowerCase()) || o.buyer.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesSite = filterSite === 'ALL' || o.site === filterSite
-    const matchesSync = filterSync === 'ALL' || o.syncStatus === filterSync
-    return matchesSearch && matchesSite && matchesSync
+    return matchesSearch && matchesSite
   })
 
   const tabs = [
@@ -191,19 +158,22 @@ export default function EbayIntegrationPage() {
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect your eBay store to synchronize orders, categories, and inventory</p>
         </div>
         <div className="flex items-center gap-3">
-          {connected ? (
+          {credentialsSaved ? (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)] rounded-lg">
               <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />
-              <span className="text-xs font-medium text-[var(--nexus-success-700)]">Connected</span>
+              <span className="text-xs font-medium text-[var(--nexus-success-700)]">Credentials saved</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface-sunken)] border border-[var(--border-default)] rounded-lg">
               <XCircle className="w-4 h-4 text-[var(--text-tertiary)]" />
-              <span className="text-xs font-medium text-[var(--text-secondary)]">Disconnected</span>
+              <span className="text-xs font-medium text-[var(--text-secondary)]">Not configured</span>
             </div>
           )}
         </div>
       </div>
+
+      <NotLiveBanner marketplace="eBay" credentialsSaved={credentialsSaved} />
+      {ordersError && <p role="alert" className="text-sm text-[var(--nexus-error-600)]">Could not load orders: {ordersError}</p>}
 
       {/* Connection Card */}
       <div className="card">
@@ -214,11 +184,11 @@ export default function EbayIntegrationPage() {
           <div className="flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-sm text-[var(--text-secondary)]">
-                Status: <span className={clsx('font-semibold', connected ? 'text-[var(--nexus-success-600)]' : 'text-[var(--text-secondary)]')}>{connected ? 'Connected' : 'Disconnected'}</span>
+                Status: <span className={clsx('font-semibold', credentialsSaved ? 'text-[var(--nexus-success-600)]' : 'text-[var(--text-secondary)]')}>{credentialsSaved ? 'Credentials saved (not verified)' : 'Not configured'}</span>
               </p>
-              {connected && <p className="text-xs text-[var(--text-tertiary)]">eBay {EBAY_SITES.find(s => s.value === form.site)?.label} · Store: {form.storeName || 'N/A'}</p>}
+              {credentialsSaved && <p className="text-xs text-[var(--text-tertiary)]">eBay {EBAY_SITES.find(s => s.value === form.site)?.label} · Store: {form.storeName || 'N/A'}</p>}
             </div>
-            {connected ? (
+            {credentialsSaved ? (
               <PermissionGate resource="integrations" action="delete">
                 <button type="button" onClick={handleDisconnect} className="enterprise-btn enterprise-btn-secondary text-sm text-[var(--nexus-error-600)] border-[var(--nexus-error-200)] hover:bg-[var(--nexus-error-50)]">
                   <XCircle className="w-4 h-4" /> Disconnect
@@ -301,9 +271,9 @@ export default function EbayIntegrationPage() {
             </div>
             <div className="card-footer flex justify-between">
               <PermissionGate resource="integrations" action="create">
-                <button type="button" onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-secondary text-sm">
-                  {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                  {syncing ? 'Syncing...' : 'Run Sync'}
+                <button type="button" disabled title="Live sync with eBay is not available yet" className="enterprise-btn enterprise-btn-secondary text-sm">
+                  <RefreshCw className="w-4 h-4" />
+                  Run Sync
                 </button>
               </PermissionGate>
               <PermissionGate resource="integrations" action="edit">
@@ -411,18 +381,12 @@ export default function EbayIntegrationPage() {
         <div className="card">
           <div className="card-header">
             <div className="flex items-center justify-between w-full">
-              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><ShoppingBag className="w-4 h-4 text-[var(--nexus-ai-500)]" /> Recent eBay Orders</h3>
+              <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><ShoppingBag className="w-4 h-4 text-[var(--nexus-ai-500)]" /> eBay-channel orders in Nexus ({ordersInNexus})</h3>
               <div className="flex items-center gap-3">
                 <Autocomplete value={searchTerm} onChange={setSearchTerm} placeholder="Search orders..." minChars={0} />
                 <select value={filterSite} onChange={e => setFilterSite(e.target.value)} className="input text-xs w-28">
                   <option value="ALL">All Sites</option>
                   {EBAY_SITES.map(s => <option key={s.value} value={s.value}>{s.value}</option>)}
-                </select>
-                <select value={filterSync} onChange={e => setFilterSync(e.target.value)} className="input text-xs w-28">
-                  <option value="ALL">All Sync</option>
-                  <option value="SYNCED">Synced</option>
-                  <option value="PENDING">Pending</option>
-                  <option value="ERROR">Error</option>
                 </select>
               </div>
             </div>
@@ -437,14 +401,13 @@ export default function EbayIntegrationPage() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)] uppercase">Status</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Items</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Amount</th>
-                  <th className="px-6 py-3 text-center text-xs font-semibold text-[var(--text-secondary)] uppercase">Sync</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-[var(--text-secondary)] uppercase">Placed At</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--surface-sunken)]">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
+                    <td colSpan={7} className="px-6 py-8 text-center text-sm text-[var(--text-tertiary)]">No orders found matching your filters</td>
                   </tr>
                 ) : filteredOrders.map(order => (
                   <tr key={order.id} className="hover:bg-[var(--surface-sunken)]">
@@ -461,11 +424,6 @@ export default function EbayIntegrationPage() {
                     </td>
                     <td className="px-6 py-3 text-sm text-[var(--text-secondary)] text-right">{order.items}</td>
                     <td className="px-6 py-3 text-sm text-[var(--text-primary)] text-right font-medium">{order.amount}</td>
-                    <td className="px-6 py-3 text-center">
-                      {order.syncStatus === 'SYNCED' ? <CheckCircle className="w-4 h-4 text-[var(--nexus-success-500)] mx-auto" /> :
-                       order.syncStatus === 'PENDING' ? <Clock className="w-4 h-4 text-[var(--nexus-warning-400)] mx-auto" /> :
-                       <XCircle className="w-4 h-4 text-[var(--nexus-error-500)] mx-auto" />}
-                    </td>
                     <td className="px-6 py-3 text-sm text-[var(--text-tertiary)] text-right">{order.placedAt}</td>
                   </tr>
                 ))}
@@ -476,8 +434,8 @@ export default function EbayIntegrationPage() {
             <span>Showing {filteredOrders.length} of {displayOrders.length} orders</span>
             <div className="flex items-center gap-2">
               <PermissionGate resource="integrations" action="create">
-                <button type="button" onClick={handleSync} disabled={syncing || !connected} className="enterprise-btn enterprise-btn-ghost text-xs">
-                  <RefreshCw className={clsx('w-3.5 h-3.5', syncing && 'animate-spin')} /> Sync Now
+                <button type="button" disabled title="Live sync with eBay is not available yet" className="enterprise-btn enterprise-btn-ghost text-xs">
+                  <RefreshCw className="w-3.5 h-3.5" /> Sync Now
                 </button>
               </PermissionGate>
             </div>
