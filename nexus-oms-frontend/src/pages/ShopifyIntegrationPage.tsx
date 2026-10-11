@@ -9,6 +9,7 @@ import { IntegrationStore, StoreSyncStatus } from '../api/integrationStores'
 import StatusBadge from '../components/common/StatusBadge'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { getOrderById } from '../api/orders'
+import InventoryPublishingPanel from '../features/shopify/InventoryPublishingPanel'
 import { Order } from '../types'
 
 const SYNC_DEFS: Record<string, { label: string; description: string }> = {
@@ -80,8 +81,13 @@ export default function ShopifyIntegrationPage() {
         case 'REFUND_PUSH': res = await api.shopifyPushRefunds(selectedStore.id); break
       }
       if (res?.data) {
-        addToast({ type: res.data.status === 'COMPLETED' ? 'success' : 'error',
-          title: `${SYNC_TYPE_LABELS[type] || type}: ${res.data.itemsSucceeded} OK, ${res.data.itemsFailed} failed` })
+        const d = res.data
+        // BLOCKED (nothing mapped) is not a failure of the sync, so say what to do instead of "0 OK, 0 failed".
+        addToast({ type: d.status === 'COMPLETED' ? 'success' : 'error',
+          title: d.status === 'BLOCKED' || d.status === 'FAILED' ? (d.message || `${SYNC_TYPE_LABELS[type] || type} could not run`)
+            : `${SYNC_TYPE_LABELS[type] || type}: ${d.itemsSucceeded} OK, ${d.itemsFailed} failed` })
+      } else if (res && res.success === false) {
+        addToast({ type: 'error', title: res.error || `${SYNC_TYPE_LABELS[type] || type} failed` })
       }
       await openStore(selectedStore)
     } catch {
@@ -94,8 +100,15 @@ export default function ShopifyIntegrationPage() {
     setRegistering(true)
     try {
       const baseUrl = window.location.origin
-      await api.shopifyRegisterWebhooks(selectedStore.id, baseUrl)
-      addToast({ type: 'success', title: `Webhooks registered to ${baseUrl}` })
+      const res = await api.shopifyRegisterWebhooks(selectedStore.id, baseUrl)
+      if (!res.success) {
+        addToast({ type: 'error', title: res.error || 'Failed to register webhooks' })
+      } else {
+        const failed = Object.entries(res.data || {}).filter(([, outcome]) => String(outcome).startsWith('FAILED'))
+        addToast(failed.length === 0
+          ? { type: 'success', title: `Webhooks are registered to ${baseUrl}` }
+          : { type: 'error', title: `${failed.length} webhook(s) not registered: ${failed.map(([topic, o]) => `${topic} (${String(o).replace('FAILED: ', '')})`).join('; ')}` })
+      }
     } catch {
       addToast({ type: 'error', title: 'Failed to register webhooks' })
     } finally { setRegistering(false) }
@@ -225,6 +238,8 @@ export default function ShopifyIntegrationPage() {
                 </div>
               </div>
             )}
+
+            {selectedStore && <InventoryPublishingPanel storeId={selectedStore.id} />}
 
             {/* Find order */}
             <div className="card">

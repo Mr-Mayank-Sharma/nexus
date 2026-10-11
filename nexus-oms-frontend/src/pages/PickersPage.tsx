@@ -187,25 +187,25 @@ export default function PickersPage() {
           title="Total Pickers"
           value={stats?.totalPickers || pickers.length}
           icon={Users}
-          color="blue"
+          color="info"
         />
         <EnterpriseKPICard
           title="Available"
           value={stats?.available || pickers.filter(p => p.status === 'AVAILABLE').length}
           icon={UserCheck}
-          color="green"
+          color="success"
         />
         <EnterpriseKPICard
           title="Picking"
           value={stats?.picking || pickers.filter(p => p.status === 'PICKING').length}
           icon={Clock}
-          color="purple"
+          color="ai"
         />
         <EnterpriseKPICard
           title="Active Assignments"
           value={stats?.activeAssignments || assignments.filter(a => a.status !== 'COMPLETED' && a.status !== 'CANCELLED').length}
           icon={ArrowRight}
-          color="orange"
+          color="warning"
         />
       </div>
 

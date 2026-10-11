@@ -23,9 +23,8 @@ export default function PackerScreen() {
   const { data: packages = [] } = useQuery({
     queryKey: ['packer-packages'],
     queryFn: async () => {
-      const res = await packingApi.getPackages({})
-      const d = res.data
-      return (Array.isArray(d) ? d : (d?.content ?? [])).slice(0, 200)
+      const res = await packingApi.getPackages()
+      return (res.data ?? []).slice(0, 200)
     },
   })
 
@@ -81,7 +80,7 @@ export default function PackerScreen() {
 
       <div className="grid grid-cols-4 gap-4">
         {kpis.map(k => (
-          <EnterpriseKPICard key={k.title} title={k.title} value={k.value} icon={k.icon} color={k.color} trend={k.trend} />
+          <EnterpriseKPICard key={k.title} title={k.title} value={k.value} icon={k.icon} color={k.color} trend={k.trend ?? undefined} />
         ))}
       </div>
 

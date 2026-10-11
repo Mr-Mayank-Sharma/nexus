@@ -145,6 +145,8 @@ export interface ApiResponse<T> {
   success: boolean
   data: T
   message?: string
+  /** Set by the API helpers when a call fails and they return instead of throwing. */
+  error?: string
   errors?: string[]
   pagination?: {
     page: number

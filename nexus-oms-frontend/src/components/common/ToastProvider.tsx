@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { ToastContext, Toast } from '../../hooks/useToast'
+import { ToastContext, type Toast, type ToastOptions, type ToastVariant } from '../../hooks/useToast'
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react'
 
 const icons = {
@@ -38,6 +38,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     setToasts(prev => prev.filter(t => t.id !== id))
   }, [])
 
+  const toast = useCallback((options: ToastOptions | string, variant?: ToastVariant) => {
+    const o: ToastOptions = typeof options === 'string' ? { title: options, variant } : options
+    addToast({
+      type: !o.variant || o.variant === 'default' ? 'info' : o.variant,
+      title: o.title,
+      message: o.description,
+      duration: o.duration,
+    })
+  }, [addToast])
+
   useEffect(() => {
     toasts.forEach(toast => {
       const timer = setTimeout(() => {
@@ -48,7 +58,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   }, [toasts, removeToast])
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+    <ToastContext.Provider value={{ toasts, addToast, removeToast, toast }}>
       {children}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm" aria-live="polite" aria-relevant="additions removals">
         {toasts.map(toast => {

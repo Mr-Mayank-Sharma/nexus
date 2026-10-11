@@ -144,25 +144,25 @@ export default function TransfersPage() {
           title="Total Transfers"
           value={stats?.totalTransfers || 0}
           icon={Package}
-          color="blue"
+          color="info"
         />
         <EnterpriseKPICard
           title="Pending Approval"
           value={stats?.pendingApproval || 0}
           icon={Clock}
-          color="yellow"
+          color="warning"
         />
         <EnterpriseKPICard
           title="In Transit"
           value={stats?.inTransit || 0}
           icon={Truck}
-          color="purple"
+          color="ai"
         />
         <EnterpriseKPICard
           title="Urgent"
           value={stats?.urgentTransfers || 0}
           icon={AlertTriangle}
-          color="red"
+          color="error"
         />
       </div>
 

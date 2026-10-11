@@ -133,7 +133,7 @@ export async function shopifyPushRefunds(storeId: string): Promise<ApiResponse<a
   }
 }
 
-export async function shopifyRegisterWebhooks(storeId: string, baseUrl: string): Promise<ApiResponse<null>> {
+export async function shopifyRegisterWebhooks(storeId: string, baseUrl: string): Promise<ApiResponse<Record<string, string>>> {
   try {
     const { data } = await client.post(`/shopify/stores/${storeId}/webhooks/register`, null, { params: { baseUrl } })
     return data

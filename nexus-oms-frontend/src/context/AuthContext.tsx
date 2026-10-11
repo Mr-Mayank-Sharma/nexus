@@ -103,18 +103,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     storeAuth(response.data)
   }, [])
 
-  const storeAuth = useCallback((authData: Record<string, unknown>) => {
-    const accessToken = authData.accessToken as string
-    const refreshToken = authData.refreshToken as string
-    const id = authData.id as string
-    const username = authData.username as string
-    const role = authData.role as string
-    const tenantId = authData.tenantId as string
-    const tenantName = authData.tenantName as string
-    const email = authData.email as string
-    const fullName = authData.fullName as string
-    const permissions = (authData.permissions as string[]) || []
-    const securityGroups = (authData.securityGroups as string[]) || []
+  const storeAuth = useCallback((authData: object) => {
+    const auth = authData as Record<string, unknown>
+    const accessToken = auth.accessToken as string
+    const refreshToken = auth.refreshToken as string
+    const id = auth.id as string
+    const username = auth.username as string
+    const role = auth.role as string
+    const tenantId = auth.tenantId as string
+    const tenantName = auth.tenantName as string
+    const email = auth.email as string
+    const fullName = auth.fullName as string
+    const permissions = (auth.permissions as string[]) || []
+    const securityGroups = (auth.securityGroups as string[]) || []
 
     const validRole = ['ADMIN','CEO','OPS_MANAGER','WAREHOUSE_MANAGER','PICKER','PACKER','LOADER','STORE_MANAGER','BOPIS_OWNER','CUSTOMER_SUPPORT','PROCUREMENT_MANAGER','FINANCE','LOGISTICS_MANAGER','VIEWER'].includes(role)
       ? role as UserRole
@@ -137,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     localStorage.setItem('nexus_user', JSON.stringify(user))
     // Tenant policy requires MFA but this user has not enrolled: the login page sends them to setup.
-    if (authData.mfaEnrollmentRequired) sessionStorage.setItem('nexus_mfa_enrollment_required', '1')
+    if (auth.mfaEnrollmentRequired) sessionStorage.setItem('nexus_mfa_enrollment_required', '1')
     else sessionStorage.removeItem('nexus_mfa_enrollment_required')
     localStorage.setItem('nexus_permissions', JSON.stringify(permissions))
     localStorage.setItem('nexus_security_groups', JSON.stringify(securityGroups))
@@ -186,17 +187,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user || user.role !== 'ADMIN') return
     try {
       const permRes = await rbacApi.getPermissionsByRole(newRole)
-      const rolePerms = permRes.data?.data ?? []
-      const permStrings: string[] = rolePerms
-        .filter((rp: { canView?: boolean; canCreate?: boolean; canEdit?: boolean; canDelete?: boolean }) => rp.canView || rp.canCreate || rp.canEdit || rp.canDelete)
-        .flatMap((rp: { permissionGroup: string; canView?: boolean; canCreate?: boolean; canEdit?: boolean; canDelete?: boolean }) => {
-          const perms: string[] = []
-          if (rp.canView) perms.push(`${rp.permissionGroup}:view`)
-          if (rp.canCreate) perms.push(`${rp.permissionGroup}:create`)
-          if (rp.canEdit) perms.push(`${rp.permissionGroup}:edit`)
-          if (rp.canDelete) perms.push(`${rp.permissionGroup}:delete`)
-          return perms
-        })
+      // The endpoint returns the backend's permission rows (permissionGroup + can* flags), which is
+      // not the shape declared by the shared RolePermission type.
+      const rolePerms = (permRes.data ?? []) as unknown as Array<{ permissionGroup: string; canView?: boolean; canCreate?: boolean; canEdit?: boolean; canDelete?: boolean }>
+      const permStrings: string[] = rolePerms.flatMap(rp => {
+        const perms: string[] = []
+        if (rp.canView) perms.push(`${rp.permissionGroup}:view`)
+        if (rp.canCreate) perms.push(`${rp.permissionGroup}:create`)
+        if (rp.canEdit) perms.push(`${rp.permissionGroup}:edit`)
+        if (rp.canDelete) perms.push(`${rp.permissionGroup}:delete`)
+        return perms
+      })
       const updated = { ...user, role: newRole, permissions: permStrings }
       setUser(updated)
       localStorage.setItem('nexus_user', JSON.stringify(updated))

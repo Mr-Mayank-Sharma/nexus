@@ -155,7 +155,9 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Zap: <Zap className="w-[18px] h-[18px]" />,
 }
 
-const STATIC_LINKS: { label: string; path: string; icon: React.ReactNode }[] = []
+interface NavLink { label: string; path: string; icon: React.ReactNode; children?: NavLink[] }
+
+const STATIC_LINKS: NavLink[] = []
 
 import { getModulesForRole } from '../../hooks/useWorkspace'
 import { moduleForRoute } from '../../features/entitlements/modules'
@@ -298,7 +300,7 @@ export default function Sidebar() {
         })),
     }))
 
-  const allLinks = [...STATIC_LINKS, ...moduleLinks]
+  const allLinks: NavLink[] = [...STATIC_LINKS, ...moduleLinks]
 
   const filteredLinks = searchQuery.trim()
     ? allLinks.filter(link => {

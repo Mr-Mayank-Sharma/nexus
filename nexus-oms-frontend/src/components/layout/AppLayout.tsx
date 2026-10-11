@@ -7,7 +7,7 @@ import AIAssistantPanel from '../enterprise/AIAssistantPanel'
 import ErrorBoundary from './ErrorBoundary'
 import clsx from 'clsx'
 import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
-import { useWebSocket } from '../../hooks/useWebSocket'
+import { useWebSocket, type WebSocketMessage } from '../../hooks/useWebSocket'
 import { useToast } from '../../hooks/useToast'
 import ConnectivityBanner from './ConnectivityBanner'
 import NotInPlan from '../../features/entitlements/NotInPlan'
@@ -28,34 +28,34 @@ export default function AppLayout() {
 
   useKeyboardShortcut('k', () => setSearchOpen(true), { meta: true, ctrl: true })
 
-  const handleOrderUpdate = (message: { orderId: string; status: string; message: string }) => {
+  const handleOrderUpdate = (message: WebSocketMessage) => {
     toast({
       title: 'Order Updated',
-      description: `Order ${message.orderId}: ${message.status}`,
+      description: `Order ${String(message.orderId)}: ${String(message.status)}`,
       variant: 'info',
     })
   }
 
-  const handleInventoryAlert = (message: { productId: string; alertType: string; message: string }) => {
+  const handleInventoryAlert = (message: WebSocketMessage) => {
     toast({
       title: 'Inventory Alert',
-      description: message.message,
+      description: String(message.message ?? ''),
       variant: message.alertType === 'LOW_STOCK' ? 'warning' : 'error',
     })
   }
 
-  const handleShipmentUpdate = (message: { shipmentId: string; status: string }) => {
+  const handleShipmentUpdate = (message: WebSocketMessage) => {
     toast({
       title: 'Shipment Update',
-      description: `Shipment ${message.shipmentId}: ${message.status}`,
+      description: `Shipment ${String(message.shipmentId)}: ${String(message.status)}`,
       variant: 'info',
     })
   }
 
-  const handleSystemAlert = (message: { severity: string; title: string; message: string }) => {
+  const handleSystemAlert = (message: WebSocketMessage) => {
     toast({
-      title: message.title,
-      description: message.message,
+      title: String(message.title ?? 'System alert'),
+      description: String(message.message ?? ''),
       variant: message.severity === 'CRITICAL' ? 'error' : message.severity === 'WARNING' ? 'warning' : 'info',
     })
   }

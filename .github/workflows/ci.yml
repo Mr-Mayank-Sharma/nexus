@@ -135,6 +135,10 @@ jobs:
 
       - run: npm ci
       - run: npm run lint
+      # The root tsconfig is solution-style, so `tsc` in the build checks nothing. This runs the
+      # real project config and fails on any new type error (existing ones are baselined per file).
+      - name: Type check (ratchet)
+        run: npm run typecheck
       - run: npm test -- --run
       - run: npm run build
 

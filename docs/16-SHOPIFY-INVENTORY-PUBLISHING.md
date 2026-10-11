@@ -28,6 +28,15 @@ or stores) mapped to that location, of:
 Nexus is authoritative for what it publishes. If the Shopify quantity differs from what Nexus
 last set, it is overwritten and the line is flagged **drift** (someone edited it in Shopify).
 
+## In the app
+
+**Integrations → Shopify → select the store → Inventory publishing.** Add a row per Nexus
+location, pick its Shopify location, optionally a buffer and a cap, and save. *Preview (no
+changes)* runs a dry run and opens the reconciliation report; each line expands to show the
+per-node arithmetic. *Publish to Shopify* asks for confirmation first. Preview and publish are
+disabled while there are unsaved or invalid changes. (Integration screens are visible to
+administrators only: no other role holds the `integration` permission group yet.)
+
 ## API (`/api/v1/shopify/stores/{storeId}/inventory`)
 
 | Call | Purpose |
