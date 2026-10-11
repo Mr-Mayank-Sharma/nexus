@@ -9,6 +9,12 @@ import PermissionGate from '../components/rbac/PermissionGate'
 import Autocomplete from '../components/common/Autocomplete'
 import { useToast } from '../hooks/useToast'
 import * as laborApi from '../api/laborManagement'
+import { useActiveWarehouse } from '../hooks/useActiveWarehouse'
+import WarehouseSelect from '../components/common/WarehouseSelect'
+import NoWarehouses from '../components/common/NoWarehouses'
+import { DAY_LABELS, percent, taskEfficiency, taskRate, utilization, weekdayEfficiency } from '../utils/labor'
+import { useQuery } from '@tanstack/react-query'
+import { getWaves } from '../api/wavePlanning'
 
 interface WorkloadRule {
   id: string
@@ -61,9 +67,6 @@ interface ProductivityByTask {
   logCount: number
 }
 
-const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const barData = [92, 88, 95, 91, 97, 85, 78]
-
 const roleColors: Record<string, string> = {
   Picker: 'bg-[var(--nexus-primary-100)] text-[var(--nexus-primary-700)]',
   Packer: 'bg-[var(--nexus-ai-100)] text-[var(--nexus-ai-700)]',
@@ -88,6 +91,7 @@ type Tab = 'overview' | 'staff' | 'shifts' | 'performance' | 'workload'
 
 export default function LaborManagementPage() {
   const { addToast } = useToast()
+  const { warehouses, warehouseId, setWarehouseId, isLoading: warehousesLoading, hasWarehouses } = useActiveWarehouse()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
 
   const [employees, setEmployees] = useState<any[]>([])
@@ -105,24 +109,27 @@ export default function LaborManagementPage() {
   const [ruleForm, setRuleForm] = useState({ taskType: 'PICKING', maxWorkloadWeight: '100', priorityWeight: '1', skillRequired: '' })
 
   useEffect(() => {
+    setEmployees([]); setShifts([])
+    if (!warehouseId) return
     Promise.all([
-      laborApi.getActiveWorkers('faaebaf3-3af7-43c2-bcde-83c2cfcd6031').catch(() => null),
-      laborApi.getShiftSchedules('faaebaf3-3af7-43c2-bcde-83c2cfcd6031').catch(() => null),
+      laborApi.getActiveWorkers(warehouseId).catch(() => null),
+      laborApi.getShiftSchedules(warehouseId).catch(() => null),
     ]).then(([empRes, shiftRes]) => {
       if (empRes?.data && Array.isArray(empRes.data) && empRes.data.length > 0) setEmployees(empRes.data)
       if (shiftRes?.data && Array.isArray(shiftRes.data) && shiftRes.data.length > 0) setShifts(shiftRes.data)
     }).catch(() => {})
-  }, [])
+  }, [warehouseId])
 
   const loadWorkloadData = useCallback(async () => {
+    if (!warehouseId) return
     setWorkloadLoading(true)
     try {
       const [rulesRes, balanceRes, perfRes, prodRes, prodByTaskRes] = await Promise.allSettled([
-        laborApi.getWorkloadRules('faaebaf3-3af7-43c2-bcde-83c2cfcd6031'),
-        laborApi.getWorkloadBalance('faaebaf3-3af7-43c2-bcde-83c2cfcd6031'),
-        laborApi.calculatePerformanceVsStandard('faaebaf3-3af7-43c2-bcde-83c2cfcd6031', new Date().toISOString().slice(0, 10)),
-        laborApi.getProductivityLogs('faaebaf3-3af7-43c2-bcde-83c2cfcd6031', 7),
-        laborApi.getProductivityByTaskType('faaebaf3-3af7-43c2-bcde-83c2cfcd6031', 7),
+        laborApi.getWorkloadRules(warehouseId),
+        laborApi.getWorkloadBalance(warehouseId),
+        laborApi.calculatePerformanceVsStandard(warehouseId, new Date().toISOString().slice(0, 10)),
+        laborApi.getProductivityLogs(warehouseId, 7),
+        laborApi.getProductivityByTaskType(warehouseId, 7),
       ])
 
       setWorkloadRules(rulesRes.status === 'fulfilled' && rulesRes.value.data?.length > 0 ? rulesRes.value.data : [])
@@ -139,14 +146,22 @@ export default function LaborManagementPage() {
     } finally {
       setWorkloadLoading(false)
     }
-  }, [])
+  }, [warehouseId])
 
-  useEffect(() => {
-    if (activeTab === 'workload') loadWorkloadData()
-  }, [activeTab, loadWorkloadData])
+  // Productivity feeds the headline KPIs and charts on every tab, so load it with the warehouse.
+  useEffect(() => { loadWorkloadData() }, [loadWorkloadData])
 
   const [assignEmployeeId, setAssignEmployeeId] = useState<string | null>(null)
   const [showAssignModal, setShowAssignModal] = useState(false)
+  const { data: waves = [] } = useQuery({
+    queryKey: ['waves', warehouseId, 'open'],
+    queryFn: async () => {
+      const res = await getWaves({ warehouseId })
+      const d = res?.data ?? res
+      return (Array.isArray(d) ? d : d?.content ?? []) as Array<{ id: string; name?: string }>
+    },
+    enabled: !!warehouseId && showAssignModal,
+  })
 
   function handleStartBreak(id: string) {
     setEmployees(employees.map((e) =>
@@ -169,9 +184,10 @@ export default function LaborManagementPage() {
     addToast({ type: 'success', title: 'Shift ended' })
   }
 
-  async function handleAssign(taskData: any) {
+  async function handleAssign() {
+    if (!assignEmployeeId) { addToast({ type: 'error', title: 'Choose a worker to assign' }); return }
     try {
-      await laborApi.assignTask(assignEmployeeId || '', taskData.taskType || 'PICKING', taskData.waveId)
+      await laborApi.assignTask(assignEmployeeId, 'PICKING', selectedAssignWave ?? undefined)
       addToast({ type: 'success', title: 'Task assigned' })
       setShowAssignModal(false)
     } catch {
@@ -182,7 +198,7 @@ export default function LaborManagementPage() {
   async function handleRebalance() {
     setRebalancing(true)
     try {
-      const res = await laborApi.rebalanceWorkload('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
+      const res = await laborApi.rebalanceWorkload(warehouseId)
       addToast({ type: 'success', title: 'Workload rebalanced', description: res?.data?.message || 'Recommendations generated' })
       await loadWorkloadData()
     } catch {
@@ -195,7 +211,7 @@ export default function LaborManagementPage() {
   async function handleCreateRule() {
     try {
       await laborApi.createWorkloadRule({
-        warehouseId: 'faaebaf3-3af7-43c2-bcde-83c2cfcd6031',
+        warehouseId,
         ruleName: ruleForm.taskType + ' Rule',
         taskType: ruleForm.taskType,
         maxWorkloadWeight: Number(ruleForm.maxWorkloadWeight),
@@ -214,7 +230,13 @@ export default function LaborManagementPage() {
 
   const displayShifts = shifts
   const activeWorkers = employees.filter((e) => e.status === 'Active').length
-  const laborUtil = Math.round((activeWorkers / employees.length) * 100)
+  const laborUtil = utilization(activeWorkers, employees.length)
+  const pickRate = taskRate(productivityByTask, 'PICKING')
+  const packEfficiency = taskEfficiency(performanceVsStandard, 'PACKING')
+  const loadEfficiency = taskEfficiency(performanceVsStandard, 'LOADING')
+  const dayEfficiency = weekdayEfficiency(productivityLogs)
+
+  if (!warehousesLoading && !hasWarehouses) return <NoWarehouses what="Labor management" />
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'overview', label: 'Overview', icon: <BarChart3 className="w-4 h-4" /> },
@@ -233,14 +255,15 @@ export default function LaborManagementPage() {
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Workforce tracking, workload balancing & efficiency</p>
         </div>
+        <WarehouseSelect warehouses={warehouses} value={warehouseId} onChange={setWarehouseId} />
       </div>
 
       <div className="grid grid-cols-5 gap-4">
         <KpiCard icon={<UserCheck className="w-5 h-5" />} label="Active Workers" value={String(activeWorkers)} />
-        <KpiCard icon={<TrendingUp className="w-5 h-5" />} label="Lines Picked/hr" value="142" />
-        <KpiCard icon={<Package className="w-5 h-5" />} label="Packing Efficiency" value="96%" />
-        <KpiCard icon={<Truck className="w-5 h-5" />} label="Loading Efficiency" value="88%" />
-        <KpiCard icon={<Gauge className="w-5 h-5" />} label="Labor Utilization" value={`${laborUtil}%`} />
+        <KpiCard icon={<TrendingUp className="w-5 h-5" />} label="Lines Picked/hr" value={pickRate === null ? '—' : String(pickRate)} />
+        <KpiCard icon={<Package className="w-5 h-5" />} label="Packing Efficiency" value={percent(packEfficiency)} />
+        <KpiCard icon={<Truck className="w-5 h-5" />} label="Loading Efficiency" value={percent(loadEfficiency)} />
+        <KpiCard icon={<Gauge className="w-5 h-5" />} label="Labor Utilization" value={percent(laborUtil)} />
       </div>
 
       <div className="enterprise-card p-4">
@@ -271,15 +294,18 @@ export default function LaborManagementPage() {
                 <BarChart3 className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Efficiency by Day of Week
               </h3>
               <div className="flex items-end gap-3 h-40">
-                {barData.map((val, i) => (
-                  <div key={dayLabels[i]} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-[10px] font-medium text-[var(--text-secondary)]">{val}%</span>
-                    <div className="w-full bg-[var(--nexus-primary-100)] rounded-t-md relative" style={{ height: `${val}%` }}>
+                {dayEfficiency.map((val, i) => (
+                  <div key={DAY_LABELS[i]} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-medium text-[var(--text-secondary)]">{percent(val)}</span>
+                    <div className="w-full bg-[var(--nexus-primary-100)] rounded-t-md relative" style={{ height: `${Math.min(val ?? 0, 100)}%` }}>
                       <div className="absolute bottom-0 w-full bg-[var(--nexus-primary-500)] rounded-t-md transition-all" style={{ height: '100%' }} />
                     </div>
-                    <span className="text-[10px] text-[var(--text-secondary)] font-medium">{dayLabels[i]}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-medium">{DAY_LABELS[i]}</span>
                   </div>
                 ))}
+                {productivityLogs.length === 0 && (
+                  <p className="absolute text-xs text-[var(--text-tertiary)]">No productivity has been logged in the last 7 days.</p>
+                )}
               </div>
             </div>
             <div className="space-y-4">
@@ -435,15 +461,18 @@ export default function LaborManagementPage() {
             <div className="enterprise-card p-4">
               <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Efficiency by Day of Week</h4>
               <div className="flex items-end gap-3 h-40">
-                {barData.map((val, i) => (
-                  <div key={dayLabels[i]} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-[10px] font-medium text-[var(--text-secondary)]">{val}%</span>
-                    <div className="w-full bg-[var(--nexus-primary-100)] rounded-t-md relative" style={{ height: `${val}%` }}>
+                {dayEfficiency.map((val, i) => (
+                  <div key={DAY_LABELS[i]} className="flex-1 flex flex-col items-center gap-1">
+                    <span className="text-[10px] font-medium text-[var(--text-secondary)]">{percent(val)}</span>
+                    <div className="w-full bg-[var(--nexus-primary-100)] rounded-t-md relative" style={{ height: `${Math.min(val ?? 0, 100)}%` }}>
                       <div className="absolute bottom-0 w-full bg-[var(--nexus-primary-500)] rounded-t-md transition-all" style={{ height: '100%' }} />
                     </div>
-                    <span className="text-[10px] text-[var(--text-secondary)] font-medium">{dayLabels[i]}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] font-medium">{DAY_LABELS[i]}</span>
                   </div>
                 ))}
+                {productivityLogs.length === 0 && (
+                  <p className="absolute text-xs text-[var(--text-tertiary)]">No productivity has been logged in the last 7 days.</p>
+                )}
               </div>
             </div>
           </div>
@@ -683,7 +712,7 @@ export default function LaborManagementPage() {
                   value={selectedAssignWave || ''}
                   onChange={(val) => setSelectedAssignWave(val || null)}
                   minChars={0}
-                  suggestions={waves.map((w: any) => w.waveId || w.id)}
+                  suggestions={waves.map((w) => w.id)}
                 />
               </div>
             </div>

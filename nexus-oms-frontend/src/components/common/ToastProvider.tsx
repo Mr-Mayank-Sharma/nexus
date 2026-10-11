@@ -72,8 +72,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${iconColors[toastType]}`} />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm">{toast.title}</p>
-                {toast.message && (
-                  <p className="text-xs mt-0.5 opacity-80">{toast.message}</p>
+                {(toast.message ?? toast.description) && (
+                  <p className="text-xs mt-0.5 opacity-80">{toast.message ?? toast.description}</p>
                 )}
               </div>
               <button

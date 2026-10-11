@@ -10,6 +10,10 @@ import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 import * as slottingApi from '../api/slotting'
+import { useQuery } from '@tanstack/react-query'
+import { getBins } from '../api/warehouse'
+import { useActiveWarehouse } from '../hooks/useActiveWarehouse'
+import WarehouseSelect from '../components/common/WarehouseSelect'
 
 interface Assignment {
   id: string
@@ -99,12 +103,6 @@ const VELOCITY_BAR: Record<string, string> = {
   D: 'bg-[var(--nexus-error-500)]',
 }
 
-const WAREHOUSES = [
-  { id: 'faaebaf3-3af7-43c2-bcde-83c2cfcd6031', name: 'Main Warehouse' },
-  { id: 'wh-east', name: 'East DC' },
-  { id: 'wh-west', name: 'West DC' },
-]
-
 const RULE_TYPES = ['Velocity-Based', 'Size-Based', 'Weight-Based', 'Affinity', 'Seasonal', 'Hazardous']
 
 function ScoreBar({ score }: { score: number }) {
@@ -135,7 +133,12 @@ function SkeletonRows({ count = 5 }: { count?: number }) {
 export default function SlottingOptimizationPage() {
   const { addToast } = useToast()
 
-  const [warehouseId, setWarehouseId] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
+  const { warehouses, warehouseId, setWarehouseId, isLoading: warehousesLoading } = useActiveWarehouse()
+  const { data: realBins = [] } = useQuery({
+    queryKey: ['warehouse-bins', warehouseId],
+    queryFn: async () => (await getBins(warehouseId)).data ?? [],
+    enabled: !!warehouseId,
+  })
   const [activeTab, setActiveTab] = useState<Tab>('assignments')
   const [search, setSearch] = useState('')
 
@@ -239,14 +242,20 @@ export default function SlottingOptimizationPage() {
   }
 
   useEffect(() => {
+    if (!warehouseId) {   // wait for the organisation's warehouses
+      if (!warehousesLoading) {
+        setLoadingAssignments(false); setLoadingRules(false); setLoadingStats(false)
+      }
+      return
+    }
     fetchAssignments()
     fetchRules()
     fetchVelocity()
     fetchSpace()
     fetchStats()
-  }, [warehouseId])
+  }, [warehouseId, warehousesLoading])
 
-  useEffect(() => { fetchAudit() }, [warehouseId, auditFrom, auditTo])
+  useEffect(() => { if (warehouseId) fetchAudit() }, [warehouseId, auditFrom, auditTo])
 
   const filteredAssignments = useMemo(() => {
     if (!search) return assignments
@@ -325,11 +334,9 @@ export default function SlottingOptimizationPage() {
 
   const scoreColor = stats.overallScore > 80 ? 'success' : stats.overallScore >= 60 ? 'warning' : 'error'
 
+  // The bins this warehouse really has (the list used to be invented per warehouse name).
   const targetBinOptions = useMemo(() => {
-    const wh = WAREHOUSES.find((w) => w.id === warehouseId)
-    if (wh?.name.includes('East')) return ['E-A1', 'E-A2', 'E-B1', 'E-B2', 'E-C1', 'E-C2', 'E-D1', 'E-D2']
-    if (wh?.name.includes('West')) return ['W-A1', 'W-A2', 'W-B1', 'W-B2', 'W-C1', 'W-C2', 'W-D1', 'W-D2']
-    return ['A-01-01', 'A-01-02', 'A-02-01', 'B-01-01', 'B-01-02', 'C-01-01', 'C-01-02', 'D-01-01']
+    return realBins.map((b) => b.code).filter(Boolean).sort()
   }, [warehouseId])
 
   const tabs: { key: Tab; label: string; icon: typeof Package; count?: number }[] = [
@@ -384,9 +391,7 @@ export default function SlottingOptimizationPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search SKU, product, or zone..." className="enterprise-input pl-9 w-72" />
           </div>
-          <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className="enterprise-select w-48">
-            {WAREHOUSES.map((wh) => (<option key={wh.id} value={wh.id}>{wh.name}</option>))}
-          </select>
+          <WarehouseSelect warehouses={warehouses} value={warehouseId} onChange={setWarehouseId} className="enterprise-select w-48" />
         </div>
         <div className="enterprise-toolbar-right">
           <span className="text-xs text-[var(--text-tertiary)]">{filteredAssignments.length} assignments</span>

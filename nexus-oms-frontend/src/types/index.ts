@@ -1,3 +1,4 @@
+/** The order model the screens use. Built from {@link ApiOrder} by normalizeOrder (api/orders.ts). */
 export interface Order {
   id: string
   orderNumber: string
@@ -30,6 +31,54 @@ export interface Order {
   exceptionReason?: string
   tags: string[]
   notes: string
+  // pass-through from the API for screens that show them
+  externalId?: string | null
+  customerId?: string | null
+  subStatus?: string | null
+  paymentStatus?: string | null
+  paymentReference?: string | null
+  labelUrl?: string | null
+  allocationRule?: string | null
+  allocationConfidence?: number | null
+  metadata?: Record<string, any> | string | null
+}
+
+/** An order exactly as GET /orders returns it. The UI works with {@link Order}; see normalizeOrder. */
+export interface ApiOrder {
+  id: string
+  orderNumber: string
+  tenantId?: string
+  channelOrderId?: string
+  externalId?: string | null
+  customerId?: string | null
+  customerName: string
+  customerEmail: string
+  channel: OrderChannel
+  status: OrderStatus
+  subStatus?: string | null
+  items: OrderItem[]
+  total: number
+  subtotal: number
+  shippingCost: number
+  taxAmount?: number
+  currency: string
+  shipTo?: Record<string, any> | null
+  billingAddress?: Address | Record<string, any> | null
+  fulfillmentType: FulfillmentType
+  allocatedNode?: string | null
+  allocationRule?: string | null
+  allocationConfidence?: number | null
+  carrierId?: string | null
+  trackingNumber?: string | null
+  labelUrl?: string | null
+  promisedDelivery?: string | null
+  shippedAt?: string | null
+  deliveredAt?: string | null
+  paymentStatus?: string | null
+  paymentReference?: string | null
+  metadata?: Record<string, any> | string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface OrderItem {

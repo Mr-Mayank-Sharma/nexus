@@ -5,6 +5,8 @@ import { clsx } from 'clsx'
 interface Crumb {
   label: string
   path?: string
+  /** Alias of path. */
+  href?: string
 }
 
 interface Props {
@@ -21,8 +23,8 @@ export default function EnterpriseBreadcrumbs({ crumbs }: Props) {
       {crumbs.map((crumb, i) => (
         <li key={i} className="flex items-center gap-1.5">
           <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-          {crumb.path && i < crumbs.length - 1 ? (
-            <Link to={crumb.path} className="hover:text-[var(--text-primary)] transition-colors">{crumb.label}</Link>
+          {(crumb.path ?? crumb.href) && i < crumbs.length - 1 ? (
+            <Link to={(crumb.path ?? crumb.href) as string} className="hover:text-[var(--text-primary)] transition-colors">{crumb.label}</Link>
           ) : (
             <span className={clsx(i === crumbs.length - 1 && 'text-[var(--text-primary)] font-medium')} aria-current="page">{crumb.label}</span>
           )}

@@ -1,10 +1,11 @@
 import client from './client'
 import { ApiResponse, Order, OrderFilters } from '../types'
+import { normalizeOrder, normalizeOrderList } from './normalizeOrder'
 
 export async function getOrders(params?: OrderFilters): Promise<ApiResponse<Order[]>> {
   try {
     const { data } = await client.get('/orders', { params })
-    return data
+    return data?.success ? { ...data, data: normalizeOrderList(data.data) } : data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get orders'
     return { success: false, error: msg } as any
@@ -14,7 +15,7 @@ export async function getOrders(params?: OrderFilters): Promise<ApiResponse<Orde
 export async function getOrderById(id: string): Promise<ApiResponse<Order>> {
   try {
     const { data } = await client.get(`/orders/${id}`)
-    return data
+    return data?.success && data.data ? { ...data, data: normalizeOrder(data.data) } : data
   } catch (err: any) {
     const msg = err?.response?.data?.message || err?.message || 'Failed to get order'
     return { success: false, error: msg } as any

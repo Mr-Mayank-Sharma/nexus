@@ -36,36 +36,12 @@ export async function fetchInventory(sku?: string): Promise<any> {
   try { const { data } = await client.get(sku ? `/inventory/${sku}` : '/inventory'); return data } catch { return null }
 }
 
-export async function fetchEnhancedInventory(): Promise<any> {
-  try {
-    const { data } = await client.get('/inventory')
-    const items = Array.isArray(data.data) ? data.data : []
-    return {
-      warehouses: [{
-        id: 'faaebaf3-3af7-43c2-bcde-83c2cfcd6031',
-        name: 'Mumbai Central WH',
-        code: 'MUM-01',
-        capacity: 42,
-        totalUnits: items.reduce((s: number, i: any) => s + (i.quantityOnHand ?? 0), 0),
-        skuCount: items.length,
-        lastUpdated: new Date().toLocaleString('en-IN'),
-        totalReserved: items.reduce((s: number, i: any) => s + (i.quantityReserved ?? 0), 0),
-        items,
-      }],
-    }
-  } catch { return null }
-}
-
 export async function fetchReceiving(): Promise<any> {
   try { const { data } = await client.get('/inventory-receipts'); return data } catch { return null }
 }
 
 export async function fetchCycleCounts(): Promise<any> {
   try { const { data } = await client.get('/cycle-counts'); return data } catch { return null }
-}
-
-export async function adjustInventory(sku: string, warehouseId: string, qty: number, reason: string): Promise<any> {
-  try { const { data } = await client.post('/inventory/adjust', { sku, warehouseId, qty, reason }); return data } catch { return null }
 }
 
 export async function fetchWarehouses(): Promise<any> {

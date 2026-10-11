@@ -1,500 +1,211 @@
-import { useState, useMemo, useEffect } from 'react'
-import {
-  Warehouse, DollarSign, AlertTriangle, Layers, Archive,
-  Building2, Store, ArrowRight, Search, X, Truck, Plus,
-  RefreshCw, TrendingUp, Sparkles, Clock, Hash, Ban,
-} from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { AlertTriangle, Ban, Building2, DollarSign, Layers, Package, Plus, Search, Store, Warehouse } from 'lucide-react'
 import clsx from 'clsx'
-import { useToast } from '../hooks/useToast'
+import client from '../api/client'
+import { getWarehouses } from '../api/warehouse'
+import { getProducts } from '../api/products'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
-import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
-import Autocomplete from '../components/common/Autocomplete'
-import { fetchEnhancedInventory } from '../api/newBackend'
 import PermissionGate from '../components/rbac/PermissionGate'
+import NewTransferDialog from '../features/transfers/NewTransferDialog'
+import {
+  atpForSku, available, lowStock, outOfStock, stockValue, summariseLocations, type StockRow,
+} from '../features/inventory/stock'
 
-interface ProductATP {
-  sku: string
-  productName: string
-  nodes: { nodeName: string; available: number; reserved: number; incoming: number; onOrder: number }[]
+const field = 'w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-sm text-[var(--text-primary)]'
+
+async function fetchStock(): Promise<StockRow[]> {
+  const { data } = await client.get('/inventory')
+  if (data?.success === false) throw new Error(data.message || 'Could not load inventory')
+  const rows = Array.isArray(data?.data) ? data.data : (data?.data?.content ?? [])
+  return rows as StockRow[]
 }
 
-const nodeIconMap: Record<string, typeof Building2> = {
-  DC: Building2,
-  Warehouse: Warehouse,
-  Store: Store,
+function capacityColor(pct: number): string {
+  if (pct >= 80) return 'bg-[var(--nexus-error-500)]'
+  if (pct >= 60) return 'bg-[var(--nexus-warning-500)]'
+  return 'bg-[var(--nexus-success-500)]'
 }
 
-function capacityColor(cap: number): string {
-  if (cap >= 80) return 'bg-[var(--nexus-error-500)]'
-  if (cap >= 60) return 'bg-[var(--nexus-warning-500)]'
-  if (cap >= 35) return 'bg-[var(--nexus-success-500)]'
-  return 'bg-[var(--nexus-primary-500)]'
-}
-
-function atpColor(atp: number): string {
-  if (atp > 50) return 'text-[var(--nexus-success-600)] bg-[var(--nexus-success-50)] dark:text-[var(--nexus-success-400)] dark:bg-[var(--nexus-success-900)]/20'
-  if (atp >= 10) return 'text-[var(--nexus-warning-600)] bg-[var(--nexus-warning-50)] dark:text-[var(--nexus-warning-400)] dark:bg-[var(--nexus-warning-900)]/20'
-  return 'text-[var(--nexus-error-600)] bg-[var(--nexus-error-50)] dark:text-[var(--nexus-error-400)] dark:bg-[var(--nexus-error-900)]/20'
-}
-
-function atpBgBar(atp: number): string {
-  if (atp > 50) return 'bg-[var(--nexus-success-500)]'
-  if (atp >= 10) return 'bg-[var(--nexus-warning-500)]'
-  return 'bg-[var(--nexus-error-500)]'
-}
+const money = (n: number) => new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 
 export default function InventoryEnhancedPage() {
-  const [warehouseData, setWarehouseData] = useState<any[]>([])
+  const stockQ = useQuery({ queryKey: ['inventory-all'], queryFn: fetchStock })
+  const warehousesQ = useQuery({ queryKey: ['warehouses-all'], queryFn: async () => (await getWarehouses(0, 200)).data?.content ?? [] })
+  const productsQ = useQuery({ queryKey: ['products-all'], queryFn: async () => (await getProducts()).data ?? [] })
 
-  useEffect(() => {
-    fetchEnhancedInventory().then(res => {
-      if (res?.warehouses) setWarehouseData(res.warehouses)
-    }).catch(() => {})
-  }, [])
+  const [search, setSearch] = useState('')
+  const [tab, setTab] = useState<'low' | 'out'>('low')
+  const [showTransfer, setShowTransfer] = useState(false)
 
-  const { addToast } = useToast()
+  const rows = useMemo(() => stockQ.data ?? [], [stockQ.data])
+  const locations = useMemo(() => warehousesQ.data ?? [], [warehousesQ.data])
+  const products = useMemo(() => productsQ.data ?? [], [productsQ.data])
 
-  const [atpSearch, setAtpSearch] = useState('')
-  const [showTransferModal, setShowTransferModal] = useState(false)
-  const [alertTab, setAlertTab] = useState<'low' | 'overstock' | 'dead'>('low')
-  const [transferForm, setTransferForm] = useState({ from: '', to: '', sku: '', qty: 0 })
+  const nameBySku = useMemo(() => new Map(products.map(p => [p.sku, p.productName])), [products])
+  const costBySku = useMemo(() => new Map<string, number | undefined>(products.map(p => [p.sku, p.costPrice])), [products])
+  const locationName = (id: string | null) => locations.find(l => l.id === id)?.name ?? (id ? `Location ${id.slice(0, 8)}` : 'Unassigned')
 
-  const filteredProducts: ProductATP[] = useMemo(() => {
-    if (!atpSearch.trim()) return []
-    const q = atpSearch.toLowerCase()
-    return [].filter(p => p.sku.toLowerCase().includes(q) || p.productName.toLowerCase().includes(q))
-  }, [atpSearch])
+  const summary = useMemo(() => summariseLocations(rows, locations), [rows, locations])
+  const totals = useMemo(() => ({
+    units: rows.reduce((s, r) => s + (r.quantityOnHand ?? 0), 0),
+    available: rows.reduce((s, r) => s + available(r), 0),
+    skus: new Set(rows.map(r => r.sku)).size,
+  }), [rows])
+  const low = useMemo(() => lowStock(rows), [rows])
+  const out = useMemo(() => outOfStock(rows), [rows])
+  const value = useMemo(() => stockValue(rows, costBySku), [rows, costBySku])
 
-  const selectedProduct: ProductATP | null = null
+  const matches = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return []
+    const skus = [...new Set(rows.map(r => r.sku))]
+    return skus.filter(s => s.toLowerCase().includes(q) || (nameBySku.get(s) ?? '').toLowerCase().includes(q)).slice(0, 8)
+  }, [search, rows, nameBySku])
 
-  const totalUnits = warehouseData.reduce((s, w) => s + w.totalUnits, 0)
-  const lowStockCount = 23
-  const overstockCount = 156
-  const deadStockCount = 34
-
-  function handleSelectProduct(_sku: string) {
-    setAtpSearch('')
+  if (stockQ.isLoading) {
+    return <div className="space-y-4"><div className="h-24 animate-pulse rounded-xl bg-[var(--surface-sunken)]" /><div className="h-64 animate-pulse rounded-xl bg-[var(--surface-sunken)]" /></div>
   }
-
-  function handleCreateTransfer() {
-    addToast({ type: 'success', title: 'Transfer Created', message: `${transferForm.sku} transfer from ${transferForm.from} to ${transferForm.to}` })
-    setShowTransferModal(false)
-    setTransferForm({ from: '', to: '', sku: '', qty: 0 })
+  if (stockQ.isError) {
+    return <p role="alert" className="text-sm text-[var(--nexus-error-600)]">Couldn't load inventory: {(stockQ.error as Error).message}</p>
   }
 
   return (
     <PermissionGate resource="inventory" action="view">
       <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
-            <Warehouse className="w-7 h-7 text-[var(--nexus-warning-500)]" />
-            Multi-Node Inventory
-          </h1>
-          <p className="text-sm text-[var(--text-secondary)] mt-1">Real-time inventory across all fulfillment nodes</p>
-        </div>
-      </div>
-
-      {/* Global Inventory Summary KPI Row */}
-      <div className="grid grid-cols-5 gap-4">
-        <EnterpriseKPICard title="Total Units" value={totalUnits.toLocaleString()} icon={<Layers className="w-5 h-5" />} color="primary" />
-        <EnterpriseKPICard title="Total Value" value={'$12.4M'} icon={<DollarSign className="w-5 h-5" />} color="success" />
-        <EnterpriseKPICard title="Low Stock Items" value={lowStockCount} subtitle="Needs reorder" icon={<AlertTriangle className="w-5 h-5" />} color="error" />
-        <EnterpriseKPICard title="Overstock Items" value={overstockCount} subtitle="Excess inventory" icon={<Archive className="w-5 h-5" />} color="warning" />
-        <EnterpriseKPICard title="Dead Stock" value={deadStockCount} subtitle="No movement" icon={<Ban className="w-5 h-5" />} color="info" />
-      </div>
-
-      {/* Warehouse Breakdown Grid */}
-      <div className="enterprise-card p-5">
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-[var(--nexus-warning-500)]" />
-              Warehouse Breakdown
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Capacity and inventory across all nodes</p>
+            <h1 className="flex items-center gap-2.5 text-2xl font-bold text-[var(--text-primary)]">
+              <Warehouse className="h-7 w-7 text-[var(--nexus-warning-500)]" /> Multi-Node Inventory
+            </h1>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">Stock across every location, from your inventory records</p>
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {warehouseData.map(w => {
-            const Icon = nodeIconMap[w.type] || Building2
-            return (
-              <div key={w.id} className="bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-[var(--nexus-warning-50)] dark:bg-[var(--nexus-warning-900)]/20 flex items-center justify-center">
-                    <Icon className="w-4 h-4 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{w.name}</p>
-                    <p className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">{w.id} · {w.type}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div>
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-[var(--text-secondary)]">Capacity</span>
-                      <span className="font-semibold text-[var(--text-secondary)]">{w.capacity}%</span>
-                    </div>
-                    <div className="w-full bg-[var(--surface-muted)] rounded-full h-2">
-                      <div className={clsx(capacityColor(w.capacity), 'h-2 rounded-full transition-all')} style={{ width: `${w.capacity}%` }} />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[var(--text-secondary)]">Total Units</span>
-                    <span className="font-medium text-[var(--text-primary)]">{w.totalUnits.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-[var(--text-secondary)]">SKUs</span>
-                    <span className="font-medium text-[var(--text-primary)]">{w.skuCount.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)] pt-1 border-t border-[var(--border-subtle)]">
-                    <Clock className="w-3 h-3" />
-                    <span>{w.lastUpdated}</span>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* ATP Simulator */}
-      <div className="enterprise-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <RefreshCw className="w-4 h-4 text-[var(--nexus-success-500)]" />
-              ATP Simulator
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Available-to-Promise across all fulfillment nodes</p>
-          </div>
-        </div>
-        <div className="relative mb-4">
-          <Autocomplete value={atpSearch} onChange={setAtpSearch} placeholder="Search product by SKU or name..." minChars={0} />
-          {filteredProducts.length > 0 && atpSearch && (
-            <div className="absolute z-10 mt-1 w-full bg-[var(--surface-base)] border border-[var(--border-default)] rounded-xl shadow-lg overflow-hidden">
-              {filteredProducts.map(p => (
-                <button
-                  key={p.sku}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-[var(--surface-sunken)] dark:hover:bg-[var(--surface-muted)] transition-colors border-b border-[var(--border-subtle)] last:border-b-0"
-                  onClick={() => handleSelectProduct(p.sku)}
-                >
-                  <Hash className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
-                  <span className="font-medium text-[var(--text-primary)]">{p.sku}</span>
-                  <span className="text-[var(--text-secondary)]">— {p.productName}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        {selectedProduct && (
-          <div className="overflow-x-auto">
-            <div className="mb-3 flex items-center gap-2 text-sm">
-              <span className="font-semibold text-[var(--text-primary)]">{selectedProduct.sku}</span>
-              <span className="text-[var(--text-secondary)]">— {selectedProduct.productName}</span>
-            </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[var(--border-default)]">
-                  <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Node</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Available</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Reserved</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Incoming</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">On Order</th>
-                  <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">ATP</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedProduct.nodes.map(n => {
-                  const atp = n.available - n.reserved + n.incoming
-                  return (
-                    <tr key={n.nodeName} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
-                      <td className="py-2.5 px-3 text-[var(--text-primary)] font-medium">{n.nodeName}</td>
-                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.available.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.reserved.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-[var(--nexus-success-600)] dark:text-[var(--nexus-success-400)] font-medium">+{n.incoming.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{n.onOrder.toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right">
-                        <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold', atpColor(atp))}>
-                          <span className={clsx('w-1.5 h-1.5 rounded-full', atpBgBar(atp))} />
-                          {atp.toLocaleString()}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {!selectedProduct && (
-          <div className="text-center py-8 text-sm text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
-            <Search className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            Search for a product to view ATP across all nodes
-          </div>
-        )}
-      </div>
-
-      {/* Inventory Transfers */}
-      <div className="enterprise-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <Truck className="w-4 h-4 text-[var(--nexus-primary-500)]" />
-              Inventory Transfers
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Stock movement between nodes</p>
-          </div>
-          <button
-            className="enterprise-btn-primary text-sm flex items-center gap-1.5 px-4 py-2"
-            onClick={() => setShowTransferModal(true)}
-          >
-            <Plus className="w-4 h-4" />
-            Create Transfer
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border-default)]">
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">From → To</th>
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">SKU</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Qty</th>
-                <th className="text-center py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[].map(t => (
-                <tr key={t.id} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
-                  <td className="py-2.5 px-3">
-                    <div className="flex items-center gap-1.5 text-sm text-[var(--text-primary)]">
-                      <span className="font-medium">{t.from}</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
-                      <span className="font-medium">{t.to}</span>
-                    </div>
-                  </td>
-                  <td className="py-2.5 px-3">
-                    <div className="text-[var(--text-primary)] font-medium">{t.sku}</div>
-                    <div className="text-xs text-[var(--text-secondary)]">{t.productName}</div>
-                  </td>
-                  <td className="py-2.5 px-3 text-right text-[var(--text-primary)] font-medium">{t.qty.toLocaleString()}</td>
-                  <td className="py-2.5 px-3 text-center">
-                    <EnterpriseStatusBadge status={t.status.toLowerCase().replace(/\s+/g, '_')} label={t.status} />
-                  </td>
-                  <td className="py-2.5 px-3 text-right text-[var(--text-secondary)] text-xs">{t.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Stock Alerts */}
-      <div className="enterprise-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[var(--nexus-error-500)]" />
-              Stock Alerts
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Inventory items requiring attention</p>
-          </div>
-        </div>
-        <div className="flex gap-1 bg-[var(--surface-muted)] rounded-lg p-0.5 w-fit mb-4">
-          {(['low', 'overstock', 'dead'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setAlertTab(tab)}
-              className={clsx(
-                'px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-all',
-                alertTab === tab
-                  ? 'bg-[var(--surface-muted)] text-[var(--text-primary)] shadow-sm'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]'
-              )}
-            >
-              {tab === 'low' ? 'Low Stock' : tab === 'overstock' ? 'Overstock' : 'Dead Stock'}
-              <span className={clsx(
-                'ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full',
-                alertTab === tab
-                  ? 'bg-[var(--surface-muted)] dark:bg-[var(--surface-muted)] text-[var(--text-secondary)] text-[var(--text-primary)]'
-                  : 'bg-[var(--surface-muted)] text-[var(--text-secondary)]'
-              )}>
-                {0}
-              </span>
+          <PermissionGate resource="inventory" action="create">
+            <button type="button" onClick={() => setShowTransfer(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--nexus-primary-600)] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[var(--nexus-primary-700)]">
+              <Plus className="h-4 w-4" /> New transfer
             </button>
-          ))}
+          </PermissionGate>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--border-default)]">
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">SKU</th>
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Product</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Current Stock</th>
-                <th className="text-right py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Reorder Point</th>
-                <th className="text-center py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Status</th>
-                <th className="text-left py-2.5 px-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Node</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[].map((a, i) => {
-                const isLow = a.currentStock < a.reorderPoint
-                const isOver = a.currentStock > a.maxStock
+
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+          <EnterpriseKPICard title="Units on hand" value={totals.units.toLocaleString()} subtitle={`${totals.skus} SKUs`} icon={<Layers className="h-5 w-5" />} color="primary" />
+          <EnterpriseKPICard title="Available to promise" value={totals.available.toLocaleString()} subtitle="After allocations and safety stock" icon={<Package className="h-5 w-5" />} color="success" />
+          <EnterpriseKPICard title="Stock value" value={value.value > 0 || value.unpricedSkus === 0 ? money(value.value) : '—'}
+            subtitle={value.unpricedSkus ? `${value.unpricedSkus} SKU${value.unpricedSkus === 1 ? '' : 's'} have no cost price` : 'At cost price'} icon={<DollarSign className="h-5 w-5" />} color="info" />
+          <EnterpriseKPICard title="Low stock" value={low.length} subtitle="At or below reorder point" icon={<AlertTriangle className="h-5 w-5" />} color="warning" />
+          <EnterpriseKPICard title="Out of stock" value={out.length} subtitle="Nothing left to promise" icon={<Ban className="h-5 w-5" />} color="error" />
+        </div>
+
+        <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5">
+          <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-[var(--text-primary)]"><Building2 className="h-4 w-4 text-[var(--nexus-warning-500)]" /> Locations</h2>
+          <p className="mb-4 text-xs text-[var(--text-secondary)]">Capacity is floor space used, where the location records it.</p>
+          {summary.length === 0 ? (
+            <p className="text-sm text-[var(--text-tertiary)]">No locations or stock yet. Add a warehouse, then receive stock into it.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {summary.map(l => {
+                const Icon = /store/i.test(l.type) ? Store : Building2
                 return (
-                  <tr key={`${a.sku}-${i}`} className="border-b border-[var(--border-subtle)]/50 hover:bg-[var(--surface-sunken)] hover:bg-[var(--surface-base)]/50 transition-colors">
-                    <td className="py-2.5 px-3 text-[var(--text-primary)] font-medium">{a.sku}</td>
-                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">{a.productName}</td>
-                    <td className="py-2.5 px-3 text-right font-semibold">
-                      <span className={clsx(isLow && 'text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]', isOver && 'text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]', !isLow && !isOver && 'text-[var(--text-primary)]')}>
-                        {a.currentStock.toLocaleString()}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-right text-[var(--text-secondary)]">{a.reorderPoint.toLocaleString()}</td>
-                    <td className="py-2.5 px-3 text-center">
-                      {isLow ? (
-                        <EnterpriseStatusBadge status="error" label="Low Stock" />
-                      ) : isOver ? (
-                        <EnterpriseStatusBadge status="warning" label="Overstock" />
-                      ) : (
-                        <EnterpriseStatusBadge status="neutral" label="Dead Stock" />
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 text-[var(--text-secondary)]">{a.node}</td>
-                  </tr>
+                  <div key={l.id} className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--nexus-warning-50)]"><Icon className="h-4 w-4 text-[var(--nexus-warning-600)]" /></div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{l.name}</p>
+                        <p className="text-[11px] text-[var(--text-tertiary)]">{l.type || 'Location'} · {l.skus} SKU{l.skus === 1 ? '' : 's'}</p>
+                      </div>
+                    </div>
+                    <dl className="grid grid-cols-3 gap-2 text-center">
+                      <div><dt className="text-[10px] uppercase text-[var(--text-tertiary)]">On hand</dt><dd className="text-sm font-semibold tabular-nums">{l.units.toLocaleString()}</dd></div>
+                      <div><dt className="text-[10px] uppercase text-[var(--text-tertiary)]">Available</dt><dd className="text-sm font-semibold tabular-nums">{l.available.toLocaleString()}</dd></div>
+                      <div><dt className="text-[10px] uppercase text-[var(--text-tertiary)]">Committed</dt><dd className="text-sm font-semibold tabular-nums">{l.committed.toLocaleString()}</dd></div>
+                    </dl>
+                    {l.capacityPct !== null && (
+                      <div className="mt-3">
+                        <div className="mb-1 flex justify-between text-[11px] text-[var(--text-secondary)]"><span>Capacity used</span><span>{l.capacityPct}%</span></div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-[var(--surface-sunken)]"><div className={clsx('h-full rounded-full', capacityColor(l.capacityPct))} style={{ width: `${l.capacityPct}%` }} /></div>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </div>
+          )}
+        </section>
 
-      {/* Replenishment Suggestions */}
-      <div className="enterprise-card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[var(--nexus-primary-500)]" />
-              AI Replenishment Suggestions
-            </h3>
-            <p className="text-xs text-[var(--text-secondary)] mt-0.5">Intelligent recommendations based on stock levels and demand</p>
+        <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5">
+          <h2 className="mb-3 text-base font-semibold text-[var(--text-primary)]">Availability by SKU</h2>
+          <div className="relative max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
+            <input aria-label="Search SKU or product" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search a SKU or product name…" className={clsx(field, 'pl-9')} />
           </div>
-        </div>
-        <div className="space-y-2">
-          {[].map(s => (
-            <div
-              key={s.id}
-              className={clsx(
-                'flex items-start gap-3 p-3 rounded-xl border transition-colors',
-                s.type === 'reorder'
-                  ? 'bg-[var(--nexus-error-50)]/50 dark:bg-[var(--nexus-error-900)]/10 border-[var(--nexus-error-100)] dark:border-[var(--nexus-error-900)]/30'
-                  : 'bg-[var(--nexus-warning-50)]/50 dark:bg-[var(--nexus-warning-900)]/10 border-[var(--nexus-warning-100)] dark:border-[var(--nexus-warning-900)]/30'
-              )}
-            >
-              <div className={clsx(
-                'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5',
-                s.type === 'reorder' ? 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/30' : 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30'
-              )}>
-                {s.type === 'reorder' ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]" />
-                ) : (
-                  <Archive className="w-3.5 h-3.5 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-[var(--text-primary)]">{s.message}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className={clsx(
-                    'text-[10px] font-medium px-1.5 py-0.5 rounded-full',
-                    s.priority === 'high' && 'bg-[var(--nexus-error-50)] dark:bg-[var(--nexus-error-900)]/30 text-[var(--nexus-error-600)] dark:text-[var(--nexus-error-400)]',
-                    s.priority === 'medium' && 'bg-[var(--nexus-warning-100)] dark:bg-[var(--nexus-warning-900)]/30 text-[var(--nexus-warning-600)] dark:text-[var(--nexus-warning-400)]',
-                    s.priority === 'low' && 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
-                  )}>
-                    {s.priority} priority
-                  </span>
-                  <span className="text-[10px] text-[var(--text-tertiary)] dark:text-[var(--text-secondary)]">
-                    {s.type === 'reorder' ? 'Reorder needed' : 'Overstock detected'}
-                  </span>
+          {search.trim() && matches.length === 0 && <p className="mt-3 text-sm text-[var(--text-tertiary)]">No SKU matches "{search.trim()}".</p>}
+          <div className="mt-4 space-y-4">
+            {matches.map(sku => {
+              const lines = atpForSku(rows, sku)
+              return (
+                <div key={sku} className="overflow-x-auto rounded-xl border border-[var(--border-default)]">
+                  <div className="border-b border-[var(--border-subtle)] px-4 py-2.5">
+                    <span className="font-mono text-xs">{sku}</span> <span className="text-sm text-[var(--text-secondary)]">{nameBySku.get(sku) ?? ''}</span>
+                  </div>
+                  <table className="w-full min-w-[480px] text-sm">
+                    <thead><tr className="text-left text-xs uppercase tracking-wider text-[var(--text-tertiary)]">
+                      <th className="px-4 py-2 font-medium">Location</th><th className="px-4 py-2 text-right font-medium">Available</th>
+                      <th className="px-4 py-2 text-right font-medium">Committed</th><th className="px-4 py-2 text-right font-medium">Incoming</th><th className="px-4 py-2 text-right font-medium">On order</th>
+                    </tr></thead>
+                    <tbody>{lines.map(l => (
+                      <tr key={l.nodeId ?? 'unassigned'} className="border-t border-[var(--border-subtle)]">
+                        <td className="px-4 py-2">{locationName(l.nodeId)}</td>
+                        <td className="px-4 py-2 text-right font-semibold tabular-nums">{l.available}</td>
+                        <td className="px-4 py-2 text-right tabular-nums">{l.committed}</td>
+                        <td className="px-4 py-2 text-right tabular-nums">{l.incoming}</td>
+                        <td className="px-4 py-2 text-right tabular-nums">{l.onOrder}</td>
+                      </tr>))}
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Create Transfer Modal */}
-      {showTransferModal && (
-        <div className="enterprise-modal-overlay">
-          <div className="enterprise-modal max-w-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
-              <h3 className="text-base font-semibold text-[var(--text-primary)] flex items-center gap-2">
-                <Truck className="w-4 h-4 text-[var(--nexus-primary-500)]" />
-                Create Transfer
-              </h3>
-              <button type="button" onClick={() => setShowTransferModal(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] dark:hover:text-[var(--text-tertiary)]">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="px-6 py-5 space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">From Node</label>
-                <select
-                  className="enterprise-input w-full"
-                  value={transferForm.from}
-                  onChange={e => setTransferForm(f => ({ ...f, from: e.target.value }))}
-                >
-                  <option value="">Select source node</option>
-                  {warehouseData.map(w => <option key={w.id} value={w.name}>{w.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">To Node</label>
-                <select
-                  className="enterprise-input w-full"
-                  value={transferForm.to}
-                  onChange={e => setTransferForm(f => ({ ...f, to: e.target.value }))}
-                >
-                  <option value="">Select destination node</option>
-                  {warehouseData.map(w => <option key={w.id} value={w.name}>{w.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">SKU</label>
-                <input
-                  className="enterprise-input w-full"
-                  placeholder="e.g. SKU-001"
-                  value={transferForm.sku}
-                  onChange={e => setTransferForm(f => ({ ...f, sku: e.target.value }))}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1.5">Quantity</label>
-                <input
-                  type="number"
-                  className="enterprise-input w-full"
-                  placeholder="0"
-                  min={0}
-                  value={transferForm.qty || ''}
-                  onChange={e => setTransferForm(f => ({ ...f, qty: parseInt(e.target.value) || 0 }))}
-                />
-              </div>
-            </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border-default)] bg-[var(--surface-sunken)]/50">
-              <button type="button" className="enterprise-btn-secondary text-sm px-4 py-2" onClick={() => setShowTransferModal(false)}>Cancel</button>
-              <button
-                className="enterprise-btn-primary text-sm px-4 py-2"
-                disabled={!transferForm.from || !transferForm.to || !transferForm.sku || transferForm.qty <= 0}
-                onClick={handleCreateTransfer}
-              >
-                <Plus className="w-4 h-4" />
-                Create Transfer
-              </button>
-            </div>
+              )
+            })}
           </div>
-        </div>
-      )}
-    </div>
-      </PermissionGate>
+        </section>
+
+        <section className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-raised)] p-5">
+          <div className="mb-3 flex items-center gap-2" role="tablist" aria-label="Stock alerts">
+            {([['low', `Low stock (${low.length})`], ['out', `Out of stock (${out.length})`]] as const).map(([key, label]) => (
+              <button key={key} type="button" role="tab" aria-selected={tab === key} onClick={() => setTab(key)}
+                className={clsx('rounded-lg px-3 py-1.5 text-sm font-medium', tab === key ? 'bg-[var(--nexus-primary-600)] text-white' : 'text-[var(--text-secondary)] hover:bg-[var(--interactive-hover)]')}>{label}</button>
+            ))}
+          </div>
+          {tab === 'low' ? (
+            low.length === 0 ? <p className="text-sm text-[var(--text-tertiary)]">Nothing is at or below its reorder point.</p> : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] text-sm">
+                  <thead><tr className="text-left text-xs uppercase tracking-wider text-[var(--text-tertiary)]">
+                    <th className="py-2 pr-3 font-medium">SKU</th><th className="py-2 pr-3 font-medium">Location</th>
+                    <th className="py-2 pr-3 text-right font-medium">Available</th><th className="py-2 pr-3 text-right font-medium">Reorder point</th><th className="py-2 text-right font-medium">Reorder qty</th>
+                  </tr></thead>
+                  <tbody>{low.map(r => (
+                    <tr key={r.id} className="border-t border-[var(--border-subtle)]">
+                      <td className="py-2 pr-3"><span className="font-mono text-xs">{r.sku}</span> <span className="text-[var(--text-secondary)]">{nameBySku.get(r.sku) ?? ''}</span></td>
+                      <td className="py-2 pr-3">{locationName(r.nodeId)}</td>
+                      <td className="py-2 pr-3 text-right font-semibold tabular-nums text-[var(--nexus-warning-700)]">{available(r)}</td>
+                      <td className="py-2 pr-3 text-right tabular-nums">{r.reorderPoint}</td>
+                      <td className="py-2 text-right tabular-nums">{r.reorderQty || '—'}</td>
+                    </tr>))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          ) : (
+            out.length === 0 ? <p className="text-sm text-[var(--text-tertiary)]">Every SKU has something left to promise.</p> : (
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {out.map(sku => <li key={sku} className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-sm"><span className="font-mono text-xs">{sku}</span> <span className="text-[var(--text-secondary)]">{nameBySku.get(sku) ?? ''}</span></li>)}
+              </ul>
+            )
+          )}
+        </section>
+      </div>
+      {showTransfer && <NewTransferDialog onClose={() => setShowTransfer(false)} />}
+    </PermissionGate>
   )
 }

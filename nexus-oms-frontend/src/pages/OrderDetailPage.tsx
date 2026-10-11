@@ -60,40 +60,8 @@ export default function OrderDetailPage() {
     try {
       setLoading(true)
       const res = await ordersApi.getOrderById(id!)
-      const orderNum = res.data.orderNumber || res.data.externalId || res.data.channelOrderId || `ORD-${(res.data.id || id!).slice(0, 8).toUpperCase()}`
-      const rawAddr = res.data.shippingAddress || res.data.shipTo
-      const parseAddress = (a: any): { street: string; city: string; state: string; zip: string; country: string } => {
-        if (!a) return { street: '', city: '', state: '', zip: '', country: '' }
-        if (typeof a === 'string') {
-          const parts = a.split(',').map((s: string) => s.trim())
-          return { street: parts[0] || '', city: parts[1] || '', state: parts[2]?.split(' ')[0] || '', zip: parts[2]?.split(' ')[1] || parts[2] || '', country: parts[3] || '' }
-        }
-        return { street: a.street || a.line1 || '', city: a.city || '', state: a.state || '', zip: a.zip || a.pincode || '', country: a.country || '' }
-      }
-      setOrder({
-        id: res.data.id || id!,
-        orderNumber: orderNum,
-        customerName: res.data.customerName || (res.data.customerId ? `Customer ${res.data.customerId.slice(0, 8)}` : 'Guest Customer'),
-        customerEmail: res.data.customerEmail || '',
-        channel: res.data.channel || 'MANUAL',
-        status: res.data.status || 'PENDING',
-        items: (res.data.items || []).map((i: any) => ({
-          id: i.id, sku: i.sku || '', productName: i.productName || i.sku || '', imageUrl: i.imageUrl || '',
-          quantity: i.quantity || 0, unitPrice: i.unitPrice || 0, totalPrice: (i.totalPrice || i.unitPrice * i.quantity || 0),
-        })),
-        total: res.data.total || 0, subtotal: res.data.subtotal || 0,
-        shippingCost: res.data.shippingCost || 0, tax: res.data.taxAmount || res.data.tax || 0, currency: res.data.currency || 'USD',
-        shippingAddress: parseAddress(rawAddr),
-        billingAddress: res.data.billingAddress ? parseAddress(res.data.billingAddress) : { street: '', city: '', state: '', zip: '', country: '' },
-        fulfillmentType: res.data.fulfillmentType || 'STANDARD',
-        allocationNodeId: res.data.allocatedNode || res.data.allocationNodeId || '', carrier: res.data.carrierId || '',
-        trackingNumber: res.data.trackingNumber || '', promisedDeliveryDate: res.data.promisedDelivery || '',
-        estimatedShipDate: res.data.shipBy || res.data.estimatedShipDate || res.data.shippedAt || '',
-        shippedDate: res.data.shippedAt || '', deliveredDate: res.data.deliveredAt || '',
-        createdAt: res.data.createdAt || new Date().toISOString(),
-        updatedAt: res.data.updatedAt || new Date().toISOString(), priority: 'MEDIUM',
-        hasException: res.data.subStatus === 'EXCEPTION', tags: [], notes: res.data.notes || '',
-      })
+      // The API layer maps the backend's field names onto the order model (see api/normalizeOrder).
+      setOrder(res.data)
 
       setPayments(res.data.paymentStatus ? [
         { id: 'pmt1', method: res.data.paymentReference ? `Ref: ${res.data.paymentReference}` : 'Standard', amount: res.data.total || 0, status: res.data.paymentStatus === 'PAID' ? 'CAPTURED' : res.data.paymentStatus || 'PENDING', date: res.data.createdAt || new Date().toISOString(), reference: res.data.paymentReference || 'N/A' },

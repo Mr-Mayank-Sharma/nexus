@@ -5,6 +5,9 @@ import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumb
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
 import { useToast } from '../hooks/useToast'
 import * as replenishmentApi from '../api/replenishment'
+import { useActiveWarehouse } from '../hooks/useActiveWarehouse'
+import WarehouseSelect from '../components/common/WarehouseSelect'
+import NoWarehouses from '../components/common/NoWarehouses'
 
 type Tab = 'rules' | 'suggestions' | 'stats'
 
@@ -44,16 +47,10 @@ const statusColors: Record<string, string> = {
   EXPIRED: 'bg-[var(--surface-muted)] text-[var(--text-secondary)]',
 }
 
-const warehouses = [
-  { id: 'faaebaf3-3af7-43c2-bcde-83c2cfcd6031', name: 'Main Warehouse' },
-  { id: 'wh-east', name: 'East DC' },
-  { id: 'wh-west', name: 'West DC' },
-]
-
 export default function ReplenishmentPage() {
   const { addToast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [selectedWarehouse, setSelectedWarehouse] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
+  const { warehouses, warehouseId: selectedWarehouse, setWarehouseId: setSelectedWarehouse, isLoading: warehousesLoading, hasWarehouses } = useActiveWarehouse()
   const [activeTab, setActiveTab] = useState<Tab>('rules')
 
   const [rules, setRules] = useState<ReplenishmentRule[]>([])
@@ -64,6 +61,7 @@ export default function ReplenishmentPage() {
   const [saving, setSaving] = useState(false)
 
   const loadData = useCallback(async () => {
+    if (!selectedWarehouse) { setLoading(warehousesLoading); return }   // wait for the organisation's warehouses
     setLoading(true)
     try {
       const [rulesRes, suggestionsRes] = await Promise.allSettled([
@@ -83,7 +81,7 @@ export default function ReplenishmentPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedWarehouse])
+  }, [selectedWarehouse, warehousesLoading])
 
   useEffect(() => { loadData() }, [loadData])
 
@@ -174,6 +172,7 @@ export default function ReplenishmentPage() {
       </div>
     )
   }
+  if (!hasWarehouses) return <NoWarehouses what="Replenishment" />
 
   return (
       <div className="enterprise-page space-y-6">
@@ -204,15 +203,7 @@ export default function ReplenishmentPage() {
       <div className="enterprise-toolbar flex flex-wrap items-center gap-3 p-4 bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)]">
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-[var(--text-secondary)]">Warehouse</label>
-          <select
-            value={selectedWarehouse}
-            onChange={(e) => setSelectedWarehouse(e.target.value)}
-            className="enterprise-input text-sm py-1.5"
-          >
-            {warehouses.map((wh) => (
-              <option key={wh.id} value={wh.id}>{wh.name}</option>
-            ))}
-          </select>
+          <WarehouseSelect warehouses={warehouses} value={selectedWarehouse} onChange={setSelectedWarehouse} className="enterprise-input text-sm py-1.5" />
         </div>
 
         <div className="h-6 w-px bg-[var(--surface-muted)]" />

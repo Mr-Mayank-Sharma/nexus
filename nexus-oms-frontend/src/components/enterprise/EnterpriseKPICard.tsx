@@ -2,17 +2,48 @@ import { memo, ReactNode, isValidElement, createElement } from 'react'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { clsx } from 'clsx'
 
+type Tone = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'ai'
+/** Colour names callers use for the card; each maps onto one of the design-system tones. */
+type ToneInput = Tone | 'blue' | 'green' | 'red' | 'amber' | 'yellow' | 'orange' | 'purple' | 'violet' | 'gray' | 'grey' | 'danger'
+type Direction = 'up' | 'down' | 'neutral'
+type TrendInput = Direction | null | { value: number | string; isPositive?: boolean }
+
 interface Props {
-  title: string
+  title?: string
+  /** Alias of title. */
+  label?: string
   value: string | number
   subtitle?: string
   icon?: ReactNode | React.ComponentType<{ className?: string }>
-  trend?: 'up' | 'down' | 'neutral'
+  trend?: TrendInput
   trendValue?: string
-  color?: 'primary' | 'success' | 'warning' | 'error' | 'info' | 'ai'
+  color?: ToneInput
+  /** Alias of color. */
+  variant?: ToneInput
   loading?: boolean
   onClick?: () => void
   className?: string
+}
+
+const TONE_ALIASES: Record<string, Tone> = {
+  blue: 'info', green: 'success', red: 'error', danger: 'error', amber: 'warning', yellow: 'warning',
+  orange: 'warning', purple: 'ai', violet: 'ai', gray: 'primary', grey: 'primary',
+}
+
+/** Unknown names fall back to primary instead of rendering an unstyled icon. */
+export function resolveTone(input: string | undefined): Tone {
+  if (!input) return 'primary'
+  if (['primary', 'success', 'warning', 'error', 'info', 'ai'].includes(input)) return input as Tone
+  return TONE_ALIASES[input] ?? 'primary'
+}
+
+/** Accepts 'up' | 'down' | 'neutral', nothing, or { value, isPositive } as some pages pass. */
+export function resolveTrend(trend: TrendInput | undefined, trendValue?: string): { direction: Direction | null; text?: string } {
+  if (!trend) return { direction: null }
+  if (typeof trend === 'string') return { direction: trend, text: trendValue }
+  const n = Number(trend.value)
+  const positive = trend.isPositive ?? n >= 0
+  return { direction: n === 0 ? 'neutral' : positive ? 'up' : 'down', text: trendValue ?? `${Math.abs(n)}%` }
 }
 
 function renderIcon(icon: Props['icon']): ReactNode {
@@ -31,7 +62,10 @@ const iconColorMap = {
   ai: 'text-[var(--text-ai)] bg-[var(--nexus-ai-50)] ring-[var(--border-ai)]',
 }
 
-export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, trend, trendValue, color = 'primary', loading, onClick, className }: Props) {
+export default memo(function EnterpriseKPICard({ title: titleProp, label, value, subtitle, icon, trend: trendProp, trendValue: trendText, color, variant, loading, onClick, className }: Props) {
+  const title = titleProp ?? label ?? ''
+  const tone = resolveTone(color ?? variant)
+  const { direction: trend, text: trendValue } = resolveTrend(trendProp, trendText)
   return (
     <div
       role="region"
@@ -63,7 +97,7 @@ export default memo(function EnterpriseKPICard({ title, value, subtitle, icon, t
             {icon && (
               <div className={clsx(
                 'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ring-1',
-                iconColorMap[color],
+                iconColorMap[tone],
               )}>
                 {renderIcon(icon)}
               </div>

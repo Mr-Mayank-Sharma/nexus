@@ -11,6 +11,8 @@ import * as automationApi from '../api/automation'
 import { useToast } from '../hooks/useToast'
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseKPICard from '../components/enterprise/EnterpriseKPICard'
+import { useActiveWarehouse } from '../hooks/useActiveWarehouse'
+import WarehouseSelect from '../components/common/WarehouseSelect'
 
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -181,7 +183,7 @@ export default function AutomationSystemsPage() {
   const [alertLoading, setAlertLoading] = useState(false)
 
   // UI State
-  const [selectedWarehouse] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
+  const { warehouses, warehouseId: selectedWarehouse, setWarehouseId: setSelectedWarehouse, isLoading: warehousesLoading } = useActiveWarehouse()
   const [activeTab, setActiveTab] = useState('systems')
   const [showCommandModal, setShowCommandModal] = useState(false)
   const [showResolveModal, setShowResolveModal] = useState<string | null>(null)
@@ -207,6 +209,7 @@ export default function AutomationSystemsPage() {
   // ─── Data Fetching ───────────────────────────────────────────────────────
 
   const fetchSystems = useCallback(async () => {
+    if (!selectedWarehouse) return
     try {
       const res = await automationApi.getAutomationSystems(selectedWarehouse)
       setSystems(res.data?.content || res.data || [])
@@ -242,6 +245,7 @@ export default function AutomationSystemsPage() {
     setAlertLoading(true)
     try {
       const statusParam = alertFilter === 'ALL' ? undefined : alertFilter
+      if (!selectedWarehouse) return
       const res = await automationApi.getAlerts(selectedWarehouse, statusParam)
       setAlerts(res.data?.content || res.data || [])
     } catch {
@@ -253,6 +257,7 @@ export default function AutomationSystemsPage() {
 
   const fetchHealth = useCallback(async () => {
     try {
+      if (!selectedWarehouse) return
       const res = await automationApi.getSystemHealth(selectedWarehouse)
       if (res.data) setHealthData(res.data)
     } catch {
@@ -262,12 +267,13 @@ export default function AutomationSystemsPage() {
 
   useEffect(() => {
     mountedRef.current = true
+    if (!selectedWarehouse) { setLoading(warehousesLoading); return }   // wait for the organisation's warehouses
     setLoading(true)
     Promise.all([fetchSystems(), fetchCommands(), fetchHealth()]).finally(() => {
       if (mountedRef.current) setLoading(false)
     })
     return () => { mountedRef.current = false }
-  }, [fetchSystems, fetchCommands, fetchHealth])
+  }, [fetchSystems, fetchCommands, fetchHealth, selectedWarehouse, warehousesLoading])
 
   useEffect(() => {
     if (activeTab === 'logs') fetchLogs()
@@ -524,15 +530,12 @@ export default function AutomationSystemsPage() {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <select
-              className="enterprise-input pl-3 pr-8 py-2 text-sm appearance-none min-w-[180px]"
+            <WarehouseSelect
+              warehouses={warehouses}
               value={selectedWarehouse}
-              onChange={() => {}}
-            >
-              <option value="faaebaf3-3af7-43c2-bcde-83c2cfcd6031">Main DC</option>
-              <option value="WH-002">East Hub — WH-002</option>
-              <option value="WH-003">West Hub — WH-003</option>
-            </select>
+              onChange={setSelectedWarehouse}
+              className="enterprise-input pl-3 pr-8 py-2 text-sm appearance-none min-w-[180px]"
+            />
             <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
           </div>
         </div>

@@ -5,6 +5,8 @@ export interface Toast {
   type: 'success' | 'error' | 'info' | 'warning'
   title: string
   message?: string
+  /** Alias of message. */
+  description?: string
   duration?: number
 }
 

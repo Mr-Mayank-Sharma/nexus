@@ -9,10 +9,8 @@ import {
   fetchProducts,
   fetchCustomers,
   fetchInventory,
-  fetchEnhancedInventory,
   fetchReceiving,
   fetchCycleCounts,
-  adjustInventory,
   fetchWarehouses,
   fetchWarehouseZones,
   fetchWavePlans,
@@ -215,18 +213,6 @@ describe('New Backend API', () => {
     })
   })
 
-  describe('fetchEnhancedInventory', () => {
-    it('should GET /inventory', async () => {
-      await fetchEnhancedInventory()
-      expect(mockGet).toHaveBeenCalledWith('/inventory')
-    })
-
-    it('should return null on error', async () => {
-      mockGet.mockRejectedValueOnce(new Error('fail'))
-      expect(await fetchEnhancedInventory()).toBeNull()
-    })
-  })
-
   describe('fetchReceiving', () => {
     it('should GET /inventory-receipts', async () => {
       await fetchReceiving()
@@ -251,24 +237,6 @@ describe('New Backend API', () => {
     })
   })
 
-  describe('adjustInventory', () => {
-    it('should POST /inventory/adjust with all params', async () => {
-      await adjustInventory('SKU-001', 'WH-001', 10, 'Restock')
-      expect(mockPost).toHaveBeenCalledWith('/inventory/adjust', {
-        sku: 'SKU-001',
-        warehouseId: 'WH-001',
-        qty: 10,
-        reason: 'Restock',
-      })
-    })
-
-    it('should return null on error', async () => {
-      mockPost.mockRejectedValueOnce(new Error('fail'))
-      expect(await adjustInventory('S', 'W', 0, 'r')).toBeNull()
-    })
-  })
-
-  // ─── Warehouse ───────────────────────────────────────────────
   describe('fetchWarehouses', () => {
     it('should GET /warehouses', async () => {
       await fetchWarehouses()

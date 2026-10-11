@@ -7,6 +7,8 @@ import { useToast } from '../hooks/useToast'
 import * as freightAuditApi from '../api/freightAudit'
 import PermissionGate from '../components/rbac/PermissionGate'
 import { fmtMoney } from '../utils/format'
+import { useActiveWarehouse } from '../hooks/useActiveWarehouse'
+import WarehouseSelect from '../components/common/WarehouseSelect'
 
 type Tab = 'invoices' | 'audit-log' | 'stats'
 
@@ -58,7 +60,7 @@ const auditStatusColors: Record<string, string> = {
 export default function FreightAuditPage() {
   const { addToast } = useToast()
   const [loading, setLoading] = useState(true)
-  const [selectedWarehouse, setSelectedWarehouse] = useState('faaebaf3-3af7-43c2-bcde-83c2cfcd6031')
+  const { warehouses, warehouseId: selectedWarehouse, setWarehouseId: setSelectedWarehouse } = useActiveWarehouse()
   const [activeTab, setActiveTab] = useState<Tab>('invoices')
 
   const [invoices, setInvoices] = useState<FreightInvoice[]>([])
@@ -207,15 +209,7 @@ export default function FreightAuditPage() {
       <div className="enterprise-toolbar flex flex-wrap items-center gap-3 p-4 bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)]">
         <div className="flex items-center gap-2">
           <label className="text-xs font-medium text-[var(--text-secondary)]">Warehouse</label>
-          <select
-            value={selectedWarehouse}
-            onChange={(e) => setSelectedWarehouse(e.target.value)}
-            className="enterprise-input text-sm py-1.5"
-          >
-            <option value="faaebaf3-3af7-43c2-bcde-83c2cfcd6031">Main Warehouse</option>
-            <option value="wh-east">East DC</option>
-            <option value="wh-west">West DC</option>
-          </select>
+          <WarehouseSelect warehouses={warehouses} value={selectedWarehouse} onChange={setSelectedWarehouse} className="enterprise-input text-sm py-1.5" />
         </div>
 
         <div className="h-6 w-px bg-[var(--surface-muted)]" />
