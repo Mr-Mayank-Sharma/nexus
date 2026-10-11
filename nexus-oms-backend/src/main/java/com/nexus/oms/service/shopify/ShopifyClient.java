@@ -14,7 +14,16 @@ import java.util.Map;
 @Component
 public class ShopifyClient {
 
-    private static final String API_VERSION = "2024-10";
+    /**
+     * Admin API version. Shopify supports each version for about a year and then silently moves
+     * requests to the oldest supported one, so the pin must be revisited regularly. Override with
+     * app.shopify.api-version and re-test against a development store when it changes.
+     */
+    @org.springframework.beans.factory.annotation.Value("${app.shopify.api-version:2026-07}")
+    private String apiVersion = "2026-07";
+
+    static final int MAX_ATTEMPTS = 4;
+    private static final long MAX_BACKOFF_MS = 10_000;
     private final ObjectMapper objectMapper;
 
     public ShopifyClient(ObjectMapper objectMapper) {
@@ -22,7 +31,7 @@ public class ShopifyClient {
     }
 
     private RestClient buildClient(String shopDomain, String accessToken) {
-        String baseUrl = "https://" + shopDomain + "/admin/api/" + API_VERSION;
+        String baseUrl = "https://" + shopDomain + "/admin/api/" + apiVersion;
         return RestClient.builder()
                 .baseUrl(baseUrl)
                 .defaultHeader("X-Shopify-Access-Token", accessToken)
@@ -82,6 +91,10 @@ public class ShopifyClient {
         return doPost(buildClient(shopDomain, accessToken), "/orders/" + orderId + "/refunds.json", data);
     }
 
+    public JsonNode getWebhooks(String shopDomain, String accessToken) {
+        return doGet(buildClient(shopDomain, accessToken), "/webhooks.json", Map.of("limit", "250"));
+    }
+
     public JsonNode registerWebhook(String shopDomain, String accessToken, Map<String, Object> data) {
         return doPost(buildClient(shopDomain, accessToken), "/webhooks.json", data);
     }
@@ -101,19 +114,58 @@ public class ShopifyClient {
         }
     }
 
+    /**
+     * Runs one HTTP call, retrying while Shopify throttles us (429) and, for reads only, on
+     * transient 502/503/504. Waits for Retry-After when given, else backs off exponentially.
+     */
+    <T> T retrying(boolean idempotent, java.util.function.Supplier<T> call) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                return call.get();
+            } catch (org.springframework.web.client.RestClientResponseException e) {
+                int status = e.getStatusCode().value();
+                boolean retryable = status == 429 || (idempotent && (status == 502 || status == 503 || status == 504));
+                if (!retryable || attempt >= MAX_ATTEMPTS) throw e;
+                pause(backoffMillis(e.getResponseHeaders() != null ? e.getResponseHeaders().getFirst("Retry-After") : null, attempt));
+            }
+        }
+    }
+
+    private static String withQuery(String path, Map<String, String> params) {
+        if (params == null || params.isEmpty()) return path;
+        StringBuilder qs = new StringBuilder();
+        params.forEach((k, v) -> qs.append(k).append("=").append(v).append("&"));
+        return path + "?" + qs.substring(0, qs.length() - 1);
+    }
+
+    static long backoffMillis(String retryAfter, int attempt) {
+        if (retryAfter != null) {
+            try {
+                return Math.min(MAX_BACKOFF_MS, Math.max(0L, (long) (Double.parseDouble(retryAfter.trim()) * 1000)));
+            } catch (NumberFormatException ignored) {
+                // fall through to exponential backoff
+            }
+        }
+        return Math.min(MAX_BACKOFF_MS, 500L * (1L << (attempt - 1)));
+    }
+
+    void pause(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting to retry Shopify", e);
+        }
+    }
+
     @CircuitBreaker(name = "shopify-api")
     private JsonNode doGet(RestClient client, String path, Map<String, String> params) {
         try {
-            String uri = path;
-            if (params != null && !params.isEmpty()) {
-                StringBuilder qs = new StringBuilder();
-                params.forEach((k, v) -> qs.append(k).append("=").append(v).append("&"));
-                uri = path + "?" + qs.substring(0, qs.length() - 1);
-            }
-            String response = client.get()
+            final String uri = withQuery(path, params);
+            String response = retrying(true, () -> client.get()
                     .uri(uri)
                     .retrieve()
-                    .body(String.class);
+                    .body(String.class));
             return objectMapper.readTree(response);
         } catch (RestClientException e) {
             throw new BadRequestException("Shopify API error: " + e.getMessage());
@@ -125,16 +177,11 @@ public class ShopifyClient {
     @CircuitBreaker(name = "shopify-api")
     private ProductPage doGetWithLink(RestClient client, String path, Map<String, String> params) {
         try {
-            String uri = path;
-            if (params != null && !params.isEmpty()) {
-                StringBuilder qs = new StringBuilder();
-                params.forEach((k, v) -> qs.append(k).append("=").append(v).append("&"));
-                uri = path + "?" + qs.substring(0, qs.length() - 1);
-            }
-            var response = client.get()
+            final String uri = withQuery(path, params);
+            var response = retrying(true, () -> client.get()
                     .uri(uri)
                     .retrieve()
-                    .toEntity(String.class);
+                    .toEntity(String.class));
             JsonNode body = objectMapper.readTree(response.getBody());
             String next = null;
             String link = response.getHeaders().getFirst("Link");
@@ -166,12 +213,12 @@ public class ShopifyClient {
     private JsonNode doPost(RestClient client, String path, Map<String, Object> data) {
         try {
             String body = objectMapper.writeValueAsString(data);
-            String response = client.post()
+            String response = retrying(false, () -> client.post()
                     .uri(path)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(body)
                     .retrieve()
-                    .body(String.class);
+                    .body(String.class));
             return objectMapper.readTree(response);
         } catch (RestClientException e) {
             throw new BadRequestException("Shopify API error: " + e.getMessage());

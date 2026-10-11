@@ -50,6 +50,10 @@ public class ShopifyTokenService {
         return refreshed;
     }
 
+    public void evict(UUID storeId) {
+        cache.remove(storeId);
+    }
+
     private String refresh(String shopDomain, String clientId, String clientSecret) {
         try {
             String url = "https://" + shopDomain + "/admin/oauth/access_token";

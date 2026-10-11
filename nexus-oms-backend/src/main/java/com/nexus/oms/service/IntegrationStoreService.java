@@ -6,6 +6,7 @@ import com.nexus.oms.dto.StoreSyncStatus;
 import com.nexus.oms.entity.*;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.integration.core.CredentialVault;
 import com.nexus.oms.repository.*;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -25,17 +26,69 @@ public class IntegrationStoreService {
     private final NxIntegrationSyncConfigRepository syncConfigRepository;
     private final NxSyncLogRepository syncLogRepository;
     private final ObjectMapper objectMapper;
+    private final CredentialVault vault;
+
+    /** Marks a stored value as AES-GCM sealed; anything without it is legacy plaintext. */
+    static final String SEALED_PREFIX = "enc:v1:";
+    /** What the API shows in place of a secret. Sending it back unchanged keeps the stored value. */
+    public static final String MASK = "********";
 
     public IntegrationStoreService(NxIntegrationStoreRepository storeRepository,
                                     NxIntegrationStoreSettingRepository settingRepository,
                                     NxIntegrationSyncConfigRepository syncConfigRepository,
                                     NxSyncLogRepository syncLogRepository,
-                                    ObjectMapper objectMapper) {
+                                    ObjectMapper objectMapper,
+                                    CredentialVault vault) {
         this.storeRepository = storeRepository;
         this.settingRepository = settingRepository;
         this.syncConfigRepository = syncConfigRepository;
         this.syncLogRepository = syncLogRepository;
         this.objectMapper = objectMapper;
+        this.vault = vault;
+    }
+
+    static boolean isSecretKey(String settingType) {
+        String k = settingType == null ? "" : settingType.toLowerCase(Locale.ROOT);
+        return k.contains("token") || k.contains("secret") || k.contains("password")
+                || k.contains("api_key") || k.contains("apikey") || k.endsWith("_key");
+    }
+
+    private String seal(String settingType, String value) {
+        if (value == null || value.isEmpty() || !isSecretKey(settingType) || value.startsWith(SEALED_PREFIX)) return value;
+        return SEALED_PREFIX + vault.encrypt(value);
+    }
+
+    private String open(String stored) {
+        return stored != null && stored.startsWith(SEALED_PREFIX)
+                ? vault.decrypt(stored.substring(SEALED_PREFIX.length())) : stored;
+    }
+
+    /**
+     * Encrypts any secret still stored as plaintext. Called once at startup; safe to repeat and
+     * to run from several instances at once (a sealed value is never sealed again).
+     */
+    @Transactional
+    public int sealLegacySecrets() {
+        int sealed = 0;
+        for (NxIntegrationStoreSetting s : settingRepository.findAll()) {
+            String v = s.getSettingValue();
+            if (isSecretKey(s.getSettingType()) && v != null && !v.isEmpty() && !v.startsWith(SEALED_PREFIX)) {
+                s.setSettingValue(seal(s.getSettingType(), v));
+                s.setIsEncrypted(true);
+                settingRepository.save(s);
+                sealed++;
+            }
+        }
+        return sealed;
+    }
+
+    /** The app secret that signs this shop's webhooks, looked up before any tenant is known. */
+    public Optional<String> findWebhookSecretForDomain(String domain) {
+        return storeRepository.findByExternalDomain(domain)
+                .flatMap(st -> settingRepository.findByStoreIdAndSettingType(st.getId(), "client_secret"))
+                .map(NxIntegrationStoreSetting::getSettingValue)
+                .map(this::open)
+                .filter(v -> !v.isBlank());
     }
 
     @Cacheable(value = "storeSettings", key = "'stores:' + #tenantId + ':' + (#platform ?: 'all')")
@@ -82,8 +135,8 @@ public class IntegrationStoreService {
                 NxIntegrationStoreSetting setting = NxIntegrationStoreSetting.builder()
                         .storeId(store.getId())
                         .settingType(entry.getKey())
-                        .settingValue(entry.getValue())
-                        .isEncrypted(entry.getKey().contains("token") || entry.getKey().contains("secret"))
+                        .settingValue(seal(entry.getKey(), entry.getValue()))
+                        .isEncrypted(isSecretKey(entry.getKey()))
                         .build();
                 settingRepository.save(setting);
             }
@@ -118,13 +171,16 @@ public class IntegrationStoreService {
 
         if (request.getSettings() != null) {
             for (Map.Entry<String, String> entry : request.getSettings().entrySet()) {
+                // The UI echoes masked secrets back untouched; that must not overwrite the real one.
+                if (MASK.equals(entry.getValue()) && isSecretKey(entry.getKey())) continue;
                 NxIntegrationStoreSetting setting = settingRepository
                         .findByStoreIdAndSettingType(store.getId(), entry.getKey())
                         .orElse(NxIntegrationStoreSetting.builder()
                                 .storeId(store.getId())
                                 .settingType(entry.getKey())
                                 .build());
-                setting.setSettingValue(entry.getValue());
+                setting.setSettingValue(seal(entry.getKey(), entry.getValue()));
+                setting.setIsEncrypted(isSecretKey(entry.getKey()));
                 settingRepository.save(setting);
             }
         }
@@ -139,23 +195,31 @@ public class IntegrationStoreService {
         storeRepository.delete(store);
     }
 
-    @Cacheable(value = "storeSettings", key = "'settings:' + #storeId")
+    /** For the API: secrets are masked and never leave the server. */
     public List<NxIntegrationStoreSetting> getSettings(UUID storeId) {
-        return settingRepository.findByStoreId(storeId);
+        return settingRepository.findByStoreId(storeId).stream()
+                .map(s -> NxIntegrationStoreSetting.builder()
+                        .id(s.getId()).storeId(s.getStoreId()).settingType(s.getSettingType())
+                        .description(s.getDescription())
+                        .settingValue(isSecretKey(s.getSettingType()) && s.getSettingValue() != null && !s.getSettingValue().isEmpty()
+                                ? MASK : s.getSettingValue())
+                        .isEncrypted(s.getIsEncrypted())
+                        .build())
+                .toList();
     }
 
-    @Cacheable(value = "storeSettings", key = "'setting:' + #storeId + ':' + #settingType")
+    // Deliberately not cached: the cache is Redis, and these return decrypted secrets.
     public String getSetting(UUID storeId, String settingType) {
         return settingRepository.findByStoreIdAndSettingType(storeId, settingType)
                 .map(NxIntegrationStoreSetting::getSettingValue)
+                .map(this::open)
                 .orElse(null);
     }
 
-    @Cacheable(value = "storeSettings", key = "'settingsMap:' + #storeId")
     public Map<String, String> getSettingsMap(UUID storeId) {
         return settingRepository.findByStoreId(storeId).stream()
                 .collect(Collectors.toMap(NxIntegrationStoreSetting::getSettingType,
-                        s -> s.getSettingValue() != null ? s.getSettingValue() : ""));
+                        s -> s.getSettingValue() != null ? open(s.getSettingValue()) : ""));
     }
 
     @Transactional
@@ -166,9 +230,9 @@ public class IntegrationStoreService {
                 .orElse(NxIntegrationStoreSetting.builder()
                         .storeId(storeId)
                         .settingType(settingType)
-                        .isEncrypted(settingType.contains("token") || settingType.contains("secret"))
                         .build());
-        setting.setSettingValue(value);
+        setting.setSettingValue(seal(settingType, value));
+        setting.setIsEncrypted(isSecretKey(settingType));
         settingRepository.save(setting);
     }
 

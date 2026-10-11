@@ -49,44 +49,93 @@ public class ShopifyWebhookService {
         this.objectMapper = objectMapper;
     }
 
+    /** Topics Nexus subscribes to, with the receiver path under /webhooks/shopify. */
+    static final Map<String, String> TOPICS = Map.of(
+            "orders/create", "/orders/create",
+            "orders/updated", "/orders/updated",
+            "orders/fulfilled", "/orders/fulfilled",
+            "orders/cancelled", "/orders/cancelled",
+            "app/uninstalled", "/app/uninstalled");
+
+    /**
+     * Subscribes the store to every topic Nexus handles. Safe to repeat: topics Shopify already
+     * has for the same address are kept, not duplicated. Returns topic to outcome ("REGISTERED",
+     * "EXISTS" or "FAILED: reason"), so a partial failure is visible instead of silently dropped.
+     */
     @Transactional
-    public void registerWebhooks(UUID storeId, String baseUrl) {
+    public Map<String, String> registerWebhooks(UUID storeId, String baseUrl) {
         NxIntegrationStore store = storeService.getStore(storeId);
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
         String accessToken = tokenService.getAccessToken(storeId);
+        String webhookBase = baseUrl.replaceAll("/+$", "") + "/api/v1/webhooks/shopify";
 
-        String webhookBase = baseUrl + "/api/v1/webhooks/shopify";
-
-        List<Map<String, String>> topics = List.of(
-                Map.of("topic", "orders/create", "event", "create"),
-                Map.of("topic", "orders/updated", "event", "updated"),
-                Map.of("topic", "orders/fulfilled", "event", "fulfilled")
-        );
-
-        for (Map<String, String> entry : topics) {
-            try {
-                Map<String, Object> data = new HashMap<>();
-                Map<String, Object> webhook = new HashMap<>();
-                webhook.put("topic", entry.get("topic"));
-                webhook.put("address", webhookBase + "/orders/" + entry.get("event"));
-                webhook.put("format", "json");
-                data.put("webhook", webhook);
-
-                JsonNode response = shopifyClient.registerWebhook(shopDomain, accessToken, data);
-                if (response != null && response.has("webhook")) {
-                    JsonNode hook = response.get("webhook");
-                    NxShopifyWebhook wh = NxShopifyWebhook.builder()
-                            .tenantId(store.getTenantId())
-                            .storeId(storeId)
-                            .shopifyWebhookId(hook.get("id").asLong())
-                            .topic(entry.get("topic"))
-                            .address(webhookBase + "/orders/" + entry.get("event"))
-                            .isActive(true)
-                            .build();
-                    webhookRepository.save(wh);
+        Map<String, String> existing = new HashMap<>();   // topic|address -> shopify webhook id
+        try {
+            JsonNode listed = shopifyClient.getWebhooks(shopDomain, accessToken);
+            if (listed != null && listed.has("webhooks")) {
+                for (JsonNode hook : listed.get("webhooks")) {
+                    existing.put(hook.path("topic").asText() + "|" + hook.path("address").asText(), hook.path("id").asText());
                 }
-            } catch (Exception ignored) {}
+            }
+        } catch (RuntimeException e) {
+            log.warn("Could not list existing Shopify webhooks for store {}: {}", storeId, e.getMessage());
         }
+
+        Map<String, String> results = new java.util.TreeMap<>();
+        TOPICS.forEach((topic, path) -> {
+            String address = webhookBase + path;
+            try {
+                String known = existing.get(topic + "|" + address);
+                if (known != null) {
+                    recordWebhook(store, storeId, Long.parseLong(known), topic, address);
+                    results.put(topic, "EXISTS");
+                    return;
+                }
+                Map<String, Object> webhook = new HashMap<>();
+                webhook.put("topic", topic);
+                webhook.put("address", address);
+                webhook.put("format", "json");
+                JsonNode response = shopifyClient.registerWebhook(shopDomain, accessToken, Map.of("webhook", webhook));
+                if (response == null || !response.has("webhook")) {
+                    results.put(topic, "FAILED: Shopify returned no webhook");
+                    return;
+                }
+                recordWebhook(store, storeId, response.get("webhook").get("id").asLong(), topic, address);
+                results.put(topic, "REGISTERED");
+            } catch (RuntimeException e) {
+                log.warn("Shopify webhook {} not registered for store {}: {}", topic, storeId, e.getMessage());
+                results.put(topic, "FAILED: " + e.getMessage());
+            }
+        });
+        return results;
+    }
+
+    private void recordWebhook(NxIntegrationStore store, UUID storeId, long shopifyId, String topic, String address) {
+        boolean known = webhookRepository.findByStoreId(storeId).stream()
+                .anyMatch(w -> w.getShopifyWebhookId() != null && w.getShopifyWebhookId() == shopifyId);
+        if (known) return;
+        webhookRepository.save(NxShopifyWebhook.builder()
+                .tenantId(store.getTenantId()).storeId(storeId).shopifyWebhookId(shopifyId)
+                .topic(topic).address(address).isActive(true).build());
+    }
+
+    /**
+     * Shopify tells us the app was removed from the shop. The credentials are dead from now on:
+     * deactivate the store so no sync keeps failing against a revoked token, and make the state
+     * visible so a merchant knows to reconnect.
+     */
+    @Transactional
+    public void handleAppUninstalled(UUID storeId) {
+        NxIntegrationStore store = storeService.getStore(storeId);
+        store.setIsActive(false);
+        store.setStatus("DISCONNECTED");
+        storeRepository.save(store);
+        tokenService.evict(storeId);
+        webhookRepository.findByStoreId(storeId).forEach(w -> {
+            w.setIsActive(false);
+            webhookRepository.save(w);
+        });
+        log.warn("Shopify app uninstalled for store {} ({}); store deactivated", store.getStoreCode(), storeId);
     }
 
     @Transactional

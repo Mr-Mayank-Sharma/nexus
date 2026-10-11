@@ -24,6 +24,11 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
         this.cachedBody = baos.toByteArray();
     }
 
+    /** The request body exactly as received; signatures are computed over these bytes. */
+    public byte[] getCachedBody() {
+        return cachedBody;
+    }
+
     @Override
     public ServletInputStream getInputStream() {
         return new ServletInputStream() {

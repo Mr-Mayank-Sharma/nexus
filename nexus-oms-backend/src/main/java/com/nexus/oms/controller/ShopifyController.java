@@ -83,16 +83,12 @@ public class ShopifyController {
     }
 
     @PostMapping("/stores/{storeId}/webhooks/register")
-    public ResponseEntity<ApiResponse<Void>> registerWebhooks(
+    public ResponseEntity<ApiResponse<Map<String, String>>> registerWebhooks(
             @PathVariable UUID storeId, @RequestParam String baseUrl) {
-        webhookService.registerWebhooks(storeId, baseUrl);
-        return ResponseEntity.ok(ApiResponse.success(null, "Shopify webhooks registered"));
-    }
-
-    @PostMapping("/webhooks/{type}")
-    public ResponseEntity<ApiResponse<Void>> handleWebhook(
-            @PathVariable String type, @RequestBody Map<String, Object> payload) {
-        webhookService.handleWebhook(payload, null);
-        return ResponseEntity.ok(ApiResponse.success(null, "Webhook received"));
+        Map<String, String> results = webhookService.registerWebhooks(storeId, baseUrl);
+        long failed = results.values().stream().filter(v -> v.startsWith("FAILED")).count();
+        return ResponseEntity.ok(ApiResponse.success(results, failed == 0
+                ? "Shopify webhooks are registered"
+                : failed + " of " + results.size() + " Shopify webhooks could not be registered"));
     }
 }

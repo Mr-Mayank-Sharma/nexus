@@ -27,6 +27,14 @@ public class WebhookController {
         this.storeService = storeService;
     }
 
+    @PostMapping("/shopify/app/uninstalled")
+    public ResponseEntity<ApiResponse<String>> handleShopifyAppUninstalled(
+            @RequestHeader("X-Shopify-Shop-Domain") String shopDomain) {
+        storeService.findStoreByExternalDomain(shopDomain)
+                .ifPresent(store -> shopifyWebhookService.handleAppUninstalled(store.getId()));
+        return ResponseEntity.ok(ApiResponse.success("OK", "Webhook processed"));
+    }
+
     @PostMapping("/shopify/orders/{event}")
     public ResponseEntity<ApiResponse<String>> handleShopifyOrderWebhook(
             @PathVariable String event,

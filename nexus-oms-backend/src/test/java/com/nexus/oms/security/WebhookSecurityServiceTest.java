@@ -79,30 +79,51 @@ class WebhookSecurityServiceTest {
     }
 
     @Test
-    void isDuplicateEvent_returnsFalseForNewEvent() {
-        String eventId = "evt-001";
-        when(redisTemplate.hasKey("webhook:processed:" + eventId)).thenReturn(false);
+    void isDuplicateEvent_claimsNewEventAtomically() {
+        when(valueOperations.setIfAbsent("webhook:processed:evt-001", "1", 24, TimeUnit.HOURS)).thenReturn(true);
 
-        assertFalse(webhookSecurityService.isDuplicateEvent(eventId));
-
-        verify(valueOperations).set("webhook:processed:" + eventId, "1", 24, TimeUnit.HOURS);
+        assertFalse(webhookSecurityService.isDuplicateEvent("evt-001"));
     }
 
     @Test
-    void isDuplicateEvent_returnsTrueForDuplicate() {
-        String eventId = "evt-002";
-        when(redisTemplate.hasKey("webhook:processed:" + eventId)).thenReturn(true);
+    void isDuplicateEvent_returnsTrueWhenAlreadyClaimed() {
+        when(valueOperations.setIfAbsent("webhook:processed:evt-002", "1", 24, TimeUnit.HOURS)).thenReturn(false);
 
-        assertTrue(webhookSecurityService.isDuplicateEvent(eventId));
-
-        verify(valueOperations, never()).set(anyString(), anyString(), anyLong(), any(TimeUnit.class));
+        assertTrue(webhookSecurityService.isDuplicateEvent("evt-002"));
     }
 
     @Test
-    void isDuplicateEvent_returnsFalseWhenRedisReturnsNull() {
-        String eventId = "evt-003";
-        when(redisTemplate.hasKey("webhook:processed:" + eventId)).thenReturn(null);
+    void releaseEvent_forgetsTheClaim_soTheRetryIsProcessed() {
+        webhookSecurityService.releaseEvent("evt-003");
 
-        assertFalse(webhookSecurityService.isDuplicateEvent(eventId));
+        verify(redisTemplate).delete("webhook:processed:evt-003");
+    }
+
+    @Test
+    void shopifyHmac_acceptsTheShopsOwnSecret_andRejectsOthers() throws Exception {
+        byte[] body = "{\"id\":1}\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);   // trailing CRLF matters
+        String sig = sign(body, "shop-secret");
+
+        assertTrue(webhookSecurityService.verifyShopifyHmac(body, sig, java.util.List.of("shop-secret", TEST_SECRET)));
+        assertTrue(webhookSecurityService.verifyShopifyHmac(body, sig, java.util.List.of(TEST_SECRET, "shop-secret")));
+        assertFalse(webhookSecurityService.verifyShopifyHmac(body, sig, java.util.List.of(TEST_SECRET, "")));
+        assertFalse(webhookSecurityService.verifyShopifyHmac(body, sig, java.util.List.of("")), "blank secrets never match");
+        assertFalse(webhookSecurityService.verifyShopifyHmac(body, null, java.util.List.of("shop-secret")));
+    }
+
+    @Test
+    void shopifyHmac_isComputedOverTheExactBytes() throws Exception {
+        byte[] original = "{\"a\":1}\n{\"b\":2}\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        String sig = sign(original, TEST_SECRET);
+        byte[] rejoinedLines = "{\"a\":1}\n{\"b\":2}".getBytes(java.nio.charset.StandardCharsets.UTF_8);   // what line-joining produced
+
+        assertTrue(webhookSecurityService.verifyShopifyHmac(original, sig, java.util.List.of(TEST_SECRET)));
+        assertFalse(webhookSecurityService.verifyShopifyHmac(rejoinedLines, sig, java.util.List.of(TEST_SECRET)));
+    }
+
+    static String sign(byte[] body, String secret) throws Exception {
+        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+        mac.init(new javax.crypto.spec.SecretKeySpec(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+        return java.util.Base64.getEncoder().encodeToString(mac.doFinal(body));
     }
 }

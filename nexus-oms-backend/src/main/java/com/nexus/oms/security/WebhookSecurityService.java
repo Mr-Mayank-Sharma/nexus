@@ -13,6 +13,8 @@ import javax.crypto.spec.SecretKeySpec;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -34,19 +36,34 @@ public class WebhookSecurityService {
     /**
      * Verify Shopify webhook HMAC-SHA256 signature.
      */
+    public String globalShopifySecret() {
+        return shopifySecret;
+    }
+
     public boolean verifyShopifyHmac(String body, String signatureHeader) {
-        if (shopifySecret.isEmpty() || signatureHeader == null) return false;
-        try {
-            Mac mac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secret = new SecretKeySpec(shopifySecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            mac.init(secret);
-            byte[] hmac = mac.doFinal(body.getBytes(StandardCharsets.UTF_8));
-            String computed = Base64.getEncoder().encodeToString(hmac);
-            return constantTimeEquals(computed, signatureHeader.trim());
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            log.error("HMAC verification failed", e);
-            return false;
+        return verifyShopifyHmac(body.getBytes(StandardCharsets.UTF_8), signatureHeader, List.of(shopifySecret));
+    }
+
+    /**
+     * Verifies against the exact bytes Shopify signed, trying each candidate secret. Shopify signs
+     * with the app's client secret, so the shop's own secret is tried first and the globally
+     * configured one is a fallback for single-app installs. Blank secrets never match.
+     */
+    public boolean verifyShopifyHmac(byte[] body, String signatureHeader, Collection<String> secrets) {
+        if (signatureHeader == null || signatureHeader.isBlank()) return false;
+        boolean valid = false;
+        for (String candidate : secrets) {
+            if (candidate == null || candidate.isEmpty()) continue;
+            try {
+                Mac mac = Mac.getInstance("HmacSHA256");
+                mac.init(new SecretKeySpec(candidate.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+                String computed = Base64.getEncoder().encodeToString(mac.doFinal(body));
+                valid |= constantTimeEquals(computed, signatureHeader.trim());   // no early exit
+            } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+                log.error("HMAC verification failed", e);
+            }
         }
+        return valid;
     }
 
     /**
@@ -72,11 +89,17 @@ public class WebhookSecurityService {
      * Returns true if the event has already been processed (duplicate).
      */
     public boolean isDuplicateEvent(String eventId) {
-        String key = "webhook:processed:" + eventId;
-        Boolean exists = redisTemplate.hasKey(key);
-        if (Boolean.TRUE.equals(exists)) return true;
-        redisTemplate.opsForValue().set(key, "1", 24, TimeUnit.HOURS);
-        return false;
+        // Atomic SET NX: two simultaneous deliveries of one event cannot both pass.
+        Boolean claimed = redisTemplate.opsForValue().setIfAbsent("webhook:processed:" + eventId, "1", 24, TimeUnit.HOURS);
+        return Boolean.FALSE.equals(claimed);
+    }
+
+    /**
+     * Forgets an event whose processing failed, so the sender's retry is processed instead of being
+     * dropped as a duplicate. Only call this for events whose signature was verified.
+     */
+    public void releaseEvent(String eventId) {
+        redisTemplate.delete("webhook:processed:" + eventId);
     }
 
     /**
