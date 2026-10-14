@@ -1,13 +1,19 @@
 # 18 — NEXUS EXPOSED
 
-> **What this is.** A ground-truth system design of Nexus plus every issue found in the
-> audit, with the critical event-contract bug fixed in detail and a deep dive into the
-> integration layer. Every claim is verified against source at the commit noted below.
+> **What this is.** The ground truth about Nexus: how it is built, every defect the audit found
+> (with its status), what was verified by actually running it end to end, and what the product is
+> honestly worth today. It replaces optimism with evidence.
 >
-> **Verified against:** working tree, branch `main` (uncommitted `GlobalExceptionHandler` fix present).
-> **Method:** source reads + `grep`/`find` sweeps. Findings marked **[outbox]** were verified in the
-> Kafka deep-dive; **[code]** were verified against current source. The 2026-09-05 audit's bugs were
-> re-checked and are **fixed** (see §2.5) — they are not carried forward as open.
+> **Verified against:** `main` at the commit that contains this file, 2026-10-14. Every number
+> below was produced by running something (the backend suite, the frontend suite, the checker in
+> `scripts/verify_docs.py`, or the live lifecycle script), not recalled.
+>
+> **Evidence labels.** **[code]** read in source · **[test]** covered by an automated test that
+> runs in CI · **[live]** observed against the running stack (Postgres, Redis, the real API) ·
+> **[unverified]** written but never exercised against the real external system it targets.
+>
+> **Read first:** [§7 the scorecard](#part-7--the-scorecard) and [§8 what is still open](#part-8--still-open-and-who-owns-it).
+> Market context (competitors, pricing, analysts) is in [19-MARKET-BENCHMARKS.md](./19-MARKET-BENCHMARKS.md).
 
 ---
 
@@ -21,8 +27,8 @@ in the UI.
 
 | Layer | Technology | Scale |
 |---|---|---|
-| Backend | Spring Boot 3 / Java 17 | 76 controllers · 79 services · 156 entities · 156 repositories · 70 migrations |
-| Frontend | React 18 + Vite + TypeScript | ~95 routed pages · 299 TS/TSX files · RF handheld app |
+| Backend | Spring Boot 3 / Java 17 | 84 controllers · 133 services · 174 entities · 70 migration files (V1–V78) · 76 permission-mapped API prefixes |
+| Frontend | React 18 + Vite + TypeScript | 103 routes · 66 API modules · RF handheld app |
 | Database | PostgreSQL 16 + pgvector | Row-Level Security per tenant |
 | Cache / Locks | Redis 7 | cache, rate-limit buckets, ShedLock |
 | Messaging | Kafka 3.7.2 (KRaft) | transactional outbox |
@@ -234,24 +240,24 @@ docker-compose (local/dev)          deploy/local (macOS)
 
 ## 2.1 Severity Summary
 
-| ID | Severity | Area | Issue |
-|---|---|---|---|
-| ISS-01 | 🔴 Critical | Kafka | Consumer can't deserialize any published event → all order events dead-lettered |
-| ISS-02 | 🔴 High | Kafka | `FAILED` outbox rows never purged, never alerted |
-| ISS-03 | 🔴 High | Kafka | Kafka disabled by default; docker-compose never enables it |
-| ISS-04 | 🟠 Medium | Kafka | `publishEvent()` (the correct API) is dead code |
-| ISS-05 | 🟠 Medium | Kafka | Dynamic `order.{status}` emits up to 16 topics, 11 undeclared |
-| ISS-06 | 🟠 Medium | Kafka | 8 consumers with no producer (dead listeners) |
-| ISS-07 | 🟠 Medium | Kafka | DLQ: 3 uncoordinated mechanisms; Spring recoverer is a no-op |
-| ISS-08 | 🟠 Medium | Kafka | DLQ topics missing for 4 consumed topics |
-| ISS-09 | 🟠 Medium | Kafka | ShedLock `lockAtMostFor` (2 min) < worst-case batch (~33 min) |
-| ISS-10 | 🟠 Medium | Integration | Connector depth gap: 11 dedicated vs ~28 generic stubs |
-| ISS-11 | 🟡 Low | Kafka | Consumer doesn't dedupe despite at-least-once delivery |
-| ISS-12 | 🟡 Low | Kafka | Global head-of-line blocking on a poison event |
-| ISS-13 | 🟡 Low | Kafka | Replication factor hardcoded to 1 |
-| ISS-14 | 🟡 Low | Frontend | `AiAuditTrailPage` is a "not yet available" placeholder |
-| ISS-15 | 🟡 Low | Backend | 2 stub markers (webhook, transform) |
-| ISS-16 | 🟡 Low | Repo | Uncommitted `GlobalExceptionHandler` 404 fix in working tree |
+| ID | Severity | Area | Issue | Status |
+|---|---|---|---|---|
+| ISS-01 | 🔴 Critical | Kafka | Consumer can't deserialize any published event → all order events dead-lettered | ✅ **Fixed** `e6d2d30`: producers publish the envelope; round-trip test **[test]** |
+| ISS-02 | 🔴 High | Kafka | `FAILED` outbox rows never purged, never alerted | ✅ **Fixed**: 30-day purge, `nexus.outbox.failed` / `.pending` gauges **[test]**. The alert rule itself is not yet written |
+| ISS-03 | 🔴 High | Kafka | Kafka disabled by default; docker-compose never enables it | 🟡 **Partly**: the dev compose now enables it; the application default stays `false` by design |
+| ISS-04 | 🟠 Medium | Kafka | `publishEvent()` (the correct API) is dead code | ✅ **Fixed**: all 11 call sites use it; a test fails if any service publishes a raw payload **[test]** |
+| ISS-05 | 🟠 Medium | Kafka | Dynamic `order.{status}` emits up to 16 topics, 11 undeclared | ✅ **Fixed**: all 16 declared **[test]** |
+| ISS-06 | 🟠 Medium | Kafka | 8 consumers with no producer (dead listeners) | 🔴 Open |
+| ISS-07 | 🟠 Medium | Kafka | DLQ: 3 uncoordinated mechanisms; Spring recoverer is a no-op | 🔴 Open |
+| ISS-08 | 🟠 Medium | Kafka | DLQ topics missing for 4 consumed topics | ✅ **Fixed**: one per consumed topic **[test]** |
+| ISS-09 | 🟠 Medium | Kafka | ShedLock `lockAtMostFor` (2 min) < worst-case batch (~33 min) | ✅ **Fixed**: batch 100 × 3 s = 5 min inside a 10 min lock; an invariant test guards it **[test]** |
+| ISS-10 | 🟠 Medium | Integration | Connector depth gap: 11 dedicated vs ~28 generic stubs | 🟡 **Made honest**: generic reads and writes now answer `NOT_SUPPORTED` instead of a fake success **[test]**. The depth gap itself remains |
+| ISS-11 | 🟡 Low | Kafka | Consumer doesn't dedupe despite at-least-once delivery | 🔴 Open |
+| ISS-12 | 🟡 Low | Kafka | Global head-of-line blocking on a poison event | 🔴 Open |
+| ISS-13 | 🟡 Low | Kafka | Replication factor hardcoded to 1 | ✅ **Fixed**: `nexus.kafka.replication` (set 3 in production) |
+| ISS-14 | 🟡 Low | Frontend | `AiAuditTrailPage` is a "not yet available" placeholder | 🔴 Open |
+| ISS-15 | 🟡 Low | Backend | 2 stub markers (webhook, transform) | 🟡 The webhook default now says plainly it is unsupported; the transform stub is open |
+| ISS-16 | 🟡 Low | Repo | Uncommitted `GlobalExceptionHandler` 404 fix in working tree | ✅ **Fixed and committed** `5533dfe` **[test]** |
 
 ---
 
@@ -412,6 +418,12 @@ Re-verified against current source; **do not treat these as open**:
 
 # PART 3 — FIX PLAN: ISS-01 / ISS-04 (the critical event-contract bug)
 
+> **Status: implemented in `e6d2d30`.** Two deliberate differences from the plan below: (1) the call
+> sites use a helper, `publishEntityEvent(topic, entityId)`, that derives the event type from the
+> topic (`order.shipped` becomes `ORDER_SHIPPED`) rather than 11 hand-written strings; (2) the Kafka
+> key is the **entity id**, not the random event id, so all events for one order share a partition
+> and stay in order (the plan would have lost per-order ordering). The consumer was not loosened.
+
 ## 3.1 Root Cause (one sentence)
 
 `KafkaProducerService.publish(topic, message)` sends the **raw** message, while
@@ -520,6 +532,11 @@ AbstractConnector
 | `pushRefunds` | ❌ returns 0, logs only | ❌ (inherited) | ✅ (where implemented) |
 | `registerWebhooks` | ❌ `log.info("Webhooks not implemented")` | ❌ (inherited) | ✅ (where implemented) |
 | `testConnection` | ⚠️ `GET baseUrl + "/"` (root) | ⚠️ `GET health_path` (default `/`) | ✅ platform-specific |
+
+> **Update (this audit):** the table above is the state *found*. A generic connector's "pull" fetched
+> records, counted them as `itemsSucceeded`, and **discarded them** (nothing maps them into Nexus
+> orders), and its writes answered `COMPLETED` with zero items. Both now answer `NOT_SUPPORTED`
+> with a warning that says what was and was not done **[test]**. The depth gap is unchanged.
 
 **Read this carefully:** a generic connector can **pull orders and products** (real REST), but
 **cannot push inventory, fulfillments, or refunds** — those return `itemsSucceeded(0)` and only log.
@@ -695,6 +712,164 @@ P0 (event backbone) ──▶ P1 (integrations) ──▶ P2 (onboarding) ──
 - **Don't ship onboarding docs** that describe a flow the code does not implement.
 - **Don't chase enterprise logos** (full ERP/WMS/POS) — that is explicitly out of scope; the ICP is
   small/mid-market brands, multi-channel retailers, 3PLs, and EDI-heavy B2B.
+
+---
+
+# PART 6 — WHAT RUNNING IT END TO END EXPOSED
+
+Everything in Parts 2 to 5 came from reading code. This part is what turned up when the system was
+**driven the way a user drives it**: a 39-step lifecycle script against the live API (product, stock,
+order, allocate, pick, pack, ship, deliver, return, refund, receive, count, transfer, ledger), a sweep
+of all 188 parameterless `GET` endpoints, a browser pass over every screen, and a read of every `catch`
+block that shows a success message.
+
+The headline: **the unit tests were green and the pages loaded, and yet core flows were wrong.** None
+of the defects below were visible to either.
+
+## 6.1 The findings
+
+| # | Area | What was wrong | How it showed | Status |
+|---|---|---|---|---|
+| L-01 | Inventory | **Shipping never took stock off the books.** Status changed; on-hand stayed overstated forever and the allocation was never cleared | Live script: after shipping 3 units, on-hand was still 50 | ✅ `1b25976` **[live][test]** |
+| L-02 | Inventory | **Transfer orders moved no stock.** Ship and receive only changed status fields | No inventory call anywhere in `TransferOrderService` | ✅ `1b25976` **[live][test]** |
+| L-03 | OMS | **Allocation failed for any tenant whose warehouses are `OPERATIONAL`** ("No active warehouse nodes found"); every caller asked for exactly `ACTIVE` | Live: manual allocate returned 400 on the demo tenant | ✅ `1b25976` **[live][test]** |
+| L-04 | OMS | **Every partial allocation failed to record its backorder exception.** The allocation strategy name was written into `resolution_strategy`, which a CHECK constraint limits to eight other values; the brokering job then errored on every cycle | Server log: `violates check constraint "..._resolution_strategy_check"` | ✅ `1b25976`; a test pins the Java list to the migration's constraint **[test]** |
+| L-05 | Inventory | A manual adjustment of a SKU held in several locations changed **whichever row the database returned first** | Code read after V70 made stock per-location | ✅ must now name the location **[test]** |
+| L-06 | Inventory | Cancelling a *shipped* order would release its allocation again, freeing another order's reservation | Follows from L-01 | ✅ releases only what is still reserved **[test]** |
+| L-07 | Inventory | **There was no ledger.** No history of on-hand, allocated or reserved changes, so nothing could be reconciled | No movement table | ✅ V78: append-only, enforced by a trigger **[live][test]**; see [17](./17-INVENTORY-LEDGER.md) |
+| L-08 | Shopify | The webhook event-id was recorded **before** the signature was checked (a forged request could burn an id so the real delivery was dropped as a "duplicate"); the check-then-set was not atomic | Code read | ✅ `71a42ac` **[live][test]** |
+| L-09 | Shopify | The signed body was rebuilt line by line (altering the bytes); only one global secret was accepted | Code read | ✅ raw bytes, per-shop secret first **[test]** |
+| L-10 | Security | **Integration secrets (access tokens, client secrets) were stored in plaintext and returned by `GET /integration-stores/{id}/settings`** | Live: the API returned the token | ✅ sealed (AES-GCM), masked in the API, never cached in Redis **[live][test]** |
+| L-11 | Shopify | Inventory push **summed every warehouse and wrote the total to whichever Shopify location came back first**, falling back to location `1`; read only the first 250 products; swallowed errors | Code read | ✅ replaced by location-aware publishing with dry run and a reconciliation report `75d3b88` **[test]**; **[unverified]** against a live shop |
+| L-12 | Shopify | No handling of HTTP 429 or transient errors; API version pinned past Shopify's support window | Code read | ✅ `Retry-After` and backoff; version configurable **[test]** |
+| L-13 | Integrations | **The Amazon, eBay and Walmart connector API simulated everything:** "sync" counted local orders and wrote a `SUCCESS` log; `authorize` marked the connector connected without checking and, with no token, stored the literal word "authorized"; "marketplace inventory" and "listings" were Nexus's own data | Live: `POST /connectors/walmart/sync` returned "Walmart sync completed"; status said `connected: true` with `hasCredentials: false` | ✅ `c3e1390`: never "connected", sync answers 501, secrets sealed, responses labelled `NEXUS_RECORDS` **[live][test]** |
+| L-14 | Integrations | Generic connectors reported `COMPLETED` for pushes they cannot do, and "imported" N orders that they downloaded and discarded | Code read | ✅ `NOT_SUPPORTED` with a warning **[test]** |
+| L-15 | AI | **`POST /ai/chat` with no model configured (the default) answered from a script:** an invented order number, "sales are up 18%", made-up top customers with dollar amounts, "Top-moving SKU is NEXUS-PRO-X1 with 1,247 units" | Live: asked about stock, got an invented SKU | ✅ `5533dfe`: refuses with a 503 that says how to enable it **[live][test]** |
+| L-16 | Frontend | The AI panel stored the whole `{success, content}` response as the message text, so answers could not render and errors never reached the user | Component test | ✅ `5533dfe` **[test]** |
+| L-17 | API | Any unknown URL, malformed JSON body, wrong method or wrong content type returned **500** | Live probes | ✅ 404 / 400 / 405 / 415 **[live][test]** |
+| L-18 | API | Settings page 500 for tenants created by sign-up; analytics NPE; six yard endpoints 500 on a missing warehouse; EDI uploads failed on Flyway databases and acknowledged the wrong control numbers; picker creation 500 | GET sweep + live | ✅ `59734e9`, `1b6f592`, `5783091` **[live][test]** |
+| L-19 | Frontend | **Type checking was a no-op.** The root `tsconfig.json` checks no files, so `tsc` and `npm run build` checked nothing; the real config had 389 errors | Running the real config | ✅ per-file ratchet in CI; **389 → 140** |
+| L-20 | Frontend | `useToast()` had no `toast()`, yet six screens call it: live notifications and four pages threw after every action | Component test | ✅ `4339b41` **[test]** |
+| L-21 | Frontend | The admin role switcher always granted **zero** permissions (read `.data.data` of an array) | Type error | ✅ **[code]** |
+| L-22 | Frontend | The packer screen requested `status=[object Object]` | Type error | ✅ **[code]** |
+| L-23 | Frontend | The Orders list showed **blank Carrier, Destination and Promised Delivery for every order** (it read names the API never sends) | Compared a live order with the columns | ✅ one normaliser for list and detail `08e2211` **[test][live]** |
+| L-24 | Frontend | **One dev tenant's warehouse id was hard-coded into six screens**; their dropdowns offered "East DC" and "West DC" that exist nowhere | grep | ✅ real warehouses, with an empty state `08e2211` **[live]** |
+| L-25 | Frontend | Multi-Node Inventory showed **"$12.4M", 23 / 156 / 34, an invented "Mumbai Central WH" at 42% capacity**, a search that could never return a result, and a **"Transfer Created" toast that never called the API** | Reading the page | ✅ rebuilt on real data with tested arithmetic `08e2211` **[live][test]** |
+| L-26 | Frontend | Labor showed literal 142 / 96% / 88%, a fabricated efficiency-by-weekday chart, `NaN%`, and crashed when its Assign modal opened (`waves` undefined) | Reading the page | ✅ derived from productivity logs; modal fixed **[test]** |
+| L-27 | Frontend | Amazon, eBay and Walmart pages showed **"sync completed: 23 orders imported, 2 errors" when the call failed**; a Save that was a `setTimeout`; invented KPIs | Reading `catch` blocks | ✅ `c3e1390` **[live]** |
+| L-28 | Frontend | Automation Systems: seven handlers claimed "(simulated)" success and added fabricated rows when the real call failed | grep `simulated` | ✅ failures are reported and nothing changes **[code]** |
+| L-29 | Frontend | Shared components silently dropped what callers passed (KPI colours and labels, grid `header`, breadcrumb `href`) | Type errors | ✅ **[test]** |
+| L-30 | CI | Backend CI red for days: a test schema excluded by `.gitignore`; code-scanning and Sonar jobs failing because unconfigured; a CVE in a binary the image never uses | CI logs | ✅ |
+
+## 6.2 The patterns, so they can be searched for
+
+1. **Fake success in a `catch`.** Code that, when the real call fails, shows or returns success with invented
+   numbers. Search for success toasts and `COMPLETED` results outside the happy path.
+2. **A constant where a lookup belongs.** Warehouse ids, KPI values, "East DC". Search for UUID literals and
+   numeric literals next to labels.
+3. **A contract that two sides disagree about** (event envelope, order field names, CHECK-constraint values).
+   Each needs a test that goes round the whole loop, not one that checks each half.
+4. **A check that checks nothing** (`tsc` over zero files; a stale incremental compile; a skipped test suite
+   when Docker is down). Prove a gate can fail before trusting that it passes.
+5. **An operation that changes a status but not the thing the status is about** (ship, transfer, restock).
+   Assert the stock, not the status.
+
+## 6.3 What found them
+
+None of the unit tests, none of the page-load audit, and none of the type checks. What found them:
+`scripts/e2e/lifecycle-smoke.py` (now in the repo, 39 checks, passes 39/39), a sweep of every `GET`, reading
+the code behind every success message, and comparing a real API response with what the screen reads.
+**The lifecycle script is not yet run by CI.** That is the single cheapest improvement to the safety net.
+
+---
+
+# PART 7 — THE SCORECARD
+
+## 7.1 How the numbers are given
+
+Scores are out of 10 and measure **production readiness (NR)**: what a stranger could verify today by
+cloning the repo and running it. They do not reward plans, and they are **not** feature counts.
+
+| Band | Meaning |
+|---|---|
+| 9–10 | Exercised against the real external system (where one exists), automated tests in CI, monitored, survived a pilot |
+| 7–8 | Works end to end in tests **and live** on the local stack; limits documented; not yet exercised externally |
+| 5–6 | The main path works; material gaps, or the external side is untested |
+| 3–4 | Partly built, or a facade that is honest about being one |
+| 1–2 | Largely absent |
+
+**Cap:** a dimension that depends on an external system that has never been exercised cannot exceed 6.
+
+## 7.2 Production readiness by dimension
+
+| Dimension | Score | Evidence | Why not higher |
+|---|---|---|---|
+| Order lifecycle and state machine | **7.5** | Illegal transitions refused with 409 **[live]**; optimistic locking **[test]**; 39-step lifecycle **[live]**; `OrderStatusPolicy` table **[test]** | Stock consumption covers single-node allocations only; partial and split shipments are treated as whole; no payment or fraud step |
+| Inventory integrity | **7.0** | Append-only ledger enforced by a trigger **[live]**; ledger-vs-stock check reconciles every row **[live]**; consume-on-ship, transfers and returns move stock **[test]** | Not lot-level; damaged stock is a field nothing maintains; in-transit and on-order are not ledgered |
+| Warehouse operations | **6.0** | Receiving, counting, transfers, pick, pack, ship all pass the live script | Carrier labels are not exercised against a real carrier; no directed putaway; the RF app is not exercised with real scanners |
+| Tenant isolation and data security | **8.5** | Row-level security forced on every tenant table, proven on real PostgreSQL **[test]**; tenant-scoped cache keys; integration secrets sealed | A second tenant has not been red-teamed; the vault key falls back to a built-in value when none is set (production validation warns) |
+| Authentication and access control | **8.0** | TOTP MFA with recovery codes verified end to end; JWKS ID-token checking; RBAC with deny-by-default **[test]** | Integration screens are admin-only (no other role has the permission group); no SSO tested against a real IdP |
+| Integrations | **4.0** | Shopify path is real code with a dry-run, reconciliation and honest errors **[test]**; every simulated connector was removed or made honest | **No integration has been run against a real external system.** No POS adapter exists. Generic connectors cannot write |
+| Event backbone | **6.0** | Envelope contract fixed and tested; every topic and DLQ declared; failed rows visible **[test]** | Never run against a real Kafka in this audit; no consumer de-duplication; three uncoordinated DLQ paths; off by default |
+| AI | **3.5** | Predict endpoints refuse to fabricate **[live]**; the chat refuses instead of inventing **[live]**; forecasting is a real Holt model **[live]** | Forecast accuracy on real data has not been measured in this audit; no curated dataset or deployed model; chat needs an OpenAI key; the two AI services were not running here |
+| Frontend integrity and UX | **5.5** | 99 screens load with no crash, failing call or dead button **[live]**; ~30 fakes removed; type-check ratchet in CI | **140 type errors remain**; each sweep still found new fakes, so more are likely; mobile and accessibility were not audited |
+| Quality engineering | **6.5** | 979 backend + 457 frontend tests, none skipped; real-PostgreSQL integration suite; a coverage ratchet; a lifecycle script | The lifecycle script is not in CI; **CI cannot currently run at all** (GitHub Actions billing); no load or soak test |
+| Operability and deployment | **4.5** | Compose, Helm, Prometheus, Grafana and Loki configs exist; outbox metrics exist | The staging deploy has **never succeeded** (secrets absent); no backup/restore drill; no alert rules for the new metrics |
+| **Overall readiness (mean)** | **6.1 / 10** | | |
+
+**Context.** [12](./12-BENCHMARK-AND-DEVELOPMENT-PLAN.md) recorded an overall readiness of **5.7** at the
+start of this engagement. The gain is **+0.4**, deliberately small: the score rewards behaviour that has
+been *verified*, and each fix exposed more that had not been. A rise should mostly come from
+exercising the system against real Shopify, real carriers and a real deployment, not from more code.
+Treat the score as ±0.5.
+
+## 7.3 The other two numbers
+
+| Measure | Value | What it means |
+|---|---|---|
+| **Feature presence (NP)** | **≈ 7.5** (judgment; `07` self-scores 8.4) | `07` counted several features as present that were facades (marketplace sync, the AI assistant, POS aggregation and store operations were not built). Removing those lowers it; it is an estimate, not a measurement |
+| **Market validation** | **1 / 10** | $0 revenue, 0 customers, no analyst coverage, no peer reviews ([19](./19-MARKET-BENCHMARKS.md) §9). This is the row that only real customers can move |
+
+## 7.4 Verdict
+
+**Technically real, commercially unproven, and narrowly pilot-ready.**
+
+*Defensible pilot configuration today:* one tenant, SUITE or WMS edition, one warehouse, orders allocated
+from a single location, Shopify as the only channel (after a dry-run on a development store), AI off.
+
+*Not ready:* multi-location split allocation, point-of-sale aggregation, any marketplace other than
+Shopify, AI features, unattended production operation.
+
+*What would move the score most:* (1) a real Shopify development-store run, (2) a successful staging
+deploy behind HTTPS, (3) the lifecycle script in CI with CI running again, (4) a first pilot customer.
+
+---
+
+# PART 8 — STILL OPEN, AND WHO OWNS IT
+
+## 8.1 Blocked on you (accounts, credentials, decisions)
+
+| Item | Why it blocks |
+|---|---|
+| **GitHub Actions billing** ("recent account payments have failed") | Every CI job ends in 2 seconds with no steps, so nothing is gated until this is resolved. Everything was verified locally with the identical commands |
+| **`STAGING_HOST`, `STAGING_USER`, `STAGING_SSH_KEY`** in the `staging` environment | The deploy step fails with "missing server host"; images build, scan and publish |
+| A public **HTTPS** address for the staging server | Shopify only delivers webhooks to HTTPS |
+| A **Shopify development store** and app credentials | The only way to verify the Shopify integration; [16](./16-SHOPIFY-INVENTORY-PUBLISHING.md) has the runbook |
+| An **OpenAI key**, or a decision to run a local model | The assistant refuses until one exists |
+| Whether non-admin roles should manage integrations | No role other than ADMIN holds the `integration` permission group |
+
+## 8.2 Engineering backlog, in the order that moves the score
+
+1. Run `scripts/e2e/lifecycle-smoke.py` in CI against the Compose stack.
+2. Point-of-sale adapter contract and inventory aggregation (explicit blocked status until credentials exist).
+3. Store-operations screen, distinct from the integration marketplace.
+4. Stock consumption for split allocations and partial shipments; lot-level movements.
+5. Consumer de-duplication by event id; one owner for dead-lettering; remove or implement the 8 dead listeners.
+6. Alert rules for `nexus.outbox.failed` and the DLQ depth.
+7. Promote UPS, DHL, NetSuite, Walmart and eBay from generic to dedicated connectors; add a connector conformance suite.
+8. Burn down the **140** type errors (the ratchet only stops it growing).
+9. A grounded assistant: answer from Nexus's own data when no model is configured, labelled as such.
+10. Mobile layout and accessibility audit; a load test; a backup and restore drill.
 
 ---
 

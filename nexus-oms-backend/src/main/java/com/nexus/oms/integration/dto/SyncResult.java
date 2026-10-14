@@ -6,7 +6,8 @@ import java.util.List;
 
 public class SyncResult {
 
-    public enum Status { COMPLETED, PARTIAL, FAILED, RUNNING }
+    /** NOT_SUPPORTED: the connector has no implementation of this operation, so nothing was sent. It is not a success. */
+    public enum Status { COMPLETED, PARTIAL, FAILED, RUNNING, NOT_SUPPORTED }
 
     private final String syncType;
     private final Status status;

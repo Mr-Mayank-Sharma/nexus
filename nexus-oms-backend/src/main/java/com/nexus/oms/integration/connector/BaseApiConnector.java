@@ -78,37 +78,37 @@ public abstract class BaseApiConnector extends AbstractConnector {
 
     @Override
     public SyncResult pushInventory(UUID tenantId, Map<String, Object> params) {
-        log.info("Pushing inventory to {} for tenant {}", getMetadata().getName(), tenantId);
-        return SyncResult.builder()
-                .syncType("INVENTORY_PUSH")
-                .status(SyncResult.Status.COMPLETED)
-                .itemsSucceeded(0)
-                .build();
+        return notSupported("INVENTORY_PUSH");
     }
 
     @Override
     public SyncResult pushFulfillments(UUID tenantId, Map<String, Object> params) {
-        log.info("Pushing fulfillments to {} for tenant {}", getMetadata().getName(), tenantId);
-        return SyncResult.builder()
-                .syncType("FULFILLMENT_PUSH")
-                .status(SyncResult.Status.COMPLETED)
-                .itemsSucceeded(0)
-                .build();
+        return notSupported("FULFILLMENT_PUSH");
     }
 
     @Override
     public SyncResult pushRefunds(UUID tenantId, Map<String, Object> params) {
-        log.info("Pushing refunds to {} for tenant {}", getMetadata().getName(), tenantId);
-        return SyncResult.builder()
-                .syncType("REFUND_PUSH")
-                .status(SyncResult.Status.COMPLETED)
-                .itemsSucceeded(0)
-                .build();
+        return notSupported("REFUND_PUSH");
     }
 
     @Override
     public void registerWebhooks(String baseUrl) {
-        log.info("Webhooks not implemented for {}", getMetadata().getName());
+        log.warn("{} does not register webhooks; inbound events are not available (polling only)", getMetadata().getName());
+    }
+
+    /**
+     * What an operation this connector never implemented must answer. It used to answer COMPLETED with
+     * zero items, so callers (and the marketplace) believed inventory, fulfilments or refunds had synced.
+     */
+    protected SyncResult notSupported(String syncType) {
+        String message = getMetadata().getName() + " does not implement " + syncType + "; nothing was sent";
+        log.warn(message);
+        return SyncResult.builder()
+                .syncType(syncType)
+                .status(SyncResult.Status.NOT_SUPPORTED)
+                .itemsSucceeded(0)
+                .addWarning(message)
+                .build();
     }
 
     protected String resolveCredential(String key) {
@@ -128,7 +128,7 @@ public abstract class BaseApiConnector extends AbstractConnector {
         LocalDateTime start = LocalDateTime.now();
         try {
             SyncResult result = runner.run();
-            recordSuccess();
+            if (result.getStatus() != SyncResult.Status.NOT_SUPPORTED) recordSuccess();   // a refusal is not a healthy sync
             SyncResult.Builder b = SyncResult.builder()
                     .syncType(syncType)
                     .status(result.getStatus())

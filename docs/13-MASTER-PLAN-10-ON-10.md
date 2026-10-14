@@ -344,3 +344,8 @@ With two engineers, phases B/C and D/E overlap.
 6. Permission-gated (RBAC) and entitlement-gated (edition).
 7. Audit-logged mutations; observable (metrics + trace id in errors).
 8. Documented in the in-app help and the public API reference.
+
+
+### 2026-10-14 progress
+
+Shopify hardening and location-aware publishing; inventory ledger (V78); shipping and transfers now move stock; honest marketplace connectors and AI; event envelope fixed; generic connectors report NOT_SUPPORTED. Evidence, scorecard (overall readiness 6.1/10) and open items: [18-NEXUS-EXPOSED](./18-NEXUS-EXPOSED.md) Parts 6-8.

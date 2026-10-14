@@ -64,10 +64,14 @@ public class GenericHttpConnector extends BaseApiConnector {
                     Map.of("limit", String.valueOf(config != null ? config.getBatchSize() : 100)),
                     config != null ? config.getSetting("items_field", "data") : "data",
                     config != null ? config.getSetting("next_token_field") : null, 10);
+            // The records were downloaded and counted, then dropped: nothing maps them into Nexus
+            // orders. Reporting them as "succeeded" claimed an import that never happened.
             return SyncResult.builder()
                     .syncType("ORDER_IMPORT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(items.size())
+                    .status(SyncResult.Status.NOT_SUPPORTED)
+                    .itemsSucceeded(0)
+                    .addWarning(getMetadata().getName() + " answered with " + items.size()
+                            + " order(s), but this connector does not import them into Nexus")
                     .build();
         });
     }
@@ -81,24 +85,15 @@ public class GenericHttpConnector extends BaseApiConnector {
                         result != null && result.has("data") ? result.get("data").size() : 0;
             return SyncResult.builder()
                     .syncType("PRODUCT_SYNC")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(count)
+                    .status(SyncResult.Status.NOT_SUPPORTED)
+                    .itemsSucceeded(0)
+                    .addWarning(getMetadata().getName() + " answered with " + count
+                            + " product(s), but this connector does not import them into Nexus")
                     .build();
         });
     }
 
-    @Override
-    public SyncResult pushInventory(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("INVENTORY_PUSH", () -> {
-            String path = config != null ? config.getSetting("inventory_path", "/inventory") : "/inventory";
-            log.info("Generic push to {} via {}", getMetadata().getName(), path);
-            return SyncResult.builder()
-                    .syncType("INVENTORY_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
-    }
+    // pushInventory / pushFulfillments / pushRefunds: inherited, and honestly NOT_SUPPORTED.
 
     public static GenericHttpConnector forPlatform(CredentialVault vault, RestProtocolAdapter rest,
                                                     GraphqlProtocolAdapter graphql, DataMapper mapper,
