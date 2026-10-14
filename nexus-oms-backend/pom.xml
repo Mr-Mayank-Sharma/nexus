@@ -47,7 +47,7 @@
         <jackson-bom.version>2.21.7</jackson-bom.version>
         <postgresql.version>42.7.13</postgresql.version>
         <resilience4j.version>2.4.0</resilience4j.version>
-        <onnxruntime.version>1.19.0</onnxruntime.version>
+        <onnxruntime.version>1.31.0</onnxruntime.version>
         <logstash.version>7.4</logstash.version>
         <jacoco.version>0.8.15</jacoco.version>
         <owasp.version>9.2.0</owasp.version>
