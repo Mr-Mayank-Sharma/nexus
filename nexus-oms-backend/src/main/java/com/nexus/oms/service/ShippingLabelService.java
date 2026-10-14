@@ -211,10 +211,8 @@ public class ShippingLabelService {
         log.info("Carrier label purchased for order {}: carrier={} tracking={} adapter={}",
                 label.getOrderNumber(), label.getCarrier(), label.getTrackingNumber(), adapter.getName());
 
-        kafkaProducerService.publish("order.label_generated",
-                "{\"orderId\":\"" + label.getOrderId() + "\",\"orderNumber\":\"" + label.getOrderNumber()
-                        + "\",\"carrier\":\"" + label.getCarrier() + "\",\"trackingNumber\":\""
-                        + label.getTrackingNumber() + "\",\"labelSource\":\"CARRIER\"}");
+        // The envelope's data is the order id (as for every order event); the label details are on the label.
+        kafkaProducerService.publishEntityEvent("order.label_generated", String.valueOf(label.getOrderId()));
         return label;
     }
 

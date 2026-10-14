@@ -151,7 +151,7 @@ public class OrderService {
             kittingService.explodeAndPersist(tenantId, order.getId());
         }
 
-        kafkaProducerService.publish("order.created", order.getId().toString());
+        kafkaProducerService.publishEntityEvent("order.created", order.getId().toString());
 
         return toOrderResponse(order);
     }
@@ -208,7 +208,7 @@ public class OrderService {
             orderStockCommit.consumeOnShip(order);   // idempotent: a no-op if it already shipped
         }
         bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), status);
-        kafkaProducerService.publish("order." + status.toLowerCase(), order.getId().toString());
+        kafkaProducerService.publishEntityEvent("order." + status.toLowerCase(), order.getId().toString());
         return toOrderResponse(order);
     }
 
@@ -267,7 +267,7 @@ public class OrderService {
         OrderStatusPolicy.requireTransition(order, OrderStatusPolicy.ALLOCATED);
         order = orderRepository.save(order);
 
-        kafkaProducerService.publish("order.allocated", order.getId().toString());
+        kafkaProducerService.publishEntityEvent("order.allocated", order.getId().toString());
 
         return AllocationResponse.builder()
                 .warehouse(selectedNode.toString())
@@ -324,7 +324,7 @@ public class OrderService {
             } catch (Exception e) {
                 log.warn("Could not enqueue order {} for brokering: {}", id, e.getMessage());
             }
-            kafkaProducerService.publish("order.confirmed", order.getId().toString());
+            kafkaProducerService.publishEntityEvent("order.confirmed", order.getId().toString());
         }
 
         return toOrderResponse(order);
@@ -349,7 +349,7 @@ public class OrderService {
         order = orderRepository.save(order);
         orderStockCommit.consumeOnShip(order);   // the stock leaves the books with the parcel
         bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "SHIPPED");
-        kafkaProducerService.publish("order.shipped", order.getId().toString());
+        kafkaProducerService.publishEntityEvent("order.shipped", order.getId().toString());
         return toOrderResponse(order);
     }
 
@@ -421,7 +421,7 @@ public class OrderService {
         order.setTotal(order.getSubtotal().add(order.getShippingCost()).add(order.getTaxAmount()));
         order = orderRepository.save(order);
 
-        kafkaProducerService.publish("order.modified", order.getId().toString());
+        kafkaProducerService.publishEntityEvent("order.modified", order.getId().toString());
         return toOrderResponse(order);
     }
 
@@ -501,7 +501,7 @@ public class OrderService {
             orderRepository.save(order);
         }
 
-        kafkaProducerService.publish("order.split", id.toString());
+        kafkaProducerService.publishEntityEvent("order.split", id.toString());
         return splitOrders;
     }
 
@@ -556,7 +556,7 @@ public class OrderService {
         target.setTotal(target.getSubtotal().add(target.getShippingCost()).add(target.getTaxAmount()));
         target = orderRepository.save(target);
 
-        kafkaProducerService.publish("order.merged", target.getId().toString());
+        kafkaProducerService.publishEntityEvent("order.merged", target.getId().toString());
         return toOrderResponse(target);
     }
 
@@ -587,7 +587,7 @@ public class OrderService {
         OrderStatusPolicy.requireTransition(order, OrderStatusPolicy.CANCELLED);
         order = orderRepository.save(order);
         bigCommerceStatusPushService.pushOrderStatus(order.getTenantId(), order.getExternalId(), "CANCELLED");
-        kafkaProducerService.publish("order.cancelled", order.getId().toString());
+        kafkaProducerService.publishEntityEvent("order.cancelled", order.getId().toString());
         return toOrderResponse(order);
     }
 

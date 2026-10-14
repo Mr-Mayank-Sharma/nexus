@@ -98,7 +98,7 @@ class FulfillmentReconciliationServiceTest {
         assertEquals(2, item.getFulfilledQty());
         assertEquals("FULFILLED", order.getStatus());
         verify(inventoryService).consumeAllocated(eq(TENANT_ID), eq("SKU-1"), eq(NODE_ID), eq(2), eq("ORDER_FULFILLMENT"), any());
-        verify(kafkaProducerService).publish("order.fulfilled", ORDER_ID.toString());
+        verify(kafkaProducerService).publishEntityEvent("order.fulfilled", ORDER_ID.toString());
         verify(reconciliationRepository).save(any(NxFulfillmentReconciliation.class));
         verify(orderRepository).save(order);
     }
@@ -117,7 +117,7 @@ class FulfillmentReconciliationServiceTest {
         assertEquals(1, item.getFulfilledQty());
         assertEquals("PROCESSING", order.getStatus());
         verify(inventoryService).consumeAllocated(eq(TENANT_ID), eq("SKU-1"), eq(NODE_ID), eq(1), eq("ORDER_FULFILLMENT"), any());
-        verify(kafkaProducerService).publish("order.fulfilled", ORDER_ID.toString());
+        verify(kafkaProducerService).publishEntityEvent("order.fulfilled", ORDER_ID.toString());
         verify(orderRepository, never()).save(any());
     }
 

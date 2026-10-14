@@ -27,20 +27,36 @@ import java.util.concurrent.TimeUnit;
 public class OutboxRelay {
 
     private static final Logger log = LoggerFactory.getLogger(OutboxRelay.class);
-    static final int BATCH_SIZE = 200;
+    // Worst case for one run is BATCH_SIZE x SEND_TIMEOUT_MS = 300 s, comfortably inside the 10-minute
+    // lock below, so a second instance can never take the lock while a batch is still being sent.
+    static final int BATCH_SIZE = 100;
     static final int MAX_ATTEMPTS = 10;
-    static final long SEND_TIMEOUT_MS = 10_000;
+    static final long SEND_TIMEOUT_MS = 3_000;
+    static final int FAILED_RETENTION_DAYS = 30;
 
     private final JdbcTemplate jdbcTemplate;
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public OutboxRelay(JdbcTemplate jdbcTemplate, KafkaTemplate<String, String> kafkaTemplate) {
+    public OutboxRelay(JdbcTemplate jdbcTemplate, KafkaTemplate<String, String> kafkaTemplate,
+                       io.micrometer.core.instrument.MeterRegistry meterRegistry) {
         this.jdbcTemplate = jdbcTemplate;
         this.kafkaTemplate = kafkaTemplate;
+        // Events that exhausted their retries sit as FAILED and were invisible; alert on this being > 0.
+        meterRegistry.gauge("nexus.outbox.failed", this, r -> r.count("FAILED"));
+        meterRegistry.gauge("nexus.outbox.pending", this, r -> r.count("PENDING"));
+    }
+
+    double count(String status) {
+        try {
+            Long n = jdbcTemplate.queryForObject("SELECT count(*) FROM nx_outbox WHERE status = ?", Long.class, status);
+            return n == null ? 0 : n;
+        } catch (RuntimeException e) {
+            return Double.NaN;   // a gauge must never throw; NaN reads as "unknown"
+        }
     }
 
     @Scheduled(fixedDelayString = "${nexus.outbox.relay-interval-ms:1000}")
-    @SchedulerLock(name = "OutboxRelay.relay", lockAtMostFor = "PT2M", lockAtLeastFor = "PT0S")
+    @SchedulerLock(name = "OutboxRelay.relay", lockAtMostFor = "PT10M", lockAtLeastFor = "PT0S")
     public void relay() {
         relayBatch();
     }
@@ -81,7 +97,11 @@ public class OutboxRelay {
     public void purgeSent() {
         int removed = jdbcTemplate.update("DELETE FROM nx_outbox WHERE status = 'SENT' AND sent_at < ?",
                 Timestamp.valueOf(LocalDateTime.now().minusDays(7)));
-        log.info("Outbox purge removed {} delivered events older than 7 days", removed);
+        // Parked events are kept for a month so they can be inspected and replayed, then dropped.
+        int failed = jdbcTemplate.update("DELETE FROM nx_outbox WHERE status = 'FAILED' AND created_at < ?",
+                Timestamp.valueOf(LocalDateTime.now().minusDays(FAILED_RETENTION_DAYS)));
+        log.info("Outbox purge removed {} delivered events older than 7 days and {} failed events older than {} days",
+                removed, failed, FAILED_RETENTION_DAYS);
     }
 
     private static String truncate(String s) {

@@ -279,7 +279,7 @@ public class FulfillmentReconciliationService {
         }
         reconciliationRepository.save(record);
 
-        kafkaProducerService.publish(ORDER_FULFILLED_TOPIC, order.getId().toString());
+        kafkaProducerService.publishEntityEvent(ORDER_FULFILLED_TOPIC, order.getId().toString());
 
         return toResult(record);
     }

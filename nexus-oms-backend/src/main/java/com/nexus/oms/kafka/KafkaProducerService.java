@@ -33,6 +33,12 @@ public class KafkaProducerService {
         log.debug("Queued event {} for topic {} (key {})", id, topic, key);
     }
 
+    /**
+     * Publishes an entity event in the {@link EventRecord} envelope the consumers parse. The Kafka key
+     * is the entity id ({@code data}), so every event for one order lands on one partition, in order.
+     * Publishing a bare id instead (what {@link #publish} does) is rejected by the consumer and the
+     * event is dead-lettered.
+     */
     public void publishEvent(String topic, String eventType, String data) {
         UUID tenantId;
         try {
@@ -40,14 +46,21 @@ public class KafkaProducerService {
         } catch (IllegalStateException e) {
             tenantId = null;
         }
-        EventRecord event = EventRecord.create(eventType, topic, data, tenantId);
-        String json = event.toJson();
-        publish(topic, event.eventId(), json);
+        publishEvent(topic, eventType, data, tenantId);
     }
 
     public void publishEvent(String topic, String eventType, String data, UUID tenantId) {
         EventRecord event = EventRecord.create(eventType, topic, data, tenantId);
-        String json = event.toJson();
-        publish(topic, event.eventId(), json);
+        publish(topic, data, event.toJson());
+    }
+
+    /** Event type derived from the topic: "order.shipped" becomes ORDER_SHIPPED. */
+    public static String eventTypeFor(String topic) {
+        return topic.toUpperCase(java.util.Locale.ROOT).replace('.', '_');
+    }
+
+    /** The common case: something happened to the entity with this id. */
+    public void publishEntityEvent(String topic, String entityId) {
+        publishEvent(topic, eventTypeFor(topic), entityId);
     }
 }

@@ -1,5 +1,6 @@
 package com.nexus.oms.config;
 
+import com.nexus.oms.domain.OrderStatusPolicy;
 import com.nexus.oms.kafka.Topics;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -14,49 +15,31 @@ import java.util.List;
 public class KafkaTopicConfig {
 
     private static final int PARTITIONS = 3;
-    private static final short REPLICATION = 1;
 
+    /** Replication factor; keep 1 for a single broker and set it to 3 in production. */
+    @org.springframework.beans.factory.annotation.Value("${nexus.kafka.replication:1}")
+    private short replication = 1;
+
+    /**
+     * Every topic that is published or consumed, plus a dead-letter topic for each consumed one. A
+     * missing dead-letter topic made the failure path itself fail where brokers do not auto-create.
+     */
     @Bean
     public List<NewTopic> omsTopics() {
-        return List.of(
-                topic(Topics.ORDER_CREATED),
-                topic(Topics.ORDER_UPDATED),
-                topic(Topics.ORDER_CANCELLED),
-                topic(Topics.ORDER_CONFIRMED),
-                topic(Topics.ORDER_ALLOCATED),
-                topic(Topics.ORDER_SHIPPED),
-                topic(Topics.ORDER_DELIVERED),
-                topic(Topics.SHIPMENT_CREATED),
-                topic(Topics.SHIPMENT_UPDATED),
-                topic(Topics.INVENTORY_ADJUSTED),
-                topic(Topics.PAYMENT_RECEIVED),
-                topic(Topics.PAYMENT_REFUNDED),
-                topic(Topics.RETURN_CREATED),
-                topic(Topics.RETURN_APPROVED),
-                dlqTopic(Topics.ORDER_CREATED),
-                dlqTopic(Topics.ORDER_UPDATED),
-                dlqTopic(Topics.ORDER_CANCELLED),
-                dlqTopic(Topics.SHIPMENT_CREATED),
-                dlqTopic(Topics.SHIPMENT_UPDATED),
-                dlqTopic(Topics.INVENTORY_ADJUSTED),
-                dlqTopic(Topics.PAYMENT_RECEIVED),
-                dlqTopic(Topics.PAYMENT_REFUNDED),
-                dlqTopic(Topics.RETURN_CREATED),
-                dlqTopic(Topics.RETURN_APPROVED)
-        );
+        java.util.Set<String> names = new java.util.TreeSet<>(Topics.CONSUMED);
+        names.addAll(Topics.ORDER_EXTRAS);
+        OrderStatusPolicy.allStatuses().forEach(s -> names.add(Topics.orderStatus(s)));   // OrderService.updateStatus publishes these
+        List<NewTopic> topics = new java.util.ArrayList<>();
+        names.forEach(n -> topics.add(topic(n, replication)));
+        Topics.CONSUMED.forEach(n -> topics.add(dlqTopic(n, replication)));
+        return topics;
     }
 
-    private static NewTopic topic(String name) {
-        return TopicBuilder.name(name)
-                .partitions(PARTITIONS)
-                .replicas(REPLICATION)
-                .build();
+    private static NewTopic topic(String name, short replication) {
+        return TopicBuilder.name(name).partitions(PARTITIONS).replicas(replication).build();
     }
 
-    private static NewTopic dlqTopic(String sourceTopic) {
-        return TopicBuilder.name(Topics.dlq(sourceTopic))
-                .partitions(1)
-                .replicas(REPLICATION)
-                .build();
+    private static NewTopic dlqTopic(String sourceTopic, short replication) {
+        return TopicBuilder.name(Topics.dlq(sourceTopic)).partitions(1).replicas(replication).build();
     }
 }

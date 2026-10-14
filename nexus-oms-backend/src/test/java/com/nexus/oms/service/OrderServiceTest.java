@@ -213,7 +213,7 @@ class OrderServiceTest {
 
         assertNotNull(result);
         assertEquals("PENDING", result.getStatus());
-        verify(kafkaProducerService).publish(eq("order.created"), anyString());
+        verify(kafkaProducerService).publishEntityEvent(eq("order.created"), anyString());
     }
 
     @Test
@@ -253,7 +253,7 @@ class OrderServiceTest {
 
         assertNotNull(result);
         verify(customerRepository, never()).save(any());
-        verify(kafkaProducerService).publish(eq("order.created"), anyString());
+        verify(kafkaProducerService).publishEntityEvent(eq("order.created"), anyString());
     }
 
     @Test
@@ -265,7 +265,7 @@ class OrderServiceTest {
         OrderResponse result = orderService.updateStatus(orderId, "SHIPPED", "DISPATCHED", "TRACK-123", "FEDEX");
 
         assertEquals("SHIPPED", result.getStatus());
-        verify(kafkaProducerService).publish("order.shipped", orderId.toString());
+        verify(kafkaProducerService).publishEntityEvent("order.shipped", orderId.toString());
     }
 
     @Test
@@ -277,7 +277,7 @@ class OrderServiceTest {
         OrderResponse result = orderService.confirmOrder(orderId);
 
         assertEquals("CONFIRMED", result.getStatus());
-        verify(kafkaProducerService).publish("order.confirmed", orderId.toString());
+        verify(kafkaProducerService).publishEntityEvent("order.confirmed", orderId.toString());
     }
 
     @Test
@@ -434,7 +434,7 @@ class OrderServiceTest {
         OrderResponse result = orderService.cancelOrder(orderId);
 
         assertEquals("CANCELLED", result.getStatus());
-        verify(kafkaProducerService).publish("order.cancelled", orderId.toString());
+        verify(kafkaProducerService).publishEntityEvent("order.cancelled", orderId.toString());
         verify(inventoryService, never()).releaseInventory(any(), any(), any(), anyInt(), any(), any());
     }
 
@@ -451,6 +451,6 @@ class OrderServiceTest {
 
         assertEquals("CANCELLED", result.getStatus());
         verify(inventoryService).releaseInventory(tenantId, "SKU-001", testItem.getAllocatedNodeId(), 2, "ORDER", orderId.toString());
-        verify(kafkaProducerService).publish("order.cancelled", orderId.toString());
+        verify(kafkaProducerService).publishEntityEvent("order.cancelled", orderId.toString());
     }
 }

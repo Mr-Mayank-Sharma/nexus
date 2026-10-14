@@ -44,6 +44,12 @@ public final class OrderStatusPolicy {
     public static final String SPLIT = "SPLIT";
 
     /** Terminal states: nothing leaves them. */
+    /** Every status an order can be in; each one can be published as the topic "order.&lt;status&gt;". */
+    public static Set<String> allStatuses() {
+        return Set.of(PENDING, CONFIRMED, ALLOCATED, PARTIALLY_ALLOCATED, FAILED, PICKING, PACKING, SHIPPED,
+                IN_TRANSIT, DELIVERED, FULFILLED, RETURNED, EXCEPTION, CANCELLED, MERGED, SPLIT);
+    }
+
     public static final Set<String> TERMINAL = Set.of(CANCELLED, MERGED, SPLIT, RETURNED);
 
     // SHIPPED/FULFILLED straight from intake covers manual "mark as shipped" and orders a
