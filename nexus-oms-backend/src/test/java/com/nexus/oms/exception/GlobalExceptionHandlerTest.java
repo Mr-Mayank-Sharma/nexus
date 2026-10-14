@@ -109,6 +109,12 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void anUnknownUrl_is404_notA500() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/definitely-not-a-route"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void malformedBody_returns400_notA500() throws Exception {
         mockMvc.perform(post("/labels/carrier").contentType("application/json").content("{not json"))
                 .andExpect(status().isBadRequest())

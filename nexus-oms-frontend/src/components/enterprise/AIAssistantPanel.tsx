@@ -69,14 +69,18 @@ export default function AIAssistantPanel({ open, onClose }: Props) {
         .map(m => ({ role: m.role, content: m.content }))
       history.push({ role: 'user' as const, content: text })
 
-      const content = await sendChatMessage({
+      // sendChatMessage resolves to { success, content | error }; it used to be stored whole as the
+      // message text, so answers rendered as "[object Object]" and failures never reached the user.
+      const res = await sendChatMessage({
         systemPrompt,
         messages: history,
       })
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content,
+        content: res.success && res.content
+          ? res.content
+          : res.error ?? "The assistant couldn't answer right now.",
         timestamp: new Date(),
       }
       setMessages(prev => [...prev, aiMsg])

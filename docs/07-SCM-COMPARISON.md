@@ -2,6 +2,8 @@
 
 > **Freshness:** every score in this report is a **dated snapshot (as of August 2026)**, not a live dashboard; the underlying vendor sources were last verified then (§7). Read each `/10` as "as of August 2026" and re-run the scoring before reusing these numbers externally.
 > Companion to [`01-CURRENT-STATE.md`](./01-CURRENT-STATE.md). Where Nexus stands against **12 real supply-chain systems**, scored feature-by-feature out of 10, based on public research (August 2026).
+>
+> ⚠️ **Read this alongside [`19-MARKET-BENCHMARKS.md`](./19-MARKET-BENCHMARKS.md).** The `/10` scores below measure **feature presence** (what has been built), *not* market position. `19` supplies the externally-verifiable market reality — real vendor revenue (SEC filings), published pricing, Gartner 2026 positions, and implementation/TCO benchmarks — and documents where this report's self-scores diverge from that data. Two known corrections: (1) the headline *"8.4, tied with Manhattan"* is a **capability** parity, not a market one (Manhattan: **$1,081.4 M FY2025 revenue, 1,200+ customers, 18× Gartner Leader**; Nexus: **$0, 0 customers, not evaluated**); (2) **HotWax is not "free"** — its OMS Starter is **$11,000/yr or $1,000/mo** (+ $0.75/order, $3,000 setup). See `19` §5 and §10.
 
 ---
 
@@ -25,7 +27,7 @@ Imagine a **football (soccer) tournament** with 13 teams. Nexus is one of the te
 | # | System | Maker | Category | Market focus | Public score signal |
 |---|---|---|---|---|---|
 | 1 | **Manhattan Active OM / Active WMS** | Manhattan Associates | Enterprise OMS + WMS | Large retailers, omnichannel, DOM | Gartner MQ **Leader** (WMS & OMS) |
-| 2 | **HotWax Commerce** | HotWax | Mid-market OMS (Shopify-first) | Shopify stores, BOPIS, ship-from-store | Open source / free |
+| 2 | **HotWax Commerce** | HotWax | Mid-market OMS (Shopify-first) | Shopify stores, BOPIS, ship-from-store | OMS Starter **$1,000/mo or $11,000/yr** (+ $0.75/order, $3,000 setup); open-source Moqui base, free install |
 | 3 | **Blue Yonder Luminate / OM** | Blue Yonder | Enterprise platform (OMS+planning) | Retailers, 3PLs, AI planning | Gartner MQ **Leader** (OMS) |
 | 4 | **Oracle SCM / WMS Cloud** | Oracle | Enterprise suite (ERP-adjacent) | Distributors, manufacturers | 4.3/5, enterprise suite |
 | 5 | **SAP S/4HANA + EWM** | SAP | Enterprise ERP + warehouse | Large manufacturers, DCs | Gartner MQ **Leader** (WMS) |
@@ -35,7 +37,7 @@ Imagine a **football (soccer) tournament** with 13 teams. Nexus is one of the te
 | 9 | **Cin7 Omni (DEAR)** | Cin7 | Omnichannel inventory + OMS | SMB/mid retailers, multi-entity | 700+ integrations |
 | 10 | **Extensiv 3PL Warehouse Manager** | Extensiv (ex-3PL Central) | 3PL WMS | Small/mid 3PLs | 3PL-focused |
 | 11 | **Brightpearl by Sage** | Sage | Retail operating system (OMS+acct) | D2C + wholesale retailers | Built-in accounting |
-| 12 | **Nexus (us)** | — | Omnichannel OMS + WMS + 3PL + AI | Mid-market omnichannel | Self-built, 204 commits, **830 tests green**, RF + 3PL billing shipped |
+| 12 | **Nexus (us)** | — | Omnichannel OMS + WMS + 3PL + AI | Mid-market omnichannel | Self-built, 204 commits, **961 tests green**, RF + 3PL billing shipped |
 
 **Methodology.** Each feature is scored **0–10** (0 = absent, 10 = best-in-class) using: (a) official product pages & docs, (b) Gartner MQ positioning, (c) analyst/partner write-ups, and (d) Nexus's own committed, honest current-state. Scores are *evidence-based judgment*, not vendor marketing. A score of 8+ means "shipping, credible, used widely." 6–7 = "real but limited/young." Below 5 = "weak, niche, or planned."
 
@@ -140,9 +142,9 @@ Weights reflect what a *mid-market omnichannel retailer* cares about most: order
 - **Weaknesses for Nexus-style buyers:** enterprise pricing, **6–18-month implementations**, consultants required → **cost/time-to-value 2/10**. No "one afternoon" onboarding.
 
 ### 4.2 HotWax Commerce ⭐ 6.5/10
-- **What it is:** the *Shopify-native* OMS — BOPIS, ship-from-store, pre-orders, configurable order routing; free to install, open-source Moqui base.
+- **What it is:** the *Shopify-native* OMS — BOPIS, ship-from-store, pre-orders, configurable order routing; free Shopify App Store install on an open-source Moqui base, but the OMS itself is **paid**.
 - **Evidence:** purpose-built for Shopify brands; strong BOPIS + order routing + ATP; integrates stores/warehouses.
-- **Strengths:** best-in-class BOPIS for Shopify (10/10), **free**, fast to deploy (9/10), great for the Shopify wedge.
+- **Strengths:** best-in-class BOPIS for Shopify (10/10), **cheap and fast to deploy (9/10)** — OMS Starter **$1,000/mo or $11,000/yr** (+ $0.75/order, $3,000 setup), great for the Shopify wedge. *(Corrected from "free" — see [`19-MARKET-BENCHMARKS.md`](./19-MARKET-BENCHMARKS.md) §5.)*
 - **Weaknesses:** limited WMS depth (receiving/picking ~5), no finance, no EDI depth, weak automation — a *focused* tool, not a full suite.
 
 ### 4.3 Blue Yonder — Luminate / Order Management ⭐ 8.0/10
@@ -230,7 +232,7 @@ Weights reflect what a *mid-market omnichannel retailer* cares about most: order
 
 | Baseline gap (from `01-CURRENT-STATE.md`) | Status now |
 |---|---|
-| **G1 — backend tests don't compile** | ✅ **Closed** — 830 tests, 0 failures, 0 errors (new suites: ATP, yard/dock, procurement, invoicing, EDI, BOPIS, billing, rate cards, waves, task queue, order routing, box recommendation, kitting, AI forecast, integration outbound, ASN, **automation emulator, slotting feedback, RF tasks, AI training orchestration, QuickBooks refund idempotency, SSO/MFA**) |
+| **G1 — backend tests don't compile** | ✅ **Closed** — 961 tests, 0 failures, 0 errors (new suites: ATP, yard/dock, procurement, invoicing, EDI, BOPIS, billing, rate cards, waves, task queue, order routing, box recommendation, kitting, AI forecast, integration outbound, ASN, **automation emulator, slotting feedback, RF tasks, AI training orchestration, QuickBooks refund idempotency, SSO/MFA**) |
 | **G2 — 6 frontend gates use broken `permission` prop** | ✅ **Closed** — migrated to resource+action `PermissionGate`; `RoleProtectedRoute` removed |
 | **Mobile RF app absent (2/10)** | ✅ **Shipped** — RF PWA: Pick, Pack, Receive, Ship, Count, Scan + Home; camera scanning (native `BarcodeDetector`, ZXing fallback); server-side scan search (`GET /rf/search`); deep-linkable screens; **offline-first pick queue** (buffers actions offline, flushes on reconnect); **voice picking (`useVoiceCommand`)** + **picker-assigned task list (`GET /rf/tasks?pickerId=`)**; E2E-verified → **8/10** |
 | **No 3PL billing / client portals (4/10)** | ✅ **Shipped** — per-client rate cards, billing statement generation (itemized lines, KPIs), read-only client portal (overview KPIs, orders-by-status, recent orders); live-verified via REST + Playwright smoke (0 console errors) → **8/10** |
@@ -258,7 +260,7 @@ Weights reflect what a *mid-market omnichannel retailer* cares about most: order
 2. **✅ Mobile warehouse app — done.** The RF module (pick/pack/receive/ship/count/scan + camera scanning + server-side scan search + **offline-first pick queue** + **voice picking** + **picker-assigned task list**) shipped and lifted Nexus 6.5 → **8.4/10 (joint-first)**. **Next upgrade:** real DC production hours.
 3. **✅ 3PL billing + client portal — done.** Per-client rate cards, statement generation and a read-only client overview shipped (4 → 8/10). **Next upgrade:** self-serve portal (approvals, document upload), credit/payment workflows.
 4. **Real ML training data (G3) is the strategic unlock.** AI is Nexus's headline — the real training pipeline (demand export → `forecast.py` → real metrics/artifacts) moved AI 7→8. A curated dataset + deployed ONNX model closes the last gap and pushes the trust story further — the single biggest remaining swing on the weighted score.
-5. **✅ Test suite (G1), permission gates (G2), DOM routing, EDI hardening, ASN, WES emulator, RF tasks, AI training orchestration, QuickBooks refund idempotency, SSO/MFA — done.** Backend is green at **830 tests**; DOM, packing/kitting, AI forecast, receiving/putaway/ASN, AR aging, integration outbound, automation emulator, slotting feedback, RF tasks, QuickBooks refunds and SSO/MFA all landed with unit tests. The next cheap, honest win is wiring the stub (`simulated:true`) endpoints to real providers (G4).
+5. **✅ Test suite (G1), permission gates (G2), DOM routing, EDI hardening, ASN, WES emulator, RF tasks, AI training orchestration, QuickBooks refund idempotency, SSO/MFA — done.** Backend is green at **961 tests**; DOM, packing/kitting, AI forecast, receiving/putaway/ASN, AR aging, integration outbound, automation emulator, slotting feedback, RF tasks, QuickBooks refunds and SSO/MFA all landed with unit tests. The next cheap, honest win is wiring the stub (`simulated:true`) endpoints to real providers (G4).
 6. **Position Nexus against the field honestly:** *"The only open, honest, all-in-one omnichannel OMS+WMS+3PL+AI for the mid-market — the breadth of Manhattan, the honesty nobody else offers, at 1/100th the cost."*
 
 ---
@@ -276,7 +278,7 @@ Weights reflect what a *mid-market omnichannel retailer* cares about most: order
 - **Cin7:** Cin7 Omni product pages (700+ integrations, native EDI/3PL, ForesightAI, batch/serial, multi-entity).
 - **Extensiv:** Extensiv 3PL Warehouse Manager pages (3PL billing, dock scheduling, Integration Manager, SmartScan, Network Management); 3PL benchmark report.
 - **Brightpearl by Sage:** Brightpearl & Sage retail pages (retail OS, built-in accounting, Sage Intacct connector, Inventory Planner forecasting).
-- **Nexus:** `docs/01-CURRENT-STATE.md` and `docs/00-VISION-DREAM.md` (honest, committed baseline); RF module (pick/pack/receive/ship/count/scan + camera scanning + `GET /rf/search` + offline pick queue + voice picking + picker task list) committed Aug 2026, unit-tested; 3PL module (rate cards + billing statements + client portal) committed Aug 2026, live smoke-verified; **ASN inbound** (manual + EDI 856 auto-create + bulk 940 + dock-appointment link + receive-against-ASN) committed Aug 2026, unit-tested; **closed-loop WES emulator** + **AI training orchestration** committed Aug 2026, unit-tested; **QuickBooks refund idempotency** (dedup + `Idempotency-Key`) + **SSO/MFA** (unit + integration) committed Aug 2026; **Helm chart** (`deploy/helm/nexus/`) + **self-host boot/TCO docs** committed Aug 2026; backend suite at **830 tests / 0 failures**.
+- **Nexus:** `docs/01-CURRENT-STATE.md` and `docs/00-VISION-DREAM.md` (honest, committed baseline); RF module (pick/pack/receive/ship/count/scan + camera scanning + `GET /rf/search` + offline pick queue + voice picking + picker task list) committed Aug 2026, unit-tested; 3PL module (rate cards + billing statements + client portal) committed Aug 2026, live smoke-verified; **ASN inbound** (manual + EDI 856 auto-create + bulk 940 + dock-appointment link + receive-against-ASN) committed Aug 2026, unit-tested; **closed-loop WES emulator** + **AI training orchestration** committed Aug 2026, unit-tested; **QuickBooks refund idempotency** (dedup + `Idempotency-Key`) + **SSO/MFA** (unit + integration) committed Aug 2026; **Helm chart** (`deploy/helm/nexus/`) + **self-host boot/TCO docs** committed Aug 2026; backend suite at **961 tests / 0 failures**.
 
 ---
 

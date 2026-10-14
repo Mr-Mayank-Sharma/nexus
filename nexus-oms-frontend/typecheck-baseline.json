@@ -3,7 +3,6 @@
   "files": {
     "src/api/aiAgents.ts": 8,
     "src/api/rbac.ts": 1,
-    "src/components/enterprise/AIAssistantPanel.tsx": 1,
     "src/components/enterprise/EnterpriseDataGrid.tsx": 1,
     "src/components/enterprise/EnterpriseToolbar.tsx": 4,
     "src/hooks/useWebSocket.ts": 1,

@@ -1,5 +1,6 @@
 package com.nexus.oms.service.ai;
 
+import com.nexus.oms.exception.AiServiceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -62,8 +63,7 @@ public class LlmChatService {
     @CircuitBreaker(name = "ai-service", fallbackMethod = "chatFallback")
     public String chat(String systemPrompt, List<Map<String, String>> messages) {
         if (!enabled) {
-            log.info("OpenAI API key not configured, using fallback response");
-            return fallbackResponse(messages);
+            throw unavailable("no model is configured (set nexus.ai.openai.api-key)");
         }
 
         // Check cache first
@@ -118,12 +118,12 @@ public class LlmChatService {
 
             log.warn("Unexpected OpenAI response: {}", json);
             meterRegistry.counter("nexus.ai.llm.empty_response").increment();
-            return fallbackResponse(messages);
+            throw unavailable("the model returned no usable answer");
 
         } catch (Exception e) {
             log.error("OpenAI chat completion failed", e);
             meterRegistry.counter("nexus.ai.llm.error").increment();
-            return fallbackResponse(messages);
+            throw unavailable("the model returned no usable answer");
         }
     }
 
@@ -187,12 +187,7 @@ public class LlmChatService {
     public Map<String, Object> chatWithUsage(String systemPrompt, List<Map<String, String>> messages) {
         Map<String, Object> result = new LinkedHashMap<>();
         if (!enabled) {
-            result.put("content", fallbackResponse(messages));
-            result.put("inputTokens", 0);
-            result.put("outputTokens", 0);
-            result.put("costUsd", BigDecimal.ZERO);
-            result.put("cached", false);
-            return result;
+            throw unavailable("no model is configured (set nexus.ai.openai.api-key)");
         }
 
         String fullPrompt = (systemPrompt != null ? systemPrompt : "") + ":" + messages;
@@ -252,9 +247,7 @@ public class LlmChatService {
             log.error("OpenAI chatWithUsage failed", e);
         }
 
-        result.put("content", fallbackResponse(messages));
-        result.put("cached", false);
-        return result;
+        throw unavailable("the model could not be reached");
     }
 
     /**
@@ -292,9 +285,10 @@ public class LlmChatService {
      * Circuit breaker fallback for chat.
      */
     public String chatFallback(String systemPrompt, List<Map<String, String>> messages, Throwable t) {
-        log.warn("Circuit breaker OPEN for LLM chat, using fallback: {}", t.getMessage());
+        log.warn("LLM chat unavailable (circuit breaker or error): {}", t.getMessage());
         meterRegistry.counter("nexus.ai.llm.circuit_breaker_fallback").increment();
-        return fallbackResponse(messages);
+        if (t instanceof AiServiceException ase) throw ase;
+        throw unavailable("the model could not be reached");
     }
 
     /**
@@ -314,35 +308,11 @@ public class LlmChatService {
     }
 
     /**
-     * Fallback response when OpenAI is unavailable.
+     * What to do when no model can answer: say so. This used to return scripted replies (an invented
+     * order number, "sales are up 18%", made-up top customers with dollar amounts), which an operator
+     * would read as real business facts. An assistant that cannot answer must not guess.
      */
-    private String fallbackResponse(List<Map<String, String>> messages) {
-        String lastUserMsg = "";
-        if (messages != null) {
-            for (int i = messages.size() - 1; i >= 0; i--) {
-                if ("user".equals(messages.get(i).get("role"))) {
-                    lastUserMsg = messages.get(i).getOrDefault("content", "");
-                    break;
-                }
-            }
-        }
-
-        String lower = lastUserMsg.toLowerCase();
-        if (lower.contains("order") || lower.contains("shipment")) {
-            return "I've checked the system. Here's what I found: Order OMS-2024-5821 is currently being processed and is expected to ship within 2 hours.";
-        }
-        if (lower.contains("inventory") || lower.contains("stock")) {
-            return "Sure! Inventory levels look healthy. Top-moving SKU is NEXUS-PRO-X1 with 1,247 units in stock across 3 warehouses.";
-        }
-        if (lower.contains("sales") || lower.contains("revenue") || lower.contains("report")) {
-            return "Based on current data, sales are up 18% this month compared to last. Your top-performing channel is Shopify.";
-        }
-        if (lower.contains("issue") || lower.contains("fail") || lower.contains("problem") || lower.contains("alert")) {
-            return "I've identified 3 orders that require attention due to payment verification delays. Would you like me to list them?";
-        }
-        if (lower.contains("customer") || lower.contains("top")) {
-            return "Your top 5 customers by revenue this month are: TechStore Inc. ($142K), GlobalMart ($98K), QuickShip Logistics ($76K), Prime Retail ($63K), and DirectBuy Corp. ($51K).";
-        }
-        return "Thanks for your question! I can help you with order tracking, inventory checks, sales reports, stock alerts, and more. Could you provide more details so I can assist you better?";
+    private static AiServiceException unavailable(String reason) {
+        return new AiServiceException("The AI assistant is not available: " + reason);
     }
 }

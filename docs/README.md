@@ -20,6 +20,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 > - "How are OMS and WMS sold separately, and how do I change a tenant's plan?" → [15-EDITIONS-AND-ENTITLEMENTS.md](./15-EDITIONS-AND-ENTITLEMENTS.md)
 > - "How is Shopify inventory calculated and published, and how do I run the first real test?" → [16-SHOPIFY-INVENTORY-PUBLISHING.md](./16-SHOPIFY-INVENTORY-PUBLISHING.md)
 > - "How does stock change, and how do I check the books?" → [17-INVENTORY-LEDGER.md](./17-INVENTORY-LEDGER.md)
+> - "What's the real market data behind the competitor comparison — revenue, pricing, Gartner?" → [19-MARKET-BENCHMARKS.md](./19-MARKET-BENCHMARKS.md)
 
 ## Library map
 
@@ -39,6 +40,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`09-COST-TCO.md`](./09-COST-TCO.md) | **Cost & TCO** — $0 license, self-host math (~$76–110/mo), vs enterprise vendors | Buyers, CFOs, investors |
 | [`10-DATA-MODEL-REFERENCE.md`](./10-DATA-MODEL-REFERENCE.md) | **Field-by-field table catalog** — every column and constraint across all 179 tables, plus the flows joining them | Engineering, DBA |
 | [`11-SYSTEM-DESIGN.md`](./11-SYSTEM-DESIGN.md) | **Diagram companion** — C4 context/container/component, deployment & network topology, CI/CD pipelines, auth/webhook/import sequences, order-to-return state machines, Kafka topic map | Engineering |
+| [`19-MARKET-BENCHMARKS.md`](./19-MARKET-BENCHMARKS.md) | **Externally-sourced market reality** — real vendor revenue (SEC filings), published pricing, Gartner 2026 WMS positions, implementation cost/TCO benchmarks, and where `07`'s self-scores diverge from verifiable data | All, exec, investors |
 | [`features/`](./features/) | Per-feature deep dives (overview, process, use cases, data flow, ER subset, access) | All |
 
 ### Feature docs

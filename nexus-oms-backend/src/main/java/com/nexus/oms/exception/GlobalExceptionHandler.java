@@ -117,6 +117,12 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Invalid value for parameter '" + ex.getName() + "'"));
     }
 
+    /** An unknown URL is the caller's mistake (404), not a server fault; as a 500 it paged on every typo and scan. */
+    @ExceptionHandler(org.springframework.web.servlet.resource.NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResource(org.springframework.web.servlet.resource.NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Not found: /" + ex.getResourcePath()));
+    }
+
     /** Unparseable JSON or a value of the wrong shape (e.g. a malformed UUID); the client's mistake, not ours. */
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Void>> handleUnreadableBody(
