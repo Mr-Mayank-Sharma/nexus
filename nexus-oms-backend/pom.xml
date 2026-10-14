@@ -51,7 +51,7 @@
         <logstash.version>7.4</logstash.version>
         <jacoco.version>0.8.15</jacoco.version>
         <owasp.version>9.2.0</owasp.version>
-        <enforcer.version>3.4.1</enforcer.version>
+        <enforcer.version>3.6.3</enforcer.version>
         <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
     </properties>
 
