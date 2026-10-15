@@ -14,7 +14,6 @@ public class ConnectorRegistry {
 
     private static final Logger log = LoggerFactory.getLogger(ConnectorRegistry.class);
 
-    private final Map<String, Connector> connectors = new ConcurrentHashMap<>();
     private final Map<String, ConnectorFactory> factories = new ConcurrentHashMap<>();
     private final CredentialVault credentialVault;
 
@@ -27,44 +26,19 @@ public class ConnectorRegistry {
         log.info("Registered connector factory: {}", platformType);
     }
 
-    public Connector createAndInitialize(ConnectorConfig config) {
+    /**
+     * Builds a connector for one stored connection. The registry keeps no connections of its own: they live
+     * in the integration store tables (see StoreConnectorService), which are tenant-scoped and persistent.
+     */
+    public Connector initialize(ConnectorConfig config) {
         String platform = config.getPlatformType().toUpperCase();
         ConnectorFactory factory = factories.get(platform);
         if (factory == null) {
             throw new IllegalArgumentException("No connector factory for platform: " + platform);
         }
-
         Connector connector = factory.create(credentialVault);
         connector.initialize(config);
-
-        String id = config.getId() != null ? config.getId() : UUID.randomUUID().toString();
-        connectors.put(id, connector);
-        log.info("Initialized connector: {} ({})", id, platform);
         return connector;
-    }
-
-    public Connector getConnector(String id) {
-        Connector c = connectors.get(id);
-        if (c == null) throw new IllegalArgumentException("Connector not found: " + id);
-        return c;
-    }
-
-    public void removeConnector(String id) {
-        Connector c = connectors.get(id);
-        if (c != null) {
-            c.shutdown();
-            connectors.remove(id);
-        }
-    }
-
-    public List<Connector> getAllConnectors() {
-        return List.copyOf(connectors.values());
-    }
-
-    public List<Connector> getConnectorsByPlatform(String platform) {
-        return connectors.values().stream()
-                .filter(c -> c.getMetadata().getPlatformType().equalsIgnoreCase(platform))
-                .collect(Collectors.toList());
     }
 
     public List<ConnectorMetadata> getAvailablePlatforms() {
@@ -73,16 +47,7 @@ public class ConnectorRegistry {
                 .collect(Collectors.toList());
     }
 
-    public boolean hasConnector(String id) {
-        return connectors.containsKey(id);
-    }
 
-    public int getConnectorCount() { return connectors.size(); }
     public Set<String> getRegisteredPlatforms() { return factories.keySet(); }
 
-    public void shutdownAll() {
-        connectors.values().forEach(Connector::shutdown);
-        connectors.clear();
-        log.info("All connectors shut down");
-    }
 }

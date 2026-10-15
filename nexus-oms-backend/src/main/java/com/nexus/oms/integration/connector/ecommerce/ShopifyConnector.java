@@ -30,13 +30,14 @@ public class ShopifyConnector extends BaseApiConnector {
                 .description("Shopify Admin REST API connector for order management, product sync, and inventory")
                 .website("https://shopify.dev")
                 .docsUrl("https://shopify.dev/docs/api/admin-rest")
-                .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"))
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
                 .supportedProtocols(List.of("REST", "GraphQL"))
                 .supportedAuthTypes(List.of("ACCESS_TOKEN", "OAUTH2"))
                 .defaultSettings(Map.of("api_version", "2024-10"))
                 .requiredSettings(Set.of("shop_domain", "access_token"))
                 .maxBatchSize(250)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(true)
                 .supportsBatchSync(true)
                 .build();
@@ -78,12 +79,8 @@ public class ShopifyConnector extends BaseApiConnector {
             List<JsonNode> orders = restClient.paginatedGet(baseUrl, "/admin/orders.json",
                     defaultHeaders, query, "orders", "next", 10);
 
-            log.info("Imported {} orders from Shopify", orders.size());
-            return SyncResult.builder()
-                    .syncType("ORDER_IMPORT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(orders.size())
-                    .build();
+            log.info("Fetched {} orders from Shopify", orders.size());
+            return previewOnly("ORDER_IMPORT", orders.size(), "orders");
         });
     }
 
@@ -93,71 +90,26 @@ public class ShopifyConnector extends BaseApiConnector {
             List<JsonNode> products = restClient.paginatedGet(baseUrl, "/admin/products.json",
                     defaultHeaders, Map.of("limit", "250"), "products", "next", 10);
 
-            log.info("Synced {} products from Shopify", products.size());
-            return SyncResult.builder()
-                    .syncType("PRODUCT_SYNC")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(products.size())
-                    .build();
+            log.info("Fetched {} products from Shopify", products.size());
+            return previewOnly("PRODUCT_SYNC", products.size(), "products");
         });
     }
 
     @Override
     public SyncResult pushInventory(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("INVENTORY_PUSH", () -> {
-            log.info("Inventory push to Shopify");
-            return SyncResult.builder()
-                    .syncType("INVENTORY_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("INVENTORY_PUSH");
     }
 
     @Override
     public SyncResult pushFulfillments(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("FULFILLMENT_PUSH", () -> {
-            log.info("Fulfillment push to Shopify");
-            return SyncResult.builder()
-                    .syncType("FULFILLMENT_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("FULFILLMENT_PUSH");
     }
 
     @Override
     public SyncResult pushRefunds(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("REFUND_PUSH", () -> {
-            log.info("Refund push to Shopify");
-            return SyncResult.builder()
-                    .syncType("REFUND_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("REFUND_PUSH");
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        String webhookEndpoint = baseUrl + "/api/v1/integration/webhooks/shopify";
-        List<Map<String, String>> topics = List.of(
-            Map.of("topic", "orders/create", "address", webhookEndpoint),
-            Map.of("topic", "orders/updated", "address", webhookEndpoint),
-            Map.of("topic", "orders/fulfilled", "address", webhookEndpoint),
-            Map.of("topic", "products/update", "address", webhookEndpoint),
-            Map.of("topic", "inventory_levels/update", "address", webhookEndpoint)
-        );
-
-        for (Map<String, String> webhook : topics) {
-            try {
-                restClient.post(baseUrl, "/admin/webhooks.json", defaultHeaders, webhook);
-                log.info("Registered Shopify webhook: {}", webhook.get("topic"));
-            } catch (Exception e) {
-                log.warn("Failed to register webhook {}: {}", webhook.get("topic"), e.getMessage());
-            }
-        }
-    }
 
     @Override
     public void handleWebhookEvent(IntegrationEvent event) {
@@ -181,10 +133,11 @@ public class ShopifyConnector extends BaseApiConnector {
                     .platformType("SHOPIFY")
                     .category("E-Commerce")
                     .description("Shopify Admin REST API connector")
-                    .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"))
+                    .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
                     .supportedProtocols(List.of("REST", "GraphQL"))
                     .supportedAuthTypes(List.of("ACCESS_TOKEN"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

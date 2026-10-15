@@ -31,12 +31,13 @@ public class TwilioConnector extends BaseApiConnector {
                 .description("Twilio API connector for SMS, WhatsApp, voice, and email notifications")
                 .website("https://www.twilio.com/docs")
                 .docsUrl("https://www.twilio.com/docs/api")
-                .supportedSyncTypes(List.of("SEND_SMS", "SEND_WHATSAPP", "SEND_EMAIL", "SEND_VOICE"))
+                .supportedSyncTypes(List.of("SEND_SMS"))
+                .previewSyncTypes(List.of())
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("BASIC_AUTH"))
                 .requiredSettings(Set.of("account_sid", "auth_token"))
                 .maxBatchSize(100)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(true)
                 .build();
     }
@@ -94,19 +95,16 @@ public class TwilioConnector extends BaseApiConnector {
 
     @Override
     public SyncResult syncOrders(UUID tenantId, Map<String, Object> params) {
-        if (params != null && params.containsKey("to")) {
-            String to = (String) params.get("to");
-            String from = (String) params.getOrDefault("from", "+15005550006");
-            String body = (String) params.getOrDefault("body", "Your order has been shipped!");
-            return sendSms(to, from, body);
+        String to = params == null ? null : (String) params.get("to");
+        String body = params == null ? null : (String) params.get("body");
+        String from = params != null && params.get("from") != null ? (String) params.get("from") : config.getSetting("from_number");
+        // No default sender and no default text: +15005550006 is Twilio's magic test number and an invented
+        // "your order has shipped" would be sent to a real customer.
+        if (to == null || to.isBlank() || body == null || body.isBlank() || from == null || from.isBlank()) {
+            return SyncResult.builder().syncType("SEND_SMS").status(SyncResult.Status.FAILED)
+                    .addError("to, body and a sender (from, or the from_number setting) are all required").build();
         }
-        return SyncResult.builder().syncType("COMMUNICATION").status(SyncResult.Status.COMPLETED).build();
-    }
-
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        String callbackUrl = baseUrl + "/api/v1/integration/webhooks/twilio";
-        log.info("Configure Twilio webhook in Console: SMS Status Callback -> {}", callbackUrl);
+        return sendSms(to, from, body);
     }
 
     public static class Factory implements ConnectorFactory {
@@ -120,9 +118,10 @@ public class TwilioConnector extends BaseApiConnector {
                     .platformType("TWILIO")
                     .category("Communication")
                     .description("SMS, WhatsApp, voice notifications")
-                    .supportedSyncTypes(List.of("SEND_SMS", "SEND_WHATSAPP"))
+                    .supportedSyncTypes(List.of("SEND_SMS"))
+                .previewSyncTypes(List.of())
                     .supportedAuthTypes(List.of("BASIC_AUTH"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

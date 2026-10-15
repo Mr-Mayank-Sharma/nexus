@@ -41,7 +41,8 @@ public class SapConnector extends BaseApiConnector {
                 .description("SAP S/4HANA connector supporting SOAP web services, IDoc, OData, and RFC")
                 .website("https://api.sap.com")
                 .docsUrl("https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE")
-                .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH"))
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of())
                 .supportedProtocols(List.of("SOAP", "REST", "EDI", "RFC"))
                 .supportedAuthTypes(List.of("BASIC_AUTH", "OAUTH2", "CERTIFICATE", "SSO"))
                 .defaultSettings(Map.of("protocol", "SOAP", "client_id", "100", "system_id", "S4H"))
@@ -75,93 +76,29 @@ public class SapConnector extends BaseApiConnector {
         super.initialize(config);
     }
 
+    /**
+     * Nothing beyond a reachability probe is built for SAP. The SOAP probe only shows the gateway answers; it does
+     * not prove the credentials or the client number, and the OData, IDoc, RFC and EDI paths have no probe at all,
+     * so they report failure rather than a connection nobody checked.
+     */
     @Override
     public boolean testConnection() {
-        if (useSoap) {
-            try {
-                String response = soapClient.sendRequest(baseUrl + "/sap/bc/srt/rfc/sap/",
-                        "ping", "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ping/></soap:Body></soap:Envelope>", defaultHeaders);
-                return response != null && !response.isEmpty();
-            } catch (Exception e) {
-                log.warn("SAP SOAP connection failed: {}", e.getMessage());
-                return false;
-            }
+        if (!useSoap) {
+            log.warn("SAP connection test is only implemented for the SOAP protocol");
+            return false;
         }
-        return true;
+        try {
+            String response = soapClient.sendRequest(baseUrl + "/sap/bc/srt/rfc/sap/",
+                    "ping", "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ping/></soap:Body></soap:Envelope>", defaultHeaders);
+            return response != null && !response.isEmpty();
+        } catch (Exception e) {
+            log.warn("SAP SOAP connection failed: {}", e.getMessage());
+            return false;
+        }
     }
 
-    @Override
-    public SyncResult syncOrders(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("ORDER_IMPORT", () -> {
-            if (useSoap) {
-                String soapBody = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
-                        "<soap:Body><GetOrders><Client>" + clientId + "</Client></GetOrders></soap:Body></soap:Envelope>";
-                String response = soapClient.sendRequest(baseUrl + "/sap/opu/odata/sap/API_SALES_ORDER_SRV/OrderCollection",
-                        null, soapBody, defaultHeaders);
-                log.info("SAP SOAP order response received ({} chars)", response != null ? response.length() : 0);
-            } else if (useEdi) {
-                Map<String, Object> ediParams = new LinkedHashMap<>();
-                ediParams.put("purchaseOrderNumber", "PO-" + UUID.randomUUID().toString().substring(0, 8));
-                ediParams.put("orderDate", "20240101");
-                String edi850 = ediClient.generate850(ediParams);
-                log.info("Generated EDI 850 for SAP ({} chars)", edi850.length());
-            }
-
-            return SyncResult.builder()
-                    .syncType("ORDER_IMPORT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
-    }
-
-    @Override
-    public SyncResult syncProducts(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("PRODUCT_SYNC", () -> {
-            log.info("SAP product master data sync via IDoc MATMAS");
-            return SyncResult.builder()
-                    .syncType("PRODUCT_SYNC")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
-    }
-
-    @Override
-    public SyncResult pushInventory(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("INVENTORY_PUSH", () -> {
-            log.info("SAP inventory sync via IDoc MBGMCR or OData API_MATERIAL_STOCK_SRV");
-            return SyncResult.builder()
-                    .syncType("INVENTORY_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
-    }
-
-    @Override
-    public SyncResult pushFulfillments(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("FULFILLMENT_PUSH", () -> {
-            log.info("SAP delivery creation via BAPI_OUTB_DELIVERY_CREATEFROMORD");
-            return SyncResult.builder()
-                    .syncType("FULFILLMENT_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
-    }
-
-    @Override
-    public SyncResult pushRefunds(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("REFUND_PUSH", () -> {
-            log.info("SAP credit memo via BAPI_ACC_GL_POSTING_POST");
-            return SyncResult.builder()
-                    .syncType("REFUND_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
-    }
+    // ORDER_IMPORT, PRODUCT_SYNC, INVENTORY_PUSH, FULFILLMENT_PUSH and REFUND_PUSH are inherited from the base
+    // class and answer NOT_SUPPORTED. They used to log "SAP delivery creation via BAPI..." and report COMPLETED.
 
     public static class Factory implements ConnectorFactory {
         @Override public String getPlatformType() { return "SAP"; }
@@ -174,7 +111,8 @@ public class SapConnector extends BaseApiConnector {
                     .platformType("SAP")
                     .category("ERP")
                     .description("SAP ERP connector supporting SOAP, OData, RFC, EDI/IDoc")
-                    .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH"))
+                    .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of())
                     .supportedProtocols(List.of("SOAP", "REST", "EDI", "RFC"))
                     .supportedAuthTypes(List.of("BASIC_AUTH", "CERTIFICATE"))
                     .supportsWebhooks(false)

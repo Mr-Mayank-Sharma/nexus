@@ -58,22 +58,12 @@ public abstract class BaseApiConnector extends AbstractConnector {
 
     @Override
     public SyncResult syncOrders(UUID tenantId, Map<String, Object> params) {
-        log.info("Syncing orders from {} for tenant {}", getMetadata().getName(), tenantId);
-        return SyncResult.builder()
-                .syncType("ORDER_IMPORT")
-                .status(SyncResult.Status.COMPLETED)
-                .itemsSucceeded(0)
-                .build();
+        return notSupported("ORDER_IMPORT");
     }
 
     @Override
     public SyncResult syncProducts(UUID tenantId, Map<String, Object> params) {
-        log.info("Syncing products from {} for tenant {}", getMetadata().getName(), tenantId);
-        return SyncResult.builder()
-                .syncType("PRODUCT_SYNC")
-                .status(SyncResult.Status.COMPLETED)
-                .itemsSucceeded(0)
-                .build();
+        return notSupported("PRODUCT_SYNC");
     }
 
     @Override
@@ -91,9 +81,29 @@ public abstract class BaseApiConnector extends AbstractConnector {
         return notSupported("REFUND_PUSH");
     }
 
+    /**
+     * Automatic webhook registration is only offered where it has been written for the platform's real API.
+     * Everywhere else the answer is an explicit refusal that says what to do instead; it used to log a line
+     * and report "Webhooks registered".
+     */
     @Override
-    public void registerWebhooks(String baseUrl) {
-        log.warn("{} does not register webhooks; inbound events are not available (polling only)", getMetadata().getName());
+    public void registerWebhooks(String nexusBaseUrl) {
+        throw new UnsupportedOperationException(getMetadata().getName()
+                + " webhooks are not registered automatically by Nexus; set them up in the platform's own console");
+    }
+
+    /**
+     * A fetch that proves the platform is reachable and readable but stores nothing in Nexus. It is reported
+     * as such, never as an import: the records were counted and dropped.
+     */
+    protected SyncResult previewOnly(String syncType, int found, String noun) {
+        return SyncResult.builder()
+                .syncType(syncType)
+                .status(SyncResult.Status.NOT_SUPPORTED)
+                .itemsSucceeded(0)
+                .addWarning(getMetadata().getName() + " returned " + found + " " + noun
+                        + ", but this connector only reads them; nothing was imported into Nexus")
+                .build();
     }
 
     /**

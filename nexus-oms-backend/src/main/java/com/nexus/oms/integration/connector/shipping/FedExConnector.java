@@ -38,13 +38,14 @@ public class FedExConnector extends BaseApiConnector {
                 .description("FedEx REST API connector for rate quotes, shipment creation, tracking, and label generation")
                 .website("https://developer.fedex.com")
                 .docsUrl("https://developer.fedex.com/api/en-us/home.html")
-                .supportedSyncTypes(List.of("RATE_QUOTE", "CREATE_SHIPMENT", "TRACK", "LABEL", "ADDRESS_VALIDATION"))
+                .supportedSyncTypes(List.of("FULFILLMENT_PUSH"))
+                .previewSyncTypes(List.of())
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("OAUTH2"))
                 .defaultSettings(Map.of("environment", "sandbox", "api_version", "v1"))
                 .requiredSettings(Set.of("client_id", "client_secret", "account_number"))
                 .maxBatchSize(50)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(true)
                 .supportsBatchSync(false)
                 .build();
@@ -149,13 +150,10 @@ public class FedExConnector extends BaseApiConnector {
     @Override
     public SyncResult pushFulfillments(UUID tenantId, Map<String, Object> params) {
         if (params != null) return createShipment(params);
-        return SyncResult.builder().syncType("FULFILLMENT_PUSH").status(SyncResult.Status.COMPLETED).build();
+        return SyncResult.builder().syncType("FULFILLMENT_PUSH").status(SyncResult.Status.FAILED)
+                .addError("Shipment details are required to create a FedEx shipment").build();
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        log.info("FedEx webhooks registered via Developer Portal — configure in FedEx Developer");
-    }
 
     public static class Factory implements ConnectorFactory {
         @Override public String getPlatformType() { return "FEDEX"; }

@@ -49,13 +49,14 @@ public class AmazonConnector extends BaseApiConnector {
                 .description("Amazon SP-API connector for order management, inventory, and fulfillment")
                 .website("https://developer.amazonservices.com")
                 .docsUrl("https://developer-docs.amazon.com/sp-api")
-                .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH"))
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("OAUTH2", "AWS_SIGV4"))
                 .defaultSettings(Map.of("aws_region", "us-east-1", "api_version", "2020-09-04"))
                 .requiredSettings(Set.of("refresh_token", "seller_id", "marketplace_id", "aws_access_key", "aws_secret_key", "client_id", "client_secret"))
                 .maxBatchSize(100)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(false)
                 .supportsBatchSync(true)
                 .build();
@@ -137,12 +138,8 @@ public class AmazonConnector extends BaseApiConnector {
             int count = result != null && result.has("payload") && result.get("payload").has("Orders") ?
                     result.get("payload").get("Orders").size() : 0;
 
-            log.info("Imported {} orders from Amazon", count);
-            return SyncResult.builder()
-                    .syncType("ORDER_IMPORT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(count)
-                    .build();
+            log.info("Fetched {} orders from Amazon", count);
+            return previewOnly("ORDER_IMPORT", count, "orders");
         });
     }
 
@@ -158,43 +155,21 @@ public class AmazonConnector extends BaseApiConnector {
                     "/catalog/2022-04-01/items", buildSignedHeaders("GET", "/catalog/2022-04-01/items", null), query);
             int count = result != null && result.has("items") ? result.get("items").size() : 0;
 
-            log.info("Synced {} products from Amazon catalog", count);
-            return SyncResult.builder()
-                    .syncType("PRODUCT_SYNC")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(count)
-                    .build();
+            log.info("Fetched {} products from Amazon catalog", count);
+            return previewOnly("PRODUCT_SYNC", count, "products");
         });
     }
 
     @Override
     public SyncResult pushInventory(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("INVENTORY_PUSH", () -> {
-            log.info("Amazon inventory feed submission");
-            return SyncResult.builder()
-                    .syncType("INVENTORY_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("INVENTORY_PUSH");
     }
 
     @Override
     public SyncResult pushFulfillments(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("FULFILLMENT_PUSH", () -> {
-            log.info("Amazon fulfillment push");
-            return SyncResult.builder()
-                    .syncType("FULFILLMENT_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("FULFILLMENT_PUSH");
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        log.info("Amazon SP-API webhooks via SQS destination — configure in Seller Central Developer Profile");
-    }
 
     public static class Factory implements ConnectorFactory {
         @Override public String getPlatformType() { return "AMAZON"; }
@@ -207,9 +182,10 @@ public class AmazonConnector extends BaseApiConnector {
                     .platformType("AMAZON")
                     .category("Marketplace")
                     .description("Amazon Selling Partner API")
-                    .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH"))
+                    .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
                     .supportedAuthTypes(List.of("OAUTH2", "AWS_SIGV4"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

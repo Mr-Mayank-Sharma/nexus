@@ -157,16 +157,19 @@ public class ConnectorFactoryConfiguration {
                 return ConnectorMetadata.builder()
                         .name(name).vendor(vendor).platformType(platformType)
                         .category(category).description(description)
-                        .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH"))
-                        .supportedAuthTypes(List.of("API_KEY", "OAUTH2"))
-                        .supportsWebhooks(true)
+                        // A generic connection only talks to an address the user supplies: it can test it and read
+                        // from it as a preview. It cannot write, import into Nexus or register webhooks.
+                        .supportedSyncTypes(List.of())
+                        .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
+                        .supportedAuthTypes(List.of("API_KEY"))
+                        .supportsWebhooks(false)
                         .build();
             }
 
             @Override
             public Connector create(CredentialVault vault) {
                 return new GenericHttpConnector(vault, restClient, graphqlClient, dataMapper,
-                        platformType, name, vendor, category, description, "https://docs.example.com/" + platformType.toLowerCase());
+                        platformType, name, vendor, category, description, null);
             }
         };
     }

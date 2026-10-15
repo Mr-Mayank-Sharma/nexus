@@ -74,6 +74,9 @@ public class SyncSchedulerService {
         this.bcCustomerImportService = bcCustomerImportService;
     }
 
+    /** Platforms whose scheduled syncs are implemented. A store on any other platform has nothing to run on a timer. */
+    public static final java.util.Set<String> SCHEDULED_PLATFORMS = java.util.Set.of("SHOPIFY", "BIGCOMMERCE");
+
     @Scheduled(fixedRate = 30000)
     @SchedulerLock(name = "SyncSchedulerService.processDueSyncs", lockAtMostFor = "PT2M", lockAtLeastFor = "PT1S")
     public void processDueSyncs() {
@@ -82,6 +85,7 @@ public class SyncSchedulerService {
 
         for (NxIntegrationSyncConfig syncConfig : allEnabled) {
             if (syncConfig.getIntervalMinutes() == null) continue;
+            if (!isScheduledPlatform(syncConfig)) continue;   // leave it alone rather than mark it FAILED every 30 s
 
             if (syncConfig.getLastSyncAt() == null ||
                     syncConfig.getLastSyncAt().plusMinutes(syncConfig.getIntervalMinutes()).isBefore(now)) {
@@ -98,6 +102,12 @@ public class SyncSchedulerService {
                 }
             }
         }
+    }
+
+    private boolean isScheduledPlatform(NxIntegrationSyncConfig syncConfig) {
+        return storeRepository.findById(syncConfig.getStoreId())
+                .map(s -> s.getPlatform() != null && SCHEDULED_PLATFORMS.contains(s.getPlatform().toUpperCase()))
+                .orElse(false);
     }
 
     @Transactional

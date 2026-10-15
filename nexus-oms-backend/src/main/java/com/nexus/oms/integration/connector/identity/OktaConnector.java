@@ -29,12 +29,13 @@ public class OktaConnector extends BaseApiConnector {
                 .description("Okta Identity API connector for user management, SSO, MFA, and group sync")
                 .website("https://developer.okta.com")
                 .docsUrl("https://developer.okta.com/docs/reference/api")
-                .supportedSyncTypes(List.of("USER_SYNC", "GROUP_SYNC", "ROLE_SYNC", "SSO_CONFIG"))
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("USER_SYNC"))
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("API_TOKEN", "OAUTH2"))
                 .requiredSettings(Set.of("base_url", "api_token"))
                 .maxBatchSize(200)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(true)
                 .build();
     }
@@ -59,19 +60,11 @@ public class OktaConnector extends BaseApiConnector {
         return runWithTiming("USER_SYNC", () -> {
             JsonNode result = restClient.get(baseUrl, "/api/v1/users?limit=200", defaultHeaders, Map.of());
             int count = result != null && result.isArray() ? result.size() : 0;
-            log.info("Synced {} users from Okta", count);
-            return SyncResult.builder()
-                    .syncType("USER_SYNC")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(count)
-                    .build();
+            log.info("Fetched {} users from Okta", count);
+            return previewOnly("USER_SYNC", count, "users");
         });
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        log.info("Okta webhooks via Event Hook -> configure in Okta Admin Console");
-    }
 
     public static class Factory implements ConnectorFactory {
         @Override public String getPlatformType() { return "OKTA"; }
@@ -84,9 +77,10 @@ public class OktaConnector extends BaseApiConnector {
                     .platformType("OKTA")
                     .category("Identity & SSO")
                     .description("Okta identity provider")
-                    .supportedSyncTypes(List.of("USER_SYNC", "GROUP_SYNC"))
+                    .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("USER_SYNC"))
                     .supportedAuthTypes(List.of("API_TOKEN"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

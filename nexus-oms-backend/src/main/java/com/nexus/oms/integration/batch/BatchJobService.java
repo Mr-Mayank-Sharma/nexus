@@ -2,7 +2,7 @@ package com.nexus.oms.integration.batch;
 
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.integration.core.Connector;
-import com.nexus.oms.integration.core.ConnectorRegistry;
+import com.nexus.oms.integration.core.StoreConnectorService;
 import com.nexus.oms.integration.core.IntegrationLog;
 import com.nexus.oms.integration.dto.IntegrationEvent;
 import com.nexus.oms.integration.dto.SyncResult;
@@ -20,23 +20,23 @@ public class BatchJobService {
 
     private static final Logger log = LoggerFactory.getLogger(BatchJobService.class);
 
-    private final ConnectorRegistry registry;
+    private final StoreConnectorService connections;
     private final IntegrationLog integrationLog;
     private final Map<String, BatchJob> activeJobs = new ConcurrentHashMap<>();
 
-    public BatchJobService(ConnectorRegistry registry, IntegrationLog integrationLog) {
-        this.registry = registry;
+    public BatchJobService(StoreConnectorService connections, IntegrationLog integrationLog) {
+        this.connections = connections;
         this.integrationLog = integrationLog;
     }
 
     public BatchJob submitJob(String connectorId, String syncType, UUID tenantId, Map<String, Object> params) {
-        Connector connector = registry.getConnector(connectorId);
+        Connector connector = connections.open(connectorId);
         String jobId = UUID.randomUUID().toString();
         BatchJob job = new BatchJob(jobId, connectorId, syncType, tenantId, params);
         activeJobs.put(jobId, job);
 
         try {
-            integrationLog.startSync(tenantId, connector.getMetadata().getName(), syncType);
+            var syncLog = integrationLog.startSync(tenantId, connector.getMetadata().getName(), syncType);
             SyncResult result = connector.executeSync(syncType, tenantId, params);
 
             job.setStatus(result.getStatus().name());
@@ -46,7 +46,7 @@ public class BatchJobService {
             job.setDurationMs(result.getDurationMs());
 
             integrationLog.completeSync(
-                    integrationLog.startSync(tenantId, connector.getMetadata().getName(), syncType),
+                    syncLog,
                     result.getStatus().name(), result.getItemsSucceeded(), result.getItemsFailed(),
                     result.getErrors().isEmpty() ? "Completed" : String.join("; ", result.getErrors()));
 

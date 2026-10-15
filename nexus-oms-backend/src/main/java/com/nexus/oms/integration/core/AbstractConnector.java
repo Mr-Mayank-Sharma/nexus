@@ -23,6 +23,11 @@ public abstract class AbstractConnector implements Connector {
     protected LocalDateTime lastErrorAt;
     protected int consecutiveFailures;
     protected long totalSyncs;
+
+    /** Every sync type executeSync can run. Metadata may only advertise these. */
+    public static final java.util.Set<String> DISPATCHABLE_SYNC_TYPES = java.util.Set.of(
+            "ORDER_IMPORT", "PAYMENT_IMPORT", "INVOICE_SYNC", "USER_SYNC", "SEND_SMS",
+            "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH");
     protected long totalErrors;
 
     @Override
@@ -52,7 +57,8 @@ public abstract class AbstractConnector implements Connector {
 
     @Override
     public boolean supportsSyncType(String syncType) {
-        return getSupportedSyncTypes().contains(syncType);
+        return getSupportedSyncTypes().contains(syncType)
+                || (metadata != null && metadata.getPreviewSyncTypes().contains(syncType));
     }
 
     @Override
@@ -66,7 +72,8 @@ public abstract class AbstractConnector implements Connector {
         }
 
         return switch (syncType) {
-            case "ORDER_IMPORT" -> syncOrders(tenantId, params);
+            // These connectors expose their single read or send through syncOrders.
+            case "ORDER_IMPORT", "PAYMENT_IMPORT", "INVOICE_SYNC", "USER_SYNC", "SEND_SMS" -> syncOrders(tenantId, params);
             case "PRODUCT_SYNC" -> syncProducts(tenantId, params);
             case "INVENTORY_PUSH" -> pushInventory(tenantId, params);
             case "FULFILLMENT_PUSH" -> pushFulfillments(tenantId, params);

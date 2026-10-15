@@ -35,17 +35,34 @@ public class ShippingLabelService {
         this.kafkaProducerService = kafkaProducerService;
     }
 
+    /**
+     * Local demo labels (fabricated tracking numbers, "SIM-" prefixed so nobody mistakes one for a real number).
+     * Off in production: there, a tracking number must come from a carrier or be entered from the carrier's own account.
+     */
+    @org.springframework.beans.factory.annotation.Value("${nexus.carrier.simulation.enabled:true}")
+    private boolean simulationEnabled = true;
+
+    /** Source and tracking for a label whose caller may or may not have supplied a tracking number. */
+    private void settleTracking(NxShippingLabel label) {
+        boolean hasTracking = label.getTrackingNumber() != null && !label.getTrackingNumber().isBlank();
+        if (hasTracking) {
+            if (label.getLabelSource() == null) label.setLabelSource("MANUAL");   // typed in from the carrier's own portal
+            return;
+        }
+        if (!simulationEnabled) {
+            throw new BadRequestException("No tracking number. Buy the label from the carrier (Shipping > Carrier labels) "
+                    + "or enter the tracking number from your carrier account. Nexus will not invent one.");
+        }
+        label.setTrackingNumber(generateTrackingNumber(label.getCarrier()));
+        label.setLabelSource("SIMULATED");
+    }
+
     @Transactional
     public NxShippingLabel generateLabel(NxShippingLabel label) {
         UUID tenantId = TenantContext.getCurrentTenantId();
         label.setTenantId(tenantId);
 
-        if (label.getLabelSource() == null) {
-            label.setLabelSource("SIMULATED");
-        }
-        if (label.getTrackingNumber() == null) {
-            label.setTrackingNumber(generateTrackingNumber(label.getCarrier()));
-        }
+        settleTracking(label);
         if (label.getLabelUrl() == null) {
             label.setLabelUrl("/api/v1/labels/" + label.getId() + "/download");
         }
@@ -65,12 +82,7 @@ public class ShippingLabelService {
             label.setTenantId(tenantId);
             label.setOrderId(orderId);
             label.setOrderNumber(orderNumber);
-            if (label.getLabelSource() == null) {
-                label.setLabelSource("SIMULATED");
-            }
-            if (label.getTrackingNumber() == null) {
-                label.setTrackingNumber(generateTrackingNumber(label.getCarrier()));
-            }
+            settleTracking(label);
             generated.add(shippingLabelRepository.save(label));
         }
 
@@ -88,9 +100,9 @@ public class ShippingLabelService {
                 .orderNumber(orderNumber)
                 .carrier("LOCAL")
                 .serviceType("SAME_DAY")
-                .trackingNumber(generateTrackingNumber("LOCAL"))
+                .trackingNumber("PICKUP-" + pickupOrderId.toString().substring(0, 8).toUpperCase())   // an internal pickup reference, not a carrier number
                 .status("GENERATED")
-                .labelSource("SIMULATED")
+                .labelSource("INTERNAL")
                 .fromName(fromName)
                 .fromAddress(fromAddress)
                 .labelUrl("/api/v1/labels/bopis/" + pickupOrderId)
@@ -188,6 +200,11 @@ public class ShippingLabelService {
                 .dimensions(label.getDimensions())
                 .build();
 
+        boolean simulated = adapter instanceof com.nexus.oms.integration.carrier.SimulatedCarrierAdapter;
+        if (simulated && !simulationEnabled) {
+            throw new BadRequestException("Carrier " + label.getCarrier() + " is set to the simulated adapter, which cannot buy real labels. "
+                    + "Configure the carrier's account in Carrier label settings.");
+        }
         CarrierShipmentResponse response = adapter.createShipment(shipmentRequest);
         if (!response.isSuccess()) {
             throw new BadRequestException("Carrier " + label.getCarrier() + " rejected shipment: "
@@ -198,7 +215,7 @@ public class ShippingLabelService {
         label.setLabelBase64(response.getLabelBase64());
         label.setLabelFormat(response.getLabelFormat() != null ? response.getLabelFormat() : adapter.getLabelFormat());
         label.setAdapterName(adapter.getName());
-        label.setLabelSource("CARRIER");
+        label.setLabelSource(simulated ? "SIMULATED" : "CARRIER");   // a simulated adapter's output is not a carrier purchase
         label.setStatus("GENERATED");
         if (label.getGeneratedAt() == null) {
             label.setGeneratedAt(LocalDateTime.now());
@@ -240,6 +257,6 @@ public class ShippingLabelService {
             case "LOCAL" -> "LC";
             default -> "GN";
         };
-        return prefix + System.currentTimeMillis() + String.format("%04d", new Random().nextInt(10000));
+        return "SIM-" + prefix + System.currentTimeMillis() + String.format("%04d", new Random().nextInt(10000));
     }
 }

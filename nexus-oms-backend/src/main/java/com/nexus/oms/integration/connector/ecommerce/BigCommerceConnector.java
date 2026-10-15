@@ -32,13 +32,14 @@ public class BigCommerceConnector extends BaseApiConnector {
                 .description("BigCommerce REST API connector for order management, product sync, and inventory")
                 .website("https://developer.bigcommerce.com")
                 .docsUrl("https://developer.bigcommerce.com/docs/rest")
-                .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"))
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("ACCESS_TOKEN", "OAUTH2"))
                 .defaultSettings(Map.of("api_path", DEFAULT_API_PATH))
                 .requiredSettings(Set.of("store_hash", "access_token"))
                 .maxBatchSize(250)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(true)
                 .supportsBatchSync(true)
                 .build();
@@ -83,12 +84,8 @@ public class BigCommerceConnector extends BaseApiConnector {
             List<JsonNode> orders = restClient.paginatedGet(baseUrl, "/v2/orders",
                     defaultHeaders, query, "orders", "next", 10);
 
-            log.info("Imported {} orders from BigCommerce", orders.size());
-            return SyncResult.builder()
-                    .syncType("ORDER_IMPORT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(orders.size())
-                    .build();
+            log.info("Fetched {} orders from BigCommerce", orders.size());
+            return previewOnly("ORDER_IMPORT", orders.size(), "orders");
         });
     }
 
@@ -98,75 +95,26 @@ public class BigCommerceConnector extends BaseApiConnector {
             List<JsonNode> products = restClient.paginatedGet(baseUrl, "/v3/catalog/products",
                     defaultHeaders, Map.of("limit", "250"), "data", "next", 10);
 
-            log.info("Synced {} products from BigCommerce", products.size());
-            return SyncResult.builder()
-                    .syncType("PRODUCT_SYNC")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(products.size())
-                    .build();
+            log.info("Fetched {} products from BigCommerce", products.size());
+            return previewOnly("PRODUCT_SYNC", products.size(), "products");
         });
     }
 
     @Override
     public SyncResult pushInventory(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("INVENTORY_PUSH", () -> {
-            log.info("Inventory push to BigCommerce");
-            return SyncResult.builder()
-                    .syncType("INVENTORY_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("INVENTORY_PUSH");
     }
 
     @Override
     public SyncResult pushFulfillments(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("FULFILLMENT_PUSH", () -> {
-            log.info("Fulfillment push to BigCommerce");
-            return SyncResult.builder()
-                    .syncType("FULFILLMENT_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("FULFILLMENT_PUSH");
     }
 
     @Override
     public SyncResult pushRefunds(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("REFUND_PUSH", () -> {
-            log.info("Refund push to BigCommerce");
-            return SyncResult.builder()
-                    .syncType("REFUND_PUSH")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(0)
-                    .build();
-        });
+        return notSupported("REFUND_PUSH");
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        String webhookEndpoint = baseUrl + "/api/v1/integration/webhooks/bigcommerce";
-        List<String> scopes = List.of(
-            "store/order/*",
-            "store/order/statusUpdated",
-            "store/product/*",
-            "store/product/updated",
-            "store/inventory/*"
-        );
-
-        for (String scope : scopes) {
-            try {
-                Map<String, Object> hookData = new LinkedHashMap<>();
-                hookData.put("scope", scope);
-                hookData.put("destination", webhookEndpoint);
-                hookData.put("is_active", true);
-                restClient.post(baseUrl, "/v3/hooks", defaultHeaders, hookData);
-                log.info("Registered BigCommerce webhook: {}", scope);
-            } catch (Exception e) {
-                log.warn("Failed to register webhook {}: {}", scope, e.getMessage());
-            }
-        }
-    }
 
     @Override
     public void handleWebhookEvent(IntegrationEvent event) {
@@ -195,10 +143,11 @@ public class BigCommerceConnector extends BaseApiConnector {
                     .platformType("BIGCOMMERCE")
                     .category("E-Commerce")
                     .description("BigCommerce REST API connector")
-                    .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"))
+                    .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
                     .supportedProtocols(List.of("REST"))
                     .supportedAuthTypes(List.of("ACCESS_TOKEN"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

@@ -142,7 +142,11 @@ public class IntegrationStoreService {
             }
         }
 
-        String[] defaultSyncs = {"ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"};
+        // Only platforms with an implemented scheduled sync get one. For the rest, enabled-by-default syncs
+        // would be listed as configured and then fail on every cycle.
+        String[] defaultSyncs = com.nexus.oms.scheduler.SyncSchedulerService.SCHEDULED_PLATFORMS.contains(store.getPlatform())
+                ? new String[]{"ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"}
+                : new String[]{};
         for (String syncType : defaultSyncs) {
             NxIntegrationSyncConfig syncConfig = NxIntegrationSyncConfig.builder()
                     .storeId(store.getId())

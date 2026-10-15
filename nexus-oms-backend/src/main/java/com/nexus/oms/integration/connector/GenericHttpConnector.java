@@ -26,10 +26,11 @@ public class GenericHttpConnector extends BaseApiConnector {
                 .description(description)
                 .website(docsUrl)
                 .docsUrl(docsUrl)
-                .supportedSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"))
-                .supportedProtocols(List.of("REST", "GraphQL"))
-                .supportedAuthTypes(List.of("API_KEY", "OAUTH2", "BASIC_AUTH"))
-                .supportsWebhooks(true)
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT", "PRODUCT_SYNC"))
+                .supportedProtocols(List.of("REST"))
+                .supportedAuthTypes(List.of("API_KEY"))
+                .supportsWebhooks(false)
                 .build();
     }
 
@@ -99,6 +100,6 @@ public class GenericHttpConnector extends BaseApiConnector {
                                                     GraphqlProtocolAdapter graphql, DataMapper mapper,
                                                     String platformType, String name, String vendor, String category) {
         return new GenericHttpConnector(vault, rest, graphql, mapper,
-                platformType, name, vendor, category, name + " connector", "https://" + platformType.toLowerCase() + ".com/docs");
+                platformType, name, vendor, category, name + " connector", null);
     }
 }

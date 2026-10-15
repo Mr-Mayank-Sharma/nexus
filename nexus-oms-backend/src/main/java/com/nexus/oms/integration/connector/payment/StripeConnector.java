@@ -31,13 +31,14 @@ public class StripeConnector extends BaseApiConnector {
                 .description("Stripe API connector for payments, refunds, invoices, and subscriptions")
                 .website("https://stripe.com/docs/api")
                 .docsUrl("https://stripe.com/docs/api")
-                .supportedSyncTypes(List.of("PAYMENT_IMPORT", "REFUND_PUSH", "INVOICE_SYNC"))
+                .supportedSyncTypes(List.of("REFUND_PUSH"))
+                .previewSyncTypes(List.of("PAYMENT_IMPORT"))
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("API_KEY"))
                 .defaultSettings(Map.of("api_version", "2023-10-16"))
                 .requiredSettings(Set.of("secret_key"))
                 .maxBatchSize(100)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(true)
                 .build();
     }
@@ -75,13 +76,9 @@ public class StripeConnector extends BaseApiConnector {
 
             JsonNode result = restClient.get(baseUrl, "/v1/charges", defaultHeaders, query);
             int count = result != null && result.has("data") ? result.get("data").size() : 0;
-            log.info("Imported {} Stripe charges", count);
+            log.info("Fetched {} Stripe charges", count);
 
-            return SyncResult.builder()
-                    .syncType("PAYMENT_IMPORT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(count)
-                    .build();
+            return previewOnly("PAYMENT_IMPORT", count, "charges");
         });
     }
 
@@ -110,27 +107,6 @@ public class StripeConnector extends BaseApiConnector {
         });
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        String callbackUrl = baseUrl + "/api/v1/integration/webhooks/stripe";
-        try {
-            Map<String, String> body = new LinkedHashMap<>();
-            body.put("url", callbackUrl);
-            body.put("enabled_events[]", "charge.completed");
-            body.put("enabled_events[]", "charge.refunded");
-            body.put("enabled_events[]", "payment_intent.succeeded");
-            body.put("enabled_events[]", "payment_intent.payment_failed");
-            body.put("enabled_events[]", "invoice.paid");
-            body.put("enabled_events[]", "invoice.payment_failed");
-
-            JsonNode result = restClient.post(baseUrl, "/v1/webhook_endpoints", defaultHeaders, body);
-            if (result != null && result.has("id")) {
-                log.info("Stripe webhook endpoint created: {}", result.get("id").asText());
-            }
-        } catch (Exception e) {
-            log.warn("Failed to register Stripe webhooks: {}", e.getMessage());
-        }
-    }
 
     @Override
     public void handleWebhookEvent(com.nexus.oms.integration.dto.IntegrationEvent event) {
@@ -153,9 +129,10 @@ public class StripeConnector extends BaseApiConnector {
                     .platformType("STRIPE")
                     .category("Payments")
                     .description("Stripe payment processing")
-                    .supportedSyncTypes(List.of("PAYMENT_IMPORT", "REFUND_PUSH", "INVOICE_SYNC"))
+                    .supportedSyncTypes(List.of("REFUND_PUSH"))
+                .previewSyncTypes(List.of("PAYMENT_IMPORT"))
                     .supportedAuthTypes(List.of("API_KEY"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

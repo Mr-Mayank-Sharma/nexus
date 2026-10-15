@@ -35,7 +35,8 @@ public class OpenAiConnector extends BaseApiConnector {
                 .description("OpenAI API connector for LLM inference, embeddings, and AI-powered automation")
                 .website("https://platform.openai.com")
                 .docsUrl("https://platform.openai.com/docs/api-reference")
-                .supportedSyncTypes(List.of("CHAT_COMPLETION", "EMBEDDINGS", "IMAGE_GENERATION", "FINE_TUNING"))
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of())
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("API_KEY"))
                 .defaultSettings(Map.of("model", "gpt-4o", "api_version", "2024-10"))
@@ -125,18 +126,6 @@ public class OpenAiConnector extends BaseApiConnector {
             return result.get("choices").get(0).get("message").get("content").asText().trim();
         }
         return "UPS";
-    }
-
-    @Override
-    public SyncResult syncOrders(UUID tenantId, Map<String, Object> params) {
-        return runWithTiming("AI_PREDICT", () -> {
-            log.info("OpenAI prediction requested");
-            return SyncResult.builder()
-                    .syncType("AI_PREDICT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(1)
-                    .build();
-        });
     }
 
     public static class Factory implements ConnectorFactory {

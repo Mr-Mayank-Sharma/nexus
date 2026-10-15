@@ -34,13 +34,14 @@ public class QuickBooksConnector extends BaseApiConnector {
                 .description("QuickBooks Online REST API connector for invoices, payments, customers, and reports")
                 .website("https://developer.intuit.com")
                 .docsUrl("https://developer.intuit.com/app/developer/qbo/docs/api")
-                .supportedSyncTypes(List.of("INVOICE_SYNC", "PAYMENT_SYNC", "CUSTOMER_SYNC", "PAYROLL_SYNC"))
+                .supportedSyncTypes(List.of("REFUND_PUSH"))
+                .previewSyncTypes(List.of("INVOICE_SYNC"))
                 .supportedProtocols(List.of("REST"))
                 .supportedAuthTypes(List.of("OAUTH2"))
                 .defaultSettings(Map.of("api_version", "v3", "environment", "production"))
                 .requiredSettings(Set.of("client_id", "client_secret", "refresh_token", "realm_id", "company_id"))
                 .maxBatchSize(100)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .build();
     }
 
@@ -109,13 +110,9 @@ public class QuickBooksConnector extends BaseApiConnector {
             int count = result != null && result.has("QueryResponse") &&
                     result.get("QueryResponse").has("Invoice") ?
                     result.get("QueryResponse").get("Invoice").size() : 0;
-            log.info("Synced {} invoices from QuickBooks", count);
+            log.info("Fetched {} invoices from QuickBooks", count);
 
-            return SyncResult.builder()
-                    .syncType("INVOICE_SYNC")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(count)
-                    .build();
+            return previewOnly("INVOICE_SYNC", count, "invoices");
         });
     }
 
@@ -182,18 +179,6 @@ public class QuickBooksConnector extends BaseApiConnector {
         });
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        String callbackUrl = baseUrl + "/api/v1/integration/webhooks/quickbooks";
-        try {
-            restClient.post("https://quickbooks.api.intuit.com",
-                    "/v3/company/" + realmId + "/webhooks", defaultHeaders,
-                    Map.of("webhooksUrl", callbackUrl, "events", List.of("Invoice", "Payment", "Customer")));
-            log.info("QuickBooks webhook registered: {}", callbackUrl);
-        } catch (Exception e) {
-            log.warn("Failed to register QuickBooks webhook: {}", e.getMessage());
-        }
-    }
 
     public static class Factory implements ConnectorFactory {
         @Override public String getPlatformType() { return "QUICKBOOKS"; }
@@ -206,9 +191,10 @@ public class QuickBooksConnector extends BaseApiConnector {
                     .platformType("QUICKBOOKS")
                     .category("Accounting")
                     .description("QuickBooks accounting connector")
-                    .supportedSyncTypes(List.of("INVOICE_SYNC", "PAYMENT_SYNC", "CUSTOMER_SYNC"))
+                    .supportedSyncTypes(List.of("REFUND_PUSH"))
+                .previewSyncTypes(List.of("INVOICE_SYNC"))
                     .supportedAuthTypes(List.of("OAUTH2"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

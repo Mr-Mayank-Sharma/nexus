@@ -32,13 +32,14 @@ public class SalesforceConnector extends BaseApiConnector {
                 .description("Salesforce REST API connector for orders, accounts, contacts, and opportunities")
                 .website("https://developer.salesforce.com")
                 .docsUrl("https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest")
-                .supportedSyncTypes(List.of("ORDER_IMPORT", "ACCOUNT_SYNC", "CONTACT_SYNC", "OPPORTUNITY_SYNC"))
+                .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT"))
                 .supportedProtocols(List.of("REST", "GraphQL", "SOAP"))
                 .supportedAuthTypes(List.of("OAUTH2", "JWT_BEARER"))
                 .defaultSettings(Map.of("api_version", "v61.0"))
                 .requiredSettings(Set.of("client_id", "client_secret", "username", "password", "security_token"))
                 .maxBatchSize(200)
-                .supportsWebhooks(true)
+                .supportsWebhooks(false)
                 .supportsRealTimeSync(true)
                 .supportsBatchSync(true)
                 .build();
@@ -110,20 +111,12 @@ public class SalesforceConnector extends BaseApiConnector {
             JsonNode result = restClient.get(instanceUrl,
                     "/services/data/" + apiVersion + "/query?q=" + query, defaultHeaders, Map.of());
             int count = result != null && result.has("records") ? result.get("records").size() : 0;
-            log.info("Imported {} orders from Salesforce", count);
+            log.info("Fetched {} orders from Salesforce", count);
 
-            return SyncResult.builder()
-                    .syncType("ORDER_IMPORT")
-                    .status(SyncResult.Status.COMPLETED)
-                    .itemsSucceeded(count)
-                    .build();
+            return previewOnly("ORDER_IMPORT", count, "orders");
         });
     }
 
-    @Override
-    public void registerWebhooks(String baseUrl) {
-        log.info("Salesforce webhooks via Platform Events or CDC — create in Salesforce Setup");
-    }
 
     public static class Factory implements ConnectorFactory {
         @Override public String getPlatformType() { return "SALESFORCE"; }
@@ -136,9 +129,10 @@ public class SalesforceConnector extends BaseApiConnector {
                     .platformType("SALESFORCE")
                     .category("CRM")
                     .description("Salesforce CRM connector")
-                    .supportedSyncTypes(List.of("ORDER_IMPORT", "ACCOUNT_SYNC", "CONTACT_SYNC"))
+                    .supportedSyncTypes(List.of())
+                .previewSyncTypes(List.of("ORDER_IMPORT"))
                     .supportedAuthTypes(List.of("OAUTH2", "JWT_BEARER"))
-                    .supportsWebhooks(true)
+                    .supportsWebhooks(false)
                     .build();
         }
 

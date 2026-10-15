@@ -15,6 +15,7 @@ public class ConnectorMetadata {
     private final String website;
     private final String docsUrl;
     private final List<String> supportedSyncTypes;
+    private final List<String> previewSyncTypes;
     private final List<String> supportedProtocols;
     private final List<String> supportedAuthTypes;
     private final Map<String, String> defaultSettings;
@@ -34,6 +35,7 @@ public class ConnectorMetadata {
         this.website = builder.website;
         this.docsUrl = builder.docsUrl;
         this.supportedSyncTypes = List.copyOf(builder.supportedSyncTypes);
+        this.previewSyncTypes = List.copyOf(builder.previewSyncTypes);
         this.supportedProtocols = List.copyOf(builder.supportedProtocols);
         this.supportedAuthTypes = List.copyOf(builder.supportedAuthTypes);
         this.defaultSettings = Map.copyOf(builder.defaultSettings);
@@ -54,7 +56,10 @@ public class ConnectorMetadata {
     public String getDescription() { return description; }
     public String getWebsite() { return website; }
     public String getDocsUrl() { return docsUrl; }
+    /** Operations that change something on the platform or in Nexus. */
     public List<String> getSupportedSyncTypes() { return supportedSyncTypes; }
+    /** Read-only checks: the platform is asked for records and the count is reported, nothing is stored in Nexus. */
+    public List<String> getPreviewSyncTypes() { return previewSyncTypes; }
     public List<String> getSupportedProtocols() { return supportedProtocols; }
     public List<String> getSupportedAuthTypes() { return supportedAuthTypes; }
     public Map<String, String> getDefaultSettings() { return defaultSettings; }
@@ -74,6 +79,7 @@ public class ConnectorMetadata {
         private String website;
         private String docsUrl;
         private List<String> supportedSyncTypes = List.of();
+        private List<String> previewSyncTypes = List.of();
         private List<String> supportedProtocols = List.of("REST");
         private List<String> supportedAuthTypes = List.of("API_KEY");
         private Map<String, String> defaultSettings = Map.of();
@@ -92,6 +98,7 @@ public class ConnectorMetadata {
         public Builder website(String w) { this.website = w; return this; }
         public Builder docsUrl(String d) { this.docsUrl = d; return this; }
         public Builder supportedSyncTypes(List<String> s) { this.supportedSyncTypes = s; return this; }
+        public Builder previewSyncTypes(List<String> s) { this.previewSyncTypes = s; return this; }
         public Builder supportedProtocols(List<String> s) { this.supportedProtocols = s; return this; }
         public Builder supportedAuthTypes(List<String> s) { this.supportedAuthTypes = s; return this; }
         public Builder defaultSettings(Map<String, String> m) { this.defaultSettings = m; return this; }
