@@ -34,9 +34,11 @@ describe('hubRules', () => {
     expect(jobView(job('COMPLETED', { itemsSucceeded: 4, itemsFailed: 1 })).detail).toBe('4 succeeded, 1 failed')
   })
 
-  it('always asks for a base address, and never echoes a secret field', () => {
-    const p = { requiredSettings: ['client_id'] } as Platform
-    expect(requiredFields(p)).toEqual(['base_url', 'client_id'])
+  it('asks only for what the connector uses, addresses first and secrets last', () => {
+    expect(requiredFields({ requiredSettings: ['secret_key'] } as Platform)).toEqual(['secret_key'])          // Stripe has no address field
+    expect(requiredFields({ requiredSettings: ['access_token', 'shop_domain'] } as Platform)).toEqual(['shop_domain', 'access_token'])
+    expect(requiredFields({ requiredSettings: [] } as unknown as Platform)).toEqual(['base_url', 'api_key'])  // generic platform
+    expect(requiredFields({} as Platform)).toEqual(['base_url', 'api_key'])
     expect(isSecretField('api_key')).toBe(true)
     expect(isSecretField('client_secret')).toBe(true)
     expect(isSecretField('base_url')).toBe(false)

@@ -64,4 +64,5 @@ Every entry also carries `liveVerified`. **It is false everywhere, because no in
 3. No payment webhooks, no carrier tracking feed, no live carrier quotes, no EDI transport (AS2/SFTP/VAN), no SCIM.
 4. `integration` permission is held by ADMIN only; other roles cannot manage connections.
 5. About 30 "Custom REST only" platforms are listed for completeness; none does anything beyond a connection test and a preview.
-6. The legacy marketplace pages (Amazon, eBay, Walmart) show Nexus's own records; they are labelled as such.
+6. The new Directory, Connections and sidebar are covered by component tests and a live API run, but **have not been looked at in a browser** (the browser tool was unavailable when they were built).
+7. The legacy marketplace pages (Amazon, eBay, Walmart) show Nexus's own records; they are labelled as such.

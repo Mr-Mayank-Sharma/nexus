@@ -205,14 +205,14 @@ export default function IntegrationHubPage() {
                 </p>
               )}
               <div className="mt-3 grid gap-3 md:grid-cols-2">
-                {[...requiredFields(platform), ...(isGenericLike(platform) ? ['api_key'] : [])].filter((k, i, a) => a.indexOf(k) === i).map(k => (
+                {requiredFields(platform).map(k => (
                   <label key={k} className="text-sm text-[var(--text-secondary)]">{k.replace(/_/g, ' ')}
                     <input className={`${field} mt-1`} type={isSecretField(k) ? 'password' : 'text'} autoComplete="off"
                       value={values[k] ?? ''} placeholder={platform.defaultSettings?.[k] ?? ''} onChange={e => setValues({ ...values, [k]: e.target.value })} />
                   </label>
                 ))}
               </div>
-              <button type="button" className={`${primary} mt-4`} disabled={save.isPending || !(values.base_url ?? '').trim()} onClick={() => save.mutate()}>
+              <button type="button" className={`${primary} mt-4`} disabled={save.isPending || !platform || requiredFields(platform).some(k => !(values[k] ?? '').trim())} onClick={() => save.mutate()}>
                 {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Save and test
               </button>
             </>
@@ -223,5 +223,3 @@ export default function IntegrationHubPage() {
   )
 }
 
-/** Platforms with no dedicated connector authenticate with a single key. */
-const isGenericLike = (p: Platform) => p.supportedSyncTypes.length === 0 && !p.requiredSettings?.length

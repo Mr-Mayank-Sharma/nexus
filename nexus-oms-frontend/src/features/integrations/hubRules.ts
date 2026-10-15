@@ -37,11 +37,16 @@ export const actionLabel = (t: string) => OPERATION_LABEL[t] ?? t
 /** Operations that spend money, message people or change another system need an explicit confirmation. */
 export const NEEDS_CONFIRM = new Set(['REFUND_PUSH', 'FULFILLMENT_PUSH', 'SEND_SMS', 'INVENTORY_PUSH'])
 
-/** Settings the form must ask for: what the platform says it requires, always with a base address first. */
+/**
+ * The fields the form must collect: exactly what the platform's connector says it needs (addresses first, secrets last).
+ * A platform with no dedicated connector has no list, so it gets the generic pair: the address to call and a key.
+ * The address is only asked for when the connector actually uses it; Stripe, Shopify, BigCommerce and Twilio build theirs.
+ */
 export function requiredFields(p: Platform): string[] {
-  const fields = [...(p.requiredSettings ?? [])]
-  if (!fields.includes('base_url')) fields.unshift('base_url')
-  return fields
+  const listed = [...(p.requiredSettings ?? [])]
+  const fields = listed.length > 0 ? listed : ['base_url', 'api_key']
+  const secret = (k: string) => (isSecretField(k) ? 1 : 0)
+  return fields.sort((a, b) => secret(a) - secret(b) || a.localeCompare(b))
 }
 
 /** Secrets are never echoed; the field type says so. */
