@@ -38,9 +38,11 @@ public class EquipmentCallbackService {
     private final AutomationSystemRepository systems;
     private final AutomationCommandRepository commands;
     private final AutomationLogRepository logs;
+    private final com.nexus.oms.repository.AutomationAlertRepository alerts;
 
     public EquipmentCallbackService(AutomationSystemRepository systems, AutomationCommandRepository commands,
-                                    AutomationLogRepository logs) {
+                                    AutomationLogRepository logs, com.nexus.oms.repository.AutomationAlertRepository alerts) {
+        this.alerts = alerts;
         this.systems = systems;
         this.commands = commands;
         this.logs = logs;
@@ -51,6 +53,8 @@ public class EquipmentCallbackService {
     public NxAutomationSystem heartbeat(UUID systemId, String presentedKey, String reportedStatus) {
         NxAutomationSystem system = authenticate(systemId, presentedKey);
         system.setLastHealthCheckAt(LocalDateTime.now());
+        system.setLastHeartbeatAt(LocalDateTime.now());
+        resolveMissedHeartbeatAlerts(system);
         if ("ERROR".equals(reportedStatus) || "DEGRADED".equals(reportedStatus)) {
             system.setStatus(reportedStatus);
         } else if (!"OFFLINE".equals(system.getStatus()) && !"MAINTENANCE".equals(system.getStatus())) {
@@ -100,8 +104,20 @@ public class EquipmentCallbackService {
         logs.save(log);
 
         system.setLastHealthCheckAt(now);
+        system.setLastHeartbeatAt(now);
         systems.save(system);
         return command;
+    }
+
+    private void resolveMissedHeartbeatAlerts(NxAutomationSystem system) {
+        for (var alert : alerts.findBySystemIdAndStatus(system.getId(), "ACTIVE")) {
+            if (EquipmentWatchdog.HEARTBEAT_ALERT.equals(alert.getAlertType())) {
+                alert.setStatus("RESOLVED");
+                alert.setResolvedAt(LocalDateTime.now());
+                alert.setResolutionNotes("Equipment resumed reporting");
+                alerts.save(alert);
+            }
+        }
     }
 
     private NxAutomationSystem authenticate(UUID systemId, String presentedKey) {

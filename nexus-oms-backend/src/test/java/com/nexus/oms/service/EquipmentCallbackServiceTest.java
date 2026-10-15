@@ -21,7 +21,8 @@ class EquipmentCallbackServiceTest {
     private final AutomationSystemRepository systems = mock(AutomationSystemRepository.class);
     private final AutomationCommandRepository commands = mock(AutomationCommandRepository.class);
     private final AutomationLogRepository logs = mock(AutomationLogRepository.class);
-    private final EquipmentCallbackService service = new EquipmentCallbackService(systems, commands, logs);
+    private final com.nexus.oms.repository.AutomationAlertRepository alerts = mock(com.nexus.oms.repository.AutomationAlertRepository.class);
+    private final EquipmentCallbackService service = new EquipmentCallbackService(systems, commands, logs, alerts);
 
     private final UUID systemId = UUID.randomUUID();
     private final UUID commandId = UUID.randomUUID();
@@ -117,5 +118,20 @@ class EquipmentCallbackServiceTest {
         system.setStatus("MAINTENANCE");
         assertEquals("MAINTENANCE", service.heartbeat(systemId, "s3cret", null).getStatus());
         assertEquals("ERROR", service.heartbeat(systemId, "s3cret", "ERROR").getStatus());
+    }
+
+    @Test
+    void heartbeat_recordsItself_andClosesTheMissedHeartbeatAlert() {
+        var alert = new com.nexus.oms.entity.NxAutomationAlert();
+        alert.setAlertType(EquipmentWatchdog.HEARTBEAT_ALERT);
+        alert.setStatus("ACTIVE");
+        when(alerts.findBySystemIdAndStatus(systemId, "ACTIVE")).thenReturn(java.util.List.of(alert));
+        system.setStatus("ERROR");
+
+        service.heartbeat(systemId, "s3cret", null);
+
+        assertNotNull(system.getLastHeartbeatAt());
+        assertEquals("RESOLVED", alert.getStatus());
+        assertNotNull(alert.getResolvedAt());
     }
 }

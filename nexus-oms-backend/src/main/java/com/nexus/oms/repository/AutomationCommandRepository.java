@@ -15,6 +15,8 @@ public interface AutomationCommandRepository extends JpaRepository<NxAutomationC
 
     List<NxAutomationCommand> findBySystemIdAndStatus(UUID systemId, String status);
 
+    List<NxAutomationCommand> findByStatusIn(java.util.Collection<String> statuses);
+
     @Query("SELECT c FROM NxAutomationCommand c JOIN NxAutomationSystem s ON c.systemId = s.id WHERE s.warehouseId = :warehouseId AND (:status IS NULL OR c.status = :status)")
     List<NxAutomationCommand> findByWarehouseIdAndStatus(@Param("warehouseId") UUID warehouseId, @Param("status") String status);
 

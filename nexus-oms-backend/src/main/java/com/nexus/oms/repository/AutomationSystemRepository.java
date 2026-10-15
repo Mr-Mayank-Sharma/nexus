@@ -9,6 +9,8 @@ public interface AutomationSystemRepository extends JpaRepository<NxAutomationSy
 
     List<NxAutomationSystem> findByTenantId(UUID tenantId);
 
+    List<NxAutomationSystem> findByLastHeartbeatAtIsNotNull();
+
     List<NxAutomationSystem> findByWarehouseId(UUID warehouseId);
 
     List<NxAutomationSystem> findByWarehouseIdAndStatus(UUID warehouseId, String status);

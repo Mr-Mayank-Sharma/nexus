@@ -58,6 +58,10 @@ public class NxAutomationSystem {
     @Column(name = "health_check_url")
     private String healthCheckUrl;
 
+    /** Set only when the equipment itself calls Nexus; null means it never reports in. */
+    @Column(name = "last_heartbeat_at")
+    private LocalDateTime lastHeartbeatAt;
+
     @Column(name = "last_health_check_at")
     private LocalDateTime lastHealthCheckAt;
 
