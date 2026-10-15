@@ -116,7 +116,7 @@ The customer orders online and selects "Pick up at Store #14". The OMS sends a p
                                         ▼
 ┌────────────────────────────────────────────────────────────────────────────────┐
 │                        SPRING BOOT 3 (JAVA 17) BACKEND                         │
-│  81 REST Controllers  ·  124 Business Services  ·  175 Hibernate Entities      │
+│  81 REST Controllers  ·  124 Business Services  ·  177 Hibernate Entities      │
 ├───────────────────────┬────────────────────────┬───────────────────────────────┤
 │ PostgreSQL 16 DB      │ Redis 7 Cache          │ Apache Kafka Event Bus        │
 │ • Multi-tenant RLS    │ • Distributed Rate-Lim │ • order.created               │

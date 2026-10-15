@@ -811,6 +811,22 @@ has ever called these endpoints. Treat it as the contract a controller integrati
 
 ---
 
+## 6.5 Point-of-sale stock (new)
+
+There was no POS support at all. What exists now is the **vendor-neutral contract**, not a vendor
+integration **[live][test]**:
+
+1. An operator registers a POS source for a store node: `POST /pos/sources {nodeId, name, vendor}`. The response carries a secret **once**; only its SHA-256 hash is stored. `POST /pos/sources/{id}/rotate-key` replaces it.
+2. The store's POS, or middleware in front of it, pushes counts: `POST /webhooks/pos/{tenantId}/{sourceId}/inventory` with header `X-Pos-Key` and body `{"reportedAt": "<ISO-8601 with offset>", "items": [{"sku": "...", "quantity": 12}]}`. Wrong key 401, disabled source 403, more than 5,000 items or a future timestamp 400. Invalid items are listed and the valid ones kept; a report older than the one already held is ignored.
+3. `GET /pos/inventory/aggregate?nodeId=` compares the POS count with Nexus on-hand at that node, per SKU: `MATCH`, `DRIFT`, `STALE` (the POS has gone quiet for longer than the source's `staleAfterMinutes`, 120 by default), `NO_POS_DATA`, or `NO_NEXUS_ROW`.
+4. `POST /pos/inventory/reconcile {nodeId, skus?, apply}` is a **dry run unless `apply` is true**. It adjusts Nexus on-hand to the POS count for fresh `DRIFT` rows only, writes inventory-ledger lines, and refuses (`BLOCKED`) a correction that would leave on-hand below what is already allocated to orders. Stale, unknown and unreported SKUs are skipped with a reason.
+
+Because Shopify publishing reads node on-hand ([16](./16-SHOPIFY-INVENTORY-PUBLISHING.md)), a reconciled store count flows to the channel on the next publish.
+
+**Not built:** an adapter that *pulls* from a specific vendor (Square, Lightspeed, Shopify POS, Clover): each needs that vendor's credentials to verify, so none is claimed. POS *sales* events (decrementing as items sell between snapshots) are not ingested; the contract is periodic full or partial counts. Reconciling assumes the POS count is right; where the till and a cycle count disagree, a person decides.
+
+---
+
 # PART 7 — THE SCORECARD
 
 ## 7.1 How the numbers are given
@@ -837,7 +853,7 @@ cloning the repo and running it. They do not reward plans, and they are **not** 
 | Warehouse operations | **6.0** | Receiving, counting, transfers, pick, pack, ship all pass the live script | Carrier labels are not exercised against a real carrier; no directed putaway; the RF app is not exercised with real scanners |
 | Tenant isolation and data security | **8.5** | Row-level security forced on every tenant table, proven on real PostgreSQL **[test]**; tenant-scoped cache keys; integration secrets sealed | A second tenant has not been red-teamed; the vault key falls back to a built-in value when none is set (production validation warns) |
 | Authentication and access control | **8.0** | TOTP MFA with recovery codes verified end to end; JWKS ID-token checking; RBAC with deny-by-default **[test]** | Integration screens are admin-only (no other role has the permission group); no SSO tested against a real IdP |
-| Integrations | **4.0** | Shopify path is real code with a dry-run, reconciliation and honest errors **[test]**; every simulated connector was removed or made honest | **No integration has been run against a real external system.** No POS adapter exists. Generic connectors cannot write |
+| Integrations | **4.0** | Shopify path is real code with a dry-run, reconciliation and honest errors **[test]**; every simulated connector was removed or made honest | **No integration has been run against a real external system.** The POS push contract exists but no vendor adapter does. Generic connectors cannot write |
 | Event backbone | **6.5** | Envelope contract fixed and tested; every topic and DLQ declared; consumer de-duplicates and has one dead-letter path **[test]** | Never run against a real Kafka in this audit; off by default; no alert rules |
 | AI | **3.5** | Predict endpoints refuse to fabricate **[live]**; the chat refuses instead of inventing **[live]**; forecasting is a real Holt model **[live]** | Forecast accuracy on real data has not been measured in this audit; no curated dataset or deployed model; chat needs an OpenAI key; the two AI services were not running here |
 | Frontend integrity and UX | **5.5** | 99 screens load with no crash, failing call or dead button **[live]**; ~30 fakes removed; type-check ratchet in CI | **140 type errors remain**; each sweep still found new fakes, so more are likely; mobile and accessibility were not audited |
@@ -889,7 +905,7 @@ deploy behind HTTPS, (3) the lifecycle script in CI with CI running again, (4) a
 ## 8.2 Engineering backlog, in the order that moves the score
 
 1. Run `scripts/e2e/lifecycle-smoke.py` in CI against the Compose stack.
-2. Point-of-sale adapter contract and inventory aggregation (explicit blocked status until credentials exist).
+2. Vendor POS adapters that pull counts and sales (the push contract exists, see 6.5); each needs vendor credentials.
 3. Store-operations screen, distinct from the integration marketplace.
 4. Stock consumption for split allocations and partial shipments; lot-level movements.
 5. Producers for the shipment, inventory, payment and return topics (their listeners exist); one real controller integration for equipment (and the protocol adapter it needs).

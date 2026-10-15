@@ -207,7 +207,7 @@ class PermissionServiceTest {
     void testEveryPathPrefixIsReachableUnderFirstPrefixMatch() throws Exception {
         LinkedHashMap<String, String> map = pathToResourceMap();
 
-        assertEquals(76, map.size(),
+        assertEquals(77, map.size(),
                 "expected 76 unique route-prefix mappings; update the documented count when adding one");
 
         List<String> keys = new ArrayList<>(map.keySet());

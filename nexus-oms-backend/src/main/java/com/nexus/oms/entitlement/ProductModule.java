@@ -26,7 +26,7 @@ public enum ProductModule {
             Map.entry("/pickup", OMS), Map.entry("/order-routing", OMS), Map.entry("/routing-rules", OMS),
             Map.entry("/brokering", OMS), Map.entry("/parked-orders", OMS), Map.entry("/approvals", OMS),
             Map.entry("/rejections", OMS), Map.entry("/promotions", OMS), Map.entry("/endless-aisle", OMS),
-            Map.entry("/atp", OMS), Map.entry("/fulfillment-limits", OMS), Map.entry("/twin/orders", OMS),
+            Map.entry("/atp", OMS), Map.entry("/pos", OMS), Map.entry("/fulfillment-limits", OMS), Map.entry("/twin/orders", OMS),
             Map.entry("/reconciliation", OMS), Map.entry("/email-parser", OMS),
             // WMS
             Map.entry("/picking", WMS), Map.entry("/pickers", WMS), Map.entry("/rf", WMS), Map.entry("/rfid", WMS),

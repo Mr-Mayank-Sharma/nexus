@@ -37,6 +37,7 @@ public class PermissionService {
     static {
         PATH_TO_RESOURCE.put("/orders/", "orders");
         PATH_TO_RESOURCE.put("/inventory/", "inventory");
+        PATH_TO_RESOURCE.put("/pos/", "inventory");
         PATH_TO_RESOURCE.put("/inventory-receipts/", "inventory-receipts");
         PATH_TO_RESOURCE.put("/products/", "products");
         PATH_TO_RESOURCE.put("/customers/", "customers");
