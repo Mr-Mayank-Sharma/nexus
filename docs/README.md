@@ -41,6 +41,7 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`10-DATA-MODEL-REFERENCE.md`](./10-DATA-MODEL-REFERENCE.md) | **Field-by-field table catalog** — every column and constraint across all 179 tables, plus the flows joining them | Engineering, DBA |
 | [`11-SYSTEM-DESIGN.md`](./11-SYSTEM-DESIGN.md) | **Diagram companion** — C4 context/container/component, deployment & network topology, CI/CD pipelines, auth/webhook/import sequences, order-to-return state machines, Kafka topic map | Engineering |
 | [`19-MARKET-BENCHMARKS.md`](./19-MARKET-BENCHMARKS.md) | **Externally-sourced market reality** — real vendor revenue (SEC filings), published pricing, Gartner 2026 WMS positions, implementation cost/TCO benchmarks, and where `07`'s self-scores diverge from verifiable data | All, exec, investors |
+| [`20-INTEGRATIONS.md`](./20-INTEGRATIONS.md) | **What is real in every integration**, how the Directory/Connections screens show it, the rules that keep it true, and what is still not | All, engineers, sales |
 | [`features/`](./features/) | Per-feature deep dives (overview, process, use cases, data flow, ER subset, access) | All |
 
 ### Feature docs

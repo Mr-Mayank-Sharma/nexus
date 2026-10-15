@@ -9,6 +9,8 @@ export interface WorkspaceModule {
   path: string
   icon: string
   badge?: number
+  /** Heading the group sits under in the sidebar. Groups are shown in SECTION_ORDER. */
+  section?: string
   children?: WorkspaceModule[]
 }
 
@@ -38,13 +40,16 @@ export const ROLE_WORKSPACES: Record<UserRole, RoleWorkspace> = {
   VIEWER: { role: 'VIEWER', label: 'Read Only', description: 'View dashboards & reports', color: 'bg-gray-600', homePath: '/', icon: 'Eye' },
 }
 
+/** Sidebar headings, in the order a person works: see it, sell it, fulfil it, source and ship it, learn from it, connect it, administer it. */
+export const SECTION_ORDER = ['Overview', 'Commerce', 'Fulfillment', 'Supply chain', 'Intelligence', 'Connect', 'Administration']
+
 export function getModulesForRole(role: string): WorkspaceModule[] {
   const groups: WorkspaceModule[] = [
     // ──────────────────────────────────────────────
     // 1. DASHBOARDS & ANALYTICS
     // ──────────────────────────────────────────────
     {
-      id: 'home', label: 'Dashboards & Analytics', path: '/', icon: 'LayoutDashboard',
+      section: 'Overview', id: 'home', label: 'Dashboards & Analytics', path: '/', icon: 'LayoutDashboard',
       children: [
         { id: 'launch-pad', label: 'Launch Pad', path: '/', icon: 'LayoutDashboard' },
         { id: 'analytics-dashboard', label: 'Analytics Dashboard', path: '/analytics-dashboard', icon: 'BarChart3' },
@@ -58,12 +63,13 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 2. ORDER MANAGEMENT
     // ──────────────────────────────────────────────
     {
-      id: 'order-management', label: 'Order Management', path: '/orders', icon: 'Package',
+      section: 'Commerce', id: 'order-management', label: 'Order Management', path: '/orders', icon: 'Package',
       children: [
         { id: 'order-twin', label: 'Order Flow Twin', path: '/order-twin', icon: 'Route' },
         { id: 'orders', label: 'All Orders', path: '/orders', icon: 'Package' },
         { id: 'find-order', label: 'Find Orders', path: '/orders/search', icon: 'Search' },
         { id: 'create-order', label: 'Create Order', path: '/orders/new', icon: 'Plus' },
+        { id: 'b2b-portal', label: 'B2B Portal', path: '/b2b-portal', icon: 'ShoppingCart' },
         { id: 'order-approvals', label: 'Order Approvals', path: '/order-approvals', icon: 'ClipboardCheck' },
         { id: 'order-routing', label: 'Order Routing', path: '/order-routing', icon: 'GitBranch' },
         { id: 'brokering', label: 'Brokering Queue', path: '/brokering', icon: 'Activity' },
@@ -77,7 +83,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 3. FULFILLMENT OPERATIONS
     // ──────────────────────────────────────────────
     {
-      id: 'fulfillment-group', label: 'Fulfillment Operations', path: '/fulfillment', icon: 'Truck',
+      section: 'Fulfillment', id: 'fulfillment-group', label: 'Fulfillment Operations', path: '/fulfillment', icon: 'Truck',
       children: [
         { id: 'fulfillment', label: 'Fulfillment Overview', path: '/fulfillment', icon: 'Truck' },
         { id: 'picking', label: 'Picking', path: '/picking', icon: 'ClipboardList' },
@@ -94,10 +100,9 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 4. INVENTORY MANAGEMENT
     // ──────────────────────────────────────────────
     {
-      id: 'inventory-management', label: 'Inventory & Catalog', path: '/inventory', icon: 'Warehouse',
+      section: 'Commerce', id: 'inventory-management', label: 'Inventory & Catalog', path: '/inventory', icon: 'Warehouse',
       children: [
         { id: 'inventory', label: 'Inventory', path: '/inventory', icon: 'Warehouse' },
-        { id: 'store-operations', label: 'Store Operations', path: '/store-operations', icon: 'Warehouse' },
         { id: 'inventory-enhanced', label: 'Multi-Node Inventory', path: '/inventory/enhanced', icon: 'Warehouse' },
         { id: 'receiving', label: 'Receiving', path: '/inventory/receiving', icon: 'PackagePlus' },
         { id: 'cycle-counts', label: 'Cycle Counts', path: '/inventory/cycle-counts', icon: 'ClipboardCheck' },
@@ -111,7 +116,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 5. RETURNS & EXCEPTIONS
     // ──────────────────────────────────────────────
     {
-      id: 'returns-management', label: 'Returns & Exceptions', path: '/returns', icon: 'RotateCcw',
+      section: 'Commerce', id: 'returns-management', label: 'Returns & Exceptions', path: '/returns', icon: 'RotateCcw',
       children: [
         { id: 'returns', label: 'Returns', path: '/returns', icon: 'RotateCcw' },
         { id: 'returns-enhanced', label: 'Returns Command Center', path: '/returns-enhanced', icon: 'RotateCcw' },
@@ -122,10 +127,10 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 6. STORE OPERATIONS
     // ──────────────────────────────────────────────
     {
-      id: 'store-group', label: 'Store Operations', path: '/store-dashboard', icon: 'Store',
+      section: 'Fulfillment', id: 'store-group', label: 'Store Operations', path: '/store-dashboard', icon: 'Store',
       children: [
         { id: 'store-dashboard', label: 'Store Dashboard', path: '/store-dashboard', icon: 'Store' },
-        { id: 'stores', label: 'Stores', path: '/stores', icon: 'Store' },
+        { id: 'store-operations', label: 'POS Stock Check', path: '/store-operations', icon: 'ClipboardCheck' },
         { id: 'bopis', label: 'BOPIS', path: '/bopis', icon: 'ShoppingBag' },
         { id: 'bopis-owner', label: 'BOPIS Owner', path: '/bopis-owner', icon: 'ShoppingBag' },
         { id: 'bopis-app', label: 'BOPIS App', path: '/bopis-app', icon: 'ShoppingBag' },
@@ -139,7 +144,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 7. WAREHOUSE OPERATIONS
     // ──────────────────────────────────────────────
     {
-      id: 'warehouse-group', label: 'Warehouse Operations', path: '/warehouse-dashboard', icon: 'Building2',
+      section: 'Fulfillment', id: 'warehouse-group', label: 'Warehouse Operations', path: '/warehouse-dashboard', icon: 'Building2',
       children: [
         { id: 'warehouse-twin', label: 'Warehouse Twin', path: '/warehouse-twin', icon: 'Layers' },
         { id: 'warehouse-dashboard', label: 'WH Dashboard', path: '/warehouse-dashboard', icon: 'BarChart3' },
@@ -155,7 +160,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 8. PROCUREMENT
     // ──────────────────────────────────────────────
     {
-      id: 'procurement-group', label: 'Procurement', path: '/procurement', icon: 'ShoppingCart',
+      section: 'Supply chain', id: 'procurement-group', label: 'Procurement', path: '/procurement', icon: 'ShoppingCart',
       children: [
         { id: 'procurement', label: 'Procurement', path: '/procurement', icon: 'ShoppingCart' },
         { id: 'purchase-requests', label: 'Purchase Requests', path: '/procurement/requests', icon: 'FileText' },
@@ -166,7 +171,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 9. SUPPLY CHAIN & LOGISTICS
     // ──────────────────────────────────────────────
     {
-      id: 'supply-chain-group', label: 'Supply Chain & Logistics', path: '/carriers', icon: 'Ship',
+      section: 'Supply chain', id: 'supply-chain-group', label: 'Shipping & Logistics', path: '/carriers', icon: 'Ship',
       children: [
         { id: 'carriers', label: 'Carriers', path: '/carriers', icon: 'Ship' },
         { id: 'rate-shopping', label: 'Rate Shopping', path: '/rate-shopping', icon: 'TrendingDown' },
@@ -178,7 +183,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 10. FINANCE
     // ──────────────────────────────────────────────
     {
-      id: 'finance-group', label: 'Finance', path: '/invoices', icon: 'Receipt',
+      section: 'Supply chain', id: 'finance-group', label: 'Finance', path: '/invoices', icon: 'Receipt',
       children: [
         { id: 'invoices', label: 'Invoices', path: '/invoices', icon: 'Receipt' },
         { id: 'payments', label: 'Payments', path: '/payments', icon: 'CreditCard' },
@@ -189,7 +194,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 11. INTELLIGENCE & AI
     // ──────────────────────────────────────────────
     {
-      id: 'ai-group', label: 'Intelligence & AI', path: '/ai', icon: 'Brain',
+      section: 'Intelligence', id: 'ai-group', label: 'Intelligence & AI', path: '/ai', icon: 'Brain',
       children: [
         { id: 'ai', label: 'AI Control Center', path: '/ai', icon: 'Brain' },
         { id: 'ai-platform', label: 'AI Platform', path: '/ai-platform', icon: 'Cpu' },
@@ -207,28 +212,31 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 12. MARKETPLACES
     // ──────────────────────────────────────────────
     {
-      id: 'marketplaces-group', label: 'Marketplaces', path: '/integrations/marketplace', icon: 'Globe',
+      section: 'Connect', id: 'integrations-group', label: 'Integrations', path: '/integration-hub', icon: 'Zap',
+      children: [
+        { id: 'integrations-directory', label: 'Directory', path: '/integrations/directory', icon: 'Layers' },
+        { id: 'integration-hub', label: 'Connections', path: '/integration-hub', icon: 'Zap' },
+        { id: 'stores', label: 'Store Connections', path: '/integrations/stores', icon: 'Store' },
+        { id: 'sync', label: 'Sync Monitor', path: '/sync', icon: 'RefreshCw' },
+      ]
+    },
+    {
+      section: 'Connect', id: 'marketplaces-group', label: 'Sales Channels', path: '/integrations/marketplace', icon: 'Globe',
       children: [
         { id: 'shopify', label: 'Shopify', path: '/integrations/shopify', icon: 'ShoppingBag' },
         { id: 'bigcommerce', label: 'BigCommerce', path: '/integrations/bigcommerce', icon: 'Store' },
         { id: 'amazon', label: 'Amazon', path: '/integrations/amazon', icon: 'ShoppingCart' },
         { id: 'ebay', label: 'eBay', path: '/integrations/ebay', icon: 'ShoppingBag' },
         { id: 'walmart', label: 'Walmart', path: '/integrations/walmart', icon: 'Globe' },
-        { id: 'marketplace-hub', label: 'Marketplace Hub', path: '/integrations/marketplace', icon: 'Globe' },
+        { id: 'marketplace-hub', label: 'All Channels', path: '/integrations/marketplace', icon: 'Globe' },
       ]
     },
-    // ──────────────────────────────────────────────
-    // 13. INTEGRATIONS & DATA
-    // ──────────────────────────────────────────────
     {
-      id: 'integrations-group', label: 'Integrations & Data', path: '/integration-hub', icon: 'Zap',
+      section: 'Connect', id: 'data-exchange-group', label: 'Data Exchange', path: '/import-export', icon: 'Upload',
       children: [
-        { id: 'integration-hub', label: 'Integration Hub', path: '/integration-hub', icon: 'Zap' },
-        { id: 'sync', label: 'Bidirectional Sync', path: '/sync', icon: 'RefreshCw' },
-        { id: 'edi', label: 'EDI Automation', path: '/edi', icon: 'Upload' },
-        { id: 'import-export', label: 'Import/Export', path: '/import-export', icon: 'Upload' },
-        { id: 'b2b-portal', label: 'B2B Portal', path: '/b2b-portal', icon: 'ShoppingCart' },
+        { id: 'edi', label: 'EDI', path: '/edi', icon: 'Upload' },
         { id: 'email-parser', label: 'Email Order Parser', path: '/email-parser', icon: 'Mail' },
+        { id: 'import-export', label: 'Import / Export', path: '/import-export', icon: 'Download' },
         { id: 'documents', label: 'Documents', path: '/documents', icon: 'FileText' },
       ]
     },
@@ -236,7 +244,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     // 14. ADMINISTRATION
     // ──────────────────────────────────────────────
     {
-      id: 'admin-group', label: 'Administration', path: '/settings', icon: 'Settings',
+      section: 'Administration', id: 'admin-group', label: 'Administration', path: '/settings', icon: 'Settings',
       children: [
         { id: 'users', label: 'Users & Roles', path: '/users', icon: 'UserCog' },
         { id: 'settings', label: 'Settings', path: '/settings', icon: 'Settings' },
@@ -268,8 +276,8 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       'procurement', 'purchase-requests', 'suppliers',
       'carriers', 'rate-shopping', 'routing',
       'invoices', 'payments', 'manifest',
-      'integration-hub', 'sync', 'edi', 'import-export', 'b2b-portal',
-      'email-parser', 'documents',
+      'integrations-directory', 'integration-hub', 'sync', 'edi', 'import-export', 'b2b-portal',
+      'email-parser', 'documents', 'store-operations',
       'bigcommerce', 'amazon', 'ebay', 'walmart', 'marketplace-hub',
       'users', 'settings', 'audit', 'workflows', 'promotions',
       'task-queues', 'report-builder',
@@ -293,7 +301,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     LOADER: ['loader', 'shipping'],
     STORE_MANAGER: [
       'launch-pad', 'analytics-dashboard', 'dashboard', 'notifications',
-      'store-dashboard', 'stores', 'bopis', 'bopis-owner', 'bopis-app',
+      'store-dashboard', 'store-operations', 'bopis', 'bopis-owner', 'bopis-app',
       'pre-orders', 'atp-rules', 'endless-aisle',
       'orders', 'inventory', 'customers', 'products',
       'returns', 'replenishment',
@@ -341,12 +349,14 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
 
   const allowedIds = roleModules[role] || roleModules.VIEWER
 
+  const rank = (g: WorkspaceModule) => { const i = SECTION_ORDER.indexOf(g.section ?? ''); return i < 0 ? SECTION_ORDER.length : i }
   return groups
     .filter(g => g.children?.some(c => allowedIds.includes(c.id)))
     .map(g => ({
       ...g,
       children: g.children?.filter(c => allowedIds.includes(c.id)),
     }))
+    .sort((a, b) => rank(a) - rank(b))   // Array.prototype.sort is stable: groups keep their order inside a section
 }
 
 export function useWorkspace() {

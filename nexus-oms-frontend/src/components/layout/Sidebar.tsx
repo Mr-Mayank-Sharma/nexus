@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, Warehouse, Truck, RotateCcw, Ship, BarChart3,
@@ -11,6 +11,8 @@ import {
   RefreshCw, ArrowRightLeft,
 } from 'lucide-react'
 import { clsx } from 'clsx'
+import { useQuery } from '@tanstack/react-query'
+import { getConnectionHealth } from '../../features/integrations/catalogApi'
 import { useTheme } from '../../context/ThemeContext'
 import { useAuth } from '../../context/AuthContext'
 import { ROLE_WORKSPACES } from '../../hooks/useWorkspace'
@@ -101,6 +103,8 @@ const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> 
   'replenishment': { resource: 'inventory', action: 'edit' },
   'freight-audit': { resource: 'returns', action: 'view' },
   'bopis-app': { resource: 'orders', action: 'view' },
+  'store-operations': { resource: 'inventory', action: 'view' },
+  'integrations-directory': { resource: 'integrations', action: 'view' },
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -155,7 +159,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Zap: <Zap className="w-[18px] h-[18px]" />,
 }
 
-interface NavLink { label: string; path: string; icon: React.ReactNode; children?: NavLink[] }
+interface NavLink { label: string; path: string; icon: React.ReactNode; section?: string; badge?: number; children?: NavLink[] }
 
 const STATIC_LINKS: NavLink[] = []
 
@@ -188,7 +192,7 @@ function SidebarGroup({
   location,
   collapsed,
 }: {
-  item: { label: string; path: string; icon: React.ReactNode; children?: { label: string; path: string; icon: React.ReactNode }[] }
+  item: { label: string; path: string; icon: React.ReactNode; badge?: number; children?: { label: string; path: string; icon: React.ReactNode }[] }
   location: any
   collapsed: boolean
 }) {
@@ -222,6 +226,9 @@ function SidebarGroup({
         {!collapsed && (
           <>
             <span className="flex-1 text-left truncate">{item.label}</span>
+            {!!item.badge && (
+              <span aria-label={`${item.badge} need attention`} className="min-w-[18px] rounded-full bg-[var(--nexus-error-500)] px-1.5 text-center text-[10px] font-bold leading-[18px] text-white">{item.badge}</span>
+            )}
             <ChevronDown className={clsx(
               'w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0',
               open ? 'rotate-180' : '',
@@ -281,6 +288,12 @@ export default function Sidebar() {
     return hasPermission(perm.resource, perm.action)
   }
 
+  // A red count on Integrations when a saved connection's last real test failed. Only asked of people who can see it.
+  const canSeeIntegrations = hasModulePermission('integration-hub')
+  const { data: integrationHealth } = useQuery({
+    queryKey: ['integration-health'], queryFn: getConnectionHealth, enabled: canSeeIntegrations, staleTime: 60_000, retry: false,
+  })
+
   const moduleLinks = modules
     // A section shows when it is shared, or when the plan includes at least one of its
     // module pages: an OMS section is not kept alive by the shared pages inside it.
@@ -291,6 +304,8 @@ export default function Sidebar() {
       label: m.label,
       path: m.path,
       icon: iconForModule(m.icon),
+      section: m.section,
+      badge: m.id === 'integrations-group' ? integrationHealth?.failing : undefined,
       children: m.children
         ?.filter(c => hasModulePermission(c.id) && inPlan(c.path))
         .map(c => ({
@@ -368,14 +383,19 @@ export default function Sidebar() {
 
       {/* ── Navigation ── */}
       <nav className="flex-1 px-2.5 py-2 space-y-px overflow-y-auto scrollbar-hide" aria-label="Main navigation">
-        {filteredLinks.map((item) => {
+        {filteredLinks.map((item, index) => {
+          const startsSection = !!item.section && item.section !== filteredLinks[index - 1]?.section && !searchQuery.trim()
+          const heading = startsSection ? (
+            collapsed
+              ? <div role="separator" className="mx-2 my-2 border-t border-[var(--sidebar-border-subtle)]" />
+              : <div className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--sidebar-text-muted)]">{item.section}</div>
+          ) : null
           const isParent = item.children && item.children.length > 0
           const parentActive = item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
 
           if (collapsed || !isParent) {
             return (
-              <NavLink
-                key={item.path}
+              <Fragment key={item.path}>{heading}<NavLink
                 to={item.path}
                 className={clsx(
                   'group flex items-center rounded-lg text-[13px] font-medium transition-all duration-150',
@@ -394,11 +414,11 @@ export default function Sidebar() {
                   {item.icon}
                 </span>
                 {!collapsed && <span className="truncate">{item.label}</span>}
-              </NavLink>
+              </NavLink></Fragment>
             )
           }
 
-          return <SidebarGroup key={item.path} item={item} location={location} collapsed={collapsed} />
+          return <Fragment key={item.path}>{heading}<SidebarGroup item={item} location={location} collapsed={collapsed} /></Fragment>
         })}
       </nav>
 

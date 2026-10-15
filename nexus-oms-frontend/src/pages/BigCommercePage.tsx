@@ -1,3 +1,4 @@
+import { ensureOk } from '../api/ensureOk'
 import { useState, useEffect } from 'react'
 import {
   Settings, ShoppingCart, Package, Truck, RotateCcw, RefreshCw, Database, Link, ExternalLink, Loader2, Activity,
@@ -54,7 +55,7 @@ export default function BigCommercePage() {
     }
     setSaving(true)
     try {
-      const res = await bcApi.updateConfig(form)
+      const res = ensureOk(await bcApi.updateConfig(form))
       setConfig(res.data)
       addToast({ type: 'success', title: 'Configuration saved' })
     } catch {
@@ -84,8 +85,12 @@ export default function BigCommercePage() {
 
   async function handleRegisterWebhooks() {
     try {
-      await bcApi.registerWebhooks(window.location.origin)
-      addToast({ type: 'success', title: 'Webhooks registered' })
+      if (!window.location.origin.startsWith('https://')) {
+        addToast({ type: 'error', title: 'Webhooks need a public https address', message: `This page is served from ${window.location.origin}; BigCommerce only delivers webhooks to a public https:// server.` })
+        return
+      }
+      ensureOk(await bcApi.registerWebhooks(window.location.origin))
+      addToast({ type: 'success', title: 'BigCommerce accepted the webhook registration' })
     } catch {
       addToast({ type: 'error', title: 'Failed to register webhooks' })
     }

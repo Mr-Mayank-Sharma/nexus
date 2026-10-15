@@ -44,6 +44,9 @@ public class BatchJobService {
             job.setItemsFailed(result.getItemsFailed());
             job.setCompletedAt(LocalDateTime.now());
             job.setDurationMs(result.getDurationMs());
+            List<String> said = new ArrayList<>(result.getErrors());
+            said.addAll(result.getWarnings());
+            job.setMessage(said.isEmpty() ? null : String.join("; ", said));
 
             integrationLog.completeSync(
                     syncLog,
@@ -86,6 +89,8 @@ public class BatchJobService {
         private int itemsSucceeded;
         private int itemsFailed;
         private String error;
+        /** What the platform or connector said: a preview's "found N, nothing imported", or the failure reason. */
+        private String message;
         private LocalDateTime startedAt;
         private LocalDateTime completedAt;
         private long durationMs;
@@ -112,6 +117,8 @@ public class BatchJobService {
         public void setItemsFailed(int i) { this.itemsFailed = i; }
         public String getError() { return error; }
         public void setError(String e) { this.error = e; }
+        public String getMessage() { return message; }
+        public void setMessage(String m) { this.message = m; }
         public LocalDateTime getStartedAt() { return startedAt; }
         public LocalDateTime getCompletedAt() { return completedAt; }
         public void setCompletedAt(LocalDateTime d) { this.completedAt = d; }

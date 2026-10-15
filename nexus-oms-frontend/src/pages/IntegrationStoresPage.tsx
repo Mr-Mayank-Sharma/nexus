@@ -6,6 +6,7 @@ import {
 import { useToast } from '../hooks/useToast'
 import * as api from '../api/integrationStores'
 import { IntegrationStore, StoreSyncStatus } from '../api/integrationStores'
+import { ensureOk } from '../api/ensureOk'
 import StatusBadge from '../components/common/StatusBadge'
 import Autocomplete from '../components/common/Autocomplete'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -17,6 +18,10 @@ const PLATFORMS = [
   { value: 'WOOCOMMERCE', label: 'WooCommerce', icon: <ShoppingBag className="w-5 h-5" />, color: 'bg-[var(bg-[var(--nexus-ai-500)])]' },
   { value: 'MANUAL', label: 'Manual', icon: <Store className="w-5 h-5" />, color: 'bg-[var(--surface-muted)]' },
 ]
+
+/** Platforms with sync code in Nexus. Anything else can be saved on the Connections screen but has nothing to run here. */
+const SYNC_PLATFORMS = ['SHOPIFY', 'BIGCOMMERCE']
+const CREATABLE = PLATFORMS.filter(p => SYNC_PLATFORMS.includes(p.value))
 
 const currencyOpts = [
   { value: 'USD', label: 'USD' },
@@ -118,7 +123,7 @@ export default function IntegrationStoresPage() {
 
   async function handleDelete(id: string) {
     try {
-      await api.deleteStore(id)
+      ensureOk(await api.deleteStore(id))
       addToast({ type: 'success', title: 'Store deleted' })
       if (selectedStore?.id === id) { setSelectedStore(null); setStoreStatus(null) }
       await fetchStores()
@@ -140,7 +145,7 @@ export default function IntegrationStoresPage() {
           case 'REFUND_PUSH': res = await api.shopifyPushRefunds(selectedStore.id); break
         }
       } else if (platform === 'BIGCOMMERCE') {
-        const { default: bc } = await import('../api/bigcommerce')
+        const bc = await import('../api/bigcommerce')
         switch (type) {
           case 'ORDER_IMPORT': res = await bc.syncOrders(); break
           case 'PRODUCT_SYNC': res = await bc.syncProducts(); break
@@ -148,10 +153,10 @@ export default function IntegrationStoresPage() {
           case 'FULFILLMENT_PUSH': res = await bc.pushShipments(); break
           case 'REFUND_PUSH': res = await bc.pushRefunds(); break
         }
-      } else {
-        addToast({ type: 'info', title: 'Sync not yet implemented for this platform' })
       }
-      if (res?.data) {
+      if (res && res.success === false) {
+        addToast({ type: 'error', title: `${type} failed`, message: res.error })
+      } else if (res?.data) {
         addToast({ type: res.data.status === 'COMPLETED' ? 'success' : 'error',
           title: `${type}: ${res.data.itemsSucceeded} OK, ${res.data.itemsFailed} failed` })
       }
@@ -165,12 +170,30 @@ export default function IntegrationStoresPage() {
 
   async function handleRegisterWebhooks() {
     if (!selectedStore) return
+    const origin = window.location.origin
+    if (!origin.startsWith('https://')) {
+      addToast({ type: 'error', title: 'Webhooks need a public https address',
+        message: `This page is served from ${origin}. ${selectedStore.platform === 'SHOPIFY' ? 'Shopify' : 'BigCommerce'} only delivers webhooks to a public https:// server, so registration would not work.` })
+      return
+    }
     try {
       if (selectedStore.platform === 'SHOPIFY') {
-        await api.shopifyRegisterWebhooks(selectedStore.id, window.location.origin)
+        const res = await api.shopifyRegisterWebhooks(selectedStore.id, origin)
+        if ((res as { success?: boolean }).success === false) throw new Error((res as { error?: string }).error ?? 'Shopify refused the registration')
+        const results = Object.entries(res.data ?? {})
+        const failed = results.filter(([, v]) => /fail|error/i.test(String(v)))
+        addToast(failed.length
+          ? { type: 'error', title: `${failed.length} of ${results.length} webhooks failed to register`, message: failed.map(([k, v]) => `${k}: ${v}`).join('; ') }
+          : { type: 'success', title: `Shopify accepted ${results.length} webhook registrations` })
+      } else if (selectedStore.platform === 'BIGCOMMERCE') {
+        const bc = await import('../api/bigcommerce')
+        const r = await bc.registerWebhooks(origin) as { success?: boolean; error?: string }
+        if (r.success === false) throw new Error(r.error ?? 'BigCommerce refused the registration')
+        addToast({ type: 'success', title: 'BigCommerce accepted the webhook registration' })
       }
-      addToast({ type: 'success', title: 'Webhooks registered' })
-    } catch { addToast({ type: 'error', title: 'Failed to register webhooks' }) }
+    } catch (e) {
+      addToast({ type: 'error', title: 'Webhook registration failed', message: (e as Error).message })
+    }
   }
 
   const platformInfo = (p: string) => PLATFORMS.find(pf => pf.value === p) || PLATFORMS[PLATFORMS.length - 1]
@@ -264,7 +287,12 @@ export default function IntegrationStoresPage() {
                     </div>
                   </div>
 
-                  {storeStatus && (
+                  {!SYNC_PLATFORMS.includes(selectedStore.platform) && (
+                    <p className="px-6 pb-4 text-sm text-[var(--text-secondary)]">
+                      Nexus has no sync for {selectedStore.platform}. Use Connections to test it and see what it can do in the Directory.
+                    </p>
+                  )}
+                  {storeStatus && SYNC_PLATFORMS.includes(selectedStore.platform) && (
                     <div className="px-6 pb-4">
                       <h4 className="text-xs font-semibold text-[var(--text-secondary)] uppercase mb-3">Sync Actions</h4>
                       <div className="grid grid-cols-2 gap-3">
@@ -339,7 +367,7 @@ export default function IntegrationStoresPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1">Platform</label>
-                <Autocomplete value={form.platform} onChange={v => setForm({ ...form, platform: v, settings: {} })} suggestions={PLATFORMS} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
+                <Autocomplete value={form.platform} onChange={v => setForm({ ...form, platform: v, settings: {} })} suggestions={CREATABLE} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
