@@ -20,7 +20,7 @@
 - **Written, not tested**: the code exists; nothing checks it.
 - **Not built**: Nexus does nothing with it.
 
-Every entry also carries `liveVerified`. **It is true for four capabilities only** (see [§7](#7-live-verification-log)) and false for everything else, because nothing else has been run against a real platform with real credentials. The Directory says so at the top of the page and marks each checked capability. A test fails if anyone sets it without recording the evidence in `IntegrationCatalog.LIVE_EVIDENCE`.
+Every entry also carries `liveVerified`. **It is true for five capabilities only** (see [§7](#7-live-verification-log)) and false for everything else, because nothing else has been run against a real platform with real credentials. The Directory says so at the top of the page and marks each checked capability. A test fails if anyone sets it without recording the evidence in `IntegrationCatalog.LIVE_EVIDENCE`.
 
 ## 3. How the Hub works now
 
@@ -59,7 +59,7 @@ Every entry also carries `liveVerified`. **It is true for four capabilities only
 
 ## 6. Still not true, in order of importance
 
-1. **Almost nothing has been run against a real platform.** Only the four read paths in §7 have. No write to a real store has been run (stock publish, fulfilment push, refund sync, webhook registration), and no BigCommerce order has ever been imported (the dev store has none). The Shopify order, product, fulfilment and refund services and most BigCommerce ones still have no automated tests.
+1. **Almost nothing has been run against a real platform.** Only the four read paths and one single-SKU stock write in §7 have. No other write to a real store has been run (full publish, fulfilment push, refund sync, webhook registration), and no BigCommerce order has ever been imported (the dev store has none). The Shopify order, product, fulfilment and refund services and most BigCommerce ones still have no automated tests.
 2. Connectors cannot import into Nexus. Only Shopify and BigCommerce create Nexus orders.
 3. No payment webhooks, no carrier tracking feed, no live carrier quotes, no EDI transport (AS2/SFTP/VAN), no SCIM.
 4. `integration` permission is held by ADMIN only; other roles cannot manage connections.
@@ -69,14 +69,14 @@ Every entry also carries `liveVerified`. **It is true for four capabilities only
 
 ## 7. Live verification log
 
-**2026-10-15, Shopify dev shop `nexus-ship-ufb7gevv` and BigCommerce dev store `mhccbjdmoi`, read-only.** Credentials were supplied by the owner, saved through the API (sealed), and revoked afterwards by the owner. Nothing was written to either store. A one-SKU real stock write was prepared (dry run planned exactly one change) but not executed: it needs the owner's go-ahead.
+**2026-10-15, Shopify dev shop `nexus-ship-ufb7gevv` and BigCommerce dev store `mhccbjdmoi`, read-only.** Credentials were supplied by the owner, saved through the API (sealed), and revoked afterwards by the owner. Nothing was written to either store. The single exception is the one-SKU stock canary in the table below.
 
 | Check | Result |
 |---|---|
 | Shopify connection, scopes, locations | Passed. 23 locations found. |
 | Shopify order import | **Matches.** 5,052 orders imported; the API lists 5,052. Order total 3,679,289.59 and 9,445 line items are identical on both sides. Shopify's count endpoint says 5,060: the 8 extra are older than 60 days and need the `read_all_orders` scope. |
 | Shopify product sync | **Matches.** 4,935 products (9,996 variants), equal to Shopify's count. |
-| Shopify stock publish | **Dry run only.** 6,934 changes planned, 13 skipped (BigCommerce-only SKUs), nothing written. A real write has not been run. |
+| Shopify stock publish | Full dry run planned 6,934 changes (all zeros, see defect 5). **Canary, real write, one SKU (100001) to `NEXUS-WH-001`:** published 7, Shopify read back 7; a repeat run said "already correct" and wrote nothing. Not restored: the item is still connected to that location with 7 units (the cleanup call was blocked), harmless and removable in Shopify admin. Full-catalogue publish not run. |
 | BigCommerce product sync | **Matches.** 13 products, 68 variants. |
 | BigCommerce order import | Ran, imported 0. The store has 0 orders, so this proves the connection, not the mapping. |
 

@@ -33,6 +33,7 @@ public final class IntegrationCatalog {
         "SHOPIFY/Connect with sealed credentials", "2026-10-15: dev shop nexus-ship-ufb7gevv; token saved sealed, never returned by the API; shop, scopes and locations read",
         "SHOPIFY/Order import", "2026-10-15: dev shop; 5,052 of the 5,052 orders the API lists imported, order total 3,679,289.59 and 9,445 line items equal Shopify's. 8 older orders need the read_all_orders scope",
         "SHOPIFY/Product sync", "2026-10-15: dev shop; 4,935 products (9,996 variants) imported, product count equals Shopify's",
+        "SHOPIFY/Inventory publishing by location", "2026-10-15: dev shop; one SKU (100001) published for real to one location: Shopify read back 7 units, a repeat run reported 'already correct' and wrote nothing. Full-catalogue publish not run",
         "BIGCOMMERCE/Product sync", "2026-10-15: dev store; 13 products and 68 variants imported, equal to the store's catalogue");
 
     private static Capability t(String n, String note) { return new Capability(n, Evidence.TESTED, live(n), note); }
@@ -62,7 +63,7 @@ public final class IntegrationCatalog {
                     t("Receive webhooks", "Signature verified first, duplicates ignored"),
                     cl("Order import", "Checked live against a dev shop (totals match). Webhook and scheduled; no automated test"),
                     cl("Product sync", "Checked live against a dev shop (counts match). No automated test"),
-                    t("Inventory publishing by location", "Dry run by default, drift detection, per-location mapping. Dry run checked live; a real write has not been run"),
+                    tl("Inventory publishing by location", "Dry run by default, drift detection, per-location mapping. One SKU written and read back live; a full-catalogue publish has not been run"),
                     c("Fulfilment push", "No automated test"),
                     c("Refund sync", "No automated test"))),
         new Entry("BIGCOMMERCE", "BigCommerce", "sales-channels", "NATIVE", "/integrations/bigcommerce",
