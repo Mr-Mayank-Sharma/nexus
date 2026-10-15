@@ -247,15 +247,15 @@ docker-compose (local/dev)          deploy/local (macOS)
 | ISS-03 | 🔴 High | Kafka | Kafka disabled by default; docker-compose never enables it | 🟡 **Partly**: the dev compose now enables it; the application default stays `false` by design |
 | ISS-04 | 🟠 Medium | Kafka | `publishEvent()` (the correct API) is dead code | ✅ **Fixed**: all 11 call sites use it; a test fails if any service publishes a raw payload **[test]** |
 | ISS-05 | 🟠 Medium | Kafka | Dynamic `order.{status}` emits up to 16 topics, 11 undeclared | ✅ **Fixed**: all 16 declared **[test]** |
-| ISS-06 | 🟠 Medium | Kafka | 8 consumers with no producer (dead listeners) | 🔴 Open |
-| ISS-07 | 🟠 Medium | Kafka | DLQ: 3 uncoordinated mechanisms; Spring recoverer is a no-op | 🔴 Open |
+| ISS-06 | 🟠 Medium | Kafka | 8 consumers with no producer (dead listeners) | 🟡 Open by choice: the listeners are harmless and will work when shipment, inventory, payment and return producers are added |
+| ISS-07 | 🟠 Medium | Kafka | DLQ: 3 uncoordinated mechanisms; Spring recoverer is a no-op | ✅ **Fixed**: the consumer no longer swallows errors and sends to the DLQ itself; the container's `DeadLetterPublishingRecoverer` is the one consuming-side path **[test]**. The outbox `FAILED` state is the separate producing-side path |
 | ISS-08 | 🟠 Medium | Kafka | DLQ topics missing for 4 consumed topics | ✅ **Fixed**: one per consumed topic **[test]** |
 | ISS-09 | 🟠 Medium | Kafka | ShedLock `lockAtMostFor` (2 min) < worst-case batch (~33 min) | ✅ **Fixed**: batch 100 × 3 s = 5 min inside a 10 min lock; an invariant test guards it **[test]** |
 | ISS-10 | 🟠 Medium | Integration | Connector depth gap: 11 dedicated vs ~28 generic stubs | 🟡 **Made honest**: generic reads and writes now answer `NOT_SUPPORTED` instead of a fake success **[test]**. The depth gap itself remains |
-| ISS-11 | 🟡 Low | Kafka | Consumer doesn't dedupe despite at-least-once delivery | 🔴 Open |
-| ISS-12 | 🟡 Low | Kafka | Global head-of-line blocking on a poison event | 🔴 Open |
+| ISS-11 | 🟡 Low | Kafka | Consumer doesn't dedupe despite at-least-once delivery | ✅ **Fixed**: V79 `nx_processed_events`; event id claimed before processing, released if processing fails; 14-day purge **[test]** |
+| ISS-12 | 🟡 Low | Kafka | Global head-of-line blocking on a poison event | ✅ **Fixed**: unreadable messages are rejected as non-retryable and dead-lettered at once; transient failures retry 3 × 1 s **[test]**. Not run against a real broker |
 | ISS-13 | 🟡 Low | Kafka | Replication factor hardcoded to 1 | ✅ **Fixed**: `nexus.kafka.replication` (set 3 in production) |
-| ISS-14 | 🟡 Low | Frontend | `AiAuditTrailPage` is a "not yet available" placeholder | 🔴 Open |
+| ISS-14 | 🟡 Low | Frontend | `AiAuditTrailPage` is a "not yet available" placeholder | 🔴 Open: honest placeholder; a real log needs AI decisions persisted on the routing path |
 | ISS-15 | 🟡 Low | Backend | 2 stub markers (webhook, transform) | 🟡 The webhook default now says plainly it is unsupported; the transform stub is open |
 | ISS-16 | 🟡 Low | Repo | Uncommitted `GlobalExceptionHandler` 404 fix in working tree | ✅ **Fixed and committed** `5533dfe` **[test]** |
 
@@ -759,6 +759,8 @@ of the defects below were visible to either.
 | L-27 | Frontend | Amazon, eBay and Walmart pages showed **"sync completed: 23 orders imported, 2 errors" when the call failed**; a Save that was a `setTimeout`; invented KPIs | Reading `catch` blocks | ✅ `c3e1390` **[live]** |
 | L-28 | Frontend | Automation Systems: seven handlers claimed "(simulated)" success and added fabricated rows when the real call failed | grep `simulated` | ✅ failures are reported and nothing changes **[code]** |
 | L-29 | Frontend | Shared components silently dropped what callers passed (KPI colours and labels, grid `header`, breadcrumb `href`) | Type errors | ✅ **[test]** |
+| L-31 | Security | **Equipment API keys were stored in plaintext and returned by `GET /automation/systems`** | Found while building the inbound path | ✅ the key is write-only in JSON **[live]**; still stored unsealed in the database |
+| L-32 | Kafka | The consumer dropped the event's tenant id when writing the audit row | Code read | ✅ **[test]** |
 | L-30 | CI | Backend CI red for days: a test schema excluded by `.gitignore`; code-scanning and Sonar jobs failing because unconfigured; a CVE in a binary the image never uses | CI logs | ✅ |
 
 ## 6.2 The patterns, so they can be searched for
@@ -780,6 +782,22 @@ None of the unit tests, none of the page-load audit, and none of the type checks
 `scripts/e2e/lifecycle-smoke.py` (now in the repo, 39 checks, passes 39/39), a sweep of every `GET`, reading
 the code behind every success message, and comparing a real API response with what the screen reads.
 **The lifecycle script is not yet run by CI.** That is the single cheapest improvement to the safety net.
+
+---
+
+## 6.4 Equipment automation: the inbound path (new)
+
+A separate review found there was **no inbound path from equipment**: commands went out, nothing came
+back, and a command stayed `SENT` unless the synchronous reply happened to say more. Webhooks were
+commerce-only and the twin is read-only. Now present **[live][test]**:
+
+- `POST /webhooks/equipment/{tenantId}/{systemId}/heartbeat`: equipment is alive (never revives a system an operator switched off or put in maintenance; `ERROR` and `DEGRADED` are reportable).
+- `POST /webhooks/equipment/{tenantId}/{systemId}/commands/{id}/status`: `ACKNOWLEDGED`, `EXECUTING`, `COMPLETED`, `FAILED`, with a result or an error. Authenticated by the system's shared secret in `X-Equipment-Key` (constant-time compare); wrong key 401, no secret configured 403, wrong tenant or another system's command 404, repeat of the same status accepted, any move out of a finished state or backwards 409.
+
+**Still not robotics-ready.** Nothing yet times out a command that never reports back, retries one that
+fails, raises an alert on a missed heartbeat, or speaks any industrial protocol (OPC-UA, MQTT, vendor
+APIs); the callback is plain HTTPS JSON. It has been exercised only by a script, never by a real
+controller. Treat it as the contract a controller integration would build on.
 
 ---
 
@@ -810,7 +828,7 @@ cloning the repo and running it. They do not reward plans, and they are **not** 
 | Tenant isolation and data security | **8.5** | Row-level security forced on every tenant table, proven on real PostgreSQL **[test]**; tenant-scoped cache keys; integration secrets sealed | A second tenant has not been red-teamed; the vault key falls back to a built-in value when none is set (production validation warns) |
 | Authentication and access control | **8.0** | TOTP MFA with recovery codes verified end to end; JWKS ID-token checking; RBAC with deny-by-default **[test]** | Integration screens are admin-only (no other role has the permission group); no SSO tested against a real IdP |
 | Integrations | **4.0** | Shopify path is real code with a dry-run, reconciliation and honest errors **[test]**; every simulated connector was removed or made honest | **No integration has been run against a real external system.** No POS adapter exists. Generic connectors cannot write |
-| Event backbone | **6.0** | Envelope contract fixed and tested; every topic and DLQ declared; failed rows visible **[test]** | Never run against a real Kafka in this audit; no consumer de-duplication; three uncoordinated DLQ paths; off by default |
+| Event backbone | **6.5** | Envelope contract fixed and tested; every topic and DLQ declared; consumer de-duplicates and has one dead-letter path **[test]** | Never run against a real Kafka in this audit; off by default; no alert rules |
 | AI | **3.5** | Predict endpoints refuse to fabricate **[live]**; the chat refuses instead of inventing **[live]**; forecasting is a real Holt model **[live]** | Forecast accuracy on real data has not been measured in this audit; no curated dataset or deployed model; chat needs an OpenAI key; the two AI services were not running here |
 | Frontend integrity and UX | **5.5** | 99 screens load with no crash, failing call or dead button **[live]**; ~30 fakes removed; type-check ratchet in CI | **140 type errors remain**; each sweep still found new fakes, so more are likely; mobile and accessibility were not audited |
 | Quality engineering | **6.5** | 979 backend + 457 frontend tests, none skipped; real-PostgreSQL integration suite; a coverage ratchet; a lifecycle script | The lifecycle script is not in CI; **CI cannot currently run at all** (GitHub Actions billing); no load or soak test |
@@ -864,7 +882,7 @@ deploy behind HTTPS, (3) the lifecycle script in CI with CI running again, (4) a
 2. Point-of-sale adapter contract and inventory aggregation (explicit blocked status until credentials exist).
 3. Store-operations screen, distinct from the integration marketplace.
 4. Stock consumption for split allocations and partial shipments; lot-level movements.
-5. Consumer de-duplication by event id; one owner for dead-lettering; remove or implement the 8 dead listeners.
+5. Producers for the shipment, inventory, payment and return topics (their listeners exist); command timeouts, missed-heartbeat alerts and a real controller integration for equipment.
 6. Alert rules for `nexus.outbox.failed` and the DLQ depth.
 7. Promote UPS, DHL, NetSuite, Walmart and eBay from generic to dedicated connectors; add a connector conformance suite.
 8. Burn down the **140** type errors (the ratchet only stops it growing).

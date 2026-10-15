@@ -108,7 +108,7 @@ class EntitlementTest {
     @Test
     void everyControllerIsClassified() {
         Set<String> platform = Set.of("/analytics", "/auth", "/connectors", "/customers", "/dashboard",
-                "/documents", "/entitlements", "/import", "/integration-hub", "/integration/webhooks", "/integration-platform", "/integration-stores",
+                "/documents", "/entitlements", "/import", "/integration-hub", "/integration/webhooks", "/webhooks/equipment", "/integration-platform", "/integration-stores",
                 "/integrations/bigcommerce", "/inventory", "/invoicing", "/notifications", "/procurement",
                 "/products", "/rbac", "/replenishment", "/reports", "/sample-data", "/settings", "/shipments",
                 "/shopify", "/shopify/stores", "/sync", "/transfers", "/twin", "/warehouses", "/webhooks", "/workflows");

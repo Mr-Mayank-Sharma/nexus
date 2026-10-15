@@ -47,6 +47,8 @@ public class NxAutomationSystem {
     @Column(name = "endpoint_url")
     private String endpointUrl;
 
+    /** Shared secret for both directions (outbound bearer, inbound callbacks). Accepted on write, never returned. */
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @Column(name = "api_key")
     private String apiKey;
 

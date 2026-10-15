@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.springframework.kafka.core.KafkaTemplate;
+import com.nexus.oms.repository.ProcessedEventRepository;
 
 import java.util.UUID;
 
@@ -26,13 +26,13 @@ class KafkaConsumerServiceTest {
     private AuditLogRepository auditLogRepository;
 
     @Mock
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private ProcessedEventRepository processedEvents;
 
     private KafkaConsumerService consumerService;
 
     @BeforeEach
     void setUp() {
-        consumerService = new KafkaConsumerService(auditLogRepository, kafkaTemplate);
+        consumerService = new KafkaConsumerService(auditLogRepository, processedEvents);
     }
 
     @Test
@@ -117,28 +117,48 @@ class KafkaConsumerServiceTest {
     }
 
     @Test
-    void onProcessingError_sendsToDlq() {
-        UUID orderId = UUID.randomUUID();
-        EventRecord event = EventRecord.create("ORDER_CREATED", Topics.ORDER_CREATED, orderId.toString(), null);
-        String json = event.toJson();
-
+    void onProcessingError_rethrowsSoTheErrorHandlerCanRetryAndDeadLetter() {
+        String json = EventRecord.create("ORDER_CREATED", Topics.ORDER_CREATED, UUID.randomUUID().toString(), null).toJson();
         doThrow(new RuntimeException("db error")).when(auditLogRepository).save(any());
 
-        consumerService.handleOrderCreated(json);
-
-        verify(auditLogRepository).save(any());
-        verify(kafkaTemplate).send(eq(Topics.dlq(Topics.ORDER_CREATED)), eq(json));
+        assertThrows(RuntimeException.class, () -> consumerService.handleOrderCreated(json));
+        // the claim on the event id is released so the retry is not mistaken for a duplicate
+        verify(processedEvents).deleteById(any());
     }
 
     @Test
-    void onProcessingError_whenDlqFails_doesNotThrow() {
-        UUID orderId = UUID.randomUUID();
-        EventRecord event = EventRecord.create("ORDER_CREATED", Topics.ORDER_CREATED, orderId.toString(), null);
-        String json = event.toJson();
+    void unreadableMessage_isRejectedAtOnce_asNonRetryable() {
+        assertThrows(IllegalArgumentException.class, () -> consumerService.handleOrderCreated("{not json"));
+        assertThrows(IllegalArgumentException.class, () -> consumerService.handleOrderCreated(
+                EventRecord.create("ORDER_CREATED", Topics.ORDER_CREATED, "not-a-uuid", null).toJson()));
+        verifyNoInteractions(auditLogRepository);
+    }
 
-        doThrow(new RuntimeException("db error")).when(auditLogRepository).save(any());
-        doThrow(new RuntimeException("kafka down")).when(kafkaTemplate).send(anyString(), anyString());
+    @Test
+    void redeliveredEvent_isProcessedOnce() {
+        String json = EventRecord.create("ORDER_CREATED", Topics.ORDER_CREATED, UUID.randomUUID().toString(), null).toJson();
+        when(processedEvents.existsById(any())).thenReturn(false).thenReturn(true);
 
-        assertDoesNotThrow(() -> consumerService.handleOrderCreated(json));
+        consumerService.handleOrderCreated(json);
+        consumerService.handleOrderCreated(json);
+
+        verify(auditLogRepository, times(1)).save(any());
+    }
+
+    @Test
+    void eventClaimedByAnotherInstanceBetweenCheckAndInsert_isSkipped() {
+        String json = EventRecord.create("ORDER_CREATED", Topics.ORDER_CREATED, UUID.randomUUID().toString(), null).toJson();
+        when(processedEvents.saveAndFlush(any())).thenThrow(new org.springframework.dao.DataIntegrityViolationException("dup"));
+
+        consumerService.handleOrderCreated(json);
+
+        verifyNoInteractions(auditLogRepository);
+    }
+
+    @Test
+    void tenantIdFromTheEvent_isKeptOnTheAuditRow() {
+        UUID tenant = UUID.randomUUID();
+        consumerService.handleOrderCreated(EventRecord.create("ORDER_CREATED", Topics.ORDER_CREATED, UUID.randomUUID().toString(), tenant).toJson());
+        verify(auditLogRepository).save(argThat(l -> tenant.equals(l.getTenantId())));
     }
 }

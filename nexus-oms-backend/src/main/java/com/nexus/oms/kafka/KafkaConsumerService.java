@@ -1,12 +1,14 @@
 package com.nexus.oms.kafka;
 
 import com.nexus.oms.entity.NxAuditLog;
+import com.nexus.oms.entity.NxProcessedEvent;
+import com.nexus.oms.repository.ProcessedEventRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.nexus.oms.repository.AuditLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -18,12 +20,11 @@ public class KafkaConsumerService {
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumerService.class);
 
     private final AuditLogRepository auditLogRepository;
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ProcessedEventRepository processedEvents;
 
-    public KafkaConsumerService(AuditLogRepository auditLogRepository,
-                                KafkaTemplate<String, String> kafkaTemplate) {
+    public KafkaConsumerService(AuditLogRepository auditLogRepository, ProcessedEventRepository processedEvents) {
         this.auditLogRepository = auditLogRepository;
-        this.kafkaTemplate = kafkaTemplate;
+        this.processedEvents = processedEvents;
     }
 
     @KafkaListener(topics = Topics.ORDER_CREATED)
@@ -96,28 +97,55 @@ public class KafkaConsumerService {
         processOrderEvent(message, "RETURN", "APPROVED", Topics.RETURN_APPROVED);
     }
 
+    /** Event ids only matter while Kafka can still redeliver; keep two weeks (default topic retention is one). */
+    @org.springframework.scheduling.annotation.Scheduled(cron = "0 45 2 * * *")
+    @net.javacrumbs.shedlock.spring.annotation.SchedulerLock(name = "KafkaConsumerService.purgeProcessedEvents", lockAtMostFor = "PT30M", lockAtLeastFor = "PT30S")
+    public void purgeProcessedEvents() {
+        int removed = processedEvents.deleteOlderThan(java.time.LocalDateTime.now().minusDays(14));
+        log.info("Removed {} processed-event ids older than 14 days", removed);
+    }
+
     @KafkaListener(topicPattern = ".*\\.dlq")
     public void handleDlq(String message) {
         log.warn("Received DLQ event: {}", message);
     }
 
+    /**
+     * Handles one event. Failures are thrown, not swallowed: the container's error handler retries
+     * transient ones with a short backoff and then dead-letters the record (see KafkaConfig). A message
+     * that cannot be parsed is rejected at once so it never blocks the partition behind it.
+     */
     private void processOrderEvent(String message, String entityType, String eventType, String topic) {
-        log.info("Processing {} event for {}: {}", eventType, entityType, message);
+        EventRecord event;
+        UUID entityId;
         try {
-            EventRecord event = EventRecord.fromJson(message);
-            String entityId = event.data();
+            event = EventRecord.fromJson(message);
+            entityId = UUID.fromString(event.data() != null ? event.data() : event.eventId());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Unreadable " + topic + " event: " + e.getMessage(), e);
+        }
+        // Delivery is at least once: claim the event id first; a second delivery finds it taken.
+        if (event.eventId() != null) {
+            if (processedEvents.existsById(event.eventId())) {
+                log.debug("Skipping already-processed event {} on {}", event.eventId(), topic);
+                return;
+            }
+            try {
+                processedEvents.saveAndFlush(new NxProcessedEvent(event.eventId(), topic));
+            } catch (DataIntegrityViolationException raced) {
+                return;   // another instance claimed it between the check and the insert
+            }
+        }
+        try {
             auditLogRepository.save(NxAuditLog.builder()
-                    .entityId(entityId != null ? UUID.fromString(entityId) : UUID.fromString(event.eventId()))
+                    .tenantId(event.tenantId())
+                    .entityId(entityId)
                     .entityType(entityType)
                     .eventType(eventType)
                     .build());
-        } catch (Exception e) {
-            log.error("Error processing {} event on {}: {}", eventType, topic, e.getMessage(), e);
-            try {
-                kafkaTemplate.send(Topics.dlq(topic), message);
-            } catch (Exception dlqEx) {
-                log.error("Failed to send event to DLQ {}: {}", Topics.dlq(topic), dlqEx.getMessage());
-            }
+        } catch (RuntimeException e) {
+            if (event.eventId() != null) processedEvents.deleteById(event.eventId());   // let the retry run
+            throw e;
         }
     }
 }

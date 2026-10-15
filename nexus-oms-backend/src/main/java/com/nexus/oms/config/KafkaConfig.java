@@ -12,6 +12,10 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
+import org.apache.kafka.common.TopicPartition;
+import org.springframework.kafka.core.KafkaTemplate;
+import com.nexus.oms.kafka.Topics;
 import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.HashMap;
@@ -74,13 +78,13 @@ public class KafkaConfig {
     }
 
     @Bean
-    public DefaultErrorHandler errorHandler() {
-        DefaultErrorHandler handler = new DefaultErrorHandler((record, exception) -> {
-            // Dead-letter topic — send failed messages here for manual inspection
-            System.err.println("Sending record to DLQ — topic: " + record.topic()
-                    + ", partition: " + record.partition()
-                    + ", offset: " + record.offset());
-        }, new FixedBackOff(5000L, 3));
+    public DefaultErrorHandler errorHandler(KafkaTemplate<String, String> kafkaTemplate) {
+        // The only dead-letter path on the consuming side: a record that still fails after the retries is
+        // published to "<topic>.dlq" (declared by KafkaTopicConfig) and the offset moves on.
+        DeadLetterPublishingRecoverer toDlq = new DeadLetterPublishingRecoverer(kafkaTemplate,
+                (record, ex) -> new TopicPartition(Topics.dlq(record.topic()), -1));
+        DefaultErrorHandler handler = new DefaultErrorHandler(toDlq, new FixedBackOff(1000L, 3));
+        // Unreadable or invalid messages will never succeed: dead-letter at once, do not hold up the partition.
         handler.addNotRetryableExceptions(NullPointerException.class, IllegalArgumentException.class);
         handler.setCommitRecovered(true);
         return handler;
