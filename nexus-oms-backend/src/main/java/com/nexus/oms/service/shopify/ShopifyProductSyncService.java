@@ -7,7 +7,6 @@ import com.nexus.oms.repository.*;
 import com.nexus.oms.service.IntegrationStoreService;
 import com.nexus.oms.service.ProductService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -52,7 +51,11 @@ public class ShopifyProductSyncService {
         this.productService = productService;
     }
 
-    @Transactional
+    /**
+     * Deliberately not one transaction: each save commits on its own, so a single bad row is
+     * counted as failed and the rest of the catalogue still imports (one constraint error used to
+     * poison the whole run and answer 500 after minutes of work).
+     */
     public SyncResult syncProducts(UUID storeId) {
         NxIntegrationStore store = storeService.getStore(storeId);
         String shopDomain = storeService.getSetting(storeId, "shop_domain");
@@ -67,6 +70,7 @@ public class ShopifyProductSyncService {
         syncLog = syncLogRepository.save(syncLog);
 
         int processed = 0, succeeded = 0, failed = 0;
+        List<String> failures = new ArrayList<>();
         try {
             List<NxNode> nodes = nodeRepository.findByTenantId(store.getTenantId());
             String nextPageInfo = null;
@@ -150,6 +154,7 @@ public class ShopifyProductSyncService {
                         }
                     } catch (Exception e) {
                         failed++;
+                        if (failures.size() < 5) failures.add("product " + productId + ": " + e.getClass().getSimpleName());
                     }
                     processed++;
                 }
@@ -167,6 +172,7 @@ public class ShopifyProductSyncService {
             syncLog.setItemsProcessed(processed);
             syncLog.setItemsSucceeded(succeeded);
             syncLog.setItemsFailed(failed);
+            if (!failures.isEmpty()) syncLog.setErrorMessage(String.join("; ", failures));
             syncLogRepository.save(syncLog);
 
         } catch (Exception e) {

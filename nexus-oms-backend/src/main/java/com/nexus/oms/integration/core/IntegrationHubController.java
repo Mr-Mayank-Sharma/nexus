@@ -55,7 +55,10 @@ public class IntegrationHubController {
                 "TESTED", "Automated tests run the logic with the outside system mocked.",
                 "CODE_ONLY", "Written, but no automated test covers it.",
                 "NOT_IMPLEMENTED", "Nexus does nothing with this."));
-        out.put("liveVerifiedNote", "No capability has yet been run against the real platform with real credentials.");
+        long live = IntegrationCatalog.entries().stream().flatMap(e -> e.capabilities().stream()).filter(IntegrationCatalog.Capability::liveVerified).count();
+        out.put("liveVerifiedNote", live == 0
+                ? "No capability has yet been run against the real platform with real credentials."
+                : live + " capabilities have been run against a real platform (listed below with the date and what was compared). Everything else is not yet run against the live platform.");
         return ResponseEntity.ok(out);
     }
 

@@ -20,7 +20,7 @@
 - **Written, not tested**: the code exists; nothing checks it.
 - **Not built**: Nexus does nothing with it.
 
-Every entry also carries `liveVerified`. **It is false everywhere, because no integration has been run against the real platform with real credentials.** The Directory says so at the top of the page. A test fails if anyone sets it without recording the evidence in `IntegrationCatalog.LIVE_EVIDENCE`.
+Every entry also carries `liveVerified`. **It is true for four capabilities only** (see [§7](#7-live-verification-log)) and false for everything else, because nothing else has been run against a real platform with real credentials. The Directory says so at the top of the page and marks each checked capability. A test fails if anyone sets it without recording the evidence in `IntegrationCatalog.LIVE_EVIDENCE`.
 
 ## 3. How the Hub works now
 
@@ -59,10 +59,31 @@ Every entry also carries `liveVerified`. **It is false everywhere, because no in
 
 ## 6. Still not true, in order of importance
 
-1. **Nothing has been run against a real platform.** Shopify and BigCommerce are the most complete; the Shopify order, product, fulfilment and refund services and most BigCommerce ones have no automated tests.
+1. **Almost nothing has been run against a real platform.** Only the four read paths in §7 have. No write to a real store has been run (stock publish, fulfilment push, refund sync, webhook registration), and no BigCommerce order has ever been imported (the dev store has none). The Shopify order, product, fulfilment and refund services and most BigCommerce ones still have no automated tests.
 2. Connectors cannot import into Nexus. Only Shopify and BigCommerce create Nexus orders.
 3. No payment webhooks, no carrier tracking feed, no live carrier quotes, no EDI transport (AS2/SFTP/VAN), no SCIM.
 4. `integration` permission is held by ADMIN only; other roles cannot manage connections.
 5. About 30 "Custom REST only" platforms are listed for completeness; none does anything beyond a connection test and a preview.
 6. The new Directory, Connections and sidebar are covered by component tests and a live API run, but **have not been looked at in a browser** (the browser tool was unavailable when they were built).
 7. The legacy marketplace pages (Amazon, eBay, Walmart) show Nexus's own records; they are labelled as such.
+
+## 7. Live verification log
+
+**2026-10-15, Shopify dev shop `nexus-ship-ufb7gevv` and BigCommerce dev store `mhccbjdmoi`, read-only.** Credentials were supplied by the owner, saved through the API (sealed), and revoked afterwards by the owner. Nothing was written to either store.
+
+| Check | Result |
+|---|---|
+| Shopify connection, scopes, locations | Passed. 23 locations found. |
+| Shopify order import | **Matches.** 5,052 orders imported; the API lists 5,052. Order total 3,679,289.59 and 9,445 line items are identical on both sides. Shopify's count endpoint says 5,060: the 8 extra are older than 60 days and need the `read_all_orders` scope. |
+| Shopify product sync | **Matches.** 4,935 products (9,996 variants), equal to Shopify's count. |
+| Shopify stock publish | **Dry run only.** 6,934 changes planned, 13 skipped (BigCommerce-only SKUs), nothing written. A real write has not been run. |
+| BigCommerce product sync | **Matches.** 13 products, 68 variants. |
+| BigCommerce order import | Ran, imported 0. The store has 0 orders, so this proves the connection, not the mapping. |
+
+Defects the live run found and fixed:
+
+1. **BigCommerce access token was stored in plain text and returned by `GET /integrations/bigcommerce/config`.** It is now sealed at rest (AES-GCM, legacy values still read and sealed on the next save) and write-only in JSON. Tests: `SealedStringConverterTest`.
+2. **A new Shopify or BigCommerce connection switched on scheduled stock, fulfilment and refund writes.** Only the order and product imports start enabled now. Test: `NewConnectionReadOnlyTest`.
+3. **The manual Shopify product sync ignored the lock the scheduler uses**, so a manual run and a scheduled run collided, and one duplicate-SKU error poisoned a single long transaction and answered 500 after 3.5 minutes. The endpoint takes the lock, rows now save independently, and failed rows are counted and named.
+4. `CredentialVault` falls back to a hard-coded key when `APP_CREDENTIAL_ENCRYPTION_KEY` is unset (a warning is logged). **Set it in every real environment.** Not changed here.
+5. Cosmetic, not fixed: the product sync reports products as `processed` but variants as `succeeded`.

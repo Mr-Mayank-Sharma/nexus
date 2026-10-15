@@ -43,7 +43,7 @@ function Card({ entry }: { entry: CatalogEntry }) {
               <EvidenceIcon evidence={c.evidence} />
               <div>
                 <span className="text-[var(--text-primary)]">{c.name}</span>
-                <span className="ml-2 text-xs text-[var(--text-tertiary)]">{EVIDENCE_LABEL[c.evidence]}{c.evidence !== 'NOT_IMPLEMENTED' && !c.liveVerified ? ' · not yet run against the live platform' : ''}</span>
+                <span className="ml-2 text-xs text-[var(--text-tertiary)]">{EVIDENCE_LABEL[c.evidence]}{c.liveVerified ? ' · checked against the live platform' : c.evidence !== 'NOT_IMPLEMENTED' ? ' · not yet run against the live platform' : ''}</span>
                 {c.note && <div className="text-xs text-[var(--text-tertiary)]">{c.note}</div>}
               </div>
             </li>

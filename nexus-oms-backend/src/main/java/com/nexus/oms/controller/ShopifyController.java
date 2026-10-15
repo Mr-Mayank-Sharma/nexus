@@ -60,8 +60,16 @@ public class ShopifyController {
 
     @PostMapping("/stores/{storeId}/sync/products")
     public ResponseEntity<ApiResponse<SyncResult>> syncProducts(@PathVariable UUID storeId) {
-        return ResponseEntity.ok(ApiResponse.success(
-                productSyncService.syncProducts(storeId), "Shopify products synced"));
+        String lockKey = SyncExecutionLocks.key(storeId, "PRODUCT_SYNC");
+        if (!syncExecutionLocks.tryAcquire(lockKey)) {
+            throw new BadRequestException("A product sync is already running for this store");
+        }
+        try {
+            return ResponseEntity.ok(ApiResponse.success(
+                    productSyncService.syncProducts(storeId), "Shopify products synced"));
+        } finally {
+            syncExecutionLocks.release(lockKey);
+        }
     }
 
     @PostMapping("/stores/{storeId}/sync/inventory")

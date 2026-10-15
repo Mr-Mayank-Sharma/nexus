@@ -29,12 +29,19 @@ public final class IntegrationCatalog {
     }
 
     /** Where a live verification is recorded, per "<entry key>/<capability>". Empty: nothing has been run against a real platform. */
-    public static final Map<String, String> LIVE_EVIDENCE = Map.of();
+    public static final Map<String, String> LIVE_EVIDENCE = Map.of(
+        "SHOPIFY/Connect with sealed credentials", "2026-10-15: dev shop nexus-ship-ufb7gevv; token saved sealed, never returned by the API; shop, scopes and locations read",
+        "SHOPIFY/Order import", "2026-10-15: dev shop; 5,052 of the 5,052 orders the API lists imported, order total 3,679,289.59 and 9,445 line items equal Shopify's. 8 older orders need the read_all_orders scope",
+        "SHOPIFY/Product sync", "2026-10-15: dev shop; 4,935 products (9,996 variants) imported, product count equals Shopify's",
+        "BIGCOMMERCE/Product sync", "2026-10-15: dev store; 13 products and 68 variants imported, equal to the store's catalogue");
 
     private static Capability t(String n, String note) { return new Capability(n, Evidence.TESTED, live(n), note); }
     private static Capability c(String n, String note) { return new Capability(n, Evidence.CODE_ONLY, false, note); }
     private static Capability x(String n, String note) { return new Capability(n, Evidence.NOT_IMPLEMENTED, false, note); }
     private static boolean live(String n) { return false; }
+    /** Run against the real platform; each one needs a dated entry in {@link #LIVE_EVIDENCE} (a test enforces it). */
+    private static Capability tl(String n, String note) { return new Capability(n, Evidence.TESTED, true, note); }
+    private static Capability cl(String n, String note) { return new Capability(n, Evidence.CODE_ONLY, true, note); }
 
     private static final String CONNECT_TEST = "Connection test";
     private static final String PREVIEW = "Read preview";
@@ -51,16 +58,17 @@ public final class IntegrationCatalog {
         // ── Sales channels ───────────────────────────────────────────────
         new Entry("SHOPIFY", "Shopify", "sales-channels", "NATIVE", "/integrations/shopify",
             "Built into Nexus end to end: orders arrive by verified webhook and scheduled import, stock is published per location, shipments and refunds go back.",
-            List.of(t("Connect with sealed credentials", "Secrets are encrypted at rest and never returned by the API"),
+            List.of(tl("Connect with sealed credentials", "Secrets are encrypted at rest and never returned by the API"),
                     t("Receive webhooks", "Signature verified first, duplicates ignored"),
-                    c("Order import", "Webhook and scheduled; no automated test"),
-                    c("Product sync", "No automated test"),
-                    t("Inventory publishing by location", "Dry run by default, drift detection, per-location mapping"),
+                    cl("Order import", "Checked live against a dev shop (totals match). Webhook and scheduled; no automated test"),
+                    cl("Product sync", "Checked live against a dev shop (counts match). No automated test"),
+                    t("Inventory publishing by location", "Dry run by default, drift detection, per-location mapping. Dry run checked live; a real write has not been run"),
                     c("Fulfilment push", "No automated test"),
                     c("Refund sync", "No automated test"))),
         new Entry("BIGCOMMERCE", "BigCommerce", "sales-channels", "NATIVE", "/integrations/bigcommerce",
             "Built into Nexus: orders, products, customers, stock, shipments and refunds, on a schedule and by webhook.",
-            List.of(c("Order import", "No automated test"), c("Product sync", "No automated test"),
+            List.of(c("Order import", "Ran live against a dev store with no orders, so it proves the connection only"),
+                    cl("Product sync", "Checked live against a dev store (counts match). No automated test"),
                     c("Customer import", "No automated test"),
                     t("Inventory push", "Unit tested"), t("Order status push", "Unit tested"),
                     c("Shipment push", "No automated test"), c("Refund sync", "No automated test"),

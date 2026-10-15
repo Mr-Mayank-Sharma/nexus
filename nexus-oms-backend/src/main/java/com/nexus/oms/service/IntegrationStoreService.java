@@ -47,6 +47,9 @@ public class IntegrationStoreService {
         this.vault = vault;
     }
 
+    /** The only scheduled syncs a new connection starts with; the rest write to the external store. */
+    static final java.util.Set<String> READ_ONLY_SYNCS = java.util.Set.of("ORDER_IMPORT", "PRODUCT_SYNC");
+
     public static boolean isSecretKey(String settingType) {
         String k = settingType == null ? "" : settingType.toLowerCase(Locale.ROOT);
         return k.contains("token") || k.contains("secret") || k.contains("password")
@@ -148,10 +151,12 @@ public class IntegrationStoreService {
                 ? new String[]{"ORDER_IMPORT", "PRODUCT_SYNC", "INVENTORY_PUSH", "FULFILLMENT_PUSH", "REFUND_PUSH"}
                 : new String[]{};
         for (String syncType : defaultSyncs) {
+            // A new connection is read-only. Anything that writes to the merchant's store (stock,
+            // fulfilments, refunds) is created switched off and has to be turned on deliberately.
             NxIntegrationSyncConfig syncConfig = NxIntegrationSyncConfig.builder()
                     .storeId(store.getId())
                     .syncType(syncType)
-                    .enabled(true)
+                    .enabled(READ_ONLY_SYNCS.contains(syncType))
                     .intervalMinutes(15)
                     .build();
             syncConfigRepository.save(syncConfig);

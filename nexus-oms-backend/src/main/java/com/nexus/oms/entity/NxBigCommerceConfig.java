@@ -23,7 +23,10 @@ public class NxBigCommerceConfig {
     @Column(nullable = false)
     private String storeHash;
 
+    /** Sealed at rest, and accepted but never returned by the API. */
     @Column(name = "access_token", nullable = false)
+    @Convert(converter = SealedStringConverter.class)
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     private String accessToken;
 
     @Column(name = "client_id")
