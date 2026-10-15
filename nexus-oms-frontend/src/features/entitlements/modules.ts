@@ -18,7 +18,7 @@ const ROUTE_PREFIXES: Record<string, ProductModule> = {
   // OMS
   '/orders': 'OMS', '/order-twin': 'OMS', '/order-approvals': 'OMS', '/order-routing': 'OMS',
   '/routing-rules': 'OMS', '/brokering': 'OMS', '/rejections': 'OMS', '/fulfillment-limits': 'OMS',
-  '/reconciliation': 'OMS', '/returns': 'OMS', '/returns-enhanced': 'OMS', '/returns-finance': 'OMS',
+  '/reconciliation': 'OMS', '/store-operations': 'OMS', '/returns': 'OMS', '/returns-enhanced': 'OMS', '/returns-finance': 'OMS',
   '/store-dashboard': 'OMS', '/bopis': 'OMS', '/bopis-owner': 'OMS', '/bopis-app': 'OMS',
   '/pre-orders': 'OMS', '/atp-rules': 'OMS', '/endless-aisle': 'OMS', '/promotions': 'OMS',
   '/email-parser': 'OMS', '/b2b-portal': 'OMS',

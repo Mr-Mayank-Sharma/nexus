@@ -66,6 +66,7 @@ const InventoryReceivingPage = lazy(() => import('./pages/InventoryReceivingPage
 const CycleCountPage = lazy(() => import('./pages/CycleCountPage'))
 const BigCommercePage = lazy(() => import('./pages/BigCommercePage'))
 const IntegrationStoresPage = lazy(() => import('./pages/IntegrationStoresPage'))
+const StoreOperationsPage = lazy(() => import('./pages/StoreOperationsPage'))
 const IntegrationHubPage = lazy(() => import('./pages/IntegrationHubPage'))
 const ImportExportCenter = lazy(() => import('./pages/ImportExportCenter'))
 const CustomersPage = lazy(() => import('./pages/CustomersPage'))
@@ -139,6 +140,7 @@ export default function App() {
           <Route path="order-routing" element={<OrderRoutingPage />} />
           <Route path="integrations/bigcommerce" element={<BigCommercePage />} />
           <Route path="integrations/stores" element={<IntegrationStoresPage />} />
+          <Route path="store-operations" element={<StoreOperationsPage />} />
           <Route path="integration-hub" element={<IntegrationHubPage />} />
           <Route path="sync" element={<SyncConflictsPage />} />
           <Route path="import-export" element={<ImportExportCenter />} />

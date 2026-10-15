@@ -27,7 +27,7 @@ That is exactly where Nexus stands: **broad, real surface + a short, honest list
 | **Git history** | 204 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
 | **Migrations** | 73 Flyway migrations (`V1`–`V78`, non-contiguous) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
 | **Backend surface** | **177 JPA entities**, **87 controllers**, 136 services, 14 RBAC roles |
-| **Frontend surface** | **103 routes**, hash-routed, role/resource-gated, React Query + WebSockets |
+| **Frontend surface** | **104 routes**, hash-routed, role/resource-gated, React Query + WebSockets |
 | **Infra (docker-compose)** | Postgres, Redis, Kafka, backend, frontend, **ai-ops**, **ai-intel**, Prometheus, Grafana |
 | **Testing** | Backend: **789 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest **403 passing, 0 failures, 0 errors** (`tsc --noEmit`, `npm run build`, and `npm run lint` green); Playwright smoke-tested on live dev stack |
 
@@ -148,7 +148,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 ## 6. Frontend Access Landscape (verified) 🖥️
 
 - Hash-router with lazy routes; `ProtectedRoute` (auth) wrapping an `AppLayout` shell; `PermissionGate` (resource+action) for fine-grained UI.
-- **103 routes** across: LaunchPad, Orders, Fulfillment, Inventory & Warehouses, Returns, Procurement, Vendors, Carriers, Yard/Trailers, Integrations, Import/Export, Finance, Analytics, AI, Admin, Support — plus the **3PL module** (Rate Cards, Billing Statements, Client Portal).
+- **104 routes** across: LaunchPad, Orders, Fulfillment, Inventory & Warehouses, Returns, Procurement, Vendors, Carriers, Yard/Trailers, Integrations, Import/Export, Finance, Analytics, AI, Admin, Support — plus the **3PL module** (Rate Cards, Billing Statements, Client Portal).
 - 14 roles enforced server-side; UI gates mirror resource mappings.
 
 ---

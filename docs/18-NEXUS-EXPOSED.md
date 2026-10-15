@@ -823,6 +823,8 @@ integration **[live][test]**:
 
 Because Shopify publishing reads node on-hand ([16](./16-SHOPIFY-INVENTORY-PUBLISHING.md)), a reconciled store count flows to the channel on the next publish.
 
+**Screen:** *Store Operations* (`/store-operations`, under Order Management) lets an operator connect a POS to the selected location (the key is displayed once, with a warning), see the till-versus-Nexus table worst difference first with plain-language statuses, preview corrections, and apply them only after a preview. It is covered by component and rule tests and builds; **it has not been looked at in a browser against the live stack.**
+
 **Not built:** an adapter that *pulls* from a specific vendor (Square, Lightspeed, Shopify POS, Clover): each needs that vendor's credentials to verify, so none is claimed. POS *sales* events (decrementing as items sell between snapshots) are not ingested; the contract is periodic full or partial counts. Reconciling assumes the POS count is right; where the till and a cycle count disagree, a person decides.
 
 ---

@@ -97,6 +97,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       id: 'inventory-management', label: 'Inventory & Catalog', path: '/inventory', icon: 'Warehouse',
       children: [
         { id: 'inventory', label: 'Inventory', path: '/inventory', icon: 'Warehouse' },
+        { id: 'store-operations', label: 'Store Operations', path: '/store-operations', icon: 'Warehouse' },
         { id: 'inventory-enhanced', label: 'Multi-Node Inventory', path: '/inventory/enhanced', icon: 'Warehouse' },
         { id: 'receiving', label: 'Receiving', path: '/inventory/receiving', icon: 'PackagePlus' },
         { id: 'cycle-counts', label: 'Cycle Counts', path: '/inventory/cycle-counts', icon: 'ClipboardCheck' },
