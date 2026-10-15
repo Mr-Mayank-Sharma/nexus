@@ -95,9 +95,9 @@ doesn't take effect.
 
 | Category | Count |
 |---|---|
-| Connector types registered | 41 |
-| **Real implementations** | **13**: Shopify, Amazon, BigCommerce, Magento, SAP, Salesforce, FedEx, Stripe, QuickBooks, Twilio, Okta, OpenAI + generic EDI/AS2 |
-| **Generic stubs** (`GenericHttpConnector`, base URL `https://docs.example.com/…`) | **28**: eBay, Walmart, Etsy, NetSuite, Dynamics 365, Oracle ERP, HubSpot, UPS, DHL, PayPal, Adyen, Xero, Square, … |
+| Connector types registered | 42 |
+| **Real implementations** | **12**: Shopify, Amazon, BigCommerce, Magento, SAP, Salesforce, FedEx, Stripe, QuickBooks, Twilio, Okta, OpenAI (EDI/AS2 is a protocol layer, not a connector factory) |
+| **Generic stubs** (`GenericHttpConnector`, base URL `https://docs.example.com/…`) | **30**: eBay, Walmart, Etsy, Alibaba, NetSuite, Dynamics 365, Oracle ERP, HubSpot, Zoho CRM, Manhattan, Blue Yonder, Oracle WMS, project44, FourKites, UPS, DHL, PayPal, Adyen, Xero, Sage, Square, Lightspeed, SendGrid, Slack, Auth0, Power BI, Tableau, Looker, Anthropic, AWS Bedrock |
 | Shopify in the UI | still marked `coming_soon` (`IntegrationMarketplacePage.tsx:68`) despite a real backend |
 | FedEx connector | real code, **no callers** in rate shopping or labels (T-16 still open) |
 | Rate shopping | reads seeded `carrier_rates` rows, never a live carrier quote |
@@ -199,7 +199,7 @@ audit. Only R is comparable with competitors.
 | Finance | 6 | 4 | 7 | 9 | 10 | 5 | 4 | 9 | 7 | 6 | 9 | 9 | **6** | QuickBooks real; AR aging |
 | 3PL billing / portal | 8 | 6 | 7 | 8 | 8 | 8 | 8 | 7 | 8 | 10 | 6 | 8 | **6** | Portal read-only |
 | EDI | 9 | 5 | 9 | 9 | 9 | 8 | 8 | 9 | 8 | 7 | 6 | 9 | **7** | 850/855/856/810/940/997 + AS2; protocol layer 4% tested |
-| Integration hub | 9 | 7 | 8 | 9 | 8 | 8 | 7 | 8 | 9 | 8 | 7 | 9 | **5** | 13 real / 28 stubs |
+| Integration hub | 9 | 7 | 8 | 9 | 8 | 8 | 7 | 8 | 9 | 8 | 7 | 9 | **5** | 12 real / 30 stubs |
 | AI / ML | 8 | 3 | 9 | 7 | 8 | 6 | 7 | 6 | 7 | 5 | 7 | 8 | **4** | Synthetic data; WAPE 1.0 |
 | **Bucket** | 7.8 | 5.0 | 8.0 | 8.5 | 8.8 | 6.8 | 6.5 | 7.8 | 7.7 | 6.8 | 7.2 | 8.5 | **5.7** | |
 
@@ -278,8 +278,8 @@ be closed by customers.
 | **P1-7** | Fix C-7 (`expiresIn`) and C-8 (fail-closed limiter on `/auth/**`, local Bucket4j fallback). | C-7, C-8 | 🟡 | 0.5 d | — |
 | **P2-1** | **Live carriers:** wire `FedExConnector` into `RateShoppingService` + `ShippingLabelService`; add UPS (REST OAuth), USPS and an aggregator (EasyPost or Shippo) so many carriers come through one adapter. Keep seeded rates as a stale-marked fallback. | T-16 | 🟠 | 8 d | Shipping 4→7 |
 | **P2-2** | **Routing math:** geocode warehouses + ship-to (cached), haversine distance, carrier zone/rate lookup from P2-1 as cost. Add substitutes, brokering groups, operating hours and split threshold (HotWax parity). | C-3, T-14, T-18 | 🟠 | 10 d | DOM 5→7 |
-| **P2-3** | **Connector honesty:** hide the 28 stubs from the marketplace (or badge them "Preview"). Un-hide Shopify. Build real **eBay**, **Walmart** and **NetSuite** connectors (T-15). | §2.4 | 🟠 | 15 d | Intake 6→8, Hub 5→7 |
-| **P2-4** | Connector contract tests (WireMock fixtures recorded from sandbox APIs) for the 13 real connectors. | §2.2 | 🟠 | 5 d | — |
+| **P2-3** | **Connector honesty:** hide the 30 stubs from the marketplace (or badge them "Preview"). Un-hide Shopify. Build real **eBay**, **Walmart** and **NetSuite** connectors (T-15). | §2.4 | 🟠 | 15 d | Intake 6→8, Hub 5→7 |
+| **P2-4** | Connector contract tests (WireMock fixtures recorded from sandbox APIs) for the 12 real connectors. | §2.2 | 🟠 | 5 d | — |
 | **P2-5** | Finance: replace the placeholder return-rate model with per-location configured rates; add Xero (real). | §3.3 | 🟡 | 4 d | Finance 6→7 |
 | **P3-1** | Procurement: reject, cancel, award and close transitions; 3-way match (PO ↔ receipt ↔ invoice). | §3.3 | 🟡 | 5 d | Procurement 6→7 |
 | **P3-2** | Picking depth: real wave release states, batch/cluster pick, slotting rules engine using recorded pick velocity. | §4.2 | 🟡 | 10 d | Picking 6→8 |
@@ -385,7 +385,7 @@ Effort assumes **one full-time developer**; with two, phases 2 and 3 can run in 
 
 ### 7.2 What *not* to build now
 
-- More connector *types*: 28 stubs already dilute the catalogue. Depth over breadth.
+- More connector *types*: 30 stubs already dilute the catalogue. Depth over breadth.
 - Robotics beyond one reference integration: Softeon and Körber own that space; Nexus wins on OMS + 3PL at its price.
 - New AI features before P3-4: no model should appear in the UI without a real backtest.
 

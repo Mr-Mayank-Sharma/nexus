@@ -40,13 +40,15 @@ public class EquipmentWatchdog {
     private final AutomationAlertRepository alerts;
     private final AutomationLogRepository logs;
     private final long heartbeatTimeoutSeconds;
+    private final AutomationService automation;
 
     public EquipmentWatchdog(AutomationSystemRepository systems, AutomationCommandRepository commands,
-                             AutomationAlertRepository alerts, AutomationLogRepository logs,
+                             AutomationAlertRepository alerts, AutomationLogRepository logs, AutomationService automation,
                              @Value("${nexus.equipment.heartbeat-timeout-seconds:300}") long heartbeatTimeoutSeconds) {
         this.systems = systems;
         this.commands = commands;
         this.alerts = alerts;
+        this.automation = automation;
         this.logs = logs;
         this.heartbeatTimeoutSeconds = heartbeatTimeoutSeconds;
     }
@@ -54,7 +56,7 @@ public class EquipmentWatchdog {
     /** @return number of commands failed plus systems flagged, for the caller's log line */
     @Transactional
     public int sweep(LocalDateTime now) {
-        return failTimedOutCommands(now) + flagSilentSystems(now);
+        return failTimedOutCommands(now) + flagSilentSystems(now) + retryUndelivered(now);
     }
 
     int failTimedOutCommands(LocalDateTime now) {
@@ -73,6 +75,33 @@ public class EquipmentWatchdog {
             failed++;
         }
         return failed;
+    }
+
+    /**
+     * Re-sends commands that failed at dispatch: the call to the equipment errored, so it never received the
+     * job and sending it again cannot do it twice. Commands that timed out, or that the equipment itself reported
+     * failed, are NOT retried: the work may have happened, and a person must decide. Backoff 30 s, 60 s, 120 s ...
+     * up to the command's own maxRetries; each failed command is retried once (it is then marked).
+     */
+    int retryUndelivered(LocalDateTime now) {
+        int retried = 0;
+        for (NxAutomationCommand c : commands.findByStatusAndCompletedAtAfter("FAILED", now.minusHours(1))) {
+            if (c.getErrorMessage() != null || c.getAcknowledgedAt() != null || c.getCompletedAt() == null) continue;
+            if (c.getMetadata() != null && c.getMetadata().contains("retriedAs")) continue;
+            int done = c.getRetryCount() == null ? 0 : c.getRetryCount();
+            int max = c.getMaxRetries() == null ? 0 : c.getMaxRetries();
+            if (done >= max) continue;
+            if (Duration.between(c.getCompletedAt(), now).getSeconds() < 30L * (1L << Math.min(done, 6))) continue;
+            try {
+                NxAutomationCommand again = automation.retryCommand(c.getId());
+                automation.markRetried(c, again.getId());
+                retried++;
+            } catch (RuntimeException e) {
+                log.warn("Automatic retry of command {} failed: {}", c.getId(), e.getMessage());
+                automation.markRetried(c, c.getId());   // do not loop on a command that cannot be retried
+            }
+        }
+        return retried;
     }
 
     int flagSilentSystems(LocalDateTime now) {

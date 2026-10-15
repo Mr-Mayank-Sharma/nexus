@@ -41,6 +41,9 @@ public class AutomationEmulatorService {
     private final AutomationLogRepository logRepository;
     private final SlottingService slottingService;
 
+    @org.springframework.beans.factory.annotation.Value("${nexus.automation.emulator.enabled:true}")
+    private boolean enabled = true;
+
     public AutomationEmulatorService(AutomationSystemRepository systemRepository,
                                      AutomationCommandRepository commandRepository,
                                      AutomationLogRepository logRepository,
@@ -55,6 +58,7 @@ public class AutomationEmulatorService {
     @SchedulerLock(name = "AutomationEmulatorService.advanceEmulatorSystems", lockAtMostFor = "PT2M", lockAtLeastFor = "PT1S")
     @Transactional
     public void advanceEmulatorSystems() {
+        if (!enabled) return;
         List<NxAutomationSystem> emulators = new ArrayList<>();
         for (NxAutomationSystem system : systemRepository.findAll()) {
             if (isEmulatorSystem(system)) {
@@ -118,7 +122,7 @@ public class AutomationEmulatorService {
     }
 
     public boolean isEmulatorSystem(NxAutomationSystem system) {
-        if (system == null || !Boolean.TRUE.equals(system.getIsActive())) {
+        if (!enabled || system == null || !Boolean.TRUE.equals(system.getIsActive())) {
             return false;
         }
         if (system.getProtocol() != null && "EMULATOR".equalsIgnoreCase(system.getProtocol())) {

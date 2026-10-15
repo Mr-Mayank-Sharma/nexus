@@ -28,6 +28,9 @@ public class AutomationService {
     private final AutomationAlertRepository alertRepository;
     private final RestProtocolAdapter restProtocolAdapter;
 
+    @org.springframework.beans.factory.annotation.Value("${nexus.automation.emulator.enabled:true}")
+    private boolean emulatorEnabled = true;
+
     public AutomationService(AutomationSystemRepository systemRepository,
                              AutomationCommandRepository commandRepository,
                              AutomationLogRepository logRepository,
@@ -244,15 +247,26 @@ public class AutomationService {
     protected void dispatchCommand(NxAutomationCommand command, NxAutomationSystem system) {
         String endpoint = system.getEndpointUrl();
         if (endpoint == null || endpoint.isBlank() || !Boolean.TRUE.equals(system.getIsActive())) {
-            if (Boolean.TRUE.equals(system.getIsActive())) {
+            if (Boolean.TRUE.equals(system.getIsActive()) && !emulatorEnabled) {
+                // No endpoint to call and no emulator: the command waits for the equipment's own callback.
+                addSystemLog(system.getId(), command.getId(), "WARN", "COMMAND_AWAITING_CALLBACK",
+                        "Command " + command.getCommandType() + " has no endpoint to be delivered to; waiting for "
+                                + system.getSystemName() + " to report, or for the watchdog to time it out");
+            } else if (Boolean.TRUE.equals(system.getIsActive())) {
                 command.setStatus("SENT");
                 command.setSentAt(LocalDateTime.now());
                 command = commandRepository.save(command);
 
                 addSystemLog(system.getId(), command.getId(), "INFO", "COMMAND_DISPATCHED",
                         "Command " + command.getCommandType() + " handed off to emulator loop for " + system.getSystemName());
-            } else {
+            } else if (emulatorEnabled) {
                 simulateAck(command, system, "system inactive; result simulated");
+            } else {
+                command.setStatus("FAILED");
+                command.setCompletedAt(LocalDateTime.now());
+                command.setErrorMessage("System " + system.getSystemName() + " is switched off");
+                commandRepository.save(command);
+                addSystemLog(system.getId(), command.getId(), "ERROR", "COMMAND_FAILED", command.getErrorMessage());
             }
             return;
         }
@@ -283,7 +297,16 @@ public class AutomationService {
                     && (!response.has("error") || response.path("error").isMissingNode())
                     && (!response.has("statusCode") || response.path("statusCode").asInt(200) < 400);
 
-            if (success) {
+            boolean acceptedOnly = success && isAcceptedForLaterCompletion(response);
+
+            if (acceptedOnly) {
+                // The equipment took the job and will report the outcome itself (callback endpoint).
+                command.setStatus("ACKNOWLEDGED");
+                command.setAcknowledgedAt(LocalDateTime.now());
+                commandRepository.save(command);
+                addSystemLog(system.getId(), command.getId(), "INFO", "COMMAND_ACK",
+                        "Command " + command.getCommandType() + " accepted by " + system.getSystemName() + "; awaiting its result");
+            } else if (success) {
                 command.setStatus("ACKNOWLEDGED");
                 command.setAcknowledgedAt(LocalDateTime.now());
                 command = commandRepository.save(command);
@@ -347,6 +370,20 @@ public class AutomationService {
 
         addSystemLog(system.getId(), command.getId(), "INFO", "COMMAND_COMPLETE",
                 "Command " + command.getCommandType() + " completed in " + command.getExecutionTimeMs() + "ms (simulated)");
+    }
+
+    /** True when the reply says the work is queued rather than done: {"async":true} or status ACCEPTED/QUEUED/PENDING. */
+    static boolean isAcceptedForLaterCompletion(JsonNode response) {
+        if (response == null) return false;
+        if (response.path("async").asBoolean(false)) return true;
+        String status = response.path("status").asText("").toUpperCase();
+        return status.equals("ACCEPTED") || status.equals("QUEUED") || status.equals("PENDING");
+    }
+
+    /** Records that a failed command was re-sent, so the watchdog never retries the same one twice. */
+    public void markRetried(NxAutomationCommand original, UUID retryId) {
+        original.setMetadata("{\"retriedAs\":\"" + retryId + "\"}");
+        commandRepository.save(original);
     }
 
     private Map<String, Object> parseParams(String json) {

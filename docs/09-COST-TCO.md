@@ -36,7 +36,7 @@ Assumes a mid-market deployment (2 replicas backend, 1 node).
 - Inventory: multi-location, ATP engine, transfer orders.
 - RMA: inspect → disposition → refund (idempotent QuickBooks sync).
 - Procurement, invoicing/AR, 3PL billing + client portal.
-- EDI (850/856/855/810/940/997), integration hub (13 connector types),
+- EDI (850/856/855/810/940/997), integration hub (12 real connector types),
   AI (deterministic + ML forecast, trained on real data).
 - Monitoring: Prometheus + Grafana + alerting included.
 

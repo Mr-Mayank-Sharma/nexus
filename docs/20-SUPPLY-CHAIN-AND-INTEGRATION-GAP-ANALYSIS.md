@@ -2,7 +2,7 @@
 
 > **What this is.** The honest answer to three questions the other docs circle but never answer head-on:
 > **(1)** Nexus is sold as a *supply chain platform* — how much of the supply chain does it actually cover?
-> **(2)** Of the ~39 advertised integrations, which are **real** and which are **demo**?
+> **(2)** Of the ~42 advertised integrations, which are **real** and which are **demo**?
 > **(3)** Which shipped features are **worthless** (or worse than absent), and what does the external
 > evidence say actually decides whether an OMS integration program succeeds?
 >
@@ -26,13 +26,13 @@ Nexus is a **strong OMS + WMS with a tactical procurement module** — not a sup
 **downstream half** of the chain (order → inventory → fulfillment → shipping → returns) is real and
 partly live-verified. The **upstream half** (demand planning, supply planning, sourcing, supplier
 collaboration, multi-echelon optimization) is **absent**. And the integration layer that would connect
-either half is **~28 of ~39 connectors read-only while advertising two-way sync** — a gap that external
+either half is **30 of 42 connectors read-only while advertising two-way sync** — a gap that external
 research says is *the* thing that decides whether OMS programs succeed or fail.
 
 Three claims, each defensible:
 
 1. **Scope:** Nexus covers the **execution** supply chain, not the **planning** supply chain. Calling it a "supply chain platform" overstates the upstream.
-2. **Integrations:** The marketplace advertises ~39 platforms; **~11 are real, ~28 are read-capable but write-incapable**, and the event bus that would carry writes is **write-only** (every event dead-letters).
+2. **Integrations:** The marketplace advertises ~42 platforms; **12 are real, 30 are read-capable but write-incapable**, and the event bus that would carry writes is **write-only** (every event dead-letters).
 3. **Leverage:** The highest-value work is **not** new features — it is making the existing integrations honest and fixing the event backbone. External evidence (integration = 40–60% of OMS cost; most large programs miss budget) says this is where the money and the risk actually are.
 
 ---
@@ -250,7 +250,7 @@ dangerous the gap is.
 | 3 | **`/ai/chat` with no model** | Invented order numbers, "sales up 18%", fake SKUs and dollar amounts | ✅ now 503 with instructions **[live]** |
 | 4 | **`AiAuditTrailPage`** | Renders "Audit trail not yet available" — a page that exists to imply a capability that isn't wired | 🔴 **Open** |
 | 5 | **Generic `testConnection`** | Probes `/` → reports connected/failed on nothing meaningful | 🟡 open |
-| 6 | **Marketplace `supportedSyncTypes`** | Advertises push capabilities that don't exist for ~28 platforms | 🟡 partially honest |
+| 6 | **Generic `ConnectorMetadata.supportedSyncTypes`** | Metadata advertises `INVENTORY_PUSH` (and `supportsWebhooks(true)`) that the generic connector never implements — the lie lives in the API, not just the marketplace | 🟡 partially honest |
 | 7 | **`registerWebhooks` no-op** | No inbound webhooks for generic platforms → silent polling-only | 🟡 open |
 | 8 | **Multi-Node Inventory page (pre-fix)** | Showed `$12.4M`, invented "Mumbai Central WH", a search that never returns, a toast that never calls the API | ✅ rebuilt on real data **[live][test]** |
 
@@ -268,7 +268,7 @@ The gap matrix. "Needed" = required for a credible mid-market OMS integration st
 
 | Capability | Needed for | Nexus has | Gap |
 |---|---|---|---|
-| **Real two-way connectors (top platforms)** | Any two-way sync promise | 11 real / ~28 read-only | **Promote UPS, DHL, NetSuite, Walmart, eBay** |
+| **Real two-way connectors (top platforms)** | Any two-way sync promise | 12 real / 30 read-only | **Promote UPS, DHL, NetSuite, Walmart, eBay** |
 | **Connector conformance test** | Stop the gap reopening | none | **Build it** (auth/pull/push/webhook/error) |
 | **Master-data crosswalk** | Every real deployment | not visible | **Build external-ID mapping** |
 | **Event backbone that works** | Notifications, analytics, AI, audit | write-only (ISS-01) | **Fix producer → envelope** |
@@ -334,7 +334,7 @@ nobody knew" fixes §3.4 says decide whether a program survives contact with pro
 
 ### 6.6 Anti-priorities (what NOT to do)
 
-- **Don't add connectors** before the existing ~28 are honest.
+- **Don't add connectors** before the existing 30 are honest.
 - **Don't build upstream/planning features** to justify the "supply chain" label — that is a new product.
 - **Don't build new AI features** while the event bus is write-only — they have no events to react to.
 - **Don't "fix" the event bug** by loosening the consumer contract.
@@ -345,7 +345,7 @@ nobody knew" fixes §3.4 says decide whether a program survives contact with pro
 | Workstream | Metric | Target |
 |---|---|---|
 | P0 | Order events reaching `NxAuditLog` | 100% (from ~0%) |
-| P1 | Connectors advertising two-way that actually push | 11 → 16+ |
+| P1 | Connectors advertising two-way that actually push | 12 → 17+ |
 | P1 | Silent no-op writes | 0 |
 | P1.5 | Entities with a crosswalk mapping | SKU + customer first |
 | P2 | Docs that call it a "supply chain platform" | 0 |
@@ -358,9 +358,9 @@ nobody knew" fixes §3.4 says decide whether a program survives contact with pro
 Recorded so a future pass knows where the holes are.
 
 1. **Is there any external-ID mapping today?** Not found in this pass — needs a source-level check before §6.3 is scoped.
-2. **How many connectors have real push, exactly?** `18` says ~11 dedicated; the *per-connector* push matrix is not enumerated.
+2. **How many connectors have real push, exactly?** `18` says ~11 dedicated (12 including OpenAI); the *per-connector* push matrix is not enumerated.
 3. **Does the AI forecast feed replenishment at all?** Forecast service exists **[code]**; the loop into POs is unverified.
-4. **Rate-limit / OAuth-refresh coverage across the 11 dedicated connectors** — only Shopify is confirmed hardened **[test]**.
+4. **Rate-limit / OAuth-refresh coverage across the 12 dedicated connectors** — only Shopify is confirmed hardened **[test]**. 
 5. **The composable-backlash sources** are directional **[research]**; a future pass should pin named studies before quoting externally.
 
 ---

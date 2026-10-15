@@ -799,11 +799,15 @@ A watchdog (`EquipmentWatchdog`, every minute, one pass per tenant, under a sche
 - A command still `SENT`, `ACKNOWLEDGED` or `EXECUTING` past its `timeoutMs` (default 300 s) is failed with a reason and a `COMMAND_TIMEOUT` alert **[test]**.
 - Equipment that has sent a heartbeat before and then goes quiet (default 300 s, `nexus.equipment.heartbeat-timeout-seconds`) is set to `ERROR` with one `CRITICAL` `HEARTBEAT_MISSED` alert; the alert closes itself when it reports again **[live][test]**. Equipment that never reported is not watched, and neither is anything an operator set to `OFFLINE` or `MAINTENANCE`.
 
-**Still not robotics-ready.** Failed commands are not retried automatically; the callback is plain HTTPS
-JSON, with no industrial protocol (OPC-UA, MQTT, vendor APIs); a command sent to a system with **no
-endpoint URL** is completed instantly by the emulator and marked `simulated:true`, so the timeout was
-verified by unit tests, not live; and nothing real has ever called this. Treat it as the contract a
-controller integration would build on.
+Three more behaviours close the remaining gaps **[test]**:
+
+- **Automatic retry, only where it is safe.** A command whose call to the equipment *errored* (it never received the job) is re-sent with backoff of 30 s, 60 s, 120 s and so on up to its `maxRetries`, once each. A command that **timed out** or that the equipment **reported failed** is never retried automatically, because the work may have happened and re-sending could do it twice; those raise an alert for a person.
+- **Production never fakes equipment.** `nexus.automation.emulator.enabled` is `true` locally and `false` in the `prod` profile (`NEXUS_AUTOMATION_EMULATOR_ENABLED` overrides). With it off, a command to a system with no endpoint stays `SENT` until the equipment calls back or the watchdog times it out, and a command to a switched-off system fails instead of "completing".
+- **Accepted is not done.** If the equipment's reply is `{"async":true}` or a status of `ACCEPTED`, `QUEUED` or `PENDING`, the command stays `ACKNOWLEDGED` and waits for the callback. Previously any 2xx reply marked it `COMPLETED`.
+
+**Still not robotics-ready.** The callback is plain HTTPS JSON, with no industrial protocol (OPC-UA, MQTT,
+vendor APIs); the command timeout and the retry were verified by unit tests, not live; and nothing real
+has ever called these endpoints. Treat it as the contract a controller integration would build on.
 
 ---
 
@@ -888,7 +892,7 @@ deploy behind HTTPS, (3) the lifecycle script in CI with CI running again, (4) a
 2. Point-of-sale adapter contract and inventory aggregation (explicit blocked status until credentials exist).
 3. Store-operations screen, distinct from the integration marketplace.
 4. Stock consumption for split allocations and partial shipments; lot-level movements.
-5. Producers for the shipment, inventory, payment and return topics (their listeners exist); automatic retry of timed-out commands, one real controller integration for equipment, and a way to turn the simulated completion off for production tenants.
+5. Producers for the shipment, inventory, payment and return topics (their listeners exist); one real controller integration for equipment (and the protocol adapter it needs).
 6. Alert rules for `nexus.outbox.failed` and the DLQ depth.
 7. Promote UPS, DHL, NetSuite, Walmart and eBay from generic to dedicated connectors; add a connector conformance suite.
 8. Burn down the **140** type errors (the ratchet only stops it growing).
