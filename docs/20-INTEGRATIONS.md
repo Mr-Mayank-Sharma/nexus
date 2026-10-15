@@ -69,7 +69,7 @@ Every entry also carries `liveVerified`. **It is true for four capabilities only
 
 ## 7. Live verification log
 
-**2026-10-15, Shopify dev shop `nexus-ship-ufb7gevv` and BigCommerce dev store `mhccbjdmoi`, read-only.** Credentials were supplied by the owner, saved through the API (sealed), and revoked afterwards by the owner. Nothing was written to either store.
+**2026-10-15, Shopify dev shop `nexus-ship-ufb7gevv` and BigCommerce dev store `mhccbjdmoi`, read-only.** Credentials were supplied by the owner, saved through the API (sealed), and revoked afterwards by the owner. Nothing was written to either store. A one-SKU real stock write was prepared (dry run planned exactly one change) but not executed: it needs the owner's go-ahead.
 
 | Check | Result |
 |---|---|
@@ -86,4 +86,5 @@ Defects the live run found and fixed:
 2. **A new Shopify or BigCommerce connection switched on scheduled stock, fulfilment and refund writes.** Only the order and product imports start enabled now. Test: `NewConnectionReadOnlyTest`.
 3. **The manual Shopify product sync ignored the lock the scheduler uses**, so a manual run and a scheduled run collided, and one duplicate-SKU error poisoned a single long transaction and answered 500 after 3.5 minutes. The endpoint takes the lock, rows now save independently, and failed rows are counted and named.
 4. `CredentialVault` falls back to a hard-coded key when `APP_CREDENTIAL_ENCRYPTION_KEY` is unset (a warning is logged). **Set it in every real environment.** Not changed here.
-5. Cosmetic, not fixed: the product sync reports products as `processed` but variants as `succeeded`.
+5. **A real stock publish would have emptied the shop.** Nexus holds stock for only 13 demo SKUs, none of them in the Shopify shop, so the "6,934 changes planned" were all *set to 0*. A SKU Nexus has no stock record for is now skipped (unknown is not zero), and the publish endpoint accepts `skus=` so the first real write can be a one-SKU canary. Tests: `ShopifyInventoryPublishTest`.
+6. Cosmetic, not fixed: the product sync reports products as `processed` but variants as `succeeded`.

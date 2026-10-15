@@ -114,18 +114,25 @@ public class ShopifyInventorySyncService {
      * @return the persisted run; its lines are the reconciliation detail
      */
     public NxInventoryPublishRun publish(UUID storeId, boolean dryRun, String triggeredBy) {
+        return publish(storeId, dryRun, triggeredBy, Set.of());
+    }
+
+    /**
+     * @param onlySkus when not empty, only these SKUs are considered: a canary for the first real write
+     */
+    public NxInventoryPublishRun publish(UUID storeId, boolean dryRun, String triggeredBy, Set<String> onlySkus) {
         NxIntegrationStore store = storeService.getStore(storeId);
         UUID tenantId = store.getTenantId();
         boolean ownsContext = TenantContext.findCurrentTenantId() == null;
         if (ownsContext) TenantContext.setCurrentTenantId(tenantId);
         try {
-            return doPublish(store, dryRun, triggeredBy);
+            return doPublish(store, dryRun, triggeredBy, onlySkus);
         } finally {
             if (ownsContext) TenantContext.clear();
         }
     }
 
-    private NxInventoryPublishRun doPublish(NxIntegrationStore store, boolean dryRun, String triggeredBy) {
+    private NxInventoryPublishRun doPublish(NxIntegrationStore store, boolean dryRun, String triggeredBy, Set<String> onlySkus) {
         UUID storeId = store.getId();
         UUID tenantId = store.getTenantId();
         housekeeping(storeId);
@@ -142,7 +149,7 @@ public class ShopifyInventorySyncService {
         List<NxInventoryPublishLine> lines = new ArrayList<>();
         String fatal = null;
         try {
-            execute(store, mappings, run, dryRun, lines);
+            execute(store, mappings, run, dryRun, lines, onlySkus);
         } catch (RuntimeException e) {
             log.error("Inventory publish failed for store {}: {}", storeId, e.getMessage(), e);
             fatal = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
@@ -153,7 +160,7 @@ public class ShopifyInventorySyncService {
     // ---- the work -------------------------------------------------------------------------------------
 
     private void execute(NxIntegrationStore store, List<NxChannelLocationMapping> mappings, NxInventoryPublishRun run,
-                         boolean dryRun, List<NxInventoryPublishLine> lines) {
+                         boolean dryRun, List<NxInventoryPublishLine> lines, Set<String> onlySkus) {
         UUID storeId = store.getId();
         UUID tenantId = store.getTenantId();
         String shop = storeService.getSetting(storeId, "shop_domain");
@@ -170,7 +177,7 @@ public class ShopifyInventorySyncService {
                 .collect(Collectors.groupingBy(NxInventory::getSku));
         Map<String, NxProductMapping> productBySku = new LinkedHashMap<>();
         for (NxProductMapping pm : productMappingRepository.findByTenantId(tenantId)) {
-            if (pm.getNexusSku() != null) productBySku.putIfAbsent(pm.getNexusSku(), pm);
+            if (pm.getNexusSku() != null && (onlySkus.isEmpty() || onlySkus.contains(pm.getNexusSku()))) productBySku.putIfAbsent(pm.getNexusSku(), pm);
         }
 
         Set<String> mappedLocationIds = rules.stream().map(Rule::externalLocationId).collect(Collectors.toCollection(TreeSet::new));
@@ -180,6 +187,9 @@ public class ShopifyInventorySyncService {
 
         for (NxProductMapping pm : productBySku.values()) {
             String sku = pm.getNexusSku();
+            // No stock record means Nexus does not track this SKU: unknown is not zero. Publishing 0 here
+            // would empty the merchant's shelf for every product Nexus has simply never counted.
+            if (!stockBySku.containsKey(sku)) continue;
             List<LocationQuantity> plan = InventoryPublishPlanner.plan(sku, stockBySku.getOrDefault(sku, List.of()), rules, nodes, today);
             Long itemId = pm.getBcVariantId() != null ? inventoryItemByVariant.get(pm.getBcVariantId()) : null;
             for (LocationQuantity lq : plan) {

@@ -305,4 +305,28 @@ class ShopifyInventoryPublishTest {
         assertEquals(2, result.getItemsSucceeded());
         assertEquals(0, result.getItemsFailed());
     }
+
+    @Test
+    void aSkuNexusHasNoStockRecordFor_isNeverPublishedAsZero() throws Exception {
+        when(products.findByTenantId(tenant)).thenReturn(List.of(product("SKU-1", 10L), product("UNTRACKED", 20L)));
+        shopifyHolds("{\"inventory_levels\":[]}");
+
+        service.publish(storeId, true, "alice");
+
+        assertTrue(savedLines().stream().noneMatch(l -> l.getSku().equals("UNTRACKED")),
+                "unknown stock must not be written as 0");
+        assertTrue(savedLines().stream().anyMatch(l -> l.getSku().equals("SKU-1")));
+    }
+
+    @Test
+    void onlySkus_limitsTheRunToTheCanary() throws Exception {
+        when(products.findByTenantId(tenant)).thenReturn(List.of(product("SKU-1", 10L), product("SKU-2", 20L)));
+        when(inventory.findByTenantId(tenant)).thenReturn(List.of(stock(storeA, "SKU-1", 30), stock(storeA, "SKU-2", 9)));
+        shopifyHolds("{\"inventory_levels\":[]}");
+
+        service.publish(storeId, true, "alice", java.util.Set.of("SKU-2"));
+
+        assertTrue(savedLines().stream().allMatch(l -> l.getSku().equals("SKU-2")));
+        assertFalse(savedLines().isEmpty());
+    }
 }

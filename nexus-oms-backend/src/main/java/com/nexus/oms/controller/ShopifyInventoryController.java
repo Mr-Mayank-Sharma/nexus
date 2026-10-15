@@ -62,8 +62,10 @@ public class ShopifyInventoryController {
     /** Dry run by default: calculating is always safe, writing to Shopify must be asked for. */
     @PostMapping("/publish")
     public ResponseEntity<ApiResponse<NxInventoryPublishRun>> publish(
-            @PathVariable UUID storeId, @RequestParam(defaultValue = "true") boolean dryRun) {
-        NxInventoryPublishRun run = publishService.publish(storeId, dryRun, TenantContext.getCurrentUsername());
+            @PathVariable UUID storeId, @RequestParam(defaultValue = "true") boolean dryRun,
+            @RequestParam(required = false) List<String> skus) {
+        NxInventoryPublishRun run = publishService.publish(storeId, dryRun, TenantContext.getCurrentUsername(),
+                skus == null ? java.util.Set.of() : new java.util.HashSet<>(skus));
         return ResponseEntity.ok(ApiResponse.success(run, run.getMessage()));
     }
 
