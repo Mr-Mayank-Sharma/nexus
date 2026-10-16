@@ -76,7 +76,7 @@ Every entry also carries `liveVerified`. **It is true for five capabilities only
 | Shopify connection, scopes, locations | Passed. 23 locations found. |
 | Shopify order import | **Matches.** 5,052 orders imported; the API lists 5,052. Order total 3,679,289.59 and 9,445 line items are identical on both sides. Shopify's count endpoint says 5,060: the 8 extra are older than 60 days and need the `read_all_orders` scope. |
 | Shopify product sync | **Matches.** 4,935 products (9,996 variants), equal to Shopify's count. |
-| Shopify stock publish | Full dry run planned 6,934 changes (all zeros, see defect 5). **Canary, real write, one SKU (100001) to `NEXUS-WH-001`:** published 7, Shopify read back 7; a repeat run said "already correct" and wrote nothing. Not restored: the item is still connected to that location with 7 units (the cleanup call was blocked), harmless and removable in Shopify admin. Full-catalogue publish not run. |
+| Shopify stock publish | Full dry run planned 6,934 changes (all zeros, see defect 5). **Canary, real write, one SKU (100001) to `NEXUS-WH-001`:** published 7, Shopify read back 7; a repeat run said "already correct" and wrote nothing. Restored afterwards: the item was disconnected from that location and the shop is back to its original state (checked). Full-catalogue publish not run. |
 | BigCommerce product sync | **Matches.** 13 products, 68 variants. |
 | BigCommerce order import | Ran, imported 0. The store has 0 orders, so this proves the connection, not the mapping. |
 
