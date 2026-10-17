@@ -54,6 +54,19 @@ public interface InventoryRepository extends JpaRepository<NxInventory, UUID> {
            "WHERE i.id = :id")
     int releaseAtomicByRow(@Param("id") UUID id, @Param("qty") int qty);
 
+    /** Moves units into the held bucket at ONE row, only if that many un-held units are on hand. */
+    @Modifying
+    @Query("UPDATE NxInventory i SET i.quantityDamaged = COALESCE(i.quantityDamaged, 0) + :qty, i.version = i.version + 1 " +
+           "WHERE i.id = :id AND COALESCE(i.quantityOnHand, 0) - COALESCE(i.quantityDamaged, 0) >= :qty")
+    int holdAtomicByRow(@Param("id") UUID id, @Param("qty") int qty);
+
+    /** Writes held units off on-hand at ONE row, only if both on-hand and the held bucket cover it. */
+    @Modifying
+    @Query("UPDATE NxInventory i SET i.quantityOnHand = COALESCE(i.quantityOnHand, 0) - :qty, " +
+           "i.quantityDamaged = COALESCE(i.quantityDamaged, 0) - :qty, i.version = i.version + 1 " +
+           "WHERE i.id = :id AND COALESCE(i.quantityOnHand, 0) >= :qty AND COALESCE(i.quantityDamaged, 0) >= :qty")
+    int writeOffHeldAtomicByRow(@Param("id") UUID id, @Param("qty") int qty);
+
     @Query("SELECT COALESCE(SUM(i.quantityOnHand), 0) FROM NxInventory i WHERE i.tenantId = :tenantId AND i.sku = :sku")
     Integer getTotalOnHand(@Param("tenantId") UUID tenantId, @Param("sku") String sku);
 

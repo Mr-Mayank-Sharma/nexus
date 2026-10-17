@@ -287,6 +287,52 @@ public class InventoryService {
         releaseInventory(tenantId, sku, nodeId, qty, null, null);
     }
 
+    /**
+     * Takes units out of what can be promised without touching on-hand: they move into the damaged /
+     * held bucket. This is the "phantom stock" response to a store rejection: online availability drops
+     * at once, and the ERP's on-hand is left alone until a manager approves a write-off or a cycle count.
+     *
+     * @return units actually held (never more than the row has that is not already held)
+     */
+    @Transactional
+    @CacheEvict(value = "inventory", allEntries = true)
+    public int holdUnits(UUID tenantId, String sku, UUID nodeId, int qty) {
+        NxInventory inv = inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
+                .orElseThrow(() -> new ResourceNotFoundException("No inventory for SKU " + sku + " at node " + nodeId));
+        int onHand = nz(inv.getQuantityOnHand());
+        int held = nz(inv.getQuantityDamaged());
+        int hold = Math.max(0, Math.min(qty, onHand - held));
+        // Atomic on purpose: a release earlier in the same transaction changed this row in SQL, so saving the
+        // cached entity would fail its version check. On-hand and the held bucket are unaffected by that release.
+        if (hold > 0 && inventoryRepository.holdAtomicByRow(inv.getId(), hold) == 1) {
+            bigCommerceInventorySyncService.pushSkuInventory(tenantId, sku);
+            return hold;
+        }
+        return 0;
+    }
+
+    /**
+     * Approved write-off of held units: removes them from on-hand and from the held bucket, with a ledger
+     * line. Clamped so it can never push either below zero.
+     *
+     * @return units actually written off
+     */
+    @Transactional
+    @CacheEvict(value = "inventory", allEntries = true)
+    public int writeOffHeldUnits(UUID tenantId, String sku, UUID nodeId, int qty, String referenceType, String referenceId, String reason) {
+        NxInventory inv = inventoryRepository.findByTenantIdAndSkuAndNodeId(tenantId, sku, nodeId)
+                .orElseThrow(() -> new ResourceNotFoundException("No inventory for SKU " + sku + " at node " + nodeId));
+        int onHand = nz(inv.getQuantityOnHand());
+        int held = nz(inv.getQuantityDamaged());
+        int off = Math.max(0, Math.min(qty, Math.min(onHand, held)));
+        if (off > 0 && inventoryRepository.writeOffHeldAtomicByRow(inv.getId(), off) == 1) {
+            recordMovement(inv, NxInventoryMovement.ADJUSTMENT, -off, 0, 0, referenceType, referenceId, reason);
+            bigCommerceInventorySyncService.pushSkuInventory(tenantId, sku);
+            return off;
+        }
+        return 0;
+    }
+
     @CacheEvict(value = "inventory", allEntries = true)
     public void releaseInventory(UUID tenantId, String sku, UUID nodeId, int qty, String referenceType, String referenceId) {
         // Same single-row resolution as reserve, so a release can only ever return units to the

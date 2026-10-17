@@ -118,6 +118,16 @@ public class OrderRoutingService {
                 allocations = selectBestAllocations(ruleAllocs, aiAllocs, threshold);
                 explanation = "Allocated using hybrid strategy (rule + AI ensemble)";
             }
+            case "REROUTE_AFTER_REJECTION" -> {
+                if (request.getForcedNodeId() == null) {
+                    throw new BadRequestException("A re-route needs the node to send the order to");
+                }
+                Warehouse target = warehouseRepository.findById(request.getForcedNodeId())
+                        .filter(wh -> tenantId.equals(wh.getTenantId()))
+                        .orElseThrow(() -> new ResourceNotFoundException("Warehouse not found: " + request.getForcedNodeId()));
+                allocations = allocateStockAware(order, tenantId, List.of(new Candidate(target, null)), "REROUTE_AFTER_REJECTION").allocations();
+                explanation = "Re-routed after a store rejection to the single node that holds the whole order";
+            }
             default ->
                 throw new BadRequestException("Invalid strategy: " + strategy + ". Must be RULE_BASED, AI_OPTIMIZED, or HYBRID");
         }
@@ -414,6 +424,110 @@ public class OrderRoutingService {
         return allocateStockAware(order, tenantId, candidates, "AI_OPTIMIZED").allocations();
     }
 
+    /** What a re-route did, in words an operator can act on. */
+    public record RerouteResult(String outcome, UUID fromNodeId, UUID toNodeId, String note) {
+        public static final String REROUTED_WHOLE_ORDER = "REROUTED_WHOLE_ORDER";
+        public static final String SHORTFALL_RAISED = "SHORTFALL_RAISED";
+        public static final String NOT_APPLICABLE = "NOT_APPLICABLE";
+    }
+
+    /**
+     * A store rejected part of an order it was allocated. Avoid a split shipment: if another node can
+     * ship <em>everything</em> in one package, release this store's reservations, cancel its allocation
+     * and send the whole order there. If no other node holds the whole order, keep what the store can
+     * still ship, release only the rejected units, and raise a visible shortfall instead of quietly
+     * splitting or losing them.
+     *
+     * <p>Runs in the caller's transaction, so a failure rolls the whole rejection back rather than
+     * leaving stock reserved at a store that said it cannot ship.
+     *
+     * @param excludedNodeIds nodes that must not receive the order (stores that already rejected it)
+     */
+    @Transactional
+    public RerouteResult rerouteAfterRejection(UUID orderId, UUID rejectedNodeId, String rejectedSku,
+                                               int rejectedQty, Set<UUID> excludedNodeIds) {
+        NxOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
+        UUID tenantId = order.getTenantId();
+        String status = order.getStatus();
+        if (!OrderStatusPolicy.ALLOCATED.equals(status) && !OrderStatusPolicy.PARTIALLY_ALLOCATED.equals(status)
+                && !OrderStatusPolicy.PICKING.equals(status)) {
+            return new RerouteResult(RerouteResult.NOT_APPLICABLE, rejectedNodeId, null,
+                    "Order is " + status + "; only an allocated order can be re-routed.");
+        }
+
+        Set<UUID> excluded = new HashSet<>(excludedNodeIds == null ? Set.of() : excludedNodeIds);
+        excluded.add(rejectedNodeId);
+
+        List<NxOrderAllocation> active = allocationRepository.findByOrderId(orderId).stream()
+                .filter(a -> "ALLOCATED".equals(a.getStatus())).toList();
+        Map<String, Integer> demand = collectOrderDemand(order);
+
+        Warehouse best = warehouseRepository.findOperational(tenantId).stream()
+                .filter(wh -> !excluded.contains(wh.getId()))
+                .filter(wh -> canFulfill(order, wh, demand))
+                .max(Comparator.comparing((Warehouse wh) -> scoreNodeForOrder(wh, order,
+                        conditionEvaluator.extractRegion(order.getShipToAddress()))))
+                .orElse(null);
+
+        if (best != null) {
+            for (NxOrderAllocation a : active) {
+                skuQuantitiesOf(a).forEach((sku, qty) -> {
+                    if (qty > 0 && a.getNodeId() != null) {
+                        inventoryService.releaseInventory(tenantId, sku, a.getNodeId(), qty, "ORDER", orderId.toString());
+                    }
+                });
+                a.setStatus("CANCELLED");
+                allocationRepository.save(a);
+            }
+            // Deliberate: the status policy has no ALLOCATED/PICKING -> CONFIRMED edge, because an order
+            // normally never goes back. A re-route is the one case that does, and it re-enters allocation.
+            order.setStatus(OrderStatusPolicy.CONFIRMED);
+            orderRepository.save(order);
+
+            AllocationRequest request = new AllocationRequest();
+            request.setOrderId(orderId);
+            request.setStrategy("REROUTE_AFTER_REJECTION");
+            request.setForcedNodeId(best.getId());
+            request.setDryRun(false);
+            AllocationResult result = allocateOrder(request);
+            return new RerouteResult(RerouteResult.REROUTED_WHOLE_ORDER, rejectedNodeId, best.getId(),
+                    "Whole order sent to " + best.getName() + " as one package (" + result.getStatus()
+                            + "). Any open pick list for this order at the rejecting store must be cancelled by the store.");
+        }
+
+        // Nobody else holds the whole order. Keep the store's remaining lines; give back only the rejected units.
+        for (NxOrderAllocation a : active) {
+            if (!rejectedNodeId.equals(a.getNodeId())) continue;
+            Map<String, Integer> quantities = skuQuantitiesOf(a);
+            int held = quantities.getOrDefault(rejectedSku, 0);
+            int release = Math.min(held, rejectedQty);
+            if (release <= 0) continue;
+            inventoryService.releaseInventory(tenantId, rejectedSku, rejectedNodeId, release, "ORDER", orderId.toString());
+            quantities.put(rejectedSku, held - release);
+            try {
+                com.fasterxml.jackson.databind.node.ObjectNode meta = (com.fasterxml.jackson.databind.node.ObjectNode)
+                        (a.getMetadata() == null || a.getMetadata().isBlank() ? MAPPER.createObjectNode() : MAPPER.readTree(a.getMetadata()));
+                meta.set("skuQuantities", MAPPER.valueToTree(quantities));
+                a.setMetadata(MAPPER.writeValueAsString(meta));
+            } catch (Exception e) {
+                throw new BadRequestException("Could not update the allocation's SKU breakdown: " + e.getMessage());
+            }
+            a.setQuantityAllocated(Math.max(0, (a.getQuantityAllocated() == null ? 0 : a.getQuantityAllocated()) - release));
+            allocationRepository.save(a);
+        }
+        OrderStatusPolicy.transitionIfAllowed(order, OrderStatusPolicy.PARTIALLY_ALLOCATED, "OrderRoutingService.rerouteAfterRejection");
+        orderRepository.save(order);
+        exceptionRepository.save(buildException(orderId, null, tenantId, "INVENTORY_SHORTAGE", "HIGH",
+                "Store rejected " + rejectedQty + " x " + rejectedSku + " and no other node holds the whole order",
+                "No single node can ship the full order, so the store keeps its remaining lines and the rejected "
+                        + rejectedQty + " unit(s) of " + rejectedSku + " need a decision: another node, a transfer, or a backorder.",
+                "BACKORDER", false));
+        return new RerouteResult(RerouteResult.SHORTFALL_RAISED, rejectedNodeId, null,
+                "No other node holds the whole order. The store keeps its remaining lines; "
+                        + rejectedQty + " x " + rejectedSku + " raised as a shortfall.");
+    }
+
     @Transactional
     public AllocationResult reallocateOrder(UUID orderId, String strategy) {
         AllocationRequest request = new AllocationRequest();
@@ -521,6 +635,21 @@ public class OrderRoutingService {
     // ---- Shared stock-aware allocation ----
 
     /** A node eligible to receive demand, plus the rule that nominated it (if any). */
+    /**
+     * The allocation table only accepts five node types. A warehouse can be one of many more
+     * (DISTRIBUTION_CENTER, COLD_STORE, AUTOMATED_DC, ...), and copying its type across made every
+     * allocation to such a node fail on a check constraint.
+     */
+    static String allocationNodeType(String warehouseType) {
+        if (warehouseType == null) return "WAREHOUSE";
+        String t = warehouseType.trim().toUpperCase(Locale.ROOT);
+        if (t.equals("STORE") || t.endsWith("_STORE") && !t.equals("COLD_STORE")) return "STORE";
+        if (t.equals("CROSS_DOCK")) return "CROSS_DOCK";
+        if (t.equals("DROP_SHIP")) return "DROP_SHIP";
+        if (t.equals("DC") || t.contains("DISTRIBUTION") || t.endsWith("_DC") || t.contains("FULFILLMENT")) return "DC";
+        return "WAREHOUSE";
+    }
+
     private record Candidate(Warehouse warehouse, NxRoutingRule rule) {}
 
     /**
@@ -1082,7 +1211,7 @@ public class OrderRoutingService {
                 .tenantId(tenantId)
                 .nodeId(wh.getId())
                 .nodeName(wh.getName())
-                .nodeType(wh.getType() != null ? wh.getType() : "WAREHOUSE")
+                .nodeType(allocationNodeType(wh.getType()))
                 .priority(priority)
                 .quantityAllocated(allocatedQty)
                 .quantityRequested(allocatedQty)

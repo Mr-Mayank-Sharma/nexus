@@ -50,6 +50,17 @@ public class NxOrderRejection {
     @Column(name = "photo_path")
     private String photoPath;
 
+    /** The store that rejected the pick. Null on rows from before re-routing existed. */
+    @Column(name = "node_id")
+    private UUID nodeId;
+
+    /** What happened to the order afterwards: REROUTED_WHOLE_ORDER, SHORTFALL_RAISED or NOT_APPLICABLE. */
+    @Column(name = "reroute_outcome")
+    private String rerouteOutcome;
+
+    @Column(name = "reroute_note", columnDefinition = "TEXT")
+    private String rerouteNote;
+
     @Column(name = "inventory_action", nullable = false)
     private String inventoryAction; // RESTOCK, DAMAGE_WRITE_OFF, RETURN_TO_VENDOR, QUARANTINE
 

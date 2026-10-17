@@ -15,4 +15,7 @@ public class AllocationRequest {
     private String strategy;
 
     private Boolean dryRun;
+
+    /** Send the whole order to this node (used by a re-route after a store rejection). */
+    private java.util.UUID forcedNodeId;
 }
