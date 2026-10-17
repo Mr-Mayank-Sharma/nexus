@@ -528,19 +528,48 @@ public class OrderRoutingService {
                         + rejectedQty + " x " + rejectedSku + " raised as a shortfall.");
     }
 
+    /**
+     * Re-runs allocation for an order that has not started picking. It used to cancel the allocation rows
+     * and leave their stock reserved, and then refuse to run at all for an ALLOCATED order (allocation
+     * only accepts PENDING or CONFIRMED), so a re-allocation either threw or leaked reservations.
+     * Once picking has started, use a rejection instead: it re-routes and accounts for the units.
+     */
     @Transactional
     public AllocationResult reallocateOrder(UUID orderId, String strategy) {
+        NxOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + orderId));
+        String status = order.getStatus();
+        boolean fresh = OrderStatusPolicy.PENDING.equals(status) || OrderStatusPolicy.CONFIRMED.equals(status);
+        boolean allocated = OrderStatusPolicy.ALLOCATED.equals(status)
+                || OrderStatusPolicy.PARTIALLY_ALLOCATED.equals(status) || OrderStatusPolicy.FAILED.equals(status);
+        if (!fresh && !allocated) {
+            throw new BadRequestException("An order that is " + status
+                    + " cannot be re-allocated. Once picking has started, record a rejection to re-route it.");
+        }
+
+        for (NxOrderAllocation existing : allocationRepository.findByOrderId(orderId)) {
+            if ("ALLOCATED".equals(existing.getStatus()) && existing.getNodeId() != null) {
+                skuQuantitiesOf(existing).forEach((sku, qty) -> {
+                    if (qty > 0) {
+                        inventoryService.releaseInventory(order.getTenantId(), sku, existing.getNodeId(), qty, "ORDER", orderId.toString());
+                    }
+                });
+            }
+            if (!"CANCELLED".equals(existing.getStatus())) {
+                existing.setStatus("CANCELLED");
+                allocationRepository.save(existing);
+            }
+        }
+        if (allocated) {
+            // The status policy has no edge back to CONFIRMED; re-allocation is the deliberate exception.
+            order.setStatus(OrderStatusPolicy.CONFIRMED);
+            orderRepository.save(order);
+        }
+
         AllocationRequest request = new AllocationRequest();
         request.setOrderId(orderId);
         request.setStrategy(strategy);
         request.setDryRun(false);
-
-        List<NxOrderAllocation> existing = allocationRepository.findByOrderId(orderId);
-        existing.forEach(a -> {
-            a.setStatus("CANCELLED");
-            allocationRepository.save(a);
-        });
-
         return allocateOrder(request);
     }
 

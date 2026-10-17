@@ -156,6 +156,30 @@ class RejectionRerouteTest {
         verify(allocationRepository, never()).save(any());
     }
 
+    @Test
+    void reallocatingAnAllocatedOrder_givesBackTheOldReservation_beforeAllocatingAgain() {
+        // Used to throw ("must be PENDING or CONFIRMED") and, had it run, left the old stock reserved.
+        availability(storeA, 0);
+        availability(storeB, 2);
+
+        service.reallocateOrder(order.getId(), "AI_OPTIMIZED");
+
+        verify(inventoryService).releaseInventory(tenant, "SKU-001", storeA.getId(), 2, "ORDER", order.getId().toString());
+        assertEquals("CANCELLED", allocA.getStatus());
+        verify(inventoryService).reserveInventory(eq(tenant), eq("SKU-001"), eq(storeB.getId()), eq(2), eq("ORDER"), eq(order.getId().toString()));
+        assertEquals("ALLOCATED", order.getStatus());
+    }
+
+    @Test
+    void reallocatingAnOrderThatIsAlreadyBeingPacked_isRefusedWithAClearReason() {
+        order.setStatus("PACKING");
+
+        BadRequestException e = assertThrows(BadRequestException.class,
+                () -> service.reallocateOrder(order.getId(), "AI_OPTIMIZED"));
+        assertTrue(e.getMessage().contains("record a rejection"), e.getMessage());
+        verifyNoInteractions(inventoryService);
+    }
+
     // ---- the rejection flow around it -------------------------------------------------------------------
 
     private static final class Flow {
