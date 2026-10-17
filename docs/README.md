@@ -42,6 +42,8 @@ AI-native, multi-tenant Order Management System unifying **commerce → inventor
 | [`11-SYSTEM-DESIGN.md`](./11-SYSTEM-DESIGN.md) | **Diagram companion** — C4 context/container/component, deployment & network topology, CI/CD pipelines, auth/webhook/import sequences, order-to-return state machines, Kafka topic map | Engineering |
 | [`19-MARKET-BENCHMARKS.md`](./19-MARKET-BENCHMARKS.md) | **Externally-sourced market reality** — real vendor revenue (SEC filings), published pricing, Gartner 2026 WMS positions, implementation cost/TCO benchmarks, and where `07`'s self-scores diverge from verifiable data | All, exec, investors |
 | [`20-INTEGRATIONS.md`](./20-INTEGRATIONS.md) | **What is real in every integration**, how the Directory/Connections screens show it, the rules that keep it true, and what is still not | All, engineers, sales |
+| [`21-DESIGN-PARTNER-REQUIREMENTS.md`](./21-DESIGN-PARTNER-REQUIREMENTS.md) | The first design partner's requirements (anonymised) and where Nexus stands against each | Product, sales |
+| [`22-MARKET-RESEARCH-AND-LAUNCH-PLAN.md`](./22-MARKET-RESEARCH-AND-LAUNCH-PLAN.md) | What the market research says, what Nexus is today, what to build and fix, how to position it, and a 90-day pilot plan | **Founders, product, sales** |
 | [`features/`](./features/) | Per-feature deep dives (overview, process, use cases, data flow, ER subset, access) | All |
 
 ### Feature docs

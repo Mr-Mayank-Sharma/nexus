@@ -62,3 +62,10 @@ system, a dated live run recorded in [20-INTEGRATIONS.md](./20-INTEGRATIONS.md).
 Recurring themes from other retail operations: Shopify-to-ERP fulfilment loops, store transfers and cycle
 counts, BOPIS and on-demand delivery, returns through a third-party portal, inventory feeds to marketing
 channels. These are treated as market patterns, not as another company's material.
+
+## 5. Defects found while building A1/A2 (all fixed, all with tests)
+
+1. `OrderRoutingService.reallocateOrder` threw for any already-allocated order and never released the stock it had reserved. It now releases the old reservations first, and refuses once picking has started with a message that points to the rejection flow.
+2. `processRejection` set `inventoryAdjusted = true` without changing any inventory.
+3. Allocating an order to a node whose warehouse type was `DISTRIBUTION_CENTER`, `COLD_STORE`, `AUTOMATED_DC` and similar failed on a check constraint (the table accepts only five node types), so such a tenant could not allocate at all. The type is now mapped.
+4. A rejection trusted the caller-supplied order id and order number: it now looks the order up, requires it to belong to the caller's tenant, and fills the number from the order.
