@@ -4,7 +4,7 @@
 >
 > **Source of truth:** `hotwaxoms/moqui2/runtime/component/` — read from the deployed component tree, not from documentation or sales claims. Every claim below cites a file and, where relevant, an exact Moqui service identifier.
 >
-> **Relationship to other docs:** This is the *code* evidence base. [`nexus-vs-hotwax-technical.md`](./nexus-vs-hotwax-technical.md) compares this architecture to Nexus's Spring Boot stack. [`hotwax-company-analysis.md`](./hotwax-company-analysis.md) covers how HotWax operates as a company.
+> **Relationship to other docs:** This is the *code* evidence base. [`nexus-vs-hotwax-technical.md`](./nexus-vs-hotwax-technical.md) compares this architecture to Nexus's Spring Boot stack. `hotwax-company-analysis.md` (kept locally, not in the repo) covers how HotWax operates as a company.
 
 ---
 

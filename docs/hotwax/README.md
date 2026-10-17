@@ -1,8 +1,8 @@
 # HotWax Commerce — Deep Analysis & Nexus Market-Readiness
 
-> **Purpose:** Reverse-engineer HotWax Commerce from real meeting transcripts (Read AI) to understand *how they operate as a company* — architecture, management, sales process, demo calls, client acquisition, and pricing — then use that intelligence to build a **market-readiness implementation plan for Nexus OMS**.
+> **Purpose:** Understand *how they operate as a company* — architecture, management, sales process, demo calls, client acquisition, and pricing — then use that intelligence to build a **market-readiness implementation plan for Nexus OMS**.
 
-*Source: 11 real HotWax customer/partner meetings transcribed via Read AI (see `../readai-analysis/transcripts/`). All analysis is read-only; nothing was posted back to Read AI.*
+*Source: general market patterns; no third-party recordings are kept in this repository.*
 
 ---
 
@@ -21,8 +21,6 @@ HotWax Commerce is a **real, revenue-generating OMS** with a live customer base 
 
 | Document | What it covers |
 |----------|----------------|
-| [`hotwax-company-analysis.md`](./hotwax-company-analysis.md) | Deep dive: HotWax business model, architecture, management, operations, pricing, weaknesses |
-| [`hotwax-sales-demo-playbook.md`](./hotwax-sales-demo-playbook.md) | How HotWax runs demo calls, finds clients, and closes deals — the sales playbook |
 | [`hotwax-marketing-strategy.md`](./hotwax-marketing-strategy.md) | How HotWax markets itself (NRF strategy, content engine, partner channel, pricing) — the marketing playbook |
 | [`soc-wms-project.md`](./soc-wms-project.md) | Deep dive on the Spoonful of Comfort (SoC) WMS project — the flagship fulfillment/WMS engagement |
 | [`nexus-market-readiness-plan.md`](./nexus-market-readiness-plan.md) | **The main deliverable** — detailed implementation plan to make Nexus market-ready |

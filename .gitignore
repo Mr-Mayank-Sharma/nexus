@@ -59,3 +59,6 @@ ai-artifacts/
 supply_chain_ai2/models/
 .credentials
 .trivy-cache/
+
+# Third-party call recordings and analysis: kept locally, never committed.
+private/

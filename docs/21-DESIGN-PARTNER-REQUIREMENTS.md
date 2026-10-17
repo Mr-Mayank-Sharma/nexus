@@ -1,24 +1,22 @@
-# 21 — First client: Aldo (requirements, and where Nexus stands)
+# 21 — Design partner A: requirements, and where Nexus stands
 
-> **Source.** Two discovery calls recorded in Read AI: *Aldo Shopify OMS Orchestration and Fulfillment*
-> (2026-09-30) and *Aldo 2 OMS Fulfillment and Routing* (2026-10-01), both between a HotWax Commerce
-> presales lead and Aldo's e-commerce operations lead. Aldo is **evaluating HotWax**, not yet a client of
-> either product; these notes are the requirements of the first account Nexus wants to win, in Aldo's words.
+> **Source.** Two discovery conversations with a prospective design partner, summarised and anonymised.
+> No recordings, transcripts, names or company identifiers are kept in this repository. The partner is
+> referred to as "Partner A", and the incumbent systems are named only by product category and vendor.
 >
 > **Status labels** — **Done** built and covered by a test · **Partial** exists but does not meet the
 > need · **Missing** not built · **Unverified** code exists, never run against the real system.
 > Status was checked against the code on the date of this file, not recalled.
 
-## 1. Who Aldo is
+## 1. Who Partner A is
 
-- A 60-year-old footwear/accessories retailer; several brands, **about 300 stores plus DCs**, e-commerce
-  above $100M a year, moving all brands to **Shopify** and **Shopify POS** (store roll-out first; the OMS
-  layer is planned for **Q2/Q3 2027**, after POS is complete).
-- Current stack: Shopify (customer transactions) · **Fluent Commerce** (OMS, store pick/pack) · **Fluid**
-  (POS, being retired) · **SAP** (inventory movements, finance; pushes inventory to Shopify nightly) ·
-  **EasyPost** (labels and tracking) · FedEx accounts that differ by store.
-- The buyer is open to a vendor without a pre-built SAP connector *if the vendor will build it with them*.
-  Explicitly wants a partner, not "dinosaur" enterprise WMS/OMS suites.
+- A multi-brand footwear and accessories retailer with **about 300 stores plus distribution centres**,
+  e-commerce above $100M a year, moving all brands to **Shopify** and **Shopify POS** (store roll-out first;
+  the OMS layer follows, planned for 2027).
+- Current stack: Shopify (customer transactions) · an enterprise OMS (store pick/pack) · a legacy POS being
+  retired · **SAP** (inventory movements, finance; pushes inventory to Shopify nightly) · a label and
+  tracking aggregator · carrier accounts that differ by store.
+- Open to a vendor without a pre-built SAP connector if the vendor will build it with them.
 - Peak: about 50,000 orders on Black Friday.
 
 ## 2. What they said they need, in priority order
@@ -61,14 +59,6 @@ system, a dated live run recorded in [20-INTEGRATIONS.md](./20-INTEGRATIONS.md).
 
 ## 4. Other accounts that shape the same product
 
-The ten other calls in `docs/readai-analysis/` (Gorjana, Rails, SIMKHAI, Chelan, Agape, Spoonful of
-Comfort, Lovers, and the integration sessions) are summarised in [readai-analysis](./readai-analysis/README.md).
-Recurring themes there: Shopify↔NetSuite fulfilment loops, store transfers and cycle counts, BOPIS and
-on-demand delivery, returns through a third-party portal, inventory feeds to marketing channels.
-
-## 5. Defects found while building A1/A2 (all fixed, all with tests)
-
-1. `OrderRoutingService.reallocateOrder` threw for any already-allocated order and never released the stock it had reserved.
-2. `processRejection` set `inventoryAdjusted = true` without changing any inventory.
-3. Allocating an order to a node whose warehouse type was `DISTRIBUTION_CENTER`, `COLD_STORE`, `AUTOMATED_DC` and similar failed on a check constraint (the table accepts only five node types), so such a tenant could not allocate at all. The type is now mapped.
-4. A rejection trusted the caller-supplied order id and order number: it now looks the order up, requires it to belong to the caller's tenant, and fills the number from the order.
+Recurring themes from other retail operations: Shopify-to-ERP fulfilment loops, store transfers and cycle
+counts, BOPIS and on-demand delivery, returns through a third-party portal, inventory feeds to marketing
+channels. These are treated as market patterns, not as another company's material.

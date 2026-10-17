@@ -2,7 +2,7 @@
 
 > **Goal:** Make Nexus OMS **market-ready** to compete with HotWax Commerce for Shopify-merchant-with-ERP OMS deals. This plan synthesizes the HotWax company analysis, the SoC WMS reference, and Nexus's current state into a **prioritized, executable roadmap** — covering product gaps, sales/demo readiness, commercial model, and competitive positioning.
 
-*Companion docs: [`hotwax-company-analysis.md`](./hotwax-company-analysis.md), [`hotwax-sales-demo-playbook.md`](./hotwax-sales-demo-playbook.md), [`soc-wms-project.md`](./soc-wms-project.md), [`nexus-vs-hotwax-competitive.md`](./nexus-vs-hotwax-competitive.md). Also see `../GAP_CLOSURE_PLAN.md` (technical gap-by-gap) and `../08-IMPLEMENTATION-PLAN.md` (10/10 scorecard).*
+*Companion docs: `hotwax-company-analysis.md` (kept locally, not in the repo), `hotwax-sales-demo-playbook.md` (kept locally, not in the repo), [`soc-wms-project.md`](./soc-wms-project.md), [`nexus-vs-hotwax-competitive.md`](./nexus-vs-hotwax-competitive.md). Also see `../GAP_CLOSURE_PLAN.md` (technical gap-by-gap) and `../08-IMPLEMENTATION-PLAN.md` (10/10 scorecard).*
 
 ---
 
