@@ -239,7 +239,8 @@ export default function JobsPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-left text-sm">
                 <thead className="text-xs uppercase text-[var(--text-tertiary)]">
                   <tr><th className="py-2 pr-3">Job</th><th className="pr-3">Schedule</th><th className="pr-3">Next run</th><th className="pr-3">Last run</th><th className="pr-3">On</th><th /></tr>
@@ -281,6 +282,30 @@ export default function JobsPage() {
                 </tbody>
               </table>
             </div>
+            <ul className="space-y-3 md:hidden" aria-label="Jobs (list)">
+              {(jobs.data ?? []).map(j => (
+                <li key={j.id} className={`rounded-xl border border-[var(--border-subtle)] p-3 ${selected === j.id ? 'bg-[var(--interactive-hover)]' : ''}`}>
+                  <button className="text-left text-base font-semibold text-[var(--text-primary)]" onClick={() => { setSelected(j.id); setOpenRun(null) }}>{j.name}</button>
+                  <div className="text-xs text-[var(--text-tertiary)]">{j.typeLabel}</div>
+                  <div className="mt-2 text-sm text-[var(--text-secondary)]">{describeSchedule(j.cron, j.timezone)}</div>
+                  <div className="text-sm text-[var(--text-secondary)]">Next: {nextRunText(j)}</div>
+                  <div className="mt-1 flex items-center gap-2"><StatusBadge status={j.lastStatus} /><span className="text-xs text-[var(--text-tertiary)]">{when(j.lastRunAt)}</span></div>
+                  <PermissionGate resource="import" action="create">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <button className={ghost} onClick={() => runMut.mutate(j.id)} disabled={runMut.isPending} aria-label={`Run ${j.name} now (mobile)`}><Play className="h-4 w-4" aria-hidden /> Run now</button>
+                      <button className={ghost} onClick={() => startEdit(j)} aria-label={`Edit ${j.name} (mobile)`}><Pencil className="h-4 w-4" aria-hidden /></button>
+                      <label className="ml-auto flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                        On
+                        <input type="checkbox" checked={j.enabled} disabled={enableMut.isPending || (!j.cron && !j.enabled)}
+                          aria-label={`Switch ${j.name} ${j.enabled ? 'off' : 'on'} (mobile)`}
+                          onChange={e => enableMut.mutate({ id: j.id, on: e.target.checked })} />
+                      </label>
+                    </div>
+                  </PermissionGate>
+                </li>
+              ))}
+            </ul>
+            </>
           )}
       </section>
 

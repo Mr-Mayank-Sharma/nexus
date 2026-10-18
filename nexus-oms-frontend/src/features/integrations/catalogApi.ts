@@ -22,9 +22,9 @@ export interface ConnectionHealth {
 }
 
 export async function getCatalog(): Promise<Catalog> {
-  return (await client.get('/integration-hub/catalog')).data
+  return (await client.get('/integration-hub/catalog', { raw: true })).data
 }
 
 export async function getConnectionHealth(): Promise<ConnectionHealth> {
-  return (await client.get('/integration-hub/health')).data
+  return (await client.get('/integration-hub/health', { raw: true })).data
 }

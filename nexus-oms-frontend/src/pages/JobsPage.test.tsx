@@ -43,15 +43,15 @@ describe('JobsPage', () => {
 
   it('lists jobs with a plain schedule, and says a new job is off', async () => {
     renderPage()
-    expect(await screen.findByText('Nightly stock')).toBeInTheDocument()
-    expect(screen.getByText('Every day at 02:00 (UTC)')).toBeInTheDocument()
-    expect(screen.getByText('Switched off')).toBeInTheDocument()
-    expect(screen.getByText('Finished with failures')).toBeInTheDocument()
+    expect((await screen.findAllByText('Nightly stock')).length).toBeGreaterThan(0)   // table row and phone card
+    expect(screen.getAllByText('Every day at 02:00 (UTC)').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Switched off').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Finished with failures').length).toBeGreaterThan(0)
   })
 
   it('shows the rows that failed with the reason, and offers both downloads', async () => {
     renderPage()
-    fireEvent.click(await screen.findByText('Nightly stock'))
+    fireEvent.click((await screen.findAllByText('Nightly stock'))[0])
     const history = await screen.findByLabelText('Run history')
     fireEvent.click(await within(history).findByText('Finished with failures'))
     expect(await screen.findByText('Nexus holds 3 but Shopify holds 5')).toBeInTheDocument()

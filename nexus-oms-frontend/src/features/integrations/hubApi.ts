@@ -39,18 +39,21 @@ export interface HubJob {
   startedAt: string
 }
 
+/** These endpoints return the payload itself, not the {success, data} envelope. */
+const RAW = { raw: true } as const
+
 export interface TestOutcome { connectionVerified?: boolean; success: boolean; message: string }
 
-export const getPlatforms = async (): Promise<Platform[]> => (await client.get('/integration-hub/platforms')).data
-export const getConnections = async (): Promise<Connection[]> => (await client.get('/integration-hub/connectors')).data
-export const getJobs = async (): Promise<HubJob[]> => (await client.get('/integration-hub/jobs')).data
+export const getPlatforms = async (): Promise<Platform[]> => (await client.get('/integration-hub/platforms', RAW)).data
+export const getConnections = async (): Promise<Connection[]> => (await client.get('/integration-hub/connectors', RAW)).data
+export const getJobs = async (): Promise<HubJob[]> => (await client.get('/integration-hub/jobs', RAW)).data
 
 export async function createConnection(platformType: string, storeName: string, settings: Record<string, string>, credentials: Record<string, string>):
   Promise<{ id: string; saved: boolean } & TestOutcome> {
-  return (await client.post('/integration-hub/connectors', { platformType, storeName, settings, credentials })).data
+  return (await client.post('/integration-hub/connectors', { platformType, storeName, settings, credentials }, RAW)).data
 }
 
-export const testConnection = async (id: string): Promise<TestOutcome> => (await client.post(`/integration-hub/connectors/${id}/test`)).data
+export const testConnection = async (id: string): Promise<TestOutcome> => (await client.post(`/integration-hub/connectors/${id}/test`, undefined, RAW)).data
 export const removeConnection = async (id: string) => { await client.delete(`/integration-hub/connectors/${id}`) }
 export const runOperation = async (id: string, syncType: string, params?: Record<string, unknown>): Promise<HubJob> =>
-  (await client.post(`/integration-hub/connectors/${id}/sync/${syncType}`, params ?? {})).data
+  (await client.post(`/integration-hub/connectors/${id}/sync/${syncType}`, params ?? {}, RAW)).data

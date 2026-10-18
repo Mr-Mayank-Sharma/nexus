@@ -2,6 +2,10 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 const API_BASE_URL = '/api/v1'
 
+declare module 'axios' {
+  interface AxiosRequestConfig { raw?: boolean }
+}
+
 const client = axios.create({
   baseURL: API_BASE_URL,
   timeout: 15000,
@@ -124,6 +128,9 @@ function normalizePagination(body: Record<string, any>): Record<string, any> {
 client.interceptors.response.use(
   (response) => {
     window.dispatchEvent(new CustomEvent('nexus:backend-reachable'))
+    // `raw` is for endpoints that return a bare array or object. The rewrapping below is built for the standard
+    // {success, data} envelope and would hand such a page an envelope where it expects the payload itself.
+    if ((response.config as { raw?: boolean } | undefined)?.raw) return response
     if (response.data && typeof response.data === 'object') {
       response.data = normalizePagination(responseToCamel(response.data))
     }

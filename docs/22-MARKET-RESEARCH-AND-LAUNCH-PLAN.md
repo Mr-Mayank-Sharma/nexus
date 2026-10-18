@@ -111,6 +111,13 @@ any published result for AI-driven routing beyond vendor claims.
 | 7 | **Agent-ready availability and promise API** | E8, E10 | UCP makes accuracy a distribution channel |
 | 8 | Shopify POS transfers: sync, do not rebuild | E8 | Shopify now has the workflow |
 
+**Status on 2026-10-18.** Built and tested: #1 failure-aware routing (per-store smoothed pick-failure rate, used in the
+AI score and in the re-route choice), #2 the order replay (`/order-replay`, three CSV files in, three rules compared,
+live-checked in a browser), and the stock baseline import (a prerequisite the list did not name). Built since the
+research: scheduled jobs with per-row failure files, a pick-work cancellation on re-route. Not yet built: #3 per-location
+oversell guard with event-driven sync, #4 phantom-inventory flags, #5 split economics, #6 plain-language rules with
+approval, #7 agent-ready availability API, #8 Shopify POS transfer sync.
+
 **Do not build now:** a returns portal (integrate), a bigger AI platform, more connector listings, WMS depth
 beyond pick/pack/ship, digital twins, RFID, yard/dock, editions and pricing modules.
 

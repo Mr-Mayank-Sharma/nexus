@@ -1,5 +1,21 @@
 # Release notes
 
+## v0.1.0-rc3 (2026-10-18)
+
+Adds, on top of rc2:
+- **Routing what-if (order replay).** Upload your own orders, stock and (optionally) locations with their pick-failure
+  rates as CSV, or load invented sample data, and see how three routing rules would have handled them: shipments,
+  orders split, units not filled, expected failed picks and an adjustable cost estimate, with the orders that would
+  ship differently and CSV downloads. It is a simulation to compare rules on the same orders, not a forecast, and the
+  page says so beside the result. Nothing is stored and nothing in Nexus changes.
+- **Fixed: the Integration Directory and Connections screens crashed in a real browser** (they passed their unit
+  tests only because the tests mocked the API). Found by viewing the screens for the first time; now covered by a test
+  that runs the real API client against a fake server.
+- Scheduled Jobs shows as cards on a phone instead of a cut-off table; "1 shipments" fixed.
+
+Every screen added in rc1 to rc3 has now been looked at in a real browser (desktop and phone width). The rest of the
+app has not.
+
 ## v0.1.0-rc2 (2026-10-18)
 
 Adds, on top of rc1:
