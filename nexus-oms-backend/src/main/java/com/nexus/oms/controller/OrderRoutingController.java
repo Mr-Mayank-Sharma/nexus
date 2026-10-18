@@ -23,9 +23,20 @@ import java.util.UUID;
 public class OrderRoutingController {
 
     private final OrderRoutingService orderRoutingService;
+    private final com.nexus.oms.service.PickFailureService pickFailureService;
 
-    public OrderRoutingController(OrderRoutingService orderRoutingService) {
+    public OrderRoutingController(OrderRoutingService orderRoutingService,
+                                  com.nexus.oms.service.PickFailureService pickFailureService) {
         this.orderRoutingService = orderRoutingService;
+        this.pickFailureService = pickFailureService;
+    }
+
+    /** Each store's smoothed pick-failure rate over the last 90 days, as routing uses it. */
+    @GetMapping("/pick-failure-rates")
+    public ResponseEntity<ApiResponse<java.util.List<com.nexus.oms.service.PickFailureService.NodeRate>>> pickFailureRates() {
+        var rates = new java.util.ArrayList<>(pickFailureService.ratesFor(com.nexus.oms.security.TenantContext.getCurrentTenantId()).values());
+        rates.sort(java.util.Comparator.comparingDouble(com.nexus.oms.service.PickFailureService.NodeRate::rate).reversed());
+        return ResponseEntity.ok(ApiResponse.success(rates));
     }
 
     @GetMapping

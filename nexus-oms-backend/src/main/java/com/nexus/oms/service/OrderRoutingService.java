@@ -71,6 +71,25 @@ public class OrderRoutingService {
         this.inventoryService = inventoryService;
     }
 
+    /** Optional: absent in unit tests that build the service by hand, in which case routing ignores failure history. */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private PickFailureService pickFailureService;
+
+    void setPickFailureService(PickFailureService service) {
+        this.pickFailureService = service;
+    }
+
+    /** Score points taken off a node per 1.0 of pick-failure rate: 5% costs 10 points, 20% costs 40. */
+    static final double PICK_FAILURE_POINTS = 200;
+
+    private Map<UUID, PickFailureService.NodeRate> failureRates(UUID tenantId) {
+        return pickFailureService == null ? Map.of() : pickFailureService.ratesFor(tenantId);
+    }
+
+    private static BigDecimal pickFailurePenalty(Map<UUID, PickFailureService.NodeRate> rates, UUID nodeId) {
+        return BigDecimal.valueOf(Math.round(PickFailureService.rateOrPrior(rates, nodeId) * PICK_FAILURE_POINTS));
+    }
+
     @Transactional
     public AllocationResult allocateOrder(AllocationRequest request) {
         long startTime = System.currentTimeMillis();
@@ -395,10 +414,12 @@ public class OrderRoutingService {
 
         // Scoring still decides node PREFERENCE (and therefore priority), but the score no longer
         // decides QUANTITIES.
+        Map<UUID, PickFailureService.NodeRate> failureRates = failureRates(tenantId);
         List<Warehouse> scored = warehouses.stream()
                 .map(wh -> {
                     boolean fulfillsAll = canFulfill(order, wh, demanded);
-                    BigDecimal base = scoreNodeForOrder(wh, order, shipRegion);
+                    // A node that often fails picks is worth less than its raw score says it is.
+                    BigDecimal base = scoreNodeForOrder(wh, order, shipRegion).subtract(pickFailurePenalty(failureRates, wh.getId()));
                     if (fulfillsAll) {
                         base = base.add(BigDecimal.valueOf(40));
                     } else if (canFulfillAny(order, wh, demanded)) {
@@ -467,7 +488,8 @@ public class OrderRoutingService {
                 .filter(wh -> !excluded.contains(wh.getId()))
                 .filter(wh -> canFulfill(order, wh, demand))
                 .max(Comparator.comparing((Warehouse wh) -> scoreNodeForOrder(wh, order,
-                        conditionEvaluator.extractRegion(order.getShipToAddress()))))
+                        conditionEvaluator.extractRegion(order.getShipToAddress()))
+                        .subtract(pickFailurePenalty(failureRates(tenantId), wh.getId()))))
                 .orElse(null);
 
         if (best != null) {

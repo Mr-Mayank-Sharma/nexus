@@ -180,6 +180,63 @@ class RejectionRerouteTest {
         verifyNoInteractions(inventoryService);
     }
 
+    // ---- failure-aware routing ---------------------------------------------------------------------------
+
+    private PickFailureService ratesWhere(UUID badStore, double rate) {
+        PickFailureService rates = mock(PickFailureService.class);
+        when(rates.ratesFor(tenant)).thenReturn(java.util.Map.of(
+                badStore, new PickFailureService.NodeRate(badStore, 100, Math.round(rate * 100), rate)));
+        return rates;
+    }
+
+    @Test
+    void withNoFailureHistory_twoIdenticalStoresTie_andTheFirstIsChosen() {
+        availability(storeC, 2);   // B and C can both ship the whole order
+
+        var result = service.rerouteAfterRejection(order.getId(), storeA.getId(), "SKU-001", 1, Set.of());
+
+        assertEquals(storeB.getId(), result.toNodeId());
+    }
+
+    @Test
+    void aStoreThatOftenFailsPicks_isNotChosenWhenAnEquallyGoodStoreIsAvailable_onReroute() {
+        availability(storeC, 2);
+        service.setPickFailureService(ratesWhere(storeB.getId(), 0.40));
+
+        var result = service.rerouteAfterRejection(order.getId(), storeA.getId(), "SKU-001", 1, Set.of());
+
+        assertEquals(storeC.getId(), result.toNodeId());
+        verify(inventoryService).reserveInventory(tenant, "SKU-001", storeC.getId(), 2, "ORDER", order.getId().toString());
+    }
+
+    @Test
+    void aStoreThatOftenFailsPicks_isRankedLower_whenAnOrderIsFirstAllocated() {
+        availability(storeC, 2);
+        order.setStatus("CONFIRMED");
+        when(allocationRepository.findByOrderId(order.getId())).thenReturn(List.of());
+        service.setPickFailureService(ratesWhere(storeB.getId(), 0.40));
+        var request = new com.nexus.oms.dto.AllocationRequest();
+        request.setOrderId(order.getId());
+        request.setStrategy("AI_OPTIMIZED");
+        request.setDryRun(false);
+
+        service.allocateOrder(request);
+
+        verify(inventoryService).reserveInventory(eq(tenant), eq("SKU-001"), eq(storeC.getId()), eq(2), eq("ORDER"), eq(order.getId().toString()));
+        verify(inventoryService, never()).reserveInventory(eq(tenant), anyString(), eq(storeB.getId()), anyInt(), any(), any());
+    }
+
+    @Test
+    void failureRatesNeverMakeAnUnstockedStoreWin() {
+        // C fails far less, but cannot ship the order; B can. Stock still decides who is eligible.
+        availability(storeC, 0);
+        service.setPickFailureService(ratesWhere(storeB.getId(), 0.40));
+
+        var result = service.rerouteAfterRejection(order.getId(), storeA.getId(), "SKU-001", 1, Set.of());
+
+        assertEquals(storeB.getId(), result.toNodeId());
+    }
+
     // ---- the rejection flow around it -------------------------------------------------------------------
 
     private static final class Flow {

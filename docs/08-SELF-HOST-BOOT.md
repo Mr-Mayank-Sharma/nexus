@@ -27,6 +27,7 @@ Create `.env` at repo root (template below). Generate strong secrets:
 openssl rand -hex 32            # → DB_PASSWORD
 openssl rand -hex 32            # → REDIS_PASSWORD
 openssl rand -hex 32            # → JWT_SECRET
+openssl rand -hex 32            # → APP_CREDENTIAL_ENCRYPTION_KEY (seals every integration secret; keep a copy, losing it loses the stored credentials)
 ```
 
 `.env`:
@@ -35,6 +36,7 @@ openssl rand -hex 32            # → JWT_SECRET
 DB_PASSWORD=<from-openssl>
 REDIS_PASSWORD=<from-openssl>
 JWT_SECRET=<from-openssl>
+APP_CREDENTIAL_ENCRYPTION_KEY=<from-openssl>
 NEXUS_CORS_ORIGINS=http://localhost
 NEXUS_FRONTEND_URL=http://localhost
 NEXUS_DB_POOL_MAX=30
