@@ -258,7 +258,7 @@ public class ShopifyInventorySyncService {
     }
 
     /** Variant id to inventory item id, across every page of products (not just the first 250). */
-    private Map<Long, Long> fetchInventoryItems(String shop, String token) {
+    Map<Long, Long> fetchInventoryItems(String shop, String token) {
         Map<Long, Long> result = new HashMap<>();
         Map<String, String> params = new LinkedHashMap<>();
         params.put("limit", "250");

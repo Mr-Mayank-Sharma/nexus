@@ -67,6 +67,44 @@ public class ShopifyClient {
         return doGet(buildClient(shopDomain, accessToken), "/inventory_levels.json", params);
     }
 
+    /**
+     * One Admin GraphQL read. Retries while Shopify throttles (it answers 200 with a THROTTLED error, not
+     * 429) and throws on any other GraphQL error rather than returning half an answer.
+     *
+     * @return the {@code data} object
+     */
+    public JsonNode graphql(String shopDomain, String accessToken, String query, Map<String, Object> variables) {
+        RestClient client = buildClient(shopDomain, accessToken);
+        try {
+            String body = objectMapper.writeValueAsString(Map.of("query", query, "variables", variables == null ? Map.of() : variables));
+            for (int attempt = 1; ; attempt++) {
+                String response = retrying(true, () -> client.post()
+                        .uri("/graphql.json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(body)
+                        .retrieve()
+                        .body(String.class));
+                JsonNode root = objectMapper.readTree(response);
+                JsonNode errors = root.get("errors");
+                if (errors == null || errors.isEmpty()) {
+                    return root.get("data");
+                }
+                boolean throttled = errors.toString().contains("THROTTLED");
+                if (!throttled || attempt >= MAX_ATTEMPTS) {
+                    String text = errors.toString();
+                    throw new BadRequestException("Shopify GraphQL error: " + (text.length() > 300 ? text.substring(0, 300) : text));
+                }
+                pause(backoffMillis(null, attempt));
+            }
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (RestClientException e) {
+            throw new BadRequestException("Shopify API error: " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to process Shopify GraphQL request", e);
+        }
+    }
+
     public JsonNode getLocations(String shopDomain, String accessToken) {
         return doGet(buildClient(shopDomain, accessToken), "/locations.json", null);
     }

@@ -30,17 +30,33 @@ public class ShopifyInventoryController {
     private final NxInventoryPublishRunRepository runRepository;
     private final NxInventoryPublishLineRepository lineRepository;
     private final IntegrationStoreService storeService;
+    private final com.nexus.oms.service.shopify.ShopifyInventoryBaselineService baselineService;
 
     public ShopifyInventoryController(ShopifyInventorySyncService publishService,
                                       InventoryChannelMappingService mappingService,
                                       NxInventoryPublishRunRepository runRepository,
                                       NxInventoryPublishLineRepository lineRepository,
-                                      IntegrationStoreService storeService) {
+                                      IntegrationStoreService storeService,
+                                      com.nexus.oms.service.shopify.ShopifyInventoryBaselineService baselineService) {
+        this.baselineService = baselineService;
         this.publishService = publishService;
         this.mappingService = mappingService;
         this.runRepository = runRepository;
         this.lineRepository = lineRepository;
         this.storeService = storeService;
+    }
+
+    /**
+     * Brings the store's current Shopify stock into Nexus (physical on-hand, per mapped location). Dry run by
+     * default; it never writes to Shopify. Existing Nexus stock is left alone unless {@code overwrite=true}.
+     */
+    @PostMapping("/baseline")
+    public ResponseEntity<ApiResponse<com.nexus.oms.service.shopify.ShopifyInventoryBaselineService.Report>> baseline(
+            @PathVariable UUID storeId,
+            @RequestParam(defaultValue = "false") boolean apply,
+            @RequestParam(defaultValue = "false") boolean overwrite) {
+        var report = baselineService.run(storeId, apply, overwrite);
+        return ResponseEntity.ok(ApiResponse.success(report, report.message()));
     }
 
     @GetMapping("/shopify-locations")

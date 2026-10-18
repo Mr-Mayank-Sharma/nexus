@@ -79,6 +79,19 @@ public class InventoryService {
         return saved;
     }
 
+    /**
+     * Creates a stock row from an external count, with its ledger line, and pushes nothing anywhere.
+     * {@link #createInventory} pushes the SKU out to BigCommerce, which is right for a person adding
+     * stock and wrong for an import: bringing a channel's own numbers in must never send them back out.
+     */
+    @Transactional
+    @CacheEvict(value = "inventory", allEntries = true)
+    public NxInventory importOpeningBalance(NxInventory inventory, String reason) {
+        NxInventory saved = inventoryRepository.save(inventory);
+        recordMovement(saved, NxInventoryMovement.ADJUSTMENT, nz(saved.getQuantityOnHand()), 0, 0, "IMPORT", null, reason);
+        return saved;
+    }
+
     @Cacheable(value = "inventory", key = "#tenantId")
     public List<NxInventory> getInventoryByTenant(UUID tenantId) {
         return inventoryRepository.findByTenantId(tenantId);
