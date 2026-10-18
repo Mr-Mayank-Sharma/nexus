@@ -75,6 +75,13 @@ public class OrderRoutingService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private PickFailureService pickFailureService;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private PickingService pickingService;
+
+    void setPickingService(PickingService service) {
+        this.pickingService = service;
+    }
+
     void setPickFailureService(PickFailureService service) {
         this.pickFailureService = service;
     }
@@ -513,9 +520,18 @@ public class OrderRoutingService {
             request.setForcedNodeId(best.getId());
             request.setDryRun(false);
             AllocationResult result = allocateOrder(request);
+            String pickNote;
+            if (pickingService == null) {
+                pickNote = "Open pick work for this order was not touched.";
+            } else {
+                PickingService.PickWorkCancelled c = pickingService.cancelPickWorkForOrder(orderId);
+                pickNote = c.tasksCancelled() + " open pick task(s) cancelled"
+                        + (c.listsClosed() > 0 ? ", " + c.listsClosed() + " pick list(s) closed" : "")
+                        + (c.linesAlreadyPicked() > 0 ? "; " + c.linesAlreadyPicked() + " line(s) were already picked and must be put back in stock by the store" : "")
+                        + ".";
+            }
             return new RerouteResult(RerouteResult.REROUTED_WHOLE_ORDER, rejectedNodeId, best.getId(),
-                    "Whole order sent to " + best.getName() + " as one package (" + result.getStatus()
-                            + "). Any open pick list for this order at the rejecting store must be cancelled by the store.");
+                    "Whole order sent to " + best.getName() + " as one package (" + result.getStatus() + "). " + pickNote);
         }
 
         // Nobody else holds the whole order. Keep the store's remaining lines; give back only the rejected units.

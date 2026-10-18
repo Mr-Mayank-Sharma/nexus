@@ -88,3 +88,27 @@ Defects the live run found and fixed:
 4. `CredentialVault` falls back to a hard-coded key when `APP_CREDENTIAL_ENCRYPTION_KEY` is unset (a warning is logged). **Set it in every real environment.** Not changed here.
 5. **A real stock publish would have emptied the shop.** Nexus holds stock for only 13 demo SKUs, none of them in the Shopify shop, so the "6,934 changes planned" were all *set to 0*. A SKU Nexus has no stock record for is now skipped (unknown is not zero), and the publish endpoint accepts `skus=` so the first real write can be a one-SKU canary. Tests: `ShopifyInventoryPublishTest`.
 6. Cosmetic, not fixed: the product sync reports products as `processed` but variants as `succeeded`.
+
+## 8. Scheduled jobs (the job manager)
+
+A customer can create, schedule and watch their own jobs at **Connect → Data Exchange → Scheduled Jobs**
+(`/jobs`), without an engineer. A job is a type, its parameters and an optional schedule; a new job is switched
+off until someone turns it on. Every run records its counts, a log, an output file if the job makes one, and
+**each row that failed or needs attention with the reason**, downloadable as a CSV.
+
+| Job type | What it does | Writes to |
+|---|---|---|
+| Shopify: import orders | Reads orders into Nexus | Nexus only |
+| Shopify: sync products | Reads the catalogue | Nexus only |
+| Shopify: bring in current stock | Physical on-hand per mapped location; dry run unless "write" is on | Nexus only |
+| NetSuite: bring in stock counts | SuiteQL inventory balances (not yet run against a real account) | Nexus only |
+| Export stock (CSV) | Stock per SKU and location, with what can be sold | a file |
+| Export store pick-failure rates (CSV) | The rates routing uses | a file |
+
+Rules the code enforces (and tests pin): a job may not run more often than every 5 minutes; a job cannot be
+switched on without a schedule; one run at a time per job; a stale run is closed out after 3 hours; schedules
+fire under a database lock so two instances cannot double-start one; a store parameter must belong to the
+tenant; CSV cells that look like spreadsheet formulas are neutralised; output is capped at 5 million characters
+and 10,000 kept rows per run. Not built yet: scheduled file pickup from SFTP or S3, retrying only the failed
+rows, failure notifications.
+

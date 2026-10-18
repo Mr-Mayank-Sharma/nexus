@@ -208,6 +208,43 @@ public class PickingService {
         return picklistRepository.save(pl);
     }
 
+    /** What cancelling one order's pick work did. */
+    public record PickWorkCancelled(int tasksCancelled, int linesAlreadyPicked, int listsClosed) {}
+
+    /**
+     * An order has been sent to another store, so the first store must stop picking it. Cancels this order's
+     * pending lines only, and closes a pick list only when nothing else is left on it (a list can carry several
+     * orders). Lines already picked cannot be un-picked by software; they are counted so the store knows to put
+     * them back.
+     */
+    @Transactional
+    public PickWorkCancelled cancelPickWorkForOrder(UUID orderId) {
+        int cancelled = 0, picked = 0, closed = 0;
+        Set<UUID> touched = new LinkedHashSet<>();
+        for (NxPicklistItem item : picklistItemRepository.findByOrderId(orderId)) {
+            if ("PENDING".equals(item.getStatus())) {
+                item.setStatus("CANCELLED");
+                picklistItemRepository.save(item);
+                cancelled++;
+                touched.add(item.getPicklistId());
+            } else if ("PICKED".equals(item.getStatus())) {
+                picked++;
+            }
+        }
+        for (UUID listId : touched) {
+            NxPicklist pl = picklistRepository.findById(listId).orElse(null);
+            if (pl == null || "CANCELLED".equals(pl.getStatus()) || "COMPLETED".equals(pl.getStatus())) continue;
+            boolean anythingLeft = picklistItemRepository.findByPicklistId(listId).stream()
+                    .anyMatch(i -> "PENDING".equals(i.getStatus()) || "PICKED".equals(i.getStatus()));
+            if (!anythingLeft) {
+                pl.setStatus("CANCELLED");
+                picklistRepository.save(pl);
+                closed++;
+            }
+        }
+        return new PickWorkCancelled(cancelled, picked, closed);
+    }
+
     @Transactional
     public NxPicklist cancelPicklist(UUID picklistId) {
         NxPicklist pl = getPicklist(picklistId);

@@ -2,7 +2,7 @@ import { Fragment, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, Warehouse, Truck, RotateCcw, Ship, BarChart3,
-  Brain, Settings, ChevronLeft, ChevronRight, GitBranch, ClipboardCheck,
+  Brain, Settings, ChevronLeft, ChevronRight, GitBranch, ClipboardCheck, CalendarClock,
   PackagePlus, Store, Moon, Sun, Zap, Building2, ShoppingCart, Receipt,
   Bell, FileText, UserCog, Upload, Download, Activity, Cpu, Users, Shield,
   Globe, Route, TrendingDown, Mail, FlaskConical, ShoppingBag, Calendar,
@@ -119,6 +119,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Settings: <Settings className="w-[18px] h-[18px]" />,
   GitBranch: <GitBranch className="w-[18px] h-[18px]" />,
   ClipboardCheck: <ClipboardCheck className="w-[18px] h-[18px]" />,
+  CalendarClock: <CalendarClock className="w-[18px] h-[18px]" />,
   PackagePlus: <PackagePlus className="w-[18px] h-[18px]" />,
   Store: <Store className="w-[18px] h-[18px]" />,
   Building2: <Building2 className="w-[18px] h-[18px]" />,

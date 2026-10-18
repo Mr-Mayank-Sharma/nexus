@@ -69,7 +69,7 @@ public class ShopifyProductSyncService {
                 .build();
         syncLog = syncLogRepository.save(syncLog);
 
-        int processed = 0, succeeded = 0, failed = 0;
+        int processed = 0, succeeded = 0, failed = 0, variantsSaved = 0;
         List<String> failures = new ArrayList<>();
         try {
             List<NxNode> nodes = nodeRepository.findByTenantId(store.getTenantId());
@@ -149,9 +149,10 @@ public class ShopifyProductSyncService {
                                                 .build());
                                     }
                                 }
-                                succeeded++;
+                                variantsSaved++;
                             }
                         }
+                        succeeded++;
                     } catch (Exception e) {
                         failed++;
                         if (failures.size() < 5) failures.add("product " + productId + ": " + e.getClass().getSimpleName());
@@ -192,6 +193,7 @@ public class ShopifyProductSyncService {
                 .itemsProcessed(processed)
                 .itemsSucceeded(succeeded)
                 .itemsFailed(failed)
+                .message(succeeded + " product(s) saved with " + variantsSaved + " variant(s)" + (failed > 0 ? ", " + failed + " failed" : ""))
                 .build();
     }
 

@@ -1,5 +1,19 @@
 # Release notes
 
+## v0.1.0-rc2 (2026-10-18)
+
+Adds, on top of rc1:
+- **Scheduled jobs.** Customers create and schedule their own jobs, and every run shows its counts, a log, the
+  file it produced, and each failed row with its reason as a downloadable CSV. Six job types (Shopify orders,
+  products and stock; NetSuite stock; stock and pick-failure exports). Details in `docs/20-INTEGRATIONS.md`, section 8.
+- **A re-routed order's pick work is cancelled.** When a store rejects part of an order and the whole order goes
+  to another store, the first store's open pick tasks for it are cancelled, and the store is told how many lines
+  were already picked and must be put back.
+- Shopify product sync now reports products honestly (it counted products as processed but variants as succeeded).
+- `/jobs` is registered for permissions (the `import` group) and for editions (platform).
+
+Upgrading from rc1: migration V83 creates the job tables; nothing else changes.
+
 ## v0.1.0-rc1: private pilot release candidate (2026-10-18)
 
 **What this is.** The first version meant to be run for a real retailer under supervision: an order-orchestration

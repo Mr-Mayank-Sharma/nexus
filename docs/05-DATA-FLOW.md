@@ -210,7 +210,7 @@ flowchart LR
 | Concern | Mechanism | Plain-English |
 |---|---|---|
 | **Tenancy** | Every query scoped by `tenant_id` | Your data stays in your locker |
-| **Authorization** | `PermissionAuthorizationFilter` (77 mappings) | The guard checks badges |
+| **Authorization** | `PermissionAuthorizationFilter` (78 mappings) | The guard checks badges |
 | **Audit** | `NxAuditLog`, `IntegrationAuditLog` | The logbook records who did what |
 | **Idempotency** | `channel_order_id` keys, import tokens, sync state | No double-cooking pizzas |
 | **Resilience** | Kafka retries + Resilience4j breakers | Seatbelts so one failure doesn't crash everything |

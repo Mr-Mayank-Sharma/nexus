@@ -180,6 +180,31 @@ class RejectionRerouteTest {
         verifyNoInteractions(inventoryService);
     }
 
+    @Test
+    void aWholeOrderReroute_cancelsTheOldStoresPickWork_andTellsThemWhatToPutBack() {
+        PickingService picking = mock(PickingService.class);
+        when(picking.cancelPickWorkForOrder(order.getId())).thenReturn(new PickingService.PickWorkCancelled(2, 1, 1));
+        service.setPickingService(picking);
+
+        var result = service.rerouteAfterRejection(order.getId(), storeA.getId(), "SKU-001", 1, Set.of());
+
+        assertEquals(OrderRoutingService.RerouteResult.REROUTED_WHOLE_ORDER, result.outcome());
+        verify(picking).cancelPickWorkForOrder(order.getId());
+        assertTrue(result.note().contains("2 open pick task(s) cancelled"), result.note());
+        assertTrue(result.note().contains("1 line(s) were already picked and must be put back"), result.note());
+    }
+
+    @Test
+    void whenNobodyCanTakeTheWholeOrder_theStoresPickWorkIsLeftAlone() {
+        PickingService picking = mock(PickingService.class);
+        service.setPickingService(picking);
+        availability(storeB, 1);
+
+        service.rerouteAfterRejection(order.getId(), storeA.getId(), "SKU-001", 1, Set.of());
+
+        verifyNoInteractions(picking);
+    }
+
     // ---- failure-aware routing ---------------------------------------------------------------------------
 
     private PickFailureService ratesWhere(UUID badStore, double rate) {
