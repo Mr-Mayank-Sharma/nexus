@@ -1,0 +1,51 @@
+---
+/** Two-tone statement with a sticky, clip-revealed product shot on one side and the verified numbers on the other. */
+import { site } from '../site.config';
+const stats = [
+  { n: 5052, label: 'Orders imported from a Shopify development store, totals equal to the cent' },
+  { n: 9996, label: 'Product variants synced, equal to the shop\'s own count' },
+  { n: 6923, label: 'Location stock rows from physical on-hand, every row matching its ledger' },
+  { n: 1154, label: 'Automated backend tests run before every release' },
+];
+---
+<section class="promise section" data-scene-trigger="light">
+  <div class="wrap promise__grid">
+    <div class="promise__left">
+      <div class="promise__sticky">
+        <div class="promise__shot" data-clip>
+          <img src="/product/dashboard-1920.webp" srcset="/product/dashboard-960.webp 960w, /product/dashboard-1920.webp 1920w" sizes="(max-width: 900px) 92vw, 45vw" width="1920" height="1200" alt="The Nexus operations dashboard" loading="lazy" decoding="async" />
+        </div>
+        <h2 class="display promise__h">
+          <span class="promise__a">We route orders.</span>
+          <span class="promise__b" data-tone>We keep the promise.</span>
+        </h2>
+      </div>
+    </div>
+    <div class="promise__right">
+      <p class="promise__lead">One team answers for every order: where it ships from, whether the stock is really there, and what happens when a store can't find it. No finger-pointing between your storefront, your marketplace feeds, your ERP and your stores.</p>
+      <p class="dim">That means one queue for every channel, one stock number per location, and routing you can replay before you trust it.</p>
+      <a class="link-arrow" href="/proof" style="display:inline-block;margin:18px 0 48px">What we have verified →</a>
+      <p class="eyebrow">Measured on {site.verified.place}</p>
+      {stats.map(s => (
+        <div class="stat">
+          <div class="num" data-count={s.n}>{s.n.toLocaleString('en-US')}</div>
+          <p class="label" style="margin:10px 0 0">{s.label}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .promise__grid { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 110px); align-items: start; }
+  .promise__sticky { position: sticky; top: 110px; }
+  .promise__shot { border-radius: 18px; overflow: hidden; box-shadow: 0 40px 100px rgba(5, 7, 13, 0.25); aspect-ratio: 16 / 10; background: #0b0f19; }
+  .promise__shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+  .promise__h { font-size: clamp(2rem, 4.6vw, 4.2rem); margin: clamp(28px, 4vw, 48px) 0 0; }
+  .promise__a { display: block; color: color-mix(in srgb, var(--fg) 38%, transparent); }
+  .promise__b { display: block; color: transparent; background: linear-gradient(var(--fg), var(--fg)) no-repeat left / 0% 100%, color-mix(in srgb, var(--fg) 22%, transparent); -webkit-background-clip: text; background-clip: text; }
+  :global(html:not(.js)) .promise__b { color: var(--fg); }
+  .promise__lead { font-size: clamp(1.2rem, 2vw, 1.6rem); line-height: 1.45; margin: 0 0 18px; font-weight: 500; }
+  @media (max-width: 900px) { .promise__grid { grid-template-columns: 1fr; } .promise__sticky { position: static; } }
+  @media (prefers-reduced-motion: reduce) { .promise__b { color: var(--fg); } }
+</style>

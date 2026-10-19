@@ -1,0 +1,51 @@
+---
+/** Connections as a grid of cells with corner ticks, grouped by kind, each with its honest status. */
+import { INTEGRATIONS, STATUS_LABEL, type IntegrationKind } from '../data/content';
+interface Props { compact?: boolean }
+const { compact = false } = Astro.props;
+const kinds: IntegrationKind[] = ['Storefront', 'Marketplace', 'ERP', 'Point of sale', 'B2B and EDI', 'Carrier', 'Open'];
+const groups = kinds.map(k => ({ k, items: INTEGRATIONS.filter(i => i.kind === k) })).filter(g => g.items.length);
+---
+<div class="chg">
+  {groups.map(g => (
+    <div class="chg__group">
+      <div class="chg__row chg__label"><span class="mono">Connects to</span><b>{g.k}</b></div>
+      <div class="chg__cells">
+        {g.items.map(i => (
+          <div class="chg__cell" data-reveal tabindex="0">
+            <span class="chg__tick chg__tick--tl"></span><span class="chg__tick chg__tick--tr"></span><span class="chg__tick chg__tick--bl"></span><span class="chg__tick chg__tick--br"></span>
+            <span class="chg__name">{i.name}</span>
+            <span class={`chg__st chg__st--${i.status}`}>{STATUS_LABEL[i.status]}</span>
+            {!compact && <span class="chg__note">{i.note}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .chg { border-top: 1px solid var(--line); }
+  .chg__group { border-bottom: 1px solid var(--line); }
+  .chg__label { display: grid; grid-template-columns: 180px 1fr; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .chg__label .mono { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .chg__label b { font-family: var(--mono); font-weight: 500; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .chg__cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .chg__cell { position: relative; min-height: 132px; padding: 24px 22px; display: flex; flex-direction: column; justify-content: center; gap: 10px; border-right: 1px solid var(--line); overflow: hidden; outline: none; }
+  .chg__cell:nth-child(4n) { border-right: 0; }
+  .chg__name { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: -0.01em; font-size: clamp(1rem, 1.5vw, 1.25rem); line-height: 1.15; transition: transform 0.5s var(--ease); }
+  .chg__st { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 7px; color: var(--muted); transition: transform 0.5s var(--ease); }
+  .chg__st::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .chg__st--live { color: #0b8a57; } .chg__st--tested { color: #9a6a00; }
+  :global(html[data-scene='dark']) .chg__st--live { color: var(--go); } :global(html[data-scene='dark']) .chg__st--tested { color: var(--warn); }
+  .chg__note { position: absolute; inset: 0; padding: 22px; display: flex; align-items: center; font-size: 0.86rem; line-height: 1.45; background: var(--ink); color: #dfe5f1; transform: translateY(101%); transition: transform 0.55s var(--ease); }
+  .chg__cell:hover .chg__note, .chg__cell:focus .chg__note { transform: none; }
+  .chg__tick { position: absolute; width: 7px; height: 7px; border-color: var(--fg); opacity: 0.5; }
+  .chg__tick--tl { left: 6px; top: 6px; border-left: 1px solid; border-top: 1px solid; }
+  .chg__tick--tr { right: 6px; top: 6px; border-right: 1px solid; border-top: 1px solid; }
+  .chg__tick--bl { left: 6px; bottom: 6px; border-left: 1px solid; border-bottom: 1px solid; }
+  .chg__tick--br { right: 6px; bottom: 6px; border-right: 1px solid; border-bottom: 1px solid; }
+  @media (max-width: 600px) { .chg__name { font-size: 0.86rem; overflow-wrap: anywhere; } .chg__cell { padding: 20px 14px; min-height: 110px; } }
+  @media (max-width: 960px) { .chg__cells { grid-template-columns: repeat(2, minmax(0, 1fr)); } .chg__cell:nth-child(2n) { border-right: 0; } .chg__cell:nth-child(4n) { border-right: 0; } .chg__cell { border-bottom: 1px solid var(--line); } .chg__label { grid-template-columns: 1fr; gap: 4px; } }
+  @media (hover: none) { .chg__note { position: static; transform: none; padding: 0; background: none; color: var(--muted); font-size: 0.82rem; } }
+</style>

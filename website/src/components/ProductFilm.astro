@@ -1,0 +1,175 @@
+---
+/**
+ * The product film: real screens from Nexus (dark theme, demo workspace) played by scrolling. The frame rises and
+ * flattens, each screen cross-fades in while the "camera" pushes into the part that matters, a HUD counts the real
+ * number on that screen, and giant text slides behind. Pinned on every screen size; a plain list without JS or
+ * with reduced motion.
+ */
+const scenes = [
+  { img: 'channels', label: 'Sales channels', metric: 'Channels connected', value: 4, origin: '22% 30%',
+    title: 'Every channel in one place', body: 'Storefronts, marketplaces and stores feed one order queue. Each connection shows what it syncs and when it last ran.' },
+  { img: 'fulfillment', label: 'Fulfilment', metric: 'Awaiting fulfilment', value: 20, origin: '30% 70%',
+    title: 'Shopify, Amazon and store orders, one pipeline', body: 'Orders from every channel are allocated and picked the same way, so nobody works from three screens.' },
+  { img: 'dashboard', label: 'Operations', metric: 'Orders in the pipeline', value: 5194, origin: '35% 32%',
+    title: 'Every order accounted for', body: 'Assigned, in flight, packed and shipped, with the orders that need a person surfaced on the right.' },
+  { img: 'routing', label: 'Order routing', metric: 'Allocations today', value: 134, origin: '45% 60%',
+    title: 'Exceptions surface. They never hide.', body: 'When no location can fill an order, or a promise date is at risk, it becomes an exception with a next step, not a silent backorder.' },
+  { img: 'replay', label: 'Routing what-if', metric: 'Shipments saved', value: 45, origin: '55% 55%',
+    title: 'Prove a rule before it goes live', body: 'Replay orders under different rules and see shipments, splits and expected failed picks side by side.' },
+  { img: 'jobs', label: 'Scheduled jobs', metric: 'Rows in the last export', value: 6938, origin: '50% 40%',
+    title: 'Every run, every failed row', body: 'Imports and exports your team schedules, each run with its log, its file and the rows that failed, and why.' },
+];
+---
+<section class="film" aria-label="Nexus, the real product" data-film data-scene-trigger="dark">
+  <div class="film__pin">
+    <div class="film__bg" aria-hidden="true"><div class="film__bgtext" data-film-bg>Every channel · Every location · One brain · Every channel · Every location ·</div></div>
+
+    <div class="wrap film__hud" aria-hidden="true">
+      <div><span class="mono film__sc" data-film-sc>01 / 0{scenes.length}</span><span class="mono film__lb" data-film-lb>{scenes[0].label}</span></div>
+      <div class="film__metric"><span class="mono" data-film-ml>{scenes[0].metric}</span><b data-film-mv>0</b></div>
+    </div>
+
+    <div class="film__stage">
+      <div class="film__device" data-film-device>
+        <div class="film__bar"><i></i><i></i><i></i><span>app.nexus · demo workspace</span></div>
+        <div class="film__screen">
+          {scenes.map((s, i) => (
+            <figure class="film__shot" data-film-shot style={`--o:${s.origin}`}>
+              <img src={`/product/${s.img}-1920.webp`} srcset={`/product/${s.img}-960.webp 960w, /product/${s.img}-1920.webp 1920w`}
+                   sizes="(max-width: 900px) 92vw, 70vw" width="1920" height="1200" alt={`Nexus ${s.label} screen`}
+                   loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
+              <figcaption class="film__static-cap"><b>{s.title}</b> {s.body}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div class="wrap film__caps">
+      {scenes.map(s => (
+        <div class="film__cap" data-film-cap>
+          <h3 class="display h-sm">{s.title}</h3>
+          <p>{s.body}</p>
+        </div>
+      ))}
+    </div>
+    <div class="film__rail" aria-hidden="true">{scenes.map(() => <i></i>)}<b data-film-rail></b></div>
+    <p class="film__note mono">Real screens · demo workspace with data from development stores and seeded examples</p>
+  </div>
+</section>
+
+<script define:vars={{ scenes }}>
+  window.__filmScenes = scenes;
+</script>
+
+<style>
+  .film { position: relative; background: #000; color: var(--text-d); overflow: hidden; }
+  .film__pin { position: relative; height: 100svh; min-height: 560px; overflow: hidden; }
+  .film__bg { position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none; }
+  .film__bgtext { white-space: nowrap; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: -0.03em; font-size: clamp(6rem, 22vw, 20rem); line-height: 1; color: rgba(255, 255, 255, 0.06); padding-left: 10vw; }
+  .film__hud { position: absolute; left: 0; right: 0; top: 96px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 3; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .film__sc { color: var(--signal); margin-right: 14px; }
+  .film__lb { color: #c7d0e0; }
+  .film__metric { text-align: right; }
+  .film__metric span { display: block; color: var(--muted-d); }
+  .film__metric b { display: block; font-family: var(--display); font-weight: 600; font-size: clamp(1.8rem, 4vw, 3.2rem); letter-spacing: -0.02em; color: #fff; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .film__stage { position: absolute; inset: 0; display: grid; place-items: center; perspective: 1600px; z-index: 2; }
+  .film__device { width: min(74vw, 1180px); border-radius: 16px; overflow: hidden; background: #0a0e18; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 60px 160px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(91, 140, 255, 0.08), 0 -20px 120px rgba(91, 140, 255, 0.18); transform-style: preserve-3d; will-change: transform; }
+  .film__bar { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; background: #0f1422; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; color: var(--muted-d); }
+  .film__bar i { width: 9px; height: 9px; border-radius: 50%; background: #2a3347; }
+  .film__bar span { margin-left: 10px; }
+  .film__screen { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #0b0f19; }
+  .film__shot { position: absolute; inset: 0; margin: 0; opacity: 0; }
+  .film__shot:first-child { opacity: 1; }
+  .film__shot img { width: 100%; height: 100%; object-fit: cover; object-position: top left; transform-origin: var(--o); will-change: transform; }
+  .film__static-cap { display: none; }
+  .film__caps { position: absolute; left: 0; right: 0; bottom: 64px; z-index: 3; pointer-events: none; }
+  .film__cap { position: absolute; left: var(--gutter); bottom: 0; max-width: 420px; padding: 20px 22px; border-radius: 16px; background: rgba(5, 7, 13, 0.82); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); opacity: 0; }
+  .film__cap h3 { margin: 0 0 8px; }
+  .film__cap p { margin: 0; color: #b4bfd3; font-size: 0.95rem; }
+  .film__rail { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 30px; height: 2px; display: flex; gap: 6px; z-index: 3; }
+  .film__rail i { flex: 1; background: rgba(255, 255, 255, 0.12); }
+  .film__rail b { position: absolute; left: 0; top: 0; height: 2px; width: 0; background: linear-gradient(90deg, var(--signal), var(--ember)); }
+  .film__note { position: absolute; right: var(--gutter); bottom: 40px; z-index: 3; margin: 0; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #566074; }
+  @media (max-width: 900px) {
+    .film__device { width: 92vw; }
+    .film__hud { top: 84px; }
+    .film__cap { right: var(--gutter); max-width: none; padding: 16px; }
+    .film__caps { bottom: 58px; }
+    .film__note { display: none; }
+  }
+  /* without JS, or with reduced motion: a plain list of the screens */
+  :global(html:not(.js)) .film__pin, .film.is-static .film__pin { height: auto; min-height: 0; padding: 100px 0 60px; }
+  :global(html:not(.js)) .film__stage, .film.is-static .film__stage { position: static; display: block; }
+  :global(html:not(.js)) .film__device, .film.is-static .film__device { margin: 0 auto; }
+  :global(html:not(.js)) .film__screen, .film.is-static .film__screen { aspect-ratio: auto; display: grid; gap: 28px; padding: 18px; }
+  :global(html:not(.js)) .film__shot, .film.is-static .film__shot { position: static; opacity: 1; }
+  :global(html:not(.js)) .film__static-cap, .film.is-static .film__static-cap { display: block; padding: 12px 4px 0; color: #b4bfd3; }
+  :global(html:not(.js)) .film__caps, :global(html:not(.js)) .film__rail, :global(html:not(.js)) .film__hud, :global(html:not(.js)) .film__bg,
+  .film.is-static .film__caps, .film.is-static .film__rail, .film.is-static .film__hud, .film.is-static .film__bg { display: none; }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, reduced } from '../lib/motion';
+
+  type Scene = { label: string; metric: string; value: number };
+  const root = document.querySelector<HTMLElement>('[data-film]');
+  const scenes = (window as unknown as { __filmScenes: Scene[] }).__filmScenes;
+  if (root && scenes) {
+    if (reduced()) root.classList.add('is-static');
+    else {
+      const $ = <T extends Element>(s: string) => root.querySelector<T>(s)!;
+      const shots = Array.from(root.querySelectorAll<HTMLElement>('[data-film-shot]'));
+      const caps = Array.from(root.querySelectorAll<HTMLElement>('[data-film-cap]'));
+      const device = $<HTMLElement>('[data-film-device]');
+      const sc = $<HTMLElement>('[data-film-sc]'), lb = $<HTMLElement>('[data-film-lb]'), ml = $<HTMLElement>('[data-film-ml]'), mv = $<HTMLElement>('[data-film-mv]');
+      const rail = $<HTMLElement>('[data-film-rail]');
+      const n = scenes.length;
+      const zoom = window.innerWidth < 900 ? 1.75 : 1.32;  // phones need a closer camera to read the screen
+      const counter = { v: 0 };
+      let current = -1;
+      const show = (i: number) => {
+        if (i === current) return;
+        current = i;
+        const s = scenes[i];
+        sc.textContent = `${String(i + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
+        lb.textContent = s.label; ml.textContent = s.metric;
+        gsap.killTweensOf(counter);
+        counter.v = 0;
+        gsap.to(counter, { v: s.value, duration: 1.1, ease: 'power3.out', onUpdate: () => (mv.textContent = Math.round(counter.v).toLocaleString('en-US')) });
+      };
+
+      const tl = gsap.timeline({ defaults: { ease: 'none' } });
+      // 1: the frame rises out of the dark and flattens
+      tl.fromTo(device, { rotateX: 42, rotateZ: -7, yPercent: 38, scale: 0.6, opacity: 0.2 }, { rotateX: 0, rotateZ: 0, yPercent: 0, scale: 1, opacity: 1, duration: 1.2, ease: 'power2.out' });
+      tl.fromTo(caps[0], { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.3 }, 0.9);
+      // 2: each screen: the camera pushes in; then the next screen fades over it
+      shots.forEach((shot, i) => {
+        const at = 1.2 + i * 1.4;
+        const img = shot.querySelector('img');
+        if (i > 0) {
+          tl.to(shots[i - 1], { opacity: 0, duration: 0.35 }, at - 0.1);
+          tl.fromTo(shot, { opacity: 0 }, { opacity: 1, duration: 0.35 }, at - 0.1);
+          tl.to(caps[i - 1], { opacity: 0, y: -16, duration: 0.2 }, at - 0.4);
+          tl.fromTo(caps[i], { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.25 }, at + 0.15);
+        }
+        tl.fromTo(img, { scale: 1 }, { scale: zoom, duration: 1.4, ease: 'power1.inOut' }, at - 0.1);
+      });
+      // 3: pull back
+      tl.to(device, { scale: 0.86, yPercent: -4, duration: 0.8, ease: 'power2.in' });
+      tl.to(caps[n - 1], { opacity: 0, duration: 0.3 }, '<');
+
+      ScrollTrigger.create({
+        trigger: root, start: 'top top', end: () => '+=' + window.innerHeight * (n * 1.05 + 1.4),
+        pin: $<HTMLElement>('.film__pin'), scrub: 0.6, animation: tl,
+        onUpdate: self => {
+          rail.style.width = `${self.progress * 100}%`;
+          const t = tl.duration() * self.progress;
+          show(Math.max(0, Math.min(n - 1, Math.floor((t - 1.15) / 1.4))));
+        },
+      });
+      gsap.fromTo('[data-film-bg]', { xPercent: 0 }, { xPercent: -38, ease: 'none', scrollTrigger: { trigger: root, start: 'top bottom', end: () => '+=' + window.innerHeight * (n * 1.05 + 3), scrub: true } });
+      show(0);
+    }
+  }
+</script>

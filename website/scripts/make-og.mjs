@@ -25,8 +25,8 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" v
   <text x="72" y="110" font-family="Helvetica, Arial, sans-serif" font-size="30" font-weight="700" letter-spacing="3" fill="#e8edf7">${name.toUpperCase()}</text>
   <text x="72" y="300" font-family="Helvetica, Arial, sans-serif" font-size="78" font-weight="800" fill="#fff">ONE BRAIN</text>
   <text x="72" y="385" font-family="Helvetica, Arial, sans-serif" font-size="78" font-weight="800" fill="#fff">FOR EVERY ORDER</text>
-  <text x="72" y="470" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#8b97ad">Order orchestration for Shopify retailers with stores</text>
-  <text x="72" y="560" font-family="Menlo, monospace" font-size="18" letter-spacing="2" fill="#5b8cff">STOCK PER LOCATION · FAILURE-AWARE ROUTING · WHAT-IF</text>
+  <text x="72" y="470" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#8b97ad">Order orchestration for omnichannel retailers</text>
+  <text x="72" y="560" font-family="Menlo, monospace" font-size="18" letter-spacing="2" fill="#5b8cff">EVERY CHANNEL · EVERY LOCATION · ONE BRAIN</text>
 </svg>`;
 await sharp(Buffer.from(svg)).png().toFile(new URL('../public/og.png', import.meta.url).pathname);
 console.log('public/og.png written');

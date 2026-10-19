@@ -1,0 +1,43 @@
+---
+/** A real recording of Nexus, in a frame that grows to full width as it scrolls in. */
+interface Props { title?: string; lead?: string }
+const { title = 'Seventeen seconds of the real thing', lead = 'Recorded from Nexus running on a demo workspace: channels, fulfilment, routing exceptions, a routing what-if and scheduled jobs. No mock-ups.' } = Astro.props;
+---
+<section class="tv" data-scene-trigger="dark" aria-labelledby="tv-h">
+  <div class="wrap tv__head">
+    <p class="eyebrow eyebrow--signal">Watch it run</p>
+    <h2 id="tv-h" class="display h-lg" style="margin:14px 0 0;max-width:16ch">{title}</h2>
+    <p class="dim" style="max-width:52ch;margin-top:18px">{lead}</p>
+  </div>
+  <div class="tv__frame" data-expand>
+    <video muted playsinline loop preload="none" poster="/product/nexus-tour-poster.webp" aria-label="A recording of the Nexus app" data-tv>
+      <source src="/product/nexus-tour.webm" type="video/webm" />
+      <source src="/product/nexus-tour.mp4" type="video/mp4" />
+    </video>
+    <button class="tv__toggle mono" type="button" data-tv-toggle aria-pressed="false">Pause</button>
+  </div>
+</section>
+
+<style>
+  .tv { background: #000; color: var(--text-d); padding: clamp(80px, 10vw, 140px) 0 clamp(40px, 6vw, 80px); }
+  .tv__head { margin-bottom: clamp(32px, 5vw, 64px); }
+  .tv__frame { --inset: 0vw; --radius: 0px; position: relative; margin: 0 var(--inset); border-radius: var(--radius); overflow: hidden; background: #0b0f19; aspect-ratio: 16 / 10; max-height: 92vh; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); }
+  .tv__frame video { width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block; }
+  .tv__toggle { position: absolute; right: 18px; bottom: 18px; padding: 8px 14px; border-radius: 999px; background: rgba(5, 7, 13, 0.7); border: 1px solid rgba(255, 255, 255, 0.2); color: #fff; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; }
+</style>
+
+<script>
+  import { reduced } from '../lib/motion';
+  document.querySelectorAll<HTMLVideoElement>('[data-tv]').forEach(v => {
+    const btn = v.parentElement?.querySelector<HTMLButtonElement>('[data-tv-toggle]');
+    let userPaused = reduced();
+    const sync = () => { if (btn) { btn.textContent = v.paused ? 'Play' : 'Pause'; btn.setAttribute('aria-pressed', String(v.paused)); } };
+    btn?.addEventListener('click', () => { if (v.paused) { userPaused = false; v.play().catch(() => {}); } else { userPaused = true; v.pause(); } });
+    v.addEventListener('play', sync); v.addEventListener('pause', sync);
+    // only plays while on screen; never autoplays for reduced motion
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !userPaused) { v.preload = 'auto'; v.play().catch(() => {}); } else v.pause();
+    }, { threshold: 0.25 }).observe(v);
+    sync();
+  });
+</script>

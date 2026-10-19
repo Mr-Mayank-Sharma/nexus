@@ -1,0 +1,73 @@
+---
+/** The capabilities as a horizontal run of cards with real screens, driven by vertical scroll on wide screens. */
+const cards = [
+  { href: '/product/order-routing', eyebrow: 'Order routing', title: 'Keep every order together', img: 'routing', body: 'One location for the whole order when any can, steering away from stores that keep failing picks.' },
+  { href: '/what-if', eyebrow: 'Routing what-if', title: 'Prove it on your orders', img: 'replay-orders', body: 'Every order that would ship differently under a new rule, and why, before you switch it on.' },
+  { href: '/product/inventory', eyebrow: 'Stock you can trust', title: 'One honest number per location', img: 'transfers', body: 'A ledger behind every number: receipts, picks, transfers, counts and returns.' },
+  { href: '/product/store-fulfilment', eyebrow: 'Store fulfilment', title: 'Stores that ship and hand over', img: 'store', body: 'Ship from store, pickup in store, and a whole-order re-route when a store can\'t find it.' },
+  { href: '/integrations', eyebrow: 'Every channel', title: 'Storefronts, marketplaces, ERP', img: 'channels', body: 'Shopify and BigCommerce verified; NetSuite and EDI built; Amazon, Walmart, Magento and SAP early.' },
+  { href: '/product/scheduled-jobs', eyebrow: 'Scheduled jobs', title: 'Every run, every failed row', img: 'jobs', body: 'Imports and exports your team schedules, with the rows that failed and why.' },
+];
+---
+<section class="cg" data-scene-trigger="light" aria-labelledby="cg-h">
+  <div class="cg__pin">
+    <div class="wrap cg__head">
+      <div>
+        <p class="eyebrow">The product</p>
+        <h2 id="cg-h" class="display h-lg" style="margin-top:14px">Everything an order touches</h2>
+      </div>
+      <p class="dim cg__hint mono">Scroll →</p>
+    </div>
+    <div class="cg__track" data-cg-track>
+      {cards.map((c, i) => (
+        <a class="cg__card" href={c.href}>
+          <div class="cg__img"><img src={`/product/${c.img}-960.webp`} width="960" height="600" alt={`Nexus ${c.eyebrow} screen`} loading="lazy" decoding="async" /></div>
+          <div class="cg__body">
+            <span class="cg__n mono">0{i + 1}</span>
+            <p class="eyebrow eyebrow--signal" style="margin:0 0 10px">{c.eyebrow}</p>
+            <h3 class="display h-sm">{c.title}</h3>
+            <p>{c.body}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .cg { position: relative; overflow: hidden; }
+  .cg__pin { min-height: 100svh; padding: clamp(96px, 11vh, 130px) 0 clamp(40px, 6vh, 72px); display: flex; flex-direction: column; justify-content: center; }
+  .cg__head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: clamp(28px, 4vw, 48px); }
+  .cg__hint { margin: 0; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .cg__track { display: flex; gap: clamp(16px, 2vw, 28px); padding: 0 var(--gutter); width: max-content; will-change: transform; }
+  .cg__card { width: min(560px, 80vw); flex: none; border-radius: 22px; overflow: hidden; background: var(--paper-2); border: 1px solid var(--line); transition: transform 0.5s var(--ease), border-color 0.3s; }
+  .cg__card:hover { border-color: var(--signal); transform: translateY(-6px); }
+  .cg__img { aspect-ratio: 16 / 10; overflow: hidden; background: #0b0f19; }
+  .cg__img img { width: 100%; height: 100%; object-fit: cover; object-position: top left; transition: transform 1.2s var(--ease); }
+  .cg__card:hover .cg__img img { transform: scale(1.06); }
+  .cg__body { position: relative; padding: 24px 26px 28px; }
+  .cg__body h3 { margin: 0 0 10px; }
+  .cg__body p:last-child { margin: 0; color: var(--muted); }
+  .cg__n { position: absolute; right: 24px; top: 24px; color: var(--muted); font-size: 0.78rem; }
+  /* phones: swipe instead of the pinned run */
+  @media (max-width: 900px) {
+    .cg__pin { min-height: 0; padding: 72px 0; }
+    .cg__track { width: auto; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; padding-bottom: 12px; }
+    .cg__card { scroll-snap-align: start; }
+  }
+</style>
+
+<script>
+  import { gsap, reduced } from '../lib/motion';
+  const track = document.querySelector<HTMLElement>('[data-cg-track]');
+  const pin = document.querySelector<HTMLElement>('.cg__pin');
+  if (track && pin && !reduced()) {
+    gsap.matchMedia().add('(min-width: 901px)', () => {
+      const dist = () => Math.max(0, track.scrollWidth - window.innerWidth);
+      gsap.to(track, {
+        x: () => -dist(), ease: 'none',
+        scrollTrigger: { trigger: pin, start: 'top top', end: () => '+=' + dist(), pin: true, scrub: 0.6, invalidateOnRefresh: true },
+      });
+    });
+  }
+</script>

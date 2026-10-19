@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import PageHero from '../components/PageHero.astro';
 import WhatIfDemo from '../components/WhatIfDemo.astro';
+import RealShot from '../components/RealShot.astro';
 
 const rules = [
   { t: 'Nearest per line', b: 'Each line ships from the closest location that has it. Simple, and the way many systems still route. It splits orders.' },
@@ -9,7 +10,7 @@ const rules = [
   { t: 'Fewest shipments, failure-aware', b: 'The same, but each store\'s expected failed picks count as cost. Unreliable stores lose close calls.' },
 ];
 const steps = [
-  'Export a few months of orders from Shopify (order, SKU, quantity, ship-to).',
+  'Export a few months of orders from your store platform, marketplace or current OMS (order, SKU, quantity, ship-to).',
   'Export stock per location at the start of the period.',
   'Nexus replays them under each rule with its own copy of the stock and shows every order that would ship differently.',
 ];
@@ -20,6 +21,13 @@ const steps = [
   <section class="section" data-scene-trigger="dark">
     <div class="wrap">
       <WhatIfDemo />
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="dark" style="padding-top:0">
+    <div class="wrap">
+      <p class="eyebrow" style="margin-bottom:22px">The same replay in the product, with your files</p>
+      <RealShot img="replay" caption="Routing what-if: results of a replay" />
     </div>
   </section>
 

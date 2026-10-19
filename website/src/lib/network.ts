@@ -1,8 +1,9 @@
 import * as THREE from 'three';
+import LAND from '../data/land.json';
 
 /**
  * The hero: a dotted sphere that is a network of warehouses and stores, with orders travelling between them.
- * It is an illustration of the idea (locations, routes, orders), not a map: the places are not real.
+ * The continents are real (Natural Earth); the warehouses, stores and routes on them are an illustration.
  * One draw loop, paused when the hero is off screen or the tab is hidden; a single still frame when the
  * visitor prefers reduced motion; nothing at all if WebGL is unavailable (the page keeps its CSS backdrop).
  */
@@ -81,18 +82,22 @@ export function mountNetwork(host: HTMLElement, labelsHost: HTMLElement, opts: {
   const world = new THREE.Group();
   scene.add(world);
 
-  // dotted shell
-  const count = small ? 2600 : 6200;
-  const pos = new Float32Array(count * 3), seed = new Float32Array(count);
+  // dotted shell: real continents (Natural Earth land, as dots) over a faint even grid for the oceans
+  const landDots = (small ? LAND.filter((_, i) => i % 2 === 0) : LAND) as [number, number][];
+  const ocean = small ? 1400 : 3200;
+  const count = landDots.length + ocean;
+  const pos = new Float32Array(count * 3), seed = new Float32Array(count), isLand = new Float32Array(count);
+  landDots.forEach(([lon, lat], i) => { pos.set(ll(lat, lon).toArray(), i * 3); seed[i] = Math.random(); isLand[i] = 1; });
   const golden = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < count; i++) {
-    const y = 1 - (i / (count - 1)) * 2, r = Math.sqrt(1 - y * y), th = golden * i;
+  for (let k = 0; k < ocean; k++) {
+    const i = landDots.length + k, y = 1 - (k / (ocean - 1)) * 2, r = Math.sqrt(1 - y * y), th = golden * k;
     pos.set([Math.cos(th) * r, y, Math.sin(th) * r], i * 3);
     seed[i] = Math.random();
   }
   const dotGeo = new THREE.BufferGeometry();
   dotGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   dotGeo.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
+  dotGeo.setAttribute('aLand', new THREE.BufferAttribute(isLand, 1));
   const dotMat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false,
     uniforms: {
@@ -101,25 +106,28 @@ export function mountNetwork(host: HTMLElement, labelsHost: HTMLElement, opts: {
     },
     vertexShader: /* glsl */ `
       uniform float uTime; uniform float uSize; uniform float uPixelRatio;
-      attribute float aSeed; varying float vFresnel; varying float vFront;
+      attribute float aSeed; attribute float aLand; varying float vFresnel; varying float vFront; varying float vLand;
       void main() {
         vec4 mv = modelViewMatrix * vec4(position * 1.0, 1.0);
         vec3 n = normalize(normalMatrix * position);
         vec3 viewDir = normalize(-mv.xyz);
         vFront = dot(n, viewDir);
         vFresnel = pow(1.0 - max(vFront, 0.0), 2.0);
+        vLand = aLand;
         float twinkle = 0.75 + 0.25 * sin(uTime * 1.4 + aSeed * 6.2831);
-        gl_PointSize = uSize * uPixelRatio * twinkle * (0.5 + 0.5 * max(vFront, 0.0)) * (6.0 / -mv.z) * 3.2;
+        float size = mix(0.55, 1.15, aLand);
+        gl_PointSize = uSize * size * uPixelRatio * twinkle * (0.5 + 0.5 * max(vFront, 0.0)) * (6.0 / -mv.z) * 3.2;
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
-      uniform vec3 uA; uniform vec3 uB; varying float vFresnel; varying float vFront;
+      uniform vec3 uA; uniform vec3 uB; varying float vFresnel; varying float vFront; varying float vLand;
       void main() {
         vec2 c = gl_PointCoord - 0.5; float d = length(c); if (d > 0.5) discard;
         float a = smoothstep(0.5, 0.05, d);
         float facing = smoothstep(-0.25, 0.25, vFront);
-        vec3 col = mix(uA, uB, vFresnel * 0.8 + 0.15);
-        gl_FragColor = vec4(col, a * (0.18 + 0.82 * facing) * (0.4 + 0.6 * vFresnel + 0.18));
+        vec3 col = mix(uA, uB, vFresnel * 0.8 + 0.15 + vLand * 0.35);
+        float strength = mix(0.28, 1.0, vLand);
+        gl_FragColor = vec4(col, strength * a * (0.18 + 0.82 * facing) * (0.4 + 0.6 * vFresnel + 0.18));
       }`,
   });
   world.add(new THREE.Points(dotGeo, dotMat));

@@ -1,24 +1,22 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHero from '../components/PageHero.astro';
-import { INTEGRATIONS, STATUS_CHIP, STATUS_LABEL } from '../data/content';
+import ChannelGrid from '../components/ChannelGrid.astro';
+import RealShot from '../components/RealShot.astro';
 ---
-<Base title="Integrations" description="Shopify, BigCommerce, NetSuite, POS and EDI, each labelled with what it really is today.">
-  <PageHero eyebrow="Integrations" title="Connected, and honest about how far" lead="Every connection says what it is today: verified against a live development system, built and tested, or not built yet." />
+<Base title="Integrations" description="Storefronts, marketplaces, ERP, POS, EDI and carriers, each labelled with what it really is today.">
+  <PageHero eyebrow="Integrations" title="Every place you sell and stock" lead="Storefronts, marketplaces, ERP, point of sale, EDI partners and carriers. Every connection says what it is today: verified live, built and tested, an early connector, or not built yet." />
 
   <section class="section" data-scene-trigger="light">
     <div class="wrap">
-      <div class="grid g2">
-        {INTEGRATIONS.map((x, i) => (
-          <div class="card intg" data-reveal data-delay={String((i % 2) * 0.08)}>
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
-              <h3 class="display h-sm">{x.name}</h3>
-              <span class={STATUS_CHIP[x.status]}>{STATUS_LABEL[x.status]}</span>
-            </div>
-            <p style="margin-top:12px">{x.note}</p>
-          </div>
-        ))}
-      </div>
+      <ChannelGrid />
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="dark">
+    <div class="wrap">
+      <p class="eyebrow" style="margin-bottom:22px">In the product</p>
+      <RealShot img="channels" caption="Sales channels: each connection with its sync actions" />
     </div>
   </section>
 

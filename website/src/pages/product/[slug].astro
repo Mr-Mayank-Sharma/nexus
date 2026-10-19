@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import PageHero from '../../components/PageHero.astro';
 import ProductVisual from '../../components/ProductVisual.astro';
+import RealShot from '../../components/RealShot.astro';
 import { PRODUCT, STATUS_CHIP, STATUS_LABEL, type ProductPage } from '../../data/content';
 import { relatedLink } from '../../lib/links';
 
@@ -9,6 +10,13 @@ export function getStaticPaths() {
   return PRODUCT.map(p => ({ params: { slug: p.slug }, props: { p } }));
 }
 const { p } = Astro.props as { p: ProductPage };
+const SHOTS: Record<string, { img: string; caption: string }[]> = {
+  'order-routing': [{ img: 'routing', caption: 'Order routing: allocations and exceptions' }, { img: 'replay-orders', caption: 'Routing what-if: orders that would ship differently' }],
+  'inventory': [{ img: 'transfers', caption: 'Transfers between warehouses and stores' }],
+  'store-fulfilment': [{ img: 'store', caption: 'Store dashboard: orders and low-stock alerts' }, { img: 'fulfillment', caption: 'Fulfilment pipeline across channels' }],
+  'scheduled-jobs': [{ img: 'jobs', caption: 'Scheduled jobs with their last runs' }],
+};
+const shots = SHOTS[p.slug] ?? [];
 ---
 <Base title={p.eyebrow} description={p.lead}>
   <PageHero eyebrow={p.eyebrow} title={p.title} lead={p.lead}>
@@ -27,6 +35,15 @@ const { p } = Astro.props as { p: ProductPage };
       <ProductVisual slug={p.slug} />
     </div>
   </section>
+
+  {shots.length > 0 && (
+    <section class="section" data-scene-trigger="dark" style="padding-top:0">
+      <div class="wrap">
+        <p class="eyebrow" style="margin-bottom:22px">In the product</p>
+        <div class="stack" style="--gap:clamp(40px,6vw,80px)">{shots.map(sh => <RealShot img={sh.img} caption={sh.caption} />)}</div>
+      </div>
+    </section>
+  )}
 
   <section class="section" data-scene-trigger="light">
     <div class="wrap">

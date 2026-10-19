@@ -3,12 +3,13 @@
  *  - live:   run against a real outside system (a Shopify or BigCommerce development store) and the result checked
  *  - tested: covered by automated tests, and for some, run end to end on a real database; not yet run against the
  *            real outside system it talks to
+ *  - early:  a connector exists in the code but is thin and has never met the real system; built out with the first customer
  *  - next:   not built yet
  * If a status changes, change it here; every page reads from this file.
  */
-export type Status = 'live' | 'tested' | 'next';
-export const STATUS_LABEL: Record<Status, string> = { live: 'Verified live', tested: 'Built and tested', next: 'Not built yet' };
-export const STATUS_CHIP: Record<Status, string> = { live: 'chip chip--go', tested: 'chip chip--warn', next: 'chip chip--dim' };
+export type Status = 'live' | 'tested' | 'early' | 'next';
+export const STATUS_LABEL: Record<Status, string> = { live: 'Verified live', tested: 'Built and tested', early: 'Early connector', next: 'Not built yet' };
+export const STATUS_CHIP: Record<Status, string> = { live: 'chip chip--go', tested: 'chip chip--warn', early: 'chip chip--dim', next: 'chip chip--dim' };
 
 export interface Capability { title: string; body: string; status: Status }
 export interface ProductPage {
@@ -34,11 +35,11 @@ export const PRODUCT: ProductPage[] = [
   {
     slug: 'inventory', eyebrow: 'Stock you can trust',
     title: 'One honest number per location',
-    lead: 'Every change to stock is a ledger line: receipts, picks, transfers, counts, returns, write-offs. What you can sell is computed from that, per location, and published to Shopify location by location.',
-    problem: 'Shopify\'s own oversell check looks at total stock, not each location\'s, and stock fed in once a day goes stale between updates. Selling what a location does not have is how most cancellations start.',
+    lead: 'Every change to stock is a ledger line: receipts, picks, transfers, counts, returns, write-offs. What you can sell is computed from that, per location, and published to your channels location by location (Shopify today, with more to follow).',
+    problem: 'Most storefronts and marketplaces check oversell against total stock, not each location\'s, and stock fed in once a day goes stale between updates. Selling what a location does not have is how most cancellations start.',
     capabilities: [
       { title: 'A ledger behind every number', body: 'Stock rows change only through recorded movements; a check reconciles every row against its ledger.', status: 'tested' },
-      { title: 'Bring in your current stock', body: 'Reads Shopify\'s physical on-hand for each mapped location and creates opening balances. Dry run first; never pushes numbers back out.', status: 'live' },
+      { title: 'Bring in your current stock', body: 'Reads physical on-hand per location from Shopify or NetSuite and creates opening balances. Dry run first; never pushes numbers back out.', status: 'live' },
       { title: 'Publish per location', body: 'Sellable stock per location, after buffers and caps, sent to the matching Shopify location. Dry run by default; unknown stock is skipped, never published as zero.', status: 'live' },
       { title: 'Held units', body: 'Units a store says it cannot find are held out of what can be sold at once, without changing on-hand until a manager approves.', status: 'tested' },
     ],
@@ -79,7 +80,7 @@ export interface UseCase { slug: string; title: string; eyebrow: string; lead: s
 export const USE_CASES: UseCase[] = [
   { slug: 'stop-overselling', eyebrow: 'Use case', title: 'Stop overselling at your busiest location', product: 'inventory',
     lead: 'Sell what each location really has, not what the total says.',
-    how: ['Bring in each location\'s physical on-hand from Shopify, then keep it as a ledger.', 'Publish what can be sold per location, after buffers and caps, and only for stock Nexus knows about.', 'Hold units a store cannot find out of availability at once.'] },
+    how: ['Bring in each location\'s physical on-hand from your store platform or ERP, then keep it as a ledger.', 'Publish what can be sold per location, after buffers and caps, and only for stock Nexus knows about.', 'Hold units a store cannot find out of availability at once.'] },
   { slug: 'fewer-split-shipments', eyebrow: 'Use case', title: 'Fewer split shipments', product: 'order-routing',
     lead: 'One parcel when one location can ship it all.',
     how: ['Prefer one location for the whole order; cover the rest with as few as possible.', 'Replay last quarter\'s orders under the new rule before you switch it on.', 'See exactly which orders would ship differently, and why.'] },
@@ -97,16 +98,24 @@ export const USE_CASES: UseCase[] = [
     how: ['Transfers out and in move stock through the ledger, with what was shipped and what arrived.', 'Cycle counts reconcile shelves with records.', 'Receiving transfers inside Shopify POS is not built yet: Shopify now does this natively, so Nexus will sync with it rather than rebuild it.'] },
 ];
 
-export interface Integration { name: string; status: Status; note: string }
+export type IntegrationKind = 'Storefront' | 'Marketplace' | 'ERP' | 'Point of sale' | 'B2B and EDI' | 'Carrier' | 'Open';
+export interface Integration { name: string; kind: IntegrationKind; status: Status; note: string }
 export const INTEGRATIONS: Integration[] = [
-  { name: 'Shopify', status: 'live', note: 'Orders, products and stock import verified on a development store; per-location stock publishing; fulfilment and refunds built.' },
-  { name: 'BigCommerce', status: 'live', note: 'Product import verified on a development store; orders, stock and shipments built.' },
-  { name: 'NetSuite', status: 'tested', note: 'Stock import over SuiteQL with token-based authentication. Not yet run against a real account.' },
-  { name: 'Shopify POS', status: 'tested', note: 'Works through Shopify\'s locations, which POS reads. POS transfer receiving is not built.' },
-  { name: 'Any POS (stock counts)', status: 'tested', note: 'A secured endpoint any POS or middleware can push counts to; Nexus compares and corrects only on request.' },
-  { name: 'EDI (850, 856, 810, 940)', status: 'tested', note: 'Parse and generate common documents, with acknowledgements.' },
-  { name: 'SAP', status: 'next', note: 'Not built. Designed with the first customer who needs it.' },
-  { name: 'Square, Lightspeed and other POS', status: 'next', note: 'No vendor adapter yet.' },
+  { name: 'Shopify', kind: 'Storefront', status: 'live', note: 'Orders, products and stock import verified on a development store; per-location stock publishing; fulfilment and refunds built.' },
+  { name: 'BigCommerce', kind: 'Storefront', status: 'live', note: 'Product import verified on a development store; orders, stock and shipments built.' },
+  { name: 'Adobe Commerce (Magento)', kind: 'Storefront', status: 'early', note: 'Connector started in the code; not yet run against a real store.' },
+  { name: 'Amazon', kind: 'Marketplace', status: 'early', note: 'Order channel modelled and connector started; not yet run against Seller Central.' },
+  { name: 'Walmart Marketplace', kind: 'Marketplace', status: 'early', note: 'Channel modelled; connector is a generic shell today.' },
+  { name: 'eBay', kind: 'Marketplace', status: 'early', note: 'Channel modelled; connector is a generic shell today.' },
+  { name: 'NetSuite', kind: 'ERP', status: 'tested', note: 'Stock import over SuiteQL with token-based authentication. Not yet run against a real account.' },
+  { name: 'SAP', kind: 'ERP', status: 'early', note: 'Connector started in the code; designed with the first customer who needs it.' },
+  { name: 'Shopify POS', kind: 'Point of sale', status: 'tested', note: 'Works through Shopify\'s locations, which POS reads. POS transfer receiving is not built.' },
+  { name: 'Any POS (stock counts)', kind: 'Point of sale', status: 'tested', note: 'A secured endpoint any POS or middleware can push counts to; Nexus compares and corrects only on request.' },
+  { name: 'Square, Lightspeed and other POS', kind: 'Point of sale', status: 'next', note: 'No vendor adapter yet.' },
+  { name: 'EDI (850, 856, 810, 940)', kind: 'B2B and EDI', status: 'tested', note: 'Parse and generate common documents, with acknowledgements.' },
+  { name: 'FedEx', kind: 'Carrier', status: 'early', note: 'Rate and label connector started; not yet run against the live API.' },
+  { name: 'REST API and webhooks', kind: 'Open', status: 'tested', note: 'Every screen in Nexus runs on the same documented API, so anything can integrate.' },
+  { name: 'CSV and scheduled files', kind: 'Open', status: 'tested', note: 'Scheduled imports and exports with every failed row kept, for systems without an API.' },
 ];
 
 export interface Proof { what: string; result: string; status: Status; when: string }
@@ -120,16 +129,18 @@ export const PROOF: Proof[] = [
   { what: 'Scheduled jobs', result: 'Scheduler started a run on its own; 6,938-row export downloaded', status: 'tested', when: 'local install' },
   { what: 'NetSuite stock import', result: 'Signing checked against an independent implementation; never run on a real account', status: 'tested', when: 'not yet live' },
   { what: 'Webhooks, carrier labels, fulfilment push', result: 'Built with tests; not yet run against the real services', status: 'tested', when: 'not yet live' },
-  { what: 'SAP connector, POS vendor adapters', result: 'Not built', status: 'next', when: '' },
+  { what: 'Amazon, Walmart, eBay, Magento, SAP, FedEx', result: 'Early connectors in the code; never run against the real systems', status: 'early', when: '' },
+  { what: 'POS vendor adapters (Square, Lightspeed)', result: 'Not built', status: 'next', when: '' },
 ];
 
 export const FAQ: { q: string; a: string }[] = [
-  { q: 'What is Nexus?', a: 'Order orchestration for retailers who sell on Shopify and fulfil from stores and warehouses: honest stock per location, routing that keeps orders together and avoids stores that fail picks, and a way to test rule changes on your own orders first.' },
+  { q: 'What is Nexus?', a: 'Order orchestration for omnichannel retailers: orders from every storefront, marketplace, store and B2B partner in one place, honest stock per location, routing that keeps orders together and avoids stores that fail picks, and a way to test rule changes on your own orders first.' },
+  { q: 'Is it only for Shopify?', a: 'No. Shopify and BigCommerce are the connections we have verified so far, NetSuite and EDI are built and tested, and Amazon, Walmart, eBay, Magento and SAP connectors are early. Anything else can use the API or scheduled files. We build out connectors with the first customer who needs them.' },
   { q: 'Is it live with customers?', a: 'Not yet. Nexus is in a private pilot. Its Shopify and BigCommerce paths have been run against development stores (the results are on the "What we have verified" page), and we are taking on our first founding customers now.' },
-  { q: 'Does it replace Shopify?', a: 'No. Shopify stays your storefront and point of sale. Nexus sits beside it, decides where orders ship from, and keeps each location\'s stock right in Shopify.' },
+  { q: 'Does it replace my storefront or ERP?', a: 'No. Your storefronts, marketplaces, POS and ERP stay where they are. Nexus sits between them, decides where each order ships from, and keeps each location\'s stock right in every channel.' },
   { q: 'Can I see the effect before I change anything?', a: 'Yes. The routing what-if replays your past orders under different rules and shows shipments, splits, unfilled units and expected failed picks. Stock imports and publishing run as dry runs first.' },
-  { q: 'How does it connect to my store?', a: 'Through a Shopify custom app that you install, with read scopes first; write scopes only when you decide to publish stock or push fulfilments. Credentials are encrypted at rest and never shown again.' },
-  { q: 'What about NetSuite, SAP or my POS?', a: 'NetSuite stock import is built and waiting for a sandbox to verify. SAP and POS vendor adapters are not built yet; Shopify POS works through Shopify\'s own locations.' },
+  { q: 'How does it connect?', a: 'With each platform\'s own API and credentials you create (for Shopify, a custom app), read-only first; write access only when you decide to publish stock or push fulfilments. Credentials are encrypted at rest and never shown again.' },
+  { q: 'What about NetSuite, SAP or my POS?', a: 'NetSuite stock import is built and waiting for a sandbox to verify. The SAP connector is early, and POS vendor adapters are not built yet; Shopify POS works through Shopify\'s own locations, and any POS can push stock counts to Nexus.' },
   { q: 'How is my data kept separate?', a: 'Every table is isolated per customer at the database level (row-level security), integration secrets are sealed with a key you hold, and access is role-based with multi-factor sign-in.' },
   { q: 'What does it cost?', a: 'See Pricing. Founding customers get a free development instance and two months free to test it on their own orders.' },
 ];

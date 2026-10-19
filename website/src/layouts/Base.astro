@@ -4,6 +4,7 @@ import '@fontsource-variable/unbounded';
 import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
+import Preloader from '../components/Preloader.astro';
 import { site, nav, footerGroups } from '../site.config';
 
 interface Props {
@@ -12,8 +13,9 @@ interface Props {
   scene?: 'dark' | 'light';
   ogType?: 'website' | 'article';
   noindex?: boolean;
+  intro?: boolean;
 }
-const { title, description = site.description, scene = 'dark', ogType = 'website', noindex = false } = Astro.props;
+const { title, description = site.description, scene = 'dark', ogType = 'website', noindex = false, intro = false } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: ${site.tagline}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://example.com').toString();
 const ogImage = new URL('/og.png', Astro.site ?? 'https://example.com').toString();
@@ -48,9 +50,13 @@ const jsonLd = {
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline>document.documentElement.classList.add('js');</script>
+    {intro && <script is:inline>
+      try { if (!sessionStorage.getItem('nx-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('preload'); } catch (e) {}
+    </script>}
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
+    {intro && <Preloader />}
     <a class="skip" href="#main">Skip to content</a>
     <div class="cursor" aria-hidden="true"></div>
 
@@ -136,7 +142,7 @@ const jsonLd = {
         </div>
         <div class="footer__base">
           <span>© {new Date().getFullYear()} {site.legalName}. All rights reserved.</span>
-          <span>{site.address || 'A private pilot product: features marked "verified" have been run on a Shopify development store.'}</span>
+          <span>{site.address || 'A private pilot product: features marked "verified" have been run on Shopify or BigCommerce development stores.'}</span>
         </div>
       </div>
     </footer>

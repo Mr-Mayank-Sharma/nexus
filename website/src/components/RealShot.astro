@@ -1,0 +1,22 @@
+---
+/** A real Nexus screen in a browser frame, revealed with a clip and settle as it scrolls in. */
+interface Props { img: string; caption: string; label?: string }
+const { img, caption, label = 'app.nexus · demo workspace' } = Astro.props;
+---
+<figure class="rs">
+  <div class="rs__frame" data-clip>
+    <div class="rs__bar"><i></i><i></i><i></i><span>{label}</span></div>
+    <img src={`/product/${img}-1920.webp`} srcset={`/product/${img}-960.webp 960w, /product/${img}-1920.webp 1920w`} sizes="(max-width: 900px) 92vw, 1200px" width="1920" height="1200" alt={caption} loading="lazy" decoding="async" />
+  </div>
+  <figcaption class="mono">{caption} · real screen, demo workspace</figcaption>
+</figure>
+
+<style>
+  .rs { margin: 0; }
+  .rs__frame { border-radius: 18px; overflow: hidden; background: #0b0f19; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 50px 120px rgba(5, 7, 13, 0.35); }
+  .rs__bar { display: flex; align-items: center; gap: 7px; height: 32px; padding: 0 14px; background: #0f1422; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; color: var(--muted-d); }
+  .rs__bar i { width: 9px; height: 9px; border-radius: 50%; background: #2a3347; }
+  .rs__bar span { margin-left: 10px; }
+  .rs__frame img { width: 100%; height: auto; display: block; }
+  .rs figcaption { margin-top: 14px; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+</style>
