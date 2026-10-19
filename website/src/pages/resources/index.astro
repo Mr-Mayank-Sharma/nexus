@@ -1,0 +1,35 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import { POSTS } from '../../data/posts';
+const fmt = (d: string) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const [first, ...rest] = POSTS;
+---
+<Base title="Insights" description="Research and practice on order routing, store fulfilment and stock accuracy.">
+  <PageHero eyebrow="Insights" title="What the research says, and what we do with it" lead="Short pieces on order routing, store fulfilment and stock accuracy. Outside figures always name their source." />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <a class="card feat" href={`/resources/${first.slug}`} data-reveal>
+        <p class="eyebrow" style="margin:0">{first.tag} · {fmt(first.date)} · {first.minutes} min</p>
+        <h2 class="display h-md" style="margin:18px 0 14px;max-width:24ch">{first.title}</h2>
+        <p style="max-width:60ch">{first.summary}</p>
+        <span class="link-arrow" style="margin-top:22px;display:inline-block">Read →</span>
+      </a>
+      <div class="grid g2" style="margin-top:clamp(16px,2vw,28px)">
+        {rest.map((p, i) => (
+          <a class="card" href={`/resources/${p.slug}`} data-reveal data-delay={String((i % 2) * 0.08)}>
+            <p class="eyebrow" style="margin:0 0 14px">{p.tag} · {fmt(p.date)} · {p.minutes} min</p>
+            <h3 class="h-sm" style="font-weight:600">{p.title}</h3>
+            <p style="margin-top:8px">{p.summary}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .feat { display: block; padding: clamp(28px, 5vw, 64px); }
+</style>

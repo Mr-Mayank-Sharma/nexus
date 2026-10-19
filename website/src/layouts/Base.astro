@@ -1,0 +1,149 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/unbounded';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/global.css';
+import Logo from '../components/Logo.astro';
+import { site, nav, footerGroups } from '../site.config';
+
+interface Props {
+  title?: string;
+  description?: string;
+  scene?: 'dark' | 'light';
+  ogType?: 'website' | 'article';
+  noindex?: boolean;
+}
+const { title, description = site.description, scene = 'dark', ogType = 'website', noindex = false } = Astro.props;
+const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: ${site.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://example.com').toString();
+const ogImage = new URL('/og.png', Astro.site ?? 'https://example.com').toString();
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'Organization', name: site.name, url: Astro.site?.toString(), email: site.contactEmail },
+    { '@type': 'WebSite', name: site.name, url: Astro.site?.toString() },
+    {
+      '@type': 'SoftwareApplication', name: site.name, applicationCategory: 'BusinessApplication', operatingSystem: 'Web',
+      description: site.description,
+    },
+  ],
+};
+---
+<!doctype html>
+<html lang="en" data-scene={scene}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#05070d" />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="cursor" aria-hidden="true"></div>
+
+    <div class="ticker">
+      <div class="wrap ticker__row">
+        <div class="ticker__news"><b>NEWS</b><span>Founding customer program is open: a free development instance, set up with you</span></div>
+        <div class="ticker__links"><a href="/what-if">Routing what-if</a><a href="/proof">What we have verified</a></div>
+      </div>
+    </div>
+
+    <header class="nav">
+      <div class="wrap nav__row">
+        <a class="brand" href="/" aria-label={`${site.name} home`}><Logo /> {site.name}</a>
+        <nav class="nav__links" aria-label="Main">
+          {nav.map(g => (
+            <div class="nav__item">
+              {g.links.length === 1
+                ? <a class="nav__link" href={g.links[0].href} aria-current={path === g.links[0].href ? 'page' : undefined}>{g.label}</a>
+                : <>
+                    <button class="nav__link" aria-haspopup="true">{g.label} <span aria-hidden="true">▾</span></button>
+                    <div class="nav__menu" role="menu">
+                      {g.links.map(l => <a href={l.href} role="menuitem">{l.label}{l.blurb && <small>{l.blurb}</small>}</a>)}
+                    </div>
+                  </>}
+            </div>
+          ))}
+        </nav>
+        <div class="nav__cta">
+          <a class="btn btn--primary" href="/contact" data-magnetic>Book a demo <span class="arr">→</span></a>
+          <button class="burger" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><i></i></button>
+        </div>
+      </div>
+    </header>
+
+    <div class="menu" id="menu" data-open="false" role="dialog" aria-modal="true" aria-label="Site menu">
+      <div class="menu__top">
+        <a class="brand" href="/"><Logo /> {site.name}</a>
+        <button class="menu__close" aria-label="Close menu">✕</button>
+      </div>
+      <div class="menu__body">
+        <div class="menu__big">
+          <a href="/product/order-routing" style="transition-delay:.05s">Product</a>
+          <a href="/use-cases/stop-overselling" style="transition-delay:.1s">Use cases</a>
+          <a href="/what-if" style="transition-delay:.15s">Routing what-if</a>
+          <a href="/resources" style="transition-delay:.2s">Insights</a>
+          <a href="/pricing" style="transition-delay:.25s">Pricing</a>
+          <a href="/about" style="transition-delay:.3s">About</a>
+          <a href="/contact" style="transition-delay:.35s">Contact</a>
+        </div>
+        <div class="menu__side">
+          <h3 class="eyebrow">Product</h3>
+          {nav[0].links.map(l => <a href={l.href}>{l.label}</a>)}
+          <h3 class="eyebrow" style="margin-top:24px">Get in touch</h3>
+          <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
+        </div>
+      </div>
+    </div>
+
+    <main id="main"><slot /></main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <div class="footer__cta">
+          <p class="eyebrow">Ready when you are</p>
+          <h2 class="display h-lg" style="margin:12px 0 28px;max-width:16ch">See it on your own orders.</h2>
+          <div style="display:flex;gap:14px;flex-wrap:wrap">
+            <a class="btn btn--signal" href="/what-if" data-magnetic>Try the what-if <span class="arr">→</span></a>
+            <a class="btn" href="/contact" data-magnetic>Book a demo</a>
+          </div>
+        </div>
+        <div class="footer__cols">
+          <div>
+            <a class="brand" href="/"><Logo /> {site.name}</a>
+            <p style="color:var(--muted-d);max-width:30ch;margin-top:16px">{site.tagline}.</p>
+            <p><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></p>
+          </div>
+          {footerGroups.map(g => (
+            <div>
+              <h4>{g.label}</h4>
+              {g.links.map(l => <a href={l.href}>{l.label}</a>)}
+            </div>
+          ))}
+        </div>
+        <div class="footer__base">
+          <span>© {new Date().getFullYear()} {site.legalName}. All rights reserved.</span>
+          <span>{site.address || 'A private pilot product: features marked "verified" have been run on a Shopify development store.'}</span>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      import { initMotion } from '../lib/motion';
+      initMotion();
+    </script>
+  </body>
+</html>

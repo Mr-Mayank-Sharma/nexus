@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import WhatIfDemo from '../components/WhatIfDemo.astro';
+
+const rules = [
+  { t: 'Nearest per line', b: 'Each line ships from the closest location that has it. Simple, and the way many systems still route. It splits orders.' },
+  { t: 'Fewest shipments', b: 'One location for the whole order when any can; otherwise the smallest set of locations that covers it.' },
+  { t: 'Fewest shipments, failure-aware', b: 'The same, but each store\'s expected failed picks count as cost. Unreliable stores lose close calls.' },
+];
+const steps = [
+  'Export a few months of orders from Shopify (order, SKU, quantity, ship-to).',
+  'Export stock per location at the start of the period.',
+  'Nexus replays them under each rule with its own copy of the stock and shows every order that would ship differently.',
+];
+---
+<Base title="Routing what-if" description="Replay orders under different routing rules and compare shipments, split orders and expected failed picks before you change anything.">
+  <PageHero eyebrow="Routing what-if" title="Know what a rule will do before you switch it on" lead="Replay orders under different routing rules, each with its own copy of the stock, and compare shipments, split orders, unfilled units and expected failed picks." />
+
+  <section class="section" data-scene-trigger="dark">
+    <div class="wrap">
+      <WhatIfDemo />
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="eyebrow">The three rules compared</p>
+      <div class="grid g3" style="margin-top:22px">
+        {rules.map((r, i) => <div class="card" data-reveal data-delay={String(i * 0.08)}><span class="mono" style="color:var(--signal);font-size:.8rem">0{i + 1}</span><h3 class="h-sm" style="margin:14px 0 10px;font-weight:600">{r.t}</h3><p>{r.b}</p></div>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap grid g2" style="align-items:start">
+      <div>
+        <p class="eyebrow">On your own orders</p>
+        <h2 class="display h-md" style="margin:14px 0 18px">Two exports and an afternoon</h2>
+        <p class="dim" style="max-width:46ch">In the product, the what-if takes CSV files with forgiving column names and tells you the line number of anything it can't read. Founding customers get it on their own data during the free pilot.</p>
+        <a class="btn btn--primary" href="/contact" style="margin-top:20px">Run it on my orders <span class="arr">→</span></a>
+      </div>
+      <ol class="steps">
+        {steps.map((s, i) => <li data-reveal><span class="mono">0{i + 1}</span><span>{s}</span></li>)}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap">
+      <div class="card">
+        <h3 class="h-sm" style="font-weight:600">What a replay does not tell you</h3>
+        <p style="margin-top:10px">It compares rules on the same orders and stock. It is not a forecast: replenishment during the period, cancellations and carrier delays are not modelled. Failure rates come from each store's rejection history, smoothed towards 5% so a quiet store is not judged on a handful of orders.</p>
+      </div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .steps { list-style: none; margin: 0; padding: 0; }
+  .steps li { display: grid; grid-template-columns: 46px 1fr; gap: 12px; padding: 22px 0; border-top: 1px solid var(--line); font-size: 1.08rem; }
+  .steps li:last-child { border-bottom: 1px solid var(--line); }
+  .steps .mono { color: var(--signal); font-size: 0.85rem; padding-top: 4px; }
+</style>

@@ -1,0 +1,91 @@
+---
+/** Code-built product views: sharp at any size, and the numbers are clearly sample data. */
+interface Props { slug: string }
+const { slug } = Astro.props;
+---
+<div class="panel pv" data-reveal>
+  {slug === 'order-routing' && (
+    <>
+      <div class="panel__bar"><i></i><i></i><i></i><span style="margin-left:8px">Routing rules · sample</span></div>
+      <div class="panel__body pv__body">
+        {[
+          ['1', 'Same-day orders in the North-East', 'Stores first · whole order', 'go'],
+          ['2', 'Orders over $500', 'Warehouse only', 'go'],
+          ['3', 'Everything else', 'Fewest shipments · failure-aware', 'go'],
+          ['4', 'Fallback', 'Backorder and alert', 'dim'],
+        ].map(([n, w, t, c]) => (
+          <div class="pv__rule"><span class="pv__n mono">{n}</span><div><b>{w}</b><small>{t}</small></div><span class={`chip chip--${c}`}>{c === 'go' ? 'On' : 'Last'}</span></div>
+        ))}
+        <div class="pv__decision">
+          <span class="mono">Order #4821 → Warehouse · East</span>
+          <small>Whole order at one location · NYC skipped: 22% pick failures (90 days)</small>
+        </div>
+      </div>
+    </>
+  )}
+  {slug === 'inventory' && (
+    <>
+      <div class="panel__bar"><i></i><i></i><i></i><span style="margin-left:8px">Stock ledger · JKT-NAVY-M · sample</span></div>
+      <div class="panel__body">
+        <table class="pv__tbl">
+          <thead><tr><th>When</th><th>Movement</th><th>Location</th><th>Change</th><th>On hand</th></tr></thead>
+          <tbody>
+            <tr><td>09:02</td><td>Opening balance (Shopify)</td><td>East</td><td class="up">+41</td><td>41</td></tr>
+            <tr><td>10:15</td><td>Pick · #4821</td><td>East</td><td class="dn">−1</td><td>40</td></tr>
+            <tr><td>11:40</td><td>Transfer out</td><td>East</td><td class="dn">−6</td><td>34</td></tr>
+            <tr><td>11:40</td><td>Transfer in</td><td>Boston</td><td class="up">+6</td><td>6</td></tr>
+            <tr><td>12:05</td><td>Held · not found</td><td>New York</td><td class="dn">−1 sellable</td><td>3</td></tr>
+          </tbody>
+        </table>
+        <div class="pv__decision"><span class="mono">Publish to Shopify · dry run</span><small>3 locations would change · 0 unknown SKUs touched</small></div>
+      </div>
+    </>
+  )}
+  {slug === 'store-fulfilment' && (
+    <>
+      <div class="panel__bar"><i></i><i></i><i></i><span style="margin-left:8px">Store · New York · pick list · sample</span></div>
+      <div class="panel__body pv__body">
+        <div class="pv__rule"><span class="pv__n mono">A3</span><div><b>Navy jacket · M</b><small>#4821 · 1 unit</small></div><span class="chip" style="color:var(--stop)">Rejected</span></div>
+        <div class="pv__rule"><span class="pv__n mono">B1</span><div><b>Wool scarf</b><small>#4821 · 1 unit</small></div><span class="chip chip--dim">Cancelled</span></div>
+        <div class="pv__rule"><span class="pv__n mono">C7</span><div><b>Leather belt</b><small>#4830 · 2 units</small></div><span class="chip chip--go">Picked</span></div>
+        <div class="pv__decision">
+          <span class="mono">#4821 re-routed whole → Warehouse · East</span>
+          <small>Reason: not found · 1 unit held · New York excluded from this order</small>
+        </div>
+      </div>
+    </>
+  )}
+  {slug === 'scheduled-jobs' && (
+    <>
+      <div class="panel__bar"><i></i><i></i><i></i><span style="margin-left:8px">Scheduled jobs · runs · sample</span></div>
+      <div class="panel__body">
+        <table class="pv__tbl">
+          <thead><tr><th>Job</th><th>Schedule</th><th>Rows</th><th>Failed</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>Shopify order import</td><td>Every 15 min</td><td>212</td><td>0</td><td><span class="chip chip--go">Done</span></td></tr>
+            <tr><td>Shopify stock import</td><td>Daily 02:00</td><td>6,923</td><td>11</td><td><span class="chip chip--warn">errors.csv</span></td></tr>
+            <tr><td>Stock export</td><td>Weekly Mon</td><td>6,938</td><td>0</td><td><span class="chip chip--go">output.csv</span></td></tr>
+            <tr><td>NetSuite stock import</td><td>Off</td><td>—</td><td>—</td><td><span class="chip chip--dim">Disabled</span></td></tr>
+          </tbody>
+        </table>
+        <div class="pv__decision"><span class="mono">11 rows need attention</span><small>SKU not found in Nexus (9) · location not mapped (2)</small></div>
+      </div>
+    </>
+  )}
+</div>
+
+<style>
+  .pv__body { display: grid; gap: 10px; }
+  .pv__rule { display: grid; grid-template-columns: 34px 1fr auto; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 12px; background: rgba(255, 255, 255, 0.035); border: 1px solid rgba(255, 255, 255, 0.07); }
+  .pv__rule b { display: block; font-weight: 600; font-size: 0.95rem; }
+  .pv__rule small { color: var(--muted-d); font-size: 0.82rem; }
+  .pv__n { color: var(--ember); font-size: 0.8rem; }
+  .pv__decision { margin-top: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(61, 220, 151, 0.45); background: rgba(61, 220, 151, 0.08); }
+  .pv__decision span { display: block; font-size: 0.82rem; color: #fff; }
+  .pv__decision small { color: var(--muted-d); font-size: 0.8rem; }
+  .pv__tbl { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .pv__tbl th { text-align: left; font-family: var(--mono); font-weight: 500; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted-d); padding: 8px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+  .pv__tbl td { padding: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); color: #dfe5f1; }
+  .pv__tbl .up { color: var(--go); } .pv__tbl .dn { color: var(--ember); }
+  @media (max-width: 560px) { .pv__tbl th:nth-child(1), .pv__tbl td:nth-child(1) { display: none; } .pv__tbl { font-size: 0.78rem; } }
+</style>

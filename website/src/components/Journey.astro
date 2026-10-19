@@ -1,0 +1,198 @@
+---
+const steps = [
+  { n: '01', t: 'An order arrives', b: 'Two items, one customer. Before anything ships, Nexus asks the only question that matters: who really has it?' },
+  { n: '02', t: 'Nexus checks the truth', b: 'Stock per location, from a ledger, not a nightly guess. And how often each store fails to find what it says it has.' },
+  { n: '03', t: 'One home for the whole order', b: 'Nearest-per-line would send two parcels from two stores. Nexus finds the one location that holds both and is least likely to fail the pick.' },
+  { n: '04', t: 'A store can\'t find it. The order still ships whole.', b: 'When a store rejects a line, the whole order moves to a location that holds all of it. The store\'s pick work is cancelled and the missing unit is held out of what you sell.' },
+  { n: '05', t: 'Every location stays honest', b: 'The ledger moves, and each Shopify location gets its new sellable number. Dry run first, always.' },
+];
+---
+<section class="journey section" aria-label="How an order moves through Nexus" data-scene-trigger="dark">
+  <div class="wrap journey__pin" data-journey>
+    <div>
+      <p class="eyebrow eyebrow--signal">How it works</p>
+      <h2 class="display h-md" style="margin:14px 0 30px">The journey of one order</h2>
+      <div class="journey__steps">
+        {steps.map((s, i) => (
+          <div class="journey__step" data-step={i} data-on={i === 0 ? 'true' : 'false'}>
+            <span class="journey__n">{s.n} / 05</span>
+            <h3 class="display h-sm">{s.t}</h3>
+            <p class="dim" style="margin:0;max-width:46ch">{s.b}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="journey__stage" aria-hidden="true">
+      <svg viewBox="0 0 800 660" class="jr">
+        <defs>
+          <radialGradient id="jrGlow"><stop offset="0" stop-color="#ff8a4c" stop-opacity=".9" /><stop offset="1" stop-color="#ff8a4c" stop-opacity="0" /></radialGradient>
+          <pattern id="jrGrid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="rgba(255,255,255,.05)" /></pattern>
+        </defs>
+        <rect width="800" height="660" fill="url(#jrGrid)" />
+
+        <!-- routes: each runs from a location to the customer -->
+        <path id="r-W" class="route" d="M170 430 Q 210 220 360 110" />
+        <path id="r-NYC" class="route" d="M520 330 Q 470 190 360 110" />
+        <path id="r-BOS" class="route" d="M640 150 Q 500 80 360 110" />
+        <path id="r-PHL" class="route" d="M420 560 Q 300 330 360 110" />
+
+        <!-- customer -->
+        <g id="n-C" transform="translate(360 110)">
+          <circle r="44" fill="url(#jrGlow)" class="pulse" />
+          <circle r="9" fill="#ff8a4c" />
+          <text y="-24" text-anchor="middle" class="lbl">Order #4821 · 2 items</text>
+        </g>
+
+        <!-- locations -->
+        <g id="n-W" transform="translate(170 430)"><rect x="-13" y="-13" width="26" height="26" rx="5" fill="#ff8a4c" /><text y="40" text-anchor="middle" class="lbl">Warehouse · East</text></g>
+        <g id="n-NYC" transform="translate(520 330)"><circle r="11" fill="#e8edf7" /><text y="36" text-anchor="middle" class="lbl">Store · New York</text></g>
+        <g id="n-BOS" transform="translate(640 150)"><circle r="11" fill="#e8edf7" /><text y="36" text-anchor="middle" class="lbl">Store · Boston</text></g>
+        <g id="n-PHL" transform="translate(420 560)"><circle r="11" fill="#e8edf7" /><text x="-22" y="5" text-anchor="end" class="lbl">Store · Philadelphia</text></g>
+
+        <!-- stock chips -->
+        <g class="chip-g" id="c-W" transform="translate(40 488)"><rect width="250" height="58" rx="10" /><text x="14" y="24" class="ct">Jacket ✓ 41 · Scarf ✓ 12</text><text x="14" y="44" class="cs" id="c-W-s">Fails 2% of picks</text></g>
+        <g class="chip-g" id="c-NYC" transform="translate(556 382)"><rect width="230" height="58" rx="10" /><text x="14" y="24" class="ct" id="c-NYC-t">Jacket ✓ 3 · Scarf ✕</text><text x="14" y="44" class="cs bad" id="c-NYC-s">Fails 22% of picks</text></g>
+        <g class="chip-g" id="c-BOS" transform="translate(560 202)"><rect width="210" height="58" rx="10" /><text x="14" y="24" class="ct">Jacket ✕ · Scarf ✓ 4</text><text x="14" y="44" class="cs">Fails 4% of picks</text></g>
+        <g class="chip-g" id="c-PHL" transform="translate(440 540)"><rect width="200" height="44" rx="10" /><text x="14" y="27" class="ct">Neither in stock</text></g>
+
+        <!-- verdicts -->
+        <g id="v-split" class="verdict" transform="translate(470 40)"><rect width="300" height="40" rx="20" class="v-bad" /><text x="150" y="25" text-anchor="middle" class="vt">Nearest per line: 2 parcels</text></g>
+        <g id="v-one" class="verdict" transform="translate(30 30)"><rect width="300" height="40" rx="20" class="v-good" /><text x="150" y="25" text-anchor="middle" class="vt">Nexus: 1 parcel, lowest risk</text></g>
+        <g id="v-reject" class="verdict" transform="translate(470 270)"><rect width="300" height="40" rx="20" class="v-bad" /><text x="150" y="25" text-anchor="middle" class="vt">New York: "not found" · rejected</text></g>
+
+        <!-- shopify sync -->
+        <g id="shop" class="verdict" transform="translate(500 470)">
+          <rect width="270" height="120" rx="14" class="shop" />
+          <text x="18" y="30" class="vt" style="text-anchor:start">Shopify · location stock</text>
+          <text x="18" y="62" class="ct">East: Jacket 41 → 40</text>
+          <text x="18" y="86" class="ct">East: Scarf 12 → 11</text>
+          <text x="18" y="108" class="cs">New York: 1 Jacket held</text>
+        </g>
+        <path id="sync-a" class="sync" d="M190 430 C 320 520 420 540 500 530" />
+
+        <circle id="tok-a" r="8" fill="#ffb27d" />
+        <circle id="tok-b" r="8" fill="#ffb27d" />
+        <text x="780" y="648" text-anchor="end" class="fine">Illustration · invented numbers</text>
+      </svg>
+      <div class="journey__bar"><i></i></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .jr { width: 100%; height: 100%; }
+  .jr .route { fill: none; stroke: rgba(255, 255, 255, 0.14); stroke-width: 2; }
+  .jr .lbl { fill: #c7d0e0; font: 500 13px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+  .jr .chip-g rect { fill: rgba(10, 14, 24, 0.92); stroke: rgba(255, 255, 255, 0.14); }
+  .jr .ct { fill: #e8edf7; font: 500 14px var(--text); }
+  .jr .cs { fill: #8b97ad; font: 500 12px var(--mono); }
+  .jr .cs.bad { fill: #ff5d6c; }
+  .jr .vt { fill: #fff; font: 600 13px var(--mono); letter-spacing: 0.04em; text-transform: uppercase; }
+  .jr .v-bad { fill: rgba(255, 93, 108, 0.16); stroke: rgba(255, 93, 108, 0.6); }
+  .jr .v-good { fill: rgba(61, 220, 151, 0.14); stroke: rgba(61, 220, 151, 0.6); }
+  .jr .shop { fill: rgba(14, 22, 44, 0.97); stroke: rgba(91, 140, 255, 0.6); }
+  .jr .sync { fill: none; stroke: #5b8cff; stroke-width: 2; stroke-dasharray: 6 8; }
+  .jr .fine { fill: #566074; font: 500 11px var(--mono); }
+  .jr .pulse { transform-origin: center; animation: jrPulse 2.4s ease-out infinite; }
+  @keyframes jrPulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .jr .pulse { animation: none; } }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, reduced } from '../lib/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-journey]');
+  if (root) {
+    const $ = (s: string) => root.querySelector(s) as SVGGraphicsElement | null;
+    const steps = Array.from(root.querySelectorAll<HTMLElement>('.journey__step'));
+    const bar = root.querySelector<HTMLElement>('.journey__bar i');
+    const chips = ['#c-W', '#c-NYC', '#c-BOS', '#c-PHL'].map($);
+    const verdicts = { split: $('#v-split'), one: $('#v-one'), reject: $('#v-reject'), shop: $('#shop') };
+    const routes = { W: $('#r-W') as SVGPathElement, NYC: $('#r-NYC') as SVGPathElement, BOS: $('#r-BOS') as SVGPathElement, PHL: $('#r-PHL') as SVGPathElement };
+    const sync = $('#sync-a') as SVGPathElement;
+    const tokA = $('#tok-a')!, tokB = $('#tok-b')!;
+    const nycT = root.querySelector('#c-NYC-t')!, nycS = root.querySelector('#c-NYC-s')!;
+
+    const style = (el: Element | null, props: gsap.TweenVars) => el && gsap.to(el, { duration: 0.5, ease: 'power2.out', ...props });
+    const along = (tok: Element, path: SVGPathElement, delay = 0) => {
+      const len = path.getTotalLength(), s = { p: 0 };
+      gsap.set(tok, { opacity: 1 });
+      return gsap.to(s, {
+        p: 1, duration: 1.4, delay, ease: 'power2.inOut',
+        onUpdate: () => { const pt = path.getPointAtLength(s.p * len); tok.setAttribute('cx', String(pt.x)); tok.setAttribute('cy', String(pt.y)); },
+      });
+    };
+    const routeStyle = (r: SVGPathElement, color: string, dash: string, width = 2) => {
+      gsap.killTweensOf(r);
+      r.style.strokeDasharray = dash;
+      gsap.to(r, { stroke: color, strokeWidth: width, duration: 0.5 });
+    };
+    const resetRoutes = (faint = 0.14) => Object.values(routes).forEach(r => routeStyle(r, `rgba(255,255,255,${faint})`, 'none'));
+
+    let current = -1;
+    const setStep = (i: number) => {
+      if (i === current) return;
+      current = i;
+      steps.forEach((s, k) => (s.dataset.on = String(k === i)));
+      gsap.killTweensOf([tokA, tokB]);
+      gsap.set([tokA, tokB], { opacity: 0, attr: { cx: 360, cy: 110 } });
+      Object.values(verdicts).forEach(v => style(v, { opacity: 0 }));
+      style(sync, { opacity: 0 });
+      nycT.textContent = 'Jacket ✓ 3 · Scarf ✕';
+      nycS.textContent = 'Fails 22% of picks';
+      if (i === 0) { chips.forEach(c => style(c, { opacity: 0 })); resetRoutes(0.08); }
+      if (i >= 1) { chips.forEach((c, k) => style(c, { opacity: 1, delay: k * 0.08 })); resetRoutes(0.18); }
+      if (i === 2) {
+        routeStyle(routes.NYC, '#ff5d6c', '8 8'); routeStyle(routes.BOS, '#ff5d6c', '8 8');
+        style(verdicts.split, { opacity: 1 });
+        along(tokA, routes.NYC, 0.1); along(tokB, routes.BOS, 0.1);
+        gsap.delayedCall(1.7, () => {
+          routeStyle(routes.NYC, 'rgba(255,255,255,.12)', 'none'); routeStyle(routes.BOS, 'rgba(255,255,255,.12)', 'none');
+          routeStyle(routes.W, '#3ddc97', 'none', 3);
+          style(verdicts.split, { opacity: 0.25 }); style(verdicts.one, { opacity: 1 });
+          gsap.set(tokB, { opacity: 0 }); along(tokA, routes.W);
+        });
+      }
+      if (i === 3) {
+        routeStyle(routes.NYC, '#ff5d6c', '8 8');
+        nycT.textContent = 'Jacket: not on the shelf';
+        nycS.textContent = 'Pick rejected · 1 unit held';
+        style(verdicts.reject, { opacity: 1 });
+        along(tokA, routes.NYC);
+        gsap.delayedCall(1.6, () => { gsap.set(tokA, { opacity: 0 }); routeStyle(routes.W, '#3ddc97', 'none', 3); along(tokB, routes.W); style(verdicts.one, { opacity: 1 }); });
+      }
+      if (i === 4) {
+        routeStyle(routes.W, '#3ddc97', 'none', 3);
+        style(verdicts.shop, { opacity: 1 });
+        chips.slice(1).forEach(c => style(c, { opacity: 0 }));
+        if (sync) { sync.style.opacity = '1'; gsap.fromTo(sync, { strokeDashoffset: 120 }, { strokeDashoffset: 0, duration: 1.2, repeat: -1, ease: 'none' }); }
+      }
+    };
+
+    gsap.set(Object.values(verdicts), { opacity: 0 });
+    gsap.set(sync, { opacity: 0 });
+    gsap.set([tokA, tokB], { opacity: 0 });
+    setStep(0);
+
+    const mm = gsap.matchMedia();
+    mm.add({ wide: '(min-width: 901px)', narrow: '(max-width: 900px)' }, ctx => {
+      const { wide } = ctx.conditions as { wide: boolean };
+      if (wide && !reduced()) {
+        ScrollTrigger.create({
+          trigger: root, start: 'top top', end: () => '+=' + window.innerHeight * 3.6, pin: true, scrub: true,
+          onUpdate: self => {
+            if (bar) bar.style.width = `${self.progress * 100}%`;
+            setStep(Math.min(steps.length - 1, Math.floor(self.progress * steps.length * 0.999)));
+          },
+        });
+      } else {
+        // phones: the steps stack, and each one plays its scene as it scrolls past
+        steps.forEach((s, k) => ScrollTrigger.create({
+          trigger: s.querySelector('h3') ?? s, start: 'top 82%',
+          onEnter: () => setStep(k), onLeaveBack: () => setStep(Math.max(0, k - 1)),
+        }));
+      }
+    });
+  }
+</script>

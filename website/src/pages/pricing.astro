@@ -1,0 +1,62 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../site.config';
+
+const tiers = [
+  { name: 'Pilot', price: 'Free', per: 'for two months', who: 'Try it on your own orders', items: ['Development instance connected to your Shopify dev store', 'Set up with you, no setup fee', 'Routing what-if on your order history', 'Stock import as a dry run'], cta: 'Apply', featured: false },
+  { name: 'Launch', price: 'From ~$1,000', per: 'one-time setup', who: 'Go live with production and UAT', items: ['Production and user-acceptance environments', 'Location mapping, stock baseline and routing rules set up with you', 'Lower setup fee for small shops', 'Then a monthly subscription, quoted up front'], cta: 'Talk to us', featured: true },
+  { name: 'Scale', price: 'Custom', per: 'for larger estates', who: 'Many stores, ERP, EDI', items: ['NetSuite and EDI connections', 'Store fulfilment across many locations', 'Connectors built with you where needed', 'Named contact for your team'], cta: 'Talk to us', featured: false },
+];
+const faq = [
+  { q: 'Why is there no monthly price on the page?', a: 'The subscription depends on order volume and the number of locations. We quote it before you go live, in writing, and it does not change without notice.' },
+  { q: 'What happens after the two free months?', a: 'Nothing automatic. You decide whether to go live; the development instance does not turn into a paid plan by itself.' },
+  { q: 'Do I need a developer?', a: 'No. You install a Shopify custom app with the scopes we list, and we do the setup with you.' },
+];
+---
+<Base title="Pricing" description="Free development instance and two months free for founding customers, then a one-time setup fee and a monthly subscription.">
+  <PageHero eyebrow="Pricing" title="Start free. Go live when it proves itself." lead={site.offer.summary} />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <div class="grid g3 tiers">
+        {tiers.map((t, i) => (
+          <div class:list={['tier', { 'tier--on': t.featured }]} data-reveal data-delay={String(i * 0.08)}>
+            {t.featured && <span class="tier__flag mono">Most retailers</span>}
+            <p class="eyebrow" style="margin:0">{t.name}</p>
+            <p class="tier__price display">{t.price}</p>
+            <p class="tier__per">{t.per}</p>
+            <p class="tier__who">{t.who}</p>
+            <ul>{t.items.map(it => <li>{it}</li>)}</ul>
+            <a class:list={['btn', t.featured ? 'btn--signal' : 'btn--primary']} href="/contact">{t.cta} <span class="arr">→</span></a>
+          </div>
+        ))}
+      </div>
+      <p class="dim" style="margin-top:22px;font-size:.88rem">{site.offer.fine}</p>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap grid g2" style="align-items:start">
+      <div><p class="eyebrow">Pricing questions</p><h2 class="display h-md" style="margin-top:14px">No surprises</h2></div>
+      <div class="faq">{faq.map(f => <details><summary>{f.q}</summary><p>{f.a}</p></details>)}</div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .tiers { align-items: stretch; }
+  .tier { position: relative; display: flex; flex-direction: column; padding: clamp(24px, 3vw, 38px); border-radius: 24px; border: 1px solid var(--line); background: var(--card); }
+  .tier--on { background: var(--ink); color: var(--text-d); border-color: var(--ink); box-shadow: 0 40px 100px rgba(5, 7, 13, 0.25); }
+  .tier--on .eyebrow, .tier--on .tier__per { color: var(--muted-d); }
+  .tier__flag { position: absolute; top: 18px; right: 18px; font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ember); }
+  .tier__price { font-size: clamp(1.8rem, 3.2vw, 2.6rem); margin: 22px 0 0; text-transform: none; }
+  .tier__per { margin: 4px 0 0; color: var(--muted); font-size: 0.9rem; }
+  .tier__who { margin: 22px 0 0; font-weight: 600; }
+  .tier ul { list-style: none; margin: 14px 0 28px; padding: 0; flex: 1; }
+  .tier li { padding: 10px 0 10px 26px; border-top: 1px solid var(--line); position: relative; font-size: 0.95rem; }
+  .tier--on li { border-color: var(--line-d); }
+  .tier li::before { content: '✓'; position: absolute; left: 0; color: var(--signal); }
+  .tier .btn { align-self: flex-start; }
+</style>

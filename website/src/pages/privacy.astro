@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../site.config';
+---
+<Base title="Privacy" description={`How ${site.name} handles personal data on this website.`}>
+  <PageHero eyebrow="Legal · draft" title="Privacy notice" lead="A plain-language draft. It will be reviewed by a lawyer before the company is registered and this site is launched." />
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap prose">
+      <h2>What this site collects</h2>
+      <p>If you use the contact form or email us, we receive what you send: usually your name, work email, company and message. We use it only to reply to you and to discuss whether {site.name} fits your business.</p>
+      <h2>What it does not do</h2>
+      <p>This site sets no advertising or tracking cookies and does not sell or share your details. The routing what-if runs entirely in your browser; nothing you change there is sent to us.</p>
+      <h2>How long we keep it</h2>
+      <p>Enquiries are kept for as long as we are in conversation, and deleted within 12 months of the last contact unless you become a customer.</p>
+      <h2>Your rights</h2>
+      <p>You can ask to see, correct or delete what we hold about you by emailing <a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>.</p>
+      <h2>Customer data in the product</h2>
+      <p>Data processed for customers inside {site.name} is covered by each customer's agreement, not by this notice.</p>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>

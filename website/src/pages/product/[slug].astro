@@ -1,0 +1,72 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import ProductVisual from '../../components/ProductVisual.astro';
+import { PRODUCT, STATUS_CHIP, STATUS_LABEL, type ProductPage } from '../../data/content';
+import { relatedLink } from '../../lib/links';
+
+export function getStaticPaths() {
+  return PRODUCT.map(p => ({ params: { slug: p.slug }, props: { p } }));
+}
+const { p } = Astro.props as { p: ProductPage };
+---
+<Base title={p.eyebrow} description={p.lead}>
+  <PageHero eyebrow={p.eyebrow} title={p.title} lead={p.lead}>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:34px" data-reveal data-delay="0.35">
+      <a class="btn btn--signal" href="/contact" data-magnetic>Book a demo <span class="arr">→</span></a>
+      <a class="btn" href="/what-if">Try the what-if</a>
+    </div>
+  </PageHero>
+
+  <section class="section" data-scene-trigger="dark">
+    <div class="wrap grid g2" style="align-items:center;gap:clamp(28px,5vw,80px)">
+      <div>
+        <p class="eyebrow">The problem</p>
+        <p class="h-sm" style="margin:16px 0 0;font-weight:500;line-height:1.5" data-reveal>{p.problem}</p>
+      </div>
+      <ProductVisual slug={p.slug} />
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <div style="display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:36px">
+        <div><p class="eyebrow">What it does</p><h2 class="display h-md" style="margin-top:14px">Capabilities</h2></div>
+        <p class="dim" style="margin:0;max-width:52ch">Each one is labelled with what it is today. <span class="chip chip--go">Verified live</span> means run against a real development store and checked.</p>
+      </div>
+      <div class="grid g2">
+        {p.capabilities.map((c, i) => (
+          <div class="card" data-reveal data-delay={String((i % 2) * 0.08)}>
+            <span class={STATUS_CHIP[c.status]}>{STATUS_LABEL[c.status]}</span>
+            <h3 class="h-sm" style="margin:18px 0 10px;font-weight:600">{c.title}</h3>
+            <p>{c.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap">
+      <div class="outcome" data-reveal>
+        <p class="eyebrow eyebrow--signal">Result</p>
+        <p class="h-sm" style="margin:14px 0 0;font-weight:500;line-height:1.5;max-width:60ch">{p.outcome}</p>
+        <a class="link-arrow" href="/proof" style="margin-top:22px;display:inline-block">Everything we have verified →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="eyebrow">Related</p>
+      <div class="grid g3" style="margin-top:20px">
+        {p.related.map(r => { const l = relatedLink(r); return <a class="card" href={l.href} data-reveal><h3 class="h-sm" style="font-weight:600">{l.label}</h3><span class="link-arrow" style="margin-top:14px;display:inline-block">Read →</span></a>; })}
+      </div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .outcome { padding: clamp(28px, 4vw, 48px); border-radius: 24px; border: 1px solid var(--line); background: var(--card); border-left: 4px solid var(--signal); }
+</style>

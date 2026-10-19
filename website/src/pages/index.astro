@@ -1,0 +1,244 @@
+---
+import Base from '../layouts/Base.astro';
+import Journey from '../components/Journey.astro';
+import WhatIfDemo from '../components/WhatIfDemo.astro';
+import { site } from '../site.config';
+import { PRODUCT, INTEGRATIONS, AUDIENCE, FAQ, STATUS_CHIP, STATUS_LABEL } from '../data/content';
+import { POSTS } from '../data/posts';
+
+const stats = [
+  { n: 5052, label: 'Shopify orders imported from a development store, with order totals equal to Shopify\'s to the cent.' },
+  { n: 9996, label: 'Product variants synced, equal to the shop\'s own count.' },
+  { n: 6923, label: 'Location stock rows brought in from physical on-hand, every row matching its ledger.' },
+  { n: 1154, label: 'Automated backend tests that run before every release.' },
+];
+const statement = 'Most cancellations start the same way: a system promised stock that a location did not have.';
+const why = [
+  { t: 'Per location, not per total', b: 'Shopify checks oversell against total stock. Nexus keeps and publishes each location\'s own number.' },
+  { t: 'Learns which stores fail', b: 'Each store\'s pick-failure rate, from your own rejections, counts against it when routing.' },
+  { t: 'Proves rules before they go live', b: 'Replay past orders under a new rule and see shipments, splits and failed picks first.' },
+  { t: 'Dry run everywhere', b: 'Stock imports and publishing preview their changes. New connections start read-only.' },
+];
+const marquee = [...INTEGRATIONS, ...INTEGRATIONS];
+---
+<Base>
+  <section class="hero scene-dark" data-scene-trigger="dark" id="top">
+    <div class="hero__fallback"></div>
+    <div class="hero__canvas" id="net"></div>
+    <div class="wrap hero__copy">
+      <p class="eyebrow eyebrow--signal" data-reveal>Order orchestration for Shopify retailers with stores</p>
+      <h1 class="display h-xl" data-split style="margin-top:22px">One brain for every order</h1>
+      <p class="hero__sub" data-reveal data-delay="0.3">{site.description}</p>
+      <div class="hero__cta" data-reveal data-delay="0.45">
+        <a class="btn btn--signal" href="/what-if" data-magnetic>See it on your orders <span class="arr">→</span></a>
+        <a class="btn" href="/contact" data-magnetic>Book a demo</a>
+      </div>
+    </div>
+    <div class="hero__legend"><span><i style="background:#ff8a4c"></i>Warehouse</span><span><i style="background:#fff"></i>Store</span><span><i style="background:#ffb27d"></i>Order in motion</span></div>
+  </section>
+
+  <!-- statement: the page turns light here -->
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>The problem</p>
+      <p class="statement" data-statement style="margin-top:24px">{statement}</p>
+      <div class="grid g2" style="margin-top:clamp(40px,6vw,80px);align-items:end">
+        <p class="lead" data-reveal>Stock fed in once a day goes stale by lunchtime. Line-by-line routing splits one order into two parcels. A store that can't find the item stalls the order. Each of these is fixable, and each one costs you a customer when it isn't.</p>
+        <div data-reveal><a class="link-arrow" href="/use-cases/stop-overselling">How Nexus stops overselling →</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light" aria-label="Verified numbers">
+    <div class="wrap">
+      <div class="grid g2" style="align-items:start">
+        <div>
+          <p class="eyebrow">Measured, not claimed</p>
+          <h2 class="display h-md" style="margin:14px 0 18px">Numbers we checked against the real thing</h2>
+          <p class="dim" style="max-width:44ch">Run against {site.verified.place}, latest on {site.verified.date}. Every result, and what is not yet live, is on one page.</p>
+          <p style="margin-top:22px"><a class="link-arrow" href="/proof">What we have verified →</a></p>
+        </div>
+        <div>
+          {stats.map(s => (
+            <div class="stat" data-reveal>
+              <div class="num" data-count={s.n}>{s.n.toLocaleString('en-US')}</div>
+              <p class="label" style="margin:10px 0 0">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Journey />
+
+  <section class="section" data-scene-trigger="light" aria-labelledby="cap-h">
+    <div class="wrap">
+      <div class="grid g2" style="align-items:end;margin-bottom:clamp(32px,5vw,64px)">
+        <div>
+          <p class="eyebrow">The product</p>
+          <h2 id="cap-h" class="display h-lg" style="margin-top:14px">Four things, done properly</h2>
+        </div>
+        <p class="lead" data-reveal>Not a hundred modules. The four jobs that decide whether an omnichannel order arrives whole, on time, from stock that was really there.</p>
+      </div>
+      <div class="grid g2">
+        {PRODUCT.map((p, i) => (
+          <a class="card cap" href={`/product/${p.slug}`} data-reveal data-delay={String((i % 2) * 0.1)}>
+            <span class="cap__n mono">0{i + 1}</span>
+            <p class="eyebrow eyebrow--signal" style="margin:0 0 12px">{p.eyebrow}</p>
+            <h3 class="display h-sm">{p.title}</h3>
+            <p>{p.lead}</p>
+            <div class="cap__chips">
+              {p.capabilities.slice(0, 3).map(c => <span class={STATUS_CHIP[c.status]} title={STATUS_LABEL[c.status]}>{c.title}</span>)}
+            </div>
+            <span class="link-arrow" style="margin-top:22px;display:inline-block">Explore →</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="dark" aria-labelledby="wi-h">
+    <div class="wrap">
+      <div class="grid g2" style="align-items:end;margin-bottom:40px">
+        <div>
+          <p class="eyebrow eyebrow--signal">Try it</p>
+          <h2 id="wi-h" class="display h-lg" style="margin-top:14px">Change a rule. Watch the orders move.</h2>
+        </div>
+        <p class="lead" data-reveal>This is the routing replay from the product, running in your browser on invented orders. Move the sliders: make the New York store less reliable, or shipping dearer, and see which rule wins.</p>
+      </div>
+      <div data-reveal><WhatIfDemo /></div>
+      <p style="margin-top:26px"><a class="link-arrow" href="/what-if">Run it on your own orders →</a></p>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="dark" aria-labelledby="why-h">
+    <div class="wrap">
+      <p class="eyebrow">Why Nexus</p>
+      <h2 id="why-h" class="display h-lg" style="margin:14px 0 clamp(32px,5vw,64px);max-width:16ch">Built for the store that can't find the jacket</h2>
+      <div class="grid g4">
+        {why.map((w, i) => (
+          <div class="why" data-reveal data-delay={String(i * 0.08)}>
+            <span class="why__i mono">{String(i + 1).padStart(2, '0')}</span>
+            <h3 class="h-sm" style="margin:18px 0 10px;font-weight:600">{w.t}</h3>
+            <p class="dim" style="margin:0">{w.b}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="dark" aria-label="Integrations">
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        {marquee.map(i => <span class="marquee__item">{i.name} <span class={STATUS_CHIP[i.status]}>{STATUS_LABEL[i.status]}</span></span>)}
+      </div>
+    </div>
+    <div class="wrap" style="margin-top:28px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap">
+      <p class="dim" style="margin:0;max-width:60ch">Each connection is labelled with what it really is today: verified against a live system, built and tested, or not built yet.</p>
+      <a class="link-arrow" href="/integrations">All integrations →</a>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light" aria-labelledby="aud-h">
+    <div class="wrap">
+      <p class="eyebrow">Who it is for</p>
+      <h2 id="aud-h" class="display h-lg" style="margin:14px 0 clamp(32px,5vw,56px)">Everyone who answers for an order</h2>
+      <div class="aud">
+        {AUDIENCE.map(a => (
+          <div class="aud__row" data-reveal>
+            <h3 class="display h-sm">{a.who}</h3>
+            <p>{a.gets}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light" aria-labelledby="offer-h">
+    <div class="wrap">
+      <div class="offer" data-reveal>
+        <div>
+          <p class="eyebrow eyebrow--signal">{site.offer.title}</p>
+          <h2 id="offer-h" class="display h-md" style="margin:14px 0 16px">Try it on your own orders, free</h2>
+          <p class="dim" style="margin:0 0 26px;max-width:44ch">{site.offer.summary}</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <a class="btn btn--signal" href="/contact" data-magnetic>Apply for the program <span class="arr">→</span></a>
+            <a class="btn" href="/pricing">Pricing</a>
+          </div>
+        </div>
+        <ol class="offer__list">
+          {site.offer.items.map((it, i) => <li><span class="mono">0{i + 1}</span><span>{it}</span></li>)}
+        </ol>
+        <p class="offer__fine">{site.offer.fine}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light" aria-labelledby="ins-h">
+    <div class="wrap">
+      <div style="display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:36px">
+        <div><p class="eyebrow">Insights</p><h2 id="ins-h" class="display h-md" style="margin-top:14px">What the research says</h2></div>
+        <a class="link-arrow" href="/resources">All insights →</a>
+      </div>
+      <div class="grid g3">
+        {POSTS.slice(0, 3).map((p, i) => (
+          <a class="card post" href={`/resources/${p.slug}`} data-reveal data-delay={String(i * 0.08)}>
+            <p class="eyebrow" style="margin:0 0 16px">{p.tag} · {p.minutes} min</p>
+            <h3 class="h-sm" style="font-weight:600">{p.title}</h3>
+            <p>{p.summary}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light" aria-labelledby="faq-h">
+    <div class="wrap grid g2" style="align-items:start">
+      <div><p class="eyebrow">Questions</p><h2 id="faq-h" class="display h-md" style="margin-top:14px">Straight answers</h2></div>
+      <div class="faq">
+        {FAQ.map(f => <details><summary>{f.q}</summary><p>{f.a}</p></details>)}
+      </div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .cap { position: relative; display: flex; flex-direction: column; min-height: 100%; }
+  .cap__n { position: absolute; right: 28px; top: 24px; color: var(--muted); font-size: 0.8rem; }
+  .cap h3 { margin-bottom: 14px; }
+  .cap__chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .why { border-top: 1px solid var(--line); padding-top: 22px; }
+  .why__i { color: var(--ember); font-size: 0.8rem; }
+  .aud__row { display: grid; grid-template-columns: 1fr 1.3fr; gap: 24px; padding: 26px 0; border-top: 1px solid var(--line); align-items: baseline; }
+  .aud__row:last-child { border-bottom: 1px solid var(--line); }
+  .aud__row p { margin: 0; color: var(--muted); font-size: 1.08rem; }
+  @media (max-width: 700px) { .aud__row { grid-template-columns: 1fr; gap: 6px; } }
+  .offer { display: grid; grid-template-columns: 1fr 1.1fr; gap: clamp(28px, 5vw, 72px); padding: clamp(28px, 5vw, 64px); border-radius: 28px; background: var(--ink); color: var(--text-d); position: relative; overflow: hidden; }
+  .offer::before { content: ''; position: absolute; inset: auto -20% -60% 40%; height: 120%; background: radial-gradient(closest-side, rgba(91, 140, 255, 0.35), transparent); pointer-events: none; }
+  .offer .dim { color: var(--muted-d); }
+  .offer .btn { border-color: var(--line-d); }
+  .offer__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; position: relative; }
+  .offer__list li { display: grid; grid-template-columns: 40px 1fr; gap: 10px; padding: 16px 0; border-top: 1px solid var(--line-d); color: #dfe5f1; }
+  .offer__list .mono { color: var(--ember); font-size: 0.8rem; padding-top: 3px; }
+  .offer__fine { grid-column: 1 / -1; margin: 0; font-size: 0.8rem; color: var(--muted-d); position: relative; }
+  @media (max-width: 860px) { .offer { grid-template-columns: 1fr; } }
+  .post { display: flex; flex-direction: column; }
+  .post h3 { margin-bottom: 12px; }
+</style>
+
+<script>
+  import { reduced, ScrollTrigger } from '../lib/motion';
+  const host = document.getElementById('net');
+  // Three.js is the heaviest thing on the site, so it loads after the page is readable; the gradient shows until then.
+  if (host) {
+    import('../lib/network').then(({ mountNetwork }) => {
+      const net = mountNetwork(host, host, { reduced: reduced() });
+      if (net) {
+        document.querySelector('.hero__fallback')?.setAttribute('style', 'opacity:.5');
+        ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true, onUpdate: s => net.setProgress(s.progress) });
+      }
+    });
+  }
+</script>

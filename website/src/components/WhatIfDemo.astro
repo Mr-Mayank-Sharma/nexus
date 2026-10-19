@@ -1,0 +1,88 @@
+---
+interface Props { compact?: boolean }
+const { compact = false } = Astro.props;
+---
+<div class="wi panel" data-whatif>
+  <div class="panel__bar"><i></i><i></i><i></i><span style="margin-left:8px">Routing what-if · runs in your browser</span></div>
+  <div class="wi__body">
+    <div class="wi__controls">
+      <label class="wi__ctl">
+        <span>New York store fails <b data-out="rate">22</b>% of picks</span>
+        <input type="range" min="0" max="40" step="1" value="22" data-in="rate" aria-label="New York store pick-failure rate" />
+      </label>
+      <label class="wi__ctl">
+        <span>Cost of one shipment <b style="white-space:nowrap">$<span data-out="cost">6.50</span></b></span>
+        <input type="range" min="3" max="20" step="0.5" value="6.5" data-in="cost" aria-label="Cost of one shipment" />
+      </label>
+      <p class="wi__note">220 invented orders, 24 SKUs, one distribution centre and three stores. The same replay logic as the product.</p>
+    </div>
+    <div class="wi__results" aria-live="polite">
+      <p class="wi__headline" data-out="headline">Replaying…</p>
+      <div class="wi__rows" data-out="rows"></div>
+      {!compact && <p class="wi__note">A simulation to compare rules on the same orders and stock, not a forecast. Replenishment and cancellations are not modelled.</p>}
+    </div>
+  </div>
+</div>
+
+<style>
+  .wi__body { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 28px; padding: 26px; }
+  .wi__controls { display: grid; gap: 22px; align-content: start; }
+  .wi__ctl span { display: block; margin-bottom: 10px; color: #c7d0e0; font-size: 0.95rem; }
+  .wi__ctl b { color: #fff; }
+  .wi__ctl input { width: 100%; accent-color: #ff8a4c; }
+  .wi__note { margin: 0; font-size: 0.82rem; color: var(--muted-d); }
+  .wi__headline { margin: 0 0 18px; font-size: 1.05rem; color: #fff; min-height: 3.2em; }
+  .wi__rows { display: grid; gap: 16px; }
+  :global(.wi__row) { display: grid; gap: 6px; }
+  :global(.wi__row h4) { margin: 0; font-family: var(--mono); font-weight: 500; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #c7d0e0; }
+  :global(.wi__metrics) { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  :global(.wi__m) { background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px; }
+  :global(.wi__m small) { display: block; color: var(--muted-d); font-size: 0.7rem; }
+  :global(.wi__m b) { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: #fff; }
+  :global(.wi__bar) { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); margin-top: 6px; overflow: hidden; }
+  :global(.wi__bar i) { display: block; height: 100%; width: 0; border-radius: 4px; transition: width 0.7s cubic-bezier(.22, 1, .36, 1); }
+  :global(.wi__row--best h4) { color: #ffb27d; }
+  @media (max-width: 860px) { .wi__body { grid-template-columns: 1fr; } :global(.wi__metrics) { grid-template-columns: repeat(2, 1fr); } }
+</style>
+
+<script>
+  import { run, sample, LABELS } from '../lib/replay';
+  const data = sample();
+  const money = (n: number) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+  document.querySelectorAll<HTMLElement>('[data-whatif]').forEach(root => {
+    const rate = root.querySelector<HTMLInputElement>('[data-in="rate"]')!;
+    const cost = root.querySelector<HTMLInputElement>('[data-in="cost"]')!;
+    const out = (k: string) => root.querySelector<HTMLElement>(`[data-out="${k}"]`)!;
+    let timer = 0;
+    const render = () => {
+      const r = Number(rate.value) / 100, c = Number(cost.value);
+      out('rate').textContent = String(rate.value);
+      out('cost').textContent = c.toFixed(2);
+      const nodes = data.nodes.map(n => (n.id === 'ST-NYC' ? { ...n, failureRate: r } : n));
+      const res = run(nodes, data.stock, data.orders, { perShipment: c, perKm: 0, perFailedUnit: c });
+      const [near, fewest, aware] = res.strategies;
+      const maxShip = Math.max(...res.strategies.map(s => s.shipments)), maxFail = Math.max(0.01, ...res.strategies.map(s => s.expectedFailedUnits));
+      const maxCost = Math.max(...res.strategies.map(s => s.totalCost));
+      out('rows').innerHTML = res.strategies.map((s, i) => `
+        <div class="wi__row ${i === 2 ? 'wi__row--best' : ''}">
+          <h4>${LABELS[s.strategy]}</h4>
+          <div class="wi__metrics">
+            <div class="wi__m"><small>Shipments</small><b>${s.shipments}</b><div class="wi__bar"><i style="width:${(s.shipments / maxShip) * 100}%;background:#5b8cff"></i></div></div>
+            <div class="wi__m"><small>Orders split</small><b>${s.splitOrders}</b><div class="wi__bar"><i style="width:${(s.splitOrders / Math.max(1, near.splitOrders)) * 100}%;background:#8fb0ff"></i></div></div>
+            <div class="wi__m"><small>Expected failed picks</small><b>${s.expectedFailedUnits.toFixed(1)}</b><div class="wi__bar"><i style="width:${(s.expectedFailedUnits / maxFail) * 100}%;background:#ff8a4c"></i></div></div>
+            <div class="wi__m"><small>Estimated cost</small><b>${money(s.totalCost)}</b><div class="wi__bar"><i style="width:${(s.totalCost / maxCost) * 100}%;background:#3ddc97"></i></div></div>
+          </div>
+        </div>`).join('');
+      const parts: string[] = [];
+      if (fewest.shipments < near.shipments) parts.push(`Keeping orders together saves ${near.shipments - fewest.shipments} shipments and ${near.splitOrders - fewest.splitOrders} split orders.`);
+      if (aware.expectedFailedUnits < fewest.expectedFailedUnits) parts.push(`Avoiding the unreliable store cuts expected failed picks from ${fewest.expectedFailedUnits.toFixed(1)} to ${aware.expectedFailedUnits.toFixed(1)}.`);
+      else parts.push('At this failure rate, avoiding the store changes nothing: it is as reliable as the rest.');
+      out('headline').textContent = parts.join(' ');
+    };
+    const schedule = () => { clearTimeout(timer); timer = window.setTimeout(render, 40); };
+    rate.addEventListener('input', schedule);
+    cost.addEventListener('input', schedule);
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { render(); io.disconnect(); } }, { rootMargin: '200px' });
+    io.observe(root);
+  });
+</script>

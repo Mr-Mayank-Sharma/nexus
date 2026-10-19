@@ -1,0 +1,46 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHero from '../../components/PageHero.astro';
+import ProductVisual from '../../components/ProductVisual.astro';
+import { USE_CASES, PRODUCT, type UseCase } from '../../data/content';
+
+export function getStaticPaths() {
+  return USE_CASES.map(u => ({ params: { slug: u.slug }, props: { u } }));
+}
+const { u } = Astro.props as { u: UseCase };
+const product = PRODUCT.find(p => p.slug === u.product)!;
+const others = USE_CASES.filter(x => x.slug !== u.slug).slice(0, 3);
+---
+<Base title={u.title} description={u.lead}>
+  <PageHero eyebrow={u.eyebrow} title={u.title} lead={u.lead} />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap grid g2" style="align-items:start;gap:clamp(28px,5vw,80px)">
+      <div>
+        <p class="eyebrow">How Nexus does it</p>
+        <ol class="how">
+          {u.how.map((h, i) => <li data-reveal data-delay={String(i * 0.08)}><span class="mono">0{i + 1}</span><span>{h}</span></li>)}
+        </ol>
+        <a class="btn btn--primary" href={`/product/${product.slug}`} style="margin-top:28px">{product.eyebrow} <span class="arr">→</span></a>
+      </div>
+      <ProductVisual slug={product.slug} />
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="eyebrow">More use cases</p>
+      <div class="grid g3" style="margin-top:20px">
+        {others.map(o => <a class="card" href={`/use-cases/${o.slug}`} data-reveal><h3 class="h-sm" style="font-weight:600">{o.title}</h3><p style="margin-top:8px">{o.lead}</p></a>)}
+      </div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .how { list-style: none; margin: 18px 0 0; padding: 0; }
+  .how li { display: grid; grid-template-columns: 46px 1fr; gap: 12px; padding: 22px 0; border-top: 1px solid var(--line); font-size: 1.12rem; }
+  .how li:last-child { border-bottom: 1px solid var(--line); }
+  .how .mono { color: var(--signal); font-size: 0.85rem; padding-top: 4px; }
+</style>

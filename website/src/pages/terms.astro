@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../site.config';
+---
+<Base title="Terms" description={`Terms of use for the ${site.name} website.`}>
+  <PageHero eyebrow="Legal · draft" title="Website terms" lead="A plain-language draft for the website only. It will be reviewed by a lawyer before launch. Use of the product is governed by a separate written agreement." />
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap prose">
+      <h2>Information on this site</h2>
+      <p>We describe {site.name} as accurately as we can and label each feature with its status. Results on the "What we have verified" page come from development stores and test environments; your results will depend on your data and setup.</p>
+      <h2>The routing what-if</h2>
+      <p>The demo uses invented data and simplified costs. It compares rules; it is not a forecast or a guarantee of savings.</p>
+      <h2>Pricing and offers</h2>
+      <p>Prices and the founding customer program on this site are indicative. Binding terms are only those agreed in writing.</p>
+      <h2>Links</h2>
+      <p>Links to outside sources are provided for reference; we are not responsible for their content.</p>
+      <h2>Contact</h2>
+      <p><a href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a></p>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>

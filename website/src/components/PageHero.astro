@@ -1,0 +1,25 @@
+---
+interface Props { eyebrow: string; title: string; lead?: string; crumb?: { label: string; href: string } }
+const { eyebrow, title, lead, crumb } = Astro.props;
+---
+<section class="phero" data-scene-trigger="dark">
+  <div class="phero__glow" aria-hidden="true"></div>
+  <div class="wrap">
+    {crumb && <a class="phero__crumb mono" href={crumb.href}>← {crumb.label}</a>}
+    <p class="eyebrow eyebrow--signal" data-reveal>{eyebrow}</p>
+    <h1 class="display h-lg balance" data-split style="margin:18px 0 0;max-width:18ch">{title}</h1>
+    {lead && <p class="lead phero__lead" data-reveal data-delay="0.25">{lead}</p>}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .phero { position: relative; overflow: hidden; background: var(--ink); color: var(--text-d); padding: clamp(96px, 14vw, 180px) 0 clamp(64px, 9vw, 120px); isolation: isolate; }
+  .phero__glow { position: absolute; z-index: -1; right: -12%; top: -30%; width: 70vw; height: 70vw; max-width: 980px; max-height: 980px; border-radius: 50%; background: radial-gradient(closest-side, rgba(91, 140, 255, 0.28), rgba(255, 138, 76, 0.08) 55%, transparent 72%); filter: blur(10px); animation: phGlow 14s ease-in-out infinite alternate; }
+  .phero::after { content: ''; position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(70% 80% at 70% 30%, #000, transparent); -webkit-mask-image: radial-gradient(70% 80% at 70% 30%, #000, transparent); }
+  .phero__lead { color: var(--muted-d); margin-top: 26px; }
+  .phero__crumb { display: inline-block; margin-bottom: 26px; font-size: 0.74rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted-d); }
+  .phero__crumb:hover { color: #fff; }
+  @keyframes phGlow { to { transform: translate(-6%, 8%) scale(1.08); } }
+  @media (prefers-reduced-motion: reduce) { .phero__glow { animation: none; } }
+</style>

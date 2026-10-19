@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+---
+<Base title="Not found" noindex>
+  <PageHero eyebrow="404" title="This page was routed somewhere else" lead="The link may be old, or the page has moved.">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:30px">
+      <a class="btn btn--signal" href="/">Home <span class="arr">→</span></a>
+      <a class="btn" href="/contact">Contact</a>
+    </div>
+  </PageHero>
+</Base>

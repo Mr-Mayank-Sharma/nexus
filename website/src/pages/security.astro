@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+
+const items = [
+  { t: 'Data isolated per customer', b: 'Every table is separated per customer in the database itself with row-level security, not only in application code.' },
+  { t: 'Secrets sealed at rest', b: 'Store and ERP credentials are encrypted with AES-256-GCM before they are saved, and are never returned by the API after you save them.' },
+  { t: 'Multi-factor sign-in', b: 'Time-based one-time codes for user accounts, and role-based permissions for every area of the product.' },
+  { t: 'Signed webhooks', b: 'Incoming webhooks are checked against the sender\'s signature before anything is processed.' },
+  { t: 'Read-only first', b: 'New connections only import. Writing back to your store is a switch you turn on, and stock publishing runs as a dry run first.' },
+  { t: 'Tested before every release', b: 'More than a thousand automated backend tests, a front-end test suite and a secret scan run before each release.' },
+];
+---
+<Base title="Security" description="How Nexus keeps customer data separate, seals credentials and limits what it can change in your store.">
+  <PageHero eyebrow="Security" title="Built so that a mistake can't spread" lead="What is in place today, described plainly. We are a young company: there is no SOC 2 report yet, and we will say so until there is." />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap grid g3">
+      {items.map((x, i) => <div class="card" data-reveal data-delay={String((i % 3) * 0.08)}><h3 class="h-sm" style="font-weight:600">{x.t}</h3><p style="margin-top:10px">{x.b}</p></div>)}
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap">
+      <div class="card">
+        <h3 class="h-sm" style="font-weight:600">Not in place yet</h3>
+        <p style="margin-top:10px">An independent security audit and a SOC 2 report. Hosting region and backup terms are agreed with each customer before go-live. If you need a security questionnaire answered, ask and we will answer it honestly.</p>
+        <a class="link-arrow" href="/contact" style="margin-top:18px;display:inline-block">Ask a security question →</a>
+      </div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>

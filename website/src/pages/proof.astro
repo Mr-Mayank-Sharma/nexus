@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { PROOF, STATUS_CHIP, STATUS_LABEL } from '../data/content';
+const live = PROOF.filter(p => p.status === 'live').length;
+---
+<Base title="What we have verified" description="Every result we have checked against a real system, with the date, and what is not live yet.">
+  <PageHero eyebrow="What we have verified" title="Results, with dates. And what isn't live yet." lead={`No logos we haven't earned and no testimonials we haven't got. These are the checks we ran: ${live} against real development stores, the rest on a real database or in automated tests.`} />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <div class="proof">
+        {PROOF.map(p => (
+          <div class="proof__row" data-reveal>
+            <h3 class="h-sm">{p.what}</h3>
+            <p>{p.result}</p>
+            <div class="proof__meta"><span class={STATUS_CHIP[p.status]}>{STATUS_LABEL[p.status]}</span>{p.when && <span class="mono">{p.when}</span>}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap grid g3">
+      <div class="card"><span class="chip chip--go">Verified live</span><p style="margin-top:12px">Run against a real Shopify or BigCommerce development store and the result checked against the store's own numbers.</p></div>
+      <div class="card"><span class="chip chip--warn">Built and tested</span><p style="margin-top:12px">Covered by automated tests, sometimes run end to end on a real database; not yet run against the real outside system.</p></div>
+      <div class="card"><span class="chip chip--dim">Not built yet</span><p style="margin-top:12px">On the roadmap. We build connectors with the first customer who needs them.</p></div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .proof__row { display: grid; grid-template-columns: 0.9fr 1.5fr 0.7fr; gap: 24px; padding: 26px 0; border-top: 1px solid var(--line); align-items: baseline; }
+  .proof__row:last-child { border-bottom: 1px solid var(--line); }
+  .proof__row h3 { margin: 0; font-weight: 600; }
+  .proof__row p { margin: 0; color: var(--muted); }
+  .proof__meta { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+  .proof__meta .mono { font-size: 0.75rem; color: var(--muted); }
+  @media (max-width: 800px) { .proof__row { grid-template-columns: 1fr; gap: 8px; } .proof__meta { flex-direction: row; align-items: center; } }
+</style>

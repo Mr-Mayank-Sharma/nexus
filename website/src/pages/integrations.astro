@@ -1,0 +1,41 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { INTEGRATIONS, STATUS_CHIP, STATUS_LABEL } from '../data/content';
+---
+<Base title="Integrations" description="Shopify, BigCommerce, NetSuite, POS and EDI, each labelled with what it really is today.">
+  <PageHero eyebrow="Integrations" title="Connected, and honest about how far" lead="Every connection says what it is today: verified against a live development system, built and tested, or not built yet." />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <div class="grid g2">
+        {INTEGRATIONS.map((x, i) => (
+          <div class="card intg" data-reveal data-delay={String((i % 2) * 0.08)}>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <h3 class="display h-sm">{x.name}</h3>
+              <span class={STATUS_CHIP[x.status]}>{STATUS_LABEL[x.status]}</span>
+            </div>
+            <p style="margin-top:12px">{x.note}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap grid g3">
+      <div class="card"><h3 class="h-sm" style="font-weight:600">Read-only first</h3><p style="margin-top:8px">New connections only import. Anything that writes back, such as stock publishing, is switched on by you.</p></div>
+      <div class="card"><h3 class="h-sm" style="font-weight:600">Dry run by default</h3><p style="margin-top:8px">Stock imports and publishing show what would change before anything changes.</p></div>
+      <div class="card"><h3 class="h-sm" style="font-weight:600">Secrets sealed</h3><p style="margin-top:8px">Store tokens are encrypted at rest and never shown again after you save them.</p></div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="eyebrow">Need something not listed?</p>
+      <h2 class="display h-md" style="margin:14px 0 18px;max-width:22ch">We build connectors with the first customer who needs them</h2>
+      <a class="btn btn--primary" href="/contact">Tell us your stack <span class="arr">→</span></a>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>

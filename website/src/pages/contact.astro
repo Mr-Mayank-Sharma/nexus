@@ -1,0 +1,89 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../site.config';
+const endpoint = site.formEndpoint ?? '';
+---
+<Base title="Contact" description="Book a demo or apply for the founding customer program.">
+  <PageHero eyebrow="Contact" title="Book a demo, or apply to be a founding customer" lead="Tell us a little about how you sell and fulfil. We reply within one working day." />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap grid g2" style="align-items:start;gap:clamp(28px,5vw,80px)">
+      <form class="form" id="contact" data-endpoint={endpoint} data-email={site.contactEmail} novalidate>
+        <div class="grid g2" style="gap:16px">
+          <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" required /></div>
+          <div class="field"><label for="f-email">Work email</label><input id="f-email" name="email" type="email" autocomplete="email" required /></div>
+        </div>
+        <div class="grid g2" style="gap:16px">
+          <div class="field"><label for="f-co">Company</label><input id="f-co" name="company" autocomplete="organization" required /></div>
+          <div class="field"><label for="f-loc">Stores and warehouses</label>
+            <select id="f-loc" name="locations"><option>1–5</option><option>6–25</option><option>26–100</option><option>100+</option></select>
+          </div>
+        </div>
+        <div class="field"><label for="f-plat">Platform</label>
+          <select id="f-plat" name="platform"><option>Shopify</option><option>Shopify Plus</option><option>BigCommerce</option><option>Other</option></select>
+        </div>
+        <div class="field"><label for="f-msg">What would you like to fix?</label><textarea id="f-msg" name="message" placeholder="Overselling at one store, split shipments, store pick failures…"></textarea></div>
+        <input type="text" name="website" tabindex="-1" autocomplete="off" class="sr-only" aria-hidden="true" />
+        <div><button class="btn btn--primary" type="submit">Send <span class="arr">→</span></button></div>
+        <p class="form__note">We use what you send only to reply to you. See the <a href="/privacy" style="text-decoration:underline">privacy notice</a>.</p>
+        <div id="form-status" role="status" aria-live="polite"></div>
+      </form>
+
+      <div class="stack" style="--gap:28px">
+        <div class="card">
+          <p class="eyebrow eyebrow--signal" style="margin:0">{site.offer.title}</p>
+          <ul class="ofl">{site.offer.items.map(i => <li>{i}</li>)}</ul>
+          <p style="font-size:.82rem">{site.offer.fine}</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow" style="margin:0 0 10px">Email</p>
+          <a class="h-sm" style="font-weight:600" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .ofl { margin: 14px 0; padding-left: 18px; }
+  .ofl li { padding: 6px 0; color: var(--muted); }
+</style>
+
+<script>
+  const form = document.getElementById('contact') as HTMLFormElement | null;
+  const status = document.getElementById('form-status');
+  form?.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!status) return;
+    const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+    if (data.website) return; // bots fill the hidden field
+    const missing = ['name', 'email', 'company'].filter(k => !data[k]?.trim());
+    if (missing.length || !/^\S+@\S+\.\S+$/.test(data.email ?? '')) {
+      status.className = 'form__err';
+      status.textContent = 'Please add your name, a valid work email and your company.';
+      return;
+    }
+    delete data.website;
+    const endpoint = form.dataset.endpoint;
+    if (!endpoint) {
+      // No form backend configured yet: hand over to the visitor's email app instead.
+      const body = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');
+      window.location.href = `mailto:${form.dataset.email}?subject=${encodeURIComponent('Demo request: ' + data.company)}&body=${encodeURIComponent(body)}`;
+      status.className = 'form__ok';
+      status.textContent = 'Your email app should open with the message ready to send.';
+      return;
+    }
+    try {
+      const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(data) });
+      if (!res.ok) throw new Error(String(res.status));
+      form.reset();
+      status.className = 'form__ok';
+      status.textContent = 'Thank you. We will reply within one working day.';
+    } catch {
+      status.className = 'form__err';
+      status.textContent = `That didn't send. Please email ${form.dataset.email} instead.`;
+    }
+  });
+</script>

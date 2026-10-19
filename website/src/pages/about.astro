@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../site.config';
+
+const beliefs = [
+  { t: 'Truth before cleverness', b: 'An order system is only as good as its stock numbers. We start there, with a ledger for every location.' },
+  { t: 'Prove it on your orders', b: 'Rule changes should be tested on history before they touch a customer. So every rule can be replayed.' },
+  { t: 'Say what is real', b: 'Every feature on this site carries its status. If it is not verified live, we say so.' },
+  { t: 'Small surface, done well', b: 'Four jobs done properly beat a hundred modules nobody finishes setting up.' },
+];
+---
+<Base title="About" description={`Why ${site.name} exists and how we work.`}>
+  <PageHero eyebrow="About" title="We started with one question: who really has it?" lead={`${site.name} is order orchestration for retailers who sell online and fulfil from stores and warehouses. We are a small team, in a private pilot, taking on our first founding customers.`} />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="statement" data-statement>Enterprise order management was built for retailers with enterprise budgets. The problems it solves are not that rare.</p>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="eyebrow">How we work</p>
+      <div class="grid g4" style="margin-top:22px">
+        {beliefs.map((b, i) => <div class="why" data-reveal data-delay={String(i * 0.08)}><span class="mono" style="color:var(--ember);font-size:.8rem">0{i + 1}</span><h3 class="h-sm" style="margin:16px 0 10px;font-weight:600">{b.t}</h3><p class="dim" style="margin:0">{b.b}</p></div>)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <h2 class="display h-md" style="max-width:22ch">Want to be one of the first ten?</h2>
+      <a class="btn btn--primary" href="/contact" style="margin-top:22px">Apply for the founding program <span class="arr">→</span></a>
+    </div>
+  </section>
+  <div data-scene-trigger="dark"></div>
+</Base>
+
+<style>
+  .why { border-top: 1px solid var(--line); padding-top: 22px; }
+</style>
