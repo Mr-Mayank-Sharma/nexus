@@ -127,11 +127,28 @@ public class NxOrder {
     @JdbcTypeCode(SqlTypes.JSON)
     private String metadata;
 
+    /** B2C or B2B. Decides the release window when the order has a requested ship date. */
+    @Column(name = "order_type", nullable = false, length = 10)
+    private String orderType;
+
+    /** When the customer wants it shipped; null = as soon as possible. */
+    @Column(name = "requested_ship_date")
+    private LocalDateTime requestedShipDate;
+
+    /** When fulfilment may start (ship date minus the window). Allocation refuses the order before this. */
+    @Column(name = "release_at")
+    private LocalDateTime releaseAt;
+
+    /** When the hold ended, on schedule or by hand. */
+    @Column(name = "released_at")
+    private LocalDateTime releasedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (status == null) status = "PENDING";
+        if (orderType == null) orderType = "B2C";
     }
 
     @PreUpdate

@@ -71,7 +71,7 @@ public class BrokeringService {
                 .status("WAITING")
                 .attempts(0)
                 .maxAttempts(3)
-                .nextRunAt(LocalDateTime.now().plusMinutes(5))
+                .nextRunAt(FulfilmentReleaseService.isHeld(order, LocalDateTime.now()) ? order.getReleaseAt() : LocalDateTime.now().plusMinutes(5))
                 .enteredAt(LocalDateTime.now())
                 .build();
 
@@ -295,6 +295,13 @@ public class BrokeringService {
             }
             brokeringQueueRepository.save(queueEntry);
             return partial ? "FAILED" : "ALLOCATED";
+        }
+
+        // Still held for its ship date: wait until the release time; this is not a failed attempt.
+        if (queuedOrder != null && FulfilmentReleaseService.isHeld(queuedOrder, LocalDateTime.now())) {
+            queueEntry.setNextRunAt(queuedOrder.getReleaseAt());
+            brokeringQueueRepository.save(queueEntry);
+            return "RETRY";
         }
 
         try {

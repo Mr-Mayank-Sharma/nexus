@@ -39,6 +39,12 @@ public class GenericOrderWriter {
     private final AddressRepository addresses;
     private final TransactionTemplate tx;
 
+    private com.nexus.oms.service.FulfilmentReleaseService release;
+
+    /** Orders with a far ship date are held for fulfilment (optional so tests can leave it out). */
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setRelease(com.nexus.oms.service.FulfilmentReleaseService release) { this.release = release; }
+
     public GenericOrderWriter(OrderRepository orders, OrderItemRepository items, CustomerRepository customers,
                               AddressRepository addresses, PlatformTransactionManager txm) {
         this.orders = orders;
@@ -125,7 +131,11 @@ public class GenericOrderWriter {
                 .currency(blank(m.get("currency")) ? "USD" : m.get("currency").trim().toUpperCase(Locale.ROOT))
                 .subtotal(subtotal).shippingCost(shipping).taxAmount(tax).total(total)
                 .metadata(meta.toString())
+                .orderType(meta.get("orderType").asText())
+                .requestedShipDate(blank(m.get("requestedShipDate")) ? null
+                        : java.time.LocalDateTime.ofInstant(java.time.Instant.parse(ValueExpr.toIso(m.get("requestedShipDate").trim())), java.time.ZoneOffset.UTC))
                 .build();
+        if (release != null) release.plan(order);
         if (ship != null) order.setShipToAddressId(ship.getId());
         NxOrder saved = orders.save(order);
         for (Map<String, String> l : m.lines()) {

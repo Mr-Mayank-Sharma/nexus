@@ -1,5 +1,23 @@
 # Release notes
 
+## Unreleased (since rc3)
+
+- **Release by ship date (B2B).** An order can carry a type (B2C or B2B) and a requested ship date. When the ship date
+  is further away than the release window (B2B: 3 days, B2C: 1 day by default, editable per workspace), the order is
+  not allocated, so it reserves no stock, until ship date minus the window. Allocation of a held order returns HELD
+  with the reason; brokering parks the order until its release time without using up its attempts; every 10 minutes
+  a scheduler releases what is due; anyone with order rights can release early or change the date on
+  **Order Management → Release by Ship Date**. Orders without a ship date are never held. Imported orders from generic
+  connections are held the same way. Verified end to end on a local install: a B2B order shipping in 40 days was
+  confirmed without reserving stock, queued for its release time, and released by hand.
+- **Generic connections.** Import orders or stock counts from any system with a JSON API, and export orders,
+  shipments or stock to one (or to a CSV file), configured instead of coded. See `docs/20-INTEGRATIONS.md`, section 9.
+- **Fixed: the Orders list took over 30 seconds** (it downloaded every order before showing any, and ran two extra
+  queries per order). It now loads one page at a time from the server with server-side sorting and filters (including
+  channel), totals per status come from a count query, and a page of 50 orders takes about 0.1 s instead of 1.5 s.
+- **Fixed in dark mode:** every table's header row (the shared table used light greys) and the transfers search box.
+
+
 ## v0.1.0-rc3 (2026-10-18)
 
 Adds, on top of rc2:

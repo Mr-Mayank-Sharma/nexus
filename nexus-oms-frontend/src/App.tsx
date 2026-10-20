@@ -70,6 +70,7 @@ const StoreOperationsPage = lazy(() => import('./pages/StoreOperationsPage'))
 const JobsPage = lazy(() => import('./pages/JobsPage'))
 const OrderReplayPage = lazy(() => import('./pages/OrderReplayPage'))
 const GenericConnectionsPage = lazy(() => import('./pages/GenericConnectionsPage'))
+const ReleaseSchedulePage = lazy(() => import('./pages/ReleaseSchedulePage'))
 const IntegrationDirectoryPage = lazy(() => import('./pages/IntegrationDirectoryPage'))
 const IntegrationHubPage = lazy(() => import('./pages/IntegrationHubPage'))
 const ImportExportCenter = lazy(() => import('./pages/ImportExportCenter'))
@@ -148,6 +149,7 @@ export default function App() {
           <Route path="jobs" element={<JobsPage />} />
           <Route path="order-replay" element={<OrderReplayPage />} />
           <Route path="generic-connections" element={<GenericConnectionsPage />} />
+          <Route path="release-schedule" element={<ReleaseSchedulePage />} />
           <Route path="integrations/directory" element={<IntegrationDirectoryPage />} />
           <Route path="integrations" element={<Navigate to="/integrations/directory" replace />} />
           <Route path="integration-hub" element={<IntegrationHubPage />} />

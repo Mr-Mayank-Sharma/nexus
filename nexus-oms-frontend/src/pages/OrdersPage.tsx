@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Download, Printer, XCircle, Ship, RotateCcw, Loader2, Plus, X,
@@ -34,7 +34,7 @@ export default function OrdersPage() {
     street: '', city: '', state: '', zip: '', country: 'US',
     channel: 'MANUAL', sku: '', productName: '', quantity: 1, unitPrice: 0,
   })
-  const pageSize = 15
+  const pageSize = 25
 
   const createMutation = useMutation({
     mutationFn: () => ordersApi.createOrder({
@@ -58,49 +58,24 @@ export default function OrdersPage() {
     onError: () => addToast({ type: 'error', title: 'Failed to create order' }),
   })
 
-  const { data: orders = [], isLoading } = useQuery({
-    queryKey: ['orders', activeTab, search],
-    queryFn: async () => {
-      // Backend caps page size at 2000 — fetch ALL pages so every order is visible
-      const baseParams: Record<string, string> = {}
-      if (activeTab !== 'ALL') baseParams.status = activeTab
-      if (search) baseParams.search = search
-      baseParams.sort = 'createdAt,desc'
-      const PAGE_SIZE = 2000
-      const all: Order[] = []
-      let p = 0
-      for (;;) {
-        const res: ApiResponse<Order[]> = await ordersApi.getOrders({ ...baseParams, page: String(p), size: String(PAGE_SIZE) } as any)
-        const d = res.data
-        const content = Array.isArray(d)
-          ? d
-          : d && typeof d === 'object' && 'content' in d
-            ? (d as { content: Order[] }).content
-            : []
-        const totalElements = !Array.isArray(d) && d && typeof d === 'object' && 'totalElements' in d
-          ? Number((d as { totalElements: number }).totalElements)
-          : null
-        all.push(...content)
-        if (Array.isArray(d) || content.length === 0 || (totalElements !== null && all.length >= totalElements)) break
-        p++
-      }
-      return all
-    },
+  // the server sorts and pages; these are the columns it can sort on
+  const SORT_FIELD: Record<string, string> = { orderNumber: 'channelOrderId', channel: 'channel', status: 'status', customerName: 'customerEmail', promisedDeliveryDate: 'promisedDelivery', createdAt: 'createdAt' }
+  const listParams = (p: number, size: number) => {
+    const params: Record<string, string> = { page: String(p), size: String(size), sort: `${SORT_FIELD[sortBy] ?? 'createdAt'},${sortOrder}` }
+    if (activeTab !== 'ALL') params.status = activeTab
+    if (search) params.search = search
+    if (channelFilter !== 'ALL') params.channel = channelFilter
+    return params
+  }
+  const { data: pageData, isLoading } = useQuery({
+    queryKey: ['orders', activeTab, search, channelFilter, sortBy, sortOrder, page],
+    queryFn: () => ordersApi.getOrdersPage(listParams(page - 1, pageSize)),
+    placeholderData: prev => prev,
   })
-
-  const filtered = useMemo(() => {
-    let result = [...orders]
-    if (channelFilter !== 'ALL') result = result.filter((o) => o.channel === channelFilter)
-    result.sort((a, b) => {
-      const aVal = String(a[sortBy as keyof Order] ?? '')
-      const bVal = String(b[sortBy as keyof Order] ?? '')
-      return sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
-    })
-    return result
-  }, [orders, channelFilter, sortBy, sortOrder])
-
-  const totalPages = Math.ceil(filtered.length / pageSize)
-  const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
+  const { data: counts } = useQuery({ queryKey: ['orders', 'status-counts'], queryFn: ordersApi.getStatusCounts })
+  const orders = pageData?.content ?? []
+  const paged = orders
+  const totalPages = Math.max(1, pageData?.totalPages ?? 1)
 
   function handleSort(key: string) {
     if (sortBy === key) setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -116,11 +91,7 @@ export default function OrdersPage() {
     onError: () => addToast({ type: 'error', title: 'Failed to cancel order' }),
   })
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = { ALL: orders.length }
-    STATUS_ORDER.forEach(s => counts[s] = orders.filter(o => o.status === s).length)
-    return counts
-  }, [orders])
+  const statusCounts: Record<string, number> = counts ?? {}
 
   const tabs = [
     { id: 'ALL', label: 'All Orders', icon: <ShoppingCart className="w-4 h-4" />, badge: statusCounts.ALL },
@@ -157,7 +128,7 @@ export default function OrdersPage() {
       <EnterpriseBreadcrumbs crumbs={[{ label: 'Orders' }]} />
 
       <div className="grid grid-cols-4 gap-4">
-        <EnterpriseKPICard title="Total Orders" value={orders.length} icon={<ShoppingCart className="w-5 h-5" />} color="primary" />
+        <EnterpriseKPICard title="Total Orders" value={statusCounts.ALL ?? 0} icon={<ShoppingCart className="w-5 h-5" />} color="primary" />
         <EnterpriseKPICard title="Pending" value={statusCounts.PENDING || 0} icon={<Clock className="w-5 h-5" />} color="amber" />
         <EnterpriseKPICard title="Shipped" value={statusCounts.SHIPPED || 0} icon={<Truck className="w-5 h-5" />} color="blue" />
         <EnterpriseKPICard title="Exceptions" value={statusCounts.EXCEPTION || 0} icon={<AlertTriangle className="w-5 h-5" />} color="red" />
@@ -190,9 +161,11 @@ export default function OrdersPage() {
           </select>
         }
         actions={[
-          { label: 'Export', icon: <Download className="w-4 h-4" />, onClick: () => {
+          { label: 'Export', icon: <Download className="w-4 h-4" />, onClick: async () => {
+            // everything matching the current tab, search and channel (up to 2,000), not just this page
+            const all = (await ordersApi.getOrdersPage(listParams(0, 2000))).content
             const headers = ['Order Number', 'Channel', 'Customer', 'Status', 'Items', 'City', 'State', 'Carrier', 'Created']
-            const rows = filtered.map(o => [
+            const rows = all.map(o => [
               o.channelOrderId || o.orderNumber || o.id,
               o.channel,
               o.customerName || '',
@@ -209,7 +182,7 @@ export default function OrdersPage() {
             const a = document.createElement('a')
             a.href = url; a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`; a.click()
             URL.revokeObjectURL(url)
-            addToast({ type: 'success', title: `Exported ${filtered.length} orders` })
+            addToast({ type: 'success', title: `Exported ${all.length} orders` })
           }},
           { label: 'New Order', icon: <Plus className="w-4 h-4" />, onClick: () => setShowCreate(true), variant: 'primary', permission: { resource: 'orders', action: 'create' } },
         ]}
@@ -267,7 +240,7 @@ export default function OrdersPage() {
             selectedIds={selectedIds}
             onSelectionChange={setSelectedIds}
             onRowClick={(o) => navigate(`/orders/${o.id}`)}
-            pagination={{ page, totalPages, total: filtered.length, onPageChange: setPage }}
+            pagination={{ page, totalPages, total: pageData?.totalElements ?? 0, onPageChange: setPage }}
           />
         )}
       </div>

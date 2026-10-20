@@ -36,6 +36,12 @@ public class OrderRequest {
 
     private String fulfillmentType;
 
+    /** B2C (default) or B2B. */
+    private String orderType;
+
+    /** When the customer wants it shipped. Far-off dates hold fulfilment until the release window opens. */
+    private java.time.LocalDateTime requestedShipDate;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

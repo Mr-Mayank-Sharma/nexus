@@ -36,9 +36,9 @@ function LoadingSkeleton() {
   return (
     <div className="animate-pulse">
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-gray-100">
+        <div key={i} className="flex items-center gap-4 px-6 py-4 border-b border-[var(--border-subtle)]">
           {Array.from({ length: 5 }).map((_, j) => (
-            <div key={j} className="h-4 bg-gray-200 rounded flex-1" />
+            <div key={j} className="h-4 bg-[var(--border-default)] rounded flex-1" />
           ))}
         </div>
       ))}
@@ -88,7 +88,7 @@ export default function DataTable<T extends Record<string, unknown>>({
   function SortIcon({ column }: { column: Column<T> }) {
     if (!column.sortable) return null
     const isActive = sortBy === column.key
-    if (!isActive) return <ChevronsUpDown className="w-3.5 h-3.5 text-gray-400" />
+    if (!isActive) return <ChevronsUpDown className="w-3.5 h-3.5 text-[var(--text-tertiary)]" />
     return sortOrder === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-primary-600" /> : <ChevronDown className="w-3.5 h-3.5 text-primary-600" />
   }
 
@@ -97,12 +97,12 @@ export default function DataTable<T extends Record<string, unknown>>({
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50/50">
+            <tr className="border-b border-[var(--border-subtle)] bg-[var(--surface-sunken)]">
               {onSelectionChange && (
                 <th className="px-4 py-3 text-left w-10">
                   <input
                     type="checkbox"
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="rounded border-[var(--border-default)] text-primary-600 focus:ring-primary-500"
                     checked={allSelected}
                     ref={(el) => el && (el.indeterminate = someSelected)}
                     onChange={handleSelectAll}
@@ -113,8 +113,8 @@ export default function DataTable<T extends Record<string, unknown>>({
                 <th
                   key={String(column.key)}
                   className={clsx(
-                    'px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider',
-                    column.sortable && 'cursor-pointer select-none hover:text-gray-700',
+                    'px-4 py-3 text-left text-xs font-semibold text-[var(--text-tertiary)] uppercase tracking-wider',
+                    column.sortable && 'cursor-pointer select-none hover:text-[var(--text-secondary)]',
                     column.headerClassName,
                   )}
                   style={{ width: column.width }}
@@ -128,7 +128,7 @@ export default function DataTable<T extends Record<string, unknown>>({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {isLoading ? (
               <tr>
                 <td colSpan={columns.length + (onSelectionChange ? 1 : 0)}>
@@ -137,7 +137,7 @@ export default function DataTable<T extends Record<string, unknown>>({
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (onSelectionChange ? 1 : 0)} className="px-6 py-12 text-center text-gray-500">
+                <td colSpan={columns.length + (onSelectionChange ? 1 : 0)} className="px-6 py-12 text-center text-[var(--text-tertiary)]">
                   {emptyMessage}
                 </td>
               </tr>
@@ -150,7 +150,7 @@ export default function DataTable<T extends Record<string, unknown>>({
                     key={id}
                     className={clsx(
                       'transition-colors',
-                      isSelected ? 'bg-primary-50/50' : 'hover:bg-gray-50',
+                      isSelected ? 'bg-[var(--nexus-primary-50)]' : 'hover:bg-[var(--interactive-hover)]',
                       onRowClick && 'cursor-pointer',
                     )}
                     onClick={() => onRowClick?.(item)}
@@ -159,14 +159,14 @@ export default function DataTable<T extends Record<string, unknown>>({
                       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
-                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                          className="rounded border-[var(--border-default)] text-primary-600 focus:ring-primary-500"
                           checked={isSelected}
                           onChange={() => handleSelect(id)}
                         />
                       </td>
                     )}
                     {columns.map((column) => (
-                      <td key={String(column.key)} className={clsx('px-4 py-3 text-sm text-gray-700', column.className)}>
+                      <td key={String(column.key)} className={clsx('px-4 py-3 text-sm text-[var(--text-secondary)]', column.className)}>
                         {column.render ? column.render(item) : String(item[column.key as keyof T] ?? '')}
                       </td>
                     ))}
@@ -178,8 +178,8 @@ export default function DataTable<T extends Record<string, unknown>>({
         </table>
       </div>
       {pagination && (
-        <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50/50">
-          <span className="text-sm text-gray-600">
+        <div className="flex items-center justify-between px-6 py-3 border-t border-[var(--border-subtle)] bg-[var(--surface-sunken)]">
+          <span className="text-sm text-[var(--text-secondary)]">
             {pagination.total} total
           </span>
           <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function DataTable<T extends Record<string, unknown>>({
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-[var(--text-secondary)]">
               Page {pagination.page} of {pagination.totalPages}
             </span>
             <button

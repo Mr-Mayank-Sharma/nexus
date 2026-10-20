@@ -23,7 +23,7 @@ public enum ProductModule {
     static final Map<String, ProductModule> API_PREFIXES = Map.ofEntries(
             // OMS
             Map.entry("/orders", OMS), Map.entry("/returns", OMS), Map.entry("/returns-finance", OMS),
-            Map.entry("/pickup", OMS), Map.entry("/order-routing", OMS), Map.entry("/routing-rules", OMS),
+            Map.entry("/pickup", OMS), Map.entry("/order-routing", OMS), Map.entry("/order-release", OMS), Map.entry("/routing-rules", OMS),
             Map.entry("/brokering", OMS), Map.entry("/parked-orders", OMS), Map.entry("/approvals", OMS),
             Map.entry("/rejections", OMS), Map.entry("/promotions", OMS), Map.entry("/endless-aisle", OMS),
             Map.entry("/atp", OMS), Map.entry("/pos", OMS), Map.entry("/fulfillment-limits", OMS), Map.entry("/twin/orders", OMS),

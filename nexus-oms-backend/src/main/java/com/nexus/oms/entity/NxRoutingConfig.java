@@ -54,6 +54,14 @@ public class NxRoutingConfig {
     @Column(name = "blacklisted_nodes", columnDefinition = "jsonb")
     private String blacklistedNodes;
 
+    /** Days before the requested ship date that a B2B order is released for fulfilment. */
+    @Column(name = "release_days_b2b")
+    private Integer releaseDaysB2b;
+
+    /** Days before the requested ship date that a B2C order is released (only when it has one). */
+    @Column(name = "release_days_b2c")
+    private Integer releaseDaysB2c;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

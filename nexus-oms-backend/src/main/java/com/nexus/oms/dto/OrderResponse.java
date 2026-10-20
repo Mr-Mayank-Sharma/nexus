@@ -47,6 +47,10 @@ public class OrderResponse {
     private LocalDateTime shippedAt;
     private LocalDateTime deliveredAt;
     private Object metadata;
+    private String orderType;
+    private LocalDateTime requestedShipDate;
+    private LocalDateTime releaseAt;
+    private LocalDateTime releasedAt;
     private List<OrderItemDto> items;
 
     @Data

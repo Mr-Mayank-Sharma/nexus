@@ -86,7 +86,7 @@ class OrderControllerTest {
     @Test
     void testGetOrders_ReturnsPage() throws Exception {
         Page<OrderResponse> page = new PageImpl<>(List.of(testOrderResponse));
-        when(orderService.getOrders(any(), any(), any(), any())).thenReturn(page);
+        when(orderService.getOrders(any(), any(), any(), any(), any())).thenReturn(page);
 
         mockMvc.perform(get("/orders"))
                 .andExpect(status().isOk())

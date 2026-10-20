@@ -109,6 +109,19 @@ public class OrderRoutingService {
             throw new BadRequestException("Order must be in PENDING or CONFIRMED status to allocate");
         }
 
+        // An order held for its ship date reserves nothing until its release time (a dry run still may look).
+        if (!Boolean.TRUE.equals(request.getDryRun()) && FulfilmentReleaseService.isHeld(order, LocalDateTime.now())) {
+            order.setSubStatus(FulfilmentReleaseService.AWAITING_RELEASE);
+            orderRepository.save(order);
+            return AllocationResult.builder()
+                    .orderId(order.getId()).strategy(request.getStrategy()).status("HELD")
+                    .allocations(List.of()).exceptions(List.of())
+                    .explanation("Held until " + order.getReleaseAt() + " for its requested ship date " + order.getRequestedShipDate()
+                            + "; no stock is reserved before then")
+                    .executionTimeMs(System.currentTimeMillis() - startTime)
+                    .build();
+        }
+
         String strategy = request.getStrategy();
         if (strategy == null || strategy.isBlank()) {
             NxRoutingConfig config = routingConfigRepository.findByTenantId(tenantId).orElse(null);

@@ -43,9 +43,10 @@ public class OrderController {
     public ResponseEntity<ApiResponse<Page<OrderResponse>>> getOrders(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) String channel,
             Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(
-                orderService.getOrders(TenantContext.getCurrentTenantId(), status, search, pageable)));
+                orderService.getOrders(TenantContext.getCurrentTenantId(), status, search, channel, pageable)));
     }
 
     @Operation(summary = "Get order by ID, order number, or channel order ID")
@@ -137,6 +138,12 @@ public class OrderController {
     public ResponseEntity<ApiResponse<List<AiActionHistoryDto>>> getAiHistory(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 aiOrderActionService.getActionHistory(id)));
+    }
+
+    @Operation(summary = "Orders per status, and the total")
+    @GetMapping("/status-counts")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> statusCounts() {
+        return ResponseEntity.ok(ApiResponse.success(orderService.countByStatus(TenantContext.getCurrentTenantId())));
     }
 
     @Operation(summary = "Get order statistics")

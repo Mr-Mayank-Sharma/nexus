@@ -2,6 +2,22 @@ import client from './client'
 import { ApiResponse, Order, OrderFilters } from '../types'
 import { normalizeOrder, normalizeOrderList } from './normalizeOrder'
 
+export interface OrderPage { content: Order[]; totalElements: number; totalPages: number }
+
+/** One page of orders from the server, with its totals. */
+export async function getOrdersPage(params: Record<string, string>): Promise<OrderPage> {
+  const { data } = await client.get('/orders', { params })
+  const d = normalizeOrderList(data?.data)
+  if (Array.isArray(d)) return { content: d, totalElements: d.length, totalPages: 1 }
+  return { content: d?.content ?? [], totalElements: Number(d?.totalElements ?? 0), totalPages: Number(d?.totalPages ?? 0) }
+}
+
+/** Orders per status plus ALL, from the server (no need to load every order to count them). */
+export async function getStatusCounts(): Promise<Record<string, number>> {
+  const { data } = await client.get('/orders/status-counts')
+  return data?.data ?? {}
+}
+
 export async function getOrders(params?: OrderFilters): Promise<ApiResponse<Order[]>> {
   try {
     const { data } = await client.get('/orders', { params })

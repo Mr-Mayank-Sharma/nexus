@@ -73,6 +73,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'order-approvals', label: 'Order Approvals', path: '/order-approvals', icon: 'ClipboardCheck' },
         { id: 'order-routing', label: 'Order Routing', path: '/order-routing', icon: 'GitBranch' },
         { id: 'order-replay', label: 'Routing What-If', path: '/order-replay', icon: 'FlaskConical' },
+        { id: 'release-schedule', label: 'Release by Ship Date', path: '/release-schedule', icon: 'CalendarClock' },
         { id: 'brokering', label: 'Brokering Queue', path: '/brokering', icon: 'Activity' },
         { id: 'rejections', label: 'Rejections', path: '/rejections', icon: 'AlertTriangle' },
         { id: 'fulfillment-limits', label: 'Fulfillment Limits', path: '/fulfillment-limits', icon: 'Gauge' },
@@ -268,7 +269,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     ],
     OPS_MANAGER: [
       'launch-pad', 'analytics-dashboard', 'dashboard', 'notifications',
-      'order-twin', 'orders', 'find-order', 'create-order', 'order-approvals', 'order-routing', 'order-replay',
+      'order-twin', 'orders', 'find-order', 'create-order', 'order-approvals', 'order-routing', 'order-replay', 'release-schedule',
       'brokering', 'rejections', 'transfers', 'fulfillment-limits', 'reconciliation',
       'fulfillment', 'picking', 'packing', 'shipping',
       'wave-planning', 'labor-management', 'pickers', 'label-printing',

@@ -31,6 +31,18 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
 
     List<NxOrder> findByCustomerId(UUID customerId);
 
+    @Query("select o from NxOrder o where o.tenantId = :tenantId and (:status is null or o.status = :status) and upper(o.channel) = :channel")
+    Page<NxOrder> findByChannel(@Param("tenantId") UUID tenantId, @Param("status") String status, @Param("channel") String channel, Pageable pageable);
+
+    @Query("select o.status, count(o) from NxOrder o where o.tenantId = :tenantId group by o.status")
+    List<Object[]> countByStatus(@Param("tenantId") UUID tenantId);
+
+    /** Orders on hold for their ship date in a tenant, soonest release first. */
+    List<NxOrder> findByTenantIdAndReleasedAtIsNullAndReleaseAtIsNotNullOrderByReleaseAtAsc(UUID tenantId);
+
+    /** Orders whose release time has come, across tenants (the release scheduler). */
+    List<NxOrder> findTop500ByReleasedAtIsNullAndReleaseAtLessThanEqualAndStatusInOrderByReleaseAtAsc(LocalDateTime now, java.util.Collection<String> statuses);
+
     /** Generic export: orders changed after a point, oldest first, a run's worth at a time. */
     List<NxOrder> findTop2000ByTenantIdAndUpdatedAtAfterOrderByUpdatedAtAsc(UUID tenantId, LocalDateTime after);
 

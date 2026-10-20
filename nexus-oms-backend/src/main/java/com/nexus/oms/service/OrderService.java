@@ -46,6 +46,11 @@ public class OrderService {
     private final BigCommerceOrderStatusPushService bigCommerceStatusPushService;
     private final OrderStockCommit orderStockCommit;
 
+    private FulfilmentReleaseService fulfilmentRelease;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setFulfilmentRelease(FulfilmentReleaseService fulfilmentRelease) { this.fulfilmentRelease = fulfilmentRelease; }
+
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         CustomerRepository customerRepository,
@@ -123,7 +128,10 @@ public class OrderService {
                 .shippingCost(BigDecimal.ZERO)
                 .taxAmount(BigDecimal.ZERO)
                 .total(BigDecimal.ZERO)
+                .orderType(FulfilmentReleaseService.normaliseType(request.getOrderType()))
+                .requestedShipDate(request.getRequestedShipDate())
                 .build();
+        if (fulfilmentRelease != null) fulfilmentRelease.plan(order);
 
         order = orderRepository.save(order);
 
@@ -175,15 +183,41 @@ public class OrderService {
     }
 
     public Page<OrderResponse> getOrders(UUID tenantId, String status, String search, Pageable pageable) {
+        return getOrders(tenantId, status, search, null, pageable);
+    }
+
+    public Page<OrderResponse> getOrders(UUID tenantId, String status, String search, String channel, Pageable pageable) {
         Page<NxOrder> orders;
-        if (search != null && !search.isBlank()) {
+        if ((search == null || search.isBlank()) && channel != null && !channel.isBlank()) {
+            orders = orderRepository.findByChannel(tenantId, status == null || status.isBlank() ? null : status, channel.trim().toUpperCase(), pageable);
+        } else if (search != null && !search.isBlank()) {
             orders = orderRepository.search(tenantId, search, pageable);
         } else if (status != null && !status.isBlank()) {
             orders = orderRepository.findByTenantIdAndStatus(tenantId, status, pageable);
         } else {
             orders = orderRepository.findByTenantId(tenantId, pageable);
         }
-        return orders.map(this::toOrderResponse);
+        // One query for every line on the page and one for the customers, instead of two per order.
+        List<UUID> ids = orders.getContent().stream().map(NxOrder::getId).toList();
+        Map<UUID, List<NxOrderItem>> itemsByOrder = ids.isEmpty() ? Map.of()
+                : orderItemRepository.findByOrderIdIn(ids).stream().collect(Collectors.groupingBy(NxOrderItem::getOrderId));
+        Set<UUID> customerIds = orders.getContent().stream().map(NxOrder::getCustomerId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<UUID, NxCustomer> customers = customerIds.isEmpty() ? Map.of()
+                : customerRepository.findAllById(customerIds).stream().collect(Collectors.toMap(NxCustomer::getId, c -> c, (x, y) -> x));
+        return orders.map(o -> toOrderResponse(o, itemsByOrder.getOrDefault(o.getId(), List.of()), o.getCustomerId() == null ? null : customers.get(o.getCustomerId())));
+    }
+
+    /** Orders per status, and the total, for list headers and tabs. */
+    public Map<String, Long> countByStatus(UUID tenantId) {
+        Map<String, Long> out = new LinkedHashMap<>();
+        long total = 0;
+        for (Object[] row : orderRepository.countByStatus(tenantId)) {
+            long n = ((Number) row[1]).longValue();
+            out.put(String.valueOf(row[0]), n);
+            total += n;
+        }
+        out.put("ALL", total);
+        return out;
     }
 
     @Transactional
@@ -606,18 +640,13 @@ public class OrderService {
     }
 
     private OrderResponse toOrderResponse(NxOrder order) {
-        List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        NxCustomer customer = order.getCustomerId() == null ? null : customerRepository.findById(order.getCustomerId()).orElse(null);
+        return toOrderResponse(order, orderItemRepository.findByOrderId(order.getId()), customer);
+    }
 
-        // Populate customer name from the customer repository
-        String customerName = null;
-        String customerEmail = null;
-        if (order.getCustomerId() != null) {
-            NxCustomer customer = customerRepository.findById(order.getCustomerId()).orElse(null);
-            if (customer != null) {
-                customerName = customer.getName();
-                customerEmail = customer.getEmail();
-            }
-        }
+    private OrderResponse toOrderResponse(NxOrder order, List<NxOrderItem> items, NxCustomer customer) {
+        String customerName = customer == null ? null : customer.getName();
+        String customerEmail = customer == null ? null : customer.getEmail();
 
         return OrderResponse.builder()
                 .id(order.getId())
@@ -631,6 +660,10 @@ public class OrderService {
                 .status(order.getStatus())
                 .subStatus(order.getSubStatus())
                 .fulfillmentType(order.getFulfillmentType())
+                .orderType(order.getOrderType())
+                .requestedShipDate(order.getRequestedShipDate())
+                .releaseAt(order.getReleaseAt())
+                .releasedAt(order.getReleasedAt())
                 .shipTo(toAddressMap(order.getShipToAddress()))
                 .billingAddress(toAddressMap(order.getBillingAddress()))
                 .currency(order.getCurrency())
