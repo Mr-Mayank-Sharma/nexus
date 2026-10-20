@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+
+const steps = [
+  { t: 'Every order can carry a ship date', b: 'From your B2B portal, EDI, an API or by hand: the date the customer wants it shipped, and whether it is a B2B or B2C order.' },
+  { t: 'Far-off orders reserve nothing', b: 'Until ship date minus a window (3 days for B2B and 1 for B2C by default, set per business), the order is not allocated. Its stock keeps serving orders that ship sooner.' },
+  { t: 'Released on time, automatically', b: 'Every few minutes Nexus releases the orders whose time has come, and they are allocated like any other order.' },
+  { t: 'People stay in control', b: 'See every held order with its release time, change a date, or release one early when the customer asks.' },
+];
+---
+<Base title="Release by ship date" description="B2B orders placed weeks ahead reserve no stock until shortly before they ship, so this week's orders get the stock first.">
+  <PageHero eyebrow="Release by ship date" title="B2B orders wait for their ship date" lead="A wholesale order placed in November for January should not lock away stock that orders shipping this week need. Nexus holds it, and releases it a few days before it ships." />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap">
+      <div class="tl">
+        {steps.map((s, i) => (
+          <div class="tl__row" data-reveal>
+            <span class="tl__n">{i + 1}</span>
+            <div><h3 class="display h-sm" style="margin:0 0 8px">{s.t}</h3><p class="dim" style="margin:0">{s.b}</p></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap grid g2" style="align-items:start">
+      <div class="card">
+        <span class="chip chip--go">Built and tested</span>
+        <h3 class="h-sm" style="margin:14px 0 8px;font-weight:650">What we verified</h3>
+        <p>On a local install: a B2B order shipping in 40 days was confirmed without reserving stock, queued for its release time, refused by allocation with the reason, and released by hand. Covered by automated tests, including brokering waiting without using up its retries.</p>
+      </div>
+      <div class="card">
+        <h3 class="h-sm" style="margin:0 0 8px;font-weight:650">Why it matters</h3>
+        <p>When advance orders reserve early, the first one in wins, not the one that ships first. That turns into backorders on orders due this week while stock sits waiting for January.</p>
+        <a class="link-arrow" href="/blog/b2b-orders-should-wait-for-their-ship-date" style="margin-top:14px;display:inline-block">Read the article →</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .tl { display: grid; gap: 0; max-width: 820px; }
+  .tl__row { display: grid; grid-template-columns: 64px 1fr; gap: 18px; padding: 26px 0; border-top: 1px solid var(--line); }
+  .tl__row:last-child { border-bottom: 1px solid var(--line); }
+  .tl__n { font-family: var(--display); font-style: italic; font-size: 2.4rem; line-height: 1; color: var(--signal); }
+</style>

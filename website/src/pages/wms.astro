@@ -1,0 +1,49 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHero from '../components/PageHero.astro';
+---
+<Base title="Nexus WMS" description="Why Nexus keeps order management and warehouse management as separate products, and what is planned for the warehouse system.">
+  <PageHero eyebrow="Nexus WMS · coming 2027" title="Two jobs, two products" lead="An order system decides which location ships each order. A warehouse system runs the inside of one warehouse. We keep them separate, the way the largest suppliers do, so you can use Nexus OMS with the warehouse system you already have." />
+
+  <section class="section" data-scene-trigger="light">
+    <div class="wrap grid g2">
+      <div class="card" data-reveal>
+        <span class="chip chip--go">Available now</span>
+        <h2 class="display h-md" style="margin:14px 0 10px">Nexus OMS</h2>
+        <ul class="ls">
+          <li>Orders from every channel in one place</li>
+          <li>Stock per location, kept as a ledger</li>
+          <li>Routing, store fulfilment and re-routes</li>
+          <li>Release by ship date for B2B</li>
+          <li>Connections to storefronts, marketplaces, ERP and POS</li>
+        </ul>
+        <a class="btn btn--primary" href="/product/order-routing" style="margin-top:18px">Explore the OMS <span class="arr">→</span></a>
+      </div>
+      <div class="card" data-reveal data-delay="0.08">
+        <span class="chip chip--dim">In design</span>
+        <h2 class="display h-md" style="margin:14px 0 10px">Nexus WMS</h2>
+        <ul class="ls">
+          <li>Receiving, putaway and slotting</li>
+          <li>Pick paths, waves and labour</li>
+          <li>Packing, cartonisation and dispatch</li>
+          <li>Counts and stock accuracy on the floor</li>
+          <li>Designed from time spent in working warehouses</li>
+        </ul>
+        <a class="btn" href="/contact" style="margin-top:18px">Join the early access list</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap prose">
+      <h2>How they work together today</h2>
+      <p>Nexus OMS sends each order to the location that should ship it. Where a warehouse runs its own system, Nexus hands the order over through that system's API or files, and takes back what was picked and shipped. Where there is no warehouse system, the pick, pack and ship screens built into Nexus cover the basics.</p>
+      <p>When Nexus WMS is ready, it will connect the same way: as one more system the OMS talks to, not a requirement.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .ls { margin: 0; padding-left: 18px; color: var(--muted); }
+  .ls li + li { margin-top: 6px; }
+</style>

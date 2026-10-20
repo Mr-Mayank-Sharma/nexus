@@ -37,9 +37,11 @@ export const nav: NavGroup[] = [
       { label: 'Order routing', href: '/product/order-routing', blurb: 'Rules that keep an order together' },
       { label: 'Stock you can trust', href: '/product/inventory', blurb: 'A ledger, per location' },
       { label: 'Store fulfilment', href: '/product/store-fulfilment', blurb: 'Picks, rejections, re-routes' },
+      { label: 'Release by ship date', href: '/release-by-ship-date', blurb: 'B2B orders wait for their date' },
       { label: 'Routing what-if', href: '/what-if', blurb: 'Replay your orders under new rules' },
       { label: 'Scheduled jobs', href: '/product/scheduled-jobs', blurb: 'Imports, exports, every failed row' },
       { label: 'Integrations', href: '/integrations', blurb: 'Storefronts, marketplaces, ERP, POS, EDI' },
+      { label: 'Nexus WMS (2027)', href: '/wms', blurb: 'Why OMS and WMS are separate' },
     ],
   },
   {
@@ -56,7 +58,8 @@ export const nav: NavGroup[] = [
   {
     label: 'Resources',
     links: [
-      { label: 'Insights', href: '/resources' },
+      { label: 'Blog', href: '/blog', blurb: 'Practical writing on order management' },
+      { label: 'What is an OMS?', href: '/blog/what-is-an-order-management-system', blurb: 'A plain-language guide' },
       { label: 'Routing what-if', href: '/what-if' },
       { label: 'What we have verified', href: '/proof' },
       { label: 'Security', href: '/security' },
@@ -71,7 +74,7 @@ export const footerGroups: NavGroup[] = [
   { label: 'Use cases', links: nav[1].links },
   { label: 'Company', links: [
     { label: 'About', href: '/about' }, { label: 'What we have verified', href: '/proof' },
-    { label: 'Insights', href: '/resources' }, { label: 'Pricing', href: '/pricing' }, { label: 'Security', href: '/security' },
+    { label: 'Blog', href: '/blog' }, { label: 'Pricing', href: '/pricing' }, { label: 'Security', href: '/security' },
     { label: 'Contact', href: '/contact' } ] },
   { label: 'Legal', links: [{ label: 'Privacy', href: '/privacy' }, { label: 'Terms', href: '/terms' }] },
 ];

@@ -22,7 +22,6 @@ const scenes = [
 ---
 <section class="film" aria-label="Nexus, the real product" data-film data-scene-trigger="dark">
   <div class="film__pin">
-    <div class="film__bg" aria-hidden="true"><div class="film__bgtext" data-film-bg>Every channel · Every location · One brain · Every channel · Every location ·</div></div>
 
     <div class="wrap film__hud" aria-hidden="true">
       <div><span class="mono film__sc" data-film-sc>01 / 0{scenes.length}</span><span class="mono film__lb" data-film-lb>{scenes[0].label}</span></div>
@@ -65,8 +64,6 @@ const scenes = [
 <style>
   .film { position: relative; background: #000; color: var(--text-d); overflow: hidden; }
   .film__pin { position: relative; height: 100svh; min-height: 560px; overflow: hidden; }
-  .film__bg { position: absolute; inset: 0; display: flex; align-items: center; pointer-events: none; }
-  .film__bgtext { white-space: nowrap; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: -0.03em; font-size: clamp(6rem, 22vw, 20rem); line-height: 1; color: rgba(255, 255, 255, 0.06); padding-left: 10vw; }
   .film__hud { position: absolute; left: 0; right: 0; top: 96px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 3; font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; }
   .film__sc { color: var(--signal); margin-right: 14px; }
   .film__lb { color: #c7d0e0; }
@@ -74,7 +71,7 @@ const scenes = [
   .film__metric span { display: block; color: var(--muted-d); }
   .film__metric b { display: block; font-family: var(--display); font-weight: 600; font-size: clamp(1.8rem, 4vw, 3.2rem); letter-spacing: -0.02em; color: #fff; line-height: 1.1; font-variant-numeric: tabular-nums; }
   .film__stage { position: absolute; inset: 0; display: grid; place-items: center; perspective: 1600px; z-index: 2; }
-  .film__device { width: min(74vw, 1180px); border-radius: 16px; overflow: hidden; background: #0a0e18; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 60px 160px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(91, 140, 255, 0.08), 0 -20px 120px rgba(91, 140, 255, 0.18); transform-style: preserve-3d; will-change: transform; }
+  .film__device { width: min(74vw, 1180px); border-radius: 16px; overflow: hidden; background: #0a0e18; border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 60px 160px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(18, 163, 122, 0.08), 0 -20px 120px rgba(18, 163, 122, 0.18); transform-style: preserve-3d; will-change: transform; }
   .film__bar { display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; background: #0f1422; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.08em; color: var(--muted-d); }
   .film__bar i { width: 9px; height: 9px; border-radius: 50%; background: #2a3347; }
   .film__bar span { margin-left: 10px; }

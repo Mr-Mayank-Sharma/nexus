@@ -1,0 +1,76 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import Newsletter from '../../components/Newsletter.astro';
+import { POSTS, TOPICS } from '../../data/posts';
+
+const posts = [...POSTS].sort((a, b) => b.date.localeCompare(a.date));
+const [featured, ...rest] = posts;
+const counts = Object.fromEntries(TOPICS.map(t => [t, posts.filter(p => p.tag === t).length]));
+---
+<Base scene="light" title="Blog" description="Practical writing on order management: routing, stock per location, store fulfilment, B2B orders and integrations.">
+  <section class="bh" data-scene-trigger="light">
+    <div class="wrap">
+      <p class="eyebrow eyebrow--signal">The Nexus blog</p>
+      <h1 class="display h-xl" style="margin:16px 0 0;max-width:14ch" data-split>Ideas for running <em>better orders</em></h1>
+      <p class="lead" style="margin-top:20px">Practical, sourced writing on order management, for the people who answer for every order: e-commerce, operations, stores and IT.</p>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light" style="padding-top:0">
+    <div class="wrap">
+      <PostCard post={featured} large />
+
+      <div class="bf" role="search">
+        <div class="bf__topics" role="group" aria-label="Filter by topic">
+          <button type="button" class="bf__chip is-on" data-topic="">All <span>{posts.length}</span></button>
+          {TOPICS.filter(t => counts[t] > 0).map(t => <button type="button" class="bf__chip" data-topic={t}>{t} <span>{counts[t]}</span></button>)}
+        </div>
+        <label class="bf__search"><span class="sr-only">Search articles</span><input type="search" placeholder="Search articles…" data-q /></label>
+      </div>
+
+      <div class="grid g3" data-list>
+        {rest.map(p => <div data-item data-tag={p.tag} data-text={`${p.title} ${p.summary} ${p.tag}`.toLowerCase()}><PostCard post={p} /></div>)}
+      </div>
+      <p class="dim" data-empty hidden>No articles match. Try another word or topic.</p>
+    </div>
+  </section>
+
+  <section class="section--tight" data-scene-trigger="light">
+    <div class="wrap"><Newsletter /></div>
+  </section>
+</Base>
+
+<style>
+  .bh { padding: clamp(64px, 9vw, 120px) 0 clamp(36px, 5vw, 56px); }
+  .bf { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; margin: clamp(36px, 5vw, 56px) 0 24px; }
+  .bf__topics { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bf__chip { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper-2); font-weight: 600; font-size: 0.9rem; color: var(--fg); }
+  .bf__chip span { color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .bf__chip.is-on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .bf__chip.is-on span { color: inherit; opacity: 0.7; }
+  .bf__search input { width: min(320px, 80vw); padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper-2); font: inherit; color: var(--fg); }
+  .bf__search input:focus { outline: none; border-color: var(--signal); }
+</style>
+
+<script>
+  const chips = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-topic]'));
+  const q = document.querySelector<HTMLInputElement>('[data-q]')!;
+  const items = Array.from(document.querySelectorAll<HTMLElement>('[data-item]'));
+  const empty = document.querySelector<HTMLElement>('[data-empty]')!;
+  let topic = new URLSearchParams(location.search).get('topic') ?? '';
+  const apply = () => {
+    const words = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    items.forEach(it => {
+      const ok = (!topic || it.dataset.tag === topic) && words.every(w => it.dataset.text!.includes(w));
+      it.hidden = !ok; if (ok) shown++;
+      it.querySelector<HTMLElement>('[data-reveal]')?.classList.add('is-in');
+    });
+    empty.hidden = shown > 0;
+    chips.forEach(c => c.classList.toggle('is-on', c.dataset.topic === topic));
+  };
+  chips.forEach(c => c.addEventListener('click', () => { topic = c.dataset.topic ?? ''; history.replaceState(null, '', topic ? `?topic=${encodeURIComponent(topic)}` : location.pathname); apply(); }));
+  q.addEventListener('input', apply);
+  if (topic) apply();
+</script>

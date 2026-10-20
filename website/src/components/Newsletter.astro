@@ -1,0 +1,44 @@
+---
+/** Newsletter sign-up. Uses the site's form endpoint when one is set; otherwise opens the visitor's email app. */
+import { site } from '../site.config';
+---
+<div class="nl">
+  <div>
+    <h2 class="display h-md" style="margin:0 0 10px">Get the next article</h2>
+    <p class="dim" style="margin:0">One email when something new is published. No tracking pixels, and you can leave with one click.</p>
+  </div>
+  <form class="nl__form" data-nl data-endpoint={site.formEndpoint ?? ''} data-email={site.contactEmail} novalidate>
+    <label class="sr-only" for="nl-email">Work email</label>
+    <input id="nl-email" name="email" type="email" autocomplete="email" placeholder="you@company.com" required />
+    <button class="btn btn--signal" type="submit">Subscribe</button>
+    <p class="nl__status" role="status" aria-live="polite" data-nl-status></p>
+  </form>
+</div>
+
+<style>
+  .nl { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: center; padding: clamp(24px, 4vw, 44px); border-radius: 24px; background: var(--paper-2); border: 1px solid var(--line); }
+  .nl__form { display: flex; flex-wrap: wrap; gap: 10px; }
+  .nl__form input { flex: 1; min-width: 200px; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--line); background: var(--paper); font: inherit; color: var(--fg); }
+  .nl__form input:focus { outline: none; border-color: var(--signal); }
+  .nl__status { flex-basis: 100%; margin: 0; font-size: 0.9rem; color: var(--muted); min-height: 1.4em; }
+  @media (max-width: 760px) { .nl { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('[data-nl]').forEach(f => f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const status = f.querySelector<HTMLElement>('[data-nl-status]')!;
+    const email = (f.elements.namedItem('email') as HTMLInputElement).value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)) { status.textContent = 'Please enter a valid email.'; return; }
+    if (!f.dataset.endpoint) {
+      location.href = `mailto:${f.dataset.email}?subject=${encodeURIComponent('Subscribe to the Nexus blog')}&body=${encodeURIComponent('Please add ' + email)}`;
+      status.textContent = 'Your email app should open with the request ready to send.';
+      return;
+    }
+    try {
+      const r = await fetch(f.dataset.endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ email, list: 'blog' }) });
+      if (!r.ok) throw new Error();
+      f.reset(); status.textContent = 'Thank you. You are on the list.';
+    } catch { status.textContent = 'That did not go through. Please try again later.'; }
+  }));
+</script>

@@ -1,10 +1,10 @@
 ---
-import '@fontsource-variable/inter';
-import '@fontsource-variable/unbounded';
+import '@fontsource-variable/fraunces/full.css';
+import '@fontsource-variable/fraunces/full-italic.css';
+import '@fontsource-variable/instrument-sans';
 import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
 import Logo from '../components/Logo.astro';
-import Preloader from '../components/Preloader.astro';
 import { site, nav, footerGroups } from '../site.config';
 
 interface Props {
@@ -13,9 +13,8 @@ interface Props {
   scene?: 'dark' | 'light';
   ogType?: 'website' | 'article';
   noindex?: boolean;
-  intro?: boolean;
 }
-const { title, description = site.description, scene = 'dark', ogType = 'website', noindex = false, intro = false } = Astro.props;
+const { title, description = site.description, scene = 'dark', ogType = 'website', noindex = false } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name}: ${site.tagline}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://example.com').toString();
 const ogImage = new URL('/og.png', Astro.site ?? 'https://example.com').toString();
@@ -40,7 +39,8 @@ const jsonLd = {
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <meta name="theme-color" content="#05070d" />
+    <meta name="theme-color" content="#f4f1ea" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name} insights`} href="/rss.xml" />
     {noindex && <meta name="robots" content="noindex" />}
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={fullTitle} />
@@ -50,26 +50,22 @@ const jsonLd = {
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline>document.documentElement.classList.add('js');</script>
-    {intro && <script is:inline>
-      try { if (!sessionStorage.getItem('nx-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('preload'); } catch (e) {}
-    </script>}
+
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body>
-    {intro && <Preloader />}
     <a class="skip" href="#main">Skip to content</a>
-    <div class="cursor" aria-hidden="true"></div>
 
     <div class="ticker">
       <div class="wrap ticker__row">
-        <div class="ticker__news"><b>NEWS</b><span>Founding customer program is open: a free development instance, set up with you</span></div>
-        <div class="ticker__links"><a href="/what-if">Routing what-if</a><a href="/proof">What we have verified</a></div>
+        <p class="ticker__news"><b>New</b><span>Founding customer program: a free development instance, set up with you</span></p>
+        <div class="ticker__links"><a href="/what-if">Routing what-if</a><a href="/proof">What we have verified</a><a href="/blog">Blog</a></div>
       </div>
     </div>
 
     <header class="nav">
       <div class="wrap nav__row">
-        <a class="brand" href="/" aria-label={`${site.name} home`}><Logo /> {site.name}</a>
+        <a class="brand" href="/" aria-label={`${site.name} OMS home`}><Logo /> {site.name} <small>OMS</small></a>
         <nav class="nav__links" aria-label="Main">
           {nav.map(g => (
             <div class="nav__item">
@@ -101,7 +97,7 @@ const jsonLd = {
           <a href="/product/order-routing" style="transition-delay:.05s">Product</a>
           <a href="/use-cases/stop-overselling" style="transition-delay:.1s">Use cases</a>
           <a href="/what-if" style="transition-delay:.15s">Routing what-if</a>
-          <a href="/resources" style="transition-delay:.2s">Insights</a>
+          <a href="/blog" style="transition-delay:.2s">Blog</a>
           <a href="/pricing" style="transition-delay:.25s">Pricing</a>
           <a href="/about" style="transition-delay:.3s">About</a>
           <a href="/contact" style="transition-delay:.35s">Contact</a>

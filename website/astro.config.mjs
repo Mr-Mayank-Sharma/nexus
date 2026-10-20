@@ -5,6 +5,8 @@ import sitemap from '@astrojs/sitemap';
 const site = process.env.SITE_URL || 'https://example.com';
 
 export default defineConfig({
+  // the blog used to live at /resources
+  redirects: { '/resources': '/blog', '/resources/[slug]': '/blog/[slug]' },
   site,
   integrations: [sitemap()],
   build: { inlineStylesheets: 'auto' },

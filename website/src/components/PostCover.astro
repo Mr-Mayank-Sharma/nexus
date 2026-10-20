@@ -1,0 +1,31 @@
+---
+/** Generated cover art for an article: a colour per category and a pattern drawn from the slug, so every post looks distinct. */
+import type { Post } from '../data/posts';
+interface Props { post: Post }
+const { post } = Astro.props;
+const PALETTE: Record<string, [string, string]> = {
+  Research: ['#0e1714', '#ff5b2e'], Operations: ['#12a37a', '#0e1714'], Product: ['#ff5b2e', '#fffdf8'],
+  Industry: ['#1d2b26', '#d9950d'], Guide: ['#e9e3d6', '#0e1714'], B2B: ['#3d2a5c', '#ffb49c'], Integrations: ['#0b4f4a', '#9fe9c8'],
+};
+const [bg, fg] = PALETTE[post.tag] ?? ['#0e1714', '#ff5b2e'];
+let h = 0;
+for (const c of post.slug) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+const rnd = () => { h = (h * 1103515245 + 12345) >>> 0; return (h % 1000) / 1000; };
+const kind = h % 3;
+const dots = Array.from({ length: 26 }, () => ({ x: 20 + rnd() * 360, y: 20 + rnd() * 180, r: 3 + rnd() * 9 }));
+const arcs = Array.from({ length: 5 }, () => ({ x1: rnd() * 400, x2: rnd() * 400, y: 40 + rnd() * 150 }));
+---
+<div class="cover" aria-hidden="true">
+  <svg viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
+    <rect width="400" height="220" fill={bg} />
+    {kind === 0 && dots.map(d => <circle cx={d.x} cy={d.y} r={d.r} fill={fg} opacity={0.15 + (d.r / 12) * 0.7} />)}
+    {kind === 1 && arcs.map(a => <path d={`M${a.x1} 230 Q ${(a.x1 + a.x2) / 2} ${a.y - 120} ${a.x2} 230`} fill="none" stroke={fg} stroke-width="2.5" opacity="0.8" />)}
+    {kind === 2 && Array.from({ length: 8 }, (_, i) => <rect x={30 + i * 44} y={180 - (20 + ((h >>> i) % 7) * 20)} width="28" height={20 + ((h >>> i) % 7) * 20} rx="5" fill={fg} opacity={0.35 + i * 0.08} />)}
+    <text x="24" y="44" fill={fg} font-family="Fraunces Variable, Georgia, serif" font-style="italic" font-size="26">{post.tag}</text>
+  </svg>
+</div>
+
+<style>
+  .cover { aspect-ratio: 400 / 220; overflow: hidden; }
+  .cover svg { width: 100%; height: 100%; }
+</style>

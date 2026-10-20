@@ -1,0 +1,29 @@
+---
+/** A blog card with generated cover art (no stock photos): the article's category colour and a pattern. */
+import type { Post } from '../data/posts';
+import PostCover from './PostCover.astro';
+interface Props { post: Post; large?: boolean }
+const { post, large = false } = Astro.props;
+const fmt = (d: string) => new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+---
+<a class:list={['pc', { 'pc--large': large }]} href={`/blog/${post.slug}`} data-reveal>
+  <PostCover post={post} />
+  <div class="pc__body">
+    <p class="pc__meta"><span class="pc__tag">{post.tag}</span> {fmt(post.date)} · {post.minutes} min read</p>
+    <h3 class:list={['display', large ? 'h-md' : 'h-sm']}>{post.title}</h3>
+    <p class="pc__sum">{post.summary}</p>
+  </div>
+</a>
+
+<style>
+  .pc { display: flex; flex-direction: column; border-radius: var(--r); overflow: hidden; background: var(--paper-2); border: 1px solid var(--line); transition: transform 0.5s var(--ease), box-shadow 0.4s, border-color 0.3s; }
+  .pc:hover { transform: translateY(-3px); box-shadow: 0 24px 50px -28px rgba(14, 23, 20, 0.4); border-color: color-mix(in srgb, var(--fg) 30%, transparent); }
+  .pc__body { padding: 20px 22px 24px; display: grid; gap: 8px; }
+  .pc__meta { margin: 0; font-size: 0.82rem; color: var(--muted); }
+  .pc__tag { font-weight: 650; color: var(--signal); margin-right: 6px; }
+  .pc h3 { margin: 0; }
+  .pc__sum { margin: 0; color: var(--muted); }
+  .pc--large { display: grid; grid-template-columns: 1.1fr 1fr; }
+  .pc--large .pc__body { padding: clamp(24px, 3vw, 40px); align-content: center; }
+  @media (max-width: 860px) { .pc--large { grid-template-columns: 1fr; } }
+</style>
