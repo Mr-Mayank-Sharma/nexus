@@ -25,9 +25,9 @@ That is exactly where Nexus stands: **broad, real surface + a short, honest list
 |---|---|
 | **Codebase** | Monorepo: `nexus-oms-backend` (Java/Spring Boot) + `nexus-oms-frontend` (React/Vite) |
 | **Git history** | 204 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
-| **Migrations** | 77 Flyway migrations (`V1`–`V85`, non-contiguous) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
-| **Backend surface** | **181 JPA entities**, **91 controllers**, 144 services, 14 RBAC roles |
-| **Frontend surface** | **110 routes**, hash-routed, role/resource-gated, React Query + WebSockets |
+| **Migrations** | 79 Flyway migrations (`V1`–`V85`, non-contiguous) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
+| **Backend surface** | **157 JPA entities**, **78 controllers**, 129 services, 14 RBAC roles |
+| **Frontend surface** | **98 routes**, hash-routed, role/resource-gated, React Query + WebSockets |
 | **Infra (docker-compose)** | Postgres, Redis, Kafka, backend, frontend, **ai-ops**, **ai-intel**, Prometheus, Grafana |
 | **Testing** | Backend: **789 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest **403 passing, 0 failures, 0 errors** (`tsc --noEmit`, `npm run build`, and `npm run lint` green); Playwright smoke-tested on live dev stack |
 
@@ -148,7 +148,7 @@ Reference: `FIX_LOG.md` Phase 2.5 plus the Aug 2026 fulfillment/billing/EDI work
 ## 6. Frontend Access Landscape (verified) 🖥️
 
 - Hash-router with lazy routes; `ProtectedRoute` (auth) wrapping an `AppLayout` shell; `PermissionGate` (resource+action) for fine-grained UI.
-- **110 routes** across: LaunchPad, Orders, Fulfillment, Inventory & Warehouses, Returns, Procurement, Vendors, Carriers, Yard/Trailers, Integrations, Import/Export, Finance, Analytics, AI, Admin, Support — plus the **3PL module** (Rate Cards, Billing Statements, Client Portal).
+- **98 routes** across: LaunchPad, Orders, Fulfillment, Inventory & Warehouses, Returns, Procurement, Vendors, Carriers, Yard/Trailers, Integrations, Import/Export, Finance, Analytics, AI, Admin, Support — plus the **3PL module** (Rate Cards, Billing Statements, Client Portal).
 - 14 roles enforced server-side; UI gates mirror resource mappings.
 
 ---

@@ -23,6 +23,7 @@ vi.mock('../../api/orders', () => ({
   modifyOrder: vi.fn().mockResolvedValue({}),
   splitOrder: vi.fn().mockResolvedValue({}),
   mergeOrders: vi.fn().mockResolvedValue({}),
+  getOrderHistory: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }))
 
 vi.mock('../../api/aiPlatform', () => ({

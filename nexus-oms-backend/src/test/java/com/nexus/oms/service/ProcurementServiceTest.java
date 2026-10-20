@@ -36,7 +36,6 @@ class ProcurementServiceTest {
     @Mock private RfqResponseRepository rfqResponseRepository;
     @Mock private PurchaseOrderRepository purchaseOrderRepository;
     @Mock private PurchaseOrderItemRepository purchaseOrderItemRepository;
-    @Mock private SlottingService slottingService;
 
     private ProcurementService service;
     private UUID tenantId;
@@ -46,7 +45,7 @@ class ProcurementServiceTest {
     void setUp() {
         service = new ProcurementService(supplierRepository, supplierContactRepository, supplierContractRepository,
                 purchaseRequestRepository, purchaseRequestItemRepository, rfqRepository, rfqResponseRepository,
-                purchaseOrderRepository, purchaseOrderItemRepository, slottingService);
+                purchaseOrderRepository, purchaseOrderItemRepository);
         tenantId = UUID.randomUUID();
         poId = UUID.randomUUID();
         TenantContext.setCurrentTenantId(tenantId);
@@ -165,33 +164,6 @@ class ProcurementServiceTest {
 
         assertEquals(11, sku1.getQuantityReceived());
         assertEquals(true, result.getIsFullyReceived());
-    }
-
-    @Test
-    void receiveItems_recommendsPutawayWhenWarehouseProvided() {
-        PurchaseOrder po = po();
-        UUID warehouseId = UUID.randomUUID();
-        PurchaseOrderItem sku1 = item("SKU-1", 10, 0, null);
-        when(purchaseOrderRepository.findById(poId)).thenReturn(Optional.of(po));
-        when(purchaseOrderItemRepository.findByPoId(poId)).thenReturn(List.of(sku1));
-        when(purchaseOrderItemRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(purchaseOrderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        service.receiveItems(poId, List.of(Map.of(
-                "sku", "SKU-1", "quantityReceived", 6, "warehouseId", warehouseId.toString())));
-
-        verify(slottingService).recommendPutaway("SKU-1", warehouseId, 6, tenantId.toString());
-    }
-
-    @Test
-    void receiveItems_invalidWarehouseIdThrowsBadRequest() {
-        PurchaseOrder po = po();
-        when(purchaseOrderRepository.findById(poId)).thenReturn(Optional.of(po));
-        when(purchaseOrderItemRepository.findByPoId(poId)).thenReturn(List.of(item("SKU-1", 10, 0, null)));
-
-        assertThrows(BadRequestException.class,
-                () -> service.receiveItems(poId, List.of(Map.of(
-                        "sku", "SKU-1", "quantityReceived", 1, "warehouseId", "not-a-uuid"))));
     }
 
     @Test

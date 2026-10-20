@@ -12,10 +12,8 @@ interface Props {
   onMenuToggle: () => void
 }
 
-import { useEntitlements } from '../../features/entitlements/useEntitlements'
 export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuToggle }: Props) {
   const { user, logout } = useAuth()
-  const { allows } = useEntitlements()
   const navigate = useNavigate()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -42,19 +40,19 @@ export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuT
             <Command className="w-2.5 h-2.5" />K
           </kbd>
         </button>
-        {allows('OMS') && <button
+        <button
           onClick={() => navigate('/orders')}
           className="hidden md:inline-flex items-center gap-2 h-9 px-3.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] text-[13px] font-semibold text-[var(--text-primary)] hover:border-[var(--nexus-primary-300)] hover:text-[var(--nexus-primary-600)] hover:bg-[#EEF2FF] transition-all duration-150 shrink-0"
         >
           <PackageSearch className="w-4 h-4" />
           Find Order
-        </button>}
+        </button>
       </div>
 
       {/* ── Right: Actions ── */}
       <div className="flex items-center gap-1.5 ml-4">
         {/* AI Assistant */}
-        {allows('AI') && <button
+        <button
           onClick={onAiToggle}
           aria-label={aiPanelOpen ? 'Close AI assistant' : 'Open AI assistant'}
           aria-pressed={aiPanelOpen}
@@ -64,7 +62,7 @@ export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuT
           )}>
           <Sparkles className="w-4 h-4" />
           <span className="hidden sm:inline">AI Assistant</span>
-        </button>}
+        </button>
 
         {/* Notifications */}
         <div className="relative">

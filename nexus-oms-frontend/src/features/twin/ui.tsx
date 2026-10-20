@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { statusTone } from './warehouse/layout'
+import { statusTone } from './format'
 
 /** Shared visual atoms for the twin pages (glass panels, status chips, live indicator). */
 

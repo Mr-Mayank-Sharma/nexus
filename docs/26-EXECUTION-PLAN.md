@@ -20,6 +20,9 @@ Common rules for every workstream:
 
 ## W1. Split the repository: core, OMS, parked WMS  (first; blocks W3+)
 
+**Status: done 2026-10-21.** WMS code parked in `nexus-wms/` (see its README); entitlements removed; OMS gained a
+Locations screen. `nexus-core` is created in W3 together with the new model, rather than moving old classes twice.
+
 Brief: Turn the backend into Maven modules `nexus-core` (shared model: party, product, store, facility, inventory,
 shipment, picklist, users, jobs, messages, settings), `nexus-oms` (orders, routing, fulfilment, returns, integrations)
 and `nexus-wms` (parked: not in the default build). Move the WMS backend code and its tests into `nexus-wms`:

@@ -172,3 +172,13 @@ export async function getWarehouseSummary(warehouseId: string): Promise<ApiRespo
     throw new Error(error.response?.data?.message || error.message || 'Failed to fetch warehouse summary')
   }
 }
+
+export interface LocationOption { id: string; code: string; name: string; type?: string }
+
+/** Every location (warehouse, distribution centre or store) as id, code, name and type, for pickers in forms. */
+export async function listLocations(): Promise<LocationOption[]> {
+  const { data } = await client.get('/warehouses', { params: { page: 0, size: 500 } })
+  const page = data?.data ?? data
+  const rows: any[] = Array.isArray(page) ? page : page?.content ?? []
+  return rows.map(r => ({ id: String(r.id), code: r.code ?? '', name: r.name ?? '', type: r.type ?? undefined }))
+}

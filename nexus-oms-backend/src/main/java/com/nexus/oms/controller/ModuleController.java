@@ -7,7 +7,7 @@ import com.nexus.oms.entity.Payment;
 import com.nexus.oms.entity.Warehouse;
 import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.InvoicingService;
-import com.nexus.oms.service.WarehouseService;
+import com.nexus.oms.repository.WarehouseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
@@ -20,11 +20,11 @@ import java.util.Map;
 public class ModuleController {
 
     private final InvoicingService invoicingService;
-    private final WarehouseService warehouseService;
+    private final WarehouseRepository warehouseRepository;
 
-    public ModuleController(InvoicingService invoicingService, WarehouseService warehouseService) {
+    public ModuleController(InvoicingService invoicingService, WarehouseRepository warehouseRepository) {
         this.invoicingService = invoicingService;
-        this.warehouseService = warehouseService;
+        this.warehouseRepository = warehouseRepository;
     }
 
     @GetMapping("/invoices")
@@ -42,7 +42,7 @@ public class ModuleController {
     @GetMapping("/warehouse")
     public ResponseEntity<ApiResponse<Page<Warehouse>>> getWarehouses() {
         return ResponseEntity.ok(ApiResponse.success(
-                warehouseService.getAllWarehouses(PageRequest.of(0, 20))));
+                warehouseRepository.findAll(PageRequest.of(0, 20))));
     }
 
     @GetMapping("/routing")

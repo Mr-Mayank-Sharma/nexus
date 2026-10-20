@@ -1,5 +1,9 @@
 # 15 — Editions & entitlements (selling OMS and WMS separately)
 
+> **Superseded (2026-10-21).** The OMS and WMS are now separate products in separate modules (see
+> [doc 26](26-EXECUTION-PLAN.md), W1). The editions and entitlements switch described here was removed from the OMS;
+> it no longer contains WMS code to switch off.
+
 Nexus is sold as three editions plus add-ons. Each tenant's plan is enforced by the server on
 every API call. The UI also hides what the plan doesn't include.
 

@@ -10,12 +10,9 @@ import { useKeyboardShortcut } from '../../hooks/useKeyboardShortcut'
 import { useWebSocket, type WebSocketMessage } from '../../hooks/useWebSocket'
 import { useToast } from '../../hooks/useToast'
 import ConnectivityBanner from './ConnectivityBanner'
-import NotInPlan from '../../features/entitlements/NotInPlan'
-import { moduleForRoute } from '../../features/entitlements/modules'
-import { useEntitlements } from '../../features/entitlements/useEntitlements'
 
 /** Control-room pages that render edge to edge (no page padding, no max width, no scroll). */
-const FULL_BLEED_ROUTES = new Set(['/warehouse-twin', '/order-twin'])
+const FULL_BLEED_ROUTES = new Set(['/order-twin'])
 
 export default function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false)
@@ -23,8 +20,6 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
   const { toast } = useToast()
-  const { allows } = useEntitlements()
-  const routeModule = moduleForRoute(location.pathname)
 
   useKeyboardShortcut('k', () => setSearchOpen(true), { meta: true, ctrl: true })
 
@@ -136,7 +131,7 @@ export default function AppLayout() {
               </div>
             }>
               <ErrorBoundary key={location.pathname}>
-                {allows(routeModule) ? <Outlet /> : <NotInPlan module={routeModule} />}
+                <Outlet />
               </ErrorBoundary>
             </Suspense>
           </div>
@@ -145,7 +140,7 @@ export default function AppLayout() {
 
       {/* Overlays */}
       <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <AIAssistantPanel open={aiPanelOpen && allows('AI')} onClose={() => setAiPanelOpen(false)} />
+      <AIAssistantPanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
       <ConnectivityBanner />
     </div>
   )

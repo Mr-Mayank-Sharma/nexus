@@ -35,20 +35,17 @@ public class SecurityConfig {
 
     private final com.nexus.oms.filter.RateLimitingFilter rateLimitingFilter;
     private final com.nexus.oms.filter.IdempotencyFilter idempotencyFilter;
-    private final com.nexus.oms.entitlement.ModuleEntitlementFilter moduleEntitlementFilter;
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           PermissionAuthorizationFilter permissionAuthorizationFilter,
                           ImportTokenAuthenticationFilter importTokenAuthenticationFilter,
                           org.springframework.data.redis.core.StringRedisTemplate redisTemplate,
-                          com.nexus.oms.service.IdempotencyService idempotencyService,
-                          com.nexus.oms.entitlement.EntitlementService entitlementService) {
+                          com.nexus.oms.service.IdempotencyService idempotencyService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.permissionAuthorizationFilter = permissionAuthorizationFilter;
         this.importTokenAuthenticationFilter = importTokenAuthenticationFilter;
         this.rateLimitingFilter = new com.nexus.oms.filter.RateLimitingFilter(redisTemplate);
         this.idempotencyFilter = new com.nexus.oms.filter.IdempotencyFilter(idempotencyService);
-        this.moduleEntitlementFilter = new com.nexus.oms.entitlement.ModuleEntitlementFilter(entitlementService);
     }
 
     @Bean
@@ -106,9 +103,7 @@ public class SecurityConfig {
             .addFilterBefore(importTokenAuthenticationFilter, JwtAuthenticationFilter.class)
             .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class)
             .addFilterAfter(idempotencyFilter, JwtAuthenticationFilter.class)
-            .addFilterAfter(permissionAuthorizationFilter, JwtAuthenticationFilter.class)
-            // Plan check: a module the tenant has not licensed is refused for every role.
-            .addFilterAfter(moduleEntitlementFilter, JwtAuthenticationFilter.class);
+            .addFilterAfter(permissionAuthorizationFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }

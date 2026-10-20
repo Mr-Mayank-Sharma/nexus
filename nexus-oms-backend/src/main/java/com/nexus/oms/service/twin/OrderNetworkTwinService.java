@@ -249,7 +249,7 @@ public class OrderNetworkTwinService {
         BigDecimal avgCost = costs.isEmpty() ? null
                 : costs.stream().reduce(BigDecimal.ZERO, BigDecimal::add).divide(BigDecimal.valueOf(costs.size()), 2, RoundingMode.HALF_UP);
         return new Node(w.getId(), w.getCode(), w.getName(), w.getType(), w.getCity(), w.getState(), w.getStatus(),
-                WarehouseTwinService.fillPct(w.getUsedCapacitySqm(), w.getTotalCapacitySqm()),
+                fillPct(w.getUsedCapacitySqm(), w.getTotalCapacitySqm()),
                 allocations.size(), units, available, skus, avgCost);
     }
 
@@ -293,5 +293,12 @@ public class OrderNetworkTwinService {
 
     private static long nz(Integer v) {
         return v == null ? 0 : v;
+    }
+
+    private static Double fillPct(java.math.BigDecimal used, java.math.BigDecimal total) {
+        if (used == null || total == null || total.signum() <= 0) {
+            return null;
+        }
+        return used.multiply(java.math.BigDecimal.valueOf(100)).divide(total, 1, java.math.RoundingMode.HALF_UP).doubleValue();
     }
 }

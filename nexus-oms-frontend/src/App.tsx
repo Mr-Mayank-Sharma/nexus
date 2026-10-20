@@ -7,7 +7,6 @@ import LoginPage from './pages/LoginPage'
 
 const LaunchPadPage = lazy(() => import('./pages/LaunchPadPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
-const WarehouseTwinPage = lazy(() => import('./features/twin/warehouse/WarehouseTwinPage'))
 const OrderFlowTwinPage = lazy(() => import('./features/twin/orders/OrderFlowTwinPage'))
 const SecurityPage = lazy(() => import('./features/account/SecurityPage'))
 const OrdersPage = lazy(() => import('./pages/OrdersPage'))
@@ -36,20 +35,14 @@ const EbayIntegrationPage = lazy(() => import('./pages/EbayIntegrationPage'))
 const WalmartIntegrationPage = lazy(() => import('./pages/WalmartIntegrationPage'))
 const IntegrationMarketplacePage = lazy(() => import('./pages/IntegrationMarketplacePage'))
 const InventoryEnhancedPage = lazy(() => import('./pages/InventoryEnhancedPage'))
-const WavePlanningPage = lazy(() => import('./pages/WavePlanningPage'))
-const LaborManagementPage = lazy(() => import('./pages/LaborManagementPage'))
 const LabelPrintingPage = lazy(() => import('./pages/LabelPrintingPage'))
 const ManifestPage = lazy(() => import('./pages/ManifestPage'))
 const ReportBuilderPage = lazy(() => import('./pages/ReportBuilderPage'))
 const ReturnsEnhancedPage = lazy(() => import('./pages/ReturnsEnhancedPage'))
 const PaymentsPage = lazy(() => import('./pages/PaymentsPage'))
-const SlottingOptimizationPage = lazy(() => import('./pages/SlottingOptimizationPage'))
-const YardDockPage = lazy(() => import('./pages/YardDockPage'))
-const AutomationSystemsPage = lazy(() => import('./pages/AutomationSystemsPage'))
 const CreateOrderPage = lazy(() => import('./pages/CreateOrderPage'))
 const CarriersPage = lazy(() => import('./pages/CarriersPage'))
 const CarrierRateShoppingPage = lazy(() => import('./pages/CarrierRateShoppingPage'))
-const EdiAutomationPage = lazy(() => import('./pages/EdiAutomationPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const RoutingRulesPage = lazy(() => import('./pages/RoutingRulesPage'))
 const OrderRoutingPage = lazy(() => import('./pages/OrderRoutingPage'))
@@ -57,13 +50,10 @@ const EmailOrderParsingPage = lazy(() => import('./pages/EmailOrderParsingPage')
 const PreOrdersPage = lazy(() => import('./pages/PreOrdersPage'))
 const ATPRulesPage = lazy(() => import('./pages/ATPRulesPage'))
 const TaskQueuesPage = lazy(() => import('./pages/TaskQueuesPage'))
-const WarehouseDashboardPage = lazy(() => import('./pages/WarehouseDashboardPage'))
 const PackerScreen = lazy(() => import('./pages/PackerScreen'))
 const LoaderScreen = lazy(() => import('./pages/LoaderScreen'))
 const StoreDashboardPage = lazy(() => import('./pages/StoreDashboardPage'))
 const BopisOwnerPage = lazy(() => import('./pages/BopisOwnerPage'))
-const InventoryReceivingPage = lazy(() => import('./pages/InventoryReceivingPage'))
-const CycleCountPage = lazy(() => import('./pages/CycleCountPage'))
 const BigCommercePage = lazy(() => import('./pages/BigCommercePage'))
 const IntegrationStoresPage = lazy(() => import('./pages/IntegrationStoresPage'))
 const StoreOperationsPage = lazy(() => import('./pages/StoreOperationsPage'))
@@ -78,8 +68,8 @@ const CustomersPage = lazy(() => import('./pages/CustomersPage'))
 const ProductsPage = lazy(() => import('./pages/ProductsPage'))
 const AuditPage = lazy(() => import('./pages/AuditPage'))
 const NotificationsCenter = lazy(() => import('./pages/NotificationsCenter'))
-const WarehousePage = lazy(() => import('./pages/WarehousePage'))
 const ProcurementPage = lazy(() => import('./pages/ProcurementPage'))
+const LocationsPage = lazy(() => import('./pages/LocationsPage'))
 const InvoicingPage = lazy(() => import('./pages/InvoicingPage'))
 const WorkflowsPage = lazy(() => import('./pages/WorkflowsPage'))
 const DocumentsPage = lazy(() => import('./pages/DocumentsPage'))
@@ -87,7 +77,6 @@ const UsersPage = lazy(() => import('./pages/UsersPage'))
 const TransfersPage = lazy(() => import('./pages/TransfersPage'))
 const BrokeringQueuePage = lazy(() => import('./pages/BrokeringQueuePage'))
 const RejectionsPage = lazy(() => import('./pages/RejectionsPage'))
-const PickersPage = lazy(() => import('./pages/PickersPage'))
 const OrderApprovalsPage = lazy(() => import('./pages/OrderApprovalsPage'))
 const FulfillmentLimitsPage = lazy(() => import('./pages/FulfillmentLimitsPage'))
 const FulfillmentReconciliationPage = lazy(() => import('./pages/FulfillmentReconciliationPage'))
@@ -101,7 +90,6 @@ const FindOrderPage = lazy(() => import('./pages/FindOrderPage'))
 const RateCardsPage = lazy(() => import('./pages/RateCardsPage'))
 const BillingStatementsPage = lazy(() => import('./pages/BillingStatementsPage'))
 const ClientPortalPage = lazy(() => import('./pages/ClientPortalPage'))
-const RfidPage = lazy(() => import('./pages/RfidPage'))
 const ReturnsFinancePage = lazy(() => import('./pages/ReturnsFinancePage'))
 const McpServerPage = lazy(() => import('./pages/McpServerPage'))
 const SyncConflictsPage = lazy(() => import('./pages/SyncConflictsPage'))
@@ -138,9 +126,6 @@ export default function App() {
           <Route path="orders/new" element={<CreateOrderPage />} />
           <Route path="orders/:id" element={<OrderDetailPage />} />
           <Route path="inventory" element={<InventoryPage />} />
-          <Route path="inventory/receiving" element={<InventoryReceivingPage />} />
-          <Route path="inventory/cycle-counts" element={<CycleCountPage />} />
-          <Route path="inventory/rfid" element={<RfidPage />} />
           <Route path="routing-rules" element={<RoutingRulesPage />} />
           <Route path="order-routing" element={<OrderRoutingPage />} />
           <Route path="integrations/bigcommerce" element={<BigCommercePage />} />
@@ -156,14 +141,12 @@ export default function App() {
           <Route path="sync" element={<SyncConflictsPage />} />
           <Route path="import-export" element={<ImportExportCenter />} />
           <Route path="notifications" element={<NotificationsCenter />} />
-          <Route path="warehouse" element={<WarehousePage />} />
-          <Route path="warehouse-dashboard" element={<WarehouseDashboardPage />} />
-          <Route path="warehouse-twin" element={<WarehouseTwinPage />} />
           <Route path="packer" element={<PackerScreen />} />
           <Route path="loader" element={<LoaderScreen />} />
           <Route path="store-dashboard" element={<StoreDashboardPage />} />
           <Route path="bopis-owner" element={<BopisOwnerPage />} />
           <Route path="procurement/*" element={<ProcurementPage />} />
+          <Route path="locations" element={<LocationsPage />} />
           <Route path="invoices" element={<InvoicingPage />} />
           <Route path="workflows" element={<WorkflowsPage />} />
           <Route path="documents" element={<DocumentsPage />} />
@@ -184,7 +167,6 @@ export default function App() {
           <Route path="task-queues" element={<TaskQueuesPage />} />
           <Route path="carriers" element={<CarriersPage />} />
           <Route path="rate-shopping" element={<CarrierRateShoppingPage />} />
-          <Route path="edi" element={<EdiAutomationPage />} />
           <Route path="email-parser" element={<EmailOrderParsingPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="ai" element={<AiPage />} />
@@ -204,11 +186,6 @@ export default function App() {
           <Route path="integrations/ebay" element={<EbayIntegrationPage />} />
           <Route path="integrations/walmart" element={<WalmartIntegrationPage />} />
           <Route path="integrations/marketplace" element={<IntegrationMarketplacePage />} />
-          <Route path="wave-planning" element={<WavePlanningPage />} />
-          <Route path="labor-management" element={<LaborManagementPage />} />
-          <Route path="slotting-optimization" element={<SlottingOptimizationPage />} />
-          <Route path="yard-dock" element={<YardDockPage />} />
-          <Route path="automation-systems" element={<AutomationSystemsPage />} />
           <Route path="label-printing" element={<LabelPrintingPage />} />
           <Route path="manifest" element={<ManifestPage />} />
           <Route path="report-builder" element={<ReportBuilderPage />} />
@@ -218,7 +195,6 @@ export default function App() {
           <Route path="transfers" element={<TransfersPage />} />
           <Route path="brokering" element={<BrokeringQueuePage />} />
           <Route path="rejections" element={<RejectionsPage />} />
-          <Route path="pickers" element={<PickersPage />} />
           <Route path="order-approvals" element={<OrderApprovalsPage />} />
           <Route path="fulfillment-limits" element={<FulfillmentLimitsPage />} />
           <Route path="reconciliation" element={<FulfillmentReconciliationPage />} />

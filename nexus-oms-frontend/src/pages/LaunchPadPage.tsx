@@ -145,8 +145,9 @@ function getInitials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
-import { moduleForRoute } from '../features/entitlements/modules'
-import { useEntitlements } from '../features/entitlements/useEntitlements'
+
+/** Pages that moved to Nexus WMS; their tiles are hidden in the OMS. */
+const WMS_PATHS = new Set(['/warehouse-dashboard', '/warehouse', '/wave-planning', '/labor-management', '/edi', '/inventory/receiving', '/inventory/cycle-counts'])
 
 export default function LaunchPadPage() {
   const navigate = useNavigate()
@@ -156,8 +157,8 @@ export default function LaunchPadPage() {
     '/orders', '/picking', '/packing', '/shipping', '/inventory', '/dashboard'
   ])
 
-  const { allows } = useEntitlements()
-  const licensedApps = useMemo(() => apps.filter(a => allows(moduleForRoute(a.path))), [allows])
+  // only apps whose page still exists in the OMS
+  const licensedApps = useMemo(() => apps.filter(a => !WMS_PATHS.has(a.path)), [])
 
   const filtered = useMemo(() => {
     if (!searchQuery.trim()) return licensedApps

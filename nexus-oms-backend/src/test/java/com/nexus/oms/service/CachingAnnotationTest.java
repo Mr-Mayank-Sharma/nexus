@@ -48,15 +48,6 @@ class CachingAnnotationTest {
     }
 
     @Test
-    void warehouseService_getZones_HasCacheableAnnotation() throws Exception {
-        Method method = WarehouseService.class.getMethod("getZones", java.util.UUID.class);
-        Cacheable annotation = method.getAnnotation(Cacheable.class);
-
-        assertNotNull(annotation);
-        assertArrayEquals(new String[]{"warehouseZones"}, annotation.value());
-    }
-
-    @Test
     void orderService_getOrder_HasCacheableAnnotation() throws Exception {
         Method method = OrderService.class.getMethod("getOrder", java.util.UUID.class);
         Cacheable annotation = method.getAnnotation(Cacheable.class);

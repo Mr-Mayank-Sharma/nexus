@@ -26,7 +26,7 @@ import PermissionGate from '../components/rbac/PermissionGate'
 import { useToast } from '../hooks/useToast'
 
 interface AlertItem { id: string; message: string; severity: 'warning' | 'error' | 'info' }
-interface FacilityData { id: string; name: string; code: string; city: string; status: string; capacityUtilization: number; totalBins: number; emptyBins: number; activeStaff: number }
+interface FacilityData { id: string; name: string; code: string; city: string; country?: string; status: string; capacityUtilization: number | null; dockCount?: number | null }
 interface PieChartData { name: string; value: number; color: string }
 
 const PIE_COLORS = ['var(--nexus-primary-500)', 'var(--nexus-warning-500)', 'var(--nexus-success-500)', 'var(--nexus-error-500)', 'var(--nexus-ai-500)', '#EC4899', 'var(--nexus-primary-500)', 'var(--text-tertiary)']
@@ -403,7 +403,7 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-[var(--text-primary)] truncate">{f.name}</p>
                     <p className="text-[10px] text-[var(--text-tertiary)]">{f.code}{f.city ? ` · ${f.city}` : ''}</p>
                   </div>
-                  <span className="text-xs font-semibold text-[var(--text-secondary)]">{f.capacityUtilization ?? 0}%</span>
+                  <span className="text-xs font-semibold text-[var(--text-secondary)]">{f.capacityUtilization == null ? '—' : `${f.capacityUtilization}%`}</span>
                 </div>
                 {/* Mini progress bar */}
                 <div className="mt-2 w-full h-1 bg-[var(--surface-muted)] rounded-full overflow-hidden">
@@ -424,38 +424,38 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-[var(--nexus-success-600)]">{selectedFacilityData.capacityUtilization ?? 0}%</p>
-                      <p className="text-[10px] text-[var(--text-tertiary)]">Bin Utilization</p>
+                      <p className="text-2xl font-bold text-[var(--nexus-success-600)]">{selectedFacilityData.capacityUtilization == null ? '—' : `${selectedFacilityData.capacityUtilization}%`}</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">Space used</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Capacity + staff */}
+                {/* Location facts the OMS holds; bins and staff are tracked in Nexus WMS */}
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
-                    <p className="text-xs text-[var(--text-secondary)]">Total Bins</p>
-                    <p className="text-lg font-bold text-[var(--text-primary)] mt-1">{selectedFacilityData.totalBins ?? 0}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Status</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)] mt-1">{selectedFacilityData.status ?? '—'}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
-                    <p className="text-xs text-[var(--text-secondary)]">Empty Bins</p>
-                    <p className="text-lg font-bold text-[var(--nexus-warning-600)] mt-1">{selectedFacilityData.emptyBins ?? 0}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">City</p>
+                    <p className="text-lg font-bold text-[var(--text-primary)] mt-1">{selectedFacilityData.city ?? '—'}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
-                    <p className="text-xs text-[var(--text-secondary)]">Active Staff</p>
-                    <p className="text-lg font-bold text-[var(--nexus-primary-600)] mt-1">{selectedFacilityData.activeStaff ?? 0}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Dock doors</p>
+                    <p className="text-lg font-bold text-[var(--nexus-primary-600)] mt-1">{selectedFacilityData.dockCount ?? '—'}</p>
                   </div>
                 </div>
 
                 {/* Capacity Progress Bar */}
                 <div>
-                  <p className="text-xs font-medium text-[var(--text-secondary)] mb-2">Capacity Utilization</p>
+                  <p className="text-xs font-medium text-[var(--text-secondary)] mb-2">Space used</p>
                   <div className="w-full h-6 rounded-lg bg-[var(--surface-muted)] overflow-hidden">
                     <div className={clsx(
                       'h-full rounded-lg flex items-center justify-center text-[10px] text-white font-medium transition-all',
                       (selectedFacilityData.capacityUtilization ?? 0) >= 90 ? 'bg-[var(--nexus-error-500)]' :
                       (selectedFacilityData.capacityUtilization ?? 0) >= 75 ? 'bg-[var(--nexus-warning-500)]' : 'bg-[var(--nexus-success-600)]'
                     )} style={{ width: `${Math.min(100, selectedFacilityData.capacityUtilization ?? 0)}%` }}>
-                      {selectedFacilityData.capacityUtilization > 15 ? `${selectedFacilityData.capacityUtilization}%` : ''}
+                      {(selectedFacilityData.capacityUtilization ?? 0) > 15 ? `${selectedFacilityData.capacityUtilization}%` : ''}
                     </div>
                   </div>
                 </div>
@@ -468,13 +468,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-[var(--text-primary)] capitalize">{(selectedFacilityData.status ?? 'unknown').toLowerCase()}</p>
-                    <p className="text-[10px] text-[var(--text-tertiary)]">{(selectedFacilityData.totalBins ?? 0) - (selectedFacilityData.emptyBins ?? 0)} occupied / {selectedFacilityData.totalBins ?? 0} bins</p>
                   </div>
                 </div>
 
                 {/* Navigation buttons */}
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => navigate(`/warehouse`)} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
+                  <button type="button" onClick={() => navigate(`/locations`)} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">
                     <Building2 className="w-3.5 h-3.5" /> View Facility
                   </button>
                   <button type="button" onClick={() => navigate(`/orders?facility=${selectedFacilityData.code}`)} className="enterprise-btn enterprise-btn-secondary enterprise-btn-sm">

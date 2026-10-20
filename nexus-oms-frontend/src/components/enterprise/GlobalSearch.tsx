@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, Command, FileText, Package, Users, Building2, ShoppingCart, Receipt, BarChart3, Settings, ArrowRight, X, Bell, GitBranch, Upload, Plus, PackagePlus, Truck, RotateCcw, CreditCard } from 'lucide-react'
+import { Search, Command, FileText, Package, Users, Building2, ShoppingCart, Receipt, BarChart3, Settings, ArrowRight, X, Bell, GitBranch, Upload, Plus, PackagePlus, CreditCard } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { clsx } from 'clsx'
 
@@ -19,7 +19,6 @@ const searchItems: SearchItem[] = [
   { id: 'order-new', label: 'Create Order', description: 'Create a new sales order', path: '/orders/new', icon: <Package className="w-4 h-4" />, category: 'Orders', shortcut: '⌘N' },
   { id: 'customers', label: 'Customers', description: 'Manage customers', path: '/customers', icon: <Users className="w-4 h-4" />, category: 'Customers' },
   { id: 'inventory', label: 'Inventory', description: 'View inventory levels', path: '/inventory', icon: <Building2 className="w-4 h-4" />, category: 'Inventory' },
-  { id: 'warehouse', label: 'Warehouse Management', path: '/warehouse', icon: <Building2 className="w-4 h-4" />, category: 'Warehouse' },
   { id: 'procurement', label: 'Procurement', path: '/procurement', icon: <ShoppingCart className="w-4 h-4" />, category: 'Procurement' },
   { id: 'invoices', label: 'Invoices', path: '/invoices', icon: <Receipt className="w-4 h-4" />, category: 'Finance' },
   { id: 'integration-hub', label: 'Integration Hub', path: '/integration-hub', icon: <Command className="w-4 h-4" />, category: 'Integrations' },
@@ -35,8 +34,6 @@ const searchItems: SearchItem[] = [
 const quickActions: SearchItem[] = [
   { id: 'quick-new-order', label: 'Create New Order', description: 'Start a new sales order', path: '/orders/new', icon: <Plus className="w-4 h-4" />, category: 'Quick Actions', shortcut: '⌘N' },
   { id: 'quick-add-product', label: 'Add Product', description: 'Add a new product to catalog', path: '/products', icon: <PackagePlus className="w-4 h-4" />, category: 'Quick Actions' },
-  { id: 'quick-receiving', label: 'Receive Inventory', description: 'Start inventory receiving', path: '/inventory/receiving', icon: <Truck className="w-4 h-4" />, category: 'Quick Actions' },
-  { id: 'quick-cycle-count', label: 'Start Cycle Count', description: 'Begin cycle count process', path: '/inventory/cycle-counts', icon: <RotateCcw className="w-4 h-4" />, category: 'Quick Actions' },
   { id: 'quick-invoice', label: 'Create Invoice', description: 'Generate a new invoice', path: '/invoices', icon: <CreditCard className="w-4 h-4" />, category: 'Quick Actions' },
   { id: 'quick-reports', label: 'View Reports', description: 'Access analytics dashboard', path: '/analytics', icon: <BarChart3 className="w-4 h-4" />, category: 'Quick Actions' },
 ]

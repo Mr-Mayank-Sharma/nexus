@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Trash2 } from 'lucide-react'
 import { transfersApi } from '../../api/transfers'
-import { fetchTwinSites } from '../twin/warehouse/api'
+import { listLocations } from '../../api/warehouse'
 import { useToast } from '../../hooks/useToast'
 
 const field = 'mt-1 w-full rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-sm text-[var(--text-primary)]'
@@ -18,7 +18,7 @@ interface Line { sku: string; quantity: number }
 export default function NewTransferDialog({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient()
   const { addToast } = useToast()
-  const { data: sites = [] } = useQuery({ queryKey: ['twin', 'sites'], queryFn: fetchTwinSites })
+  const { data: sites = [] } = useQuery({ queryKey: ['locations'], queryFn: listLocations })
   const [source, setSource] = useState('')
   const [destination, setDestination] = useState('')
   const [priority, setPriority] = useState('NORMAL')

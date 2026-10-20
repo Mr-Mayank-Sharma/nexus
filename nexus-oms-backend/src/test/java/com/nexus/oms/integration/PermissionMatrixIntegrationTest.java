@@ -143,8 +143,8 @@ class PermissionMatrixIntegrationTest extends AbstractIntegrationTest {
                 "/returns", "/shipments", "/picking", "/packing", "/warehouse",
                 "/warehouses", "/procurement", "/invoices", "/invoicing",
                 "/payments", "/carriers", "/settings", "/workflows",
-                "/analytics", "/documents", "/notifications", "/edi",
-                "/routing", "/order-routing", "/rbac", "/cycle-counts",
+                "/analytics", "/documents", "/notifications",
+                "/routing", "/order-routing", "/rbac",
                 "/inventory-receipts", "/rate-shopping", "/routing-rules",
                 "/audit", "/integration", "/shopify", "/integration-platform",
                 "/ai", "/fulfillment");

@@ -178,7 +178,7 @@ export default function ReplenishmentPage() {
       <div className="enterprise-page space-y-6">
       <EnterpriseBreadcrumbs crumbs={[
         { label: 'Home', path: '/' },
-        { label: 'Warehouse', path: '/warehouse' },
+        { label: 'Warehouse', path: '/locations' },
         { label: 'Replenishment Rules' },
       ]} />
 

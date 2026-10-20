@@ -35,7 +35,6 @@ public class ProcurementService {
     private final RfqResponseRepository rfqResponseRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
     private final PurchaseOrderItemRepository purchaseOrderItemRepository;
-    private final SlottingService slottingService;
 
     public ProcurementService(SupplierRepository supplierRepository,
                               SupplierContactRepository supplierContactRepository,
@@ -45,8 +44,7 @@ public class ProcurementService {
                               RfqRepository rfqRepository,
                               RfqResponseRepository rfqResponseRepository,
                               PurchaseOrderRepository purchaseOrderRepository,
-                              PurchaseOrderItemRepository purchaseOrderItemRepository,
-                              SlottingService slottingService) {
+                              PurchaseOrderItemRepository purchaseOrderItemRepository) {
         this.supplierRepository = supplierRepository;
         this.supplierContactRepository = supplierContactRepository;
         this.supplierContractRepository = supplierContractRepository;
@@ -56,7 +54,6 @@ public class ProcurementService {
         this.rfqResponseRepository = rfqResponseRepository;
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.purchaseOrderItemRepository = purchaseOrderItemRepository;
-        this.slottingService = slottingService;
     }
 
     // ==================== SUPPLIERS ====================
@@ -318,18 +315,6 @@ public class ProcurementService {
 
             item.setQuantityReceived(newReceived);
             purchaseOrderItemRepository.save(item);
-
-            // Destination warehouse (optional) drives a putaway slot recommendation.
-            Object warehouseRef = received.get("warehouseId");
-            if (warehouseRef != null) {
-                try {
-                    UUID warehouseId = UUID.fromString(String.valueOf(warehouseRef));
-                    slottingService.recommendPutaway(sku, warehouseId, qty, TenantContext.getCurrentTenantId() != null
-                            ? TenantContext.getCurrentTenantId().toString() : "PO_RECEIVING");
-                } catch (IllegalArgumentException ex) {
-                    throw new BadRequestException("Invalid warehouseId: " + warehouseRef);
-                }
-            }
         }
 
         items = purchaseOrderItemRepository.findByPoId(poId);

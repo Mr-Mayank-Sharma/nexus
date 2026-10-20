@@ -27,7 +27,7 @@ export const ROLE_WORKSPACES: Record<UserRole, RoleWorkspace> = {
   ADMIN: { role: 'ADMIN', label: 'System Administrator', description: 'Full system control & configuration', color: 'bg-red-600', homePath: '/', icon: 'Shield' },
   CEO: { role: 'CEO', label: 'Executive Dashboard', description: 'Company-wide overview & strategy', color: 'bg-purple-600', homePath: '/', icon: 'Award' },
   OPS_MANAGER: { role: 'OPS_MANAGER', label: 'Operations Manager', description: 'Order lifecycle & fulfillment oversight', color: 'bg-blue-600', homePath: '/', icon: 'BarChart3' },
-  WAREHOUSE_MANAGER: { role: 'WAREHOUSE_MANAGER', label: 'Warehouse Manager', description: 'Warehouse operations & labor management', color: 'bg-amber-600', homePath: '/warehouse-dashboard', icon: 'Building2' },
+  WAREHOUSE_MANAGER: { role: 'WAREHOUSE_MANAGER', label: 'Warehouse Manager', description: 'Fulfilment, picking, packing & shipping', color: 'bg-amber-600', homePath: '/fulfillment', icon: 'Building2' },
   PICKER: { role: 'PICKER', label: 'Picker', description: 'Pick items from shelves', color: 'bg-cyan-600', homePath: '/picking', icon: 'ClipboardCheck' },
   PACKER: { role: 'PACKER', label: 'Packer', description: 'Pack orders for shipment', color: 'bg-emerald-600', homePath: '/packer', icon: 'PackagePlus' },
   LOADER: { role: 'LOADER', label: 'Loader', description: 'Load & dispatch shipments', color: 'bg-orange-600', homePath: '/loader', icon: 'Truck' },
@@ -91,8 +91,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'picking', label: 'Picking', path: '/picking', icon: 'ClipboardList' },
         { id: 'packing', label: 'Packing', path: '/packing', icon: 'Package' },
         { id: 'shipping', label: 'Shipping', path: '/shipping', icon: 'Ship' },
-        { id: 'wave-planning', label: 'Wave Planning', path: '/wave-planning', icon: 'Layers' },
-        { id: 'pickers', label: 'Pickers', path: '/pickers', icon: 'ClipboardCheck' },
         { id: 'packer', label: 'Packer View', path: '/packer', icon: 'PackagePlus' },
         { id: 'loader', label: 'Loader View', path: '/loader', icon: 'Truck' },
         { id: 'label-printing', label: 'Label Printing', path: '/label-printing', icon: 'Printer' },
@@ -106,9 +104,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       children: [
         { id: 'inventory', label: 'Inventory', path: '/inventory', icon: 'Warehouse' },
         { id: 'inventory-enhanced', label: 'Multi-Node Inventory', path: '/inventory/enhanced', icon: 'Warehouse' },
-        { id: 'receiving', label: 'Receiving', path: '/inventory/receiving', icon: 'PackagePlus' },
-        { id: 'cycle-counts', label: 'Cycle Counts', path: '/inventory/cycle-counts', icon: 'ClipboardCheck' },
-        { id: 'rfid', label: 'RFID & Serialized', path: '/inventory/rfid', icon: 'Radio' },
         { id: 'replenishment', label: 'Replenishment', path: '/replenishment', icon: 'RefreshCw' },
         { id: 'transfers', label: 'Transfer Orders', path: '/transfers', icon: 'ArrowRightLeft' },
         { id: 'products', label: 'Products', path: '/products', icon: 'Tags' },
@@ -140,26 +135,11 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'atp-rules', label: 'ATP Rules', path: '/atp-rules', icon: 'Gauge' },
         { id: 'endless-aisle', label: 'Endless Aisle', path: '/endless-aisle', icon: 'ShoppingCart' },
         { id: 'promotions', label: 'Promotions', path: '/promotions', icon: 'Tags' },
-      ]
-    },
-    // ──────────────────────────────────────────────
-    // 7. WAREHOUSE OPERATIONS
-    // ──────────────────────────────────────────────
-    {
-      section: 'Fulfillment', id: 'warehouse-group', label: 'Warehouse Operations', path: '/warehouse-dashboard', icon: 'Building2',
-      children: [
-        { id: 'warehouse-twin', label: 'Warehouse Twin', path: '/warehouse-twin', icon: 'Layers' },
-        { id: 'warehouse-dashboard', label: 'WH Dashboard', path: '/warehouse-dashboard', icon: 'BarChart3' },
-        { id: 'warehouse', label: 'Warehouse Mgmt', path: '/warehouse', icon: 'Building2' },
-        { id: 'slotting-optimization', label: 'Slotting Optimization', path: '/slotting-optimization', icon: 'Target' },
-        { id: 'yard-dock', label: 'Yard & Dock', path: '/yard-dock', icon: 'Truck' },
-        { id: 'automation-systems', label: 'Automation Systems', path: '/automation-systems', icon: 'Bot' },
-        { id: 'labor-management', label: 'Labor Management', path: '/labor-management', icon: 'Users' },
         { id: 'task-queues', label: 'Task Queues', path: '/task-queues', icon: 'AlertTriangle' },
       ]
     },
     // ──────────────────────────────────────────────
-    // 8. PROCUREMENT
+    // 7. PROCUREMENT
     // ──────────────────────────────────────────────
     {
       section: 'Supply chain', id: 'procurement-group', label: 'Procurement', path: '/procurement', icon: 'ShoppingCart',
@@ -236,7 +216,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     {
       section: 'Connect', id: 'data-exchange-group', label: 'Data Exchange', path: '/import-export', icon: 'Upload',
       children: [
-        { id: 'edi', label: 'EDI', path: '/edi', icon: 'Upload' },
         { id: 'email-parser', label: 'Email Order Parser', path: '/email-parser', icon: 'Mail' },
         { id: 'import-export', label: 'Import / Export', path: '/import-export', icon: 'Download' },
         { id: 'jobs', label: 'Scheduled Jobs', path: '/jobs', icon: 'CalendarClock' },
@@ -250,6 +229,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
     {
       section: 'Administration', id: 'admin-group', label: 'Administration', path: '/settings', icon: 'Settings',
       children: [
+        { id: 'locations', label: 'Locations', path: '/locations', icon: 'Building2' },
         { id: 'users', label: 'Users & Roles', path: '/users', icon: 'UserCog' },
         { id: 'settings', label: 'Settings', path: '/settings', icon: 'Settings' },
         { id: 'audit', label: 'Audit & Compliance', path: '/audit', icon: 'Shield' },
@@ -272,30 +252,27 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       'order-twin', 'orders', 'find-order', 'create-order', 'order-approvals', 'order-routing', 'order-replay', 'release-schedule',
       'brokering', 'rejections', 'transfers', 'fulfillment-limits', 'reconciliation',
       'fulfillment', 'picking', 'packing', 'shipping',
-      'wave-planning', 'labor-management', 'pickers', 'label-printing',
-      'inventory', 'inventory-enhanced', 'receiving', 'cycle-counts', 'rfid', 'replenishment',
+      'label-printing',
+      'inventory', 'inventory-enhanced', 'replenishment',
       'returns', 'returns-enhanced', 'returns-finance', 'freight-audit',
-      'warehouse-twin', 'warehouse-dashboard', 'warehouse', 'slotting-optimization', 'yard-dock', 'automation-systems',
       'products', 'customers',
       'procurement', 'purchase-requests', 'suppliers',
       'carriers', 'rate-shopping', 'routing',
       'invoices', 'payments', 'manifest',
-      'integrations-directory', 'integration-hub', 'sync', 'edi', 'import-export', 'jobs', 'generic-connections', 'b2b-portal',
+      'integrations-directory', 'integration-hub', 'sync', 'import-export', 'jobs', 'generic-connections', 'b2b-portal',
       'email-parser', 'documents', 'store-operations',
       'bigcommerce', 'amazon', 'ebay', 'walmart', 'marketplace-hub',
-      'users', 'settings', 'audit', 'workflows', 'promotions',
+      'users', 'settings', 'audit', 'workflows', 'promotions', 'locations',
       'task-queues', 'report-builder',
       'ai-briefing', 'ai-routing', 'ai-audit', 'ai-forecasting', 'mcp-server', 'analytics',
       'endless-aisle',
     ],
     WAREHOUSE_MANAGER: [
       'launch-pad', 'analytics-dashboard', 'dashboard', 'notifications',
-      'warehouse-twin', 'warehouse-dashboard', 'warehouse',
-      'inventory', 'inventory-enhanced', 'receiving', 'cycle-counts', 'rfid', 'replenishment',
+      'inventory', 'inventory-enhanced', 'replenishment',
       'fulfillment', 'picking', 'packing', 'shipping',
-      'wave-planning', 'labor-management', 'pickers', 'packer', 'loader',
+      'packer', 'loader',
       'label-printing',
-      'slotting-optimization', 'yard-dock', 'automation-systems',
       'products',
       'task-queues', 'analytics',
       'transfers', 'endless-aisle', 'notifications',
@@ -341,7 +318,6 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       'launch-pad', 'analytics-dashboard', 'dashboard', 'notifications',
       'shipping', 'carriers', 'rate-shopping', 'routing',
       'fulfillment', 'orders',
-      'warehouse', 'yard-dock',
       'transfers',
       'analytics',
     ],

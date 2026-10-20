@@ -195,8 +195,8 @@ export default function AnalyticsDashboardPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">{wh.capacityUtilization ?? 0}%</p>
-                      <p className="text-[10px] text-[var(--text-tertiary)]">{wh.totalBins ?? 0} bins</p>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{wh.capacityUtilization == null ? '—' : `${wh.capacityUtilization}%`}</p>
+                      <p className="text-[10px] text-[var(--text-tertiary)]">space used</p>
                     </div>
                     <EnterpriseStatusBadge
                       status={(wh.status ?? 'UNKNOWN') === 'ACTIVE' ? 'ACTIVE' : (wh.status ?? 'UNKNOWN')}
