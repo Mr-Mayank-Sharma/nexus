@@ -38,6 +38,8 @@ module compiles on its own or is clearly marked parked; docs updated.
 
 ## W2. Write the OMS-WMS contract  (any time; no code)
 
+**Status: done 2026-10-21:** [doc 27](27-OMS-WMS-CONTRACT.md).
+
 Brief: Write `docs/27-OMS-WMS-CONTRACT.md`: the messages between the OMS and any warehouse system (Nexus WMS, SAP
 EWM, Manhattan, a 3PL): fulfilment request, cancellation request and response, shipment confirmation (lines,
 packages, tracking), short-pick, stock snapshot and stock change, receipt confirmation, return received. For each:
