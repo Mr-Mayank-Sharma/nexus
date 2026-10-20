@@ -71,6 +71,22 @@ requirements in [doc 21](21-DESIGN-PARTNER-REQUIREMENTS.md).
 | Store dashboard | Assigned orders, fill rate, rejection levels, picker leaderboard | Partly (A11) |
 | Endless aisle | Sell stock held elsewhere | Partly |
 
+## 4b. Store network: how stores work with each other
+
+Stores never talk directly; every request goes through the OMS, which holds one stock record per store.
+
+| Feature | What it fixes | Status |
+|---|---|---|
+| Stock lookup across stores, with a confidence level per store | Promising stock another store can't find | Partly (confidence is new) |
+| Reserve at another store for pickup | Customer travels only when the item is held | New |
+| Endless aisle, order routed to the best store | Saves the sale when the item isn't on the shelf | Partly |
+| Transfer lifecycle: request, approve, sending stock reduced at once, pick, ship, in transit, receive, settle differences | Phone requests, double-selling, lost transfers | Partly |
+| In transit as its own location | Stock always has an owner; nobody reorders what is already on the way | New |
+| Receive by scan with automatic settlement under a tolerance | Small differences no longer take days | New |
+| Sales credit split between selling and fulfilling store | Managers ignoring requests that earn their store nothing | New |
+| Rebalancing suggestions before markdown, within store clusters, only where margin beats transfer cost | Markdowns that a transfer would have avoided | New |
+| Transfers received in Shopify POS | Partner A (A13) | Partly |
+
 ## 5. Nexus Gateway: shipping and customer messages
 
 A separate shared service, in the spirit of HotWax's Unigate. Every client installation calls one API; carrier and

@@ -67,6 +67,14 @@ that area work in the browser on the new tables, and their old tables are no lon
 - W9 Routing (routing groups, rules, conditions, actions, runs; the new brokering query; reallocation and split
   control features from doc 24 section 2).
 
+## W9b. Store network  (after W9)
+
+Brief: Following doc 24 section 4b: cross-store lookup with confidence, reserve at another store, endless aisle
+routing, the full transfer lifecycle on `inventory_transfer` and transfer shipments, in transit as its own facility,
+receive by scan with tolerance-based settlement, sales credit split (selling and fulfilling store on the order),
+and rebalancing suggestions within store clusters.
+Done when: a transfer runs end to end in the browser with stock correct at every step, including a short receipt.
+
 ## W10. Jobs and messages on the new framework, then remove old tables  (after W9)
 
 Brief: Move all schedulers to `service_job` (with run history and a run lock) and all integration queues to
