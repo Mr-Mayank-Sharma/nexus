@@ -1,6 +1,7 @@
 # 23. Nexus data model, aligned with OFBiz
 
-Status: target design, approved direction (2026-10-20). Replaces the current 196-table model step by step.
+Status: target design, approved direction (2026-10-20). Replaces the current model step by step. Implementation
+guide and progress: [doc 28](28-CORE-MODEL-GUIDE.md).
 
 Sources studied:
 - Apache OFBiz data model book (32 pages, 2017 edition): common, party, product, store, facility, inventory, order, shipment, return, accounting, work effort, service and integration entities.
@@ -34,7 +35,7 @@ Nothing is copied from components without a licence (`poorti`, `ai`, `maarg-util
 | `text-short` | `VARCHAR(63)` | `VARCHAR(63)` |
 | `text-medium` / `name` / `description` | `VARCHAR(255)` | `VARCHAR(255)` |
 | `text-intermediate` | `VARCHAR(1023)` | `VARCHAR(1023)` |
-| `text-long` / `comment` | `VARCHAR(4000)` | `TEXT` |
+| `text-long` / `comment` | `VARCHAR(4000)` | `VARCHAR(4000)` (see doc 28) |
 | `text-very-long` | `TEXT` | `LONGTEXT` |
 | `date-time` | `TIMESTAMP(3)` | `DATETIME(3)` |
 | `date` / `time` | `DATE` / `TIME` | `DATE` / `TIME` |

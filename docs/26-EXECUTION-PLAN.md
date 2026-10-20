@@ -50,6 +50,11 @@ Done when: the document is reviewed and every message has an example payload.
 
 ## W3. Data model step 1: foundations  (after W1)
 
+**Status: done 2026-10-21.** 38 framework entities generated from one spec into PostgreSQL, MySQL and JPA
+([doc 28](28-CORE-MODEL-GUIDE.md)); sequence ids, status flows, enumerations, settings and field audit; the whole app
+starts on PostgreSQL with both schemas. Not done: a real MySQL run (no image; H2 MySQL mode instead), and removing
+`tenant_id` from new code is moot until areas move (W4+).
+
 Brief: In `nexus-core`, add the framework entities from doc 23 section 3 (enumeration, status with flows, uom, geo,
 sequence_value_item, system_property, user account and groups, service jobs, system messages, data manager,
 entity_audit_log, note_data) as a clean baseline schema that runs on PostgreSQL and MySQL 8; id generation from
@@ -63,6 +68,9 @@ Done when: both databases build the schema from empty, tests pass on both, and t
 Each is one brief, run in order, following doc 23 sections 4-9 and the "Done" rule from W3, plus: the screens of
 that area work in the browser on the new tables, and their old tables are no longer written.
 - W4 Party and contacts (and sign-in moves to `user_account`).
+  **Status 2026-10-21: model, services and customer copy done** (21 entities; `PartyService`, `GeoService`;
+  `POST /core-migration/customers` copied 4,934 dev customers, idempotent). **Not done: sign-in on `user_account`** (left
+  for a supervised session; a mistake there locks people out) and orders still reference `nx_customers` (W7).
 - W5 Product and product store (variants, substitutes, identifications, features, categories, prices, store settings).
 - W6 Facility and inventory (facility merges nodes and warehouses; product_facility; inventory items and details;
   reservations).

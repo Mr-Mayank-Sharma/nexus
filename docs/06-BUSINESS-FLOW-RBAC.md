@@ -1,6 +1,6 @@
 # Nexus OMS — Business Flow & Access Control (RBAC)
 
-> **Who can touch what, at every stage of the business flow.** The authoritative answer to "who has access to what" — derived from the 14-role model, `PermissionService.PATH_TO_RESOURCE` (80 mappings), and seeded `nx_role_permissions` (`V24`/`V25`).
+> **Who can touch what, at every stage of the business flow.** The authoritative answer to "who has access to what" — derived from the 14-role model, `PermissionService.PATH_TO_RESOURCE` (81 mappings), and seeded `nx_role_permissions` (`V24`/`V25`).
 
 ---
 
