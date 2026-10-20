@@ -131,9 +131,75 @@ messaging credentials live in the gateway, per client and per store, never in th
 | Routing by plain-language instruction | Describe a routing change; it becomes a draft rule set to simulate and approve | New (A4) |
 | Forecasting and alerts | Demand per location; unusual orders | Partly |
 
+## 10. AI (how each works: [doc 25](25-AI-ARCHITECTURE.md))
+
+| Feature | What it does | Status |
+|---|---|---|
+| Agent-ready order API (ACP, UCP) | AI shopping assistants (ChatGPT, Gemini) check real stock and dates, order, and get updates | New |
+| Availability and promise service | One answer to "can you deliver this, here, by then?" from live stock, capacity and cut-offs | New |
+| Agent-safe changes after purchase | A customer's agent can cancel, re-address or return within store policy | New |
+| Delivery-date prediction | Real delivery range from history, not fixed rules | New |
+| Cost-to-serve sourcing | Full cost per location: shipping, labour, split, rejection and markdown risk | New |
+| Split prediction and prevention | Predict and avoid split shipments | New |
+| Phantom stock detection | Find items stores show but don't have; route away and ask for a targeted count | New |
+| Store reliability score | Each store's chance of rejecting or failing, feeding routing | Partly (failure-aware routing) |
+| Return-risk prediction | Likely returns flagged at order time; size advice; repeat-return patterns | New |
+| Order risk scoring | Fraud and payment risk, automatic hold | New |
+| Dynamic safety stock | Online buffers from predicted demand and record accuracy | New |
+| Learning routing | Lookahead routing, tested in simulation first | New (experiment) |
+| Exception agent | Finds stuck orders, explains the cause, proposes the fix, applies after approval | New |
+| Plain-language routing | Describe a change; it becomes a rule set, simulated and approved | New |
+| Operations assistant | Questions about orders, stores and stock answered from live data | Partly |
+| Where-is-my-order agent | Status and delivery answers; changes within policy | New |
+| Proactive re-promise | Carrier delay detected, new date, customer told, re-route if needed | New |
+| Store associate assistant | Guided picking and reject reasons | New |
+| Explain, log, undo | Every AI decision traceable and reversible, with approval levels and limits | Partly |
+| AI scorecard | AI against plain rules on the client's own orders | Partly (order replay) |
+
+## 11. Client pain points and how the OMS answers them
+
+Collected from industry surveys, retailer reports, vendor and consultant write-ups and practitioner posts
+(2016-2026; sources listed below). Vendor figures are marked as such.
+
+| # | Pain point | Evidence | OMS answer |
+|---|---|---|---|
+| P1 | Store stock is wrong, so store orders fail | Store accuracy around 60-65% (vendor figure); staff blind to accurate stock 30% of the time (Manhattan research); pick failures studied in MSOM 2023 | Phantom stock detection, store reliability score, reject-reason inventory impact, targeted counts, safety buffers |
+| P2 | Orders cancelled for stock that wasn't there | 38.6% of retailers cancel at least 1 in 10 orders; only 6% cancel under 1% (Fluent, 2023) | Availability and promise service, reservations, event-by-event channel sync, dynamic safety stock |
+| P3 | No single view of stock across locations | Only 36% of retailers say they have full visibility (Linnworks 2025) | Stock per location with history, ERP/POS feeds, integration health with latency per event |
+| P4 | Systems overwrite each other's stock | One system overrides another's inventory status (Fluent) | OMS owns availability; every feed is an event with source and time; conflict rules and a sync audit view |
+| P5 | Stores aren't warehouses | Store staff also serve shoppers (Fluent); BOPIS concerns: stock availability 57%, store capacity 56%, staff 54% (LaserShip 2021) | Capacity controls, daily limits, store reliability, store task queues with priorities, associate assistant |
+| P6 | Pickup experience fails | 36% of UK BOPIS users had issues: no pickup area, waits, items not found (YouGov); 29% abandoned a BOPIS order (Forrester 2016) | Ready-for-pickup only after the item is found and staged, pickup reminders, abandoned-pickup handling that returns stock to sale |
+| P7 | Split shipments eat margin | Vendor claims of up to 50% fewer splits with better sourcing | Whole-order-first, split prediction, consolidation, rejection profiles |
+| P8 | Peak-season failure | Black Friday orders cancelled days later; next-day promises missed (retailer news reports) | Load-tested routing, capacity throttling, promise service, proactive re-promise, seasonal routing profiles |
+| P9 | Returns are huge and slow | US returns about $850B in 2025, online about 19%; processing and carrier costs rising; 9% fraudulent (NRF 2025) | Exact refunds per line, receive-and-restock fast (return to sellable stock), return labels, return-risk and fraud signals |
+| P10 | Manual work: spreadsheets, manual routing | Vendor surveys of teams updating stock and routing by hand | Rules on screen, exception agent, bulk actions, scheduled jobs |
+| P11 | OMS projects fail on data and integration, not software | Failures from people, process and data readiness (Panorama); self-guided implementation blamed by about a quarter (Brightpearl, vendor) | Data checks before go-live, connection tests per integration, phased roll-out (one brand, then stores), routing simulation on the client's own history, guided setup |
+| P12 | Slow time to value | Speed of implementation is the top upgrade motive for 69% (Nextuple/Retail Dive 2024) | Ready-made Shopify, POS and ERP connectors; templates for stores, rules and statuses; one installation per client |
+| P13 | Fragmented channels and systems | Many channels, each on a different system (vendor reports) | One order model for every channel; generic connector for anything without one |
+
+Sources: [Netguru: 13 order management challenges](https://www.netguru.com/blog/order-management-challenges) ·
+[OneStock: order management challenges](https://www.onestock-retail.com/blog/order-management-challenges/) ·
+[Kibo: OMS trends 2026](https://kibocommerce.com/blog/retail-order-management-trends/) ·
+[Retail Dive: Nextuple survey](https://retaildive.com/press-release/20240110-survey-reveals-one-in-four-retailers-and-grocers-express-concerns-over-out-1) ·
+[Pipe17: ship-from-store inventory accuracy](https://pipe17.com/blog/ship-from-store-inventory-accuracy/) ·
+[MSOM 2023: pick failures in ship-from-store](https://ideas.repec.org/a/inm/ormsom/v25y2023i2p508-523.html) ·
+[Oracle: five order management challenges](https://www.oracle.com/retail/omnichannel/products/tips-to-resolve-five-retail-order-management-challenges/) ·
+[Panorama: lessons from an OMS failure](https://www.panorama-consulting.com/lessons-learned-from-an-oms-implementation-failure) ·
+[Brightpearl: ERP and OMS implementation failure](https://www.brightpearl.com/blog/out-now-the-shocking-new-report-into-erp-and-oms-implementation-failure) ·
+[RetailWire: is BOPIS getting better](https://retailwire.com/discussion/is-the-bopis-experience-getting-any-better/) ·
+[Forrester: BOPIS abandonment](https://www.forrester.com/blogs/16-05-10-your_customers_have_abandonment_issues) ·
+[NRF: returns 2025](https://nrf.com/media-center/press-releases/consumers-expected-to-return-nearly-850-billion-in-merchandise-in-2025) ·
+[Radial: state of returns 2025](https://www.radial.com/wp-content/uploads/2025/10/State-of-Returns_Report_2025_Final.pdf) ·
+[Fluent: inventory visibility and cancellations](https://www.sdcexec.com/warehousing/retail/news/22877096/fluent-commerce-findings-suggest-impaired-inventory-jeopardizes-trust) ·
+[Linnworks: state of commerce ops 2025](https://www.retaildive.com/press-release/20250327-linnworks-releases-state-of-commerce-ops-2025-report-1) ·
+[Business Wire: Manhattan inventory visibility research](https://www.businesswire.com/news/home/20231010302318/en/Mounting-Inventory-Visibility-Challenges-Add-Pressure-to-Strapped-Retailers/) ·
+[Black Friday cancellations (news)](https://www.wcpo.com/news/our-community/holiday/online-retailers-overwhelmed-by-orders-this-year-many-shoppers-not-getting-holiday-buys) ·
+[Argos late Black Friday deliveries](https://ciltuk.org.uk/News/Latest-News/ArtMID/6887/ArticleID/7788/Argos-faces-complaints-over-late-Black-Friday-deliveries)
+
 ## Order of delivery
 
 1. Orders, routing (with reallocation and split control), inventory, store fulfilment: areas 1-4.
 2. Nexus Gateway for shipping and customer messages: area 5.
 3. Shopify and Shopify POS proven on a real store, then the SAP stock file.
 4. Returns, the rest of integrations, insight.
+5. AI in the order of [doc 25](25-AI-ARCHITECTURE.md) section 4, starting with its foundations alongside step 1.
