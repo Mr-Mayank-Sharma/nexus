@@ -700,6 +700,290 @@ export function mountOrderWorld(host: HTMLElement, opts: { reduced: boolean }): 
   const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.5, transparent: true, opacity: 0.8, depthWrite: false, fog: false }));
   stars.position.copy(GLOBE); scene.add(stars);
 
+  // ================= life: everything else that is going on, so no frame is empty
+  // (all time-driven loops, independent of scroll; counts are lower on phones)
+  const lifeFns: ((time: number, p: number) => void)[] = [];
+  const rndL = mulberry(4242);
+  const loopAt = (pts: THREE.Vector3[], t: number) => pathAt([...pts, pts[0]], ((t % 1) + 1) % 1);
+
+  // a city on the horizon: layered blocks with lit windows, fading into the fog
+  {
+    const wc = document.createElement('canvas'); wc.width = 64; wc.height = 128;
+    const wg = wc.getContext('2d')!;
+    wg.fillStyle = '#1a2335'; wg.fillRect(0, 0, 64, 128);
+    for (let y = 6; y < 128; y += 10) for (let x = 6; x < 64; x += 12) {
+      wg.fillStyle = rndL() > 0.55 ? `rgba(255,${200 + Math.floor(rndL() * 40)},150,${0.5 + rndL() * 0.5})` : 'rgba(40,52,78,1)';
+      wg.fillRect(x, y, 6, 5);
+    }
+    const wtex = new THREE.CanvasTexture(wc); wtex.colorSpace = THREE.SRGBColorSpace; wtex.wrapS = wtex.wrapT = THREE.RepeatWrapping;
+    const mat = new THREE.MeshStandardMaterial({ color: 0x9aa6bd, map: wtex, emissive: 0xffffff, emissiveMap: wtex, emissiveIntensity: 0.55, roughness: 0.9 });
+    const n = small ? 70 : 140;
+    const city = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat, n);
+    for (let i = 0; i < n; i++) {
+      const w = 4 + rndL() * 6, h = 7 + Math.pow(rndL(), 1.6) * 30, d = 4 + rndL() * 5;
+      city.setMatrixAt(i, new THREE.Matrix4().compose(v(-40 + (i / n) * 300 + rndL() * 4, h / 2, -50 - rndL() * 24), new THREE.Quaternion(), v(w, h, d)));
+    }
+    scene.add(city);
+  }
+
+  // other orders, always on the move beside ours: the system is busy
+  {
+    const n = small ? 18 : 34;
+    const geo = new RoundedBoxGeometry(0.34, 0.34, 0.34, 2, 0.07);
+    const flow = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.2, roughness: 0.4 }), n);
+    const seeds = Array.from({ length: n }, (_, i) => ({ z: (i % 2 ? 1.45 : -1.45) + (rndL() - 0.5) * 0.3, speed: 3 + rndL() * 3.5, off: rndL() * 230, c: new THREE.Color(i % 3 ? COL.ember : COL.go) }));
+    seeds.forEach((s, i) => flow.setColorAt(i, s.c));
+    scene.add(flow);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = v(1, 1, 1), at = new THREE.Vector3();
+    lifeFns.push(time => {
+      seeds.forEach((s, i) => {
+        const x = -12 + ((s.off + time * s.speed) % 232);
+        const hidden = (x > PX - 3.2 && x < PX + 3) || (x > DX - 1 && x < DX + 9);   // they slip under the packing table and the dock
+        at.set(x, hidden ? -2 : 0.3 + Math.abs(Math.sin(time * 3 + i)) * 0.05, s.z);
+        q.setFromEuler(new THREE.Euler(0, time * 0.8 + i, 0));
+        flow.setMatrixAt(i, m.compose(at, q, sc));
+      });
+      flow.instanceMatrix.needsUpdate = true;
+    });
+  }
+
+  // dust in the air, around wherever the camera is looking
+  {
+    const n = small ? 160 : 360;
+    const dust = points(n, 0xfff4e0, 0.07, glowTex);
+    dust.mat.opacity = 0.55;
+    const seeds = Array.from({ length: n }, () => [rndL() * 30 - 15, rndL() * 9, rndL() * 22 - 11, rndL()]);
+    scene.add(dust.obj);
+    lifeFns.push(time => {
+      seeds.forEach(([x, y, z, s], i) => {
+        dust.pos.set([camLook.x + x + Math.sin(time * 0.2 + s * 9) * 0.6, ((y + time * (0.08 + s * 0.12)) % 9) + 0.2, camLook.z + z + Math.cos(time * 0.17 + s * 7) * 0.6], i * 3);
+      });
+      dust.dirty();
+    });
+  }
+
+  // 0. other channels the same customer could have used: a laptop and a till, and products in the air
+  {
+    const laptop = new THREE.Group();
+    const base = rbox(2.4, 0.1, 1.6, 0.04, std(0xc9ced8, { metalness: 0.6, roughness: 0.3 })); laptop.add(base);
+    const lid = new THREE.Group(); lid.position.set(0, 0.05, -0.8); lid.rotation.x = -1.85; laptop.add(lid);
+    const lidM = rbox(2.4, 1.6, 0.06, 0.04, std(0xc9ced8, { metalness: 0.6, roughness: 0.3 })); lidM.position.set(0, 0.8, 0); lid.add(lidM);
+    const lscr = panel(2.2, 1.4, 520, (g, w, h) => {
+      g.fillStyle = '#f7f8fb'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#232f3e'; g.fillRect(0, 0, w, 46); text(g, 'Marketplace · Seller orders', 20, 24, 22, '#fff', FONT, 700);
+      ['#9921 · 1 item · Prime', '#9922 · 3 items', '#9923 · 1 item'].forEach((l, i) => { g.fillStyle = i === 0 ? '#e8f7f0' : '#ffffff'; rr(g, 16, 64 + i * 64, w - 32, 54, 10); g.fill(); text(g, l, 32, 91 + i * 64, 22, '#0b1222', FONT, 600); });
+    });
+    lscr.mesh.position.set(0, 0.8, 0.04); lid.add(lscr.mesh);
+    laptop.position.set(-5.2, 0.45, 2.6); laptop.rotation.y = 0.55;
+    const deskA = rbox(3.2, 0.4, 2.2, 0.1, std(0xffffff, { roughness: 0.3 })); deskA.position.set(-5.2, 0.2, 2.6);
+    scene.add(deskA, laptop);
+    const till = new THREE.Group();
+    const tillBase = rbox(1.6, 0.9, 1.1, 0.1, std(0xe9edf4, { roughness: 0.35 })); tillBase.position.y = 0.45; till.add(tillBase);
+    const tscr = panel(1.2, 0.85, 360, (g, w, h) => {
+      g.fillStyle = '#0e131f'; rr(g, 0, 0, w, h, 18); g.fill();
+      text(g, 'Store POS', 20, 34, 26, '#fff', FONT, 700); text(g, 'Sale · 2 items', 20, 84, 24, '#9fe9c8', MONO, 600); text(g, '$89.00', 20, 130, 34, '#fff', FONT, 800);
+    });
+    tscr.mesh.position.set(0, 1.35, 0.1); tscr.mesh.rotation.x = -0.35; till.add(tscr.mesh);
+    till.position.set(5.6, 0, 2.4); till.rotation.y = -0.5; scene.add(till);
+    const prodCols = [COL.signal, COL.ember, COL.go, 0xd2a86f, 0xf4f6fa, COL.warn];
+    const prods = prodCols.map((c, i) => { const m = rbox(0.5 + (i % 3) * 0.12, 0.45, 0.42, 0.08, std(c, { roughness: 0.35 })); scene.add(m); return m; });
+    lifeFns.push((time, p) => {
+      const on = p < CHAPTERS[1].from;
+      prods.forEach((m, i) => {
+        m.visible = on;
+        const a = time * 0.35 + (i / prods.length) * Math.PI * 2;
+        m.position.set(Math.cos(a) * 3.6, 5.6 + Math.sin(time * 0.9 + i) * 0.35 + (i % 2) * 0.6, Math.sin(a) * 2.4 - 0.5);
+        m.rotation.set(time * 0.4 + i, time * 0.6 + i, 0);
+      });
+    });
+  }
+
+  // 1. Nexus: a live order feed, more racks behind the ERP, shelves behind the stores, and screens in orbit
+  {
+    const feed = panel(5.2, 3.9, 780, () => { });
+    feed.mesh.position.set(NX + 7.2, 6.4, -4.4); scene.add(feed.mesh);
+    const SRC = ['Shopify', 'Amazon', 'Store POS', 'WooCommerce', 'B2B portal', 'BigCommerce', 'Walmart', 'EDI'];
+    const LOCN = ['East', 'New York', 'Boston', 'Dallas'];
+    let feedTick = -1;
+    const paintFeed = (k: number) => feed.repaint((g, w, h) => {
+      card(g, w, h, 'rgba(255,138,76,.75)');
+      text(g, 'Orders arriving now', 40, 58, 38, '#fff', FONT, 750);
+      for (let i = 0; i < 6; i++) {
+        const id = 4900 + k - i, s = SRC[(k - i + 80) % SRC.length], l = LOCN[(k * 3 - i + 40) % LOCN.length];
+        const y = 120 + i * 78;
+        g.globalAlpha = 1 - i * 0.13;
+        g.fillStyle = i === 0 ? 'rgba(255,138,76,.18)' : 'rgba(255,255,255,.05)'; rr(g, 32, y - 30, w - 64, 62, 12); g.fill();
+        text(g, `#${id}`, 52, y, 28, '#fff', MONO, 700);
+        text(g, s, 200, y, 26, '#c7d0e0', FONT, 600);
+        text(g, `→ ${l}`, w - 52, y, 26, '#3ddc97', FONT, 600, 'right');
+        g.globalAlpha = 1;
+      }
+    });
+    const racksBack: THREE.MeshStandardMaterial[] = [];
+    for (let i = 0; i < 4; i++) {
+      const r = rbox(1.8, 4.2, 1.4, 0.08, std(0x1a2236, { roughness: 0.3, metalness: 0.4 })); r.position.set(NX - 15 + i * 2.2, 2.1, -10.5); scene.add(r);
+      for (let j = 0; j < 7; j++) { const lm = glow(j % 2 ? COL.signal : COL.go, 2); racksBack.push(lm); const led = box(1.3, 0.05, 0.02, lm, false); led.position.set(NX - 15 + i * 2.2, 0.9 + j * 0.45, -9.78); scene.add(led); }
+    }
+    for (let i = 0; i < 2; i++) {
+      const shelf = new THREE.Group(); shelf.position.set(NX + 12 + i * 3.4, 0, -10.2);
+      for (let s = 0; s < 3; s++) {
+        const b = box(3, 0.06, 1, std(0xd5dbe6), false); b.position.y = 0.6 + s * 1.1; shelf.add(b);
+        for (let k = 0; k < 4; k++) { const pr = rbox(0.5, 0.6, 0.5, 0.06, std([COL.signal, COL.ember, COL.go, 0xd2a86f][(k + s + i) % 4], { roughness: 0.4 })); pr.position.set(-1.1 + k * 0.72, 0.95 + s * 1.1, 0); shelf.add(pr); }
+      }
+      for (const x of [-1.5, 1.5]) { const u = box(0.08, 3.6, 1, std(0x9aa3b4), false); u.position.set(x, 1.8, 0); shelf.add(u); }
+      scene.add(shelf);
+    }
+    const orbiters = Array.from({ length: 5 }, (_, i) => {
+      const o = panel(1.5, 0.9, 260, (g, w, h) => {
+        card(g, w, h, 'rgba(91,140,255,.8)');
+        text(g, ['Stock', 'Routes', 'Holds', 'Returns', 'Rules'][i], 22, 34, 30, '#fff', FONT, 700);
+        g.fillStyle = 'rgba(91,140,255,.8)';
+        for (let b = 0; b < 6; b++) { const bh = 14 + ((i * 7 + b * 13) % 40); g.fillRect(24 + b * 34, h - 20 - bh, 20, bh); }
+      });
+      scene.add(o.mesh); return o;
+    });
+    lifeFns.push((time, p) => {
+      const on = p > CHAPTERS[1].from - 0.02 && p < CHAPTERS[3].from;
+      feed.mesh.visible = on;
+      orbiters.forEach(o => (o.mesh.visible = on));
+      if (!on) return;
+      const k = Math.floor(time / 0.8);
+      if (k !== feedTick) { paintFeed(k); feedTick = k; }
+      feed.mesh.lookAt(camera.position);
+      orbiters.forEach((o, i) => {
+        const a = time * 0.25 + (i / orbiters.length) * Math.PI * 2;
+        o.mesh.position.set(NX + Math.cos(a) * 5.2, 4.8 + Math.sin(time * 0.7 + i) * 0.3, Math.sin(a) * 5.2);
+        o.mesh.lookAt(camera.position);
+      });
+      racksBack.forEach((m, i) => (m.emissiveIntensity = 0.6 + (Math.sin(time * 6 + i * 1.7) > 0.3 ? 2 : 0)));
+    });
+  }
+
+  // 2. two more lanes through the approval gates, with other orders passing
+  {
+    const side = [-7.5, 7.5].map(z => {
+      const g = new THREE.Group(); g.position.set(GX, 0, z); scene.add(g);
+      for (const dz of [-1.6, 1.6]) { const pl = rbox(0.5, 3.4, 0.5, 0.1, std(0x18213a, { roughness: 0.3, metalness: 0.4 })); pl.position.set(0, 1.7, dz); g.add(pl); }
+      const top = rbox(0.6, 0.45, 3.8, 0.1, std(0x18213a, { roughness: 0.3, metalness: 0.4 })); top.position.y = 3.5; g.add(top);
+      const lm = glow(COL.go, 2.4); const strip = box(0.05, 0.05, 3, lm, false); strip.position.set(0.32, 3.25, 0); g.add(strip);
+      const lane = box(18, 0.02, 0.3, glow(COL.signal, 0.8), false); lane.position.set(0, 0.03, 0); g.add(lane);
+      const toks = Array.from({ length: 3 }, (_, i) => { const t = rbox(0.6, 0.6, 0.6, 0.14, glow(i % 2 ? COL.ember : COL.go, 1.4)); g.add(t); return t; });
+      return { g, toks, lm };
+    });
+    lifeFns.push(time => {
+      side.forEach((s, j) => s.toks.forEach((t, i) => {
+        const x = -9 + ((time * 2.4 + i * 6 + j * 3) % 18);
+        t.position.set(x, 1.1 + Math.sin(time * 2 + i) * 0.08, 0);
+        t.rotation.set(time * 0.6 + i, time * 0.8, 0);
+        const through = x > 0;
+        (t.material as THREE.MeshStandardMaterial).emissive.setHex(through ? COL.go : COL.ember);
+        (t.material as THREE.MeshStandardMaterial).color.setHex(through ? COL.go : COL.ember);
+      }));
+    });
+  }
+
+  // 3. a staging area of pallets, and a second forklift at work
+  {
+    const pal = () => {
+      const g = new THREE.Group();
+      const d = box(2, 0.2, 1.6, std(COL.wood, { roughness: 0.8 })); d.position.y = 0.1; g.add(d);
+      for (let k = 0; k < 4; k++) { const c = rbox(0.9, 0.7, 0.75, 0.05, std(k % 2 ? COL.card : COL.cardDark, { roughness: 0.8 })); c.position.set(k % 2 ? 0.48 : -0.48, 0.55 + Math.floor(k / 2) * 0.72, 0); g.add(c); }
+      return g;
+    };
+    for (let i = 0; i < 8; i++) { const p = pal(); p.position.set(SX + 13 + (i % 4) * 2.6, 0, -9.5 - Math.floor(i / 4) * 2.4); p.rotation.y = (rndL() - 0.5) * 0.08; scene.add(p); }
+    const f2 = forklift(); const load = pal(); load.position.set(-2.2, 0.55, 0); f2.g.add(load);
+    f2.g.scale.setScalar(0.9); scene.add(f2.g);
+    const route = [v(SX + 21, 0, -14.2), v(SX + 11, 0, -14.2), v(SX + 11, 0, -15.2), v(SX + 21, 0, -15.2)];   // stays clear of the racks
+    lifeFns.push(time => {
+      const w = loopAt(route, time * 0.035);
+      f2.g.position.copy(w.pos); f2.g.rotation.y = w.heading + Math.PI / 2;
+      f2.lift(0.5 + Math.sin(time * 0.4) * 0.1);
+      f2.beacon.visible = Math.sin(time * 8 + 1) > 0;
+    });
+  }
+
+  // 4–5. a fuller warehouse: another rack row, other pickers on their own routes, a reach truck
+  {
+    racks(scene, [{ x0: WX + 2, z: -14.4, bays: 8 }]);
+    const pickers = [0, 1, 2].map(i => {
+      const pp = person([COL.ember, COL.go, COL.signal][i], [COL.signal, COL.ink, COL.ember][i]);
+      const c = box(0.9, 0.5, 0.6, std(COL.signal, { roughness: 0.45 })); c.position.set(0.95, 0.75, 0);
+      const rig = new THREE.Group(); pp.g.rotation.y = Math.PI / 2; rig.add(pp.g, c); scene.add(rig);
+      return { pp, rig };
+    });
+    const routes = [
+      [v(WX + 3, 0, -7.2), v(WX + 20, 0, -7.2), v(WX + 20, 0, -7.6), v(WX + 3, 0, -7.6)],
+      [v(WX + 6, 0, -12), v(WX + 21, 0, -12), v(WX + 21, 0, -11.6), v(WX + 6, 0, -11.6)],
+      [v(WX + 22, 0, 7.4), v(WX + 4, 0, 7.4), v(WX + 4, 0, 7.8), v(WX + 22, 0, 7.8)],
+    ];
+    const reach = forklift(); reach.g.scale.setScalar(0.85); scene.add(reach.g);
+    const reachRoute = [v(WX + 24, 0, -16.8), v(WX + 2, 0, -16.8)];
+    lifeFns.push(time => {
+      pickers.forEach((k, i) => {
+        const w = loopAt(routes[i], time * (0.028 + i * 0.006) + i * 0.3);
+        k.rig.position.copy(w.pos); k.rig.rotation.y = w.heading - Math.PI / 2;
+        k.pp.walk(time * 5 + i, 1);
+      });
+      const tt = (Math.sin(time * 0.12) + 1) / 2;
+      reach.g.position.copy(reachRoute[0]).lerp(reachRoute[1], tt);
+      reach.g.rotation.y = Math.cos(time * 0.12) > 0 ? Math.PI : 0;
+      reach.lift(1.2 + Math.sin(time * 0.5) * 1.1);
+      reach.beacon.visible = Math.sin(time * 8 + 2) > 0;
+    });
+  }
+
+  // 6. more packing stations, and parcels on the belt to the dock
+  {
+    const stations = [-4.6, -9].map(z => {
+      const g = new THREE.Group(); g.position.set(PX - 1, 0, z); scene.add(g);
+      const t = rbox(3.6, 0.14, 1.8, 0.05, std(0xf6f7fa, { roughness: 0.35 })); t.position.y = 1; g.add(t);
+      for (const [x, dz] of [[1.6, 0.75], [-1.6, 0.75], [1.6, -0.75], [-1.6, -0.75]]) { const l = box(0.08, 1, 0.08, std(COL.steel)); l.position.set(x, 0.5, dz); g.add(l); }
+      const pk = parcel(1.0, 0.7, 0.8); pk.g.position.set(0.3, 1.07, 0); pk.close(0.4); g.add(pk.g);
+      const stack = new THREE.Group(); for (let k = 0; k < 5; k++) { const f = box(1.2, 0.05, 0.9, std(COL.cardDark, { roughness: 0.9 })); f.position.y = k * 0.06; stack.add(f); }
+      stack.position.set(-1.2, 1.08, 0); g.add(stack);
+      const man = person(COL.go, COL.ink); man.g.position.set(0, 0, -1.3); g.add(man.g);
+      return { man, pk };
+    });
+    // finished parcels waiting for the truck, and a roller cage of boxes behind the table
+    const done = new THREE.Group(); done.position.set(PX + 4.6, 0, -2.8); scene.add(done);
+    const dp = box(2, 0.2, 1.6, std(COL.wood, { roughness: 0.8 })); dp.position.y = 0.1; done.add(dp);
+    for (let k = 0; k < 9; k++) { const c = rbox(0.6, 0.45, 0.5, 0.05, std(k % 3 ? COL.card : COL.cardDark, { roughness: 0.8 })); c.position.set(-0.65 + (k % 3) * 0.65, 0.45 + Math.floor(k / 3) * 0.47, (k % 2 ? 0.25 : -0.25)); done.add(c); }
+    const lbl = panel(1.6, 0.5, 300, (g, w, h) => { card(g, w, h, 'rgba(61,220,151,.9)'); text(g, 'Ready · Dock 3', w / 2, h / 2, 34, '#fff', MONO, 700, 'center'); });
+    lbl.mesh.position.set(0, 2.2, 0); done.add(lbl.mesh);
+    const cage = new THREE.Group(); cage.position.set(PX - 4.2, 0, -2.6); scene.add(cage);
+    for (const [x, z] of [[-0.6, -0.45], [0.6, -0.45], [-0.6, 0.45], [0.6, 0.45]]) { const post = box(0.05, 1.8, 0.05, std(COL.steel, { metalness: 0.6 })); post.position.set(x, 0.95, z); cage.add(post); }
+    for (const y of [0.15, 0.9, 1.75]) { const sh = box(1.25, 0.04, 0.95, std(COL.steel, { metalness: 0.6 }), false); sh.position.y = y; cage.add(sh); }
+    for (let k = 0; k < 6; k++) { const c = rbox(0.5, 0.55, 0.4, 0.05, std(k % 2 ? COL.card : 0xf4f6fa, { roughness: 0.7 })); c.position.set(-0.28 + (k % 2) * 0.56, 0.45 + Math.floor(k / 2) * 0.62, 0); cage.add(c); }
+    lifeFns.push(() => lbl.mesh.lookAt(camera.position));
+    const beltN = small ? 5 : 9;
+    const beltBoxes = Array.from({ length: beltN }, (_, i) => { const b = rbox(0.8 - (i % 3) * 0.1, 0.55, 0.7, 0.05, std(i % 2 ? COL.card : COL.cardDark, { roughness: 0.8 })); scene.add(b); return b; });
+    const B0 = PX + 4, B1 = DX - 3.4;   // the visible run of the belt
+    lifeFns.push(time => {
+      stations.forEach((s, i) => { s.man.reach(Math.abs(Math.sin(time * 3 + i))) ; s.pk.close((Math.sin(time * 0.6 + i * 2) + 1) / 2); });
+      beltBoxes.forEach((b, i) => { const x = B0 + ((time * 1.6 + i * ((B1 - B0) / beltN)) % (B1 - B0)); b.position.set(x, 1.3, (i % 2 ? 0.15 : -0.15)); });
+    });
+  }
+
+  // 7. more doors at the dock, trailers waiting, a yard truck shuttling
+  {
+    const wallMat2 = std(0x2a3450, { roughness: 0.8 });
+    for (const z of [-12.4, 12.4]) {
+      for (const dz of [-3.1, 3.1]) { const w = box(0.6, 4.6, 0.6, wallMat2); w.position.set(DX, 2.3, z + dz); scene.add(w); }
+      const head = box(0.6, 0.5, 6.4, wallMat2); head.position.set(DX, 4.35, z); scene.add(head);
+      const door = box(0.15, 4.0, 5.6, std(0x3a4566)); door.position.set(DX + 0.1, 2.1, z); scene.add(door);
+      const lamp = box(0.12, 0.18, 1.4, glow(z < 0 ? COL.stop : COL.go, 3), false); lamp.position.set(DX + 0.45, 4.7, z); scene.add(lamp);
+      const t = truck(); t.g.position.set(DX + 4.75, 0, z); t.lights(0); scene.add(t.g);
+    }
+    for (const z of [-9.3, 9.3, -15.5, 15.5]) { const w = box(0.6, 4.6, 0.6, wallMat2); w.position.set(DX, 2.3, z); scene.add(w); }
+    const yard = truck(); yard.g.scale.setScalar(0.8); scene.add(yard.g);
+    lifeFns.push(time => {
+      const tt = (time * 0.05) % 1, x = DX + 18 + Math.sin(tt * Math.PI * 2) * 12;
+      yard.g.position.set(x, 0, -20);
+      yard.g.rotation.y = Math.cos(tt * Math.PI * 2) > 0 ? 0 : Math.PI;
+      yard.roll(x); yard.lights(1);
+    });
+  }
+
   // ------------------------------------------------------------------ camera: shots set at moments within chapters
 
   type Shot = { p: number; pos: () => THREE.Vector3; look: () => THREE.Vector3 };
@@ -993,6 +1277,7 @@ export function mountOrderWorld(host: HTMLElement, opts: { reduced: boolean }): 
 
     // camera, the light that follows it, and the finish
     shotAt(p);
+    lifeFns.forEach(f => f(time, p));
     camera.position.copy(camPos); camera.lookAt(camLook);
     if (!diving(p)) { camera.position.x += Math.sin(time * 0.6) * 0.06; camera.position.y += Math.sin(time * 0.8 + 1) * 0.05; }
     sun.position.copy(camLook).add(v(-12, 24, 14)); sun.target.position.copy(camLook);
