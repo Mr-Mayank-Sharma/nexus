@@ -51,6 +51,12 @@ public class OrderService {
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     public void setFulfilmentRelease(FulfilmentReleaseService fulfilmentRelease) { this.fulfilmentRelease = fulfilmentRelease; }
 
+    /** Optional: fills in a line's picture from the catalogue when the channel did not send one. */
+    private com.nexus.oms.repository.ProductRepository productRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setProductRepository(com.nexus.oms.repository.ProductRepository productRepository) { this.productRepository = productRepository; }
+
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         CustomerRepository customerRepository,
@@ -258,28 +264,8 @@ public class OrderService {
         }
 
         UUID tenantId = order.getTenantId();
-        List<UUID> candidateNodeIds = nodeRepository.findByTenantIdAndIsActiveTrue(tenantId).stream()
-                .map(NxNode::getId)
-                .collect(Collectors.toList());
-        if (candidateNodeIds.isEmpty()) {
-            // Fall back to the operational warehouses — inventory is a shared tenant+SKU pool (node_id NULL)
-            candidateNodeIds = warehouseRepository.findOperational(tenantId).stream()
-                    .map(Warehouse::getId)
-                    .collect(Collectors.toList());
-        }
-        if (candidateNodeIds.isEmpty()) {
-            throw new BadRequestException("No active warehouse nodes found");
-        }
-
         List<NxOrderItem> items = orderItemRepository.findByOrderId(id);
-
-        UUID selectedNode = candidateNodeIds.stream()
-                .filter(nodeId -> items.stream()
-                        .allMatch(item -> inventoryService.checkAvailability(
-                                tenantId, item.getSku(), nodeId, item.getQuantity())))
-                .findFirst()
-                .orElse(null);
-
+        UUID selectedNode = findNodeWithStock(tenantId, items);
         if (selectedNode == null) {
             throw new BadRequestException("Insufficient inventory to allocate order");
         }
@@ -639,12 +625,61 @@ public class OrderService {
         return stats;
     }
 
+    /** True when one active location holds enough stock for every line, i.e. allocate would succeed. */
+    @Transactional(readOnly = true)
+    public boolean canAllocate(UUID id) {
+        NxOrder order = orderRepository.findById(id).orElse(null);
+        if (order == null || order.getAllocatedNode() != null) return false;
+        return findNodeWithStock(order.getTenantId(), orderItemRepository.findByOrderId(id)) != null;
+    }
+
+    /** The first active location (or operational warehouse) that can cover every line, or null. */
+    private UUID findNodeWithStock(UUID tenantId, List<NxOrderItem> items) {
+        List<UUID> candidateNodeIds = nodeRepository.findByTenantIdAndIsActiveTrue(tenantId).stream()
+                .map(NxNode::getId)
+                .collect(Collectors.toList());
+        if (candidateNodeIds.isEmpty()) {
+            // Fall back to the operational warehouses — inventory is a shared tenant+SKU pool (node_id NULL)
+            candidateNodeIds = warehouseRepository.findOperational(tenantId).stream()
+                    .map(Warehouse::getId)
+                    .collect(Collectors.toList());
+        }
+        if (candidateNodeIds.isEmpty()) {
+            throw new BadRequestException("No active warehouse nodes found");
+        }
+        return candidateNodeIds.stream()
+                .filter(nodeId -> items.stream()
+                        .allMatch(item -> inventoryService.checkAvailability(
+                                tenantId, item.getSku(), nodeId, item.getQuantity())))
+                .findFirst()
+                .orElse(null);
+    }
+
     private OrderResponse toOrderResponse(NxOrder order) {
         NxCustomer customer = order.getCustomerId() == null ? null : customerRepository.findById(order.getCustomerId()).orElse(null);
-        return toOrderResponse(order, orderItemRepository.findByOrderId(order.getId()), customer);
+        List<NxOrderItem> items = orderItemRepository.findByOrderId(order.getId());
+        return toOrderResponse(order, items, customer, catalogueImages(order.getTenantId(), items));
+    }
+
+    /** Pictures from the product catalogue for lines that arrived without one, keyed by SKU. */
+    private Map<String, String> catalogueImages(UUID tenantId, List<NxOrderItem> items) {
+        if (productRepository == null || tenantId == null) return Map.of();
+        List<String> skus = items.stream()
+                .filter(i -> i.getSku() != null && (i.getImageUrl() == null || i.getImageUrl().isBlank()))
+                .map(NxOrderItem::getSku).distinct().toList();
+        if (skus.isEmpty()) return Map.of();
+        Map<String, String> images = new HashMap<>();
+        for (var p : productRepository.findByTenantIdAndSkuIn(tenantId, skus)) {
+            if (p.getImageUrl() != null && !p.getImageUrl().isBlank()) images.putIfAbsent(p.getSku(), p.getImageUrl());
+        }
+        return images;
     }
 
     private OrderResponse toOrderResponse(NxOrder order, List<NxOrderItem> items, NxCustomer customer) {
+        return toOrderResponse(order, items, customer, Map.of());
+    }
+
+    private OrderResponse toOrderResponse(NxOrder order, List<NxOrderItem> items, NxCustomer customer, Map<String, String> images) {
         String customerName = customer == null ? null : customer.getName();
         String customerEmail = customer == null ? null : customer.getEmail();
 
@@ -685,16 +720,17 @@ public class OrderService {
                 .shippedAt(order.getShippedAt())
                 .deliveredAt(order.getDeliveredAt())
                 .metadata(parseJson(order.getMetadata()))
-                .items(items.stream().map(this::toItemDto).collect(Collectors.toList()))
+                .items(items.stream().map(i -> toItemDto(i, images)).collect(Collectors.toList()))
                 .build();
     }
 
-    private OrderResponse.OrderItemDto toItemDto(NxOrderItem item) {
+    private OrderResponse.OrderItemDto toItemDto(NxOrderItem item, Map<String, String> images) {
+        String image = item.getImageUrl() != null && !item.getImageUrl().isBlank() ? item.getImageUrl() : images.get(item.getSku());
         return OrderResponse.OrderItemDto.builder()
                 .id(item.getId())
                 .sku(item.getSku())
                 .productName(item.getProductName())
-                .imageUrl(item.getImageUrl())
+                .imageUrl(image)
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
                 .totalPrice(item.getTotalPrice())

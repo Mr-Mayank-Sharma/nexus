@@ -8,7 +8,10 @@ import {
 import EnterpriseBreadcrumbs from '../components/enterprise/EnterpriseBreadcrumbs'
 import EnterpriseStatusBadge from '../components/enterprise/EnterpriseStatusBadge'
 import EnterpriseTimeline from '../components/enterprise/EnterpriseTimeline'
-import { OrderTimelineEvent, Order } from '../types'
+import { Order } from '../types'
+
+/** The date order history recording started (migration V87). */
+const HISTORY_SINCE = '20 Oct 2026'
 import { useToast } from '../hooks/useToast'
 import { fmtMoney } from '../utils/format'
 import * as ordersApi from '../api/orders'
@@ -50,6 +53,7 @@ export default function OrderDetailPage() {
   const [aiPrediction, setAiPrediction] = useState<{ deliveryDate?: string; confidence?: number; anomaly?: boolean } | null>(null)
   const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([])
   const [aiHistory, setAiHistory] = useState<AiActionHistory[]>([])
+  const [history, setHistory] = useState<ordersApi.OrderHistoryEvent[]>([])
   const [aiExecuting, setAiExecuting] = useState<string | null>(null)
   const [payments, setPayments] = useState<Payment[]>([])
   const [documents, setDocuments] = useState<Document[]>([])
@@ -64,9 +68,11 @@ export default function OrderDetailPage() {
       setOrder(res.data)
 
       setPayments(res.data.paymentStatus ? [
-        { id: 'pmt1', method: res.data.paymentReference ? `Ref: ${res.data.paymentReference}` : 'Standard', amount: res.data.total || 0, status: res.data.paymentStatus === 'PAID' ? 'CAPTURED' : res.data.paymentStatus || 'PENDING', date: res.data.createdAt || new Date().toISOString(), reference: res.data.paymentReference || 'N/A' },
+        { id: 'pmt1', method: res.data.paymentReference ? `Ref: ${res.data.paymentReference}` : 'Standard', amount: res.data.total || 0, status: ['PAID', 'CAPTURED'].includes(String(res.data.paymentStatus).toUpperCase()) ? 'CAPTURED' : String(res.data.paymentStatus).toUpperCase(), date: res.data.createdAt || new Date().toISOString(), reference: res.data.paymentReference || 'N/A' },
       ] : [])
       setDocuments([])
+      const hist = await ordersApi.getOrderHistory(id!)
+      setHistory(hist.success && Array.isArray(hist.data) ? hist.data : [])
 
       // Try AI prediction
       try {
@@ -102,10 +108,17 @@ export default function OrderDetailPage() {
     if (!id) return
     setActionLoading(action)
     try {
-      if (action === 'confirm') await ordersApi.confirmOrder(id)
-      else if (action === 'allocate') await ordersApi.allocateOrder(id)
-      else if (action === 'ship') await ordersApi.shipOrder(id, 'auto', 'TN-' + Date.now())
-      else if (action === 'cancel') await ordersApi.cancelOrder(id)
+      const res = action === 'confirm' ? await ordersApi.confirmOrder(id)
+        : action === 'allocate' ? await ordersApi.allocateOrder(id)
+        : action === 'ship' ? await ordersApi.shipOrder(id, 'auto', 'TN-' + Date.now())
+        : action === 'cancel' ? await ordersApi.cancelOrder(id)
+        : null
+      // the API helpers report refusals (e.g. not enough stock) as success: false instead of throwing
+      if (res && res.success === false) {
+        addToast({ type: 'error', title: `Could not ${action} order`, message: res.error || res.message || undefined })
+        await fetchOrder()
+        return
+      }
       const verb = action === 'allocate' ? 'allocated' : action === 'confirm' ? 'confirmed' : action === 'ship' ? 'shipped' : action === 'cancel' ? 'cancelled' : action
       addToast({ type: 'success', title: `Order ${verb} successfully` })
       await fetchOrder()
@@ -183,7 +196,7 @@ export default function OrderDetailPage() {
       if (res.data?.status === 'SUCCESS') {
         addToast({ type: 'success', title: `AI action completed: ${res.data.label}` })
       } else {
-        addToast({ type: 'error', title: `AI action failed: ${res.data?.details || 'Unknown error'}` })
+        addToast({ type: 'error', title: 'AI action failed', message: res.data?.details || res.error || res.message || 'The server did not say why.' })
       }
       await fetchOrder()
     } catch {
@@ -264,26 +277,17 @@ export default function OrderDetailPage() {
     catch { addToast({ type: 'error', title: 'Merge failed' }) } finally { setActionLoading(null) }
   }
 
-  const timelineEvents: OrderTimelineEvent[] = useMemo(() => {
+  // Only recorded events: the database logs creation and every status change; nothing is inferred from the status.
+  const timelineEvents = useMemo(() => {
     if (!order) return []
-    const events: OrderTimelineEvent[] = [
-      { id: 'e1', type: 'CREATED', title: 'Order Created', description: `Placed via ${order.channel}`, timestamp: order.createdAt, user: 'System' },
-    ]
-    if (order.status !== 'PENDING') events.push({ id: 'e2', type: 'CONFIRMED', title: 'Order Confirmed', description: 'Payment verified', timestamp: order.updatedAt, user: 'System' })
-    if (['ALLOCATED', 'SHIPPED', 'IN_TRANSIT', 'DELIVERED'].includes(order.status)) events.push({ id: 'e3', type: 'ALLOCATED', title: 'Inventory Allocated', description: order.allocationNodeId ? `Allocated to ${order.allocationNodeId}` : 'Allocation complete', timestamp: order.updatedAt, user: 'Auto-Allocator' })
-    if (['SHIPPED', 'IN_TRANSIT', 'DELIVERED'].includes(order.status)) events.push({ id: 'e4', type: 'SHIPPED', title: 'Shipped', description: `Carrier: ${order.carrier} · ${order.trackingNumber}`, timestamp: order.updatedAt, user: 'System' })
-    if (order.status === 'DELIVERED') events.push({ id: 'e5', type: 'DELIVERED', title: 'Delivered', description: 'Package delivered', timestamp: order.updatedAt, user: 'System' })
-    if (order.status === 'CANCELLED') events.push({ id: 'e6', type: 'CANCELLED', title: 'Cancelled', description: 'Order was cancelled', timestamp: order.updatedAt, user: 'System' })
-    aiHistory.forEach(h => events.push({
-      id: `ai-${h.id}`,
-      type: 'AI_ACTION',
-      title: h.label,
-      description: `${h.details} (${h.actor})`,
-      timestamp: h.timestamp,
-      user: h.actor,
-    }))
+    const events = history.map(h => ({ id: h.id, type: h.type, title: h.title, description: h.description, timestamp: h.timestamp, user: h.actor, to: h.type === 'STATUS_CHANGED' ? h.title.toUpperCase().replace(/ /g, '_') : '' }))
+    if (!events.some(e => e.type === 'ORDER_CREATED')) {
+      // orders created before history was recorded: the creation time is known, the steps in between are not
+      events.unshift({ id: 'created', type: 'ORDER_CREATED', title: 'Order created', description: `Received from ${order.channel}. Status changes before ${HISTORY_SINCE} were not recorded.`, timestamp: order.createdAt, user: 'System', to: '' })
+    }
     return events
-  }, [order, aiHistory])
+  }, [order, history])
+  void aiHistory
 
   if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-primary)]" /></div>
 
@@ -300,6 +304,7 @@ export default function OrderDetailPage() {
   const statusActions: { label: string; icon: React.ReactNode; onClick: () => void; variant: 'primary' | 'danger'; disabled: boolean }[] = []
   if (order.status === 'PENDING') statusActions.push({ label: 'Confirm Order', icon: actionLoading === 'confirm' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />, onClick: () => handleAction('confirm'), variant: 'primary', disabled: actionLoading !== null })
   if (order.status === 'CONFIRMED') statusActions.push({ label: 'Allocate Inventory', icon: actionLoading === 'allocate' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />, onClick: () => handleAction('allocate'), variant: 'primary', disabled: actionLoading !== null })
+  if (order.status === 'FAILED') statusActions.push({ label: 'Retry Allocation', icon: actionLoading === 'allocate' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Package className="w-4 h-4" />, onClick: () => handleAction('allocate'), variant: 'primary', disabled: actionLoading !== null })
   if (order.status === 'ALLOCATED') statusActions.push({ label: 'Ship Order', icon: actionLoading === 'ship' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Truck className="w-4 h-4" />, onClick: () => handleAction('ship'), variant: 'primary', disabled: actionLoading !== null })
   if (order.status !== 'DELIVERED' && order.status !== 'CANCELLED') statusActions.push({ label: 'Cancel Order', icon: actionLoading === 'cancel' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />, onClick: () => handleAction('cancel'), variant: 'danger', disabled: actionLoading !== null })
 
@@ -361,8 +366,12 @@ export default function OrderDetailPage() {
                       <td className="px-6 py-3 text-sm text-[var(--text-primary)]">
                         <div className="flex items-center gap-3">
                           {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.productName} className="w-9 h-9 rounded-lg object-cover bg-[var(--bg-tertiary)]" />
-                          ) : null}
+                            <img src={item.imageUrl} alt="" loading="lazy" className="w-11 h-11 rounded-lg object-cover bg-[var(--bg-tertiary)] border border-[var(--border-subtle)]" />
+                          ) : (
+                            <span className="w-11 h-11 rounded-lg grid place-items-center bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] text-[var(--text-tertiary)]" title="No picture for this product in the store">
+                              <Package className="w-5 h-5" />
+                            </span>
+                          )}
                           {item.productName}
                         </div>
                       </td>
@@ -388,11 +397,11 @@ export default function OrderDetailPage() {
             <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)]">Order Timeline</h3></div>
             <div className="p-6">
               <EnterpriseTimeline
-                events={timelineEvents.map(e => ({
+                events={timelineEvents.map((e, i) => ({
                   id: e.id, title: e.title,
                   description: e.description,
                   timestamp: e.timestamp,
-                  status: e.type === 'DELIVERED' || e.type === 'CONFIRMED' ? 'completed' : e.type === 'SHIPPED' ? 'current' : e.type === 'AI_ACTION' ? 'completed' : e.type === 'CANCELLED' || e.type === 'EXCEPTION' ? 'error' : 'pending',
+                  status: ['FAILED', 'CANCELLED', 'EXCEPTION'].includes(e.to) || e.title.endsWith('(failed)') ? 'error' : i === timelineEvents.length - 1 ? 'current' : 'completed',
                 }))}
               />
             </div>

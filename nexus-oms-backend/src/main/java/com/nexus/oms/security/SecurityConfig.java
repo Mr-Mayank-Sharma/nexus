@@ -62,7 +62,7 @@ public class SecurityConfig {
                     "default-src 'self'; " +
                     "script-src 'self'; " +
                     "style-src 'self' 'unsafe-inline'; " +
-                    "img-src 'self' data: blob:; " +
+                    "img-src 'self' data: blob: https:; " +  // product pictures come from store CDNs (Shopify, BigCommerce, ...)
                     "font-src 'self' data:; " +
                     "connect-src 'self'; " +
                     "frame-ancestors 'none'; " +

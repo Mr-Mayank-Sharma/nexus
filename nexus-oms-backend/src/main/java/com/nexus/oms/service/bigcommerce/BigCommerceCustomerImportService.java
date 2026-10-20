@@ -101,11 +101,11 @@ public class BigCommerceCustomerImportService {
 
     private void importSingleCustomer(UUID tenantId, JsonNode customer) {
         String externalId = String.valueOf(customer.get("id").asInt());
-        String email = customer.has("email") ? customer.get("email").asText() : null;
+        String email = customer.hasNonNull("email") ? customer.get("email").asText() : null;
         if (email == null || email.isBlank()) return;
 
         String name = buildName(customer);
-        String phone = customer.has("phone") ? customer.get("phone").asText() : null;
+        String phone = customer.hasNonNull("phone") ? customer.get("phone").asText() : null;
 
         Optional<NxCustomer> existing = customerRepository.findByTenantIdAndExternalId(tenantId, externalId);
         if (existing.isEmpty()) {
@@ -129,10 +129,10 @@ public class BigCommerceCustomerImportService {
         if (customer.has("address")) {
             JsonNode addr = customer.get("address");
             address.setAddressLine1(addr.has("address1") ? addr.get("address1").asText() : null);
-            address.setCity(addr.has("city") ? addr.get("city").asText() : null);
-            address.setState(addr.has("state_or_province") ? addr.get("state_or_province").asText() : null);
-            address.setPostalCode(addr.has("postal_code") ? addr.get("postal_code").asText() : null);
-            address.setCountry(addr.has("country") ? addr.get("country").asText() : null);
+            address.setCity(addr.hasNonNull("city") ? addr.get("city").asText() : null);
+            address.setState(addr.hasNonNull("state_or_province") ? addr.get("state_or_province").asText() : null);
+            address.setPostalCode(addr.hasNonNull("postal_code") ? addr.get("postal_code").asText() : null);
+            address.setCountry(addr.hasNonNull("country") ? addr.get("country").asText() : null);
         }
         Address savedAddress = addressRepository.save(address);
 

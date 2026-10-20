@@ -491,14 +491,14 @@ public class FulfillmentReconciliationService {
     }
 
     private ShopifyFulfillment parseFulfillment(JsonNode f) {
-        String locationId = f.has("location_id") ? f.get("location_id").asText() : null;
+        String locationId = f.hasNonNull("location_id") ? f.get("location_id").asText() : null;
 
         List<ShopifyFulfillmentLine> lines = new ArrayList<>();
         if (f.has("line_items") && f.get("line_items").isArray()) {
             for (JsonNode li : f.get("line_items")) {
                 lines.add(ShopifyFulfillmentLine.builder()
-                        .lineItemId(li.has("id") ? li.get("id").asText() : null)
-                        .sku(li.has("sku") ? li.get("sku").asText() : null)
+                        .lineItemId(li.hasNonNull("id") ? li.get("id").asText() : null)
+                        .sku(li.hasNonNull("sku") ? li.get("sku").asText() : null)
                         .quantity(li.has("quantity") ? li.get("quantity").asInt() : 0)
                         .locationId(locationId)
                         .build());
@@ -506,9 +506,9 @@ public class FulfillmentReconciliationService {
         }
 
         return ShopifyFulfillment.builder()
-                .shopifyFulfillmentId(f.has("id") ? f.get("id").asText() : null)
-                .status(f.has("status") ? f.get("status").asText() : "fulfilled")
-                .createdAt(f.has("created_at") ? f.get("created_at").asText() : null)
+                .shopifyFulfillmentId(f.hasNonNull("id") ? f.get("id").asText() : null)
+                .status(f.hasNonNull("status") ? f.get("status").asText() : "fulfilled")
+                .createdAt(f.hasNonNull("created_at") ? f.get("created_at").asText() : null)
                 .lineItems(lines)
                 .build();
     }

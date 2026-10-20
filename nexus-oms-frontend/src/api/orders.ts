@@ -127,3 +127,15 @@ export async function mergeOrders(payload: Record<string, any>): Promise<ApiResp
     return { success: false, error: msg } as any
   }
 }
+
+export interface OrderHistoryEvent { id: string; type: string; title: string; description: string; actor: string; timestamp: string }
+
+/** What actually happened to the order (creation, status changes, AI actions), oldest first. */
+export async function getOrderHistory(id: string): Promise<ApiResponse<OrderHistoryEvent[]>> {
+  try {
+    const { data } = await client.get(`/orders/${id}/history`)
+    return data
+  } catch (err: any) {
+    return { success: false, error: err?.response?.data?.message || err?.message || 'Failed to load order history' } as any
+  }
+}

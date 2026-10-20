@@ -56,6 +56,9 @@ class OrderControllerTest {
     private AiOrderActionService aiOrderActionService;
 
     @MockBean
+    private com.nexus.oms.service.OrderHistoryService orderHistoryService;
+
+    @MockBean
     private JwtTokenProvider jwtTokenProvider;
 
     private UUID tenantId;

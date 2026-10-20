@@ -248,6 +248,26 @@ class BrokeringServiceTest {
     }
 
     @Test
+    @DisplayName("a shipped order leaves the queue without calling routing, which would refuse and roll back")
+    void processBrokeringQueue_shippedOrder_exitsWithoutRouting() {
+        UUID entryId = UUID.randomUUID();
+        NxBrokeringQueue entry = waitingEntry(entryId, orderId, "NORMAL", 0);
+        when(brokeringQueueRepository.findByTenantIdAndStatusAndNextRunAtBefore(any(), any(), any()))
+                .thenReturn(mutableList(entry));
+        when(brokeringRunRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(brokeringQueueRepository.findById(entryId)).thenReturn(Optional.of(entry));
+        when(brokeringQueueRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(orderWithStatus("SHIPPED")));
+
+        NxBrokeringRun run = brokeringService.processBrokeringQueue();
+
+        verify(orderRoutingService, never()).allocateOrder(any());
+        assertEquals("FAILED", entry.getStatus());
+        assertEquals("Order is SHIPPED; nothing left to allocate", entry.getFailureReason());
+        assertEquals("COMPLETED", run.getStatus());
+    }
+
+    @Test
     @DisplayName("one failing order does not stop the rest of the run — per-order transactions")
     void processBrokeringQueue_oneOrderFails_othersStillProcessed() {
         UUID badEntry = UUID.randomUUID();

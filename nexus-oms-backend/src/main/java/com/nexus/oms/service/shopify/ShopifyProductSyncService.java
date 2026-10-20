@@ -97,7 +97,7 @@ public class ShopifyProductSyncService {
                 for (JsonNode product : products) {
                     long productId = product.get("id").asLong();
                     try {
-                        String title = product.has("title") ? product.get("title").asText() : "";
+                        String title = product.hasNonNull("title") ? product.get("title").asText() : "";
                         String imageUrl = product.has("image") && product.get("image").has("src")
                                 ? product.get("image").get("src").asText() : null;
 
@@ -105,7 +105,7 @@ public class ShopifyProductSyncService {
                         if (variants != null && variants.isArray()) {
                             for (JsonNode variant : variants) {
                                 long variantId = variant.get("id").asLong();
-                                String sku = variant.has("sku") ? variant.get("sku").asText() : ("SPF-" + productId + "-" + variantId);
+                                String sku = variant.hasNonNull("sku") ? variant.get("sku").asText() : ("SPF-" + productId + "-" + variantId);
                                 if (sku.isBlank()) sku = "SPF-" + productId + "-" + variantId;
 
                                 NxProductMapping mapping = productMappingRepository

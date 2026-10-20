@@ -17,6 +17,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Optional<Product> findByIdAndTenantId(UUID id, UUID tenantId);
     boolean existsByTenantIdAndSku(UUID tenantId, String sku);
     Optional<Product> findByTenantIdAndSku(UUID tenantId, String sku);
+    List<Product> findByTenantIdAndSkuIn(UUID tenantId, java.util.Collection<String> skus);
 
     List<Product> findByTenantId(UUID tenantId);
 

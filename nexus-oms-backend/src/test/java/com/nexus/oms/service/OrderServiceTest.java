@@ -114,6 +114,22 @@ class OrderServiceTest {
     }
 
     @Test
+    void testGetOrder_LineWithoutPicture_TakesTheCataloguePicture() {
+        com.nexus.oms.repository.ProductRepository products = mock(com.nexus.oms.repository.ProductRepository.class);
+        orderService.setProductRepository(products);
+        com.nexus.oms.entity.Product product = new com.nexus.oms.entity.Product();
+        product.setSku("SKU-001");
+        product.setImageUrl("https://cdn.example.com/sku-001.jpg");
+        when(products.findByTenantIdAndSkuIn(tenantId, List.of("SKU-001"))).thenReturn(List.of(product));
+        when(orderRepository.findByIdAndTenantId(orderId, tenantId)).thenReturn(Optional.of(testOrder));
+        when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(testItem));
+
+        OrderResponse result = withTenant(() -> orderService.getOrder(orderId));
+
+        assertEquals("https://cdn.example.com/sku-001.jpg", result.getItems().get(0).getImageUrl());
+    }
+
+    @Test
     void testGetOrder_OtherTenantsOrder_IsNotFound() {
         when(orderRepository.findByIdAndTenantId(orderId, tenantId)).thenReturn(Optional.empty());
 

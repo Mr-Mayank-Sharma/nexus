@@ -109,7 +109,7 @@ public class BrokeringService {
         // @Transactional method, so a single order's exception marked the transaction rollback-only
         // and rolled back every other order's successful allocation.
         for (NxBrokeringQueue queueEntry : ctx.waitingOrders) {
-            String outcome = transactionTemplate.execute(status -> processQueueEntry(queueEntry.getId(), 5));
+            String outcome = runEntry(queueEntry.getId(), 5);
             switch (outcome == null ? "FAILED" : outcome) {
                 case "ALLOCATED" -> allocated++;
                 case "FAILED" -> failed++;
@@ -164,7 +164,7 @@ public class BrokeringService {
 
         // Phase 2: process each order in its own transaction (see processBrokeringQueue)
         for (NxBrokeringQueue queueEntry : ctx.waitingOrders) {
-            String outcome = transactionTemplate.execute(status -> processQueueEntry(queueEntry.getId(), 2));
+            String outcome = runEntry(queueEntry.getId(), 2);
             switch (outcome == null ? "FAILED" : outcome) {
                 case "ALLOCATED" -> allocated++;
                 case "FAILED" -> failed++;
@@ -257,6 +257,26 @@ public class BrokeringService {
     }
 
     /**
+     * Runs one entry in its own transaction. If routing throws, that transaction is already marked
+     * rollback-only, so the failure has to be recorded in a fresh one; otherwise the entry stays
+     * WAITING, is retried forever, and the commit error aborts the rest of the run.
+     */
+    private String runEntry(UUID queueEntryId, int retryDelayMinutes) {
+        try {
+            return transactionTemplate.execute(status -> processQueueEntry(queueEntryId, retryDelayMinutes));
+        } catch (Exception e) {
+            log.error("Brokering failed for queue entry {}: {}", queueEntryId, e.getMessage());
+            transactionTemplate.executeWithoutResult(status -> brokeringQueueRepository.findById(queueEntryId).ifPresent(q -> {
+                q.setStatus("FAILED");
+                q.setFailureReason(e.getMessage());
+                q.setExitedAt(LocalDateTime.now());
+                brokeringQueueRepository.save(q);
+            }));
+            return "FAILED";
+        }
+    }
+
+    /**
      * Processes a single queue entry inside the caller's transaction. Re-fetches the entry by ID
      * so it is a managed entity within this transaction. Returns the outcome:
      * "ALLOCATED", "FAILED", "RETRY" (backoff), or "SKIPPED" (entry no longer exists).
@@ -295,6 +315,17 @@ public class BrokeringService {
             }
             brokeringQueueRepository.save(queueEntry);
             return partial ? "FAILED" : "ALLOCATED";
+        }
+
+        // Shipped, cancelled or otherwise past allocation: nothing to do, so leave the queue rather than
+        // calling routing, which would refuse and roll the transaction back.
+        if (queuedOrder == null || !List.of("PENDING", "CONFIRMED").contains(queuedOrder.getStatus())) {
+            queueEntry.setStatus("FAILED");
+            queueEntry.setFailureReason(queuedOrder == null ? "Order no longer exists"
+                    : "Order is " + queuedOrder.getStatus() + "; nothing left to allocate");
+            queueEntry.setExitedAt(LocalDateTime.now());
+            brokeringQueueRepository.save(queueEntry);
+            return "FAILED";
         }
 
         // Still held for its ship date: wait until the release time; this is not a failed attempt.

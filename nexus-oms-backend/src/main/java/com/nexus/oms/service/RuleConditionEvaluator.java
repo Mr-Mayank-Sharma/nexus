@@ -81,7 +81,7 @@ public class RuleConditionEvaluator {
         if (metadataJson == null) return null;
         try {
             JsonNode node = MAPPER.readTree(metadataJson);
-            return node.has("priority") ? node.get("priority").asText() : null;
+            return node.hasNonNull("priority") ? node.get("priority").asText() : null;
         } catch (Exception ignored) {
             return null;
         }

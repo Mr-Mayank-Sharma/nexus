@@ -3,6 +3,7 @@ package com.nexus.oms.controller;
 import com.nexus.oms.dto.*;
 import com.nexus.oms.dto.ai.*;
 import com.nexus.oms.security.TenantContext;
+import com.nexus.oms.service.OrderHistoryService;
 import com.nexus.oms.service.OrderService;
 import com.nexus.oms.service.ai.AiOrderActionService;
 import jakarta.validation.Valid;
@@ -24,10 +25,13 @@ public class OrderController {
 
     private final OrderService orderService;
     private final AiOrderActionService aiOrderActionService;
+    private final OrderHistoryService orderHistoryService;
 
-    public OrderController(OrderService orderService, AiOrderActionService aiOrderActionService) {
+    public OrderController(OrderService orderService, AiOrderActionService aiOrderActionService,
+                           OrderHistoryService orderHistoryService) {
         this.orderService = orderService;
         this.aiOrderActionService = aiOrderActionService;
+        this.orderHistoryService = orderHistoryService;
     }
 
     @Operation(summary = "Create a new order")
@@ -131,6 +135,13 @@ public class OrderController {
     public ResponseEntity<ApiResponse<List<AiSuggestionDto>>> getAiSuggestions(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(
                 aiOrderActionService.getSuggestions(id)));
+    }
+
+    @Operation(summary = "What happened to an order: creation, each status change and AI actions, oldest first")
+    @GetMapping("/{id}/history")
+    public ResponseEntity<ApiResponse<List<OrderHistoryService.OrderEvent>>> getHistory(@PathVariable UUID id) {
+        orderService.getOrder(id); // 404 for another tenant's order
+        return ResponseEntity.ok(ApiResponse.success(orderHistoryService.history(id)));
     }
 
     @Operation(summary = "Get AI action history for an order")

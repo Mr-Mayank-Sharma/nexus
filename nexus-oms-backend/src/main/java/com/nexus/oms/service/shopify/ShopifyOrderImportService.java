@@ -172,7 +172,7 @@ public class ShopifyOrderImportService {
         if (existing.isPresent()) {
             return;
         }
-        String status = mapStatus(shopifyOrder.has("financial_status") ? shopifyOrder.get("financial_status").asText() : "pending");
+        String status = mapStatus(shopifyOrder.hasNonNull("financial_status") ? shopifyOrder.get("financial_status").asText() : "pending");
 
         NxCustomer customer = findOrCreateCustomer(tenantId, shopifyOrder);
 
@@ -200,12 +200,12 @@ public class ShopifyOrderImportService {
                 .tenantId(tenantId)
                 .addressLine1(street.isBlank() ? null : street)
                 .addressLine2(street2)
-                .city(shipping != null && shipping.has("city") ? shipping.get("city").asText() : null)
-                .state(shipping != null && shipping.has("province") ? shipping.get("province").asText() : null)
-                .postalCode(shipping != null && shipping.has("zip") ? shipping.get("zip").asText() : null)
-                .country(shipping != null && shipping.has("country") ? shipping.get("country").asText() : "US")
-                .fullName(shipping != null ? (shipping.has("first_name") ? shipping.get("first_name").asText() : "") + " " + (shipping.has("last_name") ? shipping.get("last_name").asText() : "") : null)
-                .phone(shipping != null && shipping.has("phone") ? shipping.get("phone").asText() : null)
+                .city(shipping != null && shipping.hasNonNull("city") ? shipping.get("city").asText() : null)
+                .state(shipping != null && shipping.hasNonNull("province") ? shipping.get("province").asText() : null)
+                .postalCode(shipping != null && shipping.hasNonNull("zip") ? shipping.get("zip").asText() : null)
+                .country(shipping != null && shipping.hasNonNull("country") ? shipping.get("country").asText() : "US")
+                .fullName(shipping != null ? (shipping.hasNonNull("first_name") ? shipping.get("first_name").asText() : "") + " " + (shipping.hasNonNull("last_name") ? shipping.get("last_name").asText() : "") : null)
+                .phone(shipping != null && shipping.hasNonNull("phone") ? shipping.get("phone").asText() : null)
                 .addressType("SHIPPING")
                 .build());
 
@@ -217,12 +217,12 @@ public class ShopifyOrderImportService {
                 .customerId(customer.getId())
                 .status(status)
                 .shipToAddress(shipToAddress)
-                .currency(shopifyOrder.has("currency") ? shopifyOrder.get("currency").asText() : "USD")
+                .currency(shopifyOrder.hasNonNull("currency") ? shopifyOrder.get("currency").asText() : "USD")
                 .subtotal(subtotal)
                 .shippingCost(shippingCost)
                 .taxAmount(totalTax)
                 .total(totalPrice)
-                .paymentStatus(shopifyOrder.has("financial_status") ? shopifyOrder.get("financial_status").asText() : null)
+                .paymentStatus(shopifyOrder.hasNonNull("financial_status") ? shopifyOrder.get("financial_status").asText() : null)
                 .build();
 
         // Derive fulfillment type from note_attributes (fulfillment_type / pickup_store),
@@ -257,7 +257,7 @@ public class ShopifyOrderImportService {
                 String sku = (rawSku == null || rawSku.isBlank())
                         ? ("SPF-" + item.get("product_id").asText())
                         : rawSku;
-                String productName = item.has("title") ? item.get("title").asText() : sku;
+                String productName = item.hasNonNull("title") ? item.get("title").asText() : sku;
                 int qty = item.has("quantity") ? item.get("quantity").asInt() : 1;
                 BigDecimal unitPrice = money(item.get("price"));
                 BigDecimal totalItemPrice = unitPrice.multiply(BigDecimal.valueOf(qty));
@@ -302,9 +302,9 @@ public class ShopifyOrderImportService {
 
     private NxCustomer findOrCreateCustomer(UUID tenantId, JsonNode shopifyOrder) {
         JsonNode customerNode = shopifyOrder.get("customer");
-        String email = customerNode != null && customerNode.has("email") ? customerNode.get("email").asText() : "shopify@unknown.com";
+        String email = customerNode != null && customerNode.hasNonNull("email") ? customerNode.get("email").asText() : "shopify@unknown.com";
         String name = customerNode != null ?
-                (customerNode.has("first_name") ? customerNode.get("first_name").asText() + " " + (customerNode.has("last_name") ? customerNode.get("last_name").asText() : "") : "Shopify Customer")
+                (customerNode.hasNonNull("first_name") ? customerNode.get("first_name").asText() + " " + (customerNode.hasNonNull("last_name") ? customerNode.get("last_name").asText() : "") : "Shopify Customer")
                 : "Shopify Customer";
 
         // SECURITY: scope the lookup to the importing tenant. The previous

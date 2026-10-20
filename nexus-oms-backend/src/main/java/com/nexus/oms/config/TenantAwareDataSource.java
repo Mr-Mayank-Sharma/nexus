@@ -32,7 +32,9 @@ public class TenantAwareDataSource implements DataSource {
     private static final Logger log = LoggerFactory.getLogger(TenantAwareDataSource.class);
 
     private static final String SET_SESSION_SQL = "SET SESSION app.current_tenant_id = '%s'";
-    private static final String RESET_SESSION_SQL = "RESET app.current_tenant_id";
+    private static final String RESET_SESSION_SQL = "RESET app.current_tenant_id; RESET app.current_user";
+    /** Who is acting, for the order-history trigger (V87). Only plain user names are passed through. */
+    private static final java.util.regex.Pattern USER_NAME = java.util.regex.Pattern.compile("[A-Za-z0-9._@+-]{1,100}");
     private static final String SET_H2_SQL = "SET @app_current_tenant_id = '%s'";
     private static final String RESET_H2_SQL = "SET @app_current_tenant_id = NULL";
 
@@ -96,7 +98,9 @@ public class TenantAwareDataSource implements DataSource {
         }
         boolean h2 = isH2(connection);
         try (Statement stmt = connection.createStatement()) {
-            stmt.execute(h2 ? String.format(SET_H2_SQL, tenantId) : String.format(SET_SESSION_SQL, tenantId));
+            String user = h2 ? null : currentUserName();
+            stmt.execute(h2 ? String.format(SET_H2_SQL, tenantId) : String.format(SET_SESSION_SQL, tenantId)
+                    + (user != null ? "; SET SESSION app.current_user = '" + user + "'" : ""));
             if (!h2 && !appRole.isEmpty()) {
                 stmt.execute("SET ROLE " + appRole);
             }
@@ -107,6 +111,12 @@ public class TenantAwareDataSource implements DataSource {
                     + " (is role '" + appRole + "' created by migration V69?)", e);
         }
         log.trace("Set tenant context on connection: {}", tenantId);
+    }
+
+    private static String currentUserName() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getName() == null) return null;
+        return USER_NAME.matcher(auth.getName()).matches() ? auth.getName() : null;
     }
 
     private Connection wrapConnection(Connection connection) {

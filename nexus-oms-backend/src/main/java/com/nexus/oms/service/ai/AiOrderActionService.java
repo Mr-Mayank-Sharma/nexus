@@ -14,12 +14,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -55,7 +55,7 @@ public class AiOrderActionService {
         // Try LLM-enhanced suggestions first
         if (llmChatService.isEnabled()) {
             try {
-                List<AiSuggestionDto> llmSuggestions = llmEnhancedSuggestions(orderId, order);
+                List<AiSuggestionDto> llmSuggestions = executableOnly(llmEnhancedSuggestions(orderId, order), order);
                 if (!llmSuggestions.isEmpty()) {
                     meterRegistry.counter("nexus.ai.order_action.llm_suggestions").increment();
                     return llmSuggestions;
@@ -77,7 +77,7 @@ public class AiOrderActionService {
         String systemPrompt = """
             You are an order management AI assistant. Given an order's current state and details,
             suggest the most appropriate actions. Return a JSON array of suggestions, each with:
-            - actionType: CONFIRM, ALLOCATE, SHIP, CANCEL, HOLD, ESCALATE, or REPROCESS_PAYMENT
+            - actionType: CONFIRM, ALLOCATE, SHIP or CANCEL
             - label: Human-readable action label
             - description: Why this action is recommended (1 sentence)
             - confidence: 0.0-1.0 confidence score
@@ -102,9 +102,9 @@ public class AiOrderActionService {
         if (llmResult != null && llmResult.isArray()) {
             for (JsonNode item : llmResult) {
                 suggestions.add(AiSuggestionDto.builder()
-                        .actionType(item.has("actionType") ? item.get("actionType").asText() : "CONFIRM")
-                        .label(item.has("label") ? item.get("label").asText() : "AI Suggestion")
-                        .description(item.has("description") ? item.get("description").asText() : "LLM-recommended action")
+                        .actionType(item.hasNonNull("actionType") ? item.get("actionType").asText() : null)
+                        .label(item.hasNonNull("label") ? item.get("label").asText() : "AI Suggestion")
+                        .description(item.hasNonNull("description") ? item.get("description").asText() : "LLM-recommended action")
                         .confidence(item.has("confidence") ? item.get("confidence").asDouble() : 0.7)
                         .orderId(orderId.toString())
                         .build());
@@ -114,62 +114,64 @@ public class AiOrderActionService {
         return suggestions;
     }
 
+    /** The actions {@link #executeAction} can carry out, by the order status they apply to. */
+    private static final Map<String, Set<String>> EXECUTABLE = Map.of(
+            "PENDING", Set.of("CONFIRM", "CANCEL"),
+            "CONFIRMED", Set.of("ALLOCATE", "CANCEL"),
+            "ALLOCATED", Set.of("SHIP", "CANCEL"));
+
+    /** Drops model suggestions this service cannot carry out for the order's current status. */
+    private List<AiSuggestionDto> executableOnly(List<AiSuggestionDto> suggestions, OrderResponse order) {
+        Set<String> allowed = EXECUTABLE.getOrDefault(order.getStatus() == null ? "" : order.getStatus().toUpperCase(), Set.of());
+        return suggestions.stream().filter(sg -> sg.getActionType() != null && allowed.contains(sg.getActionType().toUpperCase())).toList();
+    }
+
     /**
-     * Rule-based suggestions (original logic, preserved as fallback).
+     * Rule-based suggestions. Each one is grounded in a check this service actually makes (stock at a
+     * location, the recorded payment status) and only offers actions that {@link #executeAction} supports.
      */
     private List<AiSuggestionDto> ruleBasedSuggestions(UUID orderId, OrderResponse order) {
         List<AiSuggestionDto> suggestions = new ArrayList<>();
+        String payment = order.getPaymentStatus() == null ? "" : order.getPaymentStatus().toUpperCase();
+        boolean paid = Set.of("PAID", "CAPTURED", "AUTHORIZED", "PARTIALLY_PAID").contains(payment);
 
         switch (order.getStatus() != null ? order.getStatus().toUpperCase() : "") {
-            case "PENDING" -> {
-                suggestions.add(AiSuggestionDto.builder()
-                        .actionType("CONFIRM")
-                        .label("Confirm Order")
-                        .description("AI recommends confirming this order — payment appears verified")
-                        .confidence(0.92)
-                        .orderId(orderId.toString())
-                        .build());
-                suggestions.add(AiSuggestionDto.builder()
-                        .actionType("CANCEL")
-                        .label("Cancel Order")
-                        .description("Cancel if order is no longer needed")
-                        .confidence(0.15)
-                        .orderId(orderId.toString())
-                        .build());
-            }
+            case "PENDING" -> suggestions.add(suggestion(orderId, "CONFIRM", "Confirm Order", paid
+                    ? "Payment is recorded as " + payment.toLowerCase() + ", so the order can go ahead"
+                    : "No payment is recorded as paid yet. Check the payment before confirming", paid ? 0.92 : 0.55));
             case "CONFIRMED" -> {
-                suggestions.add(AiSuggestionDto.builder()
-                        .actionType("ALLOCATE")
-                        .label("Allocate Inventory")
-                        .description("AI suggests allocating inventory — stock appears available")
-                        .confidence(0.88)
-                        .orderId(orderId.toString())
-                        .build());
-                suggestions.add(AiSuggestionDto.builder()
-                        .actionType("CANCEL")
-                        .label("Cancel Order")
-                        .description("Cancel if inventory cannot be fulfilled")
-                        .confidence(0.10)
-                        .orderId(orderId.toString())
-                        .build());
+                boolean stock;
+                try {
+                    stock = orderService.canAllocate(orderId);
+                } catch (Exception e) {
+                    stock = false;
+                }
+                if (stock) {
+                    suggestions.add(suggestion(orderId, "ALLOCATE", "Allocate Inventory",
+                            "One location has enough stock for every line", 0.9));
+                } else {
+                    suggestions.add(suggestion(orderId, "CANCEL", "Cancel Order",
+                            "No single location has enough stock for every line. Wait for a restock or a transfer; cancel only if the customer agrees", 0.3));
+                }
             }
-            case "ALLOCATED" -> {
-                suggestions.add(AiSuggestionDto.builder()
-                        .actionType("SHIP")
-                        .label("Ship Order")
-                        .description("AI suggests shipping — allocation complete, carrier ready")
-                        .confidence(0.85)
-                        .orderId(orderId.toString())
-                        .build());
-            }
+            case "ALLOCATED" -> suggestions.add(suggestion(orderId, "SHIP", "Ship Order",
+                    "Stock is reserved" + (order.getAllocatedNode() != null ? " at the allocated location" : "") + ", so the order is ready to ship", 0.85));
             default -> {
             }
         }
-
         return suggestions;
     }
 
-    @Transactional
+    private static AiSuggestionDto suggestion(UUID orderId, String type, String label, String why, double confidence) {
+        return AiSuggestionDto.builder().actionType(type).label(label).description(why)
+                .confidence(confidence).orderId(orderId.toString()).build();
+    }
+
+    /**
+     * Not transactional on purpose: each order operation commits or rolls back on its own. If this joined one
+     * transaction, a refused step (say, not enough stock to allocate) would mark it rollback-only and the
+     * request would fail with a 500 instead of reporting the reason.
+     */
     public AiActionHistoryDto executeAction(UUID orderId, AiExecuteRequest request, UUID tenantId) {
         String actionType = request.getActionType() != null ? request.getActionType().toUpperCase() : "";
         String result = "SUCCESS";
@@ -212,7 +214,8 @@ public class AiOrderActionService {
                 .entityId(orderId)
                 .eventType("AI_" + actionType)
                 .actorType("AI")
-                .data("{\"action\":\"" + actionType + "\",\"autoExecute\":" + request.isAutoExecute() + ",\"result\":\"" + result + "\"}")
+                .data(objectMapper.createObjectNode().put("action", actionType).put("autoExecute", request.isAutoExecute())
+                        .put("result", result).put("details", details).toString())
                 .build();
         auditLogRepository.save(auditLog);
 

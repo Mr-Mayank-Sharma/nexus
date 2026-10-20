@@ -165,11 +165,11 @@ public class BigCommerceOrderImportService {
                 .tenantId(tenantId)
                 .addressLine1(billing != null && billing.has("street_1") ? billing.get("street_1").asText() : null)
                 .addressLine2(billing != null && billing.has("street_2") ? billing.get("street_2").asText() : null)
-                .city(billing != null && billing.has("city") ? billing.get("city").asText() : null)
-                .state(billing != null && billing.has("state") ? billing.get("state").asText() : null)
-                .postalCode(billing != null && billing.has("zip") ? billing.get("zip").asText() : null)
-                .country(billing != null && billing.has("country") ? billing.get("country").asText() : "US")
-                .fullName(billing != null ? (billing.has("first_name") ? billing.get("first_name").asText() : "") + " " + (billing.has("last_name") ? billing.get("last_name").asText() : "") : null)
+                .city(billing != null && billing.hasNonNull("city") ? billing.get("city").asText() : null)
+                .state(billing != null && billing.hasNonNull("state") ? billing.get("state").asText() : null)
+                .postalCode(billing != null && billing.hasNonNull("zip") ? billing.get("zip").asText() : null)
+                .country(billing != null && billing.hasNonNull("country") ? billing.get("country").asText() : "US")
+                .fullName(billing != null ? (billing.hasNonNull("first_name") ? billing.get("first_name").asText() : "") + " " + (billing.hasNonNull("last_name") ? billing.get("last_name").asText() : "") : null)
                 .addressType("SHIPPING")
                 .build());
 
@@ -181,12 +181,12 @@ public class BigCommerceOrderImportService {
                 .customerId(customer.getId())
                 .status(status)
                 .shipToAddress(shipToAddress)
-                .currency(bcOrder.has("currency_code") ? bcOrder.get("currency_code").asText() : "USD")
+                .currency(bcOrder.hasNonNull("currency_code") ? bcOrder.get("currency_code").asText() : "USD")
                 .subtotal(subtotal)
                 .shippingCost(shippingCost)
                 .taxAmount(taxAmount)
                 .total(total)
-                .paymentStatus(bcOrder.has("payment_status") ? bcOrder.get("payment_status").asText() : null)
+                .paymentStatus(bcOrder.hasNonNull("payment_status") ? bcOrder.get("payment_status").asText() : null)
                 .build();
 
         // Derive fulfillment type from custom_fields (fulfillment_type / pickup_store),
@@ -230,8 +230,8 @@ public class BigCommerceOrderImportService {
 
         if (products != null && products.isArray()) {
             for (JsonNode item : products) {
-                String sku = item.has("sku") ? item.get("sku").asText() : "UNKNOWN";
-                String productName = item.has("name") ? item.get("name").asText() : sku;
+                String sku = item.hasNonNull("sku") ? item.get("sku").asText() : "UNKNOWN";
+                String productName = item.hasNonNull("name") ? item.get("name").asText() : sku;
                 int qty = item.has("quantity") ? item.get("quantity").asInt() : 1;
                 BigDecimal unitPrice = parseDecimal(item.has("price_inc_tax") ? item.get("price_inc_tax") : null);
                 BigDecimal totalPrice = unitPrice.multiply(BigDecimal.valueOf(qty));
@@ -281,7 +281,7 @@ public class BigCommerceOrderImportService {
 
     private NxCustomer findOrCreateCustomer(UUID tenantId, JsonNode bcOrder) {
         JsonNode billing = bcOrder.get("billing_address");
-        String email = billing != null && billing.has("email") ? billing.get("email").asText() : "unknown@bigcommerce.com";
+        String email = billing != null && billing.hasNonNull("email") ? billing.get("email").asText() : "unknown@bigcommerce.com";
         String name = billing != null ? billing.get("first_name").asText() + " " + billing.get("last_name").asText() : "BigCommerce Customer";
 
         // SECURITY: tenant-scoped lookup (was findByEmail — matched across tenants)
@@ -292,9 +292,9 @@ public class BigCommerceOrderImportService {
         Address customerAddress = addressRepository.save(Address.builder()
                 .tenantId(tenantId)
                 .addressLine1(billing != null && billing.has("street_1") ? billing.get("street_1").asText() : null)
-                .city(billing != null && billing.has("city") ? billing.get("city").asText() : null)
-                .state(billing != null && billing.has("state") ? billing.get("state").asText() : null)
-                .postalCode(billing != null && billing.has("zip") ? billing.get("zip").asText() : null)
+                .city(billing != null && billing.hasNonNull("city") ? billing.get("city").asText() : null)
+                .state(billing != null && billing.hasNonNull("state") ? billing.get("state").asText() : null)
+                .postalCode(billing != null && billing.hasNonNull("zip") ? billing.get("zip").asText() : null)
                 .addressType("PRIMARY")
                 .build());
         return customerRepository.save(NxCustomer.builder()

@@ -63,8 +63,8 @@ public class BigCommerceProductSyncService {
                 for (JsonNode product : products) {
                     try {
                         long bcProductId = product.get("id").asLong();
-                        String bcSku = product.has("sku") ? product.get("sku").asText() : "";
-                        String name = product.has("name") ? product.get("name").asText() : "";
+                        String bcSku = product.hasNonNull("sku") ? product.get("sku").asText() : "";
+                        String name = product.hasNonNull("name") ? product.get("name").asText() : "";
                         String imageUrl = resolvePrimaryImage(product);
 
                         if (bcSku.isBlank()) continue;
