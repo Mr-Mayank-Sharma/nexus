@@ -102,7 +102,7 @@ export function mountNetwork(host: HTMLElement, labelsHost: HTMLElement, opts: {
     transparent: true, depthWrite: false,
     uniforms: {
       uTime: { value: 0 }, uSize: { value: small ? 2.4 : 2.2 }, uPixelRatio: { value: renderer.getPixelRatio() },
-      uA: { value: new THREE.Color('#2fbf8f') }, uB: { value: new THREE.Color('#f6efe2') },
+      uA: { value: new THREE.Color('#5b8cff') }, uB: { value: new THREE.Color('#ffffff') },
     },
     vertexShader: /* glsl */ `
       uniform float uTime; uniform float uSize; uniform float uPixelRatio;
@@ -144,7 +144,7 @@ export function mountNetwork(host: HTMLElement, labelsHost: HTMLElement, opts: {
       fragmentShader: `varying vec3 vN; varying vec3 vW; void main(){
         float t = clamp(-vN.z / 0.52, 0.0, 1.0);
         float i = pow(t, 2.2);
-        vec3 blue = vec3(0.07, 0.64, 0.48); vec3 amber = vec3(1.0, 0.36, 0.18);
+        vec3 blue = vec3(0.26, 0.42, 1.0); vec3 amber = vec3(1.0, 0.48, 0.2);
         vec3 c = mix(blue, amber, smoothstep(-0.4, 1.2, vW.x * 0.6 + vW.y * 0.5));
         gl_FragColor = vec4(c * i * 0.85, i);
       }`,
@@ -162,14 +162,14 @@ export function mountNetwork(host: HTMLElement, labelsHost: HTMLElement, opts: {
   const warehouseIdx = nodes.map((n, i) => (n.kind === 'warehouse' ? i : -1)).filter(i => i >= 0);
   const whGeo = new THREE.BufferGeometry();
   whGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(warehouseIdx.flatMap(i => nodes[i].v.toArray())), 3));
-  const whMat = new THREE.PointsMaterial({ size: 0.42, map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xff5b2e, sizeAttenuation: true });
+  const whMat = new THREE.PointsMaterial({ size: 0.42, map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xff8a4c, sizeAttenuation: true });
   world.add(new THREE.Points(whGeo, whMat));
 
   // routes and the orders that travel them
   const curves = ROUTES.map(([a, b]) => arcPoints(nodes[a].v, nodes[b].v));
   curves.forEach((pts, i) => {
     const g = new THREE.BufferGeometry().setFromPoints(pts);
-    const m = new THREE.LineBasicMaterial({ color: i % 3 === 0 ? 0xff5b2e : 0x2fbf8f, transparent: true, opacity: 0.55 });
+    const m = new THREE.LineBasicMaterial({ color: i % 3 === 0 ? 0xff8a4c : 0x5b8cff, transparent: true, opacity: 0.55 });
     world.add(new THREE.Line(g, m));
   });
   const pulseN = ROUTES.length * 2;
@@ -177,7 +177,7 @@ export function mountNetwork(host: HTMLElement, labelsHost: HTMLElement, opts: {
   const pPos = new Float32Array(pulseN * 3);
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-  const pMat = new THREE.PointsMaterial({ size: 0.22, map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xffb49c, sizeAttenuation: true });
+  const pMat = new THREE.PointsMaterial({ size: 0.22, map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xffb27d, sizeAttenuation: true });
   world.add(new THREE.Points(pGeo, pMat));
   const stepPulses = (dt: number) => {
     pulses.forEach((p, i) => {

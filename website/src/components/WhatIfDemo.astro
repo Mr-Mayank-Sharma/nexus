@@ -29,7 +29,7 @@ const { compact = false } = Astro.props;
   .wi__controls { display: grid; gap: 22px; align-content: start; }
   .wi__ctl span { display: block; margin-bottom: 10px; color: #c7d0e0; font-size: 0.95rem; }
   .wi__ctl b { color: #fff; }
-  .wi__ctl input { width: 100%; accent-color: #ff5b2e; }
+  .wi__ctl input { width: 100%; accent-color: #ff8a4c; }
   .wi__note { margin: 0; font-size: 0.82rem; color: var(--muted-d); }
   .wi__headline { margin: 0 0 18px; font-size: 1.05rem; color: #fff; min-height: 3.2em; }
   .wi__rows { display: grid; gap: 16px; }
@@ -41,7 +41,7 @@ const { compact = false } = Astro.props;
   :global(.wi__m b) { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: #fff; }
   :global(.wi__bar) { height: 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); margin-top: 6px; overflow: hidden; }
   :global(.wi__bar i) { display: block; height: 100%; width: 0; border-radius: 4px; transition: width 0.7s cubic-bezier(.22, 1, .36, 1); }
-  :global(.wi__row--best h4) { color: #ffb49c; }
+  :global(.wi__row--best h4) { color: #ffb27d; }
   @media (max-width: 860px) { .wi__body { grid-template-columns: 1fr; } :global(.wi__metrics) { grid-template-columns: repeat(2, 1fr); } }
 </style>
 
@@ -67,9 +67,9 @@ const { compact = false } = Astro.props;
         <div class="wi__row ${i === 2 ? 'wi__row--best' : ''}">
           <h4>${LABELS[s.strategy]}</h4>
           <div class="wi__metrics">
-            <div class="wi__m"><small>Shipments</small><b>${s.shipments}</b><div class="wi__bar"><i style="width:${(s.shipments / maxShip) * 100}%;background:#12a37a"></i></div></div>
-            <div class="wi__m"><small>Orders split</small><b>${s.splitOrders}</b><div class="wi__bar"><i style="width:${(s.splitOrders / Math.max(1, near.splitOrders)) * 100}%;background:#4fd3a6"></i></div></div>
-            <div class="wi__m"><small>Expected failed picks</small><b>${s.expectedFailedUnits.toFixed(1)}</b><div class="wi__bar"><i style="width:${(s.expectedFailedUnits / maxFail) * 100}%;background:#ff5b2e"></i></div></div>
+            <div class="wi__m"><small>Shipments</small><b>${s.shipments}</b><div class="wi__bar"><i style="width:${(s.shipments / maxShip) * 100}%;background:#5b8cff"></i></div></div>
+            <div class="wi__m"><small>Orders split</small><b>${s.splitOrders}</b><div class="wi__bar"><i style="width:${(s.splitOrders / Math.max(1, near.splitOrders)) * 100}%;background:#8fb0ff"></i></div></div>
+            <div class="wi__m"><small>Expected failed picks</small><b>${s.expectedFailedUnits.toFixed(1)}</b><div class="wi__bar"><i style="width:${(s.expectedFailedUnits / maxFail) * 100}%;background:#ff8a4c"></i></div></div>
             <div class="wi__m"><small>Estimated cost</small><b>${money(s.totalCost)}</b><div class="wi__bar"><i style="width:${(s.totalCost / maxCost) * 100}%;background:#3ddc97"></i></div></div>
           </div>
         </div>`).join('');
