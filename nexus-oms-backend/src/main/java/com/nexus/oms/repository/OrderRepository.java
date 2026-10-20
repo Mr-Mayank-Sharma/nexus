@@ -31,6 +31,9 @@ public interface OrderRepository extends JpaRepository<NxOrder, UUID> {
 
     List<NxOrder> findByCustomerId(UUID customerId);
 
+    /** Generic export: orders changed after a point, oldest first, a run's worth at a time. */
+    List<NxOrder> findTop2000ByTenantIdAndUpdatedAtAfterOrderByUpdatedAtAsc(UUID tenantId, LocalDateTime after);
+
     List<NxOrder> findByTenantIdAndChannel(UUID tenantId, String channel);
 
     @Query("SELECT o FROM NxOrder o WHERE o.tenantId = :tenantId AND LOWER(o.channel) = LOWER(:channel)")

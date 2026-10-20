@@ -104,6 +104,8 @@ off until someone turns it on. Every run records its counts, a log, an output fi
 | NetSuite: bring in stock counts | SuiteQL inventory balances (not yet run against a real account) | Nexus only |
 | Export stock (CSV) | Stock per SKU and location, with what can be sold | a file |
 | Export store pick-failure rates (CSV) | The rates routing uses | a file |
+| Generic import (any JSON API) | Orders or stock counts through a generic connection (§9); dry run unless "write" is on | Nexus only |
+| Generic export (any JSON API or a file) | Orders, shipments or stock through a generic connection (§9) | the other system, or a file |
 
 Rules the code enforces (and tests pin): a job may not run more often than every 5 minutes; a job cannot be
 switched on without a schedule; one run at a time per job; a stale run is closed out after 3 hours; schedules
@@ -112,3 +114,43 @@ tenant; CSV cells that look like spreadsheet formulas are neutralised; output is
 and 10,000 kept rows per run. Not built yet: scheduled file pickup from SFTP or S3, retrying only the failed
 rows, failure notifications.
 
+
+## 9. Generic connections (any system with a JSON API)
+
+For a platform without a dedicated connector, a **generic connection** describes the integration as configuration
+instead of code (**Connect → Data Exchange → Generic Connections**, `/generic-connections`, package
+`com.nexus.oms.generic`). One connection is one direction and one kind of record:
+
+| Direction | Records | What happens |
+|---|---|---|
+| Import | orders | Orders (with lines, customer, ship-to, totals, B2C/B2B type, requested ship date) become Nexus orders, tagged with the connection's channel. An order already imported (same channel and source id) is skipped, so runs can overlap safely. |
+| Import | inventory | Sets on-hand per SKU and location **through the ledger** (opening balance or adjustment). Location codes map to Nexus locations. SKUs Nexus does not sell are reported, never created; unknown stock is never treated as zero. |
+| Export | orders, shipments | Sent oldest first, at most 2,000 per run, in batches (optionally wrapped, e.g. `{"orders": [...]}`). A refused batch stops the run, so nothing is skipped silently; the next run carries on. |
+| Export | inventory | A full snapshot each run, with what can be sold per location. |
+
+Configuration: endpoint and method; auth (none, basic, bearer, a named header, a query parameter) with the secret
+**sealed at rest and never returned**; paging (page number, offset, cursor from the body, or the `Link` header);
+an incremental filter that sends "changed since" from a watermark (re-reading 10 minutes before it); where the
+records sit in the response; and a field mapping where each value is a path (`billing.email`, `items[0].sku`), a
+literal (`=USD`) or a template (`{first} {last}`), with transforms (`trim`, `upper`, `lower`, `int`, `number`,
+`cents`, `date`, `default:X`). Every expression is checked when the connection is saved.
+
+Safety: no redirects followed; private, loopback, link-local and carrier-NAT addresses refused (a deployment can
+allow them with `nexus.generic.allow-private-network=true`, for on-premise systems); 30 s timeout; retries with
+back-off on 429 and 5xx, honouring `Retry-After`; 10 MB per response; at most 500 pages per run; next-page links
+must stay on the same host; secrets never appear in logs or page URLs.
+
+**Preview** reads the first page (import) or builds the first request (export) and shows each record mapped, with
+its problems, without saving or sending anything. Runs go through the job manager (§8): schedules, logs and the
+failed rows with reasons.
+
+Templates (starting points written from public API documentation, **none yet run against the real platform**):
+WooCommerce orders, Adobe Commerce (Magento 2) orders, Squarespace orders, any REST API orders, ERP/POS/3PL stock
+counts, shipments and tracking to any system, orders to a CSV file.
+
+Verified on a local install against a stand-in WooCommerce-style API (invented data): preview mapped 3 orders from
+page 1; a dry run reported 6 to create and 1 failed row ("the order has no lines"); the real run created 6 orders with
+their lines; a repeat run skipped all 6 as already imported; an orders-to-CSV export wrote 2,000 orders and the next
+run continued from the watermark. Tests: `MappingTest`, `GenericHttpTest` (a real HTTP server: paging, cursor, Link
+header, retries, redirects refused, auth, secret redaction, private addresses refused), `WritersTest`,
+`ExportAndRunTest`.

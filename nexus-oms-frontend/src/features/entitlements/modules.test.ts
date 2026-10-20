@@ -18,7 +18,7 @@ describe('moduleForRoute', () => {
   it('classifies every route the app declares', () => {
     // Shared pages: everything else must belong to a module so it hides with the plan.
     const platform = new Set(['/analytics-dashboard', '/dashboard', '/account/security', '/inventory',
-      '/integrations/bigcommerce', '/integrations/stores', '/integrations/directory', '/integrations', '/integration-hub', '/sync', '/import-export', '/jobs',
+      '/integrations/bigcommerce', '/integrations/stores', '/integrations/directory', '/integrations', '/integration-hub', '/sync', '/import-export', '/jobs', '/generic-connections',
       '/notifications', '/procurement', '/invoices', '/workflows', '/documents', '/users', '/customers',
       '/products', '/stores', '/audit', '/analytics', '/settings', '/inventory/enhanced', '/integrations/amazon',
       '/integrations/shopify', '/integrations/ebay', '/integrations/walmart', '/integrations/marketplace',

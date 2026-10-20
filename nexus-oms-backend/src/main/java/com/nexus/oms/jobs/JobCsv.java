@@ -3,11 +3,11 @@ package com.nexus.oms.jobs;
 import java.util.List;
 
 /** Writes CSV that is safe to open in a spreadsheet. */
-final class JobCsv {
+public final class JobCsv {
 
     private JobCsv() {}
 
-    static void row(StringBuilder sb, Object... cells) {
+    public static void row(StringBuilder sb, Object... cells) {
         for (int i = 0; i < cells.length; i++) {
             if (i > 0) sb.append(',');
             sb.append(cell(cells[i]));

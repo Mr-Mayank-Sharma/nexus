@@ -87,6 +87,7 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/rate-shopping/", "rate-shopping");
         PATH_TO_RESOURCE.put("/import/", "import");
         PATH_TO_RESOURCE.put("/jobs/", "import");
+        PATH_TO_RESOURCE.put("/generic-connections/", "import");
         PATH_TO_RESOURCE.put("/audit/", "audit");
         PATH_TO_RESOURCE.put("/integration/", "integration");
         PATH_TO_RESOURCE.put("/integrations/", "integration");

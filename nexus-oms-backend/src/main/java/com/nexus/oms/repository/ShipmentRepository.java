@@ -16,6 +16,9 @@ public interface ShipmentRepository extends JpaRepository<NxShipment, UUID> {
 
     List<NxShipment> findByTenantId(UUID tenantId);
 
+    /** Generic export: shipments created after a point, oldest first. */
+    List<NxShipment> findTop2000ByTenantIdAndCreatedAtAfterOrderByCreatedAtAsc(UUID tenantId, java.time.LocalDateTime after);
+
     List<NxShipment> findTop50ByTenantIdAndOriginNodeIdOrderByCreatedAtDesc(UUID tenantId, UUID originNodeId);
 
     @Query(value = "SELECT * FROM nx_shipments WHERE tenant_id = :tenantId " +

@@ -239,6 +239,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
         { id: 'email-parser', label: 'Email Order Parser', path: '/email-parser', icon: 'Mail' },
         { id: 'import-export', label: 'Import / Export', path: '/import-export', icon: 'Download' },
         { id: 'jobs', label: 'Scheduled Jobs', path: '/jobs', icon: 'CalendarClock' },
+        { id: 'generic-connections', label: 'Generic Connections', path: '/generic-connections', icon: 'ArrowRightLeft' },
         { id: 'documents', label: 'Documents', path: '/documents', icon: 'FileText' },
       ]
     },
@@ -278,7 +279,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       'procurement', 'purchase-requests', 'suppliers',
       'carriers', 'rate-shopping', 'routing',
       'invoices', 'payments', 'manifest',
-      'integrations-directory', 'integration-hub', 'sync', 'edi', 'import-export', 'jobs', 'b2b-portal',
+      'integrations-directory', 'integration-hub', 'sync', 'edi', 'import-export', 'jobs', 'generic-connections', 'b2b-portal',
       'email-parser', 'documents', 'store-operations',
       'bigcommerce', 'amazon', 'ebay', 'walmart', 'marketplace-hub',
       'users', 'settings', 'audit', 'workflows', 'promotions',

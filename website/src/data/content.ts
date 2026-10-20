@@ -114,6 +114,7 @@ export const INTEGRATIONS: Integration[] = [
   { name: 'Square, Lightspeed and other POS', kind: 'Point of sale', status: 'next', note: 'No vendor adapter yet.' },
   { name: 'EDI (850, 856, 810, 940)', kind: 'B2B and EDI', status: 'tested', note: 'Parse and generate common documents, with acknowledgements.' },
   { name: 'FedEx', kind: 'Carrier', status: 'early', note: 'Rate and label connector started; not yet run against the live API.' },
+  { name: 'Any JSON API (generic connections)', kind: 'Open', status: 'tested', note: 'Import orders or stock, and export orders, shipments or stock, to any system with a JSON API: configured, not coded. Templates for WooCommerce, Magento 2 and Squarespace (not yet run against real stores).' },
   { name: 'REST API and webhooks', kind: 'Open', status: 'tested', note: 'Every screen in Nexus runs on the same documented API, so anything can integrate.' },
   { name: 'CSV and scheduled files', kind: 'Open', status: 'tested', note: 'Scheduled imports and exports with every failed row kept, for systems without an API.' },
 ];

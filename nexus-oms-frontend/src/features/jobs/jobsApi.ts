@@ -1,7 +1,7 @@
 import client from '../../api/client'
 
 export type RunStatus = 'RUNNING' | 'COMPLETED' | 'PARTIAL' | 'FAILED'
-export type ParamKind = 'STORE' | 'BOOLEAN' | 'TEXT'
+export type ParamKind = 'STORE' | 'BOOLEAN' | 'TEXT' | 'GENERIC_CONNECTION'
 
 export interface JobParam { name: string; label: string; kind: ParamKind; required: boolean; help: string }
 export interface JobType { type: string; label: string; description: string; params: JobParam[] }

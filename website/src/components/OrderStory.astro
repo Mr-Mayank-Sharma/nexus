@@ -1,0 +1,199 @@
+---
+/**
+ * "The life of an order": the signature scroll film. A real-time 3D world (src/lib/orderWorld.ts) follows order
+ * #4821 from the moment it is placed on any channel to the truck leaving the dock, while the captions say what Nexus
+ * does at each step and how real that step is today. Without JS, or with reduced motion, the steps read as a list.
+ */
+import { CHANNELS } from '../lib/orderStory';
+
+type Tag = 'live' | 'built' | 'next';
+const TAG: Record<Tag, { label: string; cls: string }> = {
+  live: { label: 'Verified live', cls: 'os__tag--live' },
+  built: { label: 'Built', cls: 'os__tag--built' },
+  next: { label: 'Coming next', cls: 'os__tag--next' },
+};
+const chapters: { n: string; title: string; body: string; tags: [Tag, string][]; status: string }[] = [
+  { n: '01', status: 'Placed', title: 'A customer orders. On any channel.',
+    body: 'Storefronts, marketplaces, stores and B2B partners all send orders the same way: Nexus takes the order data over each platform\'s API.',
+    tags: [['live', 'Shopify, BigCommerce'], ['built', 'Any JSON API through generic connections'], ['built', 'EDI 850']] },
+  { n: '02', status: 'In Nexus', title: 'Nexus already knows the real stock',
+    body: 'Stock arrives from your ERP and your stores\' POS and is kept as a ledger per location. Safety thresholds come off first, so Nexus only promises what can really ship.',
+    tags: [['built', 'ERP and POS stock import'], ['built', 'Safety stock and sellable per location']] },
+  { n: '03', status: 'Approved', title: 'Checked before anyone touches it',
+    body: 'Approval rules check the order (value limits, first orders, block lists) and either pass it, hold it for a person, or reject it.',
+    tags: [['built', 'Rule-based approval'], ['next', 'AI risk scoring']] },
+  { n: '04', status: 'Scheduled', title: 'The ship date decides when work starts',
+    body: 'A B2C order ships today, so its stock is reserved at once. A B2B order may ship in two months: reserving now would starve other orders, so it waits and is released a few days before its ship date.',
+    tags: [['built', 'Reserve on allocation (B2C)'], ['next', 'B2B release window by ship date']] },
+  { n: '05', status: 'In a wave', title: 'Orders become a pick wave',
+    body: 'Released orders are grouped into a wave with one walking route and handed to a picker, with every bin location already reserved.',
+    tags: [['built', 'Waves and pick lists']] },
+  { n: '06', status: 'Picked', title: 'The picker goes straight to the bins',
+    body: 'The picker walks the route, scans each bin and puts each item in the tote. If a bin is empty, the order re-routes whole to another location.',
+    tags: [['built', 'Pick tasks and re-route on reject']] },
+  { n: '07', status: 'Packed', title: 'The right box, before anyone guesses',
+    body: 'At packing, Nexus recommends the box size and count from the items\' dimensions. The packer packs, and the shipping label prints for the carrier.',
+    tags: [['built', 'Box recommendation'], ['built', 'Labels (carrier APIs not yet run live)']] },
+  { n: '08', status: 'Shipped', title: 'Dispatched. Shipped. Completed.',
+    body: 'The parcel goes to the dock, the carrier\'s truck takes it, and Nexus marks the order shipped and complete. From here the carrier\'s tracking takes over.',
+    tags: [['built', 'Manifests and dispatch']] },
+];
+const statuses = chapters.map(c => c.status).concat('Completed');
+---
+<section class="os" aria-label="The life of an order in Nexus" data-os data-scene-trigger="dark">
+  <div class="os__pin">
+    <div class="os__canvas" data-os-canvas aria-hidden="true"></div>
+    <div class="os__shade" aria-hidden="true"></div>
+
+    <div class="wrap os__top">
+      <div>
+        <p class="eyebrow eyebrow--signal">The life of an order</p>
+        <p class="os__step mono" aria-hidden="true"><b data-os-n>01</b> / 08</p>
+      </div>
+      <div class="os__ticket" aria-hidden="true">
+        <div class="os__ticket-head"><span class="mono">Order #4821</span><span class="mono os__ticket-ch">Shopify · B2C</span></div>
+        <ol>{statuses.map((s, i) => <li data-os-st={i}><i></i>{s}</li>)}</ol>
+      </div>
+    </div>
+
+    <div class="wrap os__caps">
+      {chapters.map((c, i) => (
+        <article class="os__cap" data-os-cap={i} aria-hidden={i === 0 ? 'false' : 'true'}>
+          <span class="os__n mono">{c.n}</span>
+          <h3 class="display os__h">{c.title}</h3>
+          <p>{c.body}</p>
+          <ul class="os__tags">{c.tags.map(([t, s]) => <li class={`os__tag ${TAG[t].cls}`}><b>{TAG[t].label}</b> {s}</li>)}</ul>
+        </article>
+      ))}
+    </div>
+
+    <nav class="os__rail" aria-label="Jump to a step">
+      {chapters.map((c, i) => <button type="button" data-os-jump={i} aria-label={`Step ${c.n}: ${c.title}`}><span>{c.n}</span></button>)}
+      <b data-os-fill></b>
+    </nav>
+    <p class="os__note mono" aria-hidden="true">Illustration · invented order · {CHANNELS.length} channels shown</p>
+  </div>
+</section>
+
+<style>
+  .os { position: relative; background: #070b16; color: var(--text-d); }
+  .os__pin { position: relative; height: 100svh; min-height: 600px; overflow: hidden; }
+  .os__canvas { position: absolute; inset: 0; }
+  .os__canvas :global(canvas) { width: 100%; height: 100%; display: block; }
+  .os__shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(7, 11, 22, 0.88) 0%, rgba(7, 11, 22, 0.35) 34%, transparent 55%), linear-gradient(0deg, rgba(7, 11, 22, 0.7), transparent 30%); }
+  .os__top { position: absolute; left: 0; right: 0; top: 92px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; z-index: 2; }
+  .os__step { margin: 8px 0 0; font-size: 0.8rem; letter-spacing: 0.14em; color: var(--muted-d); }
+  .os__step b { color: #fff; font-weight: 600; font-size: 1.6rem; }
+  .os__ticket { width: 240px; padding: 14px 16px; border-radius: 14px; background: rgba(9, 14, 27, 0.82); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  .os__ticket-head { display: flex; justify-content: space-between; font-size: 0.68rem; letter-spacing: 0.08em; color: #fff; margin-bottom: 10px; }
+  .os__ticket-ch { color: var(--muted-d); }
+  .os__ticket ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+  .os__ticket li { display: flex; align-items: center; gap: 10px; font-size: 0.78rem; color: #4d586e; transition: color 0.3s; }
+  .os__ticket li i { width: 8px; height: 8px; border-radius: 50%; background: #2a3347; transition: background 0.3s, box-shadow 0.3s; }
+  .os__ticket li.done { color: #c7d0e0; }
+  .os__ticket li.done i { background: var(--go); }
+  .os__ticket li.now { color: #fff; font-weight: 600; }
+  .os__ticket li.now i { background: var(--ember); box-shadow: 0 0 0 4px rgba(255, 138, 76, 0.25); }
+  .os__caps { position: absolute; left: 0; right: 0; bottom: 96px; z-index: 2; pointer-events: none; }
+  .os__cap { position: absolute; left: var(--gutter); bottom: 0; max-width: 480px; opacity: 0; transform: translateY(26px); transition: opacity 0.45s var(--ease), transform 0.6s var(--ease); }
+  .os__cap[aria-hidden='false'] { opacity: 1; transform: none; pointer-events: auto; }
+  .os__n { color: var(--ember); font-size: 0.8rem; letter-spacing: 0.14em; }
+  .os__h { font-size: clamp(1.5rem, 3vw, 2.5rem); margin: 10px 0 14px; }
+  .os__cap p { margin: 0; color: #c2cbdb; font-size: 1.02rem; max-width: 44ch; }
+  .os__tags { list-style: none; margin: 16px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .os__tag { font-size: 0.76rem; padding: 6px 11px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.16); background: rgba(9, 14, 27, 0.7); color: #c7d0e0; }
+  .os__tag b { font-family: var(--mono); font-weight: 600; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; margin-right: 4px; }
+  .os__tag--live b { color: var(--go); } .os__tag--built b { color: var(--signal-2); } .os__tag--next b { color: var(--warn); }
+  .os__rail { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 36px; z-index: 3; display: flex; gap: 6px; }
+  .os__rail button { flex: 1; height: 26px; position: relative; padding: 0; background: none; cursor: pointer; }
+  .os__rail button::before { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgba(255, 255, 255, 0.14); }
+  .os__rail button span { position: absolute; left: 0; bottom: 8px; font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--muted-d); }
+  .os__rail button:hover span, .os__rail button:focus-visible span { color: #fff; }
+  .os__rail b { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: linear-gradient(90deg, var(--signal), var(--ember)); pointer-events: none; }
+  .os__note { position: absolute; right: var(--gutter); bottom: 72px; margin: 0; font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: #566074; z-index: 2; }
+  @media (max-width: 900px) {
+    .os__shade { background: linear-gradient(0deg, rgba(7, 11, 22, 0.95) 0%, rgba(7, 11, 22, 0.75) 34%, transparent 58%); }
+    .os__top { top: 82px; }
+    .os__ticket { width: 168px; padding: 10px 12px; }
+    .os__ticket li { font-size: 0.68rem; }
+    .os__ticket-ch { display: none; }
+  }
+  @media (max-width: 600px) {
+    .os__ticket { width: auto; padding: 8px 12px; }
+    .os__ticket-head { margin-bottom: 4px; }
+    .os__ticket li:not(.now) { display: none; }
+    .os__caps { bottom: 80px; }
+    .os__cap { right: var(--gutter); max-width: none; }
+    .os__cap p { font-size: 0.92rem; }
+    .os__tags { margin-top: 10px; }
+    .os__note { display: none; }
+  }
+  /* no JS, or reduced motion: the steps as a readable list */
+  :global(html:not(.js)) .os__pin, .os.is-static .os__pin { height: auto; min-height: 0; padding: 110px 0 60px; }
+  :global(html:not(.js)) .os__canvas, :global(html:not(.js)) .os__shade, :global(html:not(.js)) .os__rail, :global(html:not(.js)) .os__ticket, :global(html:not(.js)) .os__note,
+  .os.is-static .os__canvas, .os.is-static .os__shade, .os.is-static .os__rail, .os.is-static .os__ticket, .os.is-static .os__note { display: none; }
+  :global(html:not(.js)) .os__top, :global(html:not(.js)) .os__caps, .os.is-static .os__top, .os.is-static .os__caps { position: static; }
+  :global(html:not(.js)) .os__cap, .os.is-static .os__cap { position: static; opacity: 1; transform: none; max-width: 640px; margin: 0 0 44px; }
+</style>
+
+<script>
+  import { ScrollTrigger, reduced, getLenis } from '../lib/motion';
+  import { CHAPTERS } from '../lib/orderStory';
+
+  const root = document.querySelector<HTMLElement>('[data-os]');
+  if (root) {
+    const pin = root.querySelector<HTMLElement>('.os__pin')!;
+    const host = root.querySelector<HTMLElement>('[data-os-canvas]')!;
+    const caps = Array.from(root.querySelectorAll<HTMLElement>('[data-os-cap]'));
+    const sts = Array.from(root.querySelectorAll<HTMLElement>('[data-os-st]'));
+    const num = root.querySelector<HTMLElement>('[data-os-n]')!;
+    const fill = root.querySelector<HTMLElement>('[data-os-fill]')!;
+    const jumps = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-os-jump]'));
+
+    if (reduced()) root.classList.add('is-static');
+    else {
+      let world: { setProgress(p: number): void } | null = null;
+      let progress = 0, current = -1;
+      const chapterOf = (p: number) => { const i = CHAPTERS.findIndex(c => p < c.to); return i < 0 ? CHAPTERS.length - 1 : i; };
+      const show = (p: number) => {
+        progress = p;
+        world?.setProgress(p);
+        fill.style.width = `${p * 100}%`;
+        const c = chapterOf(p);
+        // the ticket: every status up to this chapter is done; "Completed" lights once the truck has gone
+        const done = p > 0.985 ? sts.length - 1 : c;
+        sts.forEach((s, i) => { s.classList.toggle('done', i < done); s.classList.toggle('now', i === done); });
+        if (c === current) return;
+        current = c;
+        caps.forEach((cap, i) => cap.setAttribute('aria-hidden', String(i !== c)));
+        num.textContent = String(c + 1).padStart(2, '0');
+      };
+
+      const st = ScrollTrigger.create({
+        trigger: root, start: 'top top', end: () => '+=' + window.innerHeight * (window.innerWidth < 900 ? 9 : 11),
+        pin, scrub: true, anticipatePin: 1,
+        onUpdate: self => show(self.progress),
+      });
+      show(0);
+
+      // clicking a step scrolls to it
+      jumps.forEach((b, i) => b.addEventListener('click', () => {
+        const y = st.start + (st.end - st.start) * (CHAPTERS[i].from + 0.01);
+        const l = getLenis();
+        if (l) l.scrollTo(y, { duration: 1.4 }); else window.scrollTo({ top: y, behavior: 'smooth' });
+      }));
+
+      // three.js loads only when the film is near
+      const io = new IntersectionObserver(async ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        const { mountOrderWorld } = await import('../lib/orderWorld');
+        await document.fonts?.ready;
+        world = mountOrderWorld(host, { reduced: false });
+        if (!world) root.classList.add('is-static');
+        else world.setProgress(progress);
+      }, { rootMargin: '600px' });
+      io.observe(root);
+    }
+  }
+</script>

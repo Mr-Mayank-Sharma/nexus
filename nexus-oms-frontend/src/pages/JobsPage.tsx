@@ -12,6 +12,7 @@ import {
   defaultSchedule, describeSchedule, formProblems, fromCron, isTerminal, MIN_MINUTES, nextRunText, STATUS_HELP, STATUS_LABEL,
   toCron, WEEKDAYS, writesStock, type JobForm, type ScheduleKind,
 } from '../features/jobs/jobsRules'
+import { getConnections } from '../features/generic/genericApi'
 
 const field = 'rounded-lg border border-[var(--border-default)] bg-[var(--surface-raised)] px-3 py-2 text-sm text-[var(--text-primary)] w-full'
 const primary = 'inline-flex items-center gap-2 rounded-lg bg-[var(--nexus-primary-600)] px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--nexus-primary-700)] disabled:opacity-50'
@@ -65,6 +66,7 @@ export default function JobsPage() {
   const types = useQuery({ queryKey: ['job-types'], queryFn: getJobTypes })
   const jobs = useQuery({ queryKey: ['jobs'], queryFn: getJobs, refetchInterval: 15000 })
   const stores = useQuery({ queryKey: ['job-stores'], queryFn: getStoreConnections })
+  const generic = useQuery({ queryKey: ['generic-connections'], queryFn: getConnections })
   const runs = useQuery({
     queryKey: ['job-runs', selected], queryFn: () => getRuns(selected!), enabled: !!selected,
     refetchInterval: q => (q.state.data ?? []).some(r => !isTerminal(r.status)) ? 3000 : false,
@@ -168,6 +170,12 @@ export default function JobsPage() {
                           {(stores.data ?? []).filter(s => !platformFor(form.type) || s.platform?.toUpperCase() === platformFor(form.type)).map(s =>
                             <option key={s.id} value={s.id}>{s.storeName} ({s.platform})</option>)}
                         </select>
+                      ) : p.kind === 'GENERIC_CONNECTION' ? (
+                        <select className={field} value={String(form.params[p.name] ?? '')} onChange={e => setForm({ params: { ...form.params, [p.name]: e.target.value } })}>
+                          <option value="">Choose a generic connection…</option>
+                          {(generic.data ?? []).filter(c => c.direction === (form.type === 'GENERIC_EXPORT' ? 'EXPORT' : 'IMPORT')).map(c =>
+                            <option key={c.id} value={c.id}>{c.name} ({c.entityType})</option>)}
+                        </select>
                       ) : (
                         <input className={field} value={String(form.params[p.name] ?? '')} onChange={e => setForm({ params: { ...form.params, [p.name]: e.target.value } })} />
                       )}
@@ -182,7 +190,7 @@ export default function JobsPage() {
           {writesStock(formType, form.params) && (
             <p className="mt-3 flex items-start gap-2 rounded-lg bg-[var(--nexus-warning-50)] p-3 text-sm text-[var(--nexus-warning-700)]" role="note">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-              This job will create stock rows in Nexus each time it runs. Do a dry run first (leave "Write the changes" off) and read the result before you schedule it.
+              This job writes to Nexus (orders or stock) each time it runs. Do a dry run first (leave "Write the changes" off) and read the result before you schedule it.
             </p>
           )}
 
