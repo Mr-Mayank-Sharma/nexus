@@ -183,39 +183,133 @@ function parcel(w: number, h: number, d: number) {
   return { g, close, h };
 }
 
-/** A box truck facing +x: roller door at the back, wheels with hubs, headlights with light cones, tail lights. */
+/** A canvas texture drawn once, for painted surfaces that should still take light and shadow. */
+function paintTex(w: number, h: number, paint: Painter) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  paint(c.getContext('2d')!, w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+
+let liveryTex: THREE.Texture | null = null, shutterTex: THREE.Texture | null = null;
+
+/**
+ * A cab-over box truck facing +x. Clearcoat paint, a ribbed cargo box with livery, tinted glass, mirrors, roof
+ * fairing, chrome grille and bumper, fuel tank, double rear wheels with chrome rims, wheel arches, mud flaps, a
+ * roller-shutter rear door, tail lights and plate. The cargo floor is at y 0.5; the rear opening at local x -4.3.
+ */
 function truck() {
   const g = new THREE.Group();
-  const white = std(0xdfe4ec, { roughness: 0.45 }), dark = std(0x141a26), glass = std(0x1a2438, { roughness: 0.08, metalness: 0.6 });
-  const body = rbox(6.2, 3, 2.6, 0.14, white); body.position.set(-1.2, 2.0, 0);
-  const stripe = box(6.22, 0.32, 2.62, std(COL.signal)); stripe.position.set(-1.2, 1.25, 0);
-  const brand = panel(3.6, 0.9, 512, (gg, _w, h) => { text(gg, 'NEXUS FREIGHT', 0, h / 2, 64, '#1b2334', DISPLAY, 700); });
-  brand.mesh.position.set(-1.2, 2.4, 1.32); g.add(brand.mesh);
-  const brand2 = brand.mesh.clone(); brand2.position.z = -1.32; brand2.rotation.y = Math.PI; g.add(brand2);
-  const cab = rbox(2.1, 2.3, 2.5, 0.3, std(COL.signal, { roughness: 0.35 })); cab.position.set(3.0, 1.65, 0);
-  const wind = box(0.05, 1.0, 2.1, glass); wind.position.set(4.06, 2.15, 0);
-  const grille = box(0.06, 0.5, 1.6, dark); grille.position.set(4.06, 1.1, 0);
-  const bumper = box(0.25, 0.25, 2.5, dark); bumper.position.set(4.1, 0.65, 0);
-  const door = new THREE.Group(); door.position.set(-4.32, 3.45, 0);
-  const doorPanel = box(0.08, 2.85, 2.4, std(0xe2e6ee)); doorPanel.position.y = -1.43; door.add(doorPanel);
-  g.add(body, stripe, cab, wind, grille, bumper, door);
-  const wheels: THREE.Mesh[] = [];
-  for (const [x, z] of [[2.9, 1.2], [2.9, -1.2], [-0.4, 1.2], [-0.4, -1.2], [-3.2, 1.2], [-3.2, -1.2]]) {
-    const w = cyl(0.5, 0.4, dark, 28); w.rotation.x = Math.PI / 2; w.position.set(x, 0.5, z);
-    const hub = cyl(0.22, 0.42, std(0x9aa3b5, { metalness: 0.6, roughness: 0.3 })); hub.rotation.x = Math.PI / 2; hub.position.copy(w.position);
-    wheels.push(w, hub); g.add(w, hub);
+  const paint = (color: number) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.28, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.12 });
+  const chrome = new THREE.MeshStandardMaterial({ color: 0xe8edf5, roughness: 0.12, metalness: 1 });
+  const rubber = std(0x15181f, { roughness: 0.92 });
+  const dark = std(0x1a1f2b, { roughness: 0.6 });
+  const glass = new THREE.MeshPhysicalMaterial({ color: 0x0f1726, roughness: 0.05, metalness: 0.2, clearcoat: 1, transparent: true, opacity: 0.92 });
+  const add = (m: THREE.Object3D, x: number, y: number, z: number) => { m.position.set(x, y, z); g.add(m); return m; };
+
+  // chassis rails under everything
+  add(box(8.0, 0.22, 1.5, dark), -0.2, 0.62, 0);
+
+  // cargo box: white clearcoat, with livery on both sides and vertical ribs
+  liveryTex ??= paintTex(1536, 640, (c, w, h) => {
+    c.fillStyle = '#f4f6fa'; c.fillRect(0, 0, w, h);
+    const grd = c.createLinearGradient(0, 0, w, 0); grd.addColorStop(0, '#5b8cff'); grd.addColorStop(1, '#ff8a4c');
+    c.fillStyle = grd;
+    c.beginPath(); c.moveTo(0, h * 0.78); c.bezierCurveTo(w * 0.35, h * 0.62, w * 0.62, h * 0.98, w, h * 0.7); c.lineTo(w, h); c.lineTo(0, h); c.closePath(); c.fill();
+    // the Nexus mark: a small network
+    const nodes = [[150, 230], [230, 170], [230, 290], [310, 230]];
+    c.strokeStyle = '#1b2334'; c.lineWidth = 9;
+    for (const [i, j] of [[0, 1], [0, 2], [1, 3], [2, 3], [1, 2]]) { c.beginPath(); c.moveTo(nodes[i][0], nodes[i][1]); c.lineTo(nodes[j][0], nodes[j][1]); c.stroke(); }
+    nodes.forEach(([x, y], i) => { c.fillStyle = i === 3 ? '#ff8a4c' : '#5b8cff'; c.beginPath(); c.arc(x, y, 22, 0, Math.PI * 2); c.fill(); });
+    c.fillStyle = '#1b2334'; c.font = `800 150px ${DISPLAY}`; c.textBaseline = 'middle'; c.fillText('NEXUS', 370, 225);
+    c.fillStyle = '#566074'; c.font = `600 52px ${FONT}`; c.fillText('Every order, from the right place.', 378, 335);
+  });
+  const boxMat = paint(0xf4f6fa);
+  // hollow, so the load can be seen through the open door: floor, roof, front wall and two sides
+  const lining = std(0xb9c2d1, { roughness: 0.7 });
+  add(box(6.2, 0.1, 2.5, std(0x8d7656, { roughness: 0.8 })), -1.2, 0.5, 0);
+  add(rbox(6.2, 0.14, 2.6, 0.05, boxMat), -1.2, 3.48, 0);
+  add(rbox(0.14, 3.0, 2.6, 0.05, boxMat), 1.83, 2.05, 0);
+  for (const z of [1.25, -1.25]) { add(box(6.2, 3.0, 0.1, boxMat), -1.2, 2.05, z); add(box(6.1, 2.8, 0.02, lining, false), -1.2, 2.05, z - Math.sign(z) * 0.06); }
+  const sideMat = new THREE.MeshPhysicalMaterial({ map: liveryTex, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15 });
+  for (const z of [1.305, -1.305]) {
+    const side = new THREE.Mesh(new THREE.PlaneGeometry(5.9, 2.5), sideMat);
+    side.position.set(-1.2, 2.05, z); if (z < 0) side.rotation.y = Math.PI; side.receiveShadow = true; g.add(side);
+    for (let i = 0; i < 9; i++) { const rib = box(0.05, 2.9, 0.04, std(0xd5dbe6, { roughness: 0.4 }), false); rib.position.set(-4.2 + i * 0.75, 2.05, z + Math.sign(z) * 0.02); g.add(rib); }
   }
+  add(box(6.24, 0.1, 2.64, std(0xc4ccd9, { metalness: 0.5, roughness: 0.35 }), false), -1.2, 0.58, 0);   // bottom rail
+  add(box(6.24, 0.08, 2.64, std(0xc4ccd9, { metalness: 0.5, roughness: 0.35 }), false), -1.2, 3.53, 0);  // top rail
+  // side skirts between the wheels
+  for (const z of [1.18, -1.18]) add(box(2.2, 0.32, 0.06, paint(0x5b8cff)), -1.8, 0.75, z);
+
+  // rear: frame, roller shutter, lights, reflective strip, plate
+  shutterTex ??= paintTex(256, 512, (c, w, h) => {
+    c.fillStyle = '#e4e8ef'; c.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 26) { c.fillStyle = '#c3cad6'; c.fillRect(0, y, w, 3); c.fillStyle = '#f5f7fa'; c.fillRect(0, y + 3, w, 2); }
+    c.fillStyle = '#9aa3b4'; c.fillRect(w / 2 - 18, h - 40, 36, 14);
+  });
+  for (const z of [1.25, -1.25]) add(box(0.14, 3.0, 0.12, dark), -4.32, 2.05, z);
+  add(box(0.14, 0.14, 2.62, dark), -4.32, 3.5, 0);
+  const door = new THREE.Group(); door.position.set(-4.36, 3.42, 0); g.add(door);
+  const shutter = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.84, 2.38), new THREE.MeshStandardMaterial({ map: shutterTex, roughness: 0.5, metalness: 0.2 }));
+  shutter.position.y = -1.42; shutter.castShadow = true; door.add(shutter);
+  add(box(0.04, 0.08, 2.4, glow(0xffb020, 0.6), false), -4.4, 0.72, 0);           // reflective strip
+  for (const z of [1.05, -1.05]) {
+    add(box(0.06, 0.34, 0.22, glow(COL.stop, 2.2), false), -4.4, 0.95, z);
+    add(box(0.06, 0.14, 0.22, glow(0xffb020, 1.6), false), -4.4, 0.7, z);
+  }
+  const plate = panel(0.62, 0.18, 240, (c, w, h) => { c.fillStyle = '#ffffff'; c.fillRect(0, 0, w, h); c.strokeStyle = '#1b2334'; c.lineWidth = 4; c.strokeRect(2, 2, w - 4, h - 4); text(c, 'NXS 4821', w / 2, h / 2 + 2, 40, '#1b2334', MONO, 800, 'center'); });
+  plate.mesh.position.set(-4.41, 0.86, 0); plate.mesh.rotation.y = -Math.PI / 2; g.add(plate.mesh);
+
+  // cab: clearcoat blue, tinted windscreen and side windows, roof fairing, mirrors, grille, lights, bumper, step
+  const cabMat = paint(0x3f6fe0);
+  add(rbox(2.2, 2.45, 2.55, 0.32, cabMat), 3.05, 1.82, 0);
+  const fairing = rbox(1.6, 0.6, 2.4, 0.25, cabMat); fairing.position.set(2.6, 3.28, 0); fairing.rotation.z = 0.18; g.add(fairing);
+  const wind = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.05, 2.2), glass); wind.position.set(4.16, 2.42, 0); wind.rotation.z = -0.08; g.add(wind);
+  for (const z of [1.285, -1.285]) {
+    add(box(1.1, 0.8, 0.04, glass, false), 3.35, 2.45, z);                     // side window
+    add(box(0.9, 0.02, 0.02, dark, false), 2.95, 1.25, z + Math.sign(z) * 0.01); // door seam
+    const arm = box(0.5, 0.05, 0.05, dark); arm.position.set(4.0, 2.55, z + Math.sign(z) * 0.3); arm.rotation.y = Math.sign(z) * 0.6; g.add(arm);
+    add(rbox(0.12, 0.55, 0.28, 0.04, dark), 4.15, 2.45, z + Math.sign(z) * 0.5);  // mirror
+    add(rbox(0.5, 0.12, 0.6, 0.03, chrome), 2.6, 0.45, z * 0.95);                 // step
+  }
+  const grille = rbox(0.12, 0.7, 1.5, 0.05, chrome); add(grille, 4.17, 1.25, 0);
+  for (let i = 0; i < 5; i++) add(box(0.02, 0.04, 1.4, dark, false), 4.24, 1.0 + i * 0.12, 0);
+  add(rbox(0.3, 0.3, 2.6, 0.08, chrome), 4.2, 0.62, 0);                             // bumper
   const lampMat = glow(0xfff2d6, 0);
-  for (const z of [0.85, -0.85]) { const l = box(0.06, 0.24, 0.5, lampMat, false); l.position.set(4.08, 1.25, z); g.add(l); }
-  const coneMat = new THREE.MeshBasicMaterial({ color: 0xfff1d0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
-  for (const z of [0.85, -0.85]) {
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.2, 9, 24, 1, true), coneMat);
-    cone.rotation.z = Math.PI / 2; cone.position.set(8.6, 0.9, z); g.add(cone);
+  for (const z of [0.95, -0.95]) {
+    add(rbox(0.1, 0.28, 0.42, 0.06, chrome), 4.18, 1.32, z);
+    add(rbox(0.06, 0.2, 0.34, 0.05, lampMat, false), 4.24, 1.32, z);
   }
-  for (const z of [1.1, -1.1]) { const t = box(0.06, 0.3, 0.2, glow(COL.stop, 2), false); t.position.set(-4.33, 0.9, z); g.add(t); }
+  const coneMat = new THREE.MeshBasicMaterial({ color: 0xfff1d0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+  for (const z of [0.95, -0.95]) {
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.2, 9, 24, 1, true), coneMat);
+    cone.rotation.z = Math.PI / 2; cone.position.set(8.7, 0.95, z); g.add(cone);
+  }
+  // fuel tank under the cab, on one side
+  const tank = cyl(0.3, 1.0, chrome, 28); tank.rotation.z = Math.PI / 2; add(tank, 1.6, 0.85, 1.05);
+
+  // wheels: tyre, chrome rim, bolts; double at the back; arches and mud flaps
+  const wheels: THREE.Group[] = [];
+  const wheel = (x: number, z: number) => {
+    const w = new THREE.Group(); w.position.set(x, 0.52, z);
+    const tyre = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.14, 14, 32), rubber); tyre.castShadow = true; w.add(tyre);
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.33, 0.33, 0.16, 28), chrome); rim.rotation.x = Math.PI / 2; w.add(rim);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.2, 16), dark); hub.rotation.x = Math.PI / 2; w.add(hub);
+    for (let b = 0; b < 6; b++) { const bolt = box(0.05, 0.05, 0.2, dark, false); const a = (b / 6) * Math.PI * 2; bolt.position.set(Math.cos(a) * 0.2, Math.sin(a) * 0.2, 0); w.add(bolt); }
+    g.add(w); wheels.push(w);
+  };
+  for (const z of [1.12, -1.12]) {
+    wheel(3.0, z);
+    wheel(-2.7, z); wheel(-2.7, z - Math.sign(z) * 0.3);
+    wheel(-3.6, z); wheel(-3.6, z - Math.sign(z) * 0.3);
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.07, 8, 24, Math.PI), dark); arch.position.set(3.0, 0.55, z * 1.08); g.add(arch);
+    add(box(0.03, 0.38, 0.3, rubber), -4.1, 0.5, z * 0.98);                        // mud flaps
+    add(box(0.03, 0.38, 0.3, rubber), 2.25, 0.5, z * 0.98);
+  }
   const open = (t: number) => { door.scale.y = Math.max(0.04, 1 - t); };
-  const roll = (d: number) => wheels.forEach(w => (w.rotation.y = d / 0.5));
-  const lights = (k: number) => { lampMat.emissiveIntensity = 3 * k; coneMat.opacity = 0.05 * k; };
+  const roll = (d: number) => wheels.forEach(w => (w.rotation.z = -d / 0.52));
+  const lights = (k: number) => { lampMat.emissiveIntensity = 3.2 * k; coneMat.opacity = 0.05 * k; };
   return { g, open, roll, lights };
 }
 
@@ -958,9 +1052,9 @@ export function mountOrderWorld(host: HTMLElement, opts: { reduced: boolean }): 
     const beltN = small ? 5 : 9;
     const beltBoxes = Array.from({ length: beltN }, (_, i) => { const b = rbox(0.8 - (i % 3) * 0.1, 0.55, 0.7, 0.05, std(i % 2 ? COL.card : COL.cardDark, { roughness: 0.8 })); scene.add(b); return b; });
     const B0 = PX + 4, B1 = DX - 3.4;   // the visible run of the belt
-    lifeFns.push(time => {
+    lifeFns.push((time, p) => {
       stations.forEach((s, i) => { s.man.reach(Math.abs(Math.sin(time * 3 + i))) ; s.pk.close((Math.sin(time * 0.6 + i * 2) + 1) / 2); });
-      beltBoxes.forEach((b, i) => { const x = B0 + ((time * 1.6 + i * ((B1 - B0) / beltN)) % (B1 - B0)); b.position.set(x, 1.3, (i % 2 ? 0.15 : -0.15)); });
+      beltBoxes.forEach((b, i) => { const x = B0 + ((time * 1.6 + i * ((B1 - B0) / beltN)) % (B1 - B0)); b.position.set(x, 1.3, (i % 2 ? 0.15 : -0.15)); b.visible = p < CHAPTERS[7].from - 0.005; });
     });
   }
 
@@ -1014,7 +1108,9 @@ export function mountOrderWorld(host: HTMLElement, opts: { reduced: boolean }): 
     { p: at(6, 0.7), pos: () => v(PX + 1.6, 4.4, 5), look: () => v(PX, 1.6, 0) },
     { p: at(6, 1), pos: () => v(PX + 6, 6, 9), look: () => v(PX + 6, 1.4, 0) },
     { p: at(7, 0.18), pos: () => v(DX + 15, 9.5, 16), look: () => v(DX + 1, 1.6, 0) },
-    { p: at(7, 0.62), pos: () => v(DX + 12, 7.5, 13), look: () => v(DX + 1.5, 1.8, 0) },
+    // while it loads, look over the belt through the open door, so the order of the boxes is plain
+    { p: at(7, 0.34), pos: () => v(DX - 7.5, 5.2, 2.6), look: () => v(DX + 3, 0.7, -1.6) },
+    { p: at(7, 0.64), pos: () => v(DX - 6.8, 4.9, 2.0), look: () => v(DX + 3.2, 0.7, -1.6) },
     { p: at(7, 0.82), ...follow(van.g, v(-4, 6.5, 13), v(2, 1.5, 0)) },
     { p: at(7, 1), ...follow(van.g, v(-8, 40, 12), v(10, 0, 0)) },
     { p: at(8, 0.04), pos: () => GLOBE.clone().add(v(0, 8, 80)), look: () => GLOBE.clone() },
@@ -1234,12 +1330,34 @@ export function mountOrderWorld(host: HTMLElement, opts: { reduced: boolean }): 
     ghostMat.opacity = seg(c6, 0.18, 0.28) * (1 - seg(c6, 0.36, 0.42));
     const boxIn = ease(seg(c6, 0.26, 0.4)), close = ease(seg(c6, 0.66, 0.76)), labelOn = ease(seg(c6, 0.82, 0.92));
     const c7 = L(p, 7);
-    const ride = ease(seg(c7, 0.08, 0.5)), loadIn = ease(seg(c7, 0.5, 0.62));
-    const inTruck = TRUCK_DOCK.clone().add(v(-2.6, 0.62, 0.4));
+    // 7. dispatch. The truck reverses in (0–0.30) while the dock door and its own door open (fully open by 0.32).
+    // Then one belt queue moves at a steady speed and each box is lifted into the trailer in turn: the first
+    // boxes go to the front of the trailer, ours goes in last, by the door. Doors close at 0.68–0.76; it leaves at 0.78.
+    const backIn = ease(seg(c7, 0.0, 0.3)), doorUp = seg(c7, 0.22, 0.32) * (1 - seg(c7, 0.68, 0.76)), drive = seg(c7, 0.78, 1) + (ci === 8 ? 1 : 0);
+    const truckX = lerp(DX + 28, TRUCK_DOCK.x + 0.15, backIn) + Math.pow(drive, 1.7) * 80;
+    const BELT_T0 = 0.08, ARRIVE_LAST = 0.6, GAP_T = 0.064;
+    const beltLen = CONV_END.x - CONV_START.x, speed = beltLen / (ARRIVE_LAST - BELT_T0), gap = speed * GAP_T;
+    const SLOTS = [v(1.0, 0, -0.55), v(1.0, 0, 0.55), v(-0.1, 0, -0.55), v(-0.1, 0, 0.55), v(-1.3, 0, 0)];   // in the trailer, front first
+    const loaded = (k: number, startX: number, halfH: number, out: THREE.Vector3) => {
+      const arrive = BELT_T0 + (beltLen - (startX - CONV_START.x)) / speed;      // when this box reaches the end of the belt
+      const beltX = Math.min(CONV_END.x, startX + speed * Math.max(0, c7 - BELT_T0));
+      out.set(beltX, CONV_END.y + halfH, 0);
+      const carry = ease(seg(c7, arrive, arrive + 0.05));
+      if (carry > 0) {
+        const slot = v(truckX + SLOTS[k].x, 0.5 + halfH, SLOTS[k].z);
+        const from = out.clone();
+        out.copy(from).lerp(slot, carry);
+        out.y += Math.sin(Math.PI * carry) * 0.45;                                // a short lift, not a slide
+      }
+      return out;
+    };
     const pkgPos = PACK_AT.clone().add(v(0, (1 - boxIn) * 2.4, 0));
-    if (p > CHAPTERS[7].from) pkgPos.copy(PACK_AT).lerp(CONV_START, ease(seg(c7, 0, 0.08))).lerp(CONV_END, ride).lerp(inTruck, loadIn);
+    if (p > CHAPTERS[7].from) {
+      if (c7 < BELT_T0) pkgPos.copy(PACK_AT).lerp(CONV_START, ease(seg(c7, 0, BELT_T0)));
+      else loaded(4, CONV_START.x, 0, pkgPos);
+    }
     pkg.g.position.copy(pkgPos);
-    pkg.g.visible = p > at(6, 0.24) && p < at(7, 0.75);
+    pkg.g.visible = p > at(6, 0.24) && p < at(7, 0.76);
     pkg.g.scale.setScalar(lerp(0.6, 1, boxIn));
     pkg.close(close);
     label.mesh.position.copy(v(PX + 1.65, 1.6, -0.28)).lerp(pkgPos.clone().add(v(0.15, pkg.h + 0.035, 0.05)), labelOn);
@@ -1248,19 +1366,15 @@ export function mountOrderWorld(host: HTMLElement, opts: { reduced: boolean }): 
     printLed.visible = c6 > 0.74 && c6 < 0.84 && Math.sin(time * 18) > 0;
     packer.reach(c6 > 0.4 && c6 < 0.9 ? Math.abs(Math.sin(time * 4)) * 0.6 : 0);
 
-    // 7. dispatch: the truck reverses in, loads, shuts, lights up and drives into the evening
-    const backIn = ease(seg(c7, 0.0, 0.3)), doorUp = seg(c7, 0.22, 0.32) * (1 - seg(c7, 0.68, 0.76)), drive = seg(c7, 0.78, 1) + (ci === 8 ? 1 : 0);
-    const truckX = lerp(DX + 28, TRUCK_DOCK.x + 0.15, backIn) + Math.pow(drive, 1.7) * 80;
     van.g.position.set(truckX, 0, 0);
     van.open(doorUp); van.roll(truckX); van.lights(seg(c7, 0.7, 0.8));
     const dOpen = seg(c7, 0.15, 0.25) * (1 - seg(c7, 0.76, 0.84));
     dockDoor.scale.y = Math.max(0.04, 1 - dOpen); dockDoor.position.y = 4.1 - 2.0 * dockDoor.scale.y;
     lampHeads.forEach(m => (m.emissiveIntensity = 3 * seg(p, at(6, 0.95), at(7, 0.2))));
-    extra.forEach((x, i) => {
-      const s = 0.28 + i * 0.06;
-      x.position.copy(CONV_START.clone().add(v(1.2 + i * 1.4, 0.35, 0))).lerp(CONV_END.clone().setY(1.37), ease(seg(c7, s - 0.2, s)));
-      if (c7 > s) x.position.copy(CONV_END.clone().setY(1.37)).lerp(TRUCK_DOCK.clone().add(v(-3.4 + i * 0.6, 0.86, -0.6 + (i % 2) * 1.1)), ease(seg(c7, s, s + 0.08)));
-      x.visible = c7 > 0.05 && c7 < 0.75;
+    extra.forEach((x, k) => {
+      // the four boxes ahead of ours on the belt, evenly spaced
+      loaded(k, CONV_START.x + gap * (4 - k), 0.35, x.position);
+      x.visible = ci === 7 && c7 < 0.76;
     });
 
     // 8. everywhere
