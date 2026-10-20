@@ -210,10 +210,15 @@ const total = String(chapters.length).padStart(2, '0');
       const io = new IntersectionObserver(async ([e]) => {
         if (!e.isIntersecting) return;
         io.disconnect();
-        const { mountOrderWorld } = await import('../lib/orderWorld');
-        await document.fonts?.ready;
-        world = mountOrderWorld(host, { reduced: false });
-        if (!world) root.classList.add('is-static');
+        try {
+          const { mountOrderWorld } = await import('../lib/orderWorld');
+          await document.fonts?.ready;
+          world = mountOrderWorld(host, { reduced: false });
+        } catch (err) {
+          console.warn('Order film could not start; showing the steps as text', err);
+        }
+        // no WebGL, or the 3D code failed to load: the steps read as a list instead of an empty screen
+        if (!world) { root.classList.add('is-static'); st.kill(); ScrollTrigger.refresh(); }
         else world.setProgress(progress);
       }, { rootMargin: '600px' });
       io.observe(root);
