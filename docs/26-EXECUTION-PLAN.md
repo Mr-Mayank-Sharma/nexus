@@ -223,6 +223,12 @@ Briefs, one per session, each following doc 25 section 3:
   quantities; a clean recent count lowers it; it never changes stock). Routing sorts by `reliability`; the operations
   assistant has `store_reliability` and `phantom_stock`; API `/core/network/reliability` and `/core/network/phantom-stock`.
 - 13.2 Delivery-date prediction and the availability and promise service.
+  **Status 2026-10-21: done.** `PromiseService`: for every location holding the whole order (safety stock kept back),
+  the ship date (today before the cut-off of one hour before closing, 15:00 by default, in the location's time zone,
+  and while it has capacity; otherwise the next working day), transit from the location's own deliveries to a
+  similar distance when there are at least 20 (expected = median, promise = 90th percentile), otherwise distance and
+  method rules, and a confidence that falls with phantom-stock risk or poor reliability; earliest promise first, with
+  the reasons. API `POST /core/promise`. A trained delivery model can replace the history quantiles later.
 - 13.3 Exception agent and plain-language routing with simulation and approval.
 - 13.4 Agent-ready order API (ACP and UCP) and agent-safe post-purchase changes.
 

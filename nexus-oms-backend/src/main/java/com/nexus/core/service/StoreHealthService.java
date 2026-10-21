@@ -83,11 +83,21 @@ public class StoreHealthService {
      * {@code facilityId} is given. Only pairs showing stock can be phantom.
      */
     public List<PhantomRisk> phantomStock(String facilityId, int days, int limit) {
+        return phantom(facilityId, null, days, limit);
+    }
+
+    /** Phantom risk of these products at every location (the promise service asks per order). */
+    public List<PhantomRisk> phantomStock(Set<String> productIds, int days) {
+        return productIds == null || productIds.isEmpty() ? List.of() : phantom(null, productIds, days, Integer.MAX_VALUE);
+    }
+
+    private List<PhantomRisk> phantom(String facilityId, Set<String> productIds, int days, int limit) {
         LocalDateTime now = CoreClock.now();
         LocalDateTime since = now.minusDays(days);
-        String only = facilityId == null ? "" : " AND pf.facilityId = :f";
+        String only = (facilityId == null ? "" : " AND pf.facilityId = :f") + (productIds == null ? "" : " AND pf.productId IN :p");
         var q = em.createQuery("SELECT pf.productId, pf.facilityId, pf.lastInventoryCount FROM ProductFacility pf WHERE pf.lastInventoryCount > 0" + only, Object[].class);
         if (facilityId != null) q.setParameter("f", facilityId);
+        if (productIds != null) q.setParameter("p", productIds);
         List<Object[]> shown = q.getResultList();
 
         Map<String, Long> misses = counts(em.createQuery("SELECT i.productId, i.facilityId, COUNT(d) FROM InventoryItemDetail d, InventoryItem i "
