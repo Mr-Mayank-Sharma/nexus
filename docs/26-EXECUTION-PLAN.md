@@ -159,6 +159,18 @@ the dev data: 3 units Riverside Hub to Hoboken, approved (available 3,713 to 3,7
 
 Brief: Move all schedulers to `service_job` (with run history and a run lock) and all integration queues to
 `system_message`; delete the old tables and code; update docs and counts.
+**Status 2026-10-21: the framework is done and the core runs on it; the old schedulers and tables stay until the
+screens move.** `JobService`: jobs are `service_job` rows (handler bean, six-field cron, paused), started when due,
+one server at a time through `service_job_run_lock` (expires after `expire_lock_time` minutes), every run a
+`service_job_run` with results or error; run now, pause, reschedule. Seeded jobs: `core_mirror` (every minute),
+`core_routing` (paused), `core_messages` (every 10 s), `core_auto_cancel` (every 5 minutes: expired pickup holds and
+items routing could not place in time). `MessageService`: messages from other systems are stored first and consumed
+after; the same type and idempotency key is stored once; a failure is kept as `system_message_error` and retried after
+1, 2, 4 and 8 minutes. Consumers for the WMS shipment confirmation and short pick of doc 27. API: `/core/jobs`,
+`POST /core/messages/{type}` (header `Idempotency-Key`). The mirror and routing schedulers are now jobs.
+**Not done, on purpose:** the earlier model's schedulers (`BrokeringScheduler`, `PreOrderReleaseScheduler`, the sync
+scheduler, the jobs screen) and its tables stay: every screen still reads them. They go when the screens move to the
+core, a step to take with the people who use them.
 
 ## W11. Nexus Gateway: shipping and customer messages  (after W3; separate service)
 

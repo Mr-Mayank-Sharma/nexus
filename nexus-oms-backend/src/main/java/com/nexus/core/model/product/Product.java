@@ -47,7 +47,7 @@ public class Product extends CoreEntity {
     @Column(name = "description", length = 4000)
     private String description;
 
-    @Column(name = "long_description")
+    @Column(name = "long_description", length = 1000000)
     private String longDescription;
 
     @Column(name = "small_image_url", length = 1023)

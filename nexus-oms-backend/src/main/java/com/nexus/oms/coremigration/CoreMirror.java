@@ -3,12 +3,9 @@ package com.nexus.oms.coremigration;
 import com.nexus.core.service.CoreClock;
 import com.nexus.core.service.SystemPropertyService;
 import com.nexus.oms.security.TenantContext;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.sql.Timestamp;
@@ -21,11 +18,11 @@ import java.util.UUID;
  * company whose orders changed since the last run, it copies new customers, products, locations, stock items and
  * orders, then brings status and tracking changes across to orders already copied. The earlier model stays the
  * system of record and every screen still reads it; a failure here is logged and never touches an import.
- * Off with {@code nexus.core.mirror.enabled=false}. The last run time is kept as a system property, so a restart
- * picks up what changed while the server was down.
+ * It runs as the {@code core_mirror} job (pause it there). The last run time is kept as a system property, so a
+ * restart picks up what changed while the server was down.
  */
 @Component
-public class CoreMirror {
+public class CoreMirror implements com.nexus.core.job.CoreJobHandler {
 
     private static final Logger log = LoggerFactory.getLogger(CoreMirror.class);
     static final String RESOURCE = "nexus.core";
@@ -37,36 +34,25 @@ public class CoreMirror {
     private final FacilityInventoryBackfill stock;
     private final OrderBackfill orders;
     private final SystemPropertyService properties;
-    private final boolean enabled;
 
     public CoreMirror(JdbcTemplate jdbc, CustomerPartyBackfill customers, ProductBackfill products, FacilityInventoryBackfill stock,
-                      OrderBackfill orders, SystemPropertyService properties,
-                      @Value("${nexus.core.mirror.enabled:true}") boolean enabled) {
+                      OrderBackfill orders, SystemPropertyService properties) {
         this.jdbc = jdbc;
         this.customers = customers;
         this.products = products;
         this.stock = stock;
         this.orders = orders;
         this.properties = properties;
-        this.enabled = enabled;
     }
 
     public record Run(int companies, int ordersCopied, int ordersRefreshed, int failures) {
     }
 
-    @Scheduled(fixedDelayString = "${nexus.core.mirror.interval-ms:60000}", initialDelayString = "${nexus.core.mirror.initial-delay-ms:60000}")
-    @SchedulerLock(name = "CoreMirror.run", lockAtMostFor = "PT30M", lockAtLeastFor = "PT10S")
-    public void scheduled() {
-        if (!enabled) return;
-        try {
-            Run r = runOnce();
-            if (r.ordersCopied() > 0 || r.ordersRefreshed() > 0 || r.failures() > 0) {
-                log.info("Core mirror: {} companies, {} orders copied, {} refreshed, {} failures", r.companies(), r.ordersCopied(),
-                        r.ordersRefreshed(), r.failures());
-            }
-        } catch (Exception e) {
-            log.error("Core mirror run failed: {}", e.getMessage(), e);
-        }
+    /** The core_mirror job. */
+    @Override
+    public String run(java.util.Map<String, String> parameters) {
+        Run r = runOnce();
+        return r.companies() + " companies, " + r.ordersCopied() + " orders copied, " + r.ordersRefreshed() + " refreshed, " + r.failures() + " failures";
     }
 
     /** One pass over every company whose orders changed since the last pass. */

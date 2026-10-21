@@ -65,6 +65,6 @@ public class SystemMessage extends CoreEntity {
     @Column(name = "order_id", length = 40)
     private String orderId;
 
-    @Column(name = "message_text")
+    @Column(name = "message_text", length = 1000000)
     private String messageText;
 }

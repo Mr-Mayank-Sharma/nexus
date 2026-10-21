@@ -208,6 +208,9 @@ def java_entity(e):
         nullable = ", nullable = false" if ("pk" in f[2] or "required" in f[2]) else ""
         length = re.search(r"\((\d+)\)", TYPE_MAP[f[1]][0])
         length_attr = f", length = {length.group(1)}" if length and jtype == "String" and f[1] != "indicator" else ""
+        if f[1] == "text-very-long":
+            # TEXT / LONGTEXT in the migrations; the length only sizes schemas Hibernate builds itself (H2 in tests)
+            length_attr = ", length = 1000000"
         lines.append(f'    @Column(name = "{snake(f[0])}"{nullable}{length_attr})')
         lines.append(f"    private {jtype} {f[0]};")
         body.append("\n".join(lines))

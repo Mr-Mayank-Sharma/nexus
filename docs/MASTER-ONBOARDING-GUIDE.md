@@ -770,8 +770,8 @@ public class NexusOmsApplication {
 nexus-oms-backend/
 ├── src/main/java/com/nexus/oms/
 │   ├── NexusOmsApplication.java      ← entry point
-│   ├── controller/                   ← 81 REST controllers
-│   ├── service/                      ← 150 services (business logic)
+│   ├── controller/                   ← 82 REST controllers
+│   ├── service/                      ← 152 services (business logic)
 │   ├── repository/                   ← Spring Data JPA repositories
 │   ├── entity/                       ← 319 JPA entities
 │   ├── dto/                          ← request/response objects
@@ -1133,7 +1133,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │
 ├── NexusOmsApplication.java          ← Spring Boot entry point
 │
-├── controller/                       ← 81 REST controllers (HTTP layer)
+├── controller/                       ← 82 REST controllers (HTTP layer)
 │   ├── OrderController.java          ← /api/v1/orders
 │   ├── InventoryController.java      ← /api/v1/inventory
 │   ├── ATPController.java            ← /api/v1/atp
@@ -1158,7 +1158,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │   │   └── AiAgentController.java
 │   └── ... (74 total)
 │
-├── service/                          ← 150 services (business logic)
+├── service/                          ← 152 services (business logic)
 │   ├── OrderService.java             ← order lifecycle
 │   ├── OrderRoutingService.java      ← DOM routing
 │   ├── ATPCalculationEngine.java     ← ATP math

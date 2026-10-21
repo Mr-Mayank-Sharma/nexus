@@ -34,7 +34,7 @@ public class ServiceJobRun extends CoreEntity {
     @Column(name = "parameters", length = 4000)
     private String parameters;
 
-    @Column(name = "results")
+    @Column(name = "results", length = 1000000)
     private String results;
 
     @Column(name = "messages", length = 4000)

@@ -78,6 +78,8 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `RoutingService` (`coreRoutingService`) | `createGroup`, `addRouting`, `addRule` (filters, sorts, split, actions), `activate`, `run`, `simulate` (rolls back), `reallocate`, `moveAllOff`, `history`. Field names it accepts are in `ORDER_FILTERS`, `ORDER_SORTS`, `INVENTORY_FILTERS`, `INVENTORY_SORTS`; anything else is refused with the list. |
 | `TransferService` (`coreTransferService`) | `request`, `approve` (holds), `ship` (to IN_TRANSIT), `receive` (by scan, tolerance), `settle`, `cancel`. |
 | `StoreNetworkService` (`coreStoreNetworkService`) | `lookup` with confidence, `holdForPickup`, `setSellingFacility` and `salesCredit`, `rebalance` within a cluster. |
+| `JobService` (`coreJobService`, package `core.job`) | Jobs as `service_job` rows: a handler bean implementing `CoreJobHandler`, a six-field cron, paused or not. `runJob`, `setPaused`, `setSchedule`, `jobs`, `runs`. Off with `nexus.core.jobs.enabled=false` (tests). |
+| `MessageService` (`coreMessageService`) | `receive` (idempotent by type and key), `consume`, `consumeDue` with retries; a type's `consume_service_name` names a `CoreMessageHandler` bean. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
@@ -94,6 +96,7 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `FulfilmentReturnTest` | A two-box WMS confirmation, partial shipping, a store picklist with a short pick, and a return with restock, hold, reject and refund. |
 | `RoutingServiceTest` | Whole order first, split, no-split stores parking orders, full and excluded locations, next rule, substitutes, broken size runs, sales velocity, simulation, manual and bulk moves. |
 | `StoreNetworkTest` | A two-line transfer with stock checked at every step, short receipts within and past the tolerance and their settlement, cancel, lookup confidence, pickup holds, sales credit, rebalancing. |
+| `JobsMessagesTest` | Every seeded job and message type has its handler; one run at a time; pause and schedule checks; auto-cancel; WMS confirmation stored once and consumed; a bad message kept and retried; a short pick back to routing. |
 | `CoreBoundaryTest`, `CoreModelUpToDateTest` | The core stays separate; generated files match the spec. |
 
 ## Copying legacy data
@@ -137,6 +140,8 @@ development database it copied 4,934 customers.
 - With `hibernate.order_inserts`, a copy that flushes once per chunk has its inserts grouped by entity type, not in
   the order they were made. A row that a later entity points at (a guest party, a new address) needs an `em.flush()`
   right after it is created, or PostgreSQL rejects the foreign key. H2 in the tests did not catch this; the dev run did.
+- `text-very-long` fields carry `length = 1000000` in JPA: the migrations make them TEXT or LONGTEXT, but the tests'
+  H2 schema comes from the entities and would otherwise make them 255 characters.
 - `return` is a Java keyword: the return entities live in the `returns` package.
 - Bulk copies read what exists once, keep lookups in memory, and flush once per chunk; per-row queries made the
   product copy 30 times slower.

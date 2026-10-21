@@ -509,6 +509,19 @@ rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "de
      "Percent of an order's sales credit the selling store keeps when another store fulfils it"),
 ])
 
+# ── jobs and messages (W10) ──
+W10_SEED_START = len(SEED)
+rows("service_job", ["job_name", "description", "service_name", "cron_expression", "paused", "expire_lock_time", "priority"], [
+    ("core_mirror", "Copy what changed in the earlier model into the core", "coreMirror", "0 * * * * *", "N", 30, 5),
+    ("core_routing", "Run each routing group whose schedule is due", "coreRoutingJob", "0 * * * * *", "Y", 30, 5),
+    ("core_messages", "Consume messages received from other systems", "coreMessageService", "*/10 * * * * *", "N", 10, 1),
+    ("core_auto_cancel", "Cancel order items past their cancel date (expired pickup holds, unroutable items)", "coreAutoCancelJob", "0 */5 * * * *", "N", 10, 5),
+])
+rows("system_message_type", ["system_message_type_id", "description", "consume_service_name"], [
+    ("WMS_SHIPMENT_CONFIRMATION", "A WMS shipped part of an order (doc 27, 3.4)", "coreWmsShipmentConsumer"),
+    ("WMS_SHORT_PICK", "A WMS could not find stock it held for an order (doc 27, 3.3)", "coreWmsShortPickConsumer"),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
@@ -517,5 +530,6 @@ SEED_MIGRATIONS = [
     (10, "core_order_seed", SEED[W7_SEED_START:W8_SEED_START]),
     (12, "core_fulfilment_return_seed", SEED[W8_SEED_START:W9_SEED_START]),
     (14, "core_routing_seed", SEED[W9_SEED_START:W9B_SEED_START]),
-    (15, "core_store_network_seed", SEED[W9B_SEED_START:]),
+    (15, "core_store_network_seed", SEED[W9B_SEED_START:W10_SEED_START]),
+    (17, "core_jobs_messages_seed", SEED[W10_SEED_START:]),
 ]

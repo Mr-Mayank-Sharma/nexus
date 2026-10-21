@@ -53,7 +53,7 @@ public class OrderRoutingRun extends CoreEntity {
     @Column(name = "items_substituted")
     private Long itemsSubstituted;
 
-    @Column(name = "summary")
+    @Column(name = "summary", length = 1000000)
     private String summary;
 
     @Column(name = "created_by_user_login", length = 40)
