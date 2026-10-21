@@ -21,6 +21,7 @@ public final class CoreTestData {
             {"db/core/common/V15__core_store_network_seed.sql", "SELECT COUNT(*) FROM facility WHERE facility_id = 'IN_TRANSIT'"},
             {"db/core/common/V17__core_jobs_messages_seed.sql", "SELECT COUNT(*) FROM service_job WHERE job_name = 'core_mirror'"},
             {"db/core/common/V18__core_gateway_seed.sql", "SELECT COUNT(*) FROM enumeration WHERE enum_id = 'GATEWAY_URL'"},
+            {"db/core/common/V20__core_ai_seed.sql", "SELECT COUNT(*) FROM ai_action_policy WHERE action_type = 'REALLOCATE'"},
     };
 
     private CoreTestData() {

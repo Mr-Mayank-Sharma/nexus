@@ -198,6 +198,19 @@ Brief: Following doc 25 sections 2 and 4.1: `LlmGateway` (Anthropic Messages API
 masking, prompt caching), proposals with an approval queue and per-client policy, audit and undo, an evaluation
 harness, and the AI scorecard on order replay. Re-point the existing AI order suggestions to it.
 Done when: one agent (operations assistant, read-only) works end to end with audit, and the evaluation runs in CI.
+**Status 2026-10-21: built and tested; the live run waits for an Anthropic key.** Core package `core.ai`:
+`LlmProvider` (provider-neutral) with `AnthropicProvider` (Messages API, tools, system prompt and tools marked for
+prompt caching, retries on 429/5xx/529 honouring retry-after, no retry on a bad request, key only from
+`ANTHROPIC_API_KEY`); `Masker` (emails, phones and tool-marked names become tokens before leaving the OMS, restored in
+the answer); `AgentRunner` (tool loop, step limit, "Not verified:" when no tool result backs an answer, daily token
+budget per agent, cost from per-model prices, every run an `ai_agent_run` with the masked question, tools and
+answer); `OperationsAssistant` (read-only: find_order, order_counts, stuck_orders, stock_lookup, location_problems,
+list_locations, model `claude-sonnet-5-5` by default); `ProposalService` (AI changes only as proposals; policy ASK,
+AUTO or AUTO_UNDER_LIMIT with a daily cap; applied through the routing and order services; undo by compensating
+action; a failed apply is kept with its reason). API `/core/ai` (assistant, runs, proposals, policies). The
+evaluation (`OperationsAssistantEvalTest`) runs in CI with a scripted model: the right tools, the right facts, no
+customer detail sent, grounded, audited. Not done: the AI scorecard on order replay, and re-pointing the earlier AI
+suggestions (they change live screens; with the screen move).
 
 ## W13. AI features  (after W6 for 13.1; after W9 for the rest)
 

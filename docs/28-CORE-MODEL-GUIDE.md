@@ -91,6 +91,14 @@ keeps only `GATEWAY_URL`, `GATEWAY_API_KEY` (encrypted with the OMS credential v
 `GatewayService.label(shipmentId, ...)` sends the shipment's boxes and addresses and records tracking and reprint links
 with `ShipmentService.recordLabels`; `ship` keeps them.
 
+## AI
+
+Language-model work goes through `core.ai` (doc 25). A new agent is an `AgentRunner.Agent`: a name, a model, a system
+prompt, and tools whose handlers read the core (in read-only transactions for read-only agents) and mark personal
+names with `masker.name(...)`. Changes are never made by a tool directly: a tool calls `ProposalService.propose`, and the
+action's policy decides. Add a new action type with a policy row and a case in `ProposalService.run` and `undoFor`.
+Test an agent with `ScriptedProvider`: it plays the model's turns and keeps what would have been sent.
+
 ## Tests
 
 | Test | Proves |
@@ -104,6 +112,7 @@ with `ShipmentService.recordLabels`; `ship` keeps them.
 | `RoutingServiceTest` | Whole order first, split, no-split stores parking orders, full and excluded locations, next rule, substitutes, broken size runs, sales velocity, simulation, manual and bulk moves. |
 | `StoreNetworkTest` | A two-line transfer with stock checked at every step, short receipts within and past the tolerance and their settlement, cancel, lookup confidence, pickup holds, sales credit, rebalancing. |
 | `JobsMessagesTest` | Every seeded job and message type has its handler; one run at a time; pause and schedule checks; auto-cancel; WMS confirmation stored once and consumed; a bad message kept and retried; a short pick back to routing. |
+| `OperationsAssistantEvalTest`, `AnthropicProviderTest`, `ProposalServiceTest` | The assistant's evaluation cases (tools, facts, masking, grounding, audit, budget); the Anthropic call shape, caching marks and retries; proposals asked, applied, undone, failed, refused. |
 | `CoreBoundaryTest`, `CoreModelUpToDateTest` | The core stays separate; generated files match the spec. |
 
 ## Copying legacy data

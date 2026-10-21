@@ -530,6 +530,29 @@ rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "de
     ("GATEWAY_CARRIER", "PRODUCT_STORE_SETTING", "GATEWAY_CARRIER", 9, "Carrier the store uses unless a shipment names another"),
 ])
 
+# ── ai (W12) ──
+W12_SEED_START = len(SEED)
+rows("status_type", ["status_type_id", "description"], [("AI_PROPOSAL_STATUS", "AI proposal status")])
+rows("status_item", ["status_id", "status_type_id", "status_code", "sequence_num", "description"], [
+    ("AIP_PENDING", "AI_PROPOSAL_STATUS", "PENDING", 1, "Waiting for approval"), ("AIP_APPLIED", "AI_PROPOSAL_STATUS", "APPLIED", 2, "Applied"),
+    ("AIP_REJECTED", "AI_PROPOSAL_STATUS", "REJECTED", 3, "Rejected"), ("AIP_FAILED", "AI_PROPOSAL_STATUS", "FAILED", 4, "Could not be applied"),
+    ("AIP_UNDONE", "AI_PROPOSAL_STATUS", "UNDONE", 5, "Undone"), ("AIP_EXPIRED", "AI_PROPOSAL_STATUS", "EXPIRED", 6, "Expired"),
+])
+rows("status_flow_item", ["status_flow_id", "status_id", "is_initial"], [
+    (FLOW, "AIP_PENDING", "Y"), (FLOW, "AIP_APPLIED", "N"), (FLOW, "AIP_REJECTED", "N"), (FLOW, "AIP_FAILED", "N"), (FLOW, "AIP_UNDONE", "N"), (FLOW, "AIP_EXPIRED", "N"),
+])
+rows("status_flow_transition", ["status_flow_id", "status_id", "to_status_id", "transition_sequence", "transition_name"], [
+    (FLOW, "AIP_PENDING", "AIP_APPLIED", 1, "Apply"), (FLOW, "AIP_PENDING", "AIP_REJECTED", 2, "Reject"),
+    (FLOW, "AIP_PENDING", "AIP_FAILED", 3, "Fail"), (FLOW, "AIP_PENDING", "AIP_EXPIRED", 4, "Expire"),
+    (FLOW, "AIP_APPLIED", "AIP_UNDONE", 1, "Undo"),
+])
+rows("ai_action_policy", ["action_type", "description", "risk_level", "approval_mode", "limit_amount", "daily_limit"], [
+    ("REALLOCATE", "Move a ship group to another location", "MEDIUM", "ASK", None, 200),
+    ("HOLD_ORDER", "Put an order on hold", "LOW", "ASK", None, 500),
+    ("RELEASE_HOLD", "Release an order from hold", "MEDIUM", "ASK", None, 200),
+    ("CANCEL_ITEM", "Cancel what is left of an item", "HIGH", "ASK", None, 50),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
@@ -540,5 +563,6 @@ SEED_MIGRATIONS = [
     (14, "core_routing_seed", SEED[W9_SEED_START:W9B_SEED_START]),
     (15, "core_store_network_seed", SEED[W9B_SEED_START:W10_SEED_START]),
     (17, "core_jobs_messages_seed", SEED[W10_SEED_START:W11_SEED_START]),
-    (18, "core_gateway_seed", SEED[W11_SEED_START:]),
+    (18, "core_gateway_seed", SEED[W11_SEED_START:W12_SEED_START]),
+    (20, "core_ai_seed", SEED[W12_SEED_START:]),
 ]

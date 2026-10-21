@@ -1429,6 +1429,52 @@ entity("ExcludedOrderFacility", "routing", "A location an order item must not be
     ("thruDate", "date-time", []),
 ], indexes=[["facilityId"]])
 
+# ───────────────────────────── ai: agent runs, proposals, policies (W12) ─────────────────────────────
+
+entity("AiAgentRun", "ai", "One run of an AI agent: who asked, which model, the tools it called, its answer, tokens and cost.", [
+    ("aiRunId", "id", [PK]),
+    ("agentName", "text-short", [REQ]),
+    ("userId", "id", []),
+    ("modelId", "text-medium", []),
+    ("question", "text-very-long", []),
+    ("toolCalls", "text-very-long", []),
+    ("answer", "text-very-long", []),
+    ("grounded", "indicator", []),
+    ("statusId", "text-short", [REQ]),
+    ("errorText", "text-long", []),
+    ("inputTokens", "number-integer", []),
+    ("outputTokens", "number-integer", []),
+    ("cacheReadTokens", "number-integer", []),
+    ("cacheWriteTokens", "number-integer", []),
+    ("costMicros", "number-integer", []),
+    ("startedAt", "date-time", [REQ]),
+    ("endedAt", "date-time", []),
+], indexes=[["agentName", "startedAt"]])
+entity("AiActionPolicy", "ai", "How an AI action type is approved: always ask, apply automatically, or apply under a limit.", [
+    ("actionType", "text-short", [PK]),
+    ("description", "text-medium", []),
+    ("riskLevel", "text-short", [REQ]),
+    ("approvalMode", "text-short", [REQ, AUDIT]),
+    ("limitAmount", "currency-amount", [AUDIT]),
+    ("dailyLimit", "number-integer", []),
+])
+entity("AiProposal", "ai", "A change an AI proposed: what, why, its policy decision, who approved it, and how to undo it.", [
+    ("proposalId", "id", [PK]),
+    ("aiRunId", "id", [fk("AiAgentRun")]),
+    ("actionType", "text-short", [REQ, fk("AiActionPolicy")]),
+    ("orderId", "id", []),
+    ("payload", "text-very-long", [REQ]),
+    ("reason", "text-long", []),
+    ("amount", "currency-amount", []),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("decidedBy", "id", []),
+    ("decidedAt", "date-time", []),
+    ("appliedAt", "date-time", []),
+    ("result", "text-long", []),
+    ("undoPayload", "text-very-long", []),
+    ("createdAt", "date-time", [REQ]),
+], indexes=[["statusId", "createdAt"], ["orderId"]])
+
 MIGRATIONS = [
     (1, "core_framework", _W3),
     (3, "core_party", [e["name"] for e in ENTITIES if e["package"] == "party"]),
@@ -1438,4 +1484,5 @@ MIGRATIONS = [
     (11, "core_fulfilment_return", [e["name"] for e in ENTITIES if e["package"] in ("shipment", "returns")]),
     (13, "core_routing", [e["name"] for e in ENTITIES if e["package"] == "routing"]),
     (16, "core_transfer_shipment", []),
+    (19, "core_ai", [e["name"] for e in ENTITIES if e["package"] == "ai"]),
 ]
