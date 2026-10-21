@@ -3,7 +3,6 @@ package com.nexus.core.service;
 import com.nexus.core.model.inventory.InventoryItem;
 import com.nexus.core.model.inventory.InventoryItemDetail;
 import com.nexus.core.model.inventory.InventoryItemVariance;
-import com.nexus.core.model.inventory.InventoryTransfer;
 import com.nexus.core.model.inventory.Lot;
 import com.nexus.core.model.inventory.PhysicalInventory;
 import com.nexus.core.model.inventory.ProductFacility;
@@ -24,22 +23,19 @@ import java.util.Map;
  * row saying how on hand (QOH) and available to promise (ATP) moved, why, and for which order, shipment or count.
  * Reserving for an order lowers ATP only; shipping then lowers QOH. Bulk stock is one item per product and facility.
  * {@code ProductFacility.lastInventoryCount} follows ATP so routing can read stock per facility in one row.
+ * Transfers between facilities are in {@link TransferService}.
  */
 @Service("coreInventoryService")
 @Transactional
 public class InventoryService {
 
     public static final String BULK = "NON_SERIAL_INV_ITEM";
-    public static final String TRANSFER_FLOW = StatusService.DEFAULT_FLOW;
 
     private final EntityManager em;
     private final SequenceService sequences;
-    private final StatusService statuses;
-
-    public InventoryService(EntityManager em, SequenceService sequences, StatusService statuses) {
+    public InventoryService(EntityManager em, SequenceService sequences) {
         this.em = em;
         this.sequences = sequences;
-        this.statuses = statuses;
     }
 
     /** What caused a change: any of these may be null. */
@@ -233,56 +229,6 @@ public class InventoryService {
         pf.setComputedLastInventoryCount(sellable(pf));
     }
 
-    // ── transfers between facilities ──
-
-    /** Asks to move stock from one facility to another; nothing moves until it is approved. */
-    public String requestTransfer(String productId, String fromFacilityId, String toFacilityId, BigDecimal quantity, String comments) {
-        positive(quantity);
-        if (fromFacilityId.equals(toFacilityId)) throw new IllegalArgumentException("A transfer goes to a different facility");
-        InventoryTransfer t = new InventoryTransfer();
-        t.setInventoryTransferId(sequences.nextId("InventoryTransfer"));
-        t.setStatusId(statuses.initialStatus(TRANSFER_FLOW, "INVENTORY_XFER_STATUS"));
-        t.setInventoryItemId(bulkItem(productId, fromFacilityId).getInventoryItemId());
-        t.setFacilityId(fromFacilityId);
-        t.setFacilityIdTo(toFacilityId);
-        t.setQuantity(quantity);
-        t.setComments(comments);
-        em.persist(t);
-        return t.getInventoryTransferId();
-    }
-
-    /** Approving holds the stock at the sending facility. */
-    public void approveTransfer(String transferId) {
-        InventoryTransfer t = transfer(transferId, "IXF_SCHEDULED");
-        reserve(productOf(t), t.getFacilityId(), t.getQuantity(), Cause.note("Transfer " + transferId));
-        t.setStatusId("IXF_SCHEDULED");
-    }
-
-    /** Shipping takes it off the sending facility's shelf; it is now in transit. */
-    public void shipTransfer(String transferId) {
-        InventoryTransfer t = transfer(transferId, "IXF_EN_ROUTE");
-        InventoryItem i = bulkItem(productOf(t), t.getFacilityId());
-        change(i, t.getQuantity().negate(), BigDecimal.ZERO, "IID_TRANSFER_OUT", Cause.note("Transfer " + transferId));
-        t.setSendDate(CoreClock.now());
-        t.setStatusId("IXF_EN_ROUTE");
-    }
-
-    /** Receiving adds what actually arrived at the receiving facility. */
-    public void receiveTransfer(String transferId, BigDecimal received) {
-        InventoryTransfer t = transfer(transferId, "IXF_COMPLETE");
-        BigDecimal q = received == null ? t.getQuantity() : received;
-        if (q.signum() > 0) receive(productOf(t), t.getFacilityIdTo(), q, null, null, "IID_TRANSFER_IN", Cause.note("Transfer " + transferId));
-        t.setReceiveDate(CoreClock.now());
-        t.setStatusId("IXF_COMPLETE");
-    }
-
-    /** Cancelling an approved transfer gives the held stock back. */
-    public void cancelTransfer(String transferId) {
-        InventoryTransfer t = transfer(transferId, "IXF_CANCELLED");
-        if ("IXF_SCHEDULED".equals(t.getStatusId())) release(productOf(t), t.getFacilityId(), t.getQuantity(), Cause.note("Transfer " + transferId + " cancelled"));
-        t.setStatusId("IXF_CANCELLED");
-    }
-
     // ── internals ──
 
     private InventoryItemDetail change(InventoryItem i, BigDecimal onHandDiff, BigDecimal availableDiff, String reasonEnumId, Cause cause) {
@@ -334,17 +280,6 @@ public class InventoryService {
         BigDecimal atp = pf.getLastInventoryCount() == null ? BigDecimal.ZERO : pf.getLastInventoryCount();
         BigDecimal v = pf.getMinimumStock() == null ? atp : atp.subtract(pf.getMinimumStock());
         return v.signum() < 0 ? BigDecimal.ZERO : v;
-    }
-
-    private InventoryTransfer transfer(String transferId, String toStatusId) {
-        InventoryTransfer t = em.find(InventoryTransfer.class, transferId, LockModeType.PESSIMISTIC_WRITE);
-        if (t == null) throw new IllegalArgumentException("Unknown transfer " + transferId);
-        statuses.requireAllowed(TRANSFER_FLOW, t.getStatusId(), toStatusId);
-        return t;
-    }
-
-    private String productOf(InventoryTransfer t) {
-        return em.find(InventoryItem.class, t.getInventoryItemId()).getProductId();
     }
 
     private static void positive(BigDecimal quantity) {

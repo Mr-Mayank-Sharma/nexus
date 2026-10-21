@@ -47,4 +47,10 @@ public class InventoryTransfer extends CoreEntity {
 
     @Column(name = "comments", length = 4000)
     private String comments;
+
+    @Column(name = "shipment_id", length = 40)
+    private String shipmentId;
+
+    @Column(name = "shipment_item_seq_id", length = 40)
+    private String shipmentItemSeqId;
 }

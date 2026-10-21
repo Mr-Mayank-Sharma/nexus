@@ -61,7 +61,7 @@ class CoreOnPostgresAppTest {
 
     @Test
     void startsWithBothSchemasAndTheSeededOrderFlow() {
-        assertEquals(14, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
+        assertEquals(16, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
         assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success", Long.class) >= 75, "legacy migrations ran too");
         assertEquals("ORDER_CREATED", statuses.initialStatus(null, "ORDER_STATUS"));
         assertTrue(statuses.isAllowed(null, "ORDER_HOLD", "ORDER_APPROVED"));

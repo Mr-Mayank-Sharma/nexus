@@ -18,6 +18,7 @@ public final class CoreTestData {
             {"db/core/common/V10__core_order_seed.sql", "SELECT COUNT(*) FROM order_type WHERE order_type_id = 'SALES_ORDER'"},
             {"db/core/common/V12__core_fulfilment_return_seed.sql", "SELECT COUNT(*) FROM shipment_type WHERE shipment_type_id = 'SALES_SHIPMENT'"},
             {"db/core/common/V14__core_routing_seed.sql", "SELECT COUNT(*) FROM status_item WHERE status_id = 'ROUTING_ACTIVE'"},
+            {"db/core/common/V15__core_store_network_seed.sql", "SELECT COUNT(*) FROM facility WHERE facility_id = 'IN_TRANSIT'"},
     };
 
     private CoreTestData() {

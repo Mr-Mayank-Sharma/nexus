@@ -142,6 +142,18 @@ routing, the full transfer lifecycle on `inventory_transfer` and transfer shipme
 receive by scan with tolerance-based settlement, sales credit split (selling and fulfilling store on the order),
 and rebalancing suggestions within store clusters.
 Done when: a transfer runs end to end in the browser with stock correct at every step, including a short receipt.
+**Status 2026-10-21: done on the core model; checked in the browser.** `TransferService`: a transfer is a TRANSFER
+shipment with one `inventory_transfer` per product (V16 adds `shipment_id`, the first column added to a released table;
+the generator now supports `added(n)`). Approve holds the stock at once; ship moves it to the `IN_TRANSIT` location
+(owned, never for sale); receive by scan puts what arrived on sale; a shortfall within the tolerance (system properties
+`transfer.tolerancePct`, default 2, and `transfer.toleranceUnits`, default 0) settles itself as `VAR_TRANSIT_LOSS`, a
+bigger one waits in `IXF_RECEIVED_SHORT` for `settle` (found units on sale, the rest written off). `StoreNetworkService`:
+lookup across stores with HIGH/MEDIUM/LOW confidence and its reasons (how many left, when last counted, recent failures
+to find it), holds for pickup at another store, sales credit split by the store setting `SALES_CREDIT_SELLING_PCT`, and
+rebalancing suggestions inside a store cluster where margin beats `transfer.costPerUnit`. Routing now respects
+`MAX_SPLIT_LOCATIONS`. Screen: Administration > Store network (`/store-network`, on `/core/network`). Browser check on
+the dev data: 3 units Riverside Hub to Hoboken, approved (available 3,713 to 3,710), shipped (in transit 3), received 2
+(Hoboken 2 on sale), the missing unit written off; in transit back to 0. Not done: Shopify POS receiving of transfers.
 
 ## W10. Jobs and messages on the new framework, then remove old tables  (after W9)
 

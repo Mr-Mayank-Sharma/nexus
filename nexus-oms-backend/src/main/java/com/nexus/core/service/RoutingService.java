@@ -62,15 +62,17 @@ public class RoutingService {
     private final StatusService statuses;
     private final OrderService orders;
     private final FacilityService facilities;
+    private final ProductStoreService stores;
     private final TransactionTemplate tx;
 
     public RoutingService(EntityManager em, SequenceService sequences, StatusService statuses, OrderService orders,
-                          FacilityService facilities, TransactionTemplate tx) {
+                          FacilityService facilities, ProductStoreService stores, TransactionTemplate tx) {
         this.em = em;
         this.sequences = sequences;
         this.statuses = statuses;
         this.orders = orders;
         this.facilities = facilities;
+        this.stores = stores;
         this.tx = tx;
     }
 
@@ -266,6 +268,7 @@ public class RoutingService {
     private RunResult routeGroup(OrderRoutingGroup g, String runId, boolean simulate, String userId) {
         ProductStore store = em.find(ProductStore.class, g.getProductStoreId());
         boolean storeAllowsSplit = store == null || !Boolean.FALSE.equals(store.getAllowSplit());
+        long maxLocations = store == null ? Long.MAX_VALUE : stores.settingLong(store.getProductStoreId(), "MAX_SPLIT_LOCATIONS", Long.MAX_VALUE);
         List<Decision> decisions = new ArrayList<>();
         int[] c = new int[5];   // considered, routed, split, unfillable, substituted
         Set<String> done = new HashSet<>();
@@ -279,7 +282,7 @@ public class RoutingService {
                 String key = sg.getOrderId() + "|" + sg.getShipGroupSeqId();
                 if (!done.add(key)) continue;   // an earlier routing in this run already handled it
                 c[0]++;
-                Decision d = routeShipGroup(sg, rules, storeAllowsSplit, runId, userId, c);
+                Decision d = routeShipGroup(sg, rules, storeAllowsSplit, maxLocations, runId, userId, c);
                 decisions.add(d);
             }
         }
@@ -346,7 +349,8 @@ public class RoutingService {
         return m;
     }
 
-    private Decision routeShipGroup(OrderItemShipGroup sg, List<OrderRoutingRule> rules, boolean storeAllowsSplit, String runId, String userId, int[] c) {
+    private Decision routeShipGroup(OrderItemShipGroup sg, List<OrderRoutingRule> rules, boolean storeAllowsSplit, long maxLocations, String runId,
+                                    String userId, int[] c) {
         String orderId = sg.getOrderId();
         String from = sg.getFacilityId();
         List<String> notes = new ArrayList<>();
@@ -383,7 +387,9 @@ public class RoutingService {
             if ("ORA_MULTI".equals(rule.getAssignmentEnumId()) && storeAllowsSplit && !Boolean.FALSE.equals(sg.getMaySplit()) && need.size() > 1) {
                 Map<String, List<OrderItem>> plan = splitPlan(need, places);
                 Set<OrderItem> covered = plan.values().stream().flatMap(List::stream).collect(Collectors.toSet());
-                if (plan.size() > 1 || (plan.size() == 1 && covered.size() < need.size())) {
+                if (plan.size() > maxLocations) {
+                    notes.add("a split needs " + plan.size() + " locations; the store allows " + maxLocations);
+                } else if (plan.size() > 1 || (plan.size() == 1 && covered.size() < need.size())) {
                     List<String> used = new ArrayList<>();
                     boolean allCovered = covered.size() == need.size();
                     String biggest = plan.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).map(Map.Entry::getKey).orElseThrow();

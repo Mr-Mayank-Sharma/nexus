@@ -491,6 +491,24 @@ rows("facility", ["facility_id", "facility_type_id", "facility_name", "descripti
     ("REVIEW_PARKING", "VIRTUAL_FACILITY", "Needs review", "Orders a person should look at before routing"),
 ])
 
+# ── store network (W9b) ──
+W9B_SEED_START = len(SEED)
+rows("facility", ["facility_id", "facility_type_id", "facility_name", "description"], [
+    ("IN_TRANSIT", "IN_TRANSIT", "In transit", "Stock moving between locations: it has an owner and nobody reorders it"),
+])
+rows("status_item", ["status_id", "status_type_id", "status_code", "sequence_num", "description"], [
+    ("IXF_RECEIVED_SHORT", "INVENTORY_XFER_STATUS", "RECEIVED_SHORT", 6, "Received with a difference; waiting for a decision"),
+])
+rows("status_flow_item", ["status_flow_id", "status_id", "is_initial"], [(FLOW, "IXF_RECEIVED_SHORT", "N")])
+rows("status_flow_transition", ["status_flow_id", "status_id", "to_status_id", "transition_sequence", "transition_name"], [
+    (FLOW, "IXF_EN_ROUTE", "IXF_RECEIVED_SHORT", 2, "Receive short"), (FLOW, "IXF_RECEIVED_SHORT", "IXF_COMPLETE", 1, "Settle"),
+])
+rows("variance_reason", ["variance_reason_id", "description"], [("VAR_TRANSIT_LOSS", "Lost or damaged in transit")])
+rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "description"], [
+    ("SALES_CREDIT_SELLING_PCT", "PRODUCT_STORE_SETTING", "SALES_CREDIT_SELLING_PCT", 6,
+     "Percent of an order's sales credit the selling store keeps when another store fulfils it"),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
@@ -498,5 +516,6 @@ SEED_MIGRATIONS = [
     (8, "core_facility_inventory_seed", SEED[W6_SEED_START:W7_SEED_START]),
     (10, "core_order_seed", SEED[W7_SEED_START:W8_SEED_START]),
     (12, "core_fulfilment_return_seed", SEED[W8_SEED_START:W9_SEED_START]),
-    (14, "core_routing_seed", SEED[W9_SEED_START:]),
+    (14, "core_routing_seed", SEED[W9_SEED_START:W9B_SEED_START]),
+    (15, "core_store_network_seed", SEED[W9B_SEED_START:]),
 ]

@@ -230,6 +230,7 @@ export function getModulesForRole(role: string): WorkspaceModule[] {
       section: 'Administration', id: 'admin-group', label: 'Administration', path: '/settings', icon: 'Settings',
       children: [
         { id: 'locations', label: 'Locations', path: '/locations', icon: 'Building2' },
+        { id: 'store-network', label: 'Store network', path: '/store-network', icon: 'ArrowRightLeft' },
         { id: 'users', label: 'Users & Roles', path: '/users', icon: 'UserCog' },
         { id: 'settings', label: 'Settings', path: '/settings', icon: 'Settings' },
         { id: 'audit', label: 'Audit & Compliance', path: '/audit', icon: 'Shield' },

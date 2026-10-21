@@ -69,6 +69,16 @@ def fk_target(e, field):
     return None
 
 
+def added_in(f):
+    """The migration a field was added in, or None for a field of the table's first version."""
+    for opt in f[2]:
+        if isinstance(opt, tuple) and opt[0] == "added":
+            if "required" in f[2] or "pk" in f[2]:
+                raise SystemExit(f"{f[0]}: a column added later must be nullable and not part of the key")
+            return opt[1]
+    return None
+
+
 def short(name, limit=60):
     """Constraint names: unique, at most 60 characters (MySQL allows 64)."""
     if len(name) <= limit:
@@ -83,6 +93,8 @@ def ddl(e, vendor):
     col = 0 if vendor == "postgresql" else 1
     lines = []
     for f in e["fields"]:
+        if added_in(f) is not None:
+            continue   # added by its own migration
         sqltype = TYPE_MAP[f[1]][col]
         notnull = " NOT NULL" if ("pk" in f[2] or "required" in f[2]) else ""
         lines.append(f"    {snake(f[0])} {sqltype}{notnull}")
@@ -100,10 +112,15 @@ def ddl(e, vendor):
     return out
 
 
-def fks(e):
+def fks(e, only=None):
+    """Foreign keys of the table's first version, or (only=[fields]) of the given added fields."""
     t = snake(e["name"])
     out = []
     for f in e["fields"]:
+        if only is None and added_in(f) is not None:
+            continue
+        if only is not None and f[0] not in only:
+            continue
         tgt = fk_target(e, f)
         if tgt:
             target, tfield = tgt
@@ -123,9 +140,15 @@ def migration_sql(version, name, entity_names, vendor):
     for e in ents:
         parts.append("\n-- " + e["doc"] + "\n")
         parts.append("\n".join(ddl(e, vendor)) + "\n")
+    later = [(e, f) for e in ENTITIES for f in e["fields"] if added_in(f) == version]
+    if later:
+        parts.append("\n-- Columns added to tables released earlier.\n")
+        for e, f in later:
+            parts.append(f"ALTER TABLE {snake(e['name'])} ADD COLUMN {snake(f[0])} {TYPE_MAP[f[1]][0 if vendor == 'postgresql' else 1]};\n")
     parts.append("\n-- Foreign keys, added after every table exists.\n")
-    for e in ents:
-        for line in fks(e):
+    fk_sets = [(e, None) for e in ents] + [(e, [f[0]]) for e, f in later]
+    for e, only in fk_sets:
+        for line in fks(e, only):
             if line.startswith("--pg-only "):
                 if vendor == "postgresql":
                     parts.append(line[len("--pg-only "):] + "\n")

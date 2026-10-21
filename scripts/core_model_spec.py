@@ -27,6 +27,12 @@ def fk(entity, field=None):
     return ("fk", entity, field)
 
 
+def added(version):
+    """A column added to a released table by a later migration: it stays out of the table's original DDL (released
+    files never change) and migration `version` adds it with ALTER TABLE. Added columns are nullable."""
+    return ("added", version)
+
+
 ENTITIES = []
 
 
@@ -908,6 +914,8 @@ entity("InventoryTransfer", "inventory", "Stock moving from one facility to anot
     ("sendDate", "date-time", []),
     ("receiveDate", "date-time", []),
     ("comments", "text-long", []),
+    ("shipmentId", "id", [fk("Shipment"), added(16)]),
+    ("shipmentItemSeqId", "id", [added(16)]),
 ], indexes=[["facilityIdTo", "statusId"]])
 
 # ───────────────────────────── order: header, items, ship groups, reservations, money (W7) ─────────────────────────────
@@ -1429,4 +1437,5 @@ MIGRATIONS = [
     (9, "core_order", [e["name"] for e in ENTITIES if e["package"] == "order"]),
     (11, "core_fulfilment_return", [e["name"] for e in ENTITIES if e["package"] in ("shipment", "returns")]),
     (13, "core_routing", [e["name"] for e in ENTITIES if e["package"] == "routing"]),
+    (16, "core_transfer_shipment", []),
 ]

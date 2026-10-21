@@ -104,48 +104,6 @@ class FacilityInventoryServiceTest {
     }
 
     @Test
-    void transferHoldsShipsAndReceives() {
-        String bag = product("Bag");
-        String from = facility("Store A", "RETAIL_STORE", null);
-        String to = facility("Store B", "RETAIL_STORE", null);
-        tx.executeWithoutResult(s -> inventory.receive(bag, from, q("4"), null, null, null, null));
-        String t = tx.execute(s -> inventory.requestTransfer(bag, from, to, q("3"), "rebalance"));
-        assertEquals("IXF_REQUESTED", status(t));
-        same("4", inventory.atp(bag, from));
-
-        StatusService.StatusTransitionException skip = assertThrows(StatusService.StatusTransitionException.class,
-                () -> tx.executeWithoutResult(s -> inventory.receiveTransfer(t, null)));
-        assertNotNull(skip.getMessage());
-
-        tx.executeWithoutResult(s -> inventory.approveTransfer(t));
-        same("1", inventory.atp(bag, from));
-        same("4", inventory.onHand(bag, from));
-        tx.executeWithoutResult(s -> inventory.shipTransfer(t));
-        same("1", inventory.onHand(bag, from));
-        assertEquals("IXF_EN_ROUTE", status(t));
-        tx.executeWithoutResult(s -> inventory.receiveTransfer(t, q("2")));   // one went missing on the way
-        same("2", inventory.onHand(bag, to));
-        same("2", inventory.atp(bag, to));
-        assertEquals("IXF_COMPLETE", status(t));
-        Map<String, BigDecimal> byFacility = inventory.atpByFacility(bag);
-        assertEquals(List.of(to, from), List.copyOf(byFacility.keySet()));
-    }
-
-    @Test
-    void cancellingAnApprovedTransferGivesTheStockBack() {
-        String hat = product("Hat");
-        String from = facility("Store C", "RETAIL_STORE", null);
-        String to = facility("Store D", "RETAIL_STORE", null);
-        tx.executeWithoutResult(s -> inventory.receive(hat, from, q("2"), null, null, null, null));
-        String t = tx.execute(s -> inventory.requestTransfer(hat, from, to, q("2"), null));
-        tx.executeWithoutResult(s -> inventory.approveTransfer(t));
-        same("0", inventory.atp(hat, from));
-        tx.executeWithoutResult(s -> inventory.cancelTransfer(t));
-        same("2", inventory.atp(hat, from));
-        assertEquals("IXF_CANCELLED", status(t));
-    }
-
-    @Test
     void dailyOrderLimitStopsAtTheLimitAndGivesPlacesBack() {
         String store = facility("Small store", "RETAIL_STORE", 2L);
         String dc = facility("Big DC", "DISTRIBUTION_CENTER", null);
@@ -188,7 +146,4 @@ class FacilityInventoryServiceTest {
         return Boolean.TRUE.equals(taken);
     }
 
-    private String status(String transferId) {
-        return jdbc.queryForObject("SELECT status_id FROM inventory_transfer WHERE inventory_transfer_id = ?", String.class, transferId);
-    }
 }

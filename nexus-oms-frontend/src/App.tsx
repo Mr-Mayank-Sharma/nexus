@@ -70,6 +70,7 @@ const AuditPage = lazy(() => import('./pages/AuditPage'))
 const NotificationsCenter = lazy(() => import('./pages/NotificationsCenter'))
 const ProcurementPage = lazy(() => import('./pages/ProcurementPage'))
 const LocationsPage = lazy(() => import('./pages/LocationsPage'))
+const StoreNetworkPage = lazy(() => import('./pages/StoreNetworkPage'))
 const InvoicingPage = lazy(() => import('./pages/InvoicingPage'))
 const WorkflowsPage = lazy(() => import('./pages/WorkflowsPage'))
 const DocumentsPage = lazy(() => import('./pages/DocumentsPage'))
@@ -147,6 +148,7 @@ export default function App() {
           <Route path="bopis-owner" element={<BopisOwnerPage />} />
           <Route path="procurement/*" element={<ProcurementPage />} />
           <Route path="locations" element={<LocationsPage />} />
+          <Route path="store-network" element={<StoreNetworkPage />} />
           <Route path="invoices" element={<InvoicingPage />} />
           <Route path="workflows" element={<WorkflowsPage />} />
           <Route path="documents" element={<DocumentsPage />} />
