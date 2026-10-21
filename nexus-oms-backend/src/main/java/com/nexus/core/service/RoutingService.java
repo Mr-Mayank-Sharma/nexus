@@ -63,16 +63,18 @@ public class RoutingService {
     private final OrderService orders;
     private final FacilityService facilities;
     private final ProductStoreService stores;
+    private final StoreHealthService health;
     private final TransactionTemplate tx;
 
     public RoutingService(EntityManager em, SequenceService sequences, StatusService statuses, OrderService orders,
-                          FacilityService facilities, ProductStoreService stores, TransactionTemplate tx) {
+                          FacilityService facilities, ProductStoreService stores, StoreHealthService health, TransactionTemplate tx) {
         this.em = em;
         this.sequences = sequences;
         this.statuses = statuses;
         this.orders = orders;
         this.facilities = facilities;
         this.stores = stores;
+        this.health = health;
         this.tx = tx;
     }
 
@@ -185,7 +187,8 @@ public class RoutingService {
     static final Set<String> ORDER_FILTERS = Set.of("facilityId", "salesChannelEnumId", "shipmentMethodTypeId", "priority", "orderAgeMinutes");
     static final Set<String> ORDER_SORTS = Set.of("orderDate", "priority", "shipByDate");
     static final Set<String> INVENTORY_FILTERS = Set.of("facilityGroupId", "facilityTypeId", "facilityId", "distance", "ignoreOrderLimit", "allowSubstitute");
-    static final Set<String> INVENTORY_SORTS = Set.of("distance", "groupSequence", "salesVelocity", "weeksOfSupply", "brokenSizeRun", "capacityLeft", "inventory");
+    static final Set<String> INVENTORY_SORTS = Set.of("distance", "groupSequence", "salesVelocity", "weeksOfSupply", "brokenSizeRun", "capacityLeft", "inventory",
+            "reliability");
 
     private static void checkField(Cond c, Set<String> filters, Set<String> sorts) {
         Set<String> allowed = c.sort() ? sorts : filters;
@@ -602,6 +605,7 @@ public class RoutingService {
         double weeksOfSupply = Double.MAX_VALUE;
         double sizeRunCompleteness = 1;
         long capacityLeft = Long.MAX_VALUE;
+        double reliability = 0.9;
 
         Candidate(String facilityId) {
             this.facilityId = facilityId;
@@ -621,6 +625,7 @@ public class RoutingService {
             if (distanceKm != null) parts.add(String.format(Locale.ROOT, "%.1f km away", distanceKm));
             if (groupSequence != Long.MAX_VALUE) parts.add("place " + groupSequence + " in its group");
             if (capacityLeft != Long.MAX_VALUE) parts.add(capacityLeft + " orders left today");
+            if (ctx.sortNames.contains("reliability")) parts.add(String.format(Locale.ROOT, "picks %.0f%% of its orders", reliability * 100));
             if (!ctx.sortNames.isEmpty()) parts.add("sorted by " + String.join(", ", ctx.sortNames));
             return String.join("; ", parts);
         }
@@ -639,6 +644,7 @@ public class RoutingService {
         final double[] shipTo;
         final Set<String> excluded = new HashSet<>();
         final boolean pickup;
+        Map<String, Double> reliabilityScores = Map.of();
 
         Rule(OrderRoutingRule rule, List<OrderRoutingRuleInvCond> conds, OrderItemShipGroup sg) {
             Map<String, OrderRoutingRuleInvCond> f = new HashMap<>();
@@ -656,6 +662,7 @@ public class RoutingService {
             sortNames = sorts.stream().map(OrderRoutingRuleInvCond::getFieldName).toList();
             shipTo = coordinates(sg.getContactMechId());
             pickup = "STOREPICKUP".equals(sg.getShipmentMethodTypeId());
+            if (sortNames.contains("reliability")) reliabilityScores = health.reliabilityScores(90);
             for (OrderItem i : orders.items(sg.getOrderId())) {
                 if (sg.getShipGroupSeqId().equals(i.getShipGroupSeqId())) excluded.addAll(orders.excludedFacilities(i.getOrderId(), i.getOrderItemSeqId()));
             }
@@ -712,6 +719,7 @@ public class RoutingService {
                 }
                 if (maxKm != null && (c.distanceKm == null || c.distanceKm > maxKm)) continue;
                 if (sortNames.contains("brokenSizeRun")) c.sizeRunCompleteness = sizeRun(need.keySet(), c.facilityId);
+                c.reliability = reliabilityScores.getOrDefault(c.facilityId, 0.9);
                 out.add(c);
             }
             out.sort(comparator().thenComparing(c -> c.facilityId));
@@ -739,9 +747,11 @@ public class RoutingService {
                     case "brokenSizeRun" -> Comparator.comparingDouble(c -> c.sizeRunCompleteness);
                     case "capacityLeft" -> Comparator.<Candidate>comparingLong(c -> c.capacityLeft).reversed();
                     case "inventory" -> Comparator.<Candidate>comparingDouble(c -> c.sellable.values().stream().mapToDouble(BigDecimal::doubleValue).sum()).reversed();
+                    // the location most likely to pick it first
+                    case "reliability" -> Comparator.<Candidate>comparingDouble(c -> c.reliability).reversed();
                     default -> (a, b) -> 0;
                 };
-                if (desc && !"weeksOfSupply".equals(s.getFieldName()) && !"capacityLeft".equals(s.getFieldName()) && !"inventory".equals(s.getFieldName())) one = one.reversed();
+                if (desc && !Set.of("weeksOfSupply", "capacityLeft", "inventory", "reliability").contains(s.getFieldName())) one = one.reversed();
                 cmp = cmp.thenComparing(one);
             }
             return cmp;

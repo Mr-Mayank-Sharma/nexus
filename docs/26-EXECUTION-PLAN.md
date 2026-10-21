@@ -216,6 +216,12 @@ suggestions (they change live screens; with the screen move).
 
 Briefs, one per session, each following doc 25 section 3:
 - 13.1 Phantom stock detection and store reliability score.
+  **Status 2026-10-21: done as transparent scores (the rule-based fallback doc 25 plans; a trained model plugs in
+  later).** `StoreHealthService`: reliability per location (orders it picked of those routed to it, smoothed towards
+  90% with a 10-order prior, with the reason in words) and phantom stock per product and location (recent failures to
+  find it, short counts, time since the last count, stock that does not move while it sells elsewhere, very low
+  quantities; a clean recent count lowers it; it never changes stock). Routing sorts by `reliability`; the operations
+  assistant has `store_reliability` and `phantom_stock`; API `/core/network/reliability` and `/core/network/phantom-stock`.
 - 13.2 Delivery-date prediction and the availability and promise service.
 - 13.3 Exception agent and plain-language routing with simulation and approval.
 - 13.4 Agent-ready order API (ACP and UCP) and agent-safe post-purchase changes.

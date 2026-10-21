@@ -80,6 +80,7 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `StoreNetworkService` (`coreStoreNetworkService`) | `lookup` with confidence, `holdForPickup`, `setSellingFacility` and `salesCredit`, `rebalance` within a cluster. |
 | `JobService` (`coreJobService`, package `core.job`) | Jobs as `service_job` rows: a handler bean implementing `CoreJobHandler`, a six-field cron, paused or not. `runJob`, `setPaused`, `setSchedule`, `jobs`, `runs`. Off with `nexus.core.jobs.enabled=false` (tests). |
 | `MessageService` (`coreMessageService`) | `receive` (idempotent by type and key), `consume`, `consumeDue` with retries; a type's `consume_service_name` names a `CoreMessageHandler` bean. |
+| `StoreHealthService` (`coreStoreHealthService`) | `reliability(days)` per location and `phantomStock(facility, days, limit)` per product and location, each with its reasons. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |

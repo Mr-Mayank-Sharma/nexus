@@ -41,17 +41,19 @@ public class OperationsAssistant {
     private final EntityManager em;
     private final OrderService orders;
     private final StoreNetworkService network;
+    private final com.nexus.core.service.StoreHealthService health;
     private final AgentRunner runner;
     private final LlmProvider provider;
     private final TransactionTemplate readOnly;
     private final String model;
 
-    public OperationsAssistant(EntityManager em, OrderService orders, StoreNetworkService network, AgentRunner runner,
+    public OperationsAssistant(EntityManager em, OrderService orders, StoreNetworkService network, com.nexus.core.service.StoreHealthService health, AgentRunner runner,
                                @org.springframework.beans.factory.annotation.Qualifier("coreAnthropicProvider") LlmProvider provider,
                                PlatformTransactionManager tm, @Value("${nexus.ai.model.operations:claude-sonnet-5-5}") String model) {
         this.em = em;
         this.orders = orders;
         this.network = network;
+        this.health = health;
         this.runner = runner;
         this.provider = provider;
         this.readOnly = new TransactionTemplate(tm);
@@ -84,7 +86,12 @@ public class OperationsAssistant {
                         schema("sku", "string", "The SKU or product id", true), this::stockLookup),
                 tool("location_problems", "Per location over the last days: items it could not find or that were moved off it, and transfers received short.",
                         schema("days", "integer", "Look back this many days (default 30)", false), this::locationProblems),
-                tool("list_locations", "All locations with their type and daily order limit.", JSONObject(), (i, m) -> readOnly.execute(s -> listLocations()))),
+                tool("list_locations", "All locations with their type and daily order limit.", JSONObject(), (i, m) -> readOnly.execute(s -> listLocations())),
+                tool("store_reliability", "How reliably each location picks the orders routed to it, least reliable first, with the reason.",
+                        schema("days", "integer", "Look back this many days (default 90)", false), (i, m) -> AgentRunner.JSON.valueToTree(health.reliability(i.path("days").asInt(90)))),
+                tool("phantom_stock", "Products a location shows in stock that are most likely not there, highest risk first, with the reasons; where a count pays.",
+                        schema2("facilityId", "string", "One location id, or leave out for all", "limit", "integer", "At most this many (default 20)"),
+                        (i, m) -> AgentRunner.JSON.valueToTree(health.phantomStock(i.path("facilityId").asText(null), 30, Math.min(i.path("limit").asInt(20), 100))))),
                 8, 2048);
     }
 

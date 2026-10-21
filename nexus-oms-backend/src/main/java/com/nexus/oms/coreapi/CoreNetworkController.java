@@ -34,12 +34,28 @@ public class CoreNetworkController {
 
     private final TransferService transfers;
     private final StoreNetworkService network;
+    private final com.nexus.core.service.StoreHealthService health;
     private final EntityManager em;
 
-    public CoreNetworkController(TransferService transfers, StoreNetworkService network, EntityManager em) {
+    public CoreNetworkController(TransferService transfers, StoreNetworkService network, com.nexus.core.service.StoreHealthService health, EntityManager em) {
         this.transfers = transfers;
         this.network = network;
+        this.health = health;
         this.em = em;
+    }
+
+    @Operation(summary = "How reliably each location picks the orders routed to it, least reliable first")
+    @GetMapping("/reliability")
+    public ResponseEntity<ApiResponse<List<com.nexus.core.service.StoreHealthService.Reliability>>> reliability(@RequestParam(defaultValue = "90") int days) {
+        return ResponseEntity.ok(ApiResponse.success(health.reliability(days), "Reliability"));
+    }
+
+    @Operation(summary = "Stock most likely not really there, highest risk first: where a targeted count pays")
+    @GetMapping("/phantom-stock")
+    public ResponseEntity<ApiResponse<List<com.nexus.core.service.StoreHealthService.PhantomRisk>>> phantom(@RequestParam(required = false) String facilityId,
+                                                                                                         @RequestParam(defaultValue = "30") int days,
+                                                                                                         @RequestParam(defaultValue = "50") int limit) {
+        return ResponseEntity.ok(ApiResponse.success(health.phantomStock(facilityId, days, Math.min(limit, 500)), "Phantom stock"));
     }
 
     public record Location(String facilityId, String facilityName, String facilityTypeId) {
