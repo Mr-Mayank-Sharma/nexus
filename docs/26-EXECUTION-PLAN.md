@@ -252,6 +252,14 @@ Briefs, one per session, each following doc 25 section 3:
 
 Brief: Keep the existing dark, bold design. Update product pages to the OMS feature list (doc 24) and the AI
 section (doc 25); make the order film look more realistic and easier to follow; WMS marked as coming later.
+**Status 2026-10-21: content done in the same design; the film's 3D scenes unchanged.** New product pages: store
+network, shipping and messages (the gateway), and AI, each capability with its honest status; routing updated for
+the new engine; FedEx, UPS, email and AI shopping agents in the integrations list as built and tested; three new
+proof rows; the data-separation answer updated for one database per client. The order film's captions now match
+what the OMS does (routing instead of waves, store picklists, labels through the gateway) with warehouse bins,
+waves and box sizing marked as Nexus WMS (2027); its readout follows. The OMS login page and sidebar say Nexus OMS
+and no longer claim 3D warehouse views or tenant isolation. Still open: re-shooting the film's 3D scenes for realism
+(design work to show before changing).
 
 ## W15. Nexus WMS  (after the OMS is live with clients and the user's warehouse visits)
 

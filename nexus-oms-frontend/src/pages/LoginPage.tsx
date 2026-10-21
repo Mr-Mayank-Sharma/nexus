@@ -307,23 +307,23 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl">
               <Ship className="w-7 h-7 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white tracking-tight">NexusShip</span>
+            <span className="text-2xl font-bold text-white tracking-tight">Nexus OMS</span>
           </div>
 
           <div className="space-y-6">
             <h2 className="text-4xl font-bold text-white leading-tight">
-              Supply Chain<br />
-              <span className="text-[var(--nexus-primary-200)]">Command Center</span>
+              Order management<br />
+              <span className="text-[var(--nexus-primary-200)]">for omnichannel retail</span>
             </h2>
             <p className="text-lg text-[var(--nexus-primary-100)] leading-relaxed max-w-md">
-              Unify orders, inventory, warehouse operations, and carrier management
-              across your entire enterprise in one intelligent platform.
+              Orders from every channel, stock per location, and routing that keeps
+              orders together, across your stores and warehouses.
             </p>
             <ul className="space-y-3 pt-4 text-[15px] text-[var(--nexus-primary-100)]">
               {[
-                'Orders, inventory and fulfilment in one place',
-                'Live 3D views of every warehouse and your order network',
-                'Tenant data isolated at the database level',
+                'Orders, stock and fulfilment in one place',
+                'Routing rules you can simulate on real orders first',
+                'Every change kept with who made it and why',
               ].map(point => (
                 <li key={point} className="flex items-center gap-3">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--nexus-primary-200)]" />
@@ -347,7 +347,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-center w-10 h-10 bg-[var(--nexus-primary-600)] rounded-xl">
               <Ship className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">NexusShip</span>
+            <span className="text-xl font-bold text-white">Nexus OMS</span>
           </div>
 
           {step === 'tenant' && (
@@ -555,7 +555,7 @@ export default function LoginPage() {
               </div>
 
               <p className="mt-4 text-xs text-[var(--text-tertiary)] text-center">
-                NexusShip
+                Nexus OMS
               </p>
             </div>
           )}
@@ -829,7 +829,7 @@ export default function LoginPage() {
 
           {!mfaRequired && step !== 'forgot-password' && step !== 'forgot-sent' && (
             <p className="mt-6 text-xs text-[var(--text-secondary)] text-center lg:hidden">
-              NexusShip &middot; &copy; 2026
+              Nexus OMS &middot; &copy; 2026
             </p>
           )}
         </div>

@@ -117,9 +117,9 @@ export default function BigCommercePage() {
   const syncActions = [
     { id: 'orders', label: 'Import Orders', description: 'Pull new/updated orders from BigCommerce', icon: <ShoppingCart className="w-5 h-5" />, color: 'bg-[var(--nexus-primary-500)]' },
     { id: 'products', label: 'Sync Products', description: 'Sync product catalog and create mappings', icon: <Package className="w-5 h-5" />, color: 'bg-[var(bg-[var(--nexus-ai-500)])]' },
-    { id: 'inventory', label: 'Push Inventory', description: 'Push NexusShip inventory levels to BigCommerce', icon: <Database className="w-5 h-5" />, color: 'bg-[var(--nexus-success-500)]' },
+    { id: 'inventory', label: 'Push Inventory', description: 'Push Nexus stock levels to BigCommerce', icon: <Database className="w-5 h-5" />, color: 'bg-[var(--nexus-success-500)]' },
     { id: 'shipments', label: 'Push Shipments', description: 'Push tracking info to BigCommerce orders', icon: <Truck className="w-5 h-5" />, color: 'bg-[var(--nexus-warning-500)]' },
-    { id: 'refunds', label: 'Push Refunds', description: 'Push NexusShip return refunds to BigCommerce', icon: <RotateCcw className="w-5 h-5" />, color: 'bg-[var(--nexus-error-500)]' },
+    { id: 'refunds', label: 'Push Refunds', description: 'Push Nexus return refunds to BigCommerce', icon: <RotateCcw className="w-5 h-5" />, color: 'bg-[var(--nexus-error-500)]' },
   ]
 
   return (

@@ -54,9 +54,9 @@ export function hud(p: number): { clock: string; label: string; value: string } 
     ['Sellable at East', `${n(36)} of 41`],
     ['Checks passed', `${Math.min(4, Math.floor(clamp(t * 1.4 - 0.25) * 5))} / 4`],
     ['B2B: days to ship', String(n(3, 64, seg(t, 0.15, 0.7)))],
-    ['Orders in the wave', String(n(18))],
+    ['Locations considered', String(n(12))],
     ['Picker walked', `${n(42, 0, seg(t, 0.1, 0.95))} m`],
-    ['Box fill', `${n(78, 0, seg(t, 0.25, 0.75))}%`],
+    ['Parcels labelled', `${n(1, 0, seg(t, 0.25, 0.75))} / 1`],
     ['Truck', `${Math.round(48 * Math.pow(seg(t, 0.72, 1), 1.4))} km/h`],
     ['Order', 'Completed'],
   ];

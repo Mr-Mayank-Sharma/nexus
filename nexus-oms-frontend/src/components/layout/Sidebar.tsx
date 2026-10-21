@@ -329,7 +329,7 @@ export default function Sidebar() {
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-bold text-[15px] text-[var(--sidebar-text)] tracking-[-0.02em] leading-tight">NexusShip</span>
+            <span className="font-bold text-[15px] text-[var(--sidebar-text)] tracking-[-0.02em] leading-tight">Nexus OMS</span>
             <span className="text-[10px] font-medium text-[var(--sidebar-text-muted)] tracking-wide uppercase">Order Management</span>
           </div>
         )}
