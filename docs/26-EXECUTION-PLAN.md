@@ -237,6 +237,16 @@ Briefs, one per session, each following doc 25 section 3:
   ACTIVATE_ROUTING (approval swaps which group is scheduled; undo swaps back). API `POST /core/ai/exceptions` and
   `POST /core/ai/routing-drafts`. `AiAgentsTest` runs both with a scripted model, through approval and undo.
 - 13.4 Agent-ready order API (ACP and UCP) and agent-safe post-purchase changes.
+  **Status 2026-10-21: ACP-shaped API done; UCP and payment capture not.** `AgentCommerceService` and
+  `/agent-commerce/` (agents authenticate with a per-store key, issued at `POST /core/gateway/stores/{id}/agent-key` and
+  kept only as a hash): checkout sessions (create, update, get, complete, cancel; amounts in minor units; idempotent by
+  store) priced from the product model, delivery options and dates from the promise service, tax from the store's
+  estimate; completing makes an order on the agent sales channel with the buyer as customer and the delegated payment
+  recorded by reference. After purchase: cancel inside the store's window before anything ships, change the address
+  before packing, start a return inside the return days; anything outside becomes a proposal for a person. The legacy
+  `IdempotencyFilter` now skips `/agent-commerce/` (its cache is not scoped by store). To do: run the ACP conformance
+  checks against the published spec, a UCP mapping once its spec is reviewed, charging the payment through the
+  provider (Stripe), and a product feed endpoint. Note: the legacy filter also keys webhook requests without a tenant.
 
 ## W14. Website  (independent)
 

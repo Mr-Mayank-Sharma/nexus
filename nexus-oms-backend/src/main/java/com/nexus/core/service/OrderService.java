@@ -439,6 +439,19 @@ public class OrderService {
 
     // ── ship groups and locations (routing) ──
 
+    /** Changes where a ship group goes; the order's shipping contact follows. */
+    public void setShipTo(String orderId, String shipGroupSeqId, String contactMechId) {
+        OrderItemShipGroup g = shipGroup(orderId, shipGroupSeqId);
+        String old = g.getContactMechId();
+        g.setContactMechId(contactMechId);
+        if (old != null && em.createQuery("SELECT COUNT(x) FROM OrderItemShipGroup x WHERE x.orderId = :o AND x.contactMechId = :c", Long.class)
+                .setParameter("o", orderId).setParameter("c", old).getSingleResult() == 0) {
+            OrderContactMech oc = em.find(OrderContactMech.class, new OrderContactMech.Key(orderId, "SHIPPING_LOCATION", old));
+            if (oc != null) em.remove(oc);
+        }
+        contact(orderId, "SHIPPING_LOCATION", contactMechId);
+    }
+
     /** Sets where a ship group ships from (null: back in the routing queue). */
     public void setShipGroupFacility(String orderId, String shipGroupSeqId, String facilityId) {
         shipGroup(orderId, shipGroupSeqId).setFacilityId(facilityId);

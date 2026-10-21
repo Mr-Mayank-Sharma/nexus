@@ -80,6 +80,7 @@ public class SecurityConfig {
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
                 .requestMatchers("/webhooks/**").permitAll()
+                .requestMatchers("/agent-commerce/**").permitAll()   // agents authenticate with the store's agent key in the controller
                 .requestMatchers(HttpMethod.POST, "/import/**").authenticated()
                 .requestMatchers(new AntPathRequestMatcher("/assets/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/**/*.html")).permitAll()

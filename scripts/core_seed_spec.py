@@ -559,6 +559,17 @@ rows("ai_action_policy", ["action_type", "description", "risk_level", "approval_
     ("ACTIVATE_ROUTING", "Make a drafted routing group the one that runs for its store", "HIGH", "ASK", None, 5),
 ])
 
+# ── agent commerce (W13.4) ──
+W13B_SEED_START = len(SEED)
+rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "description"], [
+    ("AGENT_API_KEY_HASH", "PRODUCT_STORE_SETTING", "AGENT_API_KEY_HASH", 10, "SHA-256 of the key AI shopping agents use for this store"),
+    ("AGENT_CANCEL_MINUTES", "PRODUCT_STORE_SETTING", "AGENT_CANCEL_MINUTES", 11, "Minutes after ordering a buyer's agent may cancel without a person"),
+    ("AGENT_SHIPPING_STANDARD", "PRODUCT_STORE_SETTING", "AGENT_SHIPPING_STANDARD", 12, "Standard delivery price for agent orders, in the store currency"),
+    ("AGENT_SHIPPING_NEXT_DAY", "PRODUCT_STORE_SETTING", "AGENT_SHIPPING_NEXT_DAY", 13, "Next-day delivery price for agent orders, in the store currency"),
+    ("AGENT_TAX_PCT", "PRODUCT_STORE_SETTING", "AGENT_TAX_PCT", 14, "Tax estimate shown to agents, percent of goods and delivery"),
+])
+rows("payment_method_type", ["payment_method_type_id", "description"], [("EXT_AGENT_DELEGATED", "Paid through an AI agent's delegated payment")])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
@@ -571,5 +582,6 @@ SEED_MIGRATIONS = [
     (17, "core_jobs_messages_seed", SEED[W10_SEED_START:W11_SEED_START]),
     (18, "core_gateway_seed", SEED[W11_SEED_START:W12_SEED_START]),
     (20, "core_ai_seed", SEED[W12_SEED_START:W13_SEED_START]),
-    (21, "core_ai_agents_seed", SEED[W13_SEED_START:]),
+    (21, "core_ai_agents_seed", SEED[W13_SEED_START:W13B_SEED_START]),
+    (23, "core_agent_commerce_seed", SEED[W13B_SEED_START:]),
 ]

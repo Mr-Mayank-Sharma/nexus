@@ -38,6 +38,15 @@ public class IdempotencyFilter implements Filter {
             return;
         }
 
+        // The agent order API keeps its own idempotency per store; a shared cache keyed only on the header would let two
+        // stores' agents that send the same key receive each other's answers.
+        String uri = req.getRequestURI() == null ? "" : req.getRequestURI();
+        String context = req.getContextPath() == null ? "" : req.getContextPath();
+        if (uri.substring(Math.min(context.length(), uri.length())).startsWith("/agent-commerce/")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         String idempotencyKey = req.getHeader(IDEMPOTENCY_KEY_HEADER);
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             chain.doFilter(request, response);

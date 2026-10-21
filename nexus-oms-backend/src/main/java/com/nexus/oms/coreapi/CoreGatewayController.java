@@ -20,9 +20,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class CoreGatewayController {
 
     private final GatewayService gateway;
+    private final com.nexus.core.service.AgentCommerceService agents;
 
-    public CoreGatewayController(GatewayService gateway) {
+    public CoreGatewayController(GatewayService gateway, com.nexus.core.service.AgentCommerceService agents) {
         this.gateway = gateway;
+        this.agents = agents;
+    }
+
+    @Operation(summary = "Issue the key AI shopping agents use for a store (shown once; the old one stops working)")
+    @PostMapping("/stores/{productStoreId}/agent-key")
+    public ResponseEntity<ApiResponse<String>> agentKey(@PathVariable String productStoreId) {
+        return ResponseEntity.ok(ApiResponse.success(agents.issueKey(productStoreId), "Keep this key in the agent platform; it is not shown again"));
     }
 
     public record StoreGateway(String url, String apiKey, String defaultCarrier) {

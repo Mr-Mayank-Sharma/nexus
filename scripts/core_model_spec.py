@@ -1475,6 +1475,26 @@ entity("AiProposal", "ai", "A change an AI proposed: what, why, its policy decis
     ("createdAt", "date-time", [REQ]),
 ], indexes=[["statusId", "createdAt"], ["orderId"]])
 
+# ───────────────────────────── agent commerce: checkout sessions for AI shopping agents (W13.4) ─────────────────────────────
+
+entity("AgentCheckoutSession", "agent", "A checkout an AI shopping agent is building for a buyer: items, address, chosen delivery, totals, then the order.", [
+    ("checkoutSessionId", "id", [PK]),
+    ("productStoreId", "id", [REQ, fk("ProductStore")]),
+    ("statusId", "text-short", [REQ]),
+    ("currencyUomId", "id", [fk("Uom", "uomId")]),
+    ("buyerEmail", "text-medium", []),
+    ("buyerName", "text-medium", []),
+    ("buyerPhone", "text-short", []),
+    ("addressJson", "text-long", []),
+    ("itemsJson", "text-long", [REQ]),
+    ("fulfillmentOptionId", "text-short", []),
+    ("totalAmount", "currency-amount", []),
+    ("orderId", "id", [fk("OrderHeader")]),
+    ("createIdempotencyKey", "id-long", []),
+    ("completeIdempotencyKey", "id-long", []),
+    ("expiresAt", "date-time", []),
+], indexes=[["productStoreId", "createIdempotencyKey"], ["orderId"]])
+
 MIGRATIONS = [
     (1, "core_framework", _W3),
     (3, "core_party", [e["name"] for e in ENTITIES if e["package"] == "party"]),
@@ -1485,4 +1505,5 @@ MIGRATIONS = [
     (13, "core_routing", [e["name"] for e in ENTITIES if e["package"] == "routing"]),
     (16, "core_transfer_shipment", []),
     (19, "core_ai", [e["name"] for e in ENTITIES if e["package"] == "ai"]),
+    (22, "core_agent_commerce", [e["name"] for e in ENTITIES if e["package"] == "agent"]),
 ]

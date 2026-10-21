@@ -82,6 +82,7 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `MessageService` (`coreMessageService`) | `receive` (idempotent by type and key), `consume`, `consumeDue` with retries; a type's `consume_service_name` names a `CoreMessageHandler` bean. |
 | `StoreHealthService` (`coreStoreHealthService`) | `reliability(days)` per location and `phantomStock(facility, days, limit)` per product and location, each with its reasons. |
 | `PromiseService` (`corePromiseService`) | `promise(products, destination, method, at)`: per location the ship date, expected and promised delivery, basis (history or rule), confidence and reasons. |
+| `AgentCommerceService` (`coreAgentCommerceService`) | Checkout sessions for AI shopping agents (create, update, complete, cancel) and agent-safe changes after purchase (`cancelOrder`, `changeAddress`, `startReturn`), each inside store policy or proposed to a person. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
