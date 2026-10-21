@@ -175,28 +175,36 @@ public class ShipmentService {
         statuses.requireAllowed(FLOW, s.getStatusId(), "SHIPMENT_SHIPPED");
         LocalDateTime when = shippedAt == null ? CoreClock.now() : shippedAt;
 
-        ShipmentRouteSegment seg = new ShipmentRouteSegment();
-        seg.setShipmentId(shipmentId);
-        seg.setShipmentRouteSegmentId(SequenceService.seqId(1));
-        seg.setCarrierPartyId(carrierPartyId);
-        seg.setShipmentMethodTypeId(shipmentMethodTypeId);
+        // a label made before shipping already created the segment and the boxes' tracking; keep them
+        ShipmentRouteSegment seg = em.find(ShipmentRouteSegment.class, new ShipmentRouteSegment.Key(shipmentId, SequenceService.seqId(1)));
+        boolean labelled = seg != null;
+        if (!labelled) {
+            seg = new ShipmentRouteSegment();
+            seg.setShipmentId(shipmentId);
+            seg.setShipmentRouteSegmentId(SequenceService.seqId(1));
+        }
+        if (carrierPartyId != null) seg.setCarrierPartyId(carrierPartyId);
+        if (shipmentMethodTypeId != null) seg.setShipmentMethodTypeId(shipmentMethodTypeId);
         seg.setOriginFacilityId(s.getOriginFacilityId());
         seg.setActualStartDate(when);
-        String firstTracking = null;
+        String firstTracking = seg.getTrackingIdNumber();
         List<ShipmentPackage> boxes = em.createQuery("SELECT p FROM ShipmentPackage p WHERE p.shipmentId = :s ORDER BY p.shipmentPackageSeqId", ShipmentPackage.class)
                 .setParameter("s", shipmentId).getResultList();
         for (ShipmentPackage p : boxes) {
             String code = trackingByPackage == null ? null : trackingByPackage.get(p.getShipmentPackageSeqId());
-            if (firstTracking == null) firstTracking = code;
-            ShipmentPackageRouteSeg pr = new ShipmentPackageRouteSeg();
-            pr.setShipmentId(shipmentId);
-            pr.setShipmentPackageSeqId(p.getShipmentPackageSeqId());
-            pr.setShipmentRouteSegmentId(seg.getShipmentRouteSegmentId());
-            pr.setTrackingCode(code);
-            em.persist(pr);
+            ShipmentPackageRouteSeg pr = em.find(ShipmentPackageRouteSeg.class, new ShipmentPackageRouteSeg.Key(shipmentId, p.getShipmentPackageSeqId(), seg.getShipmentRouteSegmentId()));
+            if (pr == null) {
+                pr = new ShipmentPackageRouteSeg();
+                pr.setShipmentId(shipmentId);
+                pr.setShipmentPackageSeqId(p.getShipmentPackageSeqId());
+                pr.setShipmentRouteSegmentId(seg.getShipmentRouteSegmentId());
+                em.persist(pr);
+            }
+            if (code != null) pr.setTrackingCode(code);
+            if (firstTracking == null) firstTracking = pr.getTrackingCode();
         }
         seg.setTrackingIdNumber(firstTracking);
-        em.persist(seg);
+        if (!labelled) em.persist(seg);
 
         for (OrderShipment os : orderShipments(shipmentId)) issue(s, os, when, userId);
         s.setStatusId("SHIPMENT_SHIPPED");
@@ -205,6 +213,56 @@ public class ShipmentService {
         for (OrderShipment os : orderShipments(shipmentId)) {
             orders.shipped(os.getOrderId(), os.getOrderItemSeqId(), issuedQuantity(os.getOrderId(), os.getOrderItemSeqId()), userId);
         }
+    }
+
+    public record PackageLabel(String shipmentPackageSeqId, String trackingCode, String labelUrl) {
+    }
+
+    /**
+     * Records a carrier label made for a packed shipment (by the gateway): the carrier and service, each box's tracking
+     * code and label link. Shipping later keeps them. Packs the shipment first if it is not packed yet.
+     */
+    public void recordLabels(String shipmentId, String carrierPartyId, String shipmentMethodTypeId, List<PackageLabel> labels, java.math.BigDecimal cost,
+                             String currencyUomId, String userId) {
+        Shipment s = shipment(shipmentId, true);
+        if (!"SHIPMENT_PACKED".equals(s.getStatusId())) pack(shipmentId, userId);
+        ShipmentRouteSegment seg = em.find(ShipmentRouteSegment.class, new ShipmentRouteSegment.Key(shipmentId, SequenceService.seqId(1)));
+        if (seg == null) {
+            seg = new ShipmentRouteSegment();
+            seg.setShipmentId(shipmentId);
+            seg.setShipmentRouteSegmentId(SequenceService.seqId(1));
+            seg.setOriginFacilityId(s.getOriginFacilityId());
+            em.persist(seg);
+        }
+        seg.setCarrierPartyId(carrierPartyId);
+        seg.setShipmentMethodTypeId(shipmentMethodTypeId);
+        seg.setActualCost(cost);
+        seg.setCurrencyUomId(cost == null ? null : currencyUomId);
+        for (PackageLabel l : labels) {
+            ShipmentPackageRouteSeg pr = em.find(ShipmentPackageRouteSeg.class, new ShipmentPackageRouteSeg.Key(shipmentId, l.shipmentPackageSeqId(), seg.getShipmentRouteSegmentId()));
+            if (pr == null) {
+                pr = new ShipmentPackageRouteSeg();
+                pr.setShipmentId(shipmentId);
+                pr.setShipmentPackageSeqId(l.shipmentPackageSeqId());
+                pr.setShipmentRouteSegmentId(seg.getShipmentRouteSegmentId());
+                em.persist(pr);
+            }
+            pr.setTrackingCode(l.trackingCode());
+            pr.setLabelUrl(l.labelUrl());
+        }
+        if (!labels.isEmpty()) seg.setTrackingIdNumber(labels.get(0).trackingCode());
+    }
+
+    /** Boxes of a shipment, in order, with their weight. */
+    @Transactional(readOnly = true)
+    public List<ShipmentPackage> packages(String shipmentId) {
+        return em.createQuery("SELECT p FROM ShipmentPackage p WHERE p.shipmentId = :s ORDER BY p.shipmentPackageSeqId", ShipmentPackage.class)
+                .setParameter("s", shipmentId).getResultList();
+    }
+
+    @Transactional(readOnly = true)
+    public Shipment get(String shipmentId) {
+        return shipment(shipmentId, false);
     }
 
     public void deliver(String shipmentId, LocalDateTime at, String userId) {

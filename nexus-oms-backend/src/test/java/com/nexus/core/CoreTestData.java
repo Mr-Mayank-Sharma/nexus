@@ -20,6 +20,7 @@ public final class CoreTestData {
             {"db/core/common/V14__core_routing_seed.sql", "SELECT COUNT(*) FROM status_item WHERE status_id = 'ROUTING_ACTIVE'"},
             {"db/core/common/V15__core_store_network_seed.sql", "SELECT COUNT(*) FROM facility WHERE facility_id = 'IN_TRANSIT'"},
             {"db/core/common/V17__core_jobs_messages_seed.sql", "SELECT COUNT(*) FROM service_job WHERE job_name = 'core_mirror'"},
+            {"db/core/common/V18__core_gateway_seed.sql", "SELECT COUNT(*) FROM enumeration WHERE enum_id = 'GATEWAY_URL'"},
     };
 
     private CoreTestData() {

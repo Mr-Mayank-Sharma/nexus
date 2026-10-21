@@ -522,6 +522,14 @@ rows("system_message_type", ["system_message_type_id", "description", "consume_s
     ("WMS_SHORT_PICK", "A WMS could not find stock it held for an order (doc 27, 3.3)", "coreWmsShortPickConsumer"),
 ])
 
+# ── gateway settings per store (W11) ──
+W11_SEED_START = len(SEED)
+rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "description"], [
+    ("GATEWAY_URL", "PRODUCT_STORE_SETTING", "GATEWAY_URL", 7, "Address of the Nexus Gateway this store ships and emails through"),
+    ("GATEWAY_API_KEY", "PRODUCT_STORE_SETTING", "GATEWAY_API_KEY", 8, "The store's gateway API key, encrypted by the OMS"),
+    ("GATEWAY_CARRIER", "PRODUCT_STORE_SETTING", "GATEWAY_CARRIER", 9, "Carrier the store uses unless a shipment names another"),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
@@ -531,5 +539,6 @@ SEED_MIGRATIONS = [
     (12, "core_fulfilment_return_seed", SEED[W8_SEED_START:W9_SEED_START]),
     (14, "core_routing_seed", SEED[W9_SEED_START:W9B_SEED_START]),
     (15, "core_store_network_seed", SEED[W9B_SEED_START:W10_SEED_START]),
-    (17, "core_jobs_messages_seed", SEED[W10_SEED_START:]),
+    (17, "core_jobs_messages_seed", SEED[W10_SEED_START:W11_SEED_START]),
+    (18, "core_gateway_seed", SEED[W11_SEED_START:]),
 ]

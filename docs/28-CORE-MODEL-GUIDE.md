@@ -84,6 +84,13 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
 
+## Gateway
+
+Carrier labels and customer emails go through the Nexus Gateway (`nexus-gateway/`, its own service and README). A store
+keeps only `GATEWAY_URL`, `GATEWAY_API_KEY` (encrypted with the OMS credential vault) and `GATEWAY_CARRIER`.
+`GatewayService.label(shipmentId, ...)` sends the shipment's boxes and addresses and records tracking and reprint links
+with `ShipmentService.recordLabels`; `ship` keeps them.
+
 ## Tests
 
 | Test | Proves |

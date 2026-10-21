@@ -179,6 +179,18 @@ labels, void, return labels, address validation, tracking, and customer emails a
 and store live only in the gateway. Start with FedEx, UPS and one email provider; one API for all; request log
 with timings. The OMS stores only the gateway address and key per product store.
 Done when: a test label and a test email go through end to end from the OMS against carrier sandboxes.
+**Status 2026-10-21: built; run end to end from the OMS with the test carrier and test email; the real FedEx, UPS
+and SMTP sandboxes wait for accounts.** `nexus-gateway/` (Spring Boot, own database, README): clients with hashed API
+keys; carrier and email accounts per client and store with credentials encrypted (AES-GCM, master key from the
+environment); rates (one carrier or all, cheapest first), labels and return labels kept for reprinting, void, address
+validation, tracking with a normalised status, email templates per store with escaped data, and a request log with
+timings and a health summary. Adapters: FedEx and UPS (REST, OAuth; checked against a local server that answers like
+them), `NEXUS_TEST` and `TEST_EMAIL` (no accounts needed), `SMTP`. OMS: each store keeps the gateway address, its key
+(encrypted) and a default carrier (`/core/gateway`); labels are made for a core shipment from its boxes and addresses,
+tracking and the reprint link stored per box, and shipping keeps them. Dev run: order 15500 approved, held, shipment
+10050 labelled through the gateway (tracking on the box and the order), shipped, order completed; a test email
+rendered and kept in the test outbox. To finish: FedEx and UPS developer accounts (sandbox keys) and an SMTP inbox
+such as Mailtrap, then run the same flow against them. Also added: `/core/orders` and `/core/shipments` admin APIs.
 
 ## W12. AI foundations  (after W3; parallel with W4+ if it touches only its own files)
 
