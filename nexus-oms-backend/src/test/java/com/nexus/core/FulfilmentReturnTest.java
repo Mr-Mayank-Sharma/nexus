@@ -138,7 +138,7 @@ class FulfilmentReturnTest {
         assertEquals("ITEM_APPROVED", jdbc.queryForObject("SELECT status_id FROM order_item WHERE order_id = ? AND order_item_seq_id = '00002'", String.class, o));
         assertEquals(0, BigDecimal.ZERO.compareTo(orders.reservedQuantity(o, "00002")), "the belt's hold is released");
         assertEquals(0, beltAtp.add(q("1")).compareTo(inventory.atp(belt, store)));
-        assertEquals(store, orders.itemAttribute(o, "00002", "excludedFacilityIds"), "routing won't send it back here");
+        assertEquals(java.util.Set.of(store), orders.excludedFacilities(o, "00002"), "routing won't send it back here");
         assertEquals("ORDER_APPROVED", status("order_header", "order_id", o), "the belt still has to ship from somewhere");
     }
 

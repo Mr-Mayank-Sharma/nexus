@@ -73,6 +73,7 @@ public class PermissionService {
         PATH_TO_RESOURCE.put("/rbac/", "rbac");
         PATH_TO_RESOURCE.put("/settings/", "settings");
         PATH_TO_RESOURCE.put("/core-migration/", "settings");
+        PATH_TO_RESOURCE.put("/core/", "settings");
         PATH_TO_RESOURCE.put("/sample-data/", "settings");
         PATH_TO_RESOURCE.put("/workflows/", "workflows");
         PATH_TO_RESOURCE.put("/ai/", "ai");

@@ -14,6 +14,7 @@ import com.nexus.core.model.order.OrderPaymentPreference;
 import com.nexus.core.model.order.OrderRole;
 import com.nexus.core.model.order.OrderStatus;
 import com.nexus.core.model.inventory.InventoryItem;
+import com.nexus.core.model.routing.ExcludedOrderFacility;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
@@ -415,10 +416,72 @@ public class OrderService {
             else r.setQuantity(rest);
             left = left.subtract(take);
         }
-        String excluded = itemAttribute(orderId, orderItemSeqId, "excludedFacilityIds");
-        if (excluded == null || !List.of(excluded.split(",")).contains(facilityId)) {
-            setItemAttribute(orderId, orderItemSeqId, "excludedFacilityIds", excluded == null ? facilityId : excluded + "," + facilityId);
+        exclude(orderId, orderItemSeqId, facilityId);
+    }
+
+    /** Routing must not send this item to the facility again (it rejected or short-picked it). */
+    public void exclude(String orderId, String orderItemSeqId, String facilityId) {
+        if (excludedFacilities(orderId, orderItemSeqId).contains(facilityId)) return;
+        ExcludedOrderFacility x = new ExcludedOrderFacility();
+        x.setOrderId(orderId);
+        x.setOrderItemSeqId(orderItemSeqId);
+        x.setFacilityId(facilityId);
+        x.setFromDate(CoreClock.now());
+        em.persist(x);
+    }
+
+    @Transactional(readOnly = true)
+    public Set<String> excludedFacilities(String orderId, String orderItemSeqId) {
+        return new java.util.HashSet<>(em.createQuery("SELECT x.facilityId FROM ExcludedOrderFacility x WHERE x.orderId = :o "
+                        + "AND x.orderItemSeqId = :i AND x.thruDate IS NULL", String.class)
+                .setParameter("o", orderId).setParameter("i", orderItemSeqId).getResultList());
+    }
+
+    // ── ship groups and locations (routing) ──
+
+    /** Sets where a ship group ships from (null: back in the routing queue). */
+    public void setShipGroupFacility(String orderId, String shipGroupSeqId, String facilityId) {
+        shipGroup(orderId, shipGroupSeqId).setFacilityId(facilityId);
+    }
+
+    /**
+     * Moves items to a new ship group of the same order (same address, method and gift details) that ships from the
+     * facility given. Returns the new group's id.
+     */
+    public String splitShipGroup(String orderId, String fromShipGroupSeqId, List<String> orderItemSeqIds, String facilityId) {
+        OrderItemShipGroup from = shipGroup(orderId, fromShipGroupSeqId);
+        long groups = em.createQuery("SELECT COUNT(g) FROM OrderItemShipGroup g WHERE g.orderId = :o", Long.class).setParameter("o", orderId).getSingleResult();
+        OrderItemShipGroup g = new OrderItemShipGroup();
+        g.setOrderId(orderId);
+        g.setShipGroupSeqId(SequenceService.seqId((int) groups + 1));
+        g.setShipmentMethodTypeId(from.getShipmentMethodTypeId());
+        g.setCarrierPartyId(from.getCarrierPartyId());
+        g.setFacilityId(facilityId);
+        g.setContactMechId(from.getContactMechId());
+        g.setTelecomContactMechId(from.getTelecomContactMechId());
+        g.setShippingInstructions(from.getShippingInstructions());
+        g.setMaySplit(from.getMaySplit());
+        g.setIsGift(from.getIsGift());
+        g.setGiftMessage(from.getGiftMessage());
+        g.setShipByDate(from.getShipByDate());
+        g.setEstimatedDeliveryDate(from.getEstimatedDeliveryDate());
+        em.persist(g);
+        for (String seq : orderItemSeqIds) {
+            OrderItem i = item(orderId, seq);
+            if (!fromShipGroupSeqId.equals(i.getShipGroupSeqId())) throw new IllegalArgumentException("Item " + seq + " is not in ship group " + fromShipGroupSeqId);
+            if (reservedQuantity(orderId, seq).signum() > 0) throw new IllegalStateException("Item " + seq + " holds stock; release it before moving it");
+            OrderItemShipGroupAssoc a = em.find(OrderItemShipGroupAssoc.class, new OrderItemShipGroupAssoc.Key(orderId, seq, fromShipGroupSeqId));
+            OrderItemShipGroupAssoc b = new OrderItemShipGroupAssoc();
+            b.setOrderId(orderId);
+            b.setOrderItemSeqId(seq);
+            b.setShipGroupSeqId(g.getShipGroupSeqId());
+            b.setQuantity(a == null ? i.getQuantity() : a.getQuantity());
+            b.setCancelQuantity(a == null ? i.getCancelQuantity() : a.getCancelQuantity());
+            if (a != null) em.remove(a);
+            em.persist(b);
+            i.setShipGroupSeqId(g.getShipGroupSeqId());
         }
+        return g.getShipGroupSeqId();
     }
 
     @Transactional(readOnly = true)

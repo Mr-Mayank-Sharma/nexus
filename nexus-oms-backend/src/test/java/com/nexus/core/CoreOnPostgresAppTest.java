@@ -56,10 +56,12 @@ class CoreOnPostgresAppTest {
     @Autowired com.nexus.core.service.OrderService orders;
     @Autowired com.nexus.core.service.ShipmentService shipments;
     @Autowired com.nexus.core.service.ReturnService returns;
+    @Autowired com.nexus.core.service.RoutingService routing;
+    @Autowired com.nexus.core.service.ProductStoreService stores;
 
     @Test
     void startsWithBothSchemasAndTheSeededOrderFlow() {
-        assertEquals(12, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
+        assertEquals(14, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
         assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success", Long.class) >= 75, "legacy migrations ran too");
         assertEquals("ORDER_CREATED", statuses.initialStatus(null, "ORDER_STATUS"));
         assertTrue(statuses.isAllowed(null, "ORDER_HOLD", "ORDER_APPROVED"));
@@ -126,5 +128,30 @@ class CoreOnPostgresAppTest {
         assertEquals(0, new java.math.BigDecimal("24").compareTo(returns.refundAmount(r)));
         assertEquals(0, new java.math.BigDecimal("5").compareTo(inventory.onHand(ids[0], ids[1])));
         assertEquals("SHIPMENT_SHIPPED", shipments.status(sh));
+    }
+
+    /** A routing run and a simulation on real PostgreSQL (collection parameters, row locks, the rollback). */
+    @Test
+    void routesOnRealPostgres() {
+        String p = tx.execute(s -> products.create(new com.nexus.core.service.ProductService.NewProduct(null, "PG Cap", null, null, null, null, null, false, false)));
+        String f = tx.execute(s -> facilities.create(new com.nexus.core.service.FacilityService.NewFacility(null, "RETAIL_STORE", "PG Store", null, null, null,
+                new java.math.BigDecimal("40.7"), new java.math.BigDecimal("-74.0"), null, null, null, 10L)));
+        tx.executeWithoutResult(s -> {
+            inventory.receive(p, f, new java.math.BigDecimal("3"), null, null, null, null);
+            stores.createIfMissing(new com.nexus.core.service.ProductStoreService.NewStore("PG-STORE", "PG", "USD", null, "WEB_SALES_CHANNEL", null, null));
+        });
+        String order = tx.execute(s -> orders.create(new com.nexus.core.service.OrderService.NewOrder(null, "PG-STORE", "WEB_SALES_CHANNEL", "USD", null, null, null,
+                null, null, null, null, java.util.List.of(new com.nexus.core.service.OrderService.NewItem(p, "Cap", java.math.BigDecimal.ONE, java.math.BigDecimal.TEN, null, null, 0)),
+                null, null, null, null, null, null, "pg")));
+        tx.executeWithoutResult(s -> orders.changeStatus(order, "ORDER_APPROVED", null, "pg"));
+        String g = routing.createGroup("PG-STORE", "PG", null);
+        String r = routing.addRouting(g, "Queue", 1, java.util.List.of(com.nexus.core.service.RoutingService.Cond.filter("facilityId", "in", "_NA_")));
+        routing.addRule(r, "Nearest", 1, true, java.util.List.of(com.nexus.core.service.RoutingService.Cond.sortBy("distance", "asc"),
+                com.nexus.core.service.RoutingService.Cond.sortBy("brokenSizeRun", "asc")), java.util.Map.of("ORA_MV_TO_QUEUE", "UNFILLABLE_PARKING"));
+        routing.activate(r);
+        assertEquals(1, routing.simulate(g, "pg").routed());
+        org.junit.jupiter.api.Assertions.assertNull(jdbc.queryForObject("SELECT facility_id FROM order_item_ship_group WHERE order_id = ?", String.class, order));
+        assertEquals(1, routing.run(g, "pg").routed());
+        assertEquals(f, jdbc.queryForObject("SELECT facility_id FROM order_item_ship_group WHERE order_id = ?", String.class, order));
     }
 }

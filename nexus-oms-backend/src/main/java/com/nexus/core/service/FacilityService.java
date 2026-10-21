@@ -176,6 +176,20 @@ public class FacilityService {
         return true;
     }
 
+    /** Counts an order at the facility for the day even past its limit (a person chose it, or a rule ignores limits). */
+    public void countOrder(String facilityId, LocalDate day) {
+        FacilityOrderCount c = em.find(FacilityOrderCount.class, new FacilityOrderCount.Key(facilityId, day), LockModeType.PESSIMISTIC_WRITE);
+        if (c == null) {
+            c = new FacilityOrderCount();
+            c.setFacilityId(facilityId);
+            c.setEntryDate(day);
+            c.setLastOrderCount(1L);
+            em.persist(c);
+        } else {
+            c.setLastOrderCount(c.getLastOrderCount() + 1);
+        }
+    }
+
     /** Gives back an order's place for the day (the order was moved or cancelled). */
     public void releaseOrder(String facilityId, LocalDate day) {
         FacilityOrderCount c = em.find(FacilityOrderCount.class, new FacilityOrderCount.Key(facilityId, day), LockModeType.PESSIMISTIC_WRITE);

@@ -120,6 +120,20 @@ that area work in the browser on the new tables, and their old tables are no lon
   refund) runs on real PostgreSQL in `CoreOnPostgresAppTest`. No screens or channel updates use it yet.
 - W9 Routing (routing groups, rules, conditions, actions, runs; the new brokering query; reallocation and split
   control features from doc 24 section 2).
+  **Status 2026-10-21: engine, API and tests done; scheduler off by default** (9 entities; core `RoutingService`
+  written fresh in Java over portable JPQL, so it runs the same on PostgreSQL and MySQL). Routings filter and sort
+  approved orders waiting in a queue (no location, or a parking facility); rules filter locations (group, type, list,
+  distance, never an excluded or full one, allow-brokering and allow-pickup per product) and sort them (distance, group
+  sequence, sales velocity, weeks of supply, broken size runs, capacity left, stock). One location holding every item
+  wins first; a split rule (and a store that allows splits) spreads items over as few locations as possible; a rule
+  that finds nothing sets cancel dates, parks the order (`UNFILLABLE_PARKING` and three more queues are seeded) or
+  tries the next rule. Substitutes (`PRODUCT_SUBSTITUTE`) swap in when the product is out everywhere. A daily limit of
+  0 stops new routing to a location while its stock still sells online; a person can still move an order there.
+  Simulation runs everything and rolls back, keeping a record of what it would do. Every move is an
+  `order_facility_change` with the reason in words. Reallocation by hand and `moveAllOff` (bulk, excludes the
+  location). API under `/core/routing` (admin). `CoreRoutingScheduler` runs groups on their `schedule_minutes` only
+  with `nexus.core.routing.enabled=true`. Not yet: rejection profiles per store, seasonal profiles switched by date,
+  and routing reading stock changes made after the first copy (the mirror copies stock once).
 
 ## W9b. Store network  (after W9)
 

@@ -1334,6 +1334,93 @@ entity("ReturnItemResponse", "returns", "What was given back for returned items:
     ("referenceNumber", "text-medium", []),
 ])
 
+# ───────────────────────────── routing: groups, routings, rules, conditions, actions, runs (W9) ─────────────────────────────
+
+entity("OrderRoutingGroup", "routing", "A set of routings a store runs together on a schedule (HotWax).", [
+    ("routingGroupId", "id", [PK]),
+    ("productStoreId", "id", [REQ, fk("ProductStore")]),
+    ("groupName", "text-medium", [REQ]),
+    ("description", "text-long", []),
+    ("sequenceNum", "number-integer", []),
+    ("scheduleMinutes", "number-integer", []),
+    ("createdDate", "date-time", []),
+])
+entity("OrderRouting", "routing", "Which orders a routing takes (filters) and in what order (sorts), then its rules.", [
+    ("orderRoutingId", "id", [PK]),
+    ("routingGroupId", "id", [REQ, fk("OrderRoutingGroup")]),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("routingName", "text-medium", [REQ]),
+    ("sequenceNum", "number-integer", []),
+    ("description", "text-long", []),
+], indexes=[["routingGroupId", "sequenceNum"]])
+entity("OrderFilterCondition", "routing", "A filter or sort on the orders a routing takes: store, channel, shipping method, queue, age.", [
+    ("orderRoutingId", "id", [PK, fk("OrderRouting")]),
+    ("conditionSeqId", "id", [PK]),
+    ("conditionTypeEnumId", "id", [REQ, fk("Enumeration", "enumId")]),
+    ("fieldName", "text-medium", [REQ]),
+    ("operator", "text-short", []),
+    ("fieldValue", "text-long", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("OrderRoutingRule", "routing", "Where to look for stock, in order: one location for the whole order, or split.", [
+    ("routingRuleId", "id", [PK]),
+    ("orderRoutingId", "id", [REQ, fk("OrderRouting")]),
+    ("ruleName", "text-medium", [REQ]),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("sequenceNum", "number-integer", []),
+    ("assignmentEnumId", "id", [REQ, fk("Enumeration", "enumId")]),
+], indexes=[["orderRoutingId", "sequenceNum"]])
+entity("OrderRoutingRuleInvCond", "routing", "A filter or sort on locations for a rule: group, type, distance, safety stock, velocity, size runs.", [
+    ("routingRuleId", "id", [PK, fk("OrderRoutingRule")]),
+    ("inventoryConditionSeqId", "id", [PK]),
+    ("conditionTypeEnumId", "id", [REQ, fk("Enumeration", "enumId")]),
+    ("fieldName", "text-medium", [REQ]),
+    ("operator", "text-short", []),
+    ("fieldValue", "text-long", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("OrderRoutingRuleAction", "routing", "What a rule does when it finds no location: try the next rule, park the order, cancel it after some days.", [
+    ("routingRuleId", "id", [PK, fk("OrderRoutingRule")]),
+    ("actionSeqId", "id", [PK]),
+    ("actionTypeEnumId", "id", [REQ, fk("Enumeration", "enumId")]),
+    ("actionValue", "text-medium", []),
+])
+entity("OrderRoutingRun", "routing", "One run of a routing group, real or simulated, with what it did.", [
+    ("routingRunId", "id", [PK]),
+    ("routingGroupId", "id", [REQ, fk("OrderRoutingGroup")]),
+    ("isSimulation", "indicator", []),
+    ("startDate", "date-time", [REQ]),
+    ("endDate", "date-time", []),
+    ("ordersConsidered", "number-integer", []),
+    ("ordersRouted", "number-integer", []),
+    ("ordersSplit", "number-integer", []),
+    ("ordersUnfillable", "number-integer", []),
+    ("itemsSubstituted", "number-integer", []),
+    ("summary", "text-very-long", []),
+    ("createdByUserLogin", "id", []),
+], indexes=[["routingGroupId", "startDate"]])
+entity("OrderFacilityChange", "routing", "Every time an order's location changed: from where, to where, why, by which run or person (HotWax).", [
+    ("orderFacilityChangeId", "id", [PK]),
+    ("orderId", "id", [REQ, fk("OrderHeader")]),
+    ("shipGroupSeqId", "id", []),
+    ("orderItemSeqId", "id", []),
+    ("fromFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("facilityId", "id", [fk("Facility")]),
+    ("changeDatetime", "date-time", [REQ]),
+    ("changeReasonEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("routingRunId", "id", [fk("OrderRoutingRun")]),
+    ("routingRuleId", "id", [fk("OrderRoutingRule")]),
+    ("comments", "text-long", []),
+    ("changeUserLogin", "id", []),
+], indexes=[["orderId", "changeDatetime"], ["routingRunId"]])
+entity("ExcludedOrderFacility", "routing", "A location an order item must not be routed to again (it rejected or short-picked it), dated (HotWax).", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", [PK]),
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+], indexes=[["facilityId"]])
+
 MIGRATIONS = [
     (1, "core_framework", _W3),
     (3, "core_party", [e["name"] for e in ENTITIES if e["package"] == "party"]),
@@ -1341,4 +1428,5 @@ MIGRATIONS = [
     (7, "core_facility_inventory", [e["name"] for e in ENTITIES if e["package"] in ("facility", "inventory")]),
     (9, "core_order", [e["name"] for e in ENTITIES if e["package"] == "order"]),
     (11, "core_fulfilment_return", [e["name"] for e in ENTITIES if e["package"] in ("shipment", "returns")]),
+    (13, "core_routing", [e["name"] for e in ENTITIES if e["package"] == "routing"]),
 ]

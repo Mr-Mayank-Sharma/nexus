@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Testcontainers(disabledWithoutDocker = true)
 class CoreSchemaMigrationTest {
 
-    static final int TABLES = 152;
+    static final int TABLES = 161;
 
     @Test
     void buildsOnPostgres() {
@@ -68,7 +68,7 @@ class CoreSchemaMigrationTest {
     private static void assertBuildsAndSeeds(JdbcDatabaseContainer<?> db, String vendor) {
         DataSource ds = ds(db);
         assertEquals(vendor, CoreSchemaMigrator.vendor(ds));
-        assertEquals(12, CoreSchemaMigrator.migrate(ds).migrationsExecuted);
+        assertEquals(14, CoreSchemaMigrator.migrate(ds).migrationsExecuted);
         assertEquals(0, CoreSchemaMigrator.migrate(ds).migrationsExecuted, "a second run changes nothing");
         JdbcTemplate jdbc = new JdbcTemplate(ds);
         String schemaFilter = vendor.equals("mysql") ? "table_schema = DATABASE()" : "table_schema = 'public'";

@@ -450,11 +450,53 @@ rows("order_adjustment_type", ["order_adjustment_type_id", "parent_type_id", "de
     ("RESTOCKING_FEE", "FEE", "Restocking fee"), ("RETURN_SHIPPING", "SHIPPING_CHARGES", "Return shipping"),
 ])
 
+# ── routing (W9) ──
+W9_SEED_START = len(SEED)
+rows("status_type", ["status_type_id", "description"], [("ROUTING_STATUS", "Routing and rule status")])
+rows("status_item", ["status_id", "status_type_id", "status_code", "sequence_num", "description"], [
+    ("ROUTING_DRAFT", "ROUTING_STATUS", "DRAFT", 1, "Draft"), ("ROUTING_ACTIVE", "ROUTING_STATUS", "ACTIVE", 2, "Active"),
+    ("ROUTING_ARCHIVED", "ROUTING_STATUS", "ARCHIVED", 3, "Archived"),
+])
+rows("status_flow_item", ["status_flow_id", "status_id", "is_initial"], [
+    (FLOW, "ROUTING_DRAFT", "Y"), (FLOW, "ROUTING_ACTIVE", "N"), (FLOW, "ROUTING_ARCHIVED", "N"),
+])
+rows("status_flow_transition", ["status_flow_id", "status_id", "to_status_id", "transition_sequence", "transition_name"], [
+    (FLOW, "ROUTING_DRAFT", "ROUTING_ACTIVE", 1, "Activate"), (FLOW, "ROUTING_DRAFT", "ROUTING_ARCHIVED", 2, "Archive"),
+    (FLOW, "ROUTING_ACTIVE", "ROUTING_DRAFT", 1, "Pause"), (FLOW, "ROUTING_ACTIVE", "ROUTING_ARCHIVED", 2, "Archive"),
+    (FLOW, "ROUTING_ARCHIVED", "ROUTING_DRAFT", 1, "Restore"),
+])
+rows("enumeration_type", ["enum_type_id", "description"], [
+    ("ROUTING_CONDITION", "Filter or sort"), ("ROUTING_ASSIGNMENT", "One location or split"),
+    ("ROUTING_ACTION", "What a rule does when it finds nothing"), ("FACILITY_CHANGE_REASON", "Why an order's location changed"),
+])
+rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "description"], [
+    ("ENTCT_FILTER", "ROUTING_CONDITION", "FILTER", 1, "Filter"), ("ENTCT_SORT_BY", "ROUTING_CONDITION", "SORT_BY", 2, "Sort by"),
+    ("ORA_SINGLE", "ROUTING_ASSIGNMENT", "SINGLE", 1, "One location for the whole ship group"),
+    ("ORA_MULTI", "ROUTING_ASSIGNMENT", "MULTI", 2, "Split across locations when the store allows it"),
+    ("ORA_NEXT_RULE", "ROUTING_ACTION", "NEXT_RULE", 1, "Try the next rule"),
+    ("ORA_MV_TO_QUEUE", "ROUTING_ACTION", "MOVE_TO_QUEUE", 2, "Park the order in a queue"),
+    ("ORA_AUTO_CANCEL_DAYS", "ROUTING_ACTION", "AUTO_CANCEL_DAYS", 3, "Cancel unfilled items after some days"),
+    ("FCR_ROUTED", "FACILITY_CHANGE_REASON", "ROUTED", 1, "Routed by a routing run"),
+    ("FCR_SPLIT", "FACILITY_CHANGE_REASON", "SPLIT", 2, "Split to another location by a routing run"),
+    ("FCR_QUEUED", "FACILITY_CHANGE_REASON", "QUEUED", 3, "Parked: no location could fill it"),
+    ("FCR_MANUAL", "FACILITY_CHANGE_REASON", "MANUAL", 4, "Moved by hand"),
+    ("FCR_BULK", "FACILITY_CHANGE_REASON", "BULK", 5, "Moved off a location in bulk"),
+    ("FCR_SHORT_PICK", "FACILITY_CHANGE_REASON", "SHORT_PICK", 6, "The location could not find the stock"),
+    ("FCR_REJECTED", "FACILITY_CHANGE_REASON", "REJECTED", 7, "The location rejected it"),
+])
+rows("facility", ["facility_id", "facility_type_id", "facility_name", "description"], [
+    ("UNFILLABLE_PARKING", "VIRTUAL_FACILITY", "Unfillable", "Orders no location could fill; routing retries them"),
+    ("BACKORDER_PARKING", "VIRTUAL_FACILITY", "Backorder", "Orders waiting for stock that is on its way"),
+    ("PRE_ORDER_PARKING", "VIRTUAL_FACILITY", "Pre-order", "Orders for products not released yet"),
+    ("REVIEW_PARKING", "VIRTUAL_FACILITY", "Needs review", "Orders a person should look at before routing"),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
     (6, "core_product_seed", SEED[W5_SEED_START:W6_SEED_START]),
     (8, "core_facility_inventory_seed", SEED[W6_SEED_START:W7_SEED_START]),
     (10, "core_order_seed", SEED[W7_SEED_START:W8_SEED_START]),
-    (12, "core_fulfilment_return_seed", SEED[W8_SEED_START:]),
+    (12, "core_fulfilment_return_seed", SEED[W8_SEED_START:W9_SEED_START]),
+    (14, "core_routing_seed", SEED[W9_SEED_START:]),
 ]

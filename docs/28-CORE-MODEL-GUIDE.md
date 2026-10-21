@@ -71,6 +71,7 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `ShipmentService` (`coreShipmentService`) | `createSalesShipment`, `addPackage`, `pack`, `ship` (holds consumed, on hand down, items completed), `deliver`, `confirm` for a WMS or carrier confirmation (idempotent by its shipment id). |
 | `PicklistService` (`corePicklistService`) | Store picking: `create` from held ship groups, `assign`, `recordPick`, `complete` (ships what was found, short-picks the rest). |
 | `ReturnService` (`coreReturnService`) | `create` (up to shipped less other returns), `accept`, `receive` with a grade, `addAdjustment`, `refundAmount`, `complete`. |
+| `RoutingService` (`coreRoutingService`) | `createGroup`, `addRouting`, `addRule` (filters, sorts, split, actions), `activate`, `run`, `simulate` (rolls back), `reallocate`, `moveAllOff`, `history`. Field names it accepts are in `ORDER_FILTERS`, `ORDER_SORTS`, `INVENTORY_FILTERS`, `INVENTORY_SORTS`; anything else is refused with the list. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
@@ -85,6 +86,7 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `FacilityInventoryServiceTest` | Receive, reserve, ship and count with full history; ATP less safety stock; transfers and cancelling; the daily order limit; groups in order. |
 | `OrderServiceTest` | Totals with item and order adjustments; approve, reserve, partial cancel, cancel with stock given back; the flow enforced; orders copied in a given status. |
 | `FulfilmentReturnTest` | A two-box WMS confirmation, partial shipping, a store picklist with a short pick, and a return with restock, hold, reject and refund. |
+| `RoutingServiceTest` | Whole order first, split, no-split stores parking orders, full and excluded locations, next rule, substitutes, broken size runs, sales velocity, simulation, manual and bulk moves. |
 | `CoreBoundaryTest`, `CoreModelUpToDateTest` | The core stays separate; generated files match the spec. |
 
 ## Copying legacy data
