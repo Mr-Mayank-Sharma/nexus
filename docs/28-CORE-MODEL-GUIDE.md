@@ -83,10 +83,11 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 
 ## Copying legacy data
 
-`POST /core-migration/stock` (admin; run the product copy first) copies fulfilment nodes into facilities and stock rows
+`POST /core-migration/stock` (admin; run the product copy first) copies fulfilment nodes and warehouses into facilities and stock rows
 into inventory items, one per lot, each with one `IID_MIGRATION` detail row. Available is on hand less allocated and
 reserved, so held stock stays held; safety stock and reorder levels go to `product_facility`; damaged counts are noted
-on the item. Rows without a location or with an unknown SKU are counted and skipped.
+on the item. Rows without a location or with an unknown SKU are counted and skipped. On the dev data it copied 5 facilities and
+6,929 items in 14 seconds, with totals matching the legacy tables.
 
 `POST /core-migration/products` (admin) copies connected stores into product stores and products into the product
 model (SKU, old id, name, picture, weight, price and cost in the company currency, category). It copied 6,962 dev

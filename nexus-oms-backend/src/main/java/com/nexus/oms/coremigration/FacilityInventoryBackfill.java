@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Copies one tenant's fulfilment nodes (nx_nodes) into facilities and its stock (nx_inventory) into inventory items.
+ * Copies one tenant's fulfilment nodes (nx_nodes) and warehouses (nx_warehouses) into facilities and its stock (nx_inventory) into inventory items.
  * A node's daily capacity becomes the facility's daily order limit. Each stock row becomes one item (per lot when it
  * has one) with a single MIGRATION detail row: on hand as it was, and available = on hand - allocated - reserved, so
  * held stock stays held. Safety stock and reorder levels go to ProductFacility. Run the product copy first: stock is
@@ -60,8 +60,11 @@ public class FacilityInventoryBackfill {
     public Result run(UUID tenantId) {
         if (tenantId == null) throw new IllegalArgumentException("Run the stock copy as a user of the company whose stock to copy");
 
-        List<Map<String, Object>> nodes = jdbc.queryForList("SELECT id, name, type, address, latitude, longitude, is_active, "
-                + "capacity_daily FROM nx_nodes WHERE tenant_id = ? ORDER BY name, id", tenantId);
+        // Stock rows point at a fulfilment node or, in most data, a warehouse; both become facilities.
+        List<Map<String, Object>> nodes = jdbc.queryForList("SELECT id, NULL AS code, name, type, address, NULL AS zip_code, latitude, "
+                + "longitude, capacity_daily FROM nx_nodes WHERE tenant_id = ? ORDER BY name, id", tenantId);
+        nodes.addAll(jdbc.queryForList("SELECT id, code, name, type, NULL AS address, zip_code, latitude, longitude, "
+                + "NULL AS capacity_daily FROM nx_warehouses WHERE tenant_id = ? ORDER BY code, id", tenantId));
         Map<String, String> facilityByNode = new HashMap<>();
         jdbc.queryForList("SELECT id_value, facility_id FROM facility_identification WHERE facility_iden_type_id = ? AND thru_date IS NULL", LEGACY_ID)
                 .forEach(r -> facilityByNode.put(String.valueOf(r.get("id_value")), String.valueOf(r.get("facility_id"))));
@@ -71,8 +74,9 @@ public class FacilityInventoryBackfill {
                 String nodeId = String.valueOf(r.get("id"));
                 if (facilityByNode.containsKey(nodeId)) continue;
                 Number capacity = (Number) r.get("capacity_daily");
-                String facilityId = facilities.create(new FacilityService.NewFacility(null, facilityType(str(r, "type")), str(r, "name"),
-                        null, null, postalCode(str(r, "address")), (BigDecimal) r.get("latitude"), (BigDecimal) r.get("longitude"),
+                String postal = str(r, "zip_code") != null ? str(r, "zip_code") : postalCode(str(r, "address"));
+                String facilityId = facilities.create(new FacilityService.NewFacility(readableId(str(r, "code")), facilityType(str(r, "type")),
+                        str(r, "name"), null, str(r, "code"), postal, (BigDecimal) r.get("latitude"), (BigDecimal) r.get("longitude"),
                         null, null, null, capacity == null || capacity.longValue() <= 0 ? null : capacity.longValue()));
                 facilities.setIdentification(facilityId, LEGACY_ID, nodeId);
                 facilityByNode.put(nodeId, facilityId);
@@ -151,12 +155,21 @@ public class FacilityInventoryBackfill {
         if (nodeType == null) return "WAREHOUSE";
         return switch (nodeType.trim().toUpperCase(Locale.ROOT)) {
             case "STORE", "RETAIL", "RETAIL_STORE" -> "RETAIL_STORE";
-            case "DC", "DISTRIBUTION_CENTER" -> "DISTRIBUTION_CENTER";
+            case "DC", "DISTRIBUTION_CENTER", "AUTOMATED_DC", "FULFILLMENT_CENTER" -> "DISTRIBUTION_CENTER";
             case "DARK_STORE" -> "DARK_STORE";
             case "3PL", "THIRD_PARTY_LOGISTICS" -> "THIRD_PARTY_LOGISTICS";
             case "DROPSHIP", "SUPPLIER" -> "DROPSHIP";
             default -> "WAREHOUSE";
         };
+    }
+
+    /** A warehouse code (WH-01) is kept as the facility id when it is a valid id that isn't taken yet. */
+    private String readableId(String code) {
+        if (code == null) return null;
+        String id = code.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9_.-]", "_");
+        if (id.isEmpty() || id.length() > 40) return null;
+        Long taken = jdbc.queryForObject("SELECT COUNT(*) FROM facility WHERE facility_id = ?", Long.class, id);
+        return taken != null && taken > 0 ? null : id;
     }
 
     /** Lot numbers become lot ids, cleaned to the allowed characters. */
