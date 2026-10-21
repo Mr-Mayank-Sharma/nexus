@@ -507,6 +507,204 @@ entity("PartyContactMechPurpose", "party", "What a party's contact is for, dated
 ])
 
 
+# ───────────────────────────── product: catalogue, variants, ids, features, prices (W5) ─────────────────────────────
+
+entity("ProductType", "product", "Finished good, digital good, service, bundle, gift card.", [
+    ("productTypeId", "id", [PK]),
+    ("parentTypeId", "id", [fk("ProductType", "productTypeId")]),
+    ("isPhysical", "indicator", []),
+    ("isDigital", "indicator", []),
+    ("description", "text-medium", []),
+])
+entity("Product", "product", "Something Nexus sells or stocks; a virtual product groups its variants.", [
+    ("productId", "id", [PK]),
+    ("productTypeId", "id", [REQ, fk("ProductType")]),
+    ("primaryProductCategoryId", "id", [fk("ProductCategory", "productCategoryId")]),
+    ("primaryProductStoreId", "id", [fk("ProductStore", "productStoreId")]),
+    ("internalName", "text-medium", []),
+    ("productName", "text-medium", []),
+    ("brandName", "text-medium", []),
+    ("description", "text-long", []),
+    ("longDescription", "text-very-long", []),
+    ("smallImageUrl", "text-intermediate", []),
+    ("mediumImageUrl", "text-intermediate", []),
+    ("largeImageUrl", "text-intermediate", []),
+    ("originalImageUrl", "text-intermediate", []),
+    ("isVirtual", "indicator", []),
+    ("isVariant", "indicator", []),
+    ("requireInventory", "indicator", []),
+    ("returnable", "indicator", []),
+    ("taxable", "indicator", []),
+    ("chargeShipping", "indicator", []),
+    ("introductionDate", "date-time", []),
+    ("salesDiscontinuationDate", "date-time", []),
+    ("productWeight", "number-decimal", []),
+    ("weightUomId", "id", [fk("Uom", "uomId")]),
+    ("productHeight", "number-decimal", []),
+    ("productWidth", "number-decimal", []),
+    ("productDepth", "number-decimal", []),
+    ("dimensionUomId", "id", [fk("Uom", "uomId")]),
+], indexes=[["internalName"], ["productName"]])
+entity("ProductAssocType", "product", "How two products relate: variant, substitute, kit component.", [
+    ("productAssocTypeId", "id", [PK]),
+    ("parentTypeId", "id", [fk("ProductAssocType", "productAssocTypeId")]),
+    ("description", "text-medium", []),
+])
+entity("ProductAssoc", "product", "One product related to another, dated and ordered.", [
+    ("productId", "id", [PK, fk("Product")]),
+    ("productIdTo", "id", [PK, fk("Product", "productId")]),
+    ("productAssocTypeId", "id", [PK, fk("ProductAssocType")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNum", "number-integer", []),
+    ("quantity", "number-decimal", []),
+    ("reason", "text-medium", []),
+], indexes=[["productIdTo", "productAssocTypeId"]])
+entity("GoodIdentificationType", "product", "A kind of product id: SKU, UPC, EAN, a channel's product id.", [
+    ("goodIdentificationTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("GoodIdentification", "product", "A product's id of one kind, dated.", [
+    ("goodIdentificationTypeId", "id", [PK, fk("GoodIdentificationType")]),
+    ("productId", "id", [PK, fk("Product")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("idValue", "id-long", [REQ]),
+], indexes=[["goodIdentificationTypeId", "idValue"]])
+entity("ProductFeatureType", "product", "Colour, size, style, material.", [
+    ("productFeatureTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("ProductFeature", "product", "One feature value, such as size 9 or colour red.", [
+    ("productFeatureId", "id", [PK]),
+    ("productFeatureTypeId", "id", [REQ, fk("ProductFeatureType")]),
+    ("description", "text-medium", []),
+    ("abbrev", "text-short", []),
+    ("idCode", "text-short", []),
+    ("defaultSequenceNum", "number-integer", []),
+], indexes=[["productFeatureTypeId", "idCode"]])
+entity("ProductFeatureApplType", "product", "How a feature applies: standard, selectable, distinguishing.", [
+    ("productFeatureApplTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("ProductFeatureAppl", "product", "A feature applied to a product, dated.", [
+    ("productId", "id", [PK, fk("Product")]),
+    ("productFeatureId", "id", [PK, fk("ProductFeature")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("productFeatureApplTypeId", "id", [fk("ProductFeatureApplType")]),
+    ("sequenceNum", "number-integer", []),
+])
+entity("ProductCategoryType", "product", "Catalogue, browse or internal category.", [
+    ("productCategoryTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("ProductCategory", "product", "A category in the catalogue tree.", [
+    ("productCategoryId", "id", [PK]),
+    ("productCategoryTypeId", "id", [fk("ProductCategoryType")]),
+    ("primaryParentCategoryId", "id", [fk("ProductCategory", "productCategoryId")]),
+    ("categoryName", "text-medium", [REQ]),
+    ("description", "text-long", []),
+], indexes=[["categoryName"]])
+entity("ProductCategoryMember", "product", "A product in a category, dated.", [
+    ("productCategoryId", "id", [PK, fk("ProductCategory")]),
+    ("productId", "id", [PK, fk("Product")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("ProductCategoryRollup", "product", "A category inside another, dated.", [
+    ("productCategoryId", "id", [PK, fk("ProductCategory")]),
+    ("parentProductCategoryId", "id", [PK, fk("ProductCategory", "productCategoryId")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("ProdCatalog", "product", "A catalogue: the categories one store sells from.", [
+    ("prodCatalogId", "id", [PK]),
+    ("catalogName", "text-medium", [REQ]),
+])
+entity("ProdCatalogCategory", "product", "A category in a catalogue, dated.", [
+    ("prodCatalogId", "id", [PK, fk("ProdCatalog")]),
+    ("productCategoryId", "id", [PK, fk("ProductCategory")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("ProductPriceType", "product", "Default, list, promotional, wholesale price, or average cost.", [
+    ("productPriceTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("ProductPricePurpose", "product", "What a price is for: purchase or recurring charge.", [
+    ("productPricePurposeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("ProductStoreGroup", "product", "A group of stores that share prices.", [
+    ("productStoreGroupId", "id", [PK]),
+    ("productStoreGroupName", "text-medium", []),
+    ("description", "text-medium", []),
+])
+entity("ProductPrice", "product", "A product's price of one type, in one currency, for a store group, dated.", [
+    ("productId", "id", [PK, fk("Product")]),
+    ("productPriceTypeId", "id", [PK, fk("ProductPriceType")]),
+    ("productPricePurposeId", "id", [PK, fk("ProductPricePurpose")]),
+    ("currencyUomId", "id", [PK, fk("Uom", "uomId")]),
+    ("productStoreGroupId", "id", [PK, fk("ProductStoreGroup")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("price", "currency-precise", [REQ]),
+])
+
+# ───────────────────────────── product store: one per brand or sales channel (W5) ─────────────────────────────
+
+entity("ProductStore", "product", "A store: a brand or channel with its own currency, rules and settings.", [
+    ("productStoreId", "id", [PK]),
+    ("storeName", "text-medium", [REQ]),
+    ("companyName", "text-medium", []),
+    ("primaryStoreGroupId", "id", [fk("ProductStoreGroup", "productStoreGroupId")]),
+    ("payToPartyId", "id", [fk("Party", "partyId")]),
+    ("defaultCurrencyUomId", "id", [fk("Uom", "uomId")]),
+    ("defaultLocaleString", "text-short", []),
+    ("defaultTimeZoneString", "text-short", []),
+    ("defaultSalesChannelEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("productIdentifierEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("orderNumberPrefix", "text-short", []),
+    ("externalId", "id-long", []),
+    ("storeDomain", "text-medium", []),
+    ("reserveInventory", "indicator", []),
+    ("requireInventory", "indicator", []),
+    ("checkInventory", "indicator", []),
+    ("enableBrokering", "indicator", []),
+    ("allowSplit", "indicator", []),
+    ("autoApproveOrder", "indicator", []),
+    ("enablePreOrderAutoReleasing", "indicator", []),
+    ("daysToReturn", "number-integer", []),
+    ("autoAcceptReturn", "indicator", []),
+    ("restockingFeePercentage", "number-decimal", []),
+    ("headerApprovedStatus", "id", [fk("StatusItem", "statusId")]),
+    ("itemApprovedStatus", "id", [fk("StatusItem", "statusId")]),
+])
+entity("ProductStoreSetting", "product", "A store setting by setting type (HotWax).", [
+    ("productStoreId", "id", [PK, fk("ProductStore")]),
+    ("settingTypeEnumId", "id", [PK, fk("Enumeration", "enumId")]),
+    ("settingValue", "text-medium", []),
+])
+entity("ProductStoreCatalog", "product", "A catalogue a store sells from, dated.", [
+    ("productStoreId", "id", [PK, fk("ProductStore")]),
+    ("prodCatalogId", "id", [PK, fk("ProdCatalog")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("ProductStoreRole", "product", "A party's role in a store, such as its staff or owner.", [
+    ("partyId", "id", [PK, fk("Party")]),
+    ("roleTypeId", "id", [PK, fk("RoleType")]),
+    ("productStoreId", "id", [PK, fk("ProductStore")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+])
+
+
 # Migrations in order. Each lists the entities whose tables it creates. Released entries are never changed.
 _W3 = ["EnumerationType", "Enumeration", "EnumerationGroup", "EnumerationGroupMember", "StatusType", "StatusItem",
        "StatusFlow", "StatusFlowItem", "StatusFlowTransition", "UomType", "Uom", "UomConversion", "Geo", "GeoAssoc",
@@ -514,7 +712,207 @@ _W3 = ["EnumerationType", "Enumeration", "EnumerationGroup", "EnumerationGroupMe
        "UserGroup", "UserGroupMember", "UserPermission", "UserGroupPermission", "UserLoginHistory", "UserPasswordHistory",
        "UserPreference", "ServiceJob", "ServiceJobParameter", "ServiceJobRun", "ServiceJobRunLock", "SystemMessageType",
        "SystemMessageRemote", "SystemMessage", "SystemMessageError", "DataManagerConfig", "DataManagerLog"]
+# ───────────────────────────── facility: stores, warehouses, groups, store links (W6) ─────────────────────────────
+
+entity("FacilityType", "facility", "Warehouse, distribution centre, retail store, dark store, 3PL, in transit.", [
+    ("facilityTypeId", "id", [PK]),
+    ("parentTypeId", "id", [fk("FacilityType", "facilityTypeId")]),
+    ("description", "text-medium", []),
+])
+entity("Facility", "facility", "A place that holds stock or ships orders: a store, a warehouse, a 3PL.", [
+    ("facilityId", "id", [PK]),
+    ("facilityTypeId", "id", [REQ, fk("FacilityType")]),
+    ("parentFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("ownerPartyId", "id", [fk("Party", "partyId")]),
+    ("facilityName", "text-medium", [REQ]),
+    ("externalId", "id-long", []),
+    ("description", "text-long", []),
+    ("defaultDaysToShip", "number-integer", []),
+    ("openedDate", "date-time", []),
+    ("closedDate", "date-time", []),
+    ("openTime", "time", []),
+    ("closeTime", "time", []),
+    ("facilityTimeZone", "text-short", []),
+    ("maximumOrderLimit", "number-integer", []),
+    ("postalCode", "text-short", []),
+    ("latitude", "number-decimal", []),
+    ("longitude", "number-decimal", []),
+], indexes=[["facilityTypeId"]])
+entity("FacilityIdentificationType", "facility", "A kind of outside id for a facility: POS location id, Shopify location id.", [
+    ("facilityIdenTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("FacilityIdentification", "facility", "A facility's id in another system, dated (HotWax).", [
+    ("facilityIdenTypeId", "id", [PK, fk("FacilityIdentificationType")]),
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("idValue", "id-long", [REQ]),
+], indexes=[["facilityIdenTypeId", "idValue"]])
+entity("FacilityGroupType", "facility", "Brokering group, region, pickup group.", [
+    ("facilityGroupTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("FacilityGroup", "facility", "A named set of facilities that routing can target in order.", [
+    ("facilityGroupId", "id", [PK]),
+    ("facilityGroupTypeId", "id", [REQ, fk("FacilityGroupType")]),
+    ("primaryParentGroupId", "id", [fk("FacilityGroup", "facilityGroupId")]),
+    ("facilityGroupName", "text-medium", [REQ]),
+    ("description", "text-long", []),
+])
+entity("FacilityGroupMember", "facility", "A facility in a group with its place in the order, dated.", [
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("facilityGroupId", "id", [PK, fk("FacilityGroup")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNum", "number-integer", []),
+], indexes=[["facilityGroupId", "sequenceNum"]])
+entity("FacilityContactMech", "facility", "A contact (address, phone) of a facility, dated.", [
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("contactMechId", "id", [PK, fk("ContactMech")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+])
+entity("FacilityContactMechPurpose", "facility", "What a facility's contact is for, dated.", [
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("contactMechId", "id", [PK, fk("ContactMech")]),
+    ("contactMechPurposeTypeId", "id", [PK, fk("ContactMechPurposeType")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+])
+entity("FacilityLocation", "facility", "A place inside a facility: area, aisle, section, level, position.", [
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("locationSeqId", "id", [PK]),
+    ("locationTypeEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("areaId", "text-short", []),
+    ("aisleId", "text-short", []),
+    ("sectionId", "text-short", []),
+    ("levelId", "text-short", []),
+    ("positionId", "text-short", []),
+])
+entity("FacilityParty", "facility", "A party's role at a facility (manager, staff), dated.", [
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("partyId", "id", [PK, fk("Party")]),
+    ("roleTypeId", "id", [PK, fk("RoleType")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+])
+entity("FacilityOrderCount", "facility", "Orders a facility took on a day, for its daily limit (HotWax).", [
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("entryDate", "date", [PK]),
+    ("lastOrderCount", "number-integer", [REQ]),
+])
+entity("ProductStoreFacility", "facility", "A facility that serves a store, dated and ordered.", [
+    ("productStoreId", "id", [PK, fk("ProductStore")]),
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("ProductStoreFacilityGroup", "facility", "A facility group that serves a store, dated (HotWax).", [
+    ("productStoreId", "id", [PK, fk("ProductStore")]),
+    ("facilityGroupId", "id", [PK, fk("FacilityGroup")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("sequenceNumber", "number-integer", []),
+])
+
+# ───────────────────────────── inventory: stock, its history, counts, transfers (W6) ─────────────────────────────
+
+entity("ProductFacility", "inventory", "A product at a facility: safety stock, reorder levels, brokering switches, sales velocity.", [
+    ("productId", "id", [PK, fk("Product")]),
+    ("facilityId", "id", [PK, fk("Facility")]),
+    ("minimumStock", "number-decimal", []),
+    ("reorderPoint", "number-decimal", []),
+    ("reorderQuantity", "number-decimal", []),
+    ("maximumStock", "number-decimal", []),
+    ("daysToShip", "number-integer", []),
+    ("lastInventoryCount", "number-decimal", []),
+    ("computedLastInventoryCount", "number-decimal", []),
+    ("allowBrokering", "indicator", []),
+    ("allowPickup", "indicator", []),
+    ("salesVelocity", "number-decimal", []),
+], indexes=[["facilityId"]])
+entity("InventoryItemType", "inventory", "Counted in bulk or one serial number per item.", [
+    ("inventoryItemTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("Lot", "inventory", "A production or receipt lot with its expiry.", [
+    ("lotId", "id", [PK]),
+    ("creationDate", "date-time", []),
+    ("quantity", "number-decimal", []),
+    ("expirationDate", "date-time", []),
+])
+entity("InventoryItem", "inventory", "A quantity of one product at one facility (and lot or serial number).", [
+    ("inventoryItemId", "id", [PK]),
+    ("inventoryItemTypeId", "id", [REQ, fk("InventoryItemType")]),
+    ("productId", "id", [REQ, fk("Product")]),
+    ("facilityId", "id", [REQ, fk("Facility")]),
+    ("locationSeqId", "id", []),
+    ("lotId", "id", [fk("Lot")]),
+    ("statusId", "id", [fk("StatusItem")]),
+    ("ownerPartyId", "id", [fk("Party", "partyId")]),
+    ("datetimeReceived", "date-time", []),
+    ("expireDate", "date-time", []),
+    ("quantityOnHandTotal", "number-decimal", [REQ]),
+    ("availableToPromiseTotal", "number-decimal", [REQ]),
+    ("accountingQuantityTotal", "number-decimal", []),
+    ("unitCost", "number-decimal", []),
+    ("currencyUomId", "id", [fk("Uom", "uomId")]),
+    ("serialNumber", "text-medium", []),
+    ("comments", "text-long", []),
+], indexes=[["productId", "facilityId"], ["facilityId"]])
+entity("InventoryItemDetail", "inventory", "One change to an inventory item: on hand and available, why, and what caused it.", [
+    ("inventoryItemId", "id", [PK, fk("InventoryItem")]),
+    ("inventoryItemDetailSeqId", "id", [PK]),
+    ("effectiveDate", "date-time", [REQ]),
+    ("quantityOnHandDiff", "number-decimal", []),
+    ("availableToPromiseDiff", "number-decimal", []),
+    ("accountingQuantityDiff", "number-decimal", []),
+    ("unitCost", "number-decimal", []),
+    ("orderId", "id", []),
+    ("orderItemSeqId", "id", []),
+    ("shipGroupSeqId", "id", []),
+    ("shipmentId", "id", []),
+    ("returnId", "id", []),
+    ("physicalInventoryId", "id", []),
+    ("reasonEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("changeByUserId", "id", []),
+    ("description", "text-medium", []),
+], indexes=[["effectiveDate"], ["orderId"]])
+entity("VarianceReason", "inventory", "Why a count differs: lost, found, damaged, stolen.", [
+    ("varianceReasonId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("PhysicalInventory", "inventory", "A stock count.", [
+    ("physicalInventoryId", "id", [PK]),
+    ("physicalInventoryDate", "date-time", [REQ]),
+    ("partyId", "id", [fk("Party")]),
+    ("generalComments", "text-long", []),
+])
+entity("InventoryItemVariance", "inventory", "The difference a count found for an item.", [
+    ("inventoryItemId", "id", [PK, fk("InventoryItem")]),
+    ("physicalInventoryId", "id", [PK, fk("PhysicalInventory")]),
+    ("varianceReasonId", "id", [fk("VarianceReason")]),
+    ("availableToPromiseVar", "number-decimal", []),
+    ("quantityOnHandVar", "number-decimal", []),
+    ("comments", "text-long", []),
+])
+entity("InventoryTransfer", "inventory", "Stock moving from one facility to another.", [
+    ("inventoryTransferId", "id", [PK]),
+    ("statusId", "id", [REQ, fk("StatusItem")]),
+    ("inventoryItemId", "id", [REQ, fk("InventoryItem")]),
+    ("facilityId", "id", [REQ, fk("Facility")]),
+    ("facilityIdTo", "id", [REQ, fk("Facility", "facilityId")]),
+    ("quantity", "number-decimal", [REQ]),
+    ("sendDate", "date-time", []),
+    ("receiveDate", "date-time", []),
+    ("comments", "text-long", []),
+], indexes=[["facilityIdTo", "statusId"]])
+
 MIGRATIONS = [
     (1, "core_framework", _W3),
     (3, "core_party", [e["name"] for e in ENTITIES if e["package"] == "party"]),
+    (5, "core_product", [e["name"] for e in ENTITIES if e["package"] == "product"]),
+    (7, "core_facility_inventory", [e["name"] for e in ENTITIES if e["package"] in ("facility", "inventory")]),
 ]

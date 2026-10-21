@@ -32,7 +32,7 @@ TYPE_MAP = {
     "text-medium": ("VARCHAR(255)", "VARCHAR(255)", "String", None),
     "text-intermediate": ("VARCHAR(1023)", "VARCHAR(1023)", "String", None),
     "text-long": ("VARCHAR(4000)", "VARCHAR(4000)", "String", None),
-    "text-very-long": ("TEXT", "LONGTEXT", "String", "@JdbcTypeCode(SqlTypes.LONG32VARCHAR)"),
+    "text-very-long": ("TEXT", "LONGTEXT", "String", None),  # bound as VARCHAR: pgjdbc rejects null LONG32VARCHAR
     "date-time": ("TIMESTAMP(3)", "DATETIME(3)", "LocalDateTime", None),
     "date": ("DATE", "DATE", "LocalDate", None),
     "time": ("TIME", "TIME", "LocalTime", None),

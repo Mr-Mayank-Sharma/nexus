@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * get the same one), then serves ids from memory. Ids are readable numbers starting at 10000, for example "10042".
  * Ids are unique, not gap-free: a restart abandons the rest of a bank.
  */
-@Service
+@Service("coreSequenceService")
 public class SequenceService {
 
     static final long FIRST_ID = 10000;

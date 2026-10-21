@@ -4,11 +4,15 @@ import com.nexus.core.service.GeoService;
 import com.nexus.core.service.PartyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.FlushModeType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,12 +33,14 @@ public class CustomerPartyBackfill {
     private final PartyService parties;
     private final TransactionTemplate tx;
     private final GeoService geos;
+    private final EntityManager em;
 
-    public CustomerPartyBackfill(JdbcTemplate jdbc, PartyService parties, TransactionTemplate tx, GeoService geos) {
+    public CustomerPartyBackfill(JdbcTemplate jdbc, PartyService parties, TransactionTemplate tx, GeoService geos, EntityManager em) {
         this.jdbc = jdbc;
         this.parties = parties;
         this.tx = tx;
         this.geos = geos;
+        this.em = em;
     }
 
     public record Result(int scanned, int created, int skipped, int addressesWithoutCountryMatch) {
@@ -46,10 +52,15 @@ public class CustomerPartyBackfill {
                 "SELECT c.id, c.external_id, c.name, c.email, c.phone, a.full_name, a.address_line1, a.address_line2, a.city, "
                         + "a.state, a.postal_code, a.country, a.is_residential FROM nx_customers c "
                         + "LEFT JOIN nx_addresses a ON a.id = c.address_id WHERE c.tenant_id = ? ORDER BY c.created_at, c.id", tenantId);
+        Set<String> copied = new HashSet<>(jdbc.queryForList("SELECT id_value FROM party_identification "
+                + "WHERE party_identification_type_id = ?", String.class, LEGACY_ID));
         int created = 0, skipped = 0, noCountry = 0;
         for (int from = 0; from < rows.size(); from += CHUNK) {
             List<Map<String, Object>> chunk = rows.subList(from, Math.min(rows.size(), from + CHUNK));
-            int[] counts = tx.execute(status -> copy(chunk));
+            int[] counts = tx.execute(status -> {
+                em.setFlushMode(FlushModeType.COMMIT);
+                return copy(chunk, copied);
+            });
             created += counts[0];
             skipped += counts[1];
             noCountry += counts[2];
@@ -59,11 +70,11 @@ public class CustomerPartyBackfill {
         return new Result(rows.size(), created, skipped, noCountry);
     }
 
-    private int[] copy(List<Map<String, Object>> chunk) {
+    private int[] copy(List<Map<String, Object>> chunk, Set<String> copied) {
         int created = 0, skipped = 0, noCountry = 0;
         for (Map<String, Object> r : chunk) {
             String legacyId = String.valueOf(r.get("id"));
-            if (parties.findByIdentification(LEGACY_ID, legacyId).isPresent()) {
+            if (!copied.add(legacyId)) {
                 skipped++;
                 continue;
             }

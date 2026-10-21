@@ -16,9 +16,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class CoreMigrationController {
 
     private final CustomerPartyBackfill customers;
+    private final ProductBackfill products;
+    private final FacilityInventoryBackfill stock;
 
-    public CoreMigrationController(CustomerPartyBackfill customers) {
+    public CoreMigrationController(CustomerPartyBackfill customers, ProductBackfill products, FacilityInventoryBackfill stock) {
         this.customers = customers;
+        this.products = products;
+        this.stock = stock;
+    }
+
+    @Operation(summary = "Copy this company's fulfilment locations and stock into the facility and inventory model (run the product copy first)")
+    @PostMapping("/stock")
+    public ResponseEntity<ApiResponse<FacilityInventoryBackfill.Result>> stock() {
+        return ResponseEntity.ok(ApiResponse.success(stock.run(TenantContext.getCurrentTenantId()), "Stock copied"));
+    }
+
+    @Operation(summary = "Copy this company's connected stores and products into the product model")
+    @PostMapping("/products")
+    public ResponseEntity<ApiResponse<ProductBackfill.Result>> products() {
+        return ResponseEntity.ok(ApiResponse.success(products.run(TenantContext.getCurrentTenantId()), "Products copied"));
     }
 
     @Operation(summary = "Copy this company's customers and addresses into the party model")

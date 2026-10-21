@@ -48,15 +48,41 @@ class CoreOnPostgresAppTest {
 
     @Autowired JdbcTemplate jdbc;
     @Autowired StatusService statuses;
+    @Autowired com.nexus.core.service.ProductService products;
+    @Autowired com.nexus.core.service.PartyService parties;
+    @Autowired org.springframework.transaction.support.TransactionTemplate tx;
 
     @Test
     void startsWithBothSchemasAndTheSeededOrderFlow() {
-        assertEquals(4, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
+        assertEquals(8, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
         assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success", Long.class) >= 75, "legacy migrations ran too");
         assertEquals("ORDER_CREATED", statuses.initialStatus(null, "ORDER_STATUS"));
         assertTrue(statuses.isAllowed(null, "ORDER_HOLD", "ORDER_APPROVED"));
         StatusService.StatusTransitionException e = assertThrows(StatusService.StatusTransitionException.class,
                 () -> statuses.requireAllowed(null, "ORDER_COMPLETED", "ORDER_CREATED"));
         assertEquals("Can't change from Completed to Created; nothing can follow Completed.", e.getMessage());
+    }
+
+    /** Real PostgreSQL binds nulls and types stricter than H2: write through every kind of core column once. */
+    @Test
+    void writesProductsAndPartiesOnRealPostgres() {
+        String product = tx.execute(s -> {
+            String id = products.create(new com.nexus.core.service.ProductService.NewProduct(null, "Boot", null, null, null, null, null, false, false));
+            products.setIdentification(id, "SKU", "PG-BOOT-1");
+            products.setPrice(id, "DEFAULT_PRICE", "USD", null, new java.math.BigDecimal("10.5"));
+            products.addToCategory(id, products.category("Footwear"), true);
+            return id;
+        });
+        assertEquals(java.util.Optional.of(product), products.findByIdentification("SKU", "PG-BOOT-1"));
+        String party = tx.execute(s -> {
+            String id = parties.createPerson(com.nexus.core.service.PartyService.PersonName.parse("Pat Lee"), null);
+            parties.addEmail(id, "pat@example.com", "PRIMARY_EMAIL");
+            parties.addPostalAddress(id, new com.nexus.core.service.PartyService.AddressInput(null, "1 Main St", null, "Austin", "TX",
+                    "78701", "US", null, null, null), "SHIPPING_LOCATION");
+            return id;
+        });
+        assertEquals(java.util.List.of(party), parties.findByEmail("PAT@example.com"));
+        assertEquals("US-TX", jdbc.queryForObject("SELECT state_province_geo_id FROM postal_address pa JOIN party_contact_mech p "
+                + "ON p.contact_mech_id = pa.contact_mech_id WHERE p.party_id = ?", String.class, party));
     }
 }

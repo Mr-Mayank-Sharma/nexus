@@ -13,7 +13,7 @@ import java.util.Optional;
  * Turns the free text channels and old records hold ("US", "United States", "usa"; "NJ", "New Jersey", "US-NJ")
  * into geo ids. Unknown text returns empty rather than a guess.
  */
-@Service
+@Service("coreGeoService")
 @Transactional(readOnly = true)
 public class GeoService {
 

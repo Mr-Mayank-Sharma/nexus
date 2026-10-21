@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 import org.hibernate.type.YesNoConverter;
 
 /** One run of a job, with results and errors. */
@@ -36,7 +34,6 @@ public class ServiceJobRun extends CoreEntity {
     @Column(name = "parameters", length = 4000)
     private String parameters;
 
-    @JdbcTypeCode(SqlTypes.LONG32VARCHAR)
     @Column(name = "results")
     private String results;
 

@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /** Coded lists (sales channels, reasons, types) held as data in {@code enumeration}. */
-@Service
+@Service("coreEnumerationService")
 @Transactional(readOnly = true)
 public class EnumerationService {
 

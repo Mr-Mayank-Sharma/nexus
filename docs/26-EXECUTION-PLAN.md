@@ -72,8 +72,20 @@ that area work in the browser on the new tables, and their old tables are no lon
   `POST /core-migration/customers` copied 4,934 dev customers, idempotent). **Not done: sign-in on `user_account`** (left
   for a supervised session; a mistake there locks people out) and orders still reference `nx_customers` (W7).
 - W5 Product and product store (variants, substitutes, identifications, features, categories, prices, store settings).
+  **Status 2026-10-21: model, services and copy done** (24 entities; core `ProductService`, `ProductStoreService`;
+  `POST /core-migration/products` copied 4 stores and 6,962 dev products in 15 s, idempotent). Prices are copied in the
+  company's default currency because legacy products carry none. Channel product ids in `nx_product_mappings` are not
+  copied (their channel is ambiguous); they come with the connector rewrite. Screens still read the legacy tables (W7).
 - W6 Facility and inventory (facility merges nodes and warehouses; product_facility; inventory items and details;
   reservations).
+  **Status 2026-10-21: model, services and copy written and tested on H2; not yet run on PostgreSQL or the dev data**
+  (Docker was down: the disk was full). 23 entities; core `FacilityService` (outside ids, brokering groups in order,
+  store links, the daily order limit on `facility_order_count`) and core `InventoryService` (receive, reserve, release,
+  ship, adjust, count with variance reason, transfers through the `INVENTORY_XFER_STATUS` flow, ATP per facility,
+  `product_facility.last_inventory_count` following ATP and `computed_last_inventory_count` = ATP less safety stock).
+  `POST /core-migration/stock` copies `nx_nodes` into facilities (daily capacity becomes the order limit) and
+  `nx_inventory` into items, one per lot, with ATP = on hand - allocated - reserved. Warehouses in `nx_warehouses`
+  hold no stock and are not copied yet. Screens and routing still read the legacy tables (W7, W9).
 - W7 Orders (header, ship groups, items with status, roles, adjustments, payments, identifications; Shopify and
   BigCommerce import write the new model).
 - W8 Fulfilment and returns (picklists, shipments, packages, issuance, receipts, returns).

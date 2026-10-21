@@ -33,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * transaction as the change, so a rolled-back change leaves no audit row.
  */
 // Eager: the app starts beans lazily, and a listener nobody asks for would never register.
-@Component
+@Component("coreEntityAuditListener")
 @Lazy(false)
 public class EntityAuditListener implements PostInsertEventListener, PostUpdateEventListener {
 

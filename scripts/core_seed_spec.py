@@ -248,7 +248,113 @@ rows("status_flow_transition", ["status_flow_id", "status_id", "to_status_id", "
     (FLOW, "PARTY_ENABLED", "PARTY_DISABLED", 1, "Disable"), (FLOW, "PARTY_DISABLED", "PARTY_ENABLED", 1, "Enable"),
 ])
 
+# ── product and product store (W5) ──
+W5_SEED_START = len(SEED)
+rows("product_type", ["product_type_id", "parent_type_id", "is_physical", "is_digital", "description"], [
+    ("GOOD", None, "Y", "N", "Good"), ("FINISHED_GOOD", "GOOD", "Y", "N", "Finished good"),
+    ("DIGITAL_GOOD", None, "N", "Y", "Digital good"), ("SERVICE", None, "N", "N", "Service"),
+    ("MARKETING_PKG", "GOOD", "Y", "N", "Bundle sold as one product"), ("GIFT_CARD", None, "N", "Y", "Gift card"),
+])
+rows("product_assoc_type", ["product_assoc_type_id", "parent_type_id", "description"], [
+    ("PRODUCT_VARIANT", None, "Variant of a virtual product"), ("PRODUCT_SUBSTITUTE", None, "Can ship instead"),
+    ("PRODUCT_COMPONENT", None, "Component of a bundle or kit"), ("PRODUCT_COMPLEMENT", None, "Goes well with"),
+    ("PRODUCT_UPGRADE", None, "Upgrade of"), ("PRODUCT_OBSOLESCENCE", None, "Replaced by"),
+])
+rows("good_identification_type", ["good_identification_type_id", "description"], [
+    ("SKU", "Stock keeping unit"), ("UPCA", "UPC-A barcode"), ("EAN", "EAN-13 barcode"), ("ISBN", "ISBN"),
+    ("MANUFACTURER_ID_NO", "Manufacturer part number"), ("SHOPIFY_PROD_ID", "Shopify product id"),
+    ("SHOPIFY_VARIANT_ID", "Shopify variant id"), ("BIGCOMMERCE_PROD_ID", "BigCommerce product id"),
+    ("BIGCOMMERCE_VARIANT_ID", "BigCommerce variant id"), ("ERP_ID", "Id in the ERP"),
+    ("NEXUS_LEGACY_ID", "Id in the Nexus model before the core (migration)"),
+])
+rows("product_feature_type", ["product_feature_type_id", "description"], [
+    ("COLOR", "Colour"), ("SIZE", "Size"), ("STYLE", "Style"), ("MATERIAL", "Material"), ("WIDTH", "Width"),
+    ("BRAND", "Brand"), ("OTHER_FEATURE", "Other"),
+])
+rows("product_feature_appl_type", ["product_feature_appl_type_id", "description"], [
+    ("STANDARD_FEATURE", "Standard"), ("SELECTABLE_FEATURE", "Customer chooses it (on the virtual product)"),
+    ("DISTINGUISHING_FEAT", "Tells variants apart (on the variant)"), ("OPTIONAL_FEATURE", "Optional"),
+])
+rows("product_category_type", ["product_category_type_id", "description"], [
+    ("CATALOG_CATEGORY", "Catalogue category"), ("BROWSE_ROOT", "Top of a browse tree"),
+    ("INTERNAL_CATEGORY", "Internal grouping (routing, reports)"),
+])
+rows("product_price_type", ["product_price_type_id", "description"], [
+    ("DEFAULT_PRICE", "Selling price"), ("LIST_PRICE", "List price (compare at)"), ("PROMO_PRICE", "Promotional price"),
+    ("WHOLESALE_PRICE", "Wholesale price"), ("AVERAGE_COST", "Average cost"),
+])
+rows("product_price_purpose", ["product_price_purpose_id", "description"], [("PURCHASE", "Purchase"), ("RECURRING_CHARGE", "Recurring charge")])
+rows("product_store_group", ["product_store_group_id", "product_store_group_name", "description"], [("_NA_", "All stores", "Prices that apply to every store")])
+rows("enumeration_type", ["enum_type_id", "description"], [
+    ("PRODUCT_STORE_SETTING", "A store setting"), ("PRODUCT_IDENTIFIER", "Which id a store's channel uses for products"),
+])
+rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "description"], [
+    ("RELEASE_DAYS_B2B", "PRODUCT_STORE_SETTING", "RELEASE_DAYS_B2B", 1, "Days before ship date to release B2B orders"),
+    ("RELEASE_DAYS_B2C", "PRODUCT_STORE_SETTING", "RELEASE_DAYS_B2C", 2, "Days before ship date to release B2C orders"),
+    ("MAX_SPLIT_LOCATIONS", "PRODUCT_STORE_SETTING", "MAX_SPLIT_LOCATIONS", 3, "Most locations an order may ship from"),
+    ("REJECT_PROFILE", "PRODUCT_STORE_SETTING", "REJECT_PROFILE", 4, "How many partial rejections before the whole order moves"),
+    ("ORDER_HOLD_MINUTES", "PRODUCT_STORE_SETTING", "ORDER_HOLD_MINUTES", 5, "Minutes to hold new orders before routing (fraud and edits)"),
+    ("PI_SKU", "PRODUCT_IDENTIFIER", "SKU", 1, "SKU"), ("PI_SHOPIFY_VARIANT", "PRODUCT_IDENTIFIER", "SHOPIFY_VARIANT_ID", 2, "Shopify variant id"),
+    ("PI_UPCA", "PRODUCT_IDENTIFIER", "UPCA", 3, "UPC barcode"),
+])
+
+# ── facility and inventory (W6) ──
+W6_SEED_START = len(SEED)
+rows("facility_type", ["facility_type_id", "parent_type_id", "description"], [
+    ("PHYSICAL_FACILITY", None, "Physical place"), ("WAREHOUSE", "PHYSICAL_FACILITY", "Warehouse"),
+    ("DISTRIBUTION_CENTER", "WAREHOUSE", "Distribution centre"), ("RETAIL_STORE", "PHYSICAL_FACILITY", "Retail store"),
+    ("DARK_STORE", "PHYSICAL_FACILITY", "Dark store (online orders only)"), ("THIRD_PARTY_LOGISTICS", "WAREHOUSE", "3PL warehouse"),
+    ("VIRTUAL_FACILITY", None, "Virtual: not a place"), ("IN_TRANSIT", "VIRTUAL_FACILITY", "Stock moving between places"),
+    ("DROPSHIP", "VIRTUAL_FACILITY", "Supplier ships directly"),
+])
+rows("facility_identification_type", ["facility_iden_type_id", "description"], [
+    ("SHOPIFY_LOCATION_ID", "Shopify location id"), ("POS_LOCATION_ID", "Point of sale location id"),
+    ("ERP_FACILITY_ID", "Facility id in the ERP"), ("WMS_FACILITY_ID", "Facility id in the WMS"),
+    ("NEXUS_LEGACY_ID", "Id in the Nexus model before the core (migration)"),
+])
+rows("facility_group_type", ["facility_group_type_id", "description"], [
+    ("BROKERING_GROUP", "Routing group"), ("REGION", "Region"), ("PICKUP_GROUP", "Stores offering pickup"),
+    ("CLUSTER", "Store cluster for transfers"),
+])
+rows("inventory_item_type", ["inventory_item_type_id", "description"], [
+    ("NON_SERIAL_INV_ITEM", "Counted in bulk"), ("SERIALIZED_INV_ITEM", "One item per serial number"),
+])
+rows("variance_reason", ["variance_reason_id", "description"], [
+    ("VAR_LOST", "Lost"), ("VAR_FOUND", "Found"), ("VAR_DAMAGED", "Damaged"), ("VAR_STOLEN", "Stolen"),
+    ("VAR_SAMPLE", "Sample or giveaway"), ("VAR_MISSHIP", "Mis-shipped"), ("VAR_COUNT", "Count correction"),
+])
+rows("enumeration_type", ["enum_type_id", "description"], [
+    ("INV_DETAIL_REASON", "Why stock changed"), ("FACILITY_LOCATION_TYPE", "Kind of place inside a facility"),
+])
+rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "description"], [
+    ("IID_RECEIPT", "INV_DETAIL_REASON", "RECEIPT", 1, "Received"), ("IID_SHIPMENT", "INV_DETAIL_REASON", "SHIPMENT", 2, "Shipped"),
+    ("IID_RESERVE", "INV_DETAIL_REASON", "RESERVE", 3, "Reserved for an order"), ("IID_RELEASE", "INV_DETAIL_REASON", "RELEASE", 4, "Reservation released"),
+    ("IID_RETURN", "INV_DETAIL_REASON", "RETURN", 5, "Returned by a customer"), ("IID_ADJUST", "INV_DETAIL_REASON", "ADJUST", 6, "Adjusted by hand"),
+    ("IID_COUNT", "INV_DETAIL_REASON", "COUNT", 7, "Count variance"), ("IID_TRANSFER_OUT", "INV_DETAIL_REASON", "TRANSFER_OUT", 8, "Sent to another facility"),
+    ("IID_TRANSFER_IN", "INV_DETAIL_REASON", "TRANSFER_IN", 9, "Received from another facility"),
+    ("IID_HOLD", "INV_DETAIL_REASON", "HOLD", 10, "Held (damage, quality, rejection)"), ("IID_FEED", "INV_DETAIL_REASON", "FEED", 11, "Stock feed from ERP, POS or WMS"),
+    ("IID_MIGRATION", "INV_DETAIL_REASON", "MIGRATION", 12, "Copied from the earlier Nexus model"),
+    ("FLT_PICKLOC", "FACILITY_LOCATION_TYPE", "PICK", 1, "Pick location"), ("FLT_BULK", "FACILITY_LOCATION_TYPE", "BULK", 2, "Bulk storage"),
+    ("FLT_BACKROOM", "FACILITY_LOCATION_TYPE", "BACKROOM", 3, "Store backroom"), ("FLT_SALESFLOOR", "FACILITY_LOCATION_TYPE", "SALESFLOOR", 4, "Sales floor"),
+])
+rows("status_type", ["status_type_id", "description"], [("INVENTORY_XFER_STATUS", "Transfer status")])
+rows("status_item", ["status_id", "status_type_id", "status_code", "sequence_num", "description"], [
+    ("IXF_REQUESTED", "INVENTORY_XFER_STATUS", "REQUESTED", 1, "Requested"), ("IXF_SCHEDULED", "INVENTORY_XFER_STATUS", "SCHEDULED", 2, "Approved"),
+    ("IXF_EN_ROUTE", "INVENTORY_XFER_STATUS", "EN_ROUTE", 3, "In transit"), ("IXF_COMPLETE", "INVENTORY_XFER_STATUS", "COMPLETE", 4, "Received"),
+    ("IXF_CANCELLED", "INVENTORY_XFER_STATUS", "CANCELLED", 5, "Cancelled"),
+])
+rows("status_flow_item", ["status_flow_id", "status_id", "is_initial"], [
+    (FLOW, "IXF_REQUESTED", "Y"), (FLOW, "IXF_SCHEDULED", "N"), (FLOW, "IXF_EN_ROUTE", "N"), (FLOW, "IXF_COMPLETE", "N"), (FLOW, "IXF_CANCELLED", "N"),
+])
+rows("status_flow_transition", ["status_flow_id", "status_id", "to_status_id", "transition_sequence", "transition_name"], [
+    (FLOW, "IXF_REQUESTED", "IXF_SCHEDULED", 1, "Approve"), (FLOW, "IXF_REQUESTED", "IXF_CANCELLED", 2, "Cancel"),
+    (FLOW, "IXF_SCHEDULED", "IXF_EN_ROUTE", 1, "Ship"), (FLOW, "IXF_SCHEDULED", "IXF_CANCELLED", 2, "Cancel"),
+    (FLOW, "IXF_EN_ROUTE", "IXF_COMPLETE", 1, "Receive"),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
-    (4, "core_party_seed", SEED[W4_SEED_START:]),
+    (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
+    (6, "core_product_seed", SEED[W5_SEED_START:W6_SEED_START]),
+    (8, "core_facility_inventory_seed", SEED[W6_SEED_START:]),
 ]

@@ -31,4 +31,20 @@ class CoreBoundaryTest {
             assertEquals(List.of(), offenders, "core classes must not use com.nexus.oms");
         }
     }
+
+    /** Core beans carry explicit "core..." names, so they never clash with an OMS bean of the same class name. */
+    @Test
+    void coreBeansHaveCoreNames() throws IOException {
+        try (Stream<Path> files = Files.walk(Path.of("src/main/java/com/nexus/core"))) {
+            List<String> unnamed = files.filter(p -> p.toString().endsWith(".java")).filter(p -> {
+                try {
+                    String t = Files.readString(p);
+                    return t.matches("(?s).*\\n@(Service|Component)\\s*\\n.*") || t.matches("(?s).*\\n@(Service|Component)\\(\"(?!core)[^\"]*\"\\).*");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).map(Path::toString).toList();
+            assertEquals(List.of(), unnamed, "name core beans @Service(\"coreXxx\")");
+        }
+    }
 }

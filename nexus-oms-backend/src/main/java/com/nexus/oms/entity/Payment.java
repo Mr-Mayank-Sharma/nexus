@@ -9,7 +9,8 @@ import java.util.UUID;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-@Entity
+// JPA name differs from the class so it never clashes with the core model's Payment (doc 23)
+@Entity(name = "LegacyPayment")
 @Table(name = "nx_payments")
 @Data
 @NoArgsConstructor

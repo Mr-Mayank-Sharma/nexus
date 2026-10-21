@@ -7,7 +7,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
+// JPA name differs from the class so it never clashes with the core model's InvoiceItem (doc 23)
+@Entity(name = "LegacyInvoiceItem")
 @Table(name = "nx_invoice_items")
 @Data
 @NoArgsConstructor

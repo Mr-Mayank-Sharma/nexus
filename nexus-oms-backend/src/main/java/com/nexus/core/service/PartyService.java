@@ -27,7 +27,7 @@ import java.util.Optional;
  * People and organisations (OFBiz party model): a party has a type, roles, outside ids, and contacts (addresses,
  * phones, emails) that are dated and tagged with purposes such as SHIPPING_LOCATION or PRIMARY_EMAIL.
  */
-@Service
+@Service("corePartyService")
 @Transactional
 public class PartyService {
 
@@ -189,7 +189,7 @@ public class PartyService {
         PartyStatus s = new PartyStatus();
         s.setPartyId(partyId);
         s.setStatusId(statusId);
-        s.setStatusDate(LocalDateTime.now());
+        s.setStatusDate(CoreClock.now());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         s.setChangeByUserId(auth == null || auth.getName() == null ? null : auth.getName().substring(0, Math.min(40, auth.getName().length())));
         em.persist(s);
@@ -205,7 +205,7 @@ public class PartyService {
     }
 
     private void link(String partyId, String contactMechId, String... purposes) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = CoreClock.now();
         PartyContactMech pcm = new PartyContactMech();
         pcm.setPartyId(partyId);
         pcm.setContactMechId(contactMechId);

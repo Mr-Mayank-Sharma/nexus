@@ -22,7 +22,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     List<Product> findByTenantId(UUID tenantId);
 
     @Query("""
-            SELECT p FROM Product p WHERE p.tenantId = :tenantId
+            SELECT p FROM LegacyProduct p WHERE p.tenantId = :tenantId
               AND (:query IS NULL OR :query = '' OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :query, '%'))
                    OR LOWER(p.productName) LIKE LOWER(CONCAT('%', :query, '%')))
               AND (:category IS NULL OR :category = '' OR LOWER(p.category) LIKE LOWER(CONCAT('%', :category, '%')))

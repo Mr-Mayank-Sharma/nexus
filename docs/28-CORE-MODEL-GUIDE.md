@@ -63,6 +63,11 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `EnumerationService.require(type, id)` | Validating a coded value (sales channel, reason); the error lists valid values. |
 | `SystemPropertyService` | Settings stored as data, with typed reads and readable errors. |
 | `PartyService` | People and organisations with roles, outside ids, and dated contacts (address, phone, email) tagged with purposes. |
+| `ProductService` (`coreProductService`) | Products with ids of every kind (SKU, barcode, channel ids, dated), variants, substitutes and kit components, features (size, colour), categories, and dated prices per currency and store group. |
+| `ProductStoreService` | Stores and their settings (coded `PRODUCT_STORE_SETTING` values). |
+| `FacilityService` (`coreFacilityService`) | Stores, warehouses and 3PLs with outside ids (POS, Shopify location), brokering groups in order, the stores they serve, and the daily order limit: `takeOrder(facility, day)` is false when the facility is full that day. |
+| `InventoryService` (`coreInventoryService`) | Stock: every change is an `inventory_item_detail` row with a reason. `reserve` lowers ATP, `ship` lowers on hand, `recordCount` keeps the variance and its reason, transfers go request, approve (holds stock), ship, receive. `atp`, `atpByFacility`, and `product_facility` per product and facility for routing. |
+| `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
 
@@ -73,13 +78,38 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `CoreSchemaMigrationTest` | The core builds and seeds an empty PostgreSQL database, beside legacy tables, idempotently, with foreign keys enforced; the MySQL scripts run on H2 in MySQL mode. A real MySQL run is enabled with `-Dnexus.test.mysql=true` (pulls `mysql:8.4`). |
 | `CoreOnPostgresAppTest` | The whole app starts on PostgreSQL with legacy and core migrations and validates every entity. |
 | `CoreServicesTest` | Ids (including 400 concurrent), status rules, enumerations, settings and the audit trail. |
+| `FacilityInventoryServiceTest` | Receive, reserve, ship and count with full history; ATP less safety stock; transfers and cancelling; the daily order limit; groups in order. |
 | `CoreBoundaryTest`, `CoreModelUpToDateTest` | The core stays separate; generated files match the spec. |
 
 ## Copying legacy data
 
+`POST /core-migration/stock` (admin; run the product copy first) copies fulfilment nodes into facilities and stock rows
+into inventory items, one per lot, each with one `IID_MIGRATION` detail row. Available is on hand less allocated and
+reserved, so held stock stays held; safety stock and reorder levels go to `product_facility`; damaged counts are noted
+on the item. Rows without a location or with an unknown SKU are counted and skipped.
+
+`POST /core-migration/products` (admin) copies connected stores into product stores and products into the product
+model (SKU, old id, name, picture, weight, price and cost in the company currency, category). It copied 6,962 dev
+products in 15 seconds.
+
 `POST /core-migration/customers` (admin) copies the caller's company's customers and addresses into the party model.
 Each copy carries a `NEXUS_LEGACY_ID` identification with the old id, so running it again copies nothing twice. On the
 development database it copied 4,934 customers.
+
+## Conventions learned the hard way
+
+- Name core beans `@Service("coreXxx")`: the OMS has classes with the same simple names (`ProductService`).
+  `CoreBoundaryTest` enforces it.
+- Four legacy entities clash with OFBiz entity names; they are named `LegacyProduct`, `LegacyInvoice`,
+  `LegacyInvoiceItem` and `LegacyPayment` in JPQL. No table changed.
+- `text-very-long` columns bind as plain text; PostgreSQL's driver rejects Hibernate's long-text type for nulls.
+  `CoreOnPostgresAppTest` writes through the core on real PostgreSQL to catch this kind of difference, which H2 hides.
+- Inventory detail rows take their id from the `InventoryItemDetail` sequence, not a per-item counter: counting
+  detail rows needs a flush, and copy jobs run with COMMIT flush mode.
+- Tests run outside `main()`, which sets the JVM to UTC, so a timestamp read with plain JDBC in a test is shifted
+  by the machine's zone. Read timestamps through JPA in tests.
+- Bulk copies read what exists once, keep lookups in memory, and flush once per chunk; per-row queries made the
+  product copy 30 times slower.
 
 ## Not yet
 

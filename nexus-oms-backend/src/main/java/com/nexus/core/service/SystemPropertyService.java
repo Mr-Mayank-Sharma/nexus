@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 /** Settings stored as data ({@code system_property}), grouped by resource, for example ("routing", "max.splits"). */
-@Service
+@Service("coreSystemPropertyService")
 public class SystemPropertyService {
 
     private final EntityManager em;

@@ -9,7 +9,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Entity
+// JPA name differs from the class so it never clashes with the core model's Product (doc 23)
+@Entity(name = "LegacyProduct")
 @Table(name = "products")
 @Data
 @NoArgsConstructor

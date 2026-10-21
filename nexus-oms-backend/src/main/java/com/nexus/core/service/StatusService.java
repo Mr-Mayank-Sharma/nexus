@@ -13,7 +13,7 @@ import java.util.Objects;
  * instead of in code, so a client's flow can be changed without a release. Every status type's standard changes are in
  * the {@value #DEFAULT_FLOW} flow; a product store may point at its own flow later.
  */
-@Service
+@Service("coreStatusService")
 @Transactional(readOnly = true)
 public class StatusService {
 
