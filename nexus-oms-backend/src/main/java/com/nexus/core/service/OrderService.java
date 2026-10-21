@@ -261,6 +261,38 @@ public class OrderService {
         recalculate(h);
     }
 
+    /**
+     * Sets the status another system of record already decided (the mirror of the earlier model), without checking
+     * the flow: that system allowed the change. Items follow as they would on a copy, cancelled items give their
+     * stock back, and the change is written to the history with the reason.
+     */
+    public void mirrorStatus(String orderId, String statusId, String reason) {
+        OrderHeader h = header(orderId, true);
+        String to = statuses.status(statusId).getStatusId();
+        if (to.equals(h.getStatusId())) return;
+        h.setStatusId(to);
+        history(orderId, null, null, to, reason, null);
+        String itemTo = itemStatusFor(to);
+        for (OrderItem i : items(orderId)) {
+            if (!ITEM_OPEN.contains(i.getStatusId()) || itemTo.equals(i.getStatusId())) continue;
+            if ("ITEM_CREATED".equals(itemTo)) continue;   // never move an item back
+            if ("ITEM_CANCELLED".equals(itemTo) || "ITEM_REJECTED".equals(itemTo)) {
+                releaseReservations(orderId, i.getOrderItemSeqId(), null);
+                i.setCancelQuantity(i.getQuantity());
+            }
+            i.setStatusId(itemTo);
+            history(orderId, i.getOrderItemSeqId(), null, itemTo, reason, null);
+        }
+        recalculate(h);
+    }
+
+    /** Sets the tracking number of a ship group (the first when none is named). */
+    public void setTracking(String orderId, String shipGroupSeqId, String trackingNumber) {
+        OrderItemShipGroup g = em.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId == null ? SequenceService.seqId(1) : shipGroupSeqId));
+        if (g == null) throw new IllegalArgumentException("Order " + orderId + " has no ship group " + shipGroupSeqId);
+        g.setTrackingNumber(trackingNumber);
+    }
+
     public void setPaymentStatus(String orderPaymentPreferenceId, String toStatusId, String reason, String userId) {
         OrderPaymentPreference p = em.find(OrderPaymentPreference.class, orderPaymentPreferenceId, LockModeType.PESSIMISTIC_WRITE);
         if (p == null) throw new IllegalArgumentException("Unknown payment " + orderPaymentPreferenceId);

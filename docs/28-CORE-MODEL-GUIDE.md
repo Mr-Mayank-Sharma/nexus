@@ -86,7 +86,9 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 ## Copying legacy data
 
 Run the copies in this order: customers, products, stock, orders. Each later copy links to what the earlier ones
-copied.
+copied. `CoreMirror` runs them every minute for companies whose orders changed, and follows status and tracking
+changes (`nexus.core.mirror.enabled`, `nexus.core.mirror.interval-ms`); its watermark is the system property
+`nexus.core / mirror.lastRun`.
 
 `POST /core-migration/orders` (admin) copies orders with items, shipping and tax as adjustments, payment status, the
 channel order id, the customer's address as ship-to, and the old status and fulfilment type as order attributes. When

@@ -95,6 +95,39 @@ public class OrderBackfill {
         return new Result(rows.size(), t[0], t[1], t[2], t[3], t[4], t[5], t[6], t[7]);
     }
 
+    /**
+     * Brings status and tracking changes made in the earlier model since {@code since} over to orders already copied.
+     * The earlier model stays the system of record while the two run side by side. Returns how many orders changed.
+     */
+    public int refresh(UUID tenantId, LocalDateTime since) {
+        Map<String, String> copied = pairs("SELECT id_value, order_id FROM order_identification WHERE order_identification_type_id = ? "
+                + "AND thru_date IS NULL", LEGACY_ID);
+        List<Map<String, Object>> rows = jdbc.queryForList("SELECT id, status, tracking_number FROM nx_orders WHERE tenant_id = ? "
+                + "AND updated_at >= ?", tenantId, Timestamp.valueOf(since));
+        int changed = 0;
+        for (Map<String, Object> r : rows) {
+            String orderId = copied.get(String.valueOf(r.get("id")));
+            if (orderId == null) continue;
+            String legacyStatus = str(r, "status");
+            String status = orderStatus(legacyStatus);
+            String tracking = str(r, "tracking_number");
+            Boolean did = tx.execute(s -> {
+                Map<String, Object> now = jdbc.queryForMap("SELECT h.status_id, g.tracking_number FROM order_header h LEFT JOIN "
+                        + "order_item_ship_group g ON g.order_id = h.order_id AND g.ship_group_seq_id = '00001' WHERE h.order_id = ?", orderId);
+                boolean statusChanged = !status.equals(now.get("status_id"));
+                boolean trackingChanged = tracking != null && !tracking.equals(now.get("tracking_number"));
+                if (statusChanged) {
+                    orders.mirrorStatus(orderId, status, "Changed in the earlier model to " + legacyStatus);
+                    orders.setAttribute(orderId, "legacyStatus", legacyStatus);
+                }
+                if (trackingChanged) orders.setTracking(orderId, null, tracking);
+                return statusChanged || trackingChanged;
+            });
+            if (Boolean.TRUE.equals(did)) changed++;
+        }
+        return changed;
+    }
+
     private int[] copy(List<Map<String, Object>> chunk, Lookups l) {
         int created = 0, already = 0, items = 0, noProduct = 0, noCustomer = 0, guests = 0, reservations = 0, balanced = 0;
         for (Map<String, Object> r : chunk) {

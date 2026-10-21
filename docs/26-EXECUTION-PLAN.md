@@ -100,7 +100,13 @@ that area work in the browser on the new tables, and their old tables are no lon
   saying so) and no customer (140 had an address and got a guest party). Reservations: legacy holds are not
   consistent (1,016 allocated in `nx_inventory`, 259 in `nx_order_allocations` by order and location, 20 on items),
   and the order-level allocations name no item, so none are copied as reservations; the stock copy already keeps held
-  stock out of available. **Next: Shopify and BigCommerce import write the new model**, then screens read it.
+  stock out of available. **Mirror (2026-10-21, approved):** `CoreMirror` runs every minute and, for each company whose
+  orders changed, copies new customers, products, locations, stock items and orders, then brings status and tracking
+  changes across to copied orders. Every import (Shopify, BigCommerce, generic, manual) is covered because the mirror
+  reads what they wrote; the earlier model stays the system of record and the screens still read it. Checked on the dev
+  server: an order created through the API appeared in the core within a minute and followed its cancel. Stock
+  quantity changes after the first copy are not mirrored (routing on the core, W9, needs them). Next: screens read the
+  core once the two have been compared.
 - W8 Fulfilment and returns (picklists, shipments, packages, issuance, receipts, returns).
 - W9 Routing (routing groups, rules, conditions, actions, runs; the new brokering query; reallocation and split
   control features from doc 24 section 2).
