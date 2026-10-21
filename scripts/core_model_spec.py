@@ -910,9 +910,189 @@ entity("InventoryTransfer", "inventory", "Stock moving from one facility to anot
     ("comments", "text-long", []),
 ], indexes=[["facilityIdTo", "statusId"]])
 
+# ───────────────────────────── order: header, items, ship groups, reservations, money (W7) ─────────────────────────────
+
+entity("OrderType", "order", "Sales order or purchase order.", [
+    ("orderTypeId", "id", [PK]),
+    ("parentTypeId", "id", [fk("OrderType", "orderTypeId")]),
+    ("description", "text-medium", []),
+])
+entity("OrderHeader", "order", "An order: who, where from, when, its status and its total.", [
+    ("orderId", "id", [PK]),
+    ("orderTypeId", "id", [REQ, fk("OrderType")]),
+    ("orderName", "text-medium", []),
+    ("externalId", "id-long", []),
+    ("salesChannelEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("orderDate", "date-time", [REQ]),
+    ("entryDate", "date-time", []),
+    ("priority", "number-integer", []),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("currencyUomId", "id", [fk("Uom", "uomId")]),
+    ("productStoreId", "id", [fk("ProductStore")]),
+    ("originFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("createdBy", "id", []),
+    ("isRushOrder", "indicator", []),
+    ("grandTotal", "currency-amount", []),
+    ("remainingSubTotal", "currency-amount", []),
+], indexes=[["externalId"], ["orderDate"], ["statusId"], ["productStoreId", "orderDate"]])
+entity("OrderIdentificationType", "order", "A kind of outside id for an order: Shopify order id, marketplace order id, PO number.", [
+    ("orderIdentificationTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("OrderIdentification", "order", "An order's id in another system, dated (HotWax).", [
+    ("orderIdentificationTypeId", "id", [PK, fk("OrderIdentificationType")]),
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+    ("idValue", "id-long", [REQ]),
+], indexes=[["orderIdentificationTypeId", "idValue"]])
+entity("OrderStatus", "order", "Every status an order, item or payment had, with when, who and why.", [
+    ("orderStatusId", "id", [PK]),
+    ("statusId", "id", [REQ, fk("StatusItem")]),
+    ("orderId", "id", [REQ, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", []),
+    ("orderPaymentPreferenceId", "id", []),
+    ("statusDatetime", "date-time", [REQ]),
+    ("statusUserLogin", "id", []),
+    ("changeReason", "text-long", []),
+], indexes=[["orderId", "statusDatetime"]])
+entity("OrderRole", "order", "A party's role on an order: placing customer, bill-to, ship-to, sales rep.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("partyId", "id", [PK, fk("Party")]),
+    ("roleTypeId", "id", [PK, fk("RoleType")]),
+], indexes=[["partyId"]])
+entity("OrderContactMech", "order", "An order's contacts by purpose: ship-to address, bill-to address, order email.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("contactMechPurposeTypeId", "id", [PK, fk("ContactMechPurposeType")]),
+    ("contactMechId", "id", [PK, fk("ContactMech")]),
+])
+entity("ShipmentMethodType", "order", "How an order ships: standard, next day, store pickup.", [
+    ("shipmentMethodTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+    ("sequenceNum", "number-integer", []),
+])
+entity("OrderItemShipGroup", "order", "A set of an order's items that ship together: from where, how, to which address.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("shipGroupSeqId", "id", [PK]),
+    ("shipmentMethodTypeId", "id", [fk("ShipmentMethodType")]),
+    ("carrierPartyId", "id", [fk("Party", "partyId")]),
+    ("facilityId", "id", [fk("Facility")]),
+    ("contactMechId", "id", [fk("ContactMech")]),
+    ("telecomContactMechId", "id", [fk("ContactMech", "contactMechId")]),
+    ("trackingNumber", "text-medium", []),
+    ("shippingInstructions", "text-long", []),
+    ("maySplit", "indicator", []),
+    ("isGift", "indicator", []),
+    ("giftMessage", "text-long", []),
+    ("shipAfterDate", "date-time", []),
+    ("shipByDate", "date-time", []),
+    ("estimatedShipDate", "date-time", []),
+    ("estimatedDeliveryDate", "date-time", []),
+], indexes=[["facilityId"]])
+entity("OrderItemType", "order", "Product item, service item.", [
+    ("orderItemTypeId", "id", [PK]),
+    ("parentTypeId", "id", [fk("OrderItemType", "orderItemTypeId")]),
+    ("description", "text-medium", []),
+])
+entity("OrderItem", "order", "A line of an order: product, quantity, price, its own status and ship group.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", [PK]),
+    ("externalId", "id-long", []),
+    ("orderItemTypeId", "id", [REQ, fk("OrderItemType")]),
+    ("shipGroupSeqId", "id", []),
+    ("productId", "id", [fk("Product")]),
+    ("quantity", "number-decimal", [REQ]),
+    ("cancelQuantity", "number-decimal", []),
+    ("unitPrice", "currency-amount", []),
+    ("unitListPrice", "currency-amount", []),
+    ("itemDescription", "text-medium", []),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("isPromo", "indicator", []),
+    ("isModifiedPrice", "indicator", []),
+    ("comments", "text-long", []),
+    ("autoCancelDate", "date-time", []),
+    ("estimatedShipDate", "date-time", []),
+    ("estimatedDeliveryDate", "date-time", []),
+], indexes=[["productId"], ["statusId"]])
+entity("OrderItemShipGroupAssoc", "order", "How much of an item goes in a ship group (an item split across groups).", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", [PK]),
+    ("shipGroupSeqId", "id", [PK]),
+    ("quantity", "number-decimal", [REQ]),
+    ("cancelQuantity", "number-decimal", []),
+])
+entity("OrderItemShipGrpInvRes", "order", "Stock held for an order item at an inventory item.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("shipGroupSeqId", "id", [PK]),
+    ("orderItemSeqId", "id", [PK]),
+    ("inventoryItemId", "id", [PK, fk("InventoryItem")]),
+    ("reserveOrderEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("quantity", "number-decimal", [REQ]),
+    ("quantityNotAvailable", "number-decimal", []),
+    ("reservedDatetime", "date-time", []),
+    ("createdDatetime", "date-time", []),
+    ("promisedDatetime", "date-time", []),
+    ("priority", "number-integer", []),
+], indexes=[["inventoryItemId"]])
+entity("OrderAdjustmentType", "order", "Shipping charge, sales tax, promotion, discount, fee.", [
+    ("orderAdjustmentTypeId", "id", [PK]),
+    ("parentTypeId", "id", [fk("OrderAdjustmentType", "orderAdjustmentTypeId")]),
+    ("description", "text-medium", []),
+])
+entity("OrderAdjustment", "order", "An amount added to or taken off an order, an item or a ship group.", [
+    ("orderAdjustmentId", "id", [PK]),
+    ("orderAdjustmentTypeId", "id", [REQ, fk("OrderAdjustmentType")]),
+    ("orderId", "id", [REQ, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", []),
+    ("shipGroupSeqId", "id", []),
+    ("amount", "currency-amount", [REQ]),
+    ("sourcePercentage", "number-decimal", []),
+    ("description", "text-medium", []),
+    ("comments", "text-long", []),
+    ("taxAuthGeoId", "id", [fk("Geo", "geoId")]),
+    ("productPromoId", "id", []),
+    ("sourceReferenceId", "id-long", []),
+    ("createdDate", "date-time", []),
+    ("createdByUserLogin", "id", []),
+], indexes=[["orderId"]])
+entity("PaymentMethodType", "order", "Card, cash, gift card, paid on the channel (Shopify, marketplace), cash on delivery.", [
+    ("paymentMethodTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("OrderPaymentPreference", "order", "How an order is paid and how much, with its own status.", [
+    ("orderPaymentPreferenceId", "id", [PK]),
+    ("orderId", "id", [REQ, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", []),
+    ("paymentMethodTypeId", "id", [fk("PaymentMethodType")]),
+    ("paymentMethodId", "id", []),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("maxAmount", "currency-amount", []),
+    ("manualRefNum", "text-medium", []),
+    ("manualAuthCode", "text-medium", []),
+    ("createdDate", "date-time", []),
+    ("createdByUserLogin", "id", []),
+], indexes=[["orderId"]])
+entity("OrderAttribute", "order", "A named value on an order, for anything without its own column.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("attrName", "text-medium", [PK]),
+    ("attrValue", "text-long", []),
+])
+entity("OrderItemAttribute", "order", "A named value on an order item.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", [PK]),
+    ("attrName", "text-medium", [PK]),
+    ("attrValue", "text-long", []),
+])
+entity("OrderHeaderNote", "order", "A note on an order.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("noteId", "id", [PK, fk("NoteData")]),
+    ("internalNote", "indicator", []),
+])
+
 MIGRATIONS = [
     (1, "core_framework", _W3),
     (3, "core_party", [e["name"] for e in ENTITIES if e["package"] == "party"]),
     (5, "core_product", [e["name"] for e in ENTITIES if e["package"] == "product"]),
     (7, "core_facility_inventory", [e["name"] for e in ENTITIES if e["package"] in ("facility", "inventory")]),
+    (9, "core_order", [e["name"] for e in ENTITIES if e["package"] == "order"]),
 ]

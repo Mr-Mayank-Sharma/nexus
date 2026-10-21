@@ -352,9 +352,47 @@ rows("status_flow_transition", ["status_flow_id", "status_id", "to_status_id", "
     (FLOW, "IXF_EN_ROUTE", "IXF_COMPLETE", 1, "Receive"),
 ])
 
+# ── orders (W7) ──
+W7_SEED_START = len(SEED)
+rows("order_type", ["order_type_id", "parent_type_id", "description"], [
+    ("SALES_ORDER", None, "Sales order"), ("PURCHASE_ORDER", None, "Purchase order"),
+])
+rows("order_item_type", ["order_item_type_id", "parent_type_id", "description"], [
+    ("PRODUCT_ORDER_ITEM", None, "Product"), ("SERVICE_ORDER_ITEM", None, "Service"),
+    ("GIFT_CARD_ORDER_ITEM", "PRODUCT_ORDER_ITEM", "Gift card"),
+])
+rows("order_adjustment_type", ["order_adjustment_type_id", "parent_type_id", "description"], [
+    ("SHIPPING_CHARGES", None, "Shipping charge"), ("SALES_TAX", None, "Sales tax"), ("VAT_TAX", "SALES_TAX", "VAT"),
+    ("DUTY", None, "Customs duty"), ("PROMOTION_ADJUSTMENT", None, "Promotion"), ("DISCOUNT_ADJUSTMENT", None, "Discount"),
+    ("FEE", None, "Fee"), ("DONATION_ADJUSTMENT", None, "Donation"), ("MISCELLANEOUS_CHARGE", None, "Other charge"),
+])
+rows("order_identification_type", ["order_identification_type_id", "description"], [
+    ("SHOPIFY_ORD_ID", "Shopify order id"), ("SHOPIFY_ORD_NAME", "Shopify order name (#1001)"),
+    ("BIGCOMMERCE_ORD_ID", "BigCommerce order id"), ("WOOCOMMERCE_ORD_ID", "WooCommerce order id"),
+    ("AMAZON_ORD_ID", "Amazon order id"), ("MARKETPLACE_ORD_ID", "Other marketplace order id"),
+    ("POS_ORD_ID", "Point of sale receipt id"), ("EDI_PO_NUMBER", "Customer PO number (EDI or B2B)"),
+    ("CHANNEL_ORD_ID", "Order id on another channel"), ("NEXUS_LEGACY_ID", "Id in the Nexus model before the core (migration)"),
+])
+rows("shipment_method_type", ["shipment_method_type_id", "description", "sequence_num"], [
+    ("STANDARD", "Standard", 1), ("SECOND_DAY", "Second day", 2), ("NEXT_DAY", "Next day", 3), ("SAME_DAY", "Same day", 4),
+    ("EXPRESS", "Express", 5), ("STOREPICKUP", "Store pickup", 6), ("NO_SHIPPING", "No shipping (digital or carry-out)", 7),
+])
+rows("payment_method_type", ["payment_method_type_id", "description"], [
+    ("CREDIT_CARD", "Card"), ("CASH", "Cash"), ("GIFT_CARD", "Gift card"), ("EXT_COD", "Cash on delivery"),
+    ("EXT_SHOPIFY", "Paid on Shopify"), ("EXT_BIGCOMMERCE", "Paid on BigCommerce"), ("EXT_MARKETPLACE", "Paid on the marketplace"),
+    ("EXT_PAYPAL", "PayPal"), ("EXT_BILLING_ACCOUNT", "On account (net terms)"), ("EXT_OFFLINE", "Paid outside Nexus"),
+])
+rows("enumeration_type", ["enum_type_id", "description"], [("INV_RES_ORDER", "Which stock a reservation takes first")])
+rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "description"], [
+    ("INVRO_FIFO_REC", "INV_RES_ORDER", "FIFO_REC", 1, "First received, first out"),
+    ("INVRO_LIFO_REC", "INV_RES_ORDER", "LIFO_REC", 2, "Last received, first out"),
+    ("INVRO_FIFO_EXP", "INV_RES_ORDER", "FIFO_EXP", 3, "First to expire, first out"),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
     (6, "core_product_seed", SEED[W5_SEED_START:W6_SEED_START]),
-    (8, "core_facility_inventory_seed", SEED[W6_SEED_START:]),
+    (8, "core_facility_inventory_seed", SEED[W6_SEED_START:W7_SEED_START]),
+    (10, "core_order_seed", SEED[W7_SEED_START:]),
 ]

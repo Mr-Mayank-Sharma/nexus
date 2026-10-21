@@ -67,6 +67,7 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `ProductStoreService` | Stores and their settings (coded `PRODUCT_STORE_SETTING` values). |
 | `FacilityService` (`coreFacilityService`) | Stores, warehouses and 3PLs with outside ids (POS, Shopify location), brokering groups in order, the stores they serve, and the daily order limit: `takeOrder(facility, day)` is false when the facility is full that day. |
 | `InventoryService` (`coreInventoryService`) | Stock: every change is an `inventory_item_detail` row with a reason. `reserve` lowers ATP, `ship` lowers on hand, `recordCount` keeps the variance and its reason, transfers go request, approve (holds stock), ship, receive. `atp`, `atpByFacility`, and `product_facility` per product and facility for routing. |
+| `OrderService` (`coreOrderService`) | Orders: `create` (roles, contacts, ship groups, items, adjustments, payments, outside ids), `changeStatus` (cascades to items, gives stock back on cancel), `cancelItem` (partial), `reserve` and `releaseReservations`, `findByIdentification("SHOPIFY_ORD_ID", id)`. Every status change is an `order_status` row. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
@@ -79,9 +80,18 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `CoreOnPostgresAppTest` | The whole app starts on PostgreSQL with legacy and core migrations and validates every entity. |
 | `CoreServicesTest` | Ids (including 400 concurrent), status rules, enumerations, settings and the audit trail. |
 | `FacilityInventoryServiceTest` | Receive, reserve, ship and count with full history; ATP less safety stock; transfers and cancelling; the daily order limit; groups in order. |
+| `OrderServiceTest` | Totals with item and order adjustments; approve, reserve, partial cancel, cancel with stock given back; the flow enforced; orders copied in a given status. |
 | `CoreBoundaryTest`, `CoreModelUpToDateTest` | The core stays separate; generated files match the spec. |
 
 ## Copying legacy data
+
+Run the copies in this order: customers, products, stock, orders. Each later copy links to what the earlier ones
+copied.
+
+`POST /core-migration/orders` (admin) copies orders with items, shipping and tax as adjustments, payment status, the
+channel order id, the customer's address as ship-to, and the old status and fulfilment type as order attributes. When
+an old total differs from its parts, the difference is an adjustment, so grand totals match. It copied 5,224 dev
+orders in 54 seconds.
 
 `POST /core-migration/stock` (admin; run the product copy first) copies fulfilment nodes and warehouses into facilities and stock rows
 into inventory items, one per lot, each with one `IID_MIGRATION` detail row. Available is on hand less allocated and
@@ -109,6 +119,9 @@ development database it copied 4,934 customers.
   detail rows needs a flush, and copy jobs run with COMMIT flush mode.
 - Tests run outside `main()`, which sets the JVM to UTC, so a timestamp read with plain JDBC in a test is shifted
   by the machine's zone. Read timestamps through JPA in tests.
+- With `hibernate.order_inserts`, a copy that flushes once per chunk has its inserts grouped by entity type, not in
+  the order they were made. A row that a later entity points at (a guest party, a new address) needs an `em.flush()`
+  right after it is created, or PostgreSQL rejects the foreign key. H2 in the tests did not catch this; the dev run did.
 - Bulk copies read what exists once, keep lookups in memory, and flush once per chunk; per-row queries made the
   product copy 30 times slower.
 

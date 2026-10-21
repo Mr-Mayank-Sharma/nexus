@@ -89,6 +89,18 @@ that area work in the browser on the new tables, and their old tables are no lon
   Screens and routing still read the legacy tables (W7, W9).
 - W7 Orders (header, ship groups, items with status, roles, adjustments, payments, identifications; Shopify and
   BigCommerce import write the new model).
+  **Status 2026-10-21: model, service and copy done; imports not switched yet** (20 entities; core `OrderService`:
+  create with roles, contacts, ship groups, items, adjustments, payments, outside ids and attributes; status changes
+  through the flow with an `order_status` row each; approving approves items, cancelling cancels open items and gives
+  their stock back; partial item cancel shrinks the reservation; reserve and release through `InventoryService`;
+  grand total kept current). `POST /core-migration/orders` copied all 5,224 dev orders (9,617 items) in 54 s; the
+  grand totals add up to the legacy totals to the cent (3,702,542.02), and 163 orders whose old total differed from its
+  parts carry the difference as a discount or charge adjustment. Findings on the dev data: 3,161 items have SKUs with
+  no product (kept with their description, no product); 156 orders have no items (copied with one zero-price line
+  saying so) and no customer (140 had an address and got a guest party). Reservations: legacy holds are not
+  consistent (1,016 allocated in `nx_inventory`, 259 in `nx_order_allocations` by order and location, 20 on items),
+  and the order-level allocations name no item, so none are copied as reservations; the stock copy already keeps held
+  stock out of available. **Next: Shopify and BigCommerce import write the new model**, then screens read it.
 - W8 Fulfilment and returns (picklists, shipments, packages, issuance, receipts, returns).
 - W9 Routing (routing groups, rules, conditions, actions, runs; the new brokering query; reallocation and split
   control features from doc 24 section 2).

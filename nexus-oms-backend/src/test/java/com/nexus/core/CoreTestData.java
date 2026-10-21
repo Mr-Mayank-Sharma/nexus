@@ -15,6 +15,7 @@ public final class CoreTestData {
             {"db/core/common/V4__core_party_seed.sql", "SELECT COUNT(*) FROM status_item WHERE status_id = 'PARTY_ENABLED'"},
             {"db/core/common/V6__core_product_seed.sql", "SELECT COUNT(*) FROM product_type WHERE product_type_id = 'FINISHED_GOOD'"},
             {"db/core/common/V8__core_facility_inventory_seed.sql", "SELECT COUNT(*) FROM facility_type WHERE facility_type_id = 'WAREHOUSE'"},
+            {"db/core/common/V10__core_order_seed.sql", "SELECT COUNT(*) FROM order_type WHERE order_type_id = 'SALES_ORDER'"},
     };
 
     private CoreTestData() {

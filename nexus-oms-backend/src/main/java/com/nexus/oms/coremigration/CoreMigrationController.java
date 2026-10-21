@@ -18,11 +18,20 @@ public class CoreMigrationController {
     private final CustomerPartyBackfill customers;
     private final ProductBackfill products;
     private final FacilityInventoryBackfill stock;
+    private final OrderBackfill orders;
 
-    public CoreMigrationController(CustomerPartyBackfill customers, ProductBackfill products, FacilityInventoryBackfill stock) {
+    public CoreMigrationController(CustomerPartyBackfill customers, ProductBackfill products, FacilityInventoryBackfill stock,
+                                   OrderBackfill orders) {
         this.customers = customers;
         this.products = products;
         this.stock = stock;
+        this.orders = orders;
+    }
+
+    @Operation(summary = "Copy this company's orders into the order model (run the customer, product and stock copies first)")
+    @PostMapping("/orders")
+    public ResponseEntity<ApiResponse<OrderBackfill.Result>> orders() {
+        return ResponseEntity.ok(ApiResponse.success(orders.run(TenantContext.getCurrentTenantId()), "Orders copied"));
     }
 
     @Operation(summary = "Copy this company's fulfilment locations and stock into the facility and inventory model (run the product copy first)")
