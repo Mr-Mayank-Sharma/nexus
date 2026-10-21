@@ -230,6 +230,12 @@ Briefs, one per session, each following doc 25 section 3:
   method rules, and a confidence that falls with phantom-stock risk or poor reliability; earliest promise first, with
   the reasons. API `POST /core/promise`. A trained delivery model can replace the history quantiles later.
 - 13.3 Exception agent and plain-language routing with simulation and approval.
+  **Status 2026-10-21: done; live runs wait for the Anthropic key.** `ExceptionAgent` (model `claude-opus-5-5`):
+  the assistant's read tools plus propose_reallocate, propose_hold and propose_cancel_item; every proposal goes
+  through its policy and is tied to the run. `RoutingDrafter`: reads the store's routing and location groups, builds a
+  draft group that does not run, simulates it next to the live group on real orders and stock, and proposes
+  ACTIVATE_ROUTING (approval swaps which group is scheduled; undo swaps back). API `POST /core/ai/exceptions` and
+  `POST /core/ai/routing-drafts`. `AiAgentsTest` runs both with a scripted model, through approval and undo.
 - 13.4 Agent-ready order API (ACP and UCP) and agent-safe post-purchase changes.
 
 ## W14. Website  (independent)

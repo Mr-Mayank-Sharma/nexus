@@ -34,12 +34,41 @@ public class CoreAiController {
 
     private final OperationsAssistant assistant;
     private final ProposalService proposals;
+    private final com.nexus.core.ai.ExceptionAgent exceptions;
+    private final com.nexus.core.ai.RoutingDrafter drafter;
     private final JdbcTemplate jdbc;
 
-    public CoreAiController(OperationsAssistant assistant, ProposalService proposals, JdbcTemplate jdbc) {
+    public CoreAiController(OperationsAssistant assistant, ProposalService proposals, com.nexus.core.ai.ExceptionAgent exceptions,
+                            com.nexus.core.ai.RoutingDrafter drafter, JdbcTemplate jdbc) {
         this.assistant = assistant;
         this.proposals = proposals;
+        this.exceptions = exceptions;
+        this.drafter = drafter;
         this.jdbc = jdbc;
+    }
+
+    public record AgentOutcome(String runId, String summary, boolean grounded, List<String> toolsUsed, List<ProposalService.View> proposals, List<String> draftGroupIds) {
+    }
+
+    @Operation(summary = "Run the exception agent: it finds stuck orders, explains why and proposes fixes (applied only by policy or approval)")
+    @PostMapping("/exceptions")
+    public ResponseEntity<ApiResponse<AgentOutcome>> exceptions(@RequestBody(required = false) Map<String, String> body) {
+        if (!assistant.available()) return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ApiResponse.error("AI is not set up: ANTHROPIC_API_KEY is missing"));
+        var o = exceptions.run(body == null ? null : body.get("instruction"), user());
+        return ResponseEntity.ok(ApiResponse.success(new AgentOutcome(o.run().runId(), o.run().answer(), o.run().grounded(),
+                o.run().toolCalls().stream().map(AgentRunner.ToolCall::name).toList(), o.proposals(), List.of()), "Done"));
+    }
+
+    public record DraftRequest(String productStoreId, String request) {
+    }
+
+    @Operation(summary = "Describe a routing change in words: the agent drafts a rule set, simulates it against the live one and proposes it")
+    @PostMapping("/routing-drafts")
+    public ResponseEntity<ApiResponse<AgentOutcome>> draft(@RequestBody DraftRequest d) {
+        if (!assistant.available()) return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(ApiResponse.error("AI is not set up: ANTHROPIC_API_KEY is missing"));
+        var o = drafter.draft(d.productStoreId(), d.request(), user());
+        return ResponseEntity.ok(ApiResponse.success(new AgentOutcome(o.run().runId(), o.run().answer(), o.run().grounded(),
+                o.run().toolCalls().stream().map(AgentRunner.ToolCall::name).toList(), o.proposals(), o.draftGroupIds()), "Drafted"));
     }
 
     public record Question(String question) {

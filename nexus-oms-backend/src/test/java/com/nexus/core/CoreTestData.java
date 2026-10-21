@@ -22,6 +22,7 @@ public final class CoreTestData {
             {"db/core/common/V17__core_jobs_messages_seed.sql", "SELECT COUNT(*) FROM service_job WHERE job_name = 'core_mirror'"},
             {"db/core/common/V18__core_gateway_seed.sql", "SELECT COUNT(*) FROM enumeration WHERE enum_id = 'GATEWAY_URL'"},
             {"db/core/common/V20__core_ai_seed.sql", "SELECT COUNT(*) FROM ai_action_policy WHERE action_type = 'REALLOCATE'"},
+            {"db/core/common/V21__core_ai_agents_seed.sql", "SELECT COUNT(*) FROM ai_action_policy WHERE action_type = 'ACTIVATE_ROUTING'"},
     };
 
     private CoreTestData() {

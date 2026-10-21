@@ -99,7 +99,9 @@ Language-model work goes through `core.ai` (doc 25). A new agent is an `AgentRun
 prompt, and tools whose handlers read the core (in read-only transactions for read-only agents) and mark personal
 names with `masker.name(...)`. Changes are never made by a tool directly: a tool calls `ProposalService.propose`, and the
 action's policy decides. Add a new action type with a policy row and a case in `ProposalService.run` and `undoFor`.
-Test an agent with `ScriptedProvider`: it plays the model's turns and keeps what would have been sent.
+Test an agent with `ScriptedProvider`: it plays the model's turns and keeps what would have been sent; `Turn.toolsFrom`
+builds a turn from earlier tool results (an id a tool returned). Agents: `OperationsAssistant` (read-only),
+`ExceptionAgent` (proposes moves, holds, cancels), `RoutingDrafter` (drafts, simulates and proposes a rule set).
 
 ## Tests
 

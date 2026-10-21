@@ -184,10 +184,10 @@ public class RoutingService {
         });
     }
 
-    static final Set<String> ORDER_FILTERS = Set.of("facilityId", "salesChannelEnumId", "shipmentMethodTypeId", "priority", "orderAgeMinutes");
-    static final Set<String> ORDER_SORTS = Set.of("orderDate", "priority", "shipByDate");
-    static final Set<String> INVENTORY_FILTERS = Set.of("facilityGroupId", "facilityTypeId", "facilityId", "distance", "ignoreOrderLimit", "allowSubstitute");
-    static final Set<String> INVENTORY_SORTS = Set.of("distance", "groupSequence", "salesVelocity", "weeksOfSupply", "brokenSizeRun", "capacityLeft", "inventory",
+    public static final Set<String> ORDER_FILTERS = Set.of("facilityId", "salesChannelEnumId", "shipmentMethodTypeId", "priority", "orderAgeMinutes");
+    public static final Set<String> ORDER_SORTS = Set.of("orderDate", "priority", "shipByDate");
+    public static final Set<String> INVENTORY_FILTERS = Set.of("facilityGroupId", "facilityTypeId", "facilityId", "distance", "ignoreOrderLimit", "allowSubstitute");
+    public static final Set<String> INVENTORY_SORTS = Set.of("distance", "groupSequence", "salesVelocity", "weeksOfSupply", "brokenSizeRun", "capacityLeft", "inventory",
             "reliability");
 
     private static void checkField(Cond c, Set<String> filters, Set<String> sorts) {

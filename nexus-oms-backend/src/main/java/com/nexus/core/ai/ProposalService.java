@@ -161,8 +161,32 @@ public class ProposalService {
                 orders.changeStatus(orderId, "ORDER_APPROVED", reason, userId);
             }
             case "CANCEL_ITEM" -> orders.cancelItem(orderId, p.path("orderItemSeqId").asText(), null, reason, userId);
+            case "ACTIVATE_ROUTING" -> swapSchedule(p.path("activateGroupId").asText(), p.path("pauseGroupId").asText(null));
             default -> throw new IllegalArgumentException("Unknown action " + actionType);
         }
+    }
+
+    /**
+     * The drafted group takes over the live group's schedule (15 minutes when there was none) and the live one stops
+     * running; both keep their rules, so undo swaps them back.
+     */
+    private void swapSchedule(String activateGroupId, String pauseGroupId) {
+        var activate = em.find(com.nexus.core.model.routing.OrderRoutingGroup.class, activateGroupId);
+        if (activate == null) throw new IllegalArgumentException("Unknown routing group " + activateGroupId);
+        Long minutes = 15L;
+        if (pauseGroupId != null) {
+            var pause = em.find(com.nexus.core.model.routing.OrderRoutingGroup.class, pauseGroupId);
+            if (pause == null) throw new IllegalArgumentException("Unknown routing group " + pauseGroupId);
+            if (pause.getScheduleMinutes() != null) minutes = pause.getScheduleMinutes();
+            pause.setScheduleMinutes(null);
+        }
+        activate.setScheduleMinutes(minutes);
+    }
+
+    /** Ties proposals an agent made to its run, once the run is recorded. */
+    public void link(List<String> proposalIds, String aiRunId) {
+        if (proposalIds.isEmpty()) return;
+        tx.executeWithoutResult(s -> proposalIds.forEach(id -> em.find(AiProposal.class, id).setAiRunId(aiRunId)));
     }
 
     private String status(String orderId) {
@@ -181,6 +205,8 @@ public class ProposalService {
                         : JSON.createObjectNode().put("orderId", p.path("orderId").asText()).put("shipGroupSeqId", group).put("facilityId", g.getFacilityId());
             }
             case "HOLD_ORDER", "RELEASE_HOLD" -> JSON.createObjectNode().put("orderId", p.path("orderId").asText());
+            case "ACTIVATE_ROUTING" -> p.path("pauseGroupId").isMissingNode() || p.path("pauseGroupId").isNull() ? null
+                    : JSON.createObjectNode().put("activateGroupId", p.path("pauseGroupId").asText()).put("pauseGroupId", p.path("activateGroupId").asText());
             default -> null;
         };
     }

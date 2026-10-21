@@ -19,7 +19,16 @@ public class ScriptedProvider implements LlmProvider {
     static final ObjectMapper JSON = new ObjectMapper();
 
     /** One turn: tool calls (name and input), or a final answer built from the conversation so far. */
-    public record Turn(List<String[]> toolCalls, Function<ArrayNode, String> answer) {
+    public record Turn(List<String[]> toolCalls, Function<ArrayNode, String> answer, Function<ArrayNode, String[]> dynamicTools) {
+        public Turn(List<String[]> toolCalls, Function<ArrayNode, String> answer) {
+            this(toolCalls, answer, null);
+        }
+
+        /** Tool calls built from the conversation so far (name, JSON input, name, JSON input...): use an id a tool returned. */
+        public static Turn toolsFrom(Function<ArrayNode, String[]> f) {
+            return new Turn(List.of(), null, f);
+        }
+
         public static Turn tools(String... nameAndJsonInput) {
             List<String[]> calls = new ArrayList<>();
             for (int i = 0; i < nameAndJsonInput.length; i += 2) calls.add(new String[]{nameAndJsonInput[i], nameAndJsonInput[i + 1]});
@@ -58,8 +67,14 @@ public class ScriptedProvider implements LlmProvider {
             content.addObject().put("type", "text").put("text", t.answer().apply(r.messages()));
             return new Response(content, "end_turn", new Usage(100, 50, 0, 0));
         }
+        List<String[]> calls = t.toolCalls();
+        if (t.dynamicTools() != null) {
+            String[] flat = t.dynamicTools().apply(r.messages());
+            calls = new ArrayList<>();
+            for (int i = 0; i < flat.length; i += 2) calls.add(new String[]{flat[i], flat[i + 1]});
+        }
         int n = 0;
-        for (String[] c : t.toolCalls()) {
+        for (String[] c : calls) {
             ObjectNode use = content.addObject().put("type", "tool_use").put("id", "toolu_" + next + "_" + n++).put("name", c[0]);
             try {
                 use.set("input", JSON.readTree(c[1]));

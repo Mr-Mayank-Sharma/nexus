@@ -553,6 +553,12 @@ rows("ai_action_policy", ["action_type", "description", "risk_level", "approval_
     ("CANCEL_ITEM", "Cancel what is left of an item", "HIGH", "ASK", None, 50),
 ])
 
+# ── ai agents (W13.3) ──
+W13_SEED_START = len(SEED)
+rows("ai_action_policy", ["action_type", "description", "risk_level", "approval_mode", "limit_amount", "daily_limit"], [
+    ("ACTIVATE_ROUTING", "Make a drafted routing group the one that runs for its store", "HIGH", "ASK", None, 5),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
@@ -564,5 +570,6 @@ SEED_MIGRATIONS = [
     (15, "core_store_network_seed", SEED[W9B_SEED_START:W10_SEED_START]),
     (17, "core_jobs_messages_seed", SEED[W10_SEED_START:W11_SEED_START]),
     (18, "core_gateway_seed", SEED[W11_SEED_START:W12_SEED_START]),
-    (20, "core_ai_seed", SEED[W12_SEED_START:]),
+    (20, "core_ai_seed", SEED[W12_SEED_START:W13_SEED_START]),
+    (21, "core_ai_agents_seed", SEED[W13_SEED_START:]),
 ]
