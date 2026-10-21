@@ -389,10 +389,72 @@ rows("enumeration", ["enum_id", "enum_type_id", "enum_code", "sequence_num", "de
     ("INVRO_FIFO_EXP", "INV_RES_ORDER", "FIFO_EXP", 3, "First to expire, first out"),
 ])
 
+# ── fulfilment and returns (W8) ──
+W8_SEED_START = len(SEED)
+rows("shipment_type", ["shipment_type_id", "parent_type_id", "description"], [
+    ("OUTGOING_SHIPMENT", None, "Outgoing"), ("SALES_SHIPMENT", "OUTGOING_SHIPMENT", "Sales order shipment"),
+    ("TRANSFER", None, "Transfer between facilities"), ("INCOMING_SHIPMENT", None, "Incoming"),
+    ("PURCHASE_SHIPMENT", "INCOMING_SHIPMENT", "Purchase receipt"), ("SALES_RETURN", "INCOMING_SHIPMENT", "Customer return"),
+])
+rows("shipment_box_type", ["shipment_box_type_id", "description"], [
+    ("YOURPACKNG", "Own packaging"), ("BOX_SMALL", "Small box"), ("BOX_MEDIUM", "Medium box"), ("BOX_LARGE", "Large box"),
+    ("ENVELOPE", "Envelope or poly mailer"),
+])
+rows("rejection_reason", ["rejection_id", "description"], [
+    ("SRJ_DAMAGED", "Damaged"), ("SRJ_NOT_ORDERED", "Not ordered"), ("SRJ_WRONG_ITEM", "Wrong item"), ("SRJ_OVER_SHIPPED", "More than expected"),
+])
+rows("party", ["party_id", "party_type_id", "status_id", "description"], [
+    (c, "PARTY_GROUP", "PARTY_ENABLED", "Carrier") for c in ("_NA_", "UPS", "FEDEX", "USPS", "DHL", "BLUEDART", "DELHIVERY")
+])
+rows("party_group", ["party_id", "group_name"], [
+    ("_NA_", "No carrier (pickup or own delivery)"), ("UPS", "UPS"), ("FEDEX", "FedEx"), ("USPS", "USPS"), ("DHL", "DHL"),
+    ("BLUEDART", "Blue Dart"), ("DELHIVERY", "Delhivery"),
+])
+rows("party_role", ["party_id", "role_type_id"], [
+    (c, "CARRIER") for c in ("_NA_", "UPS", "FEDEX", "USPS", "DHL", "BLUEDART", "DELHIVERY")
+])
+rows("carrier_shipment_method", ["shipment_method_type_id", "party_id", "role_type_id", "sequence_number", "carrier_service_code"], [
+    ("STOREPICKUP", "_NA_", "CARRIER", 1, None), ("NO_SHIPPING", "_NA_", "CARRIER", 2, None),
+    ("STANDARD", "UPS", "CARRIER", 1, "03"), ("NEXT_DAY", "UPS", "CARRIER", 2, "01"), ("SECOND_DAY", "UPS", "CARRIER", 3, "02"),
+    ("STANDARD", "FEDEX", "CARRIER", 1, "FEDEX_GROUND"), ("NEXT_DAY", "FEDEX", "CARRIER", 2, "PRIORITY_OVERNIGHT"),
+    ("STANDARD", "USPS", "CARRIER", 1, "USPS_GROUND_ADVANTAGE"), ("EXPRESS", "DHL", "CARRIER", 1, "EXPRESS_WORLDWIDE"),
+    ("STANDARD", "BLUEDART", "CARRIER", 1, "SURFACE"), ("EXPRESS", "BLUEDART", "CARRIER", 2, "AIR"),
+    ("STANDARD", "DELHIVERY", "CARRIER", 1, "SURFACE"), ("EXPRESS", "DELHIVERY", "CARRIER", 2, "EXPRESS"),
+])
+rows("status_type", ["status_type_id", "description"], [("PICKITEM_STATUS", "Picklist item status")])
+rows("status_item", ["status_id", "status_type_id", "status_code", "sequence_num", "description"], [
+    ("PICKITEM_PENDING", "PICKITEM_STATUS", "PENDING", 1, "To pick"), ("PICKITEM_PICKED", "PICKITEM_STATUS", "PICKED", 2, "Picked"),
+    ("PICKITEM_COMPLETED", "PICKITEM_STATUS", "COMPLETED", 3, "Shipped"), ("PICKITEM_CANCELLED", "PICKITEM_STATUS", "CANCELLED", 4, "Not picked"),
+])
+rows("status_flow_item", ["status_flow_id", "status_id", "is_initial"], [
+    (FLOW, "PICKITEM_PENDING", "Y"), (FLOW, "PICKITEM_PICKED", "N"), (FLOW, "PICKITEM_COMPLETED", "N"), (FLOW, "PICKITEM_CANCELLED", "N"),
+])
+rows("status_flow_transition", ["status_flow_id", "status_id", "to_status_id", "transition_sequence", "transition_name"], [
+    (FLOW, "PICKITEM_PENDING", "PICKITEM_PICKED", 1, "Pick"), (FLOW, "PICKITEM_PENDING", "PICKITEM_CANCELLED", 2, "Not found"),
+    (FLOW, "PICKITEM_PICKED", "PICKITEM_COMPLETED", 1, "Ship"), (FLOW, "PICKITEM_PICKED", "PICKITEM_CANCELLED", 2, "Cancel"),
+])
+rows("role_type", ["role_type_id", "parent_type_id", "description"], [("PICKER", None, "Picker"), ("PACKER", None, "Packer")])
+rows("return_header_type", ["return_header_type_id", "description"], [
+    ("CUSTOMER_RETURN", "Customer return"), ("VENDOR_RETURN", "Return to a vendor"),
+])
+rows("return_reason", ["return_reason_id", "description", "sequence_id"], [
+    ("RTN_NOT_WANT", "No longer wanted", "01"), ("RTN_SIZE_FIT", "Size or fit", "02"), ("RTN_DEFECTIVE_ITEM", "Defective", "03"),
+    ("RTN_DAMAGED", "Arrived damaged", "04"), ("RTN_WRONG_ITEM", "Wrong item sent", "05"), ("RTN_NOT_AS_DESCRIBED", "Not as described", "06"),
+    ("RTN_LATE", "Arrived too late", "07"), ("RTN_MISC", "Other", "99"),
+])
+rows("return_type", ["return_type_id", "description", "sequence_id"], [
+    ("RTN_REFUND", "Refund", "01"), ("RTN_CREDIT", "Store credit", "02"), ("RTN_REPLACE", "Replacement", "03"),
+    ("RTN_REFUND_IMMEDIATE", "Refund before the goods arrive", "04"),
+])
+rows("order_adjustment_type", ["order_adjustment_type_id", "parent_type_id", "description"], [
+    ("RESTOCKING_FEE", "FEE", "Restocking fee"), ("RETURN_SHIPPING", "SHIPPING_CHARGES", "Return shipping"),
+])
+
 SEED_MIGRATIONS = [
     (2, "core_seed", SEED[:W4_SEED_START]),
     (4, "core_party_seed", SEED[W4_SEED_START:W5_SEED_START]),
     (6, "core_product_seed", SEED[W5_SEED_START:W6_SEED_START]),
     (8, "core_facility_inventory_seed", SEED[W6_SEED_START:W7_SEED_START]),
-    (10, "core_order_seed", SEED[W7_SEED_START:]),
+    (10, "core_order_seed", SEED[W7_SEED_START:W8_SEED_START]),
+    (12, "core_fulfilment_return_seed", SEED[W8_SEED_START:]),
 ]

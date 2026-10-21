@@ -68,6 +68,9 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `FacilityService` (`coreFacilityService`) | Stores, warehouses and 3PLs with outside ids (POS, Shopify location), brokering groups in order, the stores they serve, and the daily order limit: `takeOrder(facility, day)` is false when the facility is full that day. |
 | `InventoryService` (`coreInventoryService`) | Stock: every change is an `inventory_item_detail` row with a reason. `reserve` lowers ATP, `ship` lowers on hand, `recordCount` keeps the variance and its reason, transfers go request, approve (holds stock), ship, receive. `atp`, `atpByFacility`, and `product_facility` per product and facility for routing. |
 | `OrderService` (`coreOrderService`) | Orders: `create` (roles, contacts, ship groups, items, adjustments, payments, outside ids), `changeStatus` (cascades to items, gives stock back on cancel), `cancelItem` (partial), `reserve` and `releaseReservations`, `findByIdentification("SHOPIFY_ORD_ID", id)`. Every status change is an `order_status` row. |
+| `ShipmentService` (`coreShipmentService`) | `createSalesShipment`, `addPackage`, `pack`, `ship` (holds consumed, on hand down, items completed), `deliver`, `confirm` for a WMS or carrier confirmation (idempotent by its shipment id). |
+| `PicklistService` (`corePicklistService`) | Store picking: `create` from held ship groups, `assign`, `recordPick`, `complete` (ships what was found, short-picks the rest). |
+| `ReturnService` (`coreReturnService`) | `create` (up to shipped less other returns), `accept`, `receive` with a grade, `addAdjustment`, `refundAmount`, `complete`. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
@@ -81,6 +84,7 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `CoreServicesTest` | Ids (including 400 concurrent), status rules, enumerations, settings and the audit trail. |
 | `FacilityInventoryServiceTest` | Receive, reserve, ship and count with full history; ATP less safety stock; transfers and cancelling; the daily order limit; groups in order. |
 | `OrderServiceTest` | Totals with item and order adjustments; approve, reserve, partial cancel, cancel with stock given back; the flow enforced; orders copied in a given status. |
+| `FulfilmentReturnTest` | A two-box WMS confirmation, partial shipping, a store picklist with a short pick, and a return with restock, hold, reject and refund. |
 | `CoreBoundaryTest`, `CoreModelUpToDateTest` | The core stays separate; generated files match the spec. |
 
 ## Copying legacy data
@@ -124,6 +128,7 @@ development database it copied 4,934 customers.
 - With `hibernate.order_inserts`, a copy that flushes once per chunk has its inserts grouped by entity type, not in
   the order they were made. A row that a later entity points at (a guest party, a new address) needs an `em.flush()`
   right after it is created, or PostgreSQL rejects the foreign key. H2 in the tests did not catch this; the dev run did.
+- `return` is a Java keyword: the return entities live in the `returns` package.
 - Bulk copies read what exists once, keep lookups in memory, and flush once per chunk; per-row queries made the
   product copy 30 times slower.
 

@@ -5,6 +5,7 @@ import com.nexus.core.model.order.OrderAttribute;
 import com.nexus.core.model.order.OrderContactMech;
 import com.nexus.core.model.order.OrderHeader;
 import com.nexus.core.model.order.OrderIdentification;
+import com.nexus.core.model.order.OrderItemAttribute;
 import com.nexus.core.model.order.OrderItem;
 import com.nexus.core.model.order.OrderItemShipGroup;
 import com.nexus.core.model.order.OrderItemShipGroupAssoc;
@@ -353,6 +354,110 @@ public class OrderService {
     @Transactional(readOnly = true)
     public BigDecimal reservedQuantity(String orderId, String orderItemSeqId) {
         return reservations(orderId, orderItemSeqId).stream().map(OrderItemShipGrpInvRes::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /** An item's reservations: inventory item and quantity, most recently reserved first. */
+    @Transactional(readOnly = true)
+    public List<Held> held(String orderId, String orderItemSeqId) {
+        return reservations(orderId, orderItemSeqId).stream()
+                .map(r -> new Held(r.getInventoryItemId(), r.getQuantity())).toList();
+    }
+
+    public record Held(String inventoryItemId, BigDecimal quantity) {
+    }
+
+    /** Takes shipped quantity off one reservation; the stock itself is issued by the caller. */
+    public void consumeReservation(String orderId, String orderItemSeqId, String inventoryItemId, BigDecimal quantity) {
+        OrderItem i = item(orderId, orderItemSeqId);
+        OrderItemShipGrpInvRes r = em.find(OrderItemShipGrpInvRes.class,
+                new OrderItemShipGrpInvRes.Key(orderId, i.getShipGroupSeqId(), orderItemSeqId, inventoryItemId));
+        if (r == null || r.getQuantity().compareTo(quantity) < 0) {
+            throw new IllegalStateException("Item " + orderItemSeqId + " of order " + orderId + " holds less than "
+                    + quantity.stripTrailingZeros().toPlainString() + " at inventory item " + inventoryItemId);
+        }
+        BigDecimal rest = r.getQuantity().subtract(quantity);
+        if (rest.signum() == 0) em.remove(r);
+        else r.setQuantity(rest);
+    }
+
+    /**
+     * After a shipment: an item whose shipped quantity covers what is still open is completed, and an order with no
+     * open item left is completed.
+     */
+    public void shipped(String orderId, String orderItemSeqId, BigDecimal totalShipped, String userId) {
+        OrderHeader h = header(orderId, true);
+        OrderItem i = item(orderId, orderItemSeqId);
+        if ("ITEM_APPROVED".equals(i.getStatusId()) && totalShipped.compareTo(openQuantity(i)) >= 0) {
+            itemStatus(i, "ITEM_COMPLETED", "Shipped", userId);
+        }
+        boolean open = items(orderId).stream().anyMatch(x -> ITEM_OPEN.contains(x.getStatusId()));
+        if (!open && statuses.isAllowed(FLOW, h.getStatusId(), "ORDER_COMPLETED")) {
+            h.setStatusId("ORDER_COMPLETED");
+            history(orderId, null, null, "ORDER_COMPLETED", "Every item shipped or cancelled", userId);
+        }
+    }
+
+    /**
+     * A facility could not find stock it held for an item: the hold there is released for the short quantity and the
+     * facility is noted on the item ({@code excludedFacilityIds}) so routing does not send the item back to it.
+     */
+    public void shortPick(String orderId, String orderItemSeqId, String facilityId, BigDecimal quantity, String reason, String userId) {
+        BigDecimal left = quantity;
+        for (OrderItemShipGrpInvRes r : reservations(orderId, orderItemSeqId)) {
+            if (left.signum() <= 0) break;
+            InventoryItem inv = em.find(InventoryItem.class, r.getInventoryItemId());
+            if (!inv.getFacilityId().equals(facilityId)) continue;
+            BigDecimal take = r.getQuantity().min(left);
+            inventory.release(inv.getProductId(), facilityId, take, new InventoryService.Cause(orderId, orderItemSeqId, null, null, userId,
+                    "Short pick" + (reason == null ? "" : ": " + reason)));
+            BigDecimal rest = r.getQuantity().subtract(take);
+            if (rest.signum() == 0) em.remove(r);
+            else r.setQuantity(rest);
+            left = left.subtract(take);
+        }
+        String excluded = itemAttribute(orderId, orderItemSeqId, "excludedFacilityIds");
+        if (excluded == null || !List.of(excluded.split(",")).contains(facilityId)) {
+            setItemAttribute(orderId, orderItemSeqId, "excludedFacilityIds", excluded == null ? facilityId : excluded + "," + facilityId);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public String itemAttribute(String orderId, String orderItemSeqId, String name) {
+        OrderItemAttribute a = em.find(OrderItemAttribute.class, new OrderItemAttribute.Key(orderId, orderItemSeqId, name));
+        return a == null ? null : a.getAttrValue();
+    }
+
+    public void setItemAttribute(String orderId, String orderItemSeqId, String name, String value) {
+        OrderItemAttribute a = em.find(OrderItemAttribute.class, new OrderItemAttribute.Key(orderId, orderItemSeqId, name));
+        if (a == null) {
+            a = new OrderItemAttribute();
+            a.setOrderId(orderId);
+            a.setOrderItemSeqId(orderItemSeqId);
+            a.setAttrName(name);
+            a.setAttrValue(value);
+            em.persist(a);
+        } else {
+            a.setAttrValue(value);
+        }
+    }
+
+    /** The party in a role on the order (the ship-to customer, say), if any. */
+    @Transactional(readOnly = true)
+    public java.util.Optional<String> partyInRole(String orderId, String roleTypeId) {
+        return em.createQuery("SELECT r.partyId FROM OrderRole r WHERE r.orderId = :o AND r.roleTypeId = :t ORDER BY r.partyId", String.class)
+                .setParameter("o", orderId).setParameter("t", roleTypeId).setMaxResults(1).getResultList().stream().findFirst();
+    }
+
+    @Transactional(readOnly = true)
+    public OrderItemShipGroup shipGroup(String orderId, String shipGroupSeqId) {
+        OrderItemShipGroup g = em.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId));
+        if (g == null) throw new IllegalArgumentException("Order " + orderId + " has no ship group " + shipGroupSeqId);
+        return g;
+    }
+
+    @Transactional(readOnly = true)
+    public OrderItem orderItem(String orderId, String orderItemSeqId) {
+        return item(orderId, orderItemSeqId);
     }
 
     // ── ids, attributes, adjustments ──

@@ -108,6 +108,16 @@ that area work in the browser on the new tables, and their old tables are no lon
   quantity changes after the first copy are not mirrored (routing on the core, W9, needs them). Next: screens read the
   core once the two have been compared.
 - W8 Fulfilment and returns (picklists, shipments, packages, issuance, receipts, returns).
+  **Status 2026-10-21: model and services done** (26 entities; carriers UPS, FedEx, USPS, DHL, Blue Dart, Delhivery
+  seeded as parties with their service codes). Core `ShipmentService`: a shipment per ship group from its facility,
+  boxes with contents, pack, ship with carrier and per-box tracking (consumes holds, lowers on hand, issues stock,
+  completes fully shipped items and orders), deliver, cancel, and `confirm` taking the WMS shipment confirmation of
+  doc 27 in one idempotent call. `PicklistService` (stores and warehouses without a WMS): a pick run per facility, one
+  bin per ship group, picker, found quantities, complete ships each bin and short-picks the rest (hold released,
+  facility excluded on the item for W9). `ReturnService`: return only what shipped less other returns, accept,
+  receive (resellable back on sale, damaged or defective held, rejects noted), adjustments such as a restocking fee,
+  refund amount, complete with the refund recorded on the order payment. A full order life (stock, hold, ship, return,
+  refund) runs on real PostgreSQL in `CoreOnPostgresAppTest`. No screens or channel updates use it yet.
 - W9 Routing (routing groups, rules, conditions, actions, runs; the new brokering query; reallocation and split
   control features from doc 24 section 2).
 

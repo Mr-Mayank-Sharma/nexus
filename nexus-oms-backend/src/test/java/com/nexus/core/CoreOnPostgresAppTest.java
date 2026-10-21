@@ -51,10 +51,15 @@ class CoreOnPostgresAppTest {
     @Autowired com.nexus.core.service.ProductService products;
     @Autowired com.nexus.core.service.PartyService parties;
     @Autowired org.springframework.transaction.support.TransactionTemplate tx;
+    @Autowired com.nexus.core.service.FacilityService facilities;
+    @Autowired com.nexus.core.service.InventoryService inventory;
+    @Autowired com.nexus.core.service.OrderService orders;
+    @Autowired com.nexus.core.service.ShipmentService shipments;
+    @Autowired com.nexus.core.service.ReturnService returns;
 
     @Test
     void startsWithBothSchemasAndTheSeededOrderFlow() {
-        assertEquals(10, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
+        assertEquals(12, jdbc.queryForObject("SELECT COUNT(*) FROM " + CoreSchemaMigrator.HISTORY_TABLE + " WHERE success AND version IS NOT NULL AND version <> '0'", Long.class));
         assertTrue(jdbc.queryForObject("SELECT COUNT(*) FROM flyway_schema_history WHERE success", Long.class) >= 75, "legacy migrations ran too");
         assertEquals("ORDER_CREATED", statuses.initialStatus(null, "ORDER_STATUS"));
         assertTrue(statuses.isAllowed(null, "ORDER_HOLD", "ORDER_APPROVED"));
@@ -84,5 +89,42 @@ class CoreOnPostgresAppTest {
         assertEquals(java.util.List.of(party), parties.findByEmail("PAT@example.com"));
         assertEquals("US-TX", jdbc.queryForObject("SELECT state_province_geo_id FROM postal_address pa JOIN party_contact_mech p "
                 + "ON p.contact_mech_id = pa.contact_mech_id WHERE p.party_id = ?", String.class, party));
+    }
+
+    /** An order's whole life on real PostgreSQL: stock, order, hold, ship in a box, return, refund. */
+    @Test
+    void runsAnOrderThroughShippingAndReturnOnRealPostgres() {
+        java.math.BigDecimal two = new java.math.BigDecimal("2");
+        String[] ids = tx.execute(s -> {
+            String p = products.create(new com.nexus.core.service.ProductService.NewProduct(null, "PG Tee", null, null, null, null, null, false, false));
+            String f = facilities.create(new com.nexus.core.service.FacilityService.NewFacility(null, "WAREHOUSE", "PG WH", null, null, null, null, null, null, null, null, 100L));
+            inventory.receive(p, f, new java.math.BigDecimal("5"), new java.math.BigDecimal("3.25"), "USD", null, null);
+            return new String[]{p, f};
+        });
+        String order = tx.execute(s -> orders.create(new com.nexus.core.service.OrderService.NewOrder(null, null, "WEB_SALES_CHANNEL", "USD", null, "PG-1", null,
+                null, null, null, java.util.List.of(new com.nexus.core.service.OrderService.NewShipGroup("STANDARD", ids[1], null, null, null, true, false, null, null, null, null)),
+                java.util.List.of(new com.nexus.core.service.OrderService.NewItem(ids[0], "Tee", two, new java.math.BigDecimal("12"), null, null, 0)),
+                java.util.List.of(new com.nexus.core.service.OrderService.NewAdjustment("SALES_TAX", new java.math.BigDecimal("1.92"), null, null)),
+                java.util.List.of(new com.nexus.core.service.OrderService.NewPayment("CREDIT_CARD", new java.math.BigDecimal("25.92"), "PAYMENT_SETTLED", null)),
+                java.util.Map.of("SHOPIFY_ORD_ID", "PG-777"), null, null, null, "pg")));
+        tx.executeWithoutResult(s -> {
+            orders.changeStatus(order, "ORDER_APPROVED", null, "pg");
+            orders.reserve(order, "00001", ids[1], null, "pg");
+            assertTrue(facilities.takeOrder(ids[1], java.time.LocalDate.now()));
+        });
+        String sh = tx.execute(s -> shipments.confirm(new com.nexus.core.service.ShipmentService.Confirmation("PG-SH", order, "00001", null, "UPS", "STANDARD",
+                java.util.List.of(new com.nexus.core.service.ShipmentService.ConfirmedPackage("1ZPG", new java.math.BigDecimal("0.4"), null, "BOX_SMALL",
+                        java.util.Map.of("00001", two)))), "pg"));
+        assertEquals("ORDER_COMPLETED", jdbc.queryForObject("SELECT status_id FROM order_header WHERE order_id = ?", String.class, order));
+        assertEquals(0, new java.math.BigDecimal("3").compareTo(inventory.onHand(ids[0], ids[1])));
+        String r = tx.execute(s -> returns.create(order, java.util.List.of(new com.nexus.core.service.ReturnService.NewReturnItem("00001", two, "RTN_NOT_WANT", null)), ids[1], null, "pg"));
+        tx.executeWithoutResult(s -> {
+            returns.accept(r, "pg");
+            returns.receive(r, "00001", two, null, null, com.nexus.core.service.ReturnService.Grade.RESELLABLE, "pg");
+        });
+        tx.executeWithoutResult(s -> returns.complete(r, "re_pg", "pg"));
+        assertEquals(0, new java.math.BigDecimal("24").compareTo(returns.refundAmount(r)));
+        assertEquals(0, new java.math.BigDecimal("5").compareTo(inventory.onHand(ids[0], ids[1])));
+        assertEquals("SHIPMENT_SHIPPED", shipments.status(sh));
     }
 }

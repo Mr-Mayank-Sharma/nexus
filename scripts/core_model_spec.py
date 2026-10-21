@@ -1089,10 +1089,256 @@ entity("OrderHeaderNote", "order", "A note on an order.", [
     ("internalNote", "indicator", []),
 ])
 
+# ───────────────────────────── shipment: shipments, packages, tracking, issuance, receipts (W8) ─────────────────────────────
+
+entity("ShipmentType", "shipment", "Outgoing sales shipment, transfer, incoming purchase or return.", [
+    ("shipmentTypeId", "id", [PK]),
+    ("parentTypeId", "id", [fk("ShipmentType", "shipmentTypeId")]),
+    ("description", "text-medium", []),
+])
+entity("ShipmentBoxType", "shipment", "A box size used to pack.", [
+    ("shipmentBoxTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+    ("boxLength", "number-decimal", []),
+    ("boxWidth", "number-decimal", []),
+    ("boxHeight", "number-decimal", []),
+    ("dimensionUomId", "id", [fk("Uom", "uomId")]),
+    ("boxWeight", "number-decimal", []),
+    ("weightUomId", "id", [fk("Uom", "uomId")]),
+])
+entity("CarrierShipmentMethod", "shipment", "A service a carrier offers for a shipment method, with its code at the carrier.", [
+    ("shipmentMethodTypeId", "id", [PK, fk("ShipmentMethodType")]),
+    ("partyId", "id", [PK, fk("Party")]),
+    ("roleTypeId", "id", [PK, fk("RoleType")]),
+    ("sequenceNumber", "number-integer", []),
+    ("carrierServiceCode", "text-medium", []),
+])
+entity("Shipment", "shipment", "Goods moving from one place to another: an order going out, a transfer, a return coming in.", [
+    ("shipmentId", "id", [PK]),
+    ("shipmentTypeId", "id", [REQ, fk("ShipmentType")]),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("externalId", "id-long", []),
+    ("primaryOrderId", "id", [fk("OrderHeader", "orderId")]),
+    ("primaryShipGroupSeqId", "id", []),
+    ("primaryReturnId", "id", []),
+    ("originFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("destinationFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("originContactMechId", "id", [fk("ContactMech", "contactMechId")]),
+    ("destinationContactMechId", "id", [fk("ContactMech", "contactMechId")]),
+    ("partyIdFrom", "id", [fk("Party", "partyId")]),
+    ("partyIdTo", "id", [fk("Party", "partyId")]),
+    ("estimatedShipDate", "date-time", []),
+    ("estimatedArrivalDate", "date-time", []),
+    ("handlingInstructions", "text-long", []),
+    ("createdDate", "date-time", []),
+    ("createdByUserLogin", "id", []),
+], indexes=[["primaryOrderId"], ["originFacilityId", "statusId"]])
+entity("ShipmentStatus", "shipment", "Every status a shipment had, with when and who.", [
+    ("shipmentId", "id", [PK, fk("Shipment")]),
+    ("statusId", "id", [PK, fk("StatusItem")]),
+    ("statusDate", "date-time", [PK]),
+    ("changeByUserLoginId", "id", []),
+])
+entity("ShipmentItem", "shipment", "A product and quantity in a shipment.", [
+    ("shipmentId", "id", [PK, fk("Shipment")]),
+    ("shipmentItemSeqId", "id", [PK]),
+    ("productId", "id", [fk("Product")]),
+    ("quantity", "number-decimal", [REQ]),
+])
+entity("ShipmentRouteSegment", "shipment", "One leg of a shipment with one carrier and service: its tracking and cost.", [
+    ("shipmentId", "id", [PK, fk("Shipment")]),
+    ("shipmentRouteSegmentId", "id", [PK]),
+    ("carrierPartyId", "id", [fk("Party", "partyId")]),
+    ("shipmentMethodTypeId", "id", [fk("ShipmentMethodType")]),
+    ("originFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("destFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("trackingIdNumber", "text-medium", []),
+    ("trackingUrl", "text-intermediate", []),
+    ("actualStartDate", "date-time", []),
+    ("actualArrivalDate", "date-time", []),
+    ("billingWeight", "number-decimal", []),
+    ("billingWeightUomId", "id", [fk("Uom", "uomId")]),
+    ("actualCost", "currency-amount", []),
+    ("currencyUomId", "id", [fk("Uom", "uomId")]),
+])
+entity("ShipmentPackage", "shipment", "A box in a shipment.", [
+    ("shipmentId", "id", [PK, fk("Shipment")]),
+    ("shipmentPackageSeqId", "id", [PK]),
+    ("shipmentBoxTypeId", "id", [fk("ShipmentBoxType")]),
+    ("weight", "number-decimal", []),
+    ("weightUomId", "id", [fk("Uom", "uomId")]),
+    ("dateCreated", "date-time", []),
+])
+entity("ShipmentPackageContent", "shipment", "How much of a shipment item is in a box.", [
+    ("shipmentId", "id", [PK, fk("Shipment")]),
+    ("shipmentPackageSeqId", "id", [PK]),
+    ("shipmentItemSeqId", "id", [PK]),
+    ("quantity", "number-decimal", [REQ]),
+])
+entity("ShipmentPackageRouteSeg", "shipment", "A box on a leg: its tracking code and label.", [
+    ("shipmentId", "id", [PK, fk("Shipment")]),
+    ("shipmentPackageSeqId", "id", [PK]),
+    ("shipmentRouteSegmentId", "id", [PK]),
+    ("trackingCode", "text-medium", []),
+    ("labelUrl", "text-intermediate", []),
+    ("packageServiceCost", "currency-amount", []),
+], indexes=[["trackingCode"]])
+entity("OrderShipment", "shipment", "Which order item goes in which shipment item, and how much.", [
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", [PK]),
+    ("shipGroupSeqId", "id", [PK]),
+    ("shipmentId", "id", [PK, fk("Shipment")]),
+    ("shipmentItemSeqId", "id", [PK]),
+    ("quantity", "number-decimal", [REQ]),
+], indexes=[["shipmentId"]])
+entity("ItemIssuance", "shipment", "Stock issued to an order item when it ships: which inventory item, how much, in which shipment.", [
+    ("itemIssuanceId", "id", [PK]),
+    ("orderId", "id", [fk("OrderHeader")]),
+    ("orderItemSeqId", "id", []),
+    ("shipGroupSeqId", "id", []),
+    ("inventoryItemId", "id", [fk("InventoryItem")]),
+    ("shipmentId", "id", [fk("Shipment")]),
+    ("shipmentItemSeqId", "id", []),
+    ("issuedDateTime", "date-time", [REQ]),
+    ("issuedByUserLogin", "id", []),
+    ("quantity", "number-decimal", [REQ]),
+    ("cancelQuantity", "number-decimal", []),
+], indexes=[["orderId", "orderItemSeqId"], ["shipmentId"]])
+entity("RejectionReason", "shipment", "Why received goods were rejected: damaged, wrong item, not ordered.", [
+    ("rejectionId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("ShipmentReceipt", "shipment", "Goods received into stock from a shipment, a transfer or a return.", [
+    ("receiptId", "id", [PK]),
+    ("inventoryItemId", "id", [fk("InventoryItem")]),
+    ("productId", "id", [fk("Product")]),
+    ("shipmentId", "id", [fk("Shipment")]),
+    ("shipmentItemSeqId", "id", []),
+    ("returnId", "id", []),
+    ("returnItemSeqId", "id", []),
+    ("rejectionId", "id", [fk("RejectionReason")]),
+    ("datetimeReceived", "date-time", [REQ]),
+    ("receivedByUserLogin", "id", []),
+    ("quantityAccepted", "number-decimal", [REQ]),
+    ("quantityRejected", "number-decimal", []),
+], indexes=[["returnId"], ["shipmentId"]])
+
+# ───────────────────────────── picklist: store and warehouse picking without a WMS (HotWax) (W8) ─────────────────────────────
+
+entity("Picklist", "shipment", "A pick run at a facility: the orders a picker collects together.", [
+    ("picklistId", "id", [PK]),
+    ("facilityId", "id", [REQ, fk("Facility")]),
+    ("shipmentMethodTypeId", "id", [fk("ShipmentMethodType")]),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("picklistDate", "date-time", [REQ]),
+    ("createdByUserLogin", "id", []),
+], indexes=[["facilityId", "statusId"]])
+entity("PicklistRole", "shipment", "Who works a picklist (picker), dated.", [
+    ("picklistId", "id", [PK, fk("Picklist")]),
+    ("partyId", "id", [PK, fk("Party")]),
+    ("roleTypeId", "id", [PK, fk("RoleType")]),
+    ("fromDate", "date-time", [PK]),
+    ("thruDate", "date-time", []),
+])
+entity("PicklistBin", "shipment", "A tote or slot on a picklist, one per order ship group.", [
+    ("picklistBinId", "id", [PK]),
+    ("picklistId", "id", [REQ, fk("Picklist")]),
+    ("binLocationNumber", "number-integer", []),
+    ("primaryOrderId", "id", [fk("OrderHeader", "orderId")]),
+    ("primaryShipGroupSeqId", "id", []),
+], indexes=[["picklistId"]])
+entity("PicklistItem", "shipment", "An order item to pick into a bin, from an inventory item.", [
+    ("picklistBinId", "id", [PK, fk("PicklistBin")]),
+    ("orderId", "id", [PK, fk("OrderHeader")]),
+    ("orderItemSeqId", "id", [PK]),
+    ("shipGroupSeqId", "id", [PK]),
+    ("inventoryItemId", "id", [PK, fk("InventoryItem")]),
+    ("itemStatusId", "id", [REQ, fk("StatusItem", "statusId")]),
+    ("quantity", "number-decimal", [REQ]),
+    ("pickedQuantity", "number-decimal", []),
+])
+
+# ───────────────────────────── return: customer returns, receipts and refunds (W8) ─────────────────────────────
+
+entity("ReturnHeaderType", "returns", "Customer return or return to a vendor.", [
+    ("returnHeaderTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+])
+entity("ReturnReason", "returns", "Why it came back: too small, damaged, not as described.", [
+    ("returnReasonId", "id", [PK]),
+    ("description", "text-medium", []),
+    ("sequenceId", "id", []),
+])
+entity("ReturnType", "returns", "What the customer gets back: a refund, store credit, a replacement.", [
+    ("returnTypeId", "id", [PK]),
+    ("description", "text-medium", []),
+    ("sequenceId", "id", []),
+])
+entity("ReturnHeader", "returns", "A return: from whom, to which facility, its status and money.", [
+    ("returnId", "id", [PK]),
+    ("returnHeaderTypeId", "id", [REQ, fk("ReturnHeaderType")]),
+    ("statusId", "id", [REQ, fk("StatusItem"), AUDIT]),
+    ("externalId", "id-long", []),
+    ("fromPartyId", "id", [fk("Party", "partyId")]),
+    ("toPartyId", "id", [fk("Party", "partyId")]),
+    ("productStoreId", "id", [fk("ProductStore")]),
+    ("salesChannelEnumId", "id", [fk("Enumeration", "enumId")]),
+    ("destinationFacilityId", "id", [fk("Facility", "facilityId")]),
+    ("originContactMechId", "id", [fk("ContactMech", "contactMechId")]),
+    ("needsInventoryReceive", "indicator", []),
+    ("currencyUomId", "id", [fk("Uom", "uomId")]),
+    ("entryDate", "date-time", [REQ]),
+    ("createdBy", "id", []),
+], indexes=[["externalId"], ["statusId"]])
+entity("ReturnItem", "returns", "A returned order item: how much, why, what the customer gets, and how much arrived.", [
+    ("returnId", "id", [PK, fk("ReturnHeader")]),
+    ("returnItemSeqId", "id", [PK]),
+    ("returnReasonId", "id", [fk("ReturnReason")]),
+    ("returnTypeId", "id", [fk("ReturnType")]),
+    ("productId", "id", [fk("Product")]),
+    ("description", "text-medium", []),
+    ("orderId", "id", [fk("OrderHeader")]),
+    ("orderItemSeqId", "id", []),
+    ("statusId", "id", [REQ, fk("StatusItem")]),
+    ("expectedItemStatus", "id", [fk("StatusItem", "statusId")]),
+    ("returnQuantity", "number-decimal", [REQ]),
+    ("receivedQuantity", "number-decimal", []),
+    ("returnPrice", "currency-amount", []),
+    ("returnItemResponseId", "id", []),
+], indexes=[["orderId", "orderItemSeqId"]])
+entity("ReturnAdjustment", "returns", "An amount added to or taken off a return: restocking fee, returned shipping, tax.", [
+    ("returnAdjustmentId", "id", [PK]),
+    ("returnAdjustmentTypeId", "id", [REQ, fk("OrderAdjustmentType", "orderAdjustmentTypeId")]),
+    ("returnId", "id", [REQ, fk("ReturnHeader")]),
+    ("returnItemSeqId", "id", []),
+    ("amount", "currency-amount", [REQ]),
+    ("description", "text-medium", []),
+    ("orderAdjustmentId", "id", [fk("OrderAdjustment")]),
+    ("createdDate", "date-time", []),
+], indexes=[["returnId"]])
+entity("ReturnStatus", "returns", "Every status a return or return item had.", [
+    ("returnStatusId", "id", [PK]),
+    ("statusId", "id", [REQ, fk("StatusItem")]),
+    ("returnId", "id", [REQ, fk("ReturnHeader")]),
+    ("returnItemSeqId", "id", []),
+    ("changeByUserLoginId", "id", []),
+    ("statusDatetime", "date-time", [REQ]),
+    ("changeReason", "text-long", []),
+], indexes=[["returnId"]])
+entity("ReturnItemResponse", "returns", "What was given back for returned items: a refund on a payment, store credit, a replacement order.", [
+    ("returnItemResponseId", "id", [PK]),
+    ("orderPaymentPreferenceId", "id", [fk("OrderPaymentPreference")]),
+    ("replacementOrderId", "id", [fk("OrderHeader", "orderId")]),
+    ("responseAmount", "currency-amount", []),
+    ("responseDate", "date-time", []),
+    ("referenceNumber", "text-medium", []),
+])
+
 MIGRATIONS = [
     (1, "core_framework", _W3),
     (3, "core_party", [e["name"] for e in ENTITIES if e["package"] == "party"]),
     (5, "core_product", [e["name"] for e in ENTITIES if e["package"] == "product"]),
     (7, "core_facility_inventory", [e["name"] for e in ENTITIES if e["package"] in ("facility", "inventory")]),
     (9, "core_order", [e["name"] for e in ENTITIES if e["package"] == "order"]),
+    (11, "core_fulfilment_return", [e["name"] for e in ENTITIES if e["package"] in ("shipment", "returns")]),
 ]
