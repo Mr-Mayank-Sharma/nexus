@@ -11,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.Optional;
 
 /**
  * {@code /v1/**} needs a client API key ({@code X-Nexus-Gateway-Key}); the client id goes on the request.
@@ -20,6 +21,9 @@ import java.security.MessageDigest;
 public class AuthFilter extends OncePerRequestFilter {
 
     public static final String CLIENT = "nexus.gateway.client";
+    static final String CLIENT_KEY_HEADER = "X-Nexus-Gateway-Key";
+    static final String ADMIN_TOKEN_HEADER = "X-Admin-Token";
+    private static final int MIN_ADMIN_TOKEN_LENGTH = 16;
 
     private final Clients clients;
     private final String adminToken;
@@ -30,29 +34,36 @@ public class AuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws ServletException, IOException {
-        String path = req.getRequestURI().substring(req.getContextPath().length());
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
         if (path.startsWith("/v1/")) {
-            var client = clients.authenticate(req.getHeader("X-Nexus-Gateway-Key"));
-            if (client.isEmpty()) {
-                deny(res, "A valid X-Nexus-Gateway-Key header is required");
+            Optional<String> clientId = clients.authenticate(request.getHeader(CLIENT_KEY_HEADER));
+            if (clientId.isEmpty()) {
+                deny(response, "A valid X-Nexus-Gateway-Key header is required");
                 return;
             }
-            req.setAttribute(CLIENT, client.get());
+            request.setAttribute(CLIENT, clientId.get());
         } else if (path.startsWith("/admin/")) {
-            String given = req.getHeader("X-Admin-Token");
-            if (adminToken == null || adminToken.length() < 16 || given == null
-                    || !MessageDigest.isEqual(adminToken.getBytes(StandardCharsets.UTF_8), given.getBytes(StandardCharsets.UTF_8))) {
-                deny(res, "A valid X-Admin-Token header is required");
+            if (!isAdminToken(request.getHeader(ADMIN_TOKEN_HEADER))) {
+                deny(response, "A valid X-Admin-Token header is required");
                 return;
             }
         }
-        chain.doFilter(req, res);
+        chain.doFilter(request, response);
     }
 
-    private static void deny(HttpServletResponse res, String message) throws IOException {
-        res.setStatus(401);
-        res.setContentType("application/json");
-        res.getWriter().write("{\"error\":\"" + message + "\"}");
+    /** Compared in constant time; a missing or too short configured token lets no one in. */
+    private boolean isAdminToken(String givenToken) {
+        boolean configured = adminToken != null && adminToken.length() >= MIN_ADMIN_TOKEN_LENGTH;
+        if (!configured || givenToken == null) {
+            return false;
+        }
+        return MessageDigest.isEqual(adminToken.getBytes(StandardCharsets.UTF_8), givenToken.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static void deny(HttpServletResponse response, String message) throws IOException {
+        response.setStatus(401);
+        response.setContentType("application/json");
+        response.getWriter().write("{\"error\":\"" + message + "\"}");
     }
 }

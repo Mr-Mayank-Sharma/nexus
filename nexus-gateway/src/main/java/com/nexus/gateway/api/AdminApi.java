@@ -23,14 +23,14 @@ public class AdminApi {
 
     private final Clients clients;
     private final Accounts accounts;
-    private final EmailService email;
-    private final RequestLog log;
+    private final EmailService emailService;
+    private final RequestLog requestLog;
 
-    public AdminApi(Clients clients, Accounts accounts, EmailService email, RequestLog log) {
+    public AdminApi(Clients clients, Accounts accounts, EmailService emailService, RequestLog requestLog) {
         this.clients = clients;
         this.accounts = accounts;
-        this.email = email;
-        this.log = log;
+        this.emailService = emailService;
+        this.requestLog = requestLog;
     }
 
     public record NewClient(String name) {
@@ -44,8 +44,8 @@ public class AdminApi {
 
     /** The API key is in this answer only; keep it in the client installation. */
     @PostMapping("/clients")
-    public Clients.NewClient create(@RequestBody NewClient c) {
-        return clients.create(c.name());
+    public Clients.NewClient create(@RequestBody NewClient newClient) {
+        return clients.create(newClient.name());
     }
 
     @PostMapping("/clients/{clientId}/rotate-key")
@@ -54,8 +54,8 @@ public class AdminApi {
     }
 
     @PutMapping("/clients/{clientId}/accounts")
-    public Map<String, String> account(@PathVariable String clientId, @RequestBody AccountBody a) {
-        return Map.of("accountId", accounts.put(clientId, a.storeId(), a.provider(), a.environment(), a.settings(), a.secrets()));
+    public Map<String, String> account(@PathVariable String clientId, @RequestBody AccountBody body) {
+        return Map.of("accountId", accounts.put(clientId, body.storeId(), body.provider(), body.environment(), body.settings(), body.secrets()));
     }
 
     @GetMapping("/clients/{clientId}/accounts")
@@ -64,23 +64,23 @@ public class AdminApi {
     }
 
     @PutMapping("/clients/{clientId}/templates")
-    public Map<String, String> template(@PathVariable String clientId, @RequestBody TemplateBody t) {
-        email.putTemplate(clientId, t.storeId(), t.templateId(), t.subject(), t.bodyHtml());
-        return Map.of("templateId", t.templateId());
+    public Map<String, String> template(@PathVariable String clientId, @RequestBody TemplateBody body) {
+        emailService.putTemplate(clientId, body.storeId(), body.templateId(), body.subject(), body.bodyHtml());
+        return Map.of("templateId", body.templateId());
     }
 
     @GetMapping("/clients/{clientId}/test-outbox")
     public List<EmailService.Sent> outbox(@PathVariable String clientId) {
-        return email.testOutbox(clientId);
+        return emailService.testOutbox(clientId);
     }
 
     @GetMapping("/requests")
     public List<Map<String, Object>> requests(@RequestParam(required = false) String clientId, @RequestParam(defaultValue = "100") int limit) {
-        return log.recent(clientId, Math.min(limit, 1000));
+        return requestLog.recent(clientId, Math.min(limit, 1000));
     }
 
     @GetMapping("/health")
     public List<Map<String, Object>> health(@RequestParam(defaultValue = "24") int hours) {
-        return log.health(hours);
+        return requestLog.health(hours);
     }
 }

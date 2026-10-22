@@ -1,5 +1,6 @@
 package com.nexus.gateway.api;
 
+import com.nexus.gateway.carrier.LabelDocuments;
 import com.nexus.gateway.carrier.Shipping;
 import com.nexus.gateway.carrier.ShippingService;
 import com.nexus.gateway.email.EmailService;
@@ -23,14 +24,14 @@ import java.util.Map;
 @RequestMapping("/v1")
 public class GatewayApi {
 
-    private final ShippingService shipping;
-    private final EmailService email;
-    private final RequestLog log;
+    private final ShippingService shippingService;
+    private final EmailService emailService;
+    private final RequestLog requestLog;
 
-    public GatewayApi(ShippingService shipping, EmailService email, RequestLog log) {
-        this.shipping = shipping;
-        this.email = email;
-        this.log = log;
+    public GatewayApi(ShippingService shippingService, EmailService emailService, RequestLog requestLog) {
+        this.shippingService = shippingService;
+        this.emailService = emailService;
+        this.requestLog = requestLog;
     }
 
     public record RatesRequest(String storeId, String carrier, Shipping.Address from, Shipping.Address to, List<Shipping.Parcel> parcels) {
@@ -51,53 +52,58 @@ public class GatewayApi {
 
     @GetMapping("/carriers")
     public List<String> carriers() {
-        return shipping.carriers();
+        return shippingService.carriers();
     }
 
     @PostMapping("/rates")
-    public List<Shipping.Quote> rates(HttpServletRequest req, @RequestBody RatesRequest r) {
-        return shipping.rates(client(req), r.storeId(), r.carrier(), new Shipping.RateRequest(r.from(), r.to(), r.parcels()));
+    public List<Shipping.Quote> rates(HttpServletRequest request, @RequestBody RatesRequest ratesRequest) {
+        Shipping.RateRequest rateRequest = new Shipping.RateRequest(ratesRequest.from(), ratesRequest.to(), ratesRequest.parcels());
+        return shippingService.rates(clientOf(request), ratesRequest.storeId(), ratesRequest.carrier(), rateRequest);
     }
 
     @PostMapping("/labels")
-    public ShippingService.LabelResult label(HttpServletRequest req, @RequestBody LabelBody b) {
-        if (b.carrier() == null) throw new IllegalArgumentException("Name the carrier");
-        return shipping.label(client(req), b.storeId(), b.carrier(), new Shipping.LabelRequest(b.service(), b.from(), b.to(), b.parcels(), b.reference(),
-                b.imageFormat(), b.isReturn()));
+    public ShippingService.LabelResult label(HttpServletRequest request, @RequestBody LabelBody body) {
+        if (body.carrier() == null) {
+            throw new IllegalArgumentException("Name the carrier");
+        }
+        Shipping.LabelRequest labelRequest = new Shipping.LabelRequest(body.service(), body.from(), body.to(), body.parcels(), body.reference(),
+                body.imageFormat(), body.isReturn());
+        return shippingService.label(clientOf(request), body.storeId(), body.carrier(), labelRequest);
     }
 
     @GetMapping("/labels/{labelId}")
-    public ResponseEntity<ShippingService.Document> document(HttpServletRequest req, @PathVariable String labelId) {
-        return shipping.document(client(req), labelId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<LabelDocuments.Document> document(HttpServletRequest request, @PathVariable String labelId) {
+        return shippingService.document(clientOf(request), labelId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/labels/void")
-    public Map<String, Object> voidLabel(HttpServletRequest req, @RequestBody VoidBody b) {
-        return Map.of("voided", shipping.voidLabel(client(req), b.storeId(), b.carrier(), b.trackingNumber()));
+    public Map<String, Object> voidLabel(HttpServletRequest request, @RequestBody VoidBody body) {
+        return Map.of("voided", shippingService.voidLabel(clientOf(request), body.storeId(), body.carrier(), body.trackingNumber()));
     }
 
     @PostMapping("/addresses/validate")
-    public Shipping.AddressCheck validate(HttpServletRequest req, @RequestBody AddressBody b) {
-        return shipping.validate(client(req), b.storeId(), b.carrier(), b.address());
+    public Shipping.AddressCheck validate(HttpServletRequest request, @RequestBody AddressBody body) {
+        return shippingService.validate(clientOf(request), body.storeId(), body.carrier(), body.address());
     }
 
     @GetMapping("/tracking/{carrier}/{trackingNumber}")
-    public Shipping.Tracking track(HttpServletRequest req, @PathVariable String carrier, @PathVariable String trackingNumber,
+    public Shipping.Tracking track(HttpServletRequest request, @PathVariable String carrier, @PathVariable String trackingNumber,
                                    @RequestParam(required = false) String storeId) {
-        return shipping.track(client(req), storeId, carrier, trackingNumber);
+        return shippingService.track(clientOf(request), storeId, carrier, trackingNumber);
     }
 
     @PostMapping("/email/send")
-    public Map<String, String> send(HttpServletRequest req, @RequestBody EmailBody b) {
-        return Map.of("messageId", email.send(client(req), b.storeId(), b.templateId(), b.to(), b.data()));
+    public Map<String, String> send(HttpServletRequest request, @RequestBody EmailBody body) {
+        return Map.of("messageId", emailService.send(clientOf(request), body.storeId(), body.templateId(), body.to(), body.data()));
     }
 
     @GetMapping("/requests")
-    public List<Map<String, Object>> requests(HttpServletRequest req, @RequestParam(defaultValue = "50") int limit) {
-        return log.recent(client(req), Math.min(limit, 500));
+    public List<Map<String, Object>> requests(HttpServletRequest request, @RequestParam(defaultValue = "50") int limit) {
+        return requestLog.recent(clientOf(request), Math.min(limit, 500));
     }
 
-    static String client(HttpServletRequest req) {
-        return (String) req.getAttribute(AuthFilter.CLIENT);
+    /** The client the auth filter found for the request's key. */
+    static String clientOf(HttpServletRequest request) {
+        return (String) request.getAttribute(AuthFilter.CLIENT);
     }
 }

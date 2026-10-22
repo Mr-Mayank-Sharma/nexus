@@ -7,13 +7,11 @@ import com.nexus.gateway.account.Accounts.Account;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * FedEx REST APIs (OAuth client credentials; Ship, Rate, Track, Address Validation). Account settings:
@@ -25,7 +23,11 @@ public class FedExCarrier implements CarrierAdapter {
 
     private static final String SANDBOX = "https://apis-sandbox.fedex.com";
     private static final String PRODUCTION = "https://apis.fedex.com";
-    private final Map<String, String[]> tokens = new ConcurrentHashMap<>();   // accountId -> {token, expiresAtEpochSecond}
+    static final String DEFAULT_SERVICE = "FEDEX_GROUND";
+    /** FedEx needs a phone number for every party; this placeholder is used when none is known. */
+    static final String NO_PHONE = "0000000000";
+
+    private final OAuthTokenCache tokenCache = new OAuthTokenCache();
 
     @Override
     public String code() {
@@ -33,103 +35,125 @@ public class FedExCarrier implements CarrierAdapter {
     }
 
     @Override
-    public List<Shipping.Quote> rates(Account a, Shipping.RateRequest r) {
+    public List<Shipping.Quote> rates(Account account, Shipping.RateRequest request) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
-        body.putObject("accountNumber").put("value", a.setting("accountNumber"));
-        ObjectNode s = body.putObject("requestedShipment");
-        s.putObject("shipper").set("address", address(r.from()));
-        s.putObject("recipient").set("address", address(r.to()));
-        s.put("pickupType", "DROPOFF_AT_FEDEX_LOCATION");
-        s.putArray("rateRequestType").add("ACCOUNT").add("LIST");
-        s.set("requestedPackageLineItems", packages(r.parcels()));
-        JsonNode out = call(a, "POST", "/rate/v1/rates/quotes", body);
+        body.putObject("accountNumber").put("value", account.setting("accountNumber"));
+        ObjectNode shipment = body.putObject("requestedShipment");
+        shipment.putObject("shipper").set("address", address(request.from()));
+        shipment.putObject("recipient").set("address", address(request.to()));
+        shipment.put("pickupType", "DROPOFF_AT_FEDEX_LOCATION");
+        shipment.putArray("rateRequestType").add("ACCOUNT").add("LIST");
+        shipment.set("requestedPackageLineItems", packages(request.parcels()));
+
+        JsonNode response = call(account, "POST", "/rate/v1/rates/quotes", body);
         List<Shipping.Quote> quotes = new ArrayList<>();
-        for (JsonNode d : out.at("/output/rateReplyDetails")) {
-            JsonNode charge = d.at("/ratedShipmentDetails/0");
-            quotes.add(new Shipping.Quote(code(), d.path("serviceType").asText(), d.path("serviceName").asText(null),
+        for (JsonNode rateReply : response.at("/output/rateReplyDetails")) {
+            JsonNode charge = rateReply.at("/ratedShipmentDetails/0");
+            quotes.add(new Shipping.Quote(code(), rateReply.path("serviceType").asText(), rateReply.path("serviceName").asText(null),
                     new BigDecimal(charge.path("totalNetCharge").asText("0")), charge.path("currency").asText("USD"), null));
         }
         return quotes;
     }
 
     @Override
-    public Shipping.Label label(Account a, Shipping.LabelRequest r) {
+    public Shipping.Label label(Account account, Shipping.LabelRequest request) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
         body.put("labelResponseOptions", "LABEL");
-        body.putObject("accountNumber").put("value", a.setting("accountNumber"));
-        ObjectNode s = body.putObject("requestedShipment");
-        s.set("shipper", party(r.from()));
-        s.putArray("recipients").add(party(r.to()));
-        s.put("shipDatestamp", LocalDate.now(ZoneOffset.UTC).toString());
-        s.put("serviceType", r.service() == null ? "FEDEX_GROUND" : r.service());
-        s.put("packagingType", "YOUR_PACKAGING");
-        s.put("pickupType", "USE_SCHEDULED_PICKUP");
-        s.putObject("shippingChargesPayment").put("paymentType", "SENDER");
-        ObjectNode spec = s.putObject("labelSpecification");
-        spec.put("imageType", r.imageFormat() == null ? "PDF" : r.imageFormat());
-        spec.put("labelStockType", "PAPER_4X6");
-        if (r.isReturn()) {
-            ObjectNode special = s.putObject("shipmentSpecialServices");
-            special.putArray("specialServiceTypes").add("RETURN_SHIPMENT");
-            special.putObject("returnShipmentDetail").put("returnType", "PRINT_RETURN_LABEL");
+        body.putObject("accountNumber").put("value", account.setting("accountNumber"));
+        ObjectNode shipment = body.putObject("requestedShipment");
+        shipment.set("shipper", party(request.from()));
+        shipment.putArray("recipients").add(party(request.to()));
+        shipment.put("shipDatestamp", LocalDate.now(ZoneOffset.UTC).toString());
+        shipment.put("serviceType", request.service() == null ? DEFAULT_SERVICE : request.service());
+        shipment.put("packagingType", "YOUR_PACKAGING");
+        shipment.put("pickupType", "USE_SCHEDULED_PICKUP");
+        shipment.putObject("shippingChargesPayment").put("paymentType", "SENDER");
+        ObjectNode labelSpecification = shipment.putObject("labelSpecification");
+        String imageType = request.imageFormat() == null ? "PDF" : request.imageFormat();
+        labelSpecification.put("imageType", imageType);
+        labelSpecification.put("labelStockType", "PAPER_4X6");
+        if (request.isReturn()) {
+            ObjectNode specialServices = shipment.putObject("shipmentSpecialServices");
+            specialServices.putArray("specialServiceTypes").add("RETURN_SHIPMENT");
+            specialServices.putObject("returnShipmentDetail").put("returnType", "PRINT_RETURN_LABEL");
         }
-        ArrayNode items = packages(r.parcels());
-        if (r.reference() != null) items.forEach(p -> ((ObjectNode) p).putArray("customerReferences").addObject().put("customerReferenceType", "CUSTOMER_REFERENCE").put("value", r.reference()));
-        s.set("requestedPackageLineItems", items);
-        JsonNode t = call(a, "POST", "/ship/v1/shipments", body).at("/output/transactionShipments/0");
-        List<Shipping.LabelPackage> pkgs = new ArrayList<>();
-        for (JsonNode p : t.path("pieceResponses")) {
-            JsonNode doc = p.at("/packageDocuments/0");
-            pkgs.add(new Shipping.LabelPackage(p.path("trackingNumber").asText(), doc.path("encodedLabel").asText(null), doc.path("docType").asText(spec.path("imageType").asText())));
+        ArrayNode packageItems = packages(request.parcels());
+        if (request.reference() != null) {
+            packageItems.forEach(packageItem -> ((ObjectNode) packageItem).putArray("customerReferences").addObject()
+                    .put("customerReferenceType", "CUSTOMER_REFERENCE")
+                    .put("value", request.reference()));
         }
-        if (pkgs.isEmpty()) throw new CarrierException(502, "FedEx returned no label");
-        JsonNode charge = t.at("/completedShipmentDetail/shipmentRating/shipmentRateDetails/0/totalNetCharge");
-        return new Shipping.Label(t.path("masterTrackingNumber").asText(pkgs.get(0).trackingNumber()), t.path("masterTrackingNumber").asText(pkgs.get(0).trackingNumber()),
-                pkgs, charge.isMissingNode() ? null : new BigDecimal(charge.asText()), "USD");
+        shipment.set("requestedPackageLineItems", packageItems);
+
+        JsonNode transaction = call(account, "POST", "/ship/v1/shipments", body).at("/output/transactionShipments/0");
+        List<Shipping.LabelPackage> labelPackages = new ArrayList<>();
+        for (JsonNode piece : transaction.path("pieceResponses")) {
+            JsonNode document = piece.at("/packageDocuments/0");
+            labelPackages.add(new Shipping.LabelPackage(piece.path("trackingNumber").asText(), document.path("encodedLabel").asText(null),
+                    document.path("docType").asText(imageType)));
+        }
+        if (labelPackages.isEmpty()) {
+            throw new CarrierException(502, "FedEx returned no label");
+        }
+        String masterTrackingNumber = transaction.path("masterTrackingNumber").asText(labelPackages.get(0).trackingNumber());
+        JsonNode netCharge = transaction.at("/completedShipmentDetail/shipmentRating/shipmentRateDetails/0/totalNetCharge");
+        BigDecimal cost = netCharge.isMissingNode() ? null : new BigDecimal(netCharge.asText());
+        return new Shipping.Label(masterTrackingNumber, masterTrackingNumber, labelPackages, cost, "USD");
     }
 
     @Override
-    public boolean voidLabel(Account a, String carrierShipmentId, String trackingNumber) {
+    public boolean voidLabel(Account account, String carrierShipmentId, String trackingNumber) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
-        body.putObject("accountNumber").put("value", a.setting("accountNumber"));
+        body.putObject("accountNumber").put("value", account.setting("accountNumber"));
         body.put("trackingNumber", trackingNumber);
         body.put("deletionControl", "DELETE_ALL_PACKAGES");
-        return call(a, "PUT", "/ship/v1/shipments/cancel", body).at("/output/cancelledShipment").asBoolean(false);
+        return call(account, "PUT", "/ship/v1/shipments/cancel", body).at("/output/cancelledShipment").asBoolean(false);
     }
 
     @Override
-    public Shipping.AddressCheck validate(Account a, Shipping.Address address) {
+    public Shipping.AddressCheck validate(Account account, Shipping.Address address) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
         body.putArray("addressesToValidate").addObject().set("address", address(address));
-        JsonNode r = call(a, "POST", "/address/v1/addresses/resolve", body).at("/output/resolvedAddresses/0");
+        JsonNode resolved = call(account, "POST", "/address/v1/addresses/resolve", body).at("/output/resolvedAddresses/0");
+
         List<String> messages = new ArrayList<>();
-        r.path("customerMessages").forEach(m -> messages.add(m.path("message").asText(m.asText())));
-        boolean resolved = r.at("/attributes/Resolved").asText("false").equalsIgnoreCase("true");
-        boolean ambiguous = r.at("/attributes/MultipleMatches").asText("false").equalsIgnoreCase("true");
-        String classification = r.path("classification").asText("UNKNOWN");
-        List<String> lines = new ArrayList<>();
-        r.path("streetLinesToken").forEach(l -> lines.add(l.asText()));
+        resolved.path("customerMessages").forEach(message -> messages.add(message.path("message").asText(message.asText())));
+        boolean wasResolved = resolved.at("/attributes/Resolved").asText("false").equalsIgnoreCase("true");
+        boolean ambiguous = resolved.at("/attributes/MultipleMatches").asText("false").equalsIgnoreCase("true");
+        String classification = resolved.path("classification").asText("UNKNOWN");
+        boolean residential = "RESIDENTIAL".equals(classification);
+
+        List<String> resolvedLines = new ArrayList<>();
+        resolved.path("streetLinesToken").forEach(line -> resolvedLines.add(line.asText()));
         Shipping.Address suggested = new Shipping.Address(address.name(), address.company(), address.phone(), address.email(),
-                lines.isEmpty() ? address.lines() : lines, r.path("city").asText(address.city()), r.path("stateOrProvinceCode").asText(address.state()),
-                r.path("postalCode").asText(address.postalCode()), r.path("countryCode").asText(address.countryCode()), "RESIDENTIAL".equals(classification));
-        return new Shipping.AddressCheck(resolved && !ambiguous, ambiguous, suggested, "UNKNOWN".equals(classification) ? null : "RESIDENTIAL".equals(classification), messages);
+                resolvedLines.isEmpty() ? address.lines() : resolvedLines, resolved.path("city").asText(address.city()),
+                resolved.path("stateOrProvinceCode").asText(address.state()), resolved.path("postalCode").asText(address.postalCode()),
+                resolved.path("countryCode").asText(address.countryCode()), residential);
+        Boolean knownResidential = "UNKNOWN".equals(classification) ? null : residential;
+        return new Shipping.AddressCheck(wasResolved && !ambiguous, ambiguous, suggested, knownResidential, messages);
     }
 
     @Override
-    public Shipping.Tracking track(Account a, String trackingNumber) {
+    public Shipping.Tracking track(Account account, String trackingNumber) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
         body.put("includeDetailedScans", true);
         body.putArray("trackingInfo").addObject().putObject("trackingNumberInfo").put("trackingNumber", trackingNumber);
-        JsonNode t = call(a, "POST", "/track/v1/trackingnumbers", body).at("/output/completeTrackResults/0/trackResults/0");
-        String code = t.at("/latestStatusDetail/code").asText("");
+        JsonNode trackResult = call(account, "POST", "/track/v1/trackingnumbers", body).at("/output/completeTrackResults/0/trackResults/0");
+
+        String statusCode = trackResult.at("/latestStatusDetail/code").asText("");
         List<Shipping.TrackEvent> events = new ArrayList<>();
-        for (JsonNode e : t.path("scanEvents")) {
-            events.add(new Shipping.TrackEvent(e.path("date").asText(null), e.path("eventType").asText(null), e.path("eventDescription").asText(null),
-                    e.at("/scanLocation/city").asText(null)));
+        for (JsonNode scan : trackResult.path("scanEvents")) {
+            events.add(new Shipping.TrackEvent(scan.path("date").asText(null), scan.path("eventType").asText(null), scan.path("eventDescription").asText(null),
+                    scan.at("/scanLocation/city").asText(null)));
         }
-        String eta = null;
-        for (JsonNode d : t.path("dateAndTimes")) if ("ESTIMATED_DELIVERY".equals(d.path("type").asText())) eta = d.path("dateTime").asText();
-        return new Shipping.Tracking(trackingNumber, status(code), t.at("/latestStatusDetail/description").asText(code), eta, events);
+        String estimatedDelivery = null;
+        for (JsonNode dateAndTime : trackResult.path("dateAndTimes")) {
+            if ("ESTIMATED_DELIVERY".equals(dateAndTime.path("type").asText())) {
+                estimatedDelivery = dateAndTime.path("dateTime").asText();
+            }
+        }
+        String description = trackResult.at("/latestStatusDetail/description").asText(statusCode);
+        return new Shipping.Tracking(trackingNumber, status(statusCode), description, estimatedDelivery, events);
     }
 
     static String status(String fedexCode) {
@@ -143,60 +167,78 @@ public class FedExCarrier implements CarrierAdapter {
         };
     }
 
-    // ── helpers ──
+    // ── calling FedEx ──
 
-    private JsonNode call(Account a, String method, String path, Object body) {
-        return HttpJson.send(method, base(a) + path, Map.of("Authorization", "Bearer " + token(a), "X-locale", "en_US"), body);
+    private JsonNode call(Account account, String method, String path, Object body) {
+        return HttpJson.send(method, baseUrl(account) + path, Map.of("Authorization", "Bearer " + accessToken(account), "X-locale", "en_US"), body);
     }
 
-    private String token(Account a) {
-        String[] t = tokens.get(a.accountId());
-        if (t != null && Long.parseLong(t[1]) > Instant.now().getEpochSecond() + 60) return t[0];
-        JsonNode r = HttpJson.form(base(a) + "/oauth/token", Map.of(), Map.of("grant_type", "client_credentials",
-                "client_id", a.secret("clientId"), "client_secret", a.secret("clientSecret")));
-        String token = r.path("access_token").asText();
-        tokens.put(a.accountId(), new String[]{token, String.valueOf(Instant.now().getEpochSecond() + r.path("expires_in").asLong(3600))});
-        return token;
+    private String accessToken(Account account) {
+        return tokenCache.tokenFor(account.accountId(), () -> {
+            JsonNode response = HttpJson.form(baseUrl(account) + "/oauth/token", Map.of(), Map.of("grant_type", "client_credentials",
+                    "client_id", account.secret("clientId"), "client_secret", account.secret("clientSecret")));
+            return new OAuthTokenCache.IssuedToken(response.path("access_token").asText(),
+                    response.path("expires_in").asLong(OAuthTokenCache.DEFAULT_LIFETIME_SECONDS));
+        });
     }
 
-    private static String base(Account a) {
-        String override = a.setting("baseUrl");
-        return override != null ? override : a.sandbox() ? SANDBOX : PRODUCTION;
+    private static String baseUrl(Account account) {
+        String override = account.setting("baseUrl");
+        if (override != null) {
+            return override;
+        }
+        return account.sandbox() ? SANDBOX : PRODUCTION;
     }
 
-    static ObjectNode address(Shipping.Address a) {
-        ObjectNode n = HttpJson.JSON.createObjectNode();
-        ArrayNode lines = n.putArray("streetLines");
-        if (a.lines() != null) a.lines().forEach(lines::add);
-        n.put("city", a.city());
-        n.put("stateOrProvinceCode", a.state());
-        n.put("postalCode", a.postalCode());
-        n.put("countryCode", a.countryCode());
-        if (a.residential() != null) n.put("residential", a.residential());
-        return n;
+    // ── building FedEx JSON ──
+
+    static ObjectNode address(Shipping.Address address) {
+        ObjectNode fedexAddress = HttpJson.JSON.createObjectNode();
+        ArrayNode streetLines = fedexAddress.putArray("streetLines");
+        if (address.lines() != null) {
+            address.lines().forEach(streetLines::add);
+        }
+        fedexAddress.put("city", address.city());
+        fedexAddress.put("stateOrProvinceCode", address.state());
+        fedexAddress.put("postalCode", address.postalCode());
+        fedexAddress.put("countryCode", address.countryCode());
+        if (address.residential() != null) {
+            fedexAddress.put("residential", address.residential());
+        }
+        return fedexAddress;
     }
 
-    static ObjectNode party(Shipping.Address a) {
-        ObjectNode n = HttpJson.JSON.createObjectNode();
-        ObjectNode c = n.putObject("contact");
-        c.put("personName", a.name());
-        if (a.company() != null) c.put("companyName", a.company());
-        c.put("phoneNumber", a.phone() == null ? "0000000000" : a.phone());
-        if (a.email() != null) c.put("emailAddress", a.email());
-        n.set("address", address(a));
-        return n;
+    /** A shipper or recipient: contact (name, company, phone, email) and address. */
+    static ObjectNode party(Shipping.Address address) {
+        ObjectNode fedexParty = HttpJson.JSON.createObjectNode();
+        ObjectNode contact = fedexParty.putObject("contact");
+        contact.put("personName", address.name());
+        if (address.company() != null) {
+            contact.put("companyName", address.company());
+        }
+        contact.put("phoneNumber", address.phone() == null ? NO_PHONE : address.phone());
+        if (address.email() != null) {
+            contact.put("emailAddress", address.email());
+        }
+        fedexParty.set("address", address(address));
+        return fedexParty;
     }
 
+    /** FedEx package lines in kilograms and whole centimetres. */
     static ArrayNode packages(List<Shipping.Parcel> parcels) {
-        ArrayNode items = HttpJson.JSON.createArrayNode();
-        for (Shipping.Parcel p : parcels) {
-            ObjectNode i = items.addObject();
-            i.putObject("weight").put("units", "KG").put("value", p.weightKg() == null ? BigDecimal.ONE : p.weightKg());
-            if (p.lengthCm() != null && p.widthCm() != null && p.heightCm() != null) {
-                i.putObject("dimensions").put("length", p.lengthCm().intValue()).put("width", p.widthCm().intValue())
-                        .put("height", p.heightCm().intValue()).put("units", "CM");
+        ArrayNode packageLines = HttpJson.JSON.createArrayNode();
+        for (Shipping.Parcel parcel : parcels) {
+            ObjectNode packageLine = packageLines.addObject();
+            packageLine.putObject("weight").put("units", "KG").put("value", parcel.weightKg() == null ? BigDecimal.ONE : parcel.weightKg());
+            boolean hasDimensions = parcel.lengthCm() != null && parcel.widthCm() != null && parcel.heightCm() != null;
+            if (hasDimensions) {
+                packageLine.putObject("dimensions")
+                        .put("length", parcel.lengthCm().intValue())
+                        .put("width", parcel.widthCm().intValue())
+                        .put("height", parcel.heightCm().intValue())
+                        .put("units", "CM");
             }
         }
-        return items;
+        return packageLines;
     }
 }

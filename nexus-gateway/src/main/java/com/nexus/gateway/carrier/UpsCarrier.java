@@ -8,13 +8,11 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * UPS REST APIs (OAuth client credentials; Rating, Shipping, Tracking, Address Validation). Account settings:
@@ -26,8 +24,14 @@ public class UpsCarrier implements CarrierAdapter {
 
     private static final String SANDBOX = "https://wwwcie.ups.com";
     private static final String PRODUCTION = "https://onlinetools.ups.com";
-    private static final String VERSION = "v2409";
-    private final Map<String, String[]> tokens = new ConcurrentHashMap<>();
+    private static final String API_VERSION = "v2409";
+    static final String GROUND = "03";
+    static final String CUSTOMER_PACKAGING = "02";
+    static final String BILL_SHIPPER = "01";
+    static final String PRINT_RETURN_LABEL = "9";
+    private static final int MAX_TRANSACTION_ID_LENGTH = 32;
+
+    private final OAuthTokenCache tokenCache = new OAuthTokenCache();
 
     @Override
     public String code() {
@@ -35,112 +39,136 @@ public class UpsCarrier implements CarrierAdapter {
     }
 
     @Override
-    public List<Shipping.Quote> rates(Account a, Shipping.RateRequest r) {
+    public List<Shipping.Quote> rates(Account account, Shipping.RateRequest request) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
-        ObjectNode req = body.putObject("RateRequest");
-        req.putObject("Request").put("RequestOption", "Shop");
-        ObjectNode s = req.putObject("Shipment");
-        ObjectNode shipper = s.putObject("Shipper");
-        shipper.put("ShipperNumber", a.setting("accountNumber"));
-        shipper.set("Address", address(r.from()));
-        s.putObject("ShipTo").set("Address", address(r.to()));
-        s.putObject("ShipFrom").set("Address", address(r.from()));
-        s.set("Package", packages(r.parcels(), "PackagingType"));
-        JsonNode out = call(a, "POST", "/api/rating/" + VERSION + "/Shop", body);
+        ObjectNode rateRequest = body.putObject("RateRequest");
+        rateRequest.putObject("Request").put("RequestOption", "Shop");   // every service, not one
+        ObjectNode shipment = rateRequest.putObject("Shipment");
+        ObjectNode shipper = shipment.putObject("Shipper");
+        shipper.put("ShipperNumber", account.setting("accountNumber"));
+        shipper.set("Address", address(request.from()));
+        shipment.putObject("ShipTo").set("Address", address(request.to()));
+        shipment.putObject("ShipFrom").set("Address", address(request.from()));
+        shipment.set("Package", packages(request.parcels(), "PackagingType"));
+
+        JsonNode response = call(account, "POST", "/api/rating/" + API_VERSION + "/Shop", body);
         List<Shipping.Quote> quotes = new ArrayList<>();
-        for (JsonNode q : list(out.at("/RateResponse/RatedShipment"))) {
-            String service = q.at("/Service/Code").asText();
-            quotes.add(new Shipping.Quote(code(), service, serviceName(service), new BigDecimal(q.at("/TotalCharges/MonetaryValue").asText("0")),
-                    q.at("/TotalCharges/CurrencyCode").asText("USD"), q.at("/GuaranteedDelivery/BusinessDaysInTransit").isMissingNode() ? null
-                    : q.at("/GuaranteedDelivery/BusinessDaysInTransit").asInt()));
+        for (JsonNode ratedShipment : asList(response.at("/RateResponse/RatedShipment"))) {
+            String serviceCode = ratedShipment.at("/Service/Code").asText();
+            BigDecimal price = new BigDecimal(ratedShipment.at("/TotalCharges/MonetaryValue").asText("0"));
+            String currency = ratedShipment.at("/TotalCharges/CurrencyCode").asText("USD");
+            JsonNode transitDays = ratedShipment.at("/GuaranteedDelivery/BusinessDaysInTransit");
+            quotes.add(new Shipping.Quote(code(), serviceCode, serviceName(serviceCode), price, currency, transitDays.isMissingNode() ? null : transitDays.asInt()));
         }
         return quotes;
     }
 
     @Override
-    public Shipping.Label label(Account a, Shipping.LabelRequest r) {
+    public Shipping.Label label(Account account, Shipping.LabelRequest request) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
-        ObjectNode req = body.putObject("ShipmentRequest");
-        req.putObject("Request").put("RequestOption", "nonvalidate");
-        ObjectNode s = req.putObject("Shipment");
-        s.put("Description", r.reference() == null ? "Order" : r.reference());
-        ObjectNode shipper = party(r.from());
-        shipper.put("ShipperNumber", a.setting("accountNumber"));
-        s.set("Shipper", shipper);
-        s.set("ShipTo", party(r.to()));
-        s.set("ShipFrom", party(r.from()));
-        s.putObject("PaymentInformation").putArray("ShipmentCharge").addObject().put("Type", "01")
-                .putObject("BillShipper").put("AccountNumber", a.setting("accountNumber"));
-        s.putObject("Service").put("Code", r.service() == null ? "03" : r.service());
-        if (r.isReturn()) s.putObject("ReturnService").put("Code", "9");
-        s.set("Package", packages(r.parcels(), "Packaging"));
-        req.putObject("LabelSpecification").putObject("LabelImageFormat").put("Code", r.imageFormat() == null ? "GIF" : r.imageFormat());
-        JsonNode res = call(a, "POST", "/api/shipments/" + VERSION + "/ship", body).at("/ShipmentResponse/ShipmentResults");
-        List<Shipping.LabelPackage> pkgs = new ArrayList<>();
-        for (JsonNode p : list(res.path("PackageResults"))) {
-            pkgs.add(new Shipping.LabelPackage(p.path("TrackingNumber").asText(), p.at("/ShippingLabel/GraphicImage").asText(null),
-                    p.at("/ShippingLabel/ImageFormat/Code").asText("GIF")));
+        ObjectNode shipmentRequest = body.putObject("ShipmentRequest");
+        shipmentRequest.putObject("Request").put("RequestOption", "nonvalidate");
+        ObjectNode shipment = shipmentRequest.putObject("Shipment");
+        shipment.put("Description", request.reference() == null ? "Order" : request.reference());
+        ObjectNode shipper = party(request.from());
+        shipper.put("ShipperNumber", account.setting("accountNumber"));
+        shipment.set("Shipper", shipper);
+        shipment.set("ShipTo", party(request.to()));
+        shipment.set("ShipFrom", party(request.from()));
+        shipment.putObject("PaymentInformation").putArray("ShipmentCharge").addObject().put("Type", BILL_SHIPPER)
+                .putObject("BillShipper").put("AccountNumber", account.setting("accountNumber"));
+        shipment.putObject("Service").put("Code", request.service() == null ? GROUND : request.service());
+        if (request.isReturn()) {
+            shipment.putObject("ReturnService").put("Code", PRINT_RETURN_LABEL);
         }
-        if (pkgs.isEmpty()) throw new CarrierException(502, "UPS returned no label");
-        JsonNode charge = res.at("/ShipmentCharges/TotalCharges");
-        return new Shipping.Label(res.path("ShipmentIdentificationNumber").asText(), pkgs.get(0).trackingNumber(), pkgs,
-                charge.isMissingNode() ? null : new BigDecimal(charge.path("MonetaryValue").asText("0")), charge.path("CurrencyCode").asText("USD"));
+        shipment.set("Package", packages(request.parcels(), "Packaging"));
+        String imageFormat = request.imageFormat() == null ? "GIF" : request.imageFormat();
+        shipmentRequest.putObject("LabelSpecification").putObject("LabelImageFormat").put("Code", imageFormat);
+
+        JsonNode results = call(account, "POST", "/api/shipments/" + API_VERSION + "/ship", body).at("/ShipmentResponse/ShipmentResults");
+        List<Shipping.LabelPackage> labelPackages = new ArrayList<>();
+        for (JsonNode packageResult : asList(results.path("PackageResults"))) {
+            labelPackages.add(new Shipping.LabelPackage(packageResult.path("TrackingNumber").asText(), packageResult.at("/ShippingLabel/GraphicImage").asText(null),
+                    packageResult.at("/ShippingLabel/ImageFormat/Code").asText("GIF")));
+        }
+        if (labelPackages.isEmpty()) {
+            throw new CarrierException(502, "UPS returned no label");
+        }
+        JsonNode totalCharges = results.at("/ShipmentCharges/TotalCharges");
+        BigDecimal cost = totalCharges.isMissingNode() ? null : new BigDecimal(totalCharges.path("MonetaryValue").asText("0"));
+        return new Shipping.Label(results.path("ShipmentIdentificationNumber").asText(), labelPackages.get(0).trackingNumber(), labelPackages, cost,
+                totalCharges.path("CurrencyCode").asText("USD"));
     }
 
     @Override
-    public boolean voidLabel(Account a, String carrierShipmentId, String trackingNumber) {
-        JsonNode r = call(a, "DELETE", "/api/shipments/" + VERSION + "/void/cancel/" + carrierShipmentId, null);
-        return "1".equals(r.at("/VoidShipmentResponse/SummaryResult/Status/Code").asText());
+    public boolean voidLabel(Account account, String carrierShipmentId, String trackingNumber) {
+        JsonNode response = call(account, "DELETE", "/api/shipments/" + API_VERSION + "/void/cancel/" + carrierShipmentId, null);
+        return "1".equals(response.at("/VoidShipmentResponse/SummaryResult/Status/Code").asText());
     }
 
     @Override
-    public Shipping.AddressCheck validate(Account a, Shipping.Address address) {
+    public Shipping.AddressCheck validate(Account account, Shipping.Address address) {
         ObjectNode body = HttpJson.JSON.createObjectNode();
-        ObjectNode k = body.putObject("XAVRequest").putObject("AddressKeyFormat");
-        ArrayNode lines = k.putArray("AddressLine");
-        if (address.lines() != null) address.lines().forEach(lines::add);
-        k.put("PoliticalDivision2", address.city());
-        k.put("PoliticalDivision1", address.state());
-        k.put("PostcodePrimaryLow", address.postalCode());
-        k.put("CountryCode", address.countryCode());
-        JsonNode r = call(a, "POST", "/api/addressvalidation/v2/3", body).path("XAVResponse");
-        boolean valid = r.has("ValidAddressIndicator");
-        boolean ambiguous = r.has("AmbiguousAddressIndicator");
+        ObjectNode keyFormat = body.putObject("XAVRequest").putObject("AddressKeyFormat");
+        ArrayNode lines = keyFormat.putArray("AddressLine");
+        if (address.lines() != null) {
+            address.lines().forEach(lines::add);
+        }
+        keyFormat.put("PoliticalDivision2", address.city());
+        keyFormat.put("PoliticalDivision1", address.state());
+        keyFormat.put("PostcodePrimaryLow", address.postalCode());
+        keyFormat.put("CountryCode", address.countryCode());
+
+        JsonNode response = call(account, "POST", "/api/addressvalidation/v2/3", body).path("XAVResponse");
+        boolean valid = response.has("ValidAddressIndicator");
+        boolean ambiguous = response.has("AmbiguousAddressIndicator");
         Shipping.Address suggested = null;
         Boolean residential = null;
-        JsonNode c = list(r.path("Candidate")).stream().findFirst().orElse(null);
-        if (c != null) {
-            JsonNode f = c.path("AddressKeyFormat");
-            List<String> l = new ArrayList<>();
-            list(f.path("AddressLine")).forEach(x -> l.add(x.asText()));
-            suggested = new Shipping.Address(address.name(), address.company(), address.phone(), address.email(), l, f.path("PoliticalDivision2").asText(null),
-                    f.path("PoliticalDivision1").asText(null), f.path("PostcodePrimaryLow").asText(null), f.path("CountryCode").asText(null), null);
-            String cls = c.at("/AddressClassification/Code").asText("0");
-            residential = "2".equals(cls) ? Boolean.TRUE : "1".equals(cls) ? Boolean.FALSE : null;
+        JsonNode firstCandidate = asList(response.path("Candidate")).stream().findFirst().orElse(null);
+        if (firstCandidate != null) {
+            JsonNode candidateAddress = firstCandidate.path("AddressKeyFormat");
+            List<String> candidateLines = new ArrayList<>();
+            asList(candidateAddress.path("AddressLine")).forEach(line -> candidateLines.add(line.asText()));
+            suggested = new Shipping.Address(address.name(), address.company(), address.phone(), address.email(), candidateLines,
+                    candidateAddress.path("PoliticalDivision2").asText(null), candidateAddress.path("PoliticalDivision1").asText(null),
+                    candidateAddress.path("PostcodePrimaryLow").asText(null), candidateAddress.path("CountryCode").asText(null), null);
+            residential = residentialFromClassification(firstCandidate.at("/AddressClassification/Code").asText("0"));
         }
         List<String> messages = new ArrayList<>();
-        if (r.has("NoCandidatesIndicator")) messages.add("UPS found no matching address");
-        if (ambiguous) messages.add("UPS found more than one possible address");
+        if (response.has("NoCandidatesIndicator")) {
+            messages.add("UPS found no matching address");
+        }
+        if (ambiguous) {
+            messages.add("UPS found more than one possible address");
+        }
         return new Shipping.AddressCheck(valid, ambiguous, suggested, residential, messages);
     }
 
     @Override
-    public Shipping.Tracking track(Account a, String trackingNumber) {
-        JsonNode p = call(a, "GET", "/api/track/v1/details/" + trackingNumber + "?locale=en_US", null).at("/trackResponse/shipment/0/package/0");
-        String type = p.at("/currentStatus/type").asText(p.at("/activity/0/status/type").asText(""));
+    public Shipping.Tracking track(Account account, String trackingNumber) {
+        JsonNode trackedPackage = call(account, "GET", "/api/track/v1/details/" + trackingNumber + "?locale=en_US", null)
+                .at("/trackResponse/shipment/0/package/0");
+        String statusType = trackedPackage.at("/currentStatus/type").asText(trackedPackage.at("/activity/0/status/type").asText(""));
         List<Shipping.TrackEvent> events = new ArrayList<>();
-        for (JsonNode e : p.path("activity")) {
-            events.add(new Shipping.TrackEvent(e.path("date").asText("") + " " + e.path("time").asText(""), e.at("/status/code").asText(null),
-                    e.at("/status/description").asText(null), e.at("/location/address/city").asText(null)));
+        for (JsonNode activity : trackedPackage.path("activity")) {
+            String when = activity.path("date").asText("") + " " + activity.path("time").asText("");
+            events.add(new Shipping.TrackEvent(when, activity.at("/status/code").asText(null), activity.at("/status/description").asText(null),
+                    activity.at("/location/address/city").asText(null)));
         }
-        String eta = null;
-        for (JsonNode d : p.path("deliveryDate")) if ("DEL".equals(d.path("type").asText()) || "SDD".equals(d.path("type").asText())) eta = d.path("date").asText();
-        return new Shipping.Tracking(trackingNumber, status(type), p.at("/currentStatus/description").asText(type), eta, events);
+        String estimatedDelivery = null;
+        for (JsonNode deliveryDate : trackedPackage.path("deliveryDate")) {
+            String type = deliveryDate.path("type").asText();
+            if ("DEL".equals(type) || "SDD".equals(type)) {
+                estimatedDelivery = deliveryDate.path("date").asText();
+            }
+        }
+        String description = trackedPackage.at("/currentStatus/description").asText(statusType);
+        return new Shipping.Tracking(trackingNumber, status(statusType), description, estimatedDelivery, events);
     }
 
     /** UPS status types: M manifest, P pickup, I in transit, O out for delivery, D delivered, X exception. */
-    static String status(String type) {
-        return switch (type) {
+    static String status(String upsStatusType) {
+        return switch (upsStatusType) {
             case "M", "MV" -> "LABEL_CREATED";
             case "P", "I" -> "IN_TRANSIT";
             case "O" -> "OUT_FOR_DELIVERY";
@@ -150,8 +178,8 @@ public class UpsCarrier implements CarrierAdapter {
         };
     }
 
-    static String serviceName(String code) {
-        return switch (code) {
+    static String serviceName(String serviceCode) {
+        return switch (serviceCode) {
             case "01" -> "UPS Next Day Air";
             case "02" -> "UPS 2nd Day Air";
             case "03" -> "UPS Ground";
@@ -160,77 +188,110 @@ public class UpsCarrier implements CarrierAdapter {
             case "14" -> "UPS Next Day Air Early";
             case "59" -> "UPS 2nd Day Air A.M.";
             case "65" -> "UPS Saver";
-            default -> "UPS service " + code;
+            default -> "UPS service " + serviceCode;
         };
     }
 
-    // ── helpers ──
-
-    private JsonNode call(Account a, String method, String path, Object body) {
-        return HttpJson.send(method, base(a) + path, Map.of("Authorization", "Bearer " + token(a), "transId", UUID.randomUUID().toString().substring(0, 32),
-                "transactionSrc", "nexus-gateway"), body);
+    /** UPS address classification: 2 residential, 1 commercial, anything else unknown. */
+    private static Boolean residentialFromClassification(String classificationCode) {
+        if ("2".equals(classificationCode)) {
+            return Boolean.TRUE;
+        }
+        return "1".equals(classificationCode) ? Boolean.FALSE : null;
     }
 
-    private String token(Account a) {
-        String[] t = tokens.get(a.accountId());
-        if (t != null && Long.parseLong(t[1]) > Instant.now().getEpochSecond() + 60) return t[0];
-        String basic = Base64.getEncoder().encodeToString((a.secret("clientId") + ":" + a.secret("clientSecret")).getBytes(StandardCharsets.UTF_8));
-        JsonNode r = HttpJson.form(base(a) + "/security/v1/oauth/token", Map.of("Authorization", "Basic " + basic, "x-merchant-id", a.setting("accountNumber")),
-                Map.of("grant_type", "client_credentials"));
-        String token = r.path("access_token").asText();
-        tokens.put(a.accountId(), new String[]{token, String.valueOf(Instant.now().getEpochSecond() + r.path("expires_in").asLong(3600))});
-        return token;
+    // ── calling UPS ──
+
+    private JsonNode call(Account account, String method, String path, Object body) {
+        String transactionId = UUID.randomUUID().toString().substring(0, MAX_TRANSACTION_ID_LENGTH);
+        Map<String, String> headers = Map.of("Authorization", "Bearer " + accessToken(account), "transId", transactionId, "transactionSrc", "nexus-gateway");
+        return HttpJson.send(method, baseUrl(account) + path, headers, body);
     }
 
-    private static String base(Account a) {
-        String override = a.setting("baseUrl");
-        return override != null ? override : a.sandbox() ? SANDBOX : PRODUCTION;
+    private String accessToken(Account account) {
+        return tokenCache.tokenFor(account.accountId(), () -> {
+            String credentials = account.secret("clientId") + ":" + account.secret("clientSecret");
+            String basicAuth = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+            JsonNode response = HttpJson.form(baseUrl(account) + "/security/v1/oauth/token",
+                    Map.of("Authorization", "Basic " + basicAuth, "x-merchant-id", account.setting("accountNumber")),
+                    Map.of("grant_type", "client_credentials"));
+            return new OAuthTokenCache.IssuedToken(response.path("access_token").asText(),
+                    response.path("expires_in").asLong(OAuthTokenCache.DEFAULT_LIFETIME_SECONDS));
+        });
     }
+
+    private static String baseUrl(Account account) {
+        String override = account.setting("baseUrl");
+        if (override != null) {
+            return override;
+        }
+        return account.sandbox() ? SANDBOX : PRODUCTION;
+    }
+
+    // ── building UPS JSON ──
 
     /** UPS gives a single object where there is one and an array where there are more. */
-    static List<JsonNode> list(JsonNode n) {
-        List<JsonNode> out = new ArrayList<>();
-        if (n == null || n.isMissingNode() || n.isNull()) return out;
-        if (n.isArray()) n.forEach(out::add);
-        else out.add(n);
-        return out;
+    static List<JsonNode> asList(JsonNode node) {
+        List<JsonNode> nodes = new ArrayList<>();
+        if (node == null || node.isMissingNode() || node.isNull()) {
+            return nodes;
+        }
+        if (node.isArray()) {
+            node.forEach(nodes::add);
+        } else {
+            nodes.add(node);
+        }
+        return nodes;
     }
 
-    static ObjectNode address(Shipping.Address a) {
-        ObjectNode n = HttpJson.JSON.createObjectNode();
-        ArrayNode lines = n.putArray("AddressLine");
-        if (a.lines() != null) a.lines().forEach(lines::add);
-        n.put("City", a.city());
-        n.put("StateProvinceCode", a.state());
-        n.put("PostalCode", a.postalCode());
-        n.put("CountryCode", a.countryCode());
-        if (Boolean.TRUE.equals(a.residential())) n.put("ResidentialAddressIndicator", "");
-        return n;
+    static ObjectNode address(Shipping.Address address) {
+        ObjectNode upsAddress = HttpJson.JSON.createObjectNode();
+        ArrayNode lines = upsAddress.putArray("AddressLine");
+        if (address.lines() != null) {
+            address.lines().forEach(lines::add);
+        }
+        upsAddress.put("City", address.city());
+        upsAddress.put("StateProvinceCode", address.state());
+        upsAddress.put("PostalCode", address.postalCode());
+        upsAddress.put("CountryCode", address.countryCode());
+        if (Boolean.TRUE.equals(address.residential())) {
+            upsAddress.put("ResidentialAddressIndicator", "");
+        }
+        return upsAddress;
     }
 
-    static ObjectNode party(Shipping.Address a) {
-        ObjectNode n = HttpJson.JSON.createObjectNode();
-        n.put("Name", a.company() != null ? a.company() : a.name());
-        if (a.name() != null) n.put("AttentionName", a.name());
-        if (a.phone() != null) n.putObject("Phone").put("Number", a.phone());
-        n.set("Address", address(a));
-        return n;
+    /** A shipper or recipient: company name (or person), attention name, phone, address. */
+    static ObjectNode party(Shipping.Address address) {
+        ObjectNode upsParty = HttpJson.JSON.createObjectNode();
+        upsParty.put("Name", address.company() != null ? address.company() : address.name());
+        if (address.name() != null) {
+            upsParty.put("AttentionName", address.name());
+        }
+        if (address.phone() != null) {
+            upsParty.putObject("Phone").put("Number", address.phone());
+        }
+        upsParty.set("Address", address(address));
+        return upsParty;
     }
 
+    /** UPS packages in kilograms and centimetres; rating and shipping name the packaging field differently. */
     static ArrayNode packages(List<Shipping.Parcel> parcels, String packagingField) {
-        ArrayNode items = HttpJson.JSON.createArrayNode();
-        for (Shipping.Parcel p : parcels) {
-            ObjectNode i = items.addObject();
-            i.putObject(packagingField).put("Code", "02");
-            ObjectNode w = i.putObject("PackageWeight");
-            w.putObject("UnitOfMeasurement").put("Code", "KGS");
-            w.put("Weight", (p.weightKg() == null ? BigDecimal.ONE : p.weightKg()).toPlainString());
-            if (p.lengthCm() != null && p.widthCm() != null && p.heightCm() != null) {
-                ObjectNode d = i.putObject("Dimensions");
-                d.putObject("UnitOfMeasurement").put("Code", "CM");
-                d.put("Length", p.lengthCm().toPlainString()).put("Width", p.widthCm().toPlainString()).put("Height", p.heightCm().toPlainString());
+        ArrayNode upsPackages = HttpJson.JSON.createArrayNode();
+        for (Shipping.Parcel parcel : parcels) {
+            ObjectNode upsPackage = upsPackages.addObject();
+            upsPackage.putObject(packagingField).put("Code", CUSTOMER_PACKAGING);
+            ObjectNode weight = upsPackage.putObject("PackageWeight");
+            weight.putObject("UnitOfMeasurement").put("Code", "KGS");
+            weight.put("Weight", (parcel.weightKg() == null ? BigDecimal.ONE : parcel.weightKg()).toPlainString());
+            boolean hasDimensions = parcel.lengthCm() != null && parcel.widthCm() != null && parcel.heightCm() != null;
+            if (hasDimensions) {
+                ObjectNode dimensions = upsPackage.putObject("Dimensions");
+                dimensions.putObject("UnitOfMeasurement").put("Code", "CM");
+                dimensions.put("Length", parcel.lengthCm().toPlainString())
+                        .put("Width", parcel.widthCm().toPlainString())
+                        .put("Height", parcel.heightCm().toPlainString());
             }
         }
-        return items;
+        return upsPackages;
     }
 }
