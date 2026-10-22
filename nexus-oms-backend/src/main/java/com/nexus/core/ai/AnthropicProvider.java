@@ -1,5 +1,6 @@
 package com.nexus.core.ai;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -7,32 +8,53 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Set;
 
 /**
- * The Anthropic Messages API. The system prompt and the tool list are marked for prompt caching (they repeat on every
- * call of an agent); 429, 500, 503 and 529 are retried with backoff, honouring retry-after. The key comes from
- * {@code ANTHROPIC_API_KEY} (property {@code nexus.ai.anthropic.api-key}) and is never stored in the database.
+ * The Anthropic Messages API.
+ * <ul>
+ *   <li>The system prompt and the tool list are marked for prompt caching: they repeat on every call of an agent.</li>
+ *   <li>429, 500, 502, 503 and 529 are retried with backoff, honouring retry-after; any other refusal is final.</li>
+ *   <li>The key comes from {@code ANTHROPIC_API_KEY} (property {@code nexus.ai.anthropic.api-key}) and is never stored
+ *       in the database.</li>
+ * </ul>
  */
 @Component("coreAnthropicProvider")
 public class AnthropicProvider implements LlmProvider {
 
+    static final String API_VERSION = "2023-06-01";
+    static final Set<Integer> RETRYABLE_STATUSES = Set.of(429, 500, 502, 503, 529);
+    static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(120);
+    static final long MAX_BACKOFF_MILLIS = 30_000;
+    static final long MAX_RETRY_AFTER_SECONDS = 60;
+    static final long UNREADABLE_RETRY_AFTER_SECONDS = 2;
+
     private static final ObjectMapper JSON = new ObjectMapper();
-    private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+    private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build();
     private final String apiKey;
     private final String baseUrl;
-    private final int attempts;
+    private final int maxAttempts;
 
     public AnthropicProvider(@Value("${nexus.ai.anthropic.api-key:${ANTHROPIC_API_KEY:}}") String apiKey,
                              @Value("${nexus.ai.anthropic.base-url:https://api.anthropic.com}") String baseUrl,
-                             @Value("${nexus.ai.anthropic.attempts:4}") int attempts) {
+                             @Value("${nexus.ai.anthropic.attempts:4}") int maxAttempts) {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl.replaceAll("/+$", "");
-        this.attempts = Math.max(1, attempts);
+        this.maxAttempts = Math.max(1, maxAttempts);
+    }
+
+    /** A refusal that retrying won't change (bad request, bad key). */
+    static final class Refused extends IllegalStateException {
+        Refused(String message) {
+            super(message);
+        }
     }
 
     @Override
@@ -41,88 +63,112 @@ public class AnthropicProvider implements LlmProvider {
     }
 
     @Override
-    public Response complete(Request r) {
-        if (!available()) throw new IllegalStateException("AI is not set up: ANTHROPIC_API_KEY is missing");
-        ObjectNode body = body(r);
-        String text;
-        try {
-            text = JSON.writeValueAsString(body);
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+    public Response complete(Request request) {
+        if (!available()) {
+            throw new IllegalStateException("AI is not set up: ANTHROPIC_API_KEY is missing");
         }
-        RuntimeException last = null;
-        for (int attempt = 1; attempt <= attempts; attempt++) {
+        String requestJson;
+        try {
+            requestJson = JSON.writeValueAsString(requestBody(request));
+        } catch (JsonProcessingException notSerializable) {
+            throw new IllegalStateException(notSerializable);
+        }
+
+        IllegalStateException lastFailure = null;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                HttpResponse<String> res = http.send(HttpRequest.newBuilder(URI.create(baseUrl + "/v1/messages")).timeout(Duration.ofSeconds(120))
-                        .header("x-api-key", apiKey).header("anthropic-version", "2023-06-01").header("content-type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(text)).build(), HttpResponse.BodyHandlers.ofString());
-                JsonNode n = res.body() == null || res.body().isBlank() ? JSON.createObjectNode() : JSON.readTree(res.body());
-                if (res.statusCode() == 200) return parse(n);
-                String message = n.at("/error/message").asText("HTTP " + res.statusCode());
-                if (!retryable(res.statusCode())) throw new IllegalStateException("The AI provider refused the request: " + message);
-                last = new IllegalStateException("The AI provider is busy: " + message);
-                sleep(res.headers().firstValue("retry-after").map(v -> parseSeconds(v) * 1000).orElse(backoff(attempt)));
-            } catch (IllegalStateException e) {
-                if (e.getMessage() != null && e.getMessage().startsWith("The AI provider refused")) throw e;
-                last = e;
-            } catch (java.io.IOException e) {
-                last = new IllegalStateException("Could not reach the AI provider: " + e.getMessage());
-                sleep(backoff(attempt));
-            } catch (InterruptedException e) {
+                HttpResponse<String> response = httpClient.send(newHttpRequest(requestJson), HttpResponse.BodyHandlers.ofString());
+                JsonNode body = response.body() == null || response.body().isBlank() ? JSON.createObjectNode() : JSON.readTree(response.body());
+                if (response.statusCode() == 200) {
+                    return parseResponse(body);
+                }
+                String message = body.at("/error/message").asText("HTTP " + response.statusCode());
+                if (!retryable(response.statusCode())) {
+                    throw new Refused("The AI provider refused the request: " + message);
+                }
+                lastFailure = new IllegalStateException("The AI provider is busy: " + message);
+                long waitMillis = response.headers().firstValue("retry-after")
+                        .map(retryAfter -> retryAfterSeconds(retryAfter) * 1000)
+                        .orElse(backoffMillis(attempt));
+                sleep(waitMillis);
+            } catch (Refused refused) {
+                throw refused;
+            } catch (IOException unreachable) {
+                lastFailure = new IllegalStateException("Could not reach the AI provider: " + unreachable.getMessage());
+                sleep(backoffMillis(attempt));
+            } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Interrupted");
             }
         }
-        throw last == null ? new IllegalStateException("The AI provider did not answer") : last;
+        throw lastFailure == null ? new IllegalStateException("The AI provider did not answer") : lastFailure;
     }
 
-    static ObjectNode body(Request r) {
+    private HttpRequest newHttpRequest(String requestJson) {
+        return HttpRequest.newBuilder(URI.create(baseUrl + "/v1/messages"))
+                .timeout(REQUEST_TIMEOUT)
+                .header("x-api-key", apiKey)
+                .header("anthropic-version", API_VERSION)
+                .header("content-type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestJson))
+                .build();
+    }
+
+    /** The Messages API body. Cache marks on the system prompt and on the last tool cache everything up to them. */
+    static ObjectNode requestBody(Request request) {
         ObjectNode body = JSON.createObjectNode();
-        body.put("model", r.model());
-        body.put("max_tokens", r.maxTokens());
+        body.put("model", request.model());
+        body.put("max_tokens", request.maxTokens());
         ArrayNode system = body.putArray("system");
-        system.addObject().put("type", "text").put("text", r.system()).putObject("cache_control").put("type", "ephemeral");
-        if (r.tools() != null && !r.tools().isEmpty()) {
+        system.addObject().put("type", "text").put("text", request.system()).putObject("cache_control").put("type", "ephemeral");
+
+        if (request.tools() != null && !request.tools().isEmpty()) {
             ArrayNode tools = body.putArray("tools");
-            for (int i = 0; i < r.tools().size(); i++) {
-                Tool t = r.tools().get(i);
-                ObjectNode n = tools.addObject();
-                n.put("name", t.name());
-                n.put("description", t.description());
-                n.set("input_schema", t.inputSchema());
-                if (i == r.tools().size() - 1) n.putObject("cache_control").put("type", "ephemeral");   // caches every tool before it too
+            for (int index = 0; index < request.tools().size(); index++) {
+                Tool tool = request.tools().get(index);
+                ObjectNode toolNode = tools.addObject();
+                toolNode.put("name", tool.name());
+                toolNode.put("description", tool.description());
+                toolNode.set("input_schema", tool.inputSchema());
+                boolean lastTool = index == request.tools().size() - 1;
+                if (lastTool) {
+                    toolNode.putObject("cache_control").put("type", "ephemeral");   // caches every tool before it too
+                }
             }
         }
-        body.set("messages", r.messages());
+        body.set("messages", request.messages());
         return body;
     }
 
-    static Response parse(JsonNode n) {
-        JsonNode u = n.path("usage");
-        return new Response((ArrayNode) n.path("content"), n.path("stop_reason").asText(null), new Usage(u.path("input_tokens").asLong(),
-                u.path("output_tokens").asLong(), u.path("cache_read_input_tokens").asLong(), u.path("cache_creation_input_tokens").asLong()));
+    static Response parseResponse(JsonNode body) {
+        JsonNode usage = body.path("usage");
+        Usage tokens = new Usage(usage.path("input_tokens").asLong(), usage.path("output_tokens").asLong(),
+                usage.path("cache_read_input_tokens").asLong(), usage.path("cache_creation_input_tokens").asLong());
+        return new Response((ArrayNode) body.path("content"), body.path("stop_reason").asText(null), tokens);
     }
 
     static boolean retryable(int status) {
-        return status == 429 || status == 500 || status == 502 || status == 503 || status == 529;
+        return RETRYABLE_STATUSES.contains(status);
     }
 
-    private static long backoff(int attempt) {
-        return Math.min(30_000L, 1000L * (1L << (attempt - 1)));
+    /** 1, 2, 4, 8... seconds, at most 30. */
+    private static long backoffMillis(int attempt) {
+        return Math.min(MAX_BACKOFF_MILLIS, 1000L * (1L << (attempt - 1)));
     }
 
-    private static long parseSeconds(String v) {
+    /** The retry-after header in seconds, at most 60; 2 when it is not a number. */
+    private static long retryAfterSeconds(String headerValue) {
         try {
-            return Math.min(60, Long.parseLong(v.trim()));
-        } catch (NumberFormatException e) {
-            return 2;
+            return Math.min(MAX_RETRY_AFTER_SECONDS, Long.parseLong(headerValue.trim()));
+        } catch (NumberFormatException notSeconds) {
+            return UNREADABLE_RETRY_AFTER_SECONDS;
         }
     }
 
-    private static void sleep(long ms) {
+    private static void sleep(long millis) {
         try {
-            Thread.sleep(ms);
-        } catch (InterruptedException e) {
+            Thread.sleep(millis);
+        } catch (InterruptedException interrupted) {
             Thread.currentThread().interrupt();
         }
     }

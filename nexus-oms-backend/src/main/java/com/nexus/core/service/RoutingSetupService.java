@@ -170,6 +170,32 @@ public class RoutingSetupService {
                 .forEach(rule -> rule.setStatusId(CoreStatus.Routing.ACTIVE));
     }
 
+    /** Every how many minutes a group runs when it takes over from a group that had no schedule. */
+    static final long DEFAULT_SCHEDULE_MINUTES = 15;
+
+    /**
+     * Makes one group the one that runs: it takes over the other group's schedule (15 minutes when there was none or
+     * no other group) and the other stops running. Both keep their rules, so calling it the other way round undoes it.
+     */
+    public void handOverSchedule(String activateGroupId, String pauseGroupId) {
+        OrderRoutingGroup groupToActivate = entityManager.find(OrderRoutingGroup.class, activateGroupId);
+        if (groupToActivate == null) {
+            throw new IllegalArgumentException("Unknown routing group " + activateGroupId);
+        }
+        long scheduleMinutes = DEFAULT_SCHEDULE_MINUTES;
+        if (pauseGroupId != null) {
+            OrderRoutingGroup groupToPause = entityManager.find(OrderRoutingGroup.class, pauseGroupId);
+            if (groupToPause == null) {
+                throw new IllegalArgumentException("Unknown routing group " + pauseGroupId);
+            }
+            if (groupToPause.getScheduleMinutes() != null) {
+                scheduleMinutes = groupToPause.getScheduleMinutes();
+            }
+            groupToPause.setScheduleMinutes(null);
+        }
+        groupToActivate.setScheduleMinutes(scheduleMinutes);
+    }
+
     // ── reading what was set up ──
 
     /** A store's routing groups, oldest first. */

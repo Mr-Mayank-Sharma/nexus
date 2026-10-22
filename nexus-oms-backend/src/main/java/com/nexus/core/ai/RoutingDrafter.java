@@ -105,11 +105,11 @@ public class RoutingDrafter {
                 .forEach(tools::add);
         tools.add(tool("current_routing",
                 "The store's routing groups with their routings, conditions, rules and actions; which one runs on a schedule.",
-                ExceptionAgent.schema(new String[][]{{"productStoreId", "string"}}),
+                ToolSchema.requiredStrings("productStoreId").json(),
                 (input, masker) -> describeRouting(input.path("productStoreId").asText())));
         tools.add(tool("location_groups",
                 "Location groups (brokering groups, regions, clusters) with their members in order.",
-                ExceptionAgent.schema(new String[][]{}),
+                ToolSchema.of().json(),
                 (input, masker) -> locationGroups()));
         tools.add(tool("draft_and_simulate",
                 "Build a draft routing group (it does not run) from routings with conditions, rules and actions; "
@@ -118,7 +118,7 @@ public class RoutingDrafter {
                 (input, masker) -> draftAndSimulate(productStoreId, input, userId, draftGroupIds)));
         tools.add(tool("propose_activation",
                 "Propose making a draft group the one that runs for the store. A person approves it.",
-                ExceptionAgent.schema(new String[][]{{"draftGroupId", "string"}, {"reason", "string"}}),
+                ToolSchema.requiredStrings("draftGroupId", "reason").json(),
                 (input, masker) -> proposeActivation(productStoreId, input, draftGroupIds, proposalIds)));
 
         AgentRunner.Agent agent = new AgentRunner.Agent(NAME, model, system(), tools, MAX_STEPS, MAX_TOKENS);

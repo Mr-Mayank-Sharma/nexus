@@ -1,11 +1,12 @@
 package com.nexus.core.ai;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.nexus.core.CoreStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,18 +32,21 @@ public class ExceptionAgent {
             something needs a person (an address, a payment). Propose a cancel only when the customer asked or nothing \
             anywhere can fill it.
             - End with a short summary: what you found, what you proposed, and anything you left for a person.""";
+    static final String DEFAULT_INSTRUCTION = "Find stuck orders and propose fixes.";
+    static final int MAX_STEPS = 12;
+    static final int MAX_TOKENS = 4096;
 
-    private final OperationsAssistant assistant;
-    private final ProposalService proposals;
-    private final AgentRunner runner;
+    private final OperationsAssistant operationsAssistant;
+    private final ProposalService proposalService;
+    private final AgentRunner agentRunner;
     private final LlmProvider provider;
     private final String model;
 
-    public ExceptionAgent(OperationsAssistant assistant, ProposalService proposals, AgentRunner runner,
+    public ExceptionAgent(OperationsAssistant operationsAssistant, ProposalService proposalService, AgentRunner agentRunner,
                           @Qualifier("coreAnthropicProvider") LlmProvider provider, @Value("${nexus.ai.model.exceptions:claude-opus-5-5}") String model) {
-        this.assistant = assistant;
-        this.proposals = proposals;
-        this.runner = runner;
+        this.operationsAssistant = operationsAssistant;
+        this.proposalService = proposalService;
+        this.agentRunner = agentRunner;
         this.provider = provider;
         this.model = model;
     }
@@ -54,41 +58,41 @@ public class ExceptionAgent {
         return run(instruction, userId, provider);
     }
 
-    public Outcome run(String instruction, String userId, LlmProvider with) {
-        List<String> made = Collections.synchronizedList(new ArrayList<>());
-        List<AgentRunner.AgentTool> tools = new ArrayList<>(assistant.agent().tools());
-        tools.add(propose("propose_reallocate", "Propose moving a ship group to another location.", "REALLOCATE",
-                schema(new String[][]{{"orderId", "string"}, {"shipGroupSeqId", "string"}, {"facilityId", "string"}, {"reason", "string"}}), made));
-        tools.add(propose("propose_hold", "Propose putting an order on hold for a person to look at.", "HOLD_ORDER",
-                schema(new String[][]{{"orderId", "string"}, {"reason", "string"}}), made));
-        tools.add(propose("propose_cancel_item", "Propose cancelling what is left of an order item.", "CANCEL_ITEM",
-                schema(new String[][]{{"orderId", "string"}, {"orderItemSeqId", "string"}, {"reason", "string"}}), made));
-        AgentRunner.Result r = runner.run(new AgentRunner.Agent(NAME, model, SYSTEM, tools, 12, 4096),
-                instruction == null || instruction.isBlank() ? "Find stuck orders and propose fixes." : instruction, userId, with);
-        proposals.link(made, r.runId());
-        return new Outcome(r, made.stream().map(proposals::view).toList());
+    /** Runs the agent once. With another provider: a scripted one in tests and evaluation. */
+    public Outcome run(String instruction, String userId, LlmProvider withProvider) {
+        // Tools run on the agent's threads, so the proposals it makes are kept in a synchronized list.
+        List<String> proposalIds = Collections.synchronizedList(new ArrayList<>());
+
+        List<AgentRunner.AgentTool> tools = new ArrayList<>(operationsAssistant.agent().tools());
+        tools.add(proposeTool("propose_reallocate", "Propose moving a ship group to another location.", ProposalActions.REALLOCATE,
+                ToolSchema.requiredStrings("orderId", "shipGroupSeqId", "facilityId", "reason"), proposalIds));
+        tools.add(proposeTool("propose_hold", "Propose putting an order on hold for a person to look at.", ProposalActions.HOLD_ORDER,
+                ToolSchema.requiredStrings("orderId", "reason"), proposalIds));
+        tools.add(proposeTool("propose_cancel_item", "Propose cancelling what is left of an order item.", ProposalActions.CANCEL_ITEM,
+                ToolSchema.requiredStrings("orderId", "orderItemSeqId", "reason"), proposalIds));
+
+        String question = instruction == null || instruction.isBlank() ? DEFAULT_INSTRUCTION : instruction;
+        AgentRunner.Agent agent = new AgentRunner.Agent(NAME, model, SYSTEM, tools, MAX_STEPS, MAX_TOKENS);
+        AgentRunner.Result result = agentRunner.run(agent, question, userId, withProvider);
+        proposalService.link(proposalIds, result.runId());
+        return new Outcome(result, proposalIds.stream().map(proposalService::view).toList());
     }
 
-    private AgentRunner.AgentTool propose(String name, String description, String actionType, JsonNode schema, List<String> made) {
-        return new AgentRunner.AgentTool(new LlmProvider.Tool(name, description, schema), (in, masker) -> {
-            ObjectNode payload = ((ObjectNode) in.deepCopy());
+    /** A tool that turns the model's call into a proposal of the action; the "reason" field becomes the proposal's reason. */
+    private AgentRunner.AgentTool proposeTool(String name, String description, String actionType, ToolSchema schema, List<String> proposalIds) {
+        AgentRunner.Handler handler = (input, masker) -> {
+            ObjectNode payload = input.deepCopy();
             String reason = payload.path("reason").asText(null);
             payload.remove("reason");
-            ProposalService.View v = proposals.propose(null, actionType, payload, reason, proposals.orderValue(payload.path("orderId").asText()));
-            made.add(v.proposalId());
-            return AgentRunner.JSON.createObjectNode().put("proposalId", v.proposalId()).put("status", v.statusId())
-                    .put("note", "AIP_PENDING".equals(v.statusId()) ? "Waiting for a person to approve" : v.result());
-        });
-    }
-
-    static JsonNode schema(String[][] fields) {
-        ObjectNode s = AgentRunner.JSON.createObjectNode().put("type", "object");
-        ObjectNode props = s.putObject("properties");
-        var req = s.putArray("required");
-        for (String[] f : fields) {
-            props.putObject(f[0]).put("type", f[1]);
-            req.add(f[0]);
-        }
-        return s;
+            BigDecimal orderValue = proposalService.orderValue(payload.path("orderId").asText());
+            ProposalService.View proposal = proposalService.propose(null, actionType, payload, reason, orderValue);
+            proposalIds.add(proposal.proposalId());
+            String note = CoreStatus.Proposal.PENDING.equals(proposal.statusId()) ? "Waiting for a person to approve" : proposal.result();
+            return AgentRunner.JSON.createObjectNode()
+                    .put("proposalId", proposal.proposalId())
+                    .put("status", proposal.statusId())
+                    .put("note", note);
+        };
+        return new AgentRunner.AgentTool(new LlmProvider.Tool(name, description, schema.json()), handler);
     }
 }

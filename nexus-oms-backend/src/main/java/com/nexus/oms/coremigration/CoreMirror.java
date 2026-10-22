@@ -1,5 +1,6 @@
 package com.nexus.oms.coremigration;
 
+import com.nexus.core.job.CoreJobHandler;
 import com.nexus.core.service.CoreClock;
 import com.nexus.core.service.SystemPropertyService;
 import com.nexus.oms.security.TenantContext;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -22,27 +24,31 @@ import java.util.UUID;
  * restart picks up what changed while the server was down.
  */
 @Component
-public class CoreMirror implements com.nexus.core.job.CoreJobHandler {
+public class CoreMirror implements CoreJobHandler {
 
     private static final Logger log = LoggerFactory.getLogger(CoreMirror.class);
     static final String RESOURCE = "nexus.core";
     static final String LAST_RUN = "mirror.lastRun";
+    /** Before the first pass, everything counts as changed. */
+    static final LocalDateTime BEGINNING = LocalDateTime.of(2000, 1, 1, 0, 0);
+    /** A row committed just before the last pass started may carry an older updated_at, so passes overlap by a minute. */
+    static final long OVERLAP_MINUTES = 1;
 
     private final JdbcTemplate jdbc;
-    private final CustomerPartyBackfill customers;
-    private final ProductBackfill products;
-    private final FacilityInventoryBackfill stock;
-    private final OrderBackfill orders;
-    private final SystemPropertyService properties;
+    private final CustomerPartyBackfill customerCopy;
+    private final ProductBackfill productCopy;
+    private final FacilityInventoryBackfill stockCopy;
+    private final OrderBackfill orderCopy;
+    private final SystemPropertyService systemPropertyService;
 
-    public CoreMirror(JdbcTemplate jdbc, CustomerPartyBackfill customers, ProductBackfill products, FacilityInventoryBackfill stock,
-                      OrderBackfill orders, SystemPropertyService properties) {
+    public CoreMirror(JdbcTemplate jdbc, CustomerPartyBackfill customerCopy, ProductBackfill productCopy, FacilityInventoryBackfill stockCopy,
+                      OrderBackfill orderCopy, SystemPropertyService systemPropertyService) {
         this.jdbc = jdbc;
-        this.customers = customers;
-        this.products = products;
-        this.stock = stock;
-        this.orders = orders;
-        this.properties = properties;
+        this.customerCopy = customerCopy;
+        this.productCopy = productCopy;
+        this.stockCopy = stockCopy;
+        this.orderCopy = orderCopy;
+        this.systemPropertyService = systemPropertyService;
     }
 
     public record Run(int companies, int ordersCopied, int ordersRefreshed, int failures) {
@@ -50,40 +56,49 @@ public class CoreMirror implements com.nexus.core.job.CoreJobHandler {
 
     /** The core_mirror job. */
     @Override
-    public String run(java.util.Map<String, String> parameters) {
-        Run r = runOnce();
-        return r.companies() + " companies, " + r.ordersCopied() + " orders copied, " + r.ordersRefreshed() + " refreshed, " + r.failures() + " failures";
+    public String run(Map<String, String> parameters) {
+        Run pass = runOnce();
+        return pass.companies() + " companies, " + pass.ordersCopied() + " orders copied, " + pass.ordersRefreshed() + " refreshed, "
+                + pass.failures() + " failures";
     }
 
-    /** One pass over every company whose orders changed since the last pass. */
+    /**
+     * One pass over every company whose orders changed since the last pass. The last-run time only moves on when every
+     * company copied cleanly, so a failed company is tried again next time.
+     */
     public Run runOnce() {
-        LocalDateTime started = CoreClock.now();
-        LocalDateTime since = properties.get(RESOURCE, LAST_RUN).map(LocalDateTime::parse).orElse(LocalDateTime.of(2000, 1, 1, 0, 0));
-        // a minute of overlap: a row committed just before the last pass started may carry an older updated_at
-        List<UUID> tenants = jdbc.queryForList("SELECT DISTINCT tenant_id FROM nx_orders WHERE updated_at >= ? AND tenant_id IS NOT NULL",
-                UUID.class, Timestamp.valueOf(since.minusMinutes(1)));
-        int copied = 0, refreshed = 0, failures = 0;
-        for (UUID tenant : tenants) {
+        LocalDateTime startedAt = CoreClock.now();
+        LocalDateTime lastPass = systemPropertyService.get(RESOURCE, LAST_RUN).map(LocalDateTime::parse).orElse(BEGINNING);
+        LocalDateTime changedSince = lastPass.minusMinutes(OVERLAP_MINUTES);
+        List<UUID> changedCompanies = jdbc.queryForList("SELECT DISTINCT tenant_id FROM nx_orders WHERE updated_at >= ? AND tenant_id IS NOT NULL",
+                UUID.class, Timestamp.valueOf(changedSince));
+
+        int ordersCopied = 0;
+        int ordersRefreshed = 0;
+        int failures = 0;
+        for (UUID tenantId : changedCompanies) {
             try {
-                TenantContext.setCurrentTenantId(tenant);
-                customers.run(tenant);
+                TenantContext.setCurrentTenantId(tenantId);
+                customerCopy.run(tenantId);
                 try {
-                    products.run(tenant);
-                } catch (IllegalStateException e) {
-                    // no company currency yet: products wait, orders still copy (their items keep the description)
-                    log.warn("Core mirror: products of company {} not copied: {}", tenant, e.getMessage());
+                    productCopy.run(tenantId);
+                } catch (IllegalStateException noCompanyCurrency) {
+                    // No company currency yet: products wait, orders still copy (their items keep the description).
+                    log.warn("Core mirror: products of company {} not copied: {}", tenantId, noCompanyCurrency.getMessage());
                 }
-                stock.run(tenant);
-                copied += orders.run(tenant).ordersCreated();
-                refreshed += orders.refresh(tenant, since.minusMinutes(1));
-            } catch (Exception e) {
+                stockCopy.run(tenantId);
+                ordersCopied += orderCopy.run(tenantId).ordersCreated();
+                ordersRefreshed += orderCopy.refresh(tenantId, changedSince);
+            } catch (Exception failure) {
                 failures++;
-                log.error("Core mirror failed for company {}: {}", tenant, e.getMessage(), e);
+                log.error("Core mirror failed for company {}: {}", tenantId, failure.getMessage(), failure);
             } finally {
                 TenantContext.clear();
             }
         }
-        if (failures == 0) properties.set(RESOURCE, LAST_RUN, started.toString(), "When the core mirror last finished a pass without failures");
-        return new Run(tenants.size(), copied, refreshed, failures);
+        if (failures == 0) {
+            systemPropertyService.set(RESOURCE, LAST_RUN, startedAt.toString(), "When the core mirror last finished a pass without failures");
+        }
+        return new Run(changedCompanies.size(), ordersCopied, ordersRefreshed, failures);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,42 +18,59 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 
 /**
  * The availability and promise service (doc 25, features 2 and 4): one answer to "can you deliver this, here, by
- * then?". For each location that can fill the whole order: when it would ship (today before its cut-off and while it
- * has capacity, otherwise the next working day), how long delivery takes, and how sure we are. Delivery time comes from
- * the location's own history of deliveries to a similar distance when there are enough of them (expected = median,
- * promise = 90th percentile: late costs trust), otherwise from distance rules. Confidence falls when the stock may
- * not be there (phantom risk) or the location often fails to pick.
+ * then?". For each location that can fill the whole order:
+ * <ul>
+ *   <li>when it would ship: today before its cut-off and while it has capacity, otherwise the next working day;</li>
+ *   <li>how long delivery takes: from the location's own history of deliveries to a similar distance when there are
+ *       enough of them (expected = median, promise = 90th percentile: late costs trust), otherwise from distance
+ *       rules;</li>
+ *   <li>how sure we are: confidence falls (and the promise moves a day) when the stock may not be there (phantom risk)
+ *       or the location often fails to pick.</li>
+ * </ul>
  */
 @Service("corePromiseService")
 @Transactional(readOnly = true)
 public class PromiseService {
 
+    /** Fewer past deliveries than this, and the distance rules are used instead. */
     static final int MIN_HISTORY = 20;
+    static final int MAX_HISTORY_ROWS = 2000;
     static final LocalTime DEFAULT_CUTOFF = LocalTime.of(15, 0);
-    static final Set<String> VIRTUAL = Set.of("VIRTUAL_FACILITY", "IN_TRANSIT", "DROPSHIP");
+    static final String DEFAULT_METHOD = "STANDARD";
+    static final double LIKELY_PHANTOM = 0.5;
+    static final double UNRELIABLE = 0.8;
+    static final int RELIABILITY_DAYS = 90;
+    static final int PHANTOM_DAYS = 30;
 
-    private final EntityManager em;
-    private final FacilityService facilities;
-    private final StoreHealthService health;
+    public static final String HIGH = "HIGH";
+    public static final String MEDIUM = "MEDIUM";
+    public static final String LOW = "LOW";
 
-    public PromiseService(EntityManager em, FacilityService facilities, StoreHealthService health) {
-        this.em = em;
-        this.facilities = facilities;
-        this.health = health;
+    private final EntityManager entityManager;
+    private final FacilityService facilityService;
+    private final StoreHealthService storeHealthService;
+
+    public PromiseService(EntityManager entityManager, FacilityService facilityService, StoreHealthService storeHealthService) {
+        this.entityManager = entityManager;
+        this.facilityService = facilityService;
+        this.storeHealthService = storeHealthService;
     }
 
     public record Destination(Double latitude, Double longitude, String postalCode, String countryCode) {
-        public static Destination of(PostalAddress a) {
-            return new Destination(a.getLatitude() == null ? null : a.getLatitude().doubleValue(), a.getLongitude() == null ? null : a.getLongitude().doubleValue(),
-                    a.getPostalCode(), null);
+        public static Destination of(PostalAddress address) {
+            Double latitude = address.getLatitude() == null ? null : address.getLatitude().doubleValue();
+            Double longitude = address.getLongitude() == null ? null : address.getLongitude().doubleValue();
+            return new Destination(latitude, longitude, address.getPostalCode(), null);
         }
     }
 
+    /** One location's promise. {@code basis} is "history" or "rule"; {@code confidence} is HIGH, MEDIUM or LOW. */
     public record Option(String facilityId, String facilityName, LocalDate shipDate, LocalDate expectedDelivery, LocalDate promiseBy, int transitDaysExpected,
                          int transitDaysPromise, String basis, String confidence, Double distanceKm, List<String> reasons) {
     }
@@ -60,157 +78,264 @@ public class PromiseService {
     public record Answer(boolean deliverable, Option best, List<Option> options, String summary) {
     }
 
-    /** Where and when the products (product id to quantity) can be delivered, earliest promise first. */
-    public Answer promise(Map<String, BigDecimal> products, Destination to, String shipmentMethodTypeId, LocalDateTime at) {
-        if (products == null || products.isEmpty()) throw new IllegalArgumentException("Name at least one product and quantity");
-        LocalDateTime now = at == null ? CoreClock.now() : at;
-        String method = shipmentMethodTypeId == null ? "STANDARD" : shipmentMethodTypeId;
-        Map<String, Map<String, BigDecimal>> stock = new HashMap<>();
-        em.createQuery("SELECT pf.facilityId, pf.productId, pf.computedLastInventoryCount FROM ProductFacility pf WHERE pf.productId IN :p "
-                        + "AND (pf.allowBrokering IS NULL OR pf.allowBrokering = true)", Object[].class)
-                .setParameter("p", products.keySet()).getResultList()
-                .forEach(r -> stock.computeIfAbsent((String) r[0], k -> new HashMap<>()).put((String) r[1], r[2] == null ? BigDecimal.ZERO : (BigDecimal) r[2]));
-        Map<String, Double> reliability = health.reliabilityScores(90);
-        Map<String, Double> phantom = new HashMap<>();
-        for (StoreHealthService.PhantomRisk p : health.phantomStock(products.keySet(), 30)) phantom.merge(p.facilityId(), p.risk(), Math::max);
-
-        List<Option> options = new ArrayList<>();
-        for (Map.Entry<String, Map<String, BigDecimal>> e : stock.entrySet()) {
-            boolean fills = products.entrySet().stream().allMatch(p -> e.getValue().getOrDefault(p.getKey(), BigDecimal.ZERO).compareTo(p.getValue()) >= 0);
-            if (!fills) continue;
-            Facility f = em.find(Facility.class, e.getKey());
-            if (f == null || VIRTUAL.contains(f.getFacilityTypeId())) continue;
-            if (f.getClosedDate() != null && !f.getClosedDate().isAfter(now)) continue;
-            options.add(option(f, to, method, now, reliability.getOrDefault(f.getFacilityId(), 0.9), phantom.getOrDefault(f.getFacilityId(), 0.0)));
-        }
-        options.sort(Comparator.comparing(Option::promiseBy).thenComparing(o -> confidenceRank(o.confidence())).thenComparing(Option::facilityId));
-        if (options.isEmpty()) return new Answer(false, null, List.of(), "No single location holds all of it now");
-        Option best = options.get(0);
-        return new Answer(true, best, options, "Delivered by " + best.promiseBy() + " (expected " + best.expectedDelivery() + ") from " + best.facilityName()
-                + ", " + best.confidence().toLowerCase() + " confidence");
+    /** Working days in transit: expected and promised, and how many past deliveries they came from (0 for a rule). */
+    record Transit(int expectedDays, int promiseDays, int samples) {
     }
 
-    private Option option(Facility f, Destination to, String method, LocalDateTime now, double reliability, double phantomRisk) {
-        List<String> reasons = new ArrayList<>();
-        ZoneId zone = zone(f.getFacilityTimeZone());
-        LocalDateTime local = now.atOffset(ZoneOffset.UTC).atZoneSameInstant(zone).toLocalDateTime();
-        LocalTime cutoff = f.getCloseTime() != null ? f.getCloseTime().minusHours(1) : DEFAULT_CUTOFF;
-        LocalDate ship = local.toLocalDate();
-        if (!isWorkday(ship) || !local.toLocalTime().isBefore(cutoff)) {
-            ship = nextWorkday(ship);
-            reasons.add("past today's " + cutoff + " cut-off; ships " + ship);
+    /** Where and when the products (product id to quantity) can be delivered, earliest promise first. */
+    public Answer promise(Map<String, BigDecimal> quantityByProduct, Destination destination, String shipmentMethodTypeId, LocalDateTime at) {
+        if (quantityByProduct == null || quantityByProduct.isEmpty()) {
+            throw new IllegalArgumentException("Name at least one product and quantity");
         }
-        if (ship.equals(local.toLocalDate())) {
-            var left = facilities.ordersLeft(f.getFacilityId(), ship);
-            if (left.isPresent() && left.get() <= 0) {
-                ship = nextWorkday(ship);
-                reasons.add("full for today; ships " + ship);
+        LocalDateTime now = at == null ? CoreClock.now() : at;
+        String method = shipmentMethodTypeId == null ? DEFAULT_METHOD : shipmentMethodTypeId;
+
+        // What each location may promise of each product.
+        Map<String, Map<String, BigDecimal>> stockByFacility = new HashMap<>();
+        entityManager.createQuery("SELECT pf.facilityId, pf.productId, pf.computedLastInventoryCount FROM ProductFacility pf WHERE pf.productId IN :productIds "
+                        + "AND (pf.allowBrokering IS NULL OR pf.allowBrokering = true)", Object[].class)
+                .setParameter("productIds", quantityByProduct.keySet())
+                .getResultList()
+                .forEach(row -> stockByFacility.computeIfAbsent((String) row[0], facilityId -> new HashMap<>())
+                        .put((String) row[1], row[2] == null ? BigDecimal.ZERO : (BigDecimal) row[2]));
+
+        Map<String, Double> reliabilityByFacility = storeHealthService.reliabilityScores(RELIABILITY_DAYS);
+        Map<String, Double> phantomRiskByFacility = new HashMap<>();
+        for (StoreHealthService.PhantomRisk risk : storeHealthService.phantomStock(quantityByProduct.keySet(), PHANTOM_DAYS)) {
+            phantomRiskByFacility.merge(risk.facilityId(), risk.risk(), Math::max);   // the riskiest product decides
+        }
+
+        List<Option> options = new ArrayList<>();
+        for (Map.Entry<String, Map<String, BigDecimal>> entry : stockByFacility.entrySet()) {
+            Map<String, BigDecimal> stock = entry.getValue();
+            boolean fillsEverything = quantityByProduct.entrySet().stream()
+                    .allMatch(wanted -> stock.getOrDefault(wanted.getKey(), BigDecimal.ZERO).compareTo(wanted.getValue()) >= 0);
+            if (!fillsEverything) {
+                continue;
+            }
+            Facility facility = entityManager.find(Facility.class, entry.getKey());
+            if (facility == null || StoreNetworkService.VIRTUAL_FACILITY_TYPES.contains(facility.getFacilityTypeId())) {
+                continue;
+            }
+            boolean closed = facility.getClosedDate() != null && !facility.getClosedDate().isAfter(now);
+            if (closed) {
+                continue;
+            }
+            double reliability = reliabilityByFacility.getOrDefault(facility.getFacilityId(), CandidateLocation.DEFAULT_RELIABILITY);
+            double phantomRisk = phantomRiskByFacility.getOrDefault(facility.getFacilityId(), 0.0);
+            options.add(optionFor(facility, destination, method, now, reliability, phantomRisk));
+        }
+
+        options.sort(Comparator.comparing(Option::promiseBy)
+                .thenComparing(option -> confidenceRank(option.confidence()))
+                .thenComparing(Option::facilityId));
+        if (options.isEmpty()) {
+            return new Answer(false, null, List.of(), "No single location holds all of it now");
+        }
+        Option best = options.get(0);
+        String summary = "Delivered by " + best.promiseBy() + " (expected " + best.expectedDelivery() + ") from " + best.facilityName()
+                + ", " + best.confidence().toLowerCase(Locale.ROOT) + " confidence";
+        return new Answer(true, best, options, summary);
+    }
+
+    /** Where a saved postal address is, as a promise destination. */
+    public Destination destinationOf(String contactMechId) {
+        PostalAddress address = entityManager.find(PostalAddress.class, contactMechId);
+        if (address == null) {
+            throw new IllegalArgumentException("Unknown address " + contactMechId);
+        }
+        return Destination.of(address);
+    }
+
+    /** One location's ship date, delivery dates and confidence, with the reasons. */
+    private Option optionFor(Facility facility, Destination destination, String method, LocalDateTime now, double reliability, double phantomRisk) {
+        List<String> reasons = new ArrayList<>();
+
+        // Step 1: the ship date, in the location's own time zone.
+        ZoneId zone = zoneOf(facility.getFacilityTimeZone());
+        LocalDateTime localNow = now.atOffset(ZoneOffset.UTC).atZoneSameInstant(zone).toLocalDateTime();
+        LocalTime cutoff = facility.getCloseTime() != null ? facility.getCloseTime().minusHours(1) : DEFAULT_CUTOFF;
+        LocalDate today = localNow.toLocalDate();
+        LocalDate shipDate = today;
+        if (!isWorkday(today) || !localNow.toLocalTime().isBefore(cutoff)) {
+            shipDate = nextWorkday(today);
+            reasons.add("past today's " + cutoff + " cut-off; ships " + shipDate);
+        }
+        if (shipDate.equals(today)) {
+            Optional<Long> ordersLeft = facilityService.ordersLeft(facility.getFacilityId(), shipDate);
+            if (ordersLeft.isPresent() && ordersLeft.get() <= 0) {
+                shipDate = nextWorkday(shipDate);
+                reasons.add("full for today; ships " + shipDate);
             }
         }
-        Double km = distance(f, to);
-        int[] transit = history(f.getFacilityId(), km, method);
+
+        // Step 2: time in transit, from history or from the distance rules.
+        Double distanceKm = distanceKm(facility, destination);
+        Transit transit = fromHistory(facility.getFacilityId(), distanceKm, method);
         String basis;
         if (transit != null) {
             basis = "history";
-            reasons.add("from " + transit[2] + " past deliveries from here at a similar distance");
+            reasons.add("from " + transit.samples() + " past deliveries from here at a similar distance");
         } else {
-            transit = rule(km, method);
+            transit = fromRule(distanceKm, method);
             basis = "rule";
-            reasons.add(km == null ? "no map position; a cautious rule" : String.format(java.util.Locale.ROOT, "%.0f km; a distance rule", km));
+            reasons.add(distanceKm == null ? "no map position; a cautious rule" : String.format(Locale.ROOT, "%.0f km; a distance rule", distanceKm));
         }
-        LocalDate expected = addWorkdays(ship, transit[0]);
-        LocalDate by = addWorkdays(ship, transit[1]);
-        String confidence = "history".equals(basis) ? "HIGH" : "MEDIUM";
-        if (phantomRisk >= 0.5) {
-            confidence = "LOW";
+        LocalDate expectedDelivery = addWorkdays(shipDate, transit.expectedDays());
+        LocalDate promiseBy = addWorkdays(shipDate, transit.promiseDays());
+
+        // Step 3: confidence. A doubtful location's promise moves a day.
+        String confidence = "history".equals(basis) ? HIGH : MEDIUM;
+        if (phantomRisk >= LIKELY_PHANTOM) {
+            confidence = LOW;
             reasons.add("the stock there may not be real");
-            by = addWorkdays(by, 1);
-        } else if (reliability < 0.8) {
-            confidence = "LOW";
-            reasons.add(String.format(java.util.Locale.ROOT, "it picks only %.0f%% of its orders", reliability * 100));
-            by = addWorkdays(by, 1);
+            promiseBy = addWorkdays(promiseBy, 1);
+        } else if (reliability < UNRELIABLE) {
+            confidence = LOW;
+            reasons.add(String.format(Locale.ROOT, "it picks only %.0f%% of its orders", reliability * 100));
+            promiseBy = addWorkdays(promiseBy, 1);
         }
-        return new Option(f.getFacilityId(), f.getFacilityName(), ship, expected, by, transit[0], transit[1], basis, confidence, km, reasons);
+        return new Option(facility.getFacilityId(), facility.getFacilityName(), shipDate, expectedDelivery, promiseBy, transit.expectedDays(),
+                transit.promiseDays(), basis, confidence, distanceKm, reasons);
     }
 
-    /** {expected, promise, samples} working days from past deliveries of this location within a similar distance band, or null. */
-    int[] history(String facilityId, Double km, String method) {
-        if (km == null) return null;
-        List<Object[]> rows = em.createQuery("SELECT r.actualStartDate, r.actualArrivalDate, a.latitude, a.longitude FROM ShipmentRouteSegment r, Shipment s, PostalAddress a "
-                        + "WHERE s.shipmentId = r.shipmentId AND a.contactMechId = s.destinationContactMechId AND s.originFacilityId = :f AND s.shipmentTypeId = 'SALES_SHIPMENT' "
-                        + "AND r.actualStartDate IS NOT NULL AND r.actualArrivalDate IS NOT NULL AND a.latitude IS NOT NULL AND (r.shipmentMethodTypeId = :m OR r.shipmentMethodTypeId IS NULL) "
-                        + "ORDER BY r.actualArrivalDate DESC", Object[].class)
-                .setParameter("f", facilityId).setParameter("m", method).setMaxResults(2000).getResultList();
-        Facility f = em.find(Facility.class, facilityId);
-        int band = band(km);
-        List<Integer> days = new ArrayList<>();
-        for (Object[] r : rows) {
-            double d = GeoDistance.km(f.getLatitude().doubleValue(), f.getLongitude().doubleValue(), ((BigDecimal) r[2]).doubleValue(), ((BigDecimal) r[3]).doubleValue());
-            if (band(d) != band) continue;
-            days.add(workdaysBetween(((LocalDateTime) r[0]).toLocalDate(), ((LocalDateTime) r[1]).toLocalDate()));
+    /**
+     * Transit from past deliveries of this location, by this method, within the same distance band; null when there is
+     * no distance or fewer than {@value #MIN_HISTORY} such deliveries.
+     */
+    Transit fromHistory(String facilityId, Double distanceKm, String method) {
+        if (distanceKm == null) {
+            return null;
         }
-        if (days.size() < MIN_HISTORY) return null;
-        days.sort(Integer::compare);
-        return new int[]{quantile(days, 0.5), quantile(days, 0.9), days.size()};
+        List<Object[]> deliveries = entityManager.createQuery("SELECT r.actualStartDate, r.actualArrivalDate, a.latitude, a.longitude "
+                        + "FROM ShipmentRouteSegment r, Shipment s, PostalAddress a WHERE s.shipmentId = r.shipmentId "
+                        + "AND a.contactMechId = s.destinationContactMechId AND s.originFacilityId = :facilityId AND s.shipmentTypeId = 'SALES_SHIPMENT' "
+                        + "AND r.actualStartDate IS NOT NULL AND r.actualArrivalDate IS NOT NULL AND a.latitude IS NOT NULL "
+                        + "AND (r.shipmentMethodTypeId = :method OR r.shipmentMethodTypeId IS NULL) ORDER BY r.actualArrivalDate DESC", Object[].class)
+                .setParameter("facilityId", facilityId)
+                .setParameter("method", method)
+                .setMaxResults(MAX_HISTORY_ROWS)
+                .getResultList();
+        Facility facility = entityManager.find(Facility.class, facilityId);
+        int band = distanceBand(distanceKm);
+        List<Integer> transitDays = new ArrayList<>();
+        for (Object[] delivery : deliveries) {
+            double deliveryKm = GeoDistance.km(facility.getLatitude().doubleValue(), facility.getLongitude().doubleValue(),
+                    ((BigDecimal) delivery[2]).doubleValue(), ((BigDecimal) delivery[3]).doubleValue());
+            if (distanceBand(deliveryKm) != band) {
+                continue;
+            }
+            LocalDate shipped = ((LocalDateTime) delivery[0]).toLocalDate();
+            LocalDate arrived = ((LocalDateTime) delivery[1]).toLocalDate();
+            transitDays.add(workdaysBetween(shipped, arrived));
+        }
+        if (transitDays.size() < MIN_HISTORY) {
+            return null;
+        }
+        transitDays.sort(Integer::compare);
+        return new Transit(quantile(transitDays, 0.5), quantile(transitDays, 0.9), transitDays.size());
     }
 
-    /** Working days {expected, promise} by distance and method when there is no history. */
-    static int[] rule(Double km, String method) {
-        if ("SAME_DAY".equals(method) && km != null && km <= 30) return new int[]{0, 0};
-        if ("NEXT_DAY".equals(method) || "EXPRESS".equals(method)) return new int[]{1, 2};
-        if ("STOREPICKUP".equals(method)) return new int[]{0, 1};
-        if (km == null) return new int[]{4, 7};
-        if (km <= 50) return new int[]{1, 2};
-        if (km <= 500) return new int[]{2, 3};
-        if (km <= 1500) return new int[]{3, 5};
-        return new int[]{5, 8};
+    /** Transit by distance and method when there is no history. */
+    static Transit fromRule(Double distanceKm, String method) {
+        if ("SAME_DAY".equals(method) && distanceKm != null && distanceKm <= 30) {
+            return new Transit(0, 0, 0);
+        }
+        if ("NEXT_DAY".equals(method) || "EXPRESS".equals(method)) {
+            return new Transit(1, 2, 0);
+        }
+        if ("STOREPICKUP".equals(method)) {
+            return new Transit(0, 1, 0);
+        }
+        if (distanceKm == null) {
+            return new Transit(4, 7, 0);
+        }
+        if (distanceKm <= 50) {
+            return new Transit(1, 2, 0);
+        }
+        if (distanceKm <= 500) {
+            return new Transit(2, 3, 0);
+        }
+        if (distanceKm <= 1500) {
+            return new Transit(3, 5, 0);
+        }
+        return new Transit(5, 8, 0);
     }
 
-    static int band(double km) {
-        return km <= 50 ? 0 : km <= 500 ? 1 : km <= 1500 ? 2 : 3;
+    /** 0: up to 50 km, 1: up to 500, 2: up to 1500, 3: further. */
+    static int distanceBand(double distanceKm) {
+        if (distanceKm <= 50) {
+            return 0;
+        }
+        if (distanceKm <= 500) {
+            return 1;
+        }
+        return distanceKm <= 1500 ? 2 : 3;
     }
 
-    static int quantile(List<Integer> sorted, double q) {
-        int i = (int) Math.ceil(q * sorted.size()) - 1;
-        return sorted.get(Math.max(0, Math.min(sorted.size() - 1, i)));
+    /** The value at the quantile of a sorted list (nearest rank). */
+    static int quantile(List<Integer> sortedValues, double quantile) {
+        int rank = (int) Math.ceil(quantile * sortedValues.size()) - 1;
+        return sortedValues.get(Math.max(0, Math.min(sortedValues.size() - 1, rank)));
     }
 
-    private Double distance(Facility f, Destination to) {
-        if (to == null || to.latitude() == null || to.longitude() == null || f.getLatitude() == null || f.getLongitude() == null) return null;
-        return GeoDistance.km(f.getLatitude().doubleValue(), f.getLongitude().doubleValue(), to.latitude(), to.longitude());
+    private static Double distanceKm(Facility facility, Destination destination) {
+        boolean bothPlaced = destination != null && destination.latitude() != null && destination.longitude() != null
+                && facility.getLatitude() != null && facility.getLongitude() != null;
+        if (!bothPlaced) {
+            return null;
+        }
+        return GeoDistance.km(facility.getLatitude().doubleValue(), facility.getLongitude().doubleValue(), destination.latitude(), destination.longitude());
     }
 
-    static boolean isWorkday(LocalDate d) {
-        return d.getDayOfWeek() != DayOfWeek.SATURDAY && d.getDayOfWeek() != DayOfWeek.SUNDAY;
+    // ── working days ──
+
+    static boolean isWorkday(LocalDate date) {
+        return date.getDayOfWeek() != DayOfWeek.SATURDAY && date.getDayOfWeek() != DayOfWeek.SUNDAY;
     }
 
-    static LocalDate nextWorkday(LocalDate d) {
-        LocalDate n = d.plusDays(1);
-        while (!isWorkday(n)) n = n.plusDays(1);
-        return n;
+    static LocalDate nextWorkday(LocalDate date) {
+        LocalDate next = date.plusDays(1);
+        while (!isWorkday(next)) {
+            next = next.plusDays(1);
+        }
+        return next;
     }
 
-    static LocalDate addWorkdays(LocalDate d, int days) {
-        LocalDate n = d;
-        for (int i = 0; i < days; i++) n = nextWorkday(n);
-        return n;
+    static LocalDate addWorkdays(LocalDate date, int workdays) {
+        LocalDate result = date;
+        for (int added = 0; added < workdays; added++) {
+            result = nextWorkday(result);
+        }
+        return result;
     }
 
+    /** Working days after {@code from}, up to and including {@code to}. */
     static int workdaysBetween(LocalDate from, LocalDate to) {
-        int n = 0;
-        for (LocalDate d = from; d.isBefore(to); d = d.plusDays(1)) if (isWorkday(d.plusDays(1))) n++;
-        return n;
+        int workdays = 0;
+        for (LocalDate day = from; day.isBefore(to); day = day.plusDays(1)) {
+            if (isWorkday(day.plusDays(1))) {
+                workdays++;
+            }
+        }
+        return workdays;
     }
 
-    private static ZoneId zone(String id) {
+    private static ZoneId zoneOf(String zoneId) {
+        if (zoneId == null || zoneId.isBlank()) {
+            return ZoneOffset.UTC;
+        }
         try {
-            return id == null || id.isBlank() ? ZoneOffset.UTC : ZoneId.of(id);
-        } catch (Exception e) {
+            return ZoneId.of(zoneId);
+        } catch (DateTimeException unknownZone) {
             return ZoneOffset.UTC;
         }
     }
 
-    private static int confidenceRank(String c) {
-        return "HIGH".equals(c) ? 0 : "MEDIUM".equals(c) ? 1 : 2;
+    private static int confidenceRank(String confidence) {
+        if (HIGH.equals(confidence)) {
+            return 0;
+        }
+        return MEDIUM.equals(confidence) ? 1 : 2;
     }
 }

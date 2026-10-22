@@ -1,13 +1,11 @@
 package com.nexus.oms.coreapi;
 
-import com.nexus.core.model.party.PostalAddress;
+import com.nexus.core.service.ProductService;
 import com.nexus.core.service.PromiseService;
 import com.nexus.oms.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityManager;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,43 +16,44 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** "Can you deliver this, here, by then?" (doc 25, features 2 and 4). Admin only for now; the agent order API will use it. */
+/** "Can you deliver this, here, by then?" (doc 25, features 2 and 4). Admin only for now; the agent order API uses the service directly. */
 @RestController
 @RequestMapping("/core/promise")
 @Tag(name = "Core promise", description = "Availability and delivery-date promise")
 public class CorePromiseController {
 
-    private final PromiseService promise;
-    private final EntityManager em;
+    private final PromiseService promiseService;
+    private final ProductService productService;
 
-    public CorePromiseController(PromiseService promise, EntityManager em) {
-        this.promise = promise;
-        this.em = em;
+    public CorePromiseController(PromiseService promiseService, ProductService productService) {
+        this.promiseService = promiseService;
+        this.productService = productService;
     }
 
+    /** An item by product id or by SKU; one when no quantity is given. */
     public record Item(String sku, String productId, BigDecimal quantity) {
     }
 
+    /** Where to: coordinates and postal code, or the id of a saved address. */
     public record Request(List<Item> items, PromiseService.Destination shipTo, String shipToContactMechId, String shipmentMethodTypeId) {
     }
 
     @Operation(summary = "Where and when these items can be delivered: ship date, expected and promised delivery, confidence and why")
     @PostMapping
-    @Transactional(readOnly = true)
-    public ResponseEntity<ApiResponse<PromiseService.Answer>> promise(@RequestBody Request r) {
-        Map<String, BigDecimal> products = new LinkedHashMap<>();
-        for (Item i : r.items() == null ? List.<Item>of() : r.items()) {
-            String id = i.productId() != null ? i.productId() : em.createQuery("SELECT g.productId FROM GoodIdentification g WHERE g.goodIdentificationTypeId = 'SKU' "
-                    + "AND g.idValue = :v AND g.thruDate IS NULL", String.class).setParameter("v", i.sku()).setMaxResults(1).getResultList().stream().findFirst()
-                    .orElseThrow(() -> new IllegalArgumentException("Unknown SKU " + i.sku()));
-            products.merge(id, i.quantity() == null ? BigDecimal.ONE : i.quantity(), BigDecimal::add);
+    public ResponseEntity<ApiResponse<PromiseService.Answer>> promise(@RequestBody Request request) {
+        Map<String, BigDecimal> quantityByProduct = new LinkedHashMap<>();
+        for (Item item : request.items() == null ? List.<Item>of() : request.items()) {
+            String productId = item.productId() != null
+                    ? item.productId()
+                    : productService.findByIdentification("SKU", item.sku()).orElseThrow(() -> new IllegalArgumentException("Unknown SKU " + item.sku()));
+            BigDecimal quantity = item.quantity() == null ? BigDecimal.ONE : item.quantity();
+            quantityByProduct.merge(productId, quantity, BigDecimal::add);
         }
-        PromiseService.Destination to = r.shipTo();
-        if (to == null && r.shipToContactMechId() != null) {
-            PostalAddress a = em.find(PostalAddress.class, r.shipToContactMechId());
-            if (a == null) throw new IllegalArgumentException("Unknown address " + r.shipToContactMechId());
-            to = PromiseService.Destination.of(a);
+        PromiseService.Destination destination = request.shipTo();
+        if (destination == null && request.shipToContactMechId() != null) {
+            destination = promiseService.destinationOf(request.shipToContactMechId());
         }
-        return ResponseEntity.ok(ApiResponse.success(promise.promise(products, to, r.shipmentMethodTypeId(), null), "Promise"));
+        PromiseService.Answer answer = promiseService.promise(quantityByProduct, destination, request.shipmentMethodTypeId(), null);
+        return ResponseEntity.ok(ApiResponse.success(answer, "Promise"));
     }
 }

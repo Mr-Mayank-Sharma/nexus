@@ -2,12 +2,16 @@ package com.nexus.oms.gateway;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.core.CoreStatus;
 import com.nexus.core.model.basic.Geo;
 import com.nexus.core.model.facility.Facility;
 import com.nexus.core.model.order.OrderHeader;
+import com.nexus.core.model.order.OrderItemShipGroup;
+import com.nexus.core.model.party.Party;
 import com.nexus.core.model.party.PostalAddress;
 import com.nexus.core.model.shipment.Shipment;
 import com.nexus.core.model.shipment.ShipmentPackage;
+import com.nexus.core.service.OrderService;
 import com.nexus.core.service.ProductStoreService;
 import com.nexus.core.service.ShipmentService;
 import com.nexus.oms.integration.core.CredentialVault;
@@ -24,6 +28,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -35,33 +40,52 @@ import java.util.Map;
 @Service
 public class GatewayService {
 
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
-    private final ObjectMapper json = new ObjectMapper();
+    static final String URL_SETTING = "GATEWAY_URL";
+    static final String KEY_SETTING = "GATEWAY_API_KEY";
+    static final String CARRIER_SETTING = "GATEWAY_CARRIER";
+    static final String KEY_HEADER = "X-Nexus-Gateway-Key";
+    static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(45);
 
-    private final EntityManager em;
-    private final ProductStoreService stores;
-    private final ShipmentService shipments;
-    private final CredentialVault vault;
+    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build();
+    private final ObjectMapper jsonMapper = new ObjectMapper();
 
-    public GatewayService(EntityManager em, ProductStoreService stores, ShipmentService shipments, CredentialVault vault) {
-        this.em = em;
-        this.stores = stores;
-        this.shipments = shipments;
-        this.vault = vault;
+    private final EntityManager entityManager;
+    private final ProductStoreService productStoreService;
+    private final OrderService orderService;
+    private final ShipmentService shipmentService;
+    private final CredentialVault credentialVault;
+
+    public GatewayService(EntityManager entityManager, ProductStoreService productStoreService, OrderService orderService, ShipmentService shipmentService,
+                          CredentialVault credentialVault) {
+        this.entityManager = entityManager;
+        this.productStoreService = productStoreService;
+        this.orderService = orderService;
+        this.shipmentService = shipmentService;
+        this.credentialVault = credentialVault;
+    }
+
+    public record LabelOutcome(String shipmentId, String carrier, List<ShipmentService.PackageLabel> labels, BigDecimal cost, String currency) {
+    }
+
+    /** A store's gateway: its address and its (decrypted) key. */
+    record Gateway(String url, String key) {
     }
 
     /** Points a store at a gateway. The key is kept encrypted; a null key keeps the one already set. */
     @Transactional
     public void configure(String productStoreId, String url, String apiKey, String defaultCarrier) {
-        if (url == null || !(url.startsWith("https://") || url.startsWith("http://localhost") || url.startsWith("http://127.0.0.1"))) {
+        boolean secureOrLocal = url != null && (url.startsWith("https://") || url.startsWith("http://localhost") || url.startsWith("http://127.0.0.1"));
+        if (!secureOrLocal) {
             throw new IllegalArgumentException("The gateway address must use https (http is allowed only for localhost)");
         }
-        stores.setSetting(productStoreId, "GATEWAY_URL", url.replaceAll("/+$", ""));
-        if (apiKey != null && !apiKey.isBlank()) stores.setSetting(productStoreId, "GATEWAY_API_KEY", vault.encrypt(apiKey.trim()));
-        if (defaultCarrier != null) stores.setSetting(productStoreId, "GATEWAY_CARRIER", defaultCarrier.trim().toUpperCase());
-    }
-
-    public record LabelOutcome(String shipmentId, String carrier, List<ShipmentService.PackageLabel> labels, BigDecimal cost, String currency) {
+        productStoreService.setSetting(productStoreId, URL_SETTING, url.replaceAll("/+$", ""));
+        if (apiKey != null && !apiKey.isBlank()) {
+            productStoreService.setSetting(productStoreId, KEY_SETTING, credentialVault.encrypt(apiKey.trim()));
+        }
+        if (defaultCarrier != null) {
+            productStoreService.setSetting(productStoreId, CARRIER_SETTING, defaultCarrier.trim().toUpperCase(Locale.ROOT));
+        }
     }
 
     /**
@@ -70,122 +94,176 @@ public class GatewayService {
      */
     @Transactional
     public LabelOutcome label(String shipmentId, String carrier, String service, String userId) {
-        Shipment s = shipments.get(shipmentId);
-        if (s.getPrimaryOrderId() == null) throw new IllegalStateException("Shipment " + shipmentId + " has no order; labels here are for order shipments");
-        OrderHeader order = em.find(OrderHeader.class, s.getPrimaryOrderId());
-        String store = order.getProductStoreId();
-        if (store == null) throw new IllegalStateException("Order " + order.getOrderId() + " has no store, so no gateway is set up for it");
-        Gateway g = gateway(store);
-        String c = carrier != null ? carrier.toUpperCase() : stores.setting(store, "GATEWAY_CARRIER").orElseThrow(
-                () -> new IllegalStateException("Name a carrier or set the store's GATEWAY_CARRIER"));
-        if (!"SHIPMENT_PACKED".equals(s.getStatusId())) shipments.pack(shipmentId, userId);
-        List<ShipmentPackage> boxes = shipments.packages(shipmentId);
-        List<Map<String, Object>> parcels = new ArrayList<>();
-        for (ShipmentPackage b : boxes) parcels.add(Map.of("weightKg", b.getWeight() == null ? BigDecimal.ONE : b.getWeight()));
-
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put("storeId", store);
-        body.put("carrier", c);
-        body.put("service", service);
-        body.put("from", from(s.getOriginFacilityId()));
-        body.put("to", address(s.getDestinationContactMechId(), null));
-        body.put("parcels", parcels);
-        body.put("reference", "Order " + order.getOrderId());
-        JsonNode r = post(g, "/v1/labels", body);
-        List<ShipmentService.PackageLabel> labels = new ArrayList<>();
-        JsonNode got = r.path("labels");
-        for (int i = 0; i < boxes.size() && i < got.size(); i++) {
-            labels.add(new ShipmentService.PackageLabel(boxes.get(i).getShipmentPackageSeqId(), got.get(i).path("trackingNumber").asText(),
-                    g.url() + "/v1/labels/" + got.get(i).path("labelId").asText()));
+        // Step 1: the shipment, its order's store, and that store's gateway and carrier.
+        Shipment shipment = shipmentService.get(shipmentId);
+        if (shipment.getPrimaryOrderId() == null) {
+            throw new IllegalStateException("Shipment " + shipmentId + " has no order; labels here are for order shipments");
         }
-        BigDecimal cost = r.hasNonNull("cost") ? new BigDecimal(r.get("cost").asText()) : null;
-        var group = em.find(com.nexus.core.model.order.OrderItemShipGroup.class,
-                new com.nexus.core.model.order.OrderItemShipGroup.Key(s.getPrimaryOrderId(), s.getPrimaryShipGroupSeqId()));
-        shipments.recordLabels(shipmentId, carrierParty(c), group == null ? null : group.getShipmentMethodTypeId(), labels, cost,
-                r.path("currency").asText(null), userId);
-        return new LabelOutcome(shipmentId, c, labels, cost, r.path("currency").asText(null));
+        OrderHeader order = orderService.header(shipment.getPrimaryOrderId());
+        String productStoreId = order.getProductStoreId();
+        if (productStoreId == null) {
+            throw new IllegalStateException("Order " + order.getOrderId() + " has no store, so no gateway is set up for it");
+        }
+        Gateway gateway = gatewayOf(productStoreId);
+        String carrierCode = carrier != null
+                ? carrier.toUpperCase(Locale.ROOT)
+                : productStoreService.setting(productStoreId, CARRIER_SETTING)
+                        .orElseThrow(() -> new IllegalStateException("Name a carrier or set the store's GATEWAY_CARRIER"));
+
+        // Step 2: the boxes (packing first makes one box when there are none).
+        if (!CoreStatus.Shipment.PACKED.equals(shipment.getStatusId())) {
+            shipmentService.pack(shipmentId, userId);
+        }
+        List<ShipmentPackage> boxes = shipmentService.packages(shipmentId);
+        List<Map<String, Object>> parcels = new ArrayList<>();
+        for (ShipmentPackage box : boxes) {
+            parcels.add(Map.of("weightKg", box.getWeight() == null ? BigDecimal.ONE : box.getWeight()));
+        }
+
+        // Step 3: ask the gateway.
+        Map<String, Object> request = new LinkedHashMap<>();
+        request.put("storeId", productStoreId);
+        request.put("carrier", carrierCode);
+        request.put("service", service);
+        request.put("from", facilityAddress(shipment.getOriginFacilityId()));
+        request.put("to", addressOf(shipment.getDestinationContactMechId(), null));
+        request.put("parcels", parcels);
+        request.put("reference", "Order " + order.getOrderId());
+        JsonNode response = post(gateway, "/v1/labels", request);
+
+        // Step 4: one label per box, in order, stored on the shipment.
+        List<ShipmentService.PackageLabel> labels = new ArrayList<>();
+        JsonNode returnedLabels = response.path("labels");
+        for (int boxIndex = 0; boxIndex < boxes.size() && boxIndex < returnedLabels.size(); boxIndex++) {
+            JsonNode returnedLabel = returnedLabels.get(boxIndex);
+            labels.add(new ShipmentService.PackageLabel(boxes.get(boxIndex).getShipmentPackageSeqId(), returnedLabel.path("trackingNumber").asText(),
+                    gateway.url() + "/v1/labels/" + returnedLabel.path("labelId").asText()));
+        }
+        BigDecimal cost = response.hasNonNull("cost") ? new BigDecimal(response.get("cost").asText()) : null;
+        String currency = response.path("currency").asText(null);
+        OrderItemShipGroup shipGroup = orderService.shipGroupOrNull(shipment.getPrimaryOrderId(), shipment.getPrimaryShipGroupSeqId());
+        String shipmentMethod = shipGroup == null ? null : shipGroup.getShipmentMethodTypeId();
+        shipmentService.recordLabels(shipmentId, carrierPartyId(carrierCode), shipmentMethod, labels, cost, currency, userId);
+        return new LabelOutcome(shipmentId, carrierCode, labels, cost, currency);
     }
 
-    /** Sends a test email through the store's gateway with the template given (the gateway must have it). */
+    /** Sends a test email through the store's gateway with the template given (the gateway must have it). Returns its message id. */
     public String testEmail(String productStoreId, String templateId, String to) {
-        Gateway g = gateway(productStoreId);
-        return post(g, "/v1/email/send", Map.of("storeId", productStoreId, "templateId", templateId == null ? "TEST" : templateId, "to", to,
-                "data", Map.of("storeName", productStoreId, "message", "This is a test from Nexus"))).path("messageId").asText();
+        Map<String, Object> data = Map.of("storeName", productStoreId, "message", "This is a test from Nexus");
+        return email(productStoreId, templateId == null ? "TEST" : templateId, to, data);
     }
 
-    /** Sends a customer email (pickup ready, cancellation, completion) through the store's gateway. */
+    /** Sends a customer email (pickup ready, cancellation, completion) through the store's gateway. Returns its message id. */
     public String email(String productStoreId, String templateId, String to, Map<String, Object> data) {
-        return post(gateway(productStoreId), "/v1/email/send", Map.of("storeId", productStoreId, "templateId", templateId, "to", to, "data", data))
-                .path("messageId").asText();
+        Map<String, Object> request = Map.of("storeId", productStoreId, "templateId", templateId, "to", to, "data", data);
+        return post(gatewayOf(productStoreId), "/v1/email/send", request).path("messageId").asText();
     }
 
     // ── internals ──
 
-    record Gateway(String url, String key) {
+    private Gateway gatewayOf(String productStoreId) {
+        String url = productStoreService.setting(productStoreId, URL_SETTING)
+                .orElseThrow(() -> new IllegalStateException("Store " + productStoreId + " has no gateway set up"));
+        String encryptedKey = productStoreService.setting(productStoreId, KEY_SETTING)
+                .orElseThrow(() -> new IllegalStateException("Store " + productStoreId + " has no gateway key"));
+        return new Gateway(url, credentialVault.decrypt(encryptedKey));
     }
 
-    private Gateway gateway(String productStoreId) {
-        String url = stores.setting(productStoreId, "GATEWAY_URL").orElseThrow(() -> new IllegalStateException("Store " + productStoreId + " has no gateway set up"));
-        String sealed = stores.setting(productStoreId, "GATEWAY_API_KEY").orElseThrow(() -> new IllegalStateException("Store " + productStoreId + " has no gateway key"));
-        return new Gateway(url, vault.decrypt(sealed));
-    }
-
-    private JsonNode post(Gateway g, String path, Object body) {
+    /** Posts JSON to the gateway; a reply of 300 or above is an error carrying the gateway's own message. */
+    private JsonNode post(Gateway gateway, String path, Object requestBody) {
+        HttpResponse<String> response;
         try {
-            HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create(g.url() + path)).timeout(Duration.ofSeconds(45))
-                    .header("Content-Type", "application/json").header("X-Nexus-Gateway-Key", g.key())
-                    .POST(HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body))).build(), HttpResponse.BodyHandlers.ofString());
-            JsonNode n = r.body() == null || r.body().isBlank() ? json.createObjectNode() : json.readTree(r.body());
-            if (r.statusCode() >= 300) throw new IllegalStateException("The gateway said: " + n.path("error").asText("HTTP " + r.statusCode()));
-            return n;
-        } catch (IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not reach the gateway at " + g.url() + ": " + e.getMessage());
+            HttpRequest request = HttpRequest.newBuilder(URI.create(gateway.url() + path))
+                    .timeout(REQUEST_TIMEOUT)
+                    .header("Content-Type", "application/json")
+                    .header(KEY_HEADER, gateway.key())
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonMapper.writeValueAsString(requestBody)))
+                    .build();
+            response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Could not reach the gateway at " + gateway.url() + ": interrupted");
+        } catch (Exception unreachable) {
+            throw new IllegalStateException("Could not reach the gateway at " + gateway.url() + ": " + unreachable.getMessage());
         }
+
+        JsonNode body;
+        try {
+            body = response.body() == null || response.body().isBlank() ? jsonMapper.createObjectNode() : jsonMapper.readTree(response.body());
+        } catch (Exception notJson) {
+            throw new IllegalStateException("Could not reach the gateway at " + gateway.url() + ": " + notJson.getMessage());
+        }
+        if (response.statusCode() >= 300) {
+            throw new IllegalStateException("The gateway said: " + body.path("error").asText("HTTP " + response.statusCode()));
+        }
+        return body;
     }
 
     /** Carriers are seeded as parties with their code as id (UPS, FEDEX); the test carrier has none. */
-    private String carrierParty(String carrier) {
-        return em.find(com.nexus.core.model.party.Party.class, carrier) != null ? carrier : null;
+    private String carrierPartyId(String carrierCode) {
+        return entityManager.find(Party.class, carrierCode) != null ? carrierCode : null;
     }
 
-    private Map<String, Object> from(String facilityId) {
-        Facility f = em.find(Facility.class, facilityId);
-        List<String> mechs = em.createQuery("SELECT c.contactMechId FROM FacilityContactMech c WHERE c.facilityId = :f AND c.thruDate IS NULL ORDER BY c.fromDate",
-                String.class).setParameter("f", facilityId).getResultList();
-        for (String m : mechs) {
-            if (em.find(PostalAddress.class, m) != null) return address(m, f.getFacilityName());
+    /** The facility's postal address; just its name and postal code when it has no full address yet. */
+    private Map<String, Object> facilityAddress(String facilityId) {
+        Facility facility = entityManager.find(Facility.class, facilityId);
+        List<String> contactMechIds = entityManager.createQuery("SELECT c.contactMechId FROM FacilityContactMech c WHERE c.facilityId = :facilityId "
+                        + "AND c.thruDate IS NULL ORDER BY c.fromDate", String.class)
+                .setParameter("facilityId", facilityId)
+                .getResultList();
+        for (String contactMechId : contactMechIds) {
+            if (entityManager.find(PostalAddress.class, contactMechId) != null) {
+                return addressOf(contactMechId, facility.getFacilityName());
+            }
         }
-        // a facility without a full address yet: its name and postal code are what we have
-        Map<String, Object> a = new LinkedHashMap<>();
-        a.put("name", f.getFacilityName());
-        a.put("postalCode", f.getPostalCode());
-        return a;
+        Map<String, Object> partialAddress = new LinkedHashMap<>();
+        partialAddress.put("name", facility.getFacilityName());
+        partialAddress.put("postalCode", facility.getPostalCode());
+        return partialAddress;
     }
 
-    private Map<String, Object> address(String contactMechId, String name) {
-        Map<String, Object> a = new LinkedHashMap<>();
-        if (contactMechId == null) return a;
-        PostalAddress p = em.find(PostalAddress.class, contactMechId);
-        if (p == null) return a;
-        a.put("name", name != null ? name : p.getToName());
+    /** A postal address in the gateway's shape; {@code name} overrides the address's own "to" name. Empty when unknown. */
+    private Map<String, Object> addressOf(String contactMechId, String name) {
+        Map<String, Object> gatewayAddress = new LinkedHashMap<>();
+        if (contactMechId == null) {
+            return gatewayAddress;
+        }
+        PostalAddress address = entityManager.find(PostalAddress.class, contactMechId);
+        if (address == null) {
+            return gatewayAddress;
+        }
+        gatewayAddress.put("name", name != null ? name : address.getToName());
         List<String> lines = new ArrayList<>();
-        if (p.getAddress1() != null) lines.add(p.getAddress1());
-        if (p.getAddress2() != null) lines.add(p.getAddress2());
-        a.put("lines", lines);
-        a.put("city", p.getCity());
-        a.put("postalCode", p.getPostalCode());
-        if (p.getStateProvinceGeoId() != null) {
-            Geo st = em.find(Geo.class, p.getStateProvinceGeoId());
-            a.put("state", st != null && st.getAbbreviation() != null ? st.getAbbreviation()
-                    : p.getStateProvinceGeoId().contains("-") ? p.getStateProvinceGeoId().substring(p.getStateProvinceGeoId().indexOf('-') + 1) : p.getStateProvinceGeoId());
+        if (address.getAddress1() != null) {
+            lines.add(address.getAddress1());
         }
-        if (p.getCountryGeoId() != null) {
-            Geo c = em.find(Geo.class, p.getCountryGeoId());
-            a.put("countryCode", c != null && c.getGeoCodeAlpha2() != null ? c.getGeoCodeAlpha2() : p.getCountryGeoId());
+        if (address.getAddress2() != null) {
+            lines.add(address.getAddress2());
         }
-        if (p.getIsResidential() != null) a.put("residential", p.getIsResidential());
-        return a;
+        gatewayAddress.put("lines", lines);
+        gatewayAddress.put("city", address.getCity());
+        gatewayAddress.put("postalCode", address.getPostalCode());
+        if (address.getStateProvinceGeoId() != null) {
+            gatewayAddress.put("state", stateCode(address.getStateProvinceGeoId()));
+        }
+        if (address.getCountryGeoId() != null) {
+            Geo country = entityManager.find(Geo.class, address.getCountryGeoId());
+            boolean hasAlpha2 = country != null && country.getGeoCodeAlpha2() != null;
+            gatewayAddress.put("countryCode", hasAlpha2 ? country.getGeoCodeAlpha2() : address.getCountryGeoId());
+        }
+        if (address.getIsResidential() != null) {
+            gatewayAddress.put("residential", address.getIsResidential());
+        }
+        return gatewayAddress;
+    }
+
+    /** A state's short code: its abbreviation, else the part of the geo id after the dash ("USA-NJ" is "NJ"). */
+    private String stateCode(String stateGeoId) {
+        Geo state = entityManager.find(Geo.class, stateGeoId);
+        if (state != null && state.getAbbreviation() != null) {
+            return state.getAbbreviation();
+        }
+        int dash = stateGeoId.indexOf('-');
+        return dash >= 0 ? stateGeoId.substring(dash + 1) : stateGeoId;
     }
 }

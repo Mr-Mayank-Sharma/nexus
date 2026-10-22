@@ -1,6 +1,6 @@
 package com.nexus.core.job;
 
-import com.nexus.core.model.order.OrderItem;
+import com.nexus.core.CoreStatus;
 import com.nexus.core.service.CoreClock;
 import com.nexus.core.service.OrderService;
 import jakarta.persistence.EntityManager;
@@ -24,34 +24,47 @@ import java.util.Map;
 public class AutoCancelJob implements CoreJobHandler {
 
     private static final Logger log = LoggerFactory.getLogger(AutoCancelJob.class);
+    static final String JOB_USER = "core_auto_cancel";
 
-    private final EntityManager em;
-    private final OrderService orders;
-    private final TransactionTemplate tx;
+    private final EntityManager entityManager;
+    private final OrderService orderService;
+    private final TransactionTemplate newTransaction;
 
-    public AutoCancelJob(EntityManager em, OrderService orders, PlatformTransactionManager tm) {
-        this.em = em;
-        this.orders = orders;
-        this.tx = new TransactionTemplate(tm);
-        this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    public AutoCancelJob(EntityManager entityManager, OrderService orderService, PlatformTransactionManager transactionManager) {
+        this.entityManager = entityManager;
+        this.orderService = orderService;
+        this.newTransaction = new TransactionTemplate(transactionManager);
+        this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    /** An order item, by its key. */
+    private record ItemKey(String orderId, String orderItemSeqId) {
     }
 
     @Override
     public String run(Map<String, String> parameters) {
         LocalDateTime now = CoreClock.now();
-        List<String[]> due = tx.execute(s -> em.createQuery("SELECT i FROM OrderItem i WHERE i.autoCancelDate <= :now "
-                        + "AND i.statusId IN ('ITEM_CREATED', 'ITEM_APPROVED')", OrderItem.class).setParameter("now", now).getResultList().stream()
-                .map(i -> new String[]{i.getOrderId(), i.getOrderItemSeqId()}).toList());
-        int done = 0, failed = 0;
-        for (String[] k : due) {
+        List<ItemKey> dueItems = newTransaction.execute(status -> entityManager.createQuery("SELECT i.orderId, i.orderItemSeqId FROM OrderItem i "
+                        + "WHERE i.autoCancelDate <= :now AND i.statusId IN :open", Object[].class)
+                .setParameter("now", now)
+                .setParameter("open", CoreStatus.Item.OPEN)
+                .getResultList()
+                .stream()
+                .map(row -> new ItemKey((String) row[0], (String) row[1]))
+                .toList());
+
+        int cancelled = 0;
+        int failed = 0;
+        for (ItemKey item : dueItems) {
             try {
-                tx.executeWithoutResult(s -> orders.cancelItem(k[0], k[1], null, "Cancel date passed", "core_auto_cancel"));
-                done++;
-            } catch (RuntimeException e) {
+                newTransaction.executeWithoutResult(status ->
+                        orderService.cancelItem(item.orderId(), item.orderItemSeqId(), null, "Cancel date passed", JOB_USER));
+                cancelled++;
+            } catch (RuntimeException failure) {
                 failed++;
-                log.warn("Could not auto-cancel item {} of order {}: {}", k[1], k[0], e.getMessage());
+                log.warn("Could not auto-cancel item {} of order {}: {}", item.orderItemSeqId(), item.orderId(), failure.getMessage());
             }
         }
-        return done + " item(s) cancelled" + (failed > 0 ? ", " + failed + " failed" : "");
+        return cancelled + " item(s) cancelled" + (failed > 0 ? ", " + failed + " failed" : "");
     }
 }

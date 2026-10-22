@@ -2,19 +2,22 @@ package com.nexus.oms.coremigration;
 
 import com.nexus.core.service.GeoService;
 import com.nexus.core.service.PartyService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.FlushModeType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+
+import static com.nexus.oms.coremigration.LegacyRows.LEGACY_ID;
+import static com.nexus.oms.coremigration.LegacyRows.text;
 
 /**
  * Copies customers and their addresses from the legacy tables (nx_customers, nx_addresses) into the core party model
@@ -26,83 +29,94 @@ import java.util.UUID;
 public class CustomerPartyBackfill {
 
     private static final Logger log = LoggerFactory.getLogger(CustomerPartyBackfill.class);
-    static final String LEGACY_ID = "NEXUS_LEGACY_ID";
-    private static final int CHUNK = 200;
+    private static final int CHUNK_SIZE = 200;
 
     private final JdbcTemplate jdbc;
-    private final PartyService parties;
-    private final TransactionTemplate tx;
-    private final GeoService geos;
-    private final EntityManager em;
+    private final PartyService partyService;
+    private final TransactionTemplate transaction;
+    private final GeoService geoService;
+    private final EntityManager entityManager;
 
-    public CustomerPartyBackfill(JdbcTemplate jdbc, PartyService parties, TransactionTemplate tx, GeoService geos, EntityManager em) {
+    public CustomerPartyBackfill(JdbcTemplate jdbc, PartyService partyService, TransactionTemplate transaction, GeoService geoService,
+                                 EntityManager entityManager) {
         this.jdbc = jdbc;
-        this.parties = parties;
-        this.tx = tx;
-        this.geos = geos;
-        this.em = em;
+        this.partyService = partyService;
+        this.transaction = transaction;
+        this.geoService = geoService;
+        this.entityManager = entityManager;
     }
 
     public record Result(int scanned, int created, int skipped, int addressesWithoutCountryMatch) {
     }
 
+    /** Customers created and skipped, and addresses whose country could not be matched, in one chunk. */
+    private record ChunkCounts(int created, int skipped, int addressesWithoutCountryMatch) {
+    }
+
     public Result run(UUID tenantId) {
-        if (tenantId == null) throw new IllegalArgumentException("Run the customer copy as a user of the company whose customers to copy");
-        List<Map<String, Object>> rows = jdbc.queryForList(
+        if (tenantId == null) {
+            throw new IllegalArgumentException("Run the customer copy as a user of the company whose customers to copy");
+        }
+        List<Map<String, Object>> customers = jdbc.queryForList(
                 "SELECT c.id, c.external_id, c.name, c.email, c.phone, a.full_name, a.address_line1, a.address_line2, a.city, "
                         + "a.state, a.postal_code, a.country, a.is_residential FROM nx_customers c "
                         + "LEFT JOIN nx_addresses a ON a.id = c.address_id WHERE c.tenant_id = ? ORDER BY c.created_at, c.id", tenantId);
-        Set<String> copied = new HashSet<>(jdbc.queryForList("SELECT id_value FROM party_identification "
+        Set<String> copiedLegacyIds = new HashSet<>(jdbc.queryForList("SELECT id_value FROM party_identification "
                 + "WHERE party_identification_type_id = ?", String.class, LEGACY_ID));
-        int created = 0, skipped = 0, noCountry = 0;
-        for (int from = 0; from < rows.size(); from += CHUNK) {
-            List<Map<String, Object>> chunk = rows.subList(from, Math.min(rows.size(), from + CHUNK));
-            int[] counts = tx.execute(status -> {
-                em.setFlushMode(FlushModeType.COMMIT);
-                return copy(chunk, copied);
+
+        int created = 0;
+        int skipped = 0;
+        int withoutCountry = 0;
+        for (int start = 0; start < customers.size(); start += CHUNK_SIZE) {
+            List<Map<String, Object>> chunk = customers.subList(start, Math.min(customers.size(), start + CHUNK_SIZE));
+            ChunkCounts chunkCounts = transaction.execute(status -> {
+                entityManager.setFlushMode(FlushModeType.COMMIT);
+                return copyCustomers(chunk, copiedLegacyIds);
             });
-            created += counts[0];
-            skipped += counts[1];
-            noCountry += counts[2];
+            created += chunkCounts.created();
+            skipped += chunkCounts.skipped();
+            withoutCountry += chunkCounts.addressesWithoutCountryMatch();
         }
         log.info("Customer copy for tenant {}: {} scanned, {} created, {} already copied, {} addresses without a known country",
-                tenantId, rows.size(), created, skipped, noCountry);
-        return new Result(rows.size(), created, skipped, noCountry);
+                tenantId, customers.size(), created, skipped, withoutCountry);
+        return new Result(customers.size(), created, skipped, withoutCountry);
     }
 
-    private int[] copy(List<Map<String, Object>> chunk, Set<String> copied) {
-        int created = 0, skipped = 0, noCountry = 0;
-        for (Map<String, Object> r : chunk) {
-            String legacyId = String.valueOf(r.get("id"));
-            if (!copied.add(legacyId)) {
+    private ChunkCounts copyCustomers(List<Map<String, Object>> chunk, Set<String> copiedLegacyIds) {
+        int created = 0;
+        int skipped = 0;
+        int withoutCountry = 0;
+        for (Map<String, Object> customer : chunk) {
+            String legacyId = String.valueOf(customer.get("id"));
+            boolean firstTimeSeen = copiedLegacyIds.add(legacyId);
+            if (!firstTimeSeen) {
                 skipped++;
                 continue;
             }
-            String partyId = parties.createPerson(PartyService.PersonName.parse(str(r, "name")), str(r, "external_id"));
-            parties.addRole(partyId, "CUSTOMER");
-            parties.setIdentification(partyId, LEGACY_ID, legacyId);
-            parties.addEmail(partyId, str(r, "email"), "PRIMARY_EMAIL", "ORDER_EMAIL");
-            parties.addPhone(partyId, str(r, "phone"), "PRIMARY_PHONE");
-            if (str(r, "address_line1") != null || str(r, "city") != null) {
-                PartyService.AddressInput a = new PartyService.AddressInput(str(r, "full_name"), str(r, "address_line1"),
-                        str(r, "address_line2"), str(r, "city"), str(r, "state"), str(r, "postal_code"), str(r, "country"),
-                        null, null, (Boolean) r.get("is_residential"));
-                parties.addPostalAddress(partyId, a, "SHIPPING_LOCATION", "PRIMARY_LOCATION");
-                if (geos.countryId(a.country()).isEmpty()) noCountry++;
+            String partyId = partyService.createPerson(PartyService.PersonName.parse(text(customer, "name")), text(customer, "external_id"));
+            partyService.addRole(partyId, "CUSTOMER");
+            partyService.setIdentification(partyId, LEGACY_ID, legacyId);
+            partyService.addEmail(partyId, text(customer, "email"), "PRIMARY_EMAIL", "ORDER_EMAIL");
+            partyService.addPhone(partyId, text(customer, "phone"), "PRIMARY_PHONE");
+
+            boolean hasAddress = text(customer, "address_line1") != null || text(customer, "city") != null;
+            if (hasAddress) {
+                PartyService.AddressInput address = new PartyService.AddressInput(text(customer, "full_name"), text(customer, "address_line1"),
+                        text(customer, "address_line2"), text(customer, "city"), text(customer, "state"), text(customer, "postal_code"),
+                        text(customer, "country"), null, null, (Boolean) customer.get("is_residential"));
+                partyService.addPostalAddress(partyId, address, "SHIPPING_LOCATION", "PRIMARY_LOCATION");
+                if (geoService.countryId(address.country()).isEmpty()) {
+                    withoutCountry++;
+                }
             }
             created++;
         }
-        return new int[]{created, skipped, noCountry};
-    }
-
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null || String.valueOf(v).isBlank() ? null : String.valueOf(v);
+        return new ChunkCounts(created, skipped, withoutCountry);
     }
 
     /** For tests and reports: how many parties came from the legacy customer table. */
     public long copiedCount() {
-        Long n = jdbc.queryForObject("SELECT COUNT(*) FROM party_identification WHERE party_identification_type_id = ?", Long.class, LEGACY_ID);
-        return n == null ? 0 : n;
+        Long count = jdbc.queryForObject("SELECT COUNT(*) FROM party_identification WHERE party_identification_type_id = ?", Long.class, LEGACY_ID);
+        return count == null ? 0 : count;
     }
 }

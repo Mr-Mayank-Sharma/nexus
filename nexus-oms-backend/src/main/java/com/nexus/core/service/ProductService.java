@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -26,176 +27,263 @@ import java.util.Optional;
 @Transactional
 public class ProductService {
 
+    /** The store group a price applies to when it applies to every store. */
     public static final String ALL_STORES = "_NA_";
     public static final String PURCHASE = "PURCHASE";
+    static final String DEFAULT_PRODUCT_TYPE = "FINISHED_GOOD";
+    static final String DEFAULT_WEIGHT_UNIT = "WT_kg";
+    static final String CATALOG_CATEGORY = "CATALOG_CATEGORY";
 
-    private final EntityManager em;
-    private final SequenceService sequences;
+    private final EntityManager entityManager;
+    private final SequenceService sequenceService;
 
-    public ProductService(EntityManager em, SequenceService sequences) {
-        this.em = em;
-        this.sequences = sequences;
+    public ProductService(EntityManager entityManager, SequenceService sequenceService) {
+        this.entityManager = entityManager;
+        this.sequenceService = sequenceService;
     }
 
     public record NewProduct(String productTypeId, String productName, String internalName, String description,
                              String imageUrl, BigDecimal weight, String weightUomId, Boolean virtual, Boolean variant) {
     }
 
-    public String create(NewProduct n) {
-        Product p = new Product();
-        p.setProductId(sequences.nextId("Product"));
-        p.setProductTypeId(n.productTypeId() == null ? "FINISHED_GOOD" : n.productTypeId());
-        p.setProductName(trim(n.productName()));
-        p.setInternalName(trim(n.internalName()));
-        p.setDescription(trim(n.description()));
-        String img = trim(n.imageUrl());
-        p.setSmallImageUrl(img);
-        p.setMediumImageUrl(img);
-        p.setLargeImageUrl(img);
-        p.setOriginalImageUrl(img);
-        p.setProductWeight(n.weight());
-        p.setWeightUomId(n.weight() == null ? null : (n.weightUomId() == null ? "WT_kg" : n.weightUomId()));
-        p.setIsVirtual(Boolean.TRUE.equals(n.virtual()));
-        p.setIsVariant(Boolean.TRUE.equals(n.variant()));
-        p.setRequireInventory(true);
-        p.setReturnable(true);
-        p.setTaxable(true);
-        p.setChargeShipping(true);
-        p.setIntroductionDate(CoreClock.now());
-        em.persist(p);
-        return p.getProductId();
+    // ── products ──
+
+    /** Creates a product (a finished good unless a type is given) that needs stock, can be returned, and is taxed and shipped. */
+    public String create(NewProduct newProduct) {
+        Product product = new Product();
+        product.setProductId(sequenceService.nextId("Product"));
+        product.setProductTypeId(newProduct.productTypeId() == null ? DEFAULT_PRODUCT_TYPE : newProduct.productTypeId());
+        product.setProductName(blankToNull(newProduct.productName()));
+        product.setInternalName(blankToNull(newProduct.internalName()));
+        product.setDescription(blankToNull(newProduct.description()));
+        String imageUrl = blankToNull(newProduct.imageUrl());
+        product.setSmallImageUrl(imageUrl);
+        product.setMediumImageUrl(imageUrl);
+        product.setLargeImageUrl(imageUrl);
+        product.setOriginalImageUrl(imageUrl);
+        product.setProductWeight(newProduct.weight());
+        String weightUnit = newProduct.weightUomId() == null ? DEFAULT_WEIGHT_UNIT : newProduct.weightUomId();
+        product.setWeightUomId(newProduct.weight() == null ? null : weightUnit);
+        product.setIsVirtual(Boolean.TRUE.equals(newProduct.virtual()));
+        product.setIsVariant(Boolean.TRUE.equals(newProduct.variant()));
+        product.setRequireInventory(true);
+        product.setReturnable(true);
+        product.setTaxable(true);
+        product.setChargeShipping(true);
+        product.setIntroductionDate(CoreClock.now());
+        entityManager.persist(product);
+        return product.getProductId();
     }
+
+    // ── ids ──
 
     /** Sets the current id of a kind (ending any earlier one); a blank value does nothing. */
     public void setIdentification(String productId, String typeId, String value) {
-        if (value == null || value.isBlank()) return;
-        List<GoodIdentification> current = em.createQuery("SELECT g FROM GoodIdentification g WHERE g.productId = :p "
-                        + "AND g.goodIdentificationTypeId = :t AND g.thruDate IS NULL", GoodIdentification.class)
-                .setParameter("p", productId).setParameter("t", typeId).getResultList();
-        if (current.stream().anyMatch(g -> g.getIdValue().equals(value.trim()))) return;
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        String trimmedValue = value.trim();
+        List<GoodIdentification> current = entityManager.createQuery("SELECT g FROM GoodIdentification g WHERE g.productId = :productId "
+                        + "AND g.goodIdentificationTypeId = :typeId AND g.thruDate IS NULL", GoodIdentification.class)
+                .setParameter("productId", productId)
+                .setParameter("typeId", typeId)
+                .getResultList();
+        boolean alreadySet = current.stream().anyMatch(identification -> identification.getIdValue().equals(trimmedValue));
+        if (alreadySet) {
+            return;
+        }
         LocalDateTime now = CoreClock.now();
-        current.forEach(g -> g.setThruDate(now));
-        GoodIdentification g = new GoodIdentification();
-        g.setGoodIdentificationTypeId(typeId);
-        g.setProductId(productId);
-        g.setFromDate(now);
-        g.setIdValue(value.trim());
-        em.persist(g);
+        current.forEach(identification -> identification.setThruDate(now));
+
+        GoodIdentification identification = new GoodIdentification();
+        identification.setGoodIdentificationTypeId(typeId);
+        identification.setProductId(productId);
+        identification.setFromDate(now);
+        identification.setIdValue(trimmedValue);
+        entityManager.persist(identification);
     }
 
-    /** The product whose current id of this kind is the value (SKU, barcode, channel id). */
+    /** The product whose current id of this kind is the value (SKU, barcode, channel id); newest first when several share it. */
     @Transactional(readOnly = true)
     public Optional<String> findByIdentification(String typeId, String value) {
-        if (value == null || value.isBlank()) return Optional.empty();
-        return em.createQuery("SELECT g.productId FROM GoodIdentification g WHERE g.goodIdentificationTypeId = :t "
-                        + "AND g.idValue = :v AND g.thruDate IS NULL ORDER BY g.fromDate DESC", String.class)
-                .setParameter("t", typeId).setParameter("v", value.trim()).setMaxResults(1).getResultList().stream().findFirst();
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
+        return entityManager.createQuery("SELECT g.productId FROM GoodIdentification g WHERE g.goodIdentificationTypeId = :typeId "
+                        + "AND g.idValue = :value AND g.thruDate IS NULL ORDER BY g.fromDate DESC", String.class)
+                .setParameter("typeId", typeId)
+                .setParameter("value", value.trim())
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
+
+    /** A product as a picker shows it. */
+    public record ProductRef(String productId, String productName, String sku) {
+    }
+
+    /** Products whose name or current SKU contains the text (any case), by name. */
+    @Transactional(readOnly = true)
+    public List<ProductRef> search(String text, int limit) {
+        String pattern = "%" + (text == null ? "" : text.trim().toLowerCase(Locale.ROOT)) + "%";
+        return entityManager.createQuery("SELECT p.productId, p.productName, g.idValue FROM Product p, GoodIdentification g WHERE g.productId = p.productId "
+                        + "AND g.goodIdentificationTypeId = 'SKU' AND g.thruDate IS NULL AND (LOWER(p.productName) LIKE :pattern OR LOWER(g.idValue) LIKE :pattern) "
+                        + "ORDER BY p.productName", Object[].class)
+                .setParameter("pattern", pattern)
+                .setMaxResults(limit)
+                .getResultList()
+                .stream()
+                .map(row -> new ProductRef((String) row[0], (String) row[1], (String) row[2]))
+                .toList();
+    }
+
+    // ── links between products ──
 
     /** Links two products (variant, substitute, kit component) from now on; an existing current link is kept. */
     public void associate(String productId, String productIdTo, String assocTypeId, Long sequenceNum, BigDecimal quantity) {
-        if (productId.equals(productIdTo)) throw new IllegalArgumentException("A product can't be linked to itself");
-        if (!associated(productId, assocTypeId).contains(productIdTo)) {
-            ProductAssoc a = new ProductAssoc();
-            a.setProductId(productId);
-            a.setProductIdTo(productIdTo);
-            a.setProductAssocTypeId(assocTypeId);
-            a.setFromDate(CoreClock.now());
-            a.setSequenceNum(sequenceNum);
-            a.setQuantity(quantity);
-            em.persist(a);
+        if (productId.equals(productIdTo)) {
+            throw new IllegalArgumentException("A product can't be linked to itself");
         }
+        if (associated(productId, assocTypeId).contains(productIdTo)) {
+            return;
+        }
+        ProductAssoc link = new ProductAssoc();
+        link.setProductId(productId);
+        link.setProductIdTo(productIdTo);
+        link.setProductAssocTypeId(assocTypeId);
+        link.setFromDate(CoreClock.now());
+        link.setSequenceNum(sequenceNum);
+        link.setQuantity(quantity);
+        entityManager.persist(link);
     }
 
     /** Current links of a kind from a product, in sequence order: its variants, substitutes or components. */
     @Transactional(readOnly = true)
     public List<String> associated(String productId, String assocTypeId) {
         LocalDateTime now = CoreClock.now();
-        return em.createQuery("SELECT a.productIdTo FROM ProductAssoc a WHERE a.productId = :p AND a.productAssocTypeId = :t "
+        return entityManager.createQuery("SELECT a.productIdTo FROM ProductAssoc a WHERE a.productId = :productId AND a.productAssocTypeId = :typeId "
                         + "AND a.fromDate <= :now AND (a.thruDate IS NULL OR a.thruDate > :now) ORDER BY a.sequenceNum, a.fromDate", String.class)
-                .setParameter("p", productId).setParameter("t", assocTypeId).setParameter("now", now).getResultList();
+                .setParameter("productId", productId)
+                .setParameter("typeId", assocTypeId)
+                .setParameter("now", now)
+                .getResultList();
     }
+
+    // ── features and categories ──
 
     /** The feature (e.g. SIZE "9"), created once per type and code. */
     public String feature(String featureTypeId, String idCode, String description) {
-        List<String> found = em.createQuery("SELECT f.productFeatureId FROM ProductFeature f WHERE f.productFeatureTypeId = :t AND f.idCode = :c", String.class)
-                .setParameter("t", featureTypeId).setParameter("c", idCode).getResultList();
-        if (!found.isEmpty()) return found.get(0);
-        ProductFeature f = new ProductFeature();
-        f.setProductFeatureId(sequences.nextId("ProductFeature"));
-        f.setProductFeatureTypeId(featureTypeId);
-        f.setIdCode(idCode);
-        f.setDescription(description == null ? idCode : description);
-        em.persist(f);
-        return f.getProductFeatureId();
+        List<String> existing = entityManager.createQuery("SELECT f.productFeatureId FROM ProductFeature f WHERE f.productFeatureTypeId = :typeId "
+                        + "AND f.idCode = :code", String.class)
+                .setParameter("typeId", featureTypeId)
+                .setParameter("code", idCode)
+                .getResultList();
+        if (!existing.isEmpty()) {
+            return existing.get(0);
+        }
+        ProductFeature feature = new ProductFeature();
+        feature.setProductFeatureId(sequenceService.nextId("ProductFeature"));
+        feature.setProductFeatureTypeId(featureTypeId);
+        feature.setIdCode(idCode);
+        feature.setDescription(description == null ? idCode : description);
+        entityManager.persist(feature);
+        return feature.getProductFeatureId();
     }
 
+    /** Gives the product a feature, from now on. */
     public void applyFeature(String productId, String productFeatureId, String applTypeId) {
-        ProductFeatureAppl a = new ProductFeatureAppl();
-        a.setProductId(productId);
-        a.setProductFeatureId(productFeatureId);
-        a.setFromDate(CoreClock.now());
-        a.setProductFeatureApplTypeId(applTypeId);
-        em.persist(a);
+        ProductFeatureAppl application = new ProductFeatureAppl();
+        application.setProductId(productId);
+        application.setProductFeatureId(productFeatureId);
+        application.setFromDate(CoreClock.now());
+        application.setProductFeatureApplTypeId(applTypeId);
+        entityManager.persist(application);
     }
 
     /** The category with this name, created when missing. */
     public String category(String name) {
-        List<String> found = em.createQuery("SELECT c.productCategoryId FROM ProductCategory c WHERE c.categoryName = :n", String.class)
-                .setParameter("n", name.trim()).getResultList();
-        if (!found.isEmpty()) return found.get(0);
-        ProductCategory c = new ProductCategory();
-        c.setProductCategoryId(sequences.nextId("ProductCategory"));
-        c.setProductCategoryTypeId("CATALOG_CATEGORY");
-        c.setCategoryName(name.trim());
-        em.persist(c);
-        return c.getProductCategoryId();
+        List<String> existing = entityManager.createQuery("SELECT c.productCategoryId FROM ProductCategory c WHERE c.categoryName = :name", String.class)
+                .setParameter("name", name.trim())
+                .getResultList();
+        if (!existing.isEmpty()) {
+            return existing.get(0);
+        }
+        ProductCategory category = new ProductCategory();
+        category.setProductCategoryId(sequenceService.nextId("ProductCategory"));
+        category.setProductCategoryTypeId(CATALOG_CATEGORY);
+        category.setCategoryName(name.trim());
+        entityManager.persist(category);
+        return category.getProductCategoryId();
     }
 
+    /** Puts the product in a category from now on; {@code primary} also makes it the product's main category. */
     public void addToCategory(String productId, String productCategoryId, boolean primary) {
-        ProductCategoryMember m = new ProductCategoryMember();
-        m.setProductCategoryId(productCategoryId);
-        m.setProductId(productId);
-        m.setFromDate(CoreClock.now());
-        em.persist(m);
-        if (primary) em.find(Product.class, productId).setPrimaryProductCategoryId(productCategoryId);
+        ProductCategoryMember member = new ProductCategoryMember();
+        member.setProductCategoryId(productCategoryId);
+        member.setProductId(productId);
+        member.setFromDate(CoreClock.now());
+        entityManager.persist(member);
+        if (primary) {
+            entityManager.find(Product.class, productId).setPrimaryProductCategoryId(productCategoryId);
+        }
     }
 
-    /** Sets a price from now on, ending the current one of the same type, currency and store group. */
+    // ── prices ──
+
+    /** Sets a price from now on, ending the current one of the same type, currency and store group. A null price does nothing. */
     public void setPrice(String productId, String priceTypeId, String currencyUomId, String storeGroupId, BigDecimal price) {
-        if (price == null) return;
-        if (price.signum() < 0) throw new IllegalArgumentException("A price can't be negative");
-        String group = storeGroupId == null ? ALL_STORES : storeGroupId;
+        if (price == null) {
+            return;
+        }
+        if (price.signum() < 0) {
+            throw new IllegalArgumentException("A price can't be negative");
+        }
+        String storeGroup = storeGroupId == null ? ALL_STORES : storeGroupId;
         LocalDateTime now = CoreClock.now();
-        currentPrices(productId, priceTypeId, currencyUomId, group).forEach(p -> p.setThruDate(now));
-        ProductPrice p = new ProductPrice();
-        p.setProductId(productId);
-        p.setProductPriceTypeId(priceTypeId);
-        p.setProductPricePurposeId(PURCHASE);
-        p.setCurrencyUomId(currencyUomId);
-        p.setProductStoreGroupId(group);
-        p.setFromDate(now);
-        p.setPrice(price);
-        em.persist(p);
+        currentPrices(productId, priceTypeId, currencyUomId, storeGroup).forEach(earlierPrice -> earlierPrice.setThruDate(now));
+
+        ProductPrice newPrice = new ProductPrice();
+        newPrice.setProductId(productId);
+        newPrice.setProductPriceTypeId(priceTypeId);
+        newPrice.setProductPricePurposeId(PURCHASE);
+        newPrice.setCurrencyUomId(currencyUomId);
+        newPrice.setProductStoreGroupId(storeGroup);
+        newPrice.setFromDate(now);
+        newPrice.setPrice(price);
+        entityManager.persist(newPrice);
     }
 
     /** The current price: the store group's own price, else the all-stores price. */
     @Transactional(readOnly = true)
     public Optional<BigDecimal> price(String productId, String priceTypeId, String currencyUomId, String storeGroupId) {
-        if (storeGroupId != null && !ALL_STORES.equals(storeGroupId)) {
-            Optional<BigDecimal> own = currentPrices(productId, priceTypeId, currencyUomId, storeGroupId).stream().map(ProductPrice::getPrice).findFirst();
-            if (own.isPresent()) return own;
+        boolean ownGroup = storeGroupId != null && !ALL_STORES.equals(storeGroupId);
+        if (ownGroup) {
+            Optional<BigDecimal> groupPrice = newestPrice(productId, priceTypeId, currencyUomId, storeGroupId);
+            if (groupPrice.isPresent()) {
+                return groupPrice;
+            }
         }
-        return currentPrices(productId, priceTypeId, currencyUomId, ALL_STORES).stream().map(ProductPrice::getPrice).findFirst();
+        return newestPrice(productId, priceTypeId, currencyUomId, ALL_STORES);
     }
 
-    private List<ProductPrice> currentPrices(String productId, String typeId, String currency, String group) {
-        return em.createQuery("SELECT p FROM ProductPrice p WHERE p.productId = :id AND p.productPriceTypeId = :t AND p.currencyUomId = :c "
-                        + "AND p.productStoreGroupId = :g AND p.thruDate IS NULL ORDER BY p.fromDate DESC", ProductPrice.class)
-                .setParameter("id", productId).setParameter("t", typeId).setParameter("c", currency).setParameter("g", group).getResultList();
+    private Optional<BigDecimal> newestPrice(String productId, String priceTypeId, String currencyUomId, String storeGroupId) {
+        return currentPrices(productId, priceTypeId, currencyUomId, storeGroupId).stream().map(ProductPrice::getPrice).findFirst();
     }
 
-    private static String trim(String s) {
-        return s == null || s.isBlank() ? null : s.trim();
+    /** Prices not yet ended, newest first. */
+    private List<ProductPrice> currentPrices(String productId, String priceTypeId, String currencyUomId, String storeGroupId) {
+        return entityManager.createQuery("SELECT p FROM ProductPrice p WHERE p.productId = :productId AND p.productPriceTypeId = :priceTypeId "
+                        + "AND p.currencyUomId = :currency AND p.productStoreGroupId = :storeGroup AND p.thruDate IS NULL ORDER BY p.fromDate DESC",
+                        ProductPrice.class)
+                .setParameter("productId", productId)
+                .setParameter("priceTypeId", priceTypeId)
+                .setParameter("currency", currencyUomId)
+                .setParameter("storeGroup", storeGroupId)
+                .getResultList();
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

@@ -137,9 +137,9 @@ class JobsMessagesTest {
         assertEquals("SmsgError", v.statusId());
         assertEquals(1, v.failCount());
         assertTrue(v.lastError().contains("not JSON"), v.lastError());
-        int[] c = messages.consumeDue(50);
+        MessageService.ConsumeResult result = messages.consumeDue(50);
         assertEquals("SmsgError", messages.view(r.systemMessageId()).orElseThrow().statusId(), "not retried before its wait is over");
-        assertTrue(c[0] + c[1] >= 0);
+        assertTrue(result.consumed() + result.failed() >= 0);
         IllegalArgumentException unknown = assertThrows(IllegalArgumentException.class, () -> messages.receive("NOPE", "{}", null, null, null));
         assertTrue(unknown.getMessage().contains("does not accept"));
     }

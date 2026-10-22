@@ -237,7 +237,7 @@ Briefs, one per session, each following doc 25 section 3:
   ACTIVATE_ROUTING (approval swaps which group is scheduled; undo swaps back). API `POST /core/ai/exceptions` and
   `POST /core/ai/routing-drafts`. `AiAgentsTest` runs both with a scripted model, through approval and undo.
 - 13.4 Agent-ready order API (ACP and UCP) and agent-safe post-purchase changes.
-  **Status 2026-10-21: ACP-shaped API done; UCP and payment capture not.** `AgentCommerceService` and
+  **Status 2026-10-21: ACP-shaped API done; UCP and payment capture not.** `AgentCheckoutService`, `AgentOrderChangeService` and
   `/agent-commerce/` (agents authenticate with a per-store key, issued at `POST /core/gateway/stores/{id}/agent-key` and
   kept only as a hash): checkout sessions (create, update, get, complete, cancel; amounts in minor units; idempotent by
   store) priced from the product model, delivery options and dates from the promise service, tax from the store's

@@ -33,25 +33,41 @@ public class PartyService {
 
     public static final String STATUS_TYPE = "PARTY_STATUS";
 
-    private final EntityManager em;
-    private final SequenceService sequences;
-    private final StatusService statuses;
-    private final GeoService geos;
+    static final String PERSON = "PERSON";
+    static final String ORGANIZATION = "PARTY_GROUP";
+    static final String EMAIL = "EMAIL_ADDRESS";
+    static final String PHONE = "TELECOM_NUMBER";
+    static final String POSTAL_ADDRESS = "POSTAL_ADDRESS";
+    // Column lengths.
+    private static final int MAX_PHONE_LENGTH = 63;
+    private static final int MAX_USER_ID_LENGTH = 40;
 
-    public PartyService(EntityManager em, SequenceService sequences, StatusService statuses, GeoService geos) {
-        this.em = em;
-        this.sequences = sequences;
-        this.statuses = statuses;
-        this.geos = geos;
+    private final EntityManager entityManager;
+    private final SequenceService sequenceService;
+    private final StatusService statusService;
+    private final GeoService geoService;
+
+    public PartyService(EntityManager entityManager, SequenceService sequenceService, StatusService statusService, GeoService geoService) {
+        this.entityManager = entityManager;
+        this.sequenceService = sequenceService;
+        this.statusService = statusService;
+        this.geoService = geoService;
     }
 
     /** A person's name as given; one word goes to the first name. */
     public record PersonName(String firstName, String lastName) {
-        public static PersonName parse(String full) {
-            if (full == null || full.isBlank()) return new PersonName(null, null);
-            String t = full.trim().replaceAll("\\s+", " ");
-            int i = t.lastIndexOf(' ');
-            return i < 0 ? new PersonName(t, null) : new PersonName(t.substring(0, i), t.substring(i + 1));
+
+        /** Splits a full name at its last space: "Mary Ann Smith" is first name "Mary Ann", last name "Smith". */
+        public static PersonName parse(String fullName) {
+            if (fullName == null || fullName.isBlank()) {
+                return new PersonName(null, null);
+            }
+            String normalised = fullName.trim().replaceAll("\\s+", " ");
+            int lastSpace = normalised.lastIndexOf(' ');
+            if (lastSpace < 0) {
+                return new PersonName(normalised, null);
+            }
+            return new PersonName(normalised.substring(0, lastSpace), normalised.substring(lastSpace + 1));
         }
     }
 
@@ -59,169 +75,213 @@ public class PartyService {
                                String postalCode, String country, BigDecimal latitude, BigDecimal longitude, Boolean residential) {
     }
 
+    // ── parties ──
+
     public String createPerson(PersonName name, String externalId) {
-        Party p = newParty("PERSON", externalId);
+        Party party = newParty(PERSON, externalId);
         Person person = new Person();
-        person.setPartyId(p.getPartyId());
-        person.setFirstName(trim(name.firstName()));
-        person.setLastName(trim(name.lastName()));
-        em.persist(person);
-        return p.getPartyId();
+        person.setPartyId(party.getPartyId());
+        person.setFirstName(blankToNull(name.firstName()));
+        person.setLastName(blankToNull(name.lastName()));
+        entityManager.persist(person);
+        return party.getPartyId();
     }
 
     public String createOrganization(String groupName, String externalId) {
-        if (groupName == null || groupName.isBlank()) throw new IllegalArgumentException("An organisation needs a name");
-        Party p = newParty("PARTY_GROUP", externalId);
-        PartyGroup g = new PartyGroup();
-        g.setPartyId(p.getPartyId());
-        g.setGroupName(groupName.trim());
-        em.persist(g);
-        return p.getPartyId();
-    }
-
-    public void addRole(String partyId, String roleTypeId) {
-        if (em.find(PartyRole.class, new PartyRole.Key(partyId, roleTypeId)) == null) {
-            PartyRole r = new PartyRole();
-            r.setPartyId(partyId);
-            r.setRoleTypeId(roleTypeId);
-            em.persist(r);
+        if (groupName == null || groupName.isBlank()) {
+            throw new IllegalArgumentException("An organisation needs a name");
         }
+        Party party = newParty(ORGANIZATION, externalId);
+        PartyGroup group = new PartyGroup();
+        group.setPartyId(party.getPartyId());
+        group.setGroupName(groupName.trim());
+        entityManager.persist(group);
+        return party.getPartyId();
     }
 
+    /** Gives the party a role; a role it already has is kept. */
+    public void addRole(String partyId, String roleTypeId) {
+        boolean alreadyHasRole = entityManager.find(PartyRole.class, new PartyRole.Key(partyId, roleTypeId)) != null;
+        if (alreadyHasRole) {
+            return;
+        }
+        PartyRole role = new PartyRole();
+        role.setPartyId(partyId);
+        role.setRoleTypeId(roleTypeId);
+        entityManager.persist(role);
+    }
+
+    /** Sets the party's outside id of a kind, replacing the earlier value; a blank value does nothing. */
     public void setIdentification(String partyId, String typeId, String value) {
-        if (value == null || value.isBlank()) return;
-        PartyIdentification id = em.find(PartyIdentification.class, new PartyIdentification.Key(partyId, typeId));
-        if (id == null) {
-            id = new PartyIdentification();
-            id.setPartyId(partyId);
-            id.setPartyIdentificationTypeId(typeId);
-            id.setIdValue(value.trim());
-            em.persist(id);
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        PartyIdentification identification = entityManager.find(PartyIdentification.class, new PartyIdentification.Key(partyId, typeId));
+        if (identification == null) {
+            identification = new PartyIdentification();
+            identification.setPartyId(partyId);
+            identification.setPartyIdentificationTypeId(typeId);
+            identification.setIdValue(value.trim());
+            entityManager.persist(identification);
         } else {
-            id.setIdValue(value.trim());
+            identification.setIdValue(value.trim());
         }
     }
 
     @Transactional(readOnly = true)
     public Optional<String> findByIdentification(String typeId, String value) {
-        List<String> ids = em.createQuery("SELECT i.partyId FROM PartyIdentification i WHERE i.partyIdentificationTypeId = :t AND i.idValue = :v", String.class)
-                .setParameter("t", typeId).setParameter("v", value).getResultList();
-        return ids.stream().findFirst();
+        return entityManager.createQuery("SELECT i.partyId FROM PartyIdentification i WHERE i.partyIdentificationTypeId = :typeId AND i.idValue = :value",
+                        String.class)
+                .setParameter("typeId", typeId)
+                .setParameter("value", value)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
-    /** Adds an email (stored lower-case) with the given purposes and returns its contact id. */
+    /** Enables or disables a party, checking the status flow and keeping the history. */
+    public void setStatus(String partyId, String statusId) {
+        Party party = entityManager.find(Party.class, partyId);
+        if (party == null) {
+            throw new IllegalArgumentException("Unknown party " + partyId);
+        }
+        statusService.requireAllowed(null, party.getStatusId(), statusId);
+        party.setStatusId(statusId);
+        recordStatus(partyId, statusId);
+    }
+
+    // ── contacts ──
+
+    /** Adds an email (stored lower-case) with the given purposes and returns its contact id; null for a blank email. */
     public String addEmail(String partyId, String email, String... purposes) {
-        if (email == null || email.isBlank()) return null;
-        ContactMech cm = newContact("EMAIL_ADDRESS", email.trim().toLowerCase(Locale.ROOT));
-        link(partyId, cm.getContactMechId(), purposes);
-        return cm.getContactMechId();
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        ContactMech contact = newContact(EMAIL, email.trim().toLowerCase(Locale.ROOT));
+        linkToParty(partyId, contact.getContactMechId(), purposes);
+        return contact.getContactMechId();
     }
 
+    /** Adds a phone number (cut to the column's length) and returns its contact id; null for a blank number. */
     public String addPhone(String partyId, String number, String... purposes) {
-        if (number == null || number.isBlank()) return null;
-        ContactMech cm = newContact("TELECOM_NUMBER", null);
-        TelecomNumber t = new TelecomNumber();
-        t.setContactMechId(cm.getContactMechId());
-        t.setContactNumber(number.trim().length() > 63 ? number.trim().substring(0, 63) : number.trim());
-        em.persist(t);
-        link(partyId, cm.getContactMechId(), purposes);
-        return cm.getContactMechId();
+        if (number == null || number.isBlank()) {
+            return null;
+        }
+        ContactMech contact = newContact(PHONE, null);
+        String trimmedNumber = number.trim();
+        TelecomNumber phone = new TelecomNumber();
+        phone.setContactMechId(contact.getContactMechId());
+        phone.setContactNumber(trimmedNumber.length() > MAX_PHONE_LENGTH ? trimmedNumber.substring(0, MAX_PHONE_LENGTH) : trimmedNumber);
+        entityManager.persist(phone);
+        linkToParty(partyId, contact.getContactMechId(), purposes);
+        return contact.getContactMechId();
     }
 
-    /** Adds a postal address; country and state text are matched to geo ids when they can be. */
-    public String addPostalAddress(String partyId, AddressInput a, String... purposes) {
-        ContactMech cm = newContact("POSTAL_ADDRESS", null);
-        PostalAddress pa = new PostalAddress();
-        pa.setContactMechId(cm.getContactMechId());
-        pa.setToName(trim(a.toName()));
-        pa.setAddress1(trim(a.address1()));
-        pa.setAddress2(trim(a.address2()));
-        pa.setCity(trim(a.city()));
-        pa.setPostalCode(trim(a.postalCode()));
-        Optional<String> country = geos.countryId(a.country());
-        pa.setCountryGeoId(country.orElse(null));
-        pa.setStateProvinceGeoId(country.flatMap(c -> geos.stateId(c, a.state())).orElse(null));
-        pa.setLatitude(a.latitude());
-        pa.setLongitude(a.longitude());
-        pa.setIsResidential(a.residential());
-        em.persist(pa);
-        link(partyId, cm.getContactMechId(), purposes);
-        return cm.getContactMechId();
+    /** Adds a postal address and returns its contact id. Country and state text are matched to geo ids when they can be. */
+    public String addPostalAddress(String partyId, AddressInput input, String... purposes) {
+        ContactMech contact = newContact(POSTAL_ADDRESS, null);
+        PostalAddress address = new PostalAddress();
+        address.setContactMechId(contact.getContactMechId());
+        address.setToName(blankToNull(input.toName()));
+        address.setAddress1(blankToNull(input.address1()));
+        address.setAddress2(blankToNull(input.address2()));
+        address.setCity(blankToNull(input.city()));
+        address.setPostalCode(blankToNull(input.postalCode()));
+        Optional<String> countryGeoId = geoService.countryId(input.country());
+        address.setCountryGeoId(countryGeoId.orElse(null));
+        address.setStateProvinceGeoId(countryGeoId.flatMap(country -> geoService.stateId(country, input.state())).orElse(null));
+        address.setLatitude(input.latitude());
+        address.setLongitude(input.longitude());
+        address.setIsResidential(input.residential());
+        entityManager.persist(address);
+        linkToParty(partyId, contact.getContactMechId(), purposes);
+        return contact.getContactMechId();
     }
 
     /** Current (not ended) contact ids of a party for a purpose, newest first. */
     @Transactional(readOnly = true)
     public List<String> contacts(String partyId, String purposeTypeId) {
-        return em.createQuery("SELECT p.contactMechId FROM PartyContactMechPurpose p WHERE p.partyId = :party "
+        return entityManager.createQuery("SELECT p.contactMechId FROM PartyContactMechPurpose p WHERE p.partyId = :partyId "
                         + "AND p.contactMechPurposeTypeId = :purpose AND p.thruDate IS NULL ORDER BY p.fromDate DESC", String.class)
-                .setParameter("party", partyId).setParameter("purpose", purposeTypeId).getResultList();
+                .setParameter("partyId", partyId)
+                .setParameter("purpose", purposeTypeId)
+                .getResultList();
     }
 
+    /** Parties with this email as a current contact (matched case-insensitively). */
     @Transactional(readOnly = true)
     public List<String> findByEmail(String email) {
-        if (email == null || email.isBlank()) return List.of();
-        return em.createQuery("SELECT DISTINCT pcm.partyId FROM PartyContactMech pcm, ContactMech cm WHERE cm.contactMechId = pcm.contactMechId "
-                        + "AND cm.contactMechTypeId = 'EMAIL_ADDRESS' AND cm.infoString = :e AND pcm.thruDate IS NULL", String.class)
-                .setParameter("e", email.trim().toLowerCase(Locale.ROOT)).getResultList();
+        if (email == null || email.isBlank()) {
+            return List.of();
+        }
+        return entityManager.createQuery("SELECT DISTINCT link.partyId FROM PartyContactMech link, ContactMech contact "
+                        + "WHERE contact.contactMechId = link.contactMechId AND contact.contactMechTypeId = :emailType "
+                        + "AND contact.infoString = :email AND link.thruDate IS NULL", String.class)
+                .setParameter("emailType", EMAIL)
+                .setParameter("email", email.trim().toLowerCase(Locale.ROOT))
+                .getResultList();
     }
 
-    /** Enables or disables a party, checking the status flow and keeping the history. */
-    public void setStatus(String partyId, String statusId) {
-        Party p = em.find(Party.class, partyId);
-        if (p == null) throw new IllegalArgumentException("Unknown party " + partyId);
-        statuses.requireAllowed(null, p.getStatusId(), statusId);
-        p.setStatusId(statusId);
-        recordStatus(partyId, statusId);
+    // ── internals ──
+
+    private Party newParty(String partyTypeId, String externalId) {
+        Party party = new Party();
+        party.setPartyId(sequenceService.nextId("Party"));
+        party.setPartyTypeId(partyTypeId);
+        party.setExternalId(blankToNull(externalId));
+        party.setStatusId(statusService.initialStatus(null, STATUS_TYPE));
+        entityManager.persist(party);
+        recordStatus(party.getPartyId(), party.getStatusId());
+        return party;
     }
 
-    private Party newParty(String typeId, String externalId) {
-        Party p = new Party();
-        p.setPartyId(sequences.nextId("Party"));
-        p.setPartyTypeId(typeId);
-        p.setExternalId(trim(externalId));
-        p.setStatusId(statuses.initialStatus(null, STATUS_TYPE));
-        em.persist(p);
-        recordStatus(p.getPartyId(), p.getStatusId());
-        return p;
-    }
-
+    /** Writes a {@code party_status} row, by the signed-in user when there is one. */
     private void recordStatus(String partyId, String statusId) {
-        PartyStatus s = new PartyStatus();
-        s.setPartyId(partyId);
-        s.setStatusId(statusId);
-        s.setStatusDate(CoreClock.now());
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        s.setChangeByUserId(auth == null || auth.getName() == null ? null : auth.getName().substring(0, Math.min(40, auth.getName().length())));
-        em.persist(s);
+        PartyStatus history = new PartyStatus();
+        history.setPartyId(partyId);
+        history.setStatusId(statusId);
+        history.setStatusDate(CoreClock.now());
+        history.setChangeByUserId(signedInUser());
+        entityManager.persist(history);
     }
 
-    private ContactMech newContact(String typeId, String infoString) {
-        ContactMech cm = new ContactMech();
-        cm.setContactMechId(sequences.nextId("ContactMech"));
-        cm.setContactMechTypeId(typeId);
-        cm.setInfoString(infoString);
-        em.persist(cm);
-        return cm;
+    private static String signedInUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            return null;
+        }
+        String name = authentication.getName();
+        return name.substring(0, Math.min(MAX_USER_ID_LENGTH, name.length()));
     }
 
-    private void link(String partyId, String contactMechId, String... purposes) {
+    private ContactMech newContact(String contactMechTypeId, String infoString) {
+        ContactMech contact = new ContactMech();
+        contact.setContactMechId(sequenceService.nextId("ContactMech"));
+        contact.setContactMechTypeId(contactMechTypeId);
+        contact.setInfoString(infoString);
+        entityManager.persist(contact);
+        return contact;
+    }
+
+    /** Links the contact to the party from now, with each purpose. */
+    private void linkToParty(String partyId, String contactMechId, String... purposes) {
         LocalDateTime now = CoreClock.now();
-        PartyContactMech pcm = new PartyContactMech();
-        pcm.setPartyId(partyId);
-        pcm.setContactMechId(contactMechId);
-        pcm.setFromDate(now);
-        em.persist(pcm);
+        PartyContactMech link = new PartyContactMech();
+        link.setPartyId(partyId);
+        link.setContactMechId(contactMechId);
+        link.setFromDate(now);
+        entityManager.persist(link);
         for (String purpose : purposes) {
-            PartyContactMechPurpose pp = new PartyContactMechPurpose();
-            pp.setPartyId(partyId);
-            pp.setContactMechId(contactMechId);
-            pp.setContactMechPurposeTypeId(purpose);
-            pp.setFromDate(now);
-            em.persist(pp);
+            PartyContactMechPurpose purposeRow = new PartyContactMechPurpose();
+            purposeRow.setPartyId(partyId);
+            purposeRow.setContactMechId(contactMechId);
+            purposeRow.setContactMechPurposeTypeId(purpose);
+            purposeRow.setFromDate(now);
+            entityManager.persist(purposeRow);
         }
     }
 
-    private static String trim(String s) {
-        return s == null || s.isBlank() ? null : s.trim();
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

@@ -394,6 +394,25 @@ public class RoutingService {
         return swapped;
     }
 
+    /**
+     * Routing groups with a schedule whose last real run (simulations don't count) is at least that many minutes old,
+     * or that never ran.
+     */
+    public List<String> scheduledGroupsDue(LocalDateTime now) {
+        return transaction.execute(status -> entityManager.createQuery("SELECT g.routingGroupId, g.scheduleMinutes, MAX(r.startDate) FROM OrderRoutingGroup g "
+                        + "LEFT JOIN OrderRoutingRun r ON r.routingGroupId = g.routingGroupId AND r.isSimulation = false "
+                        + "WHERE g.scheduleMinutes IS NOT NULL AND g.scheduleMinutes > 0 GROUP BY g.routingGroupId, g.scheduleMinutes", Object[].class)
+                .getResultList()
+                .stream()
+                .filter(row -> {
+                    LocalDateTime lastRun = (LocalDateTime) row[2];
+                    long everyMinutes = ((Number) row[1]).longValue();
+                    return lastRun == null || !lastRun.plusMinutes(everyMinutes).isAfter(now);
+                })
+                .map(row -> (String) row[0])
+                .toList());
+    }
+
     // ── moving orders by hand or in bulk ──
 
     /**

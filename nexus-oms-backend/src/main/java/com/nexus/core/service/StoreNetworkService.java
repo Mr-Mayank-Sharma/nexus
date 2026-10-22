@@ -168,6 +168,28 @@ public class StoreNetworkService {
                 .getSingleResult();
     }
 
+    /** A product a location holds: what it may promise (sellable) and what it shows (available). */
+    public record StockAtLocation(String productId, String productName, String sku, BigDecimal sellable, BigDecimal available) {
+    }
+
+    /** Products in stock at a location whose name or SKU contains the text (any case), by name; at most 50. */
+    @Transactional(readOnly = true)
+    public List<StockAtLocation> stockAt(String facilityId, String text) {
+        String pattern = "%" + (text == null ? "" : text.trim().toLowerCase(Locale.ROOT)) + "%";
+        return entityManager.createQuery("SELECT p.productId, p.productName, g.idValue, pf.computedLastInventoryCount, pf.lastInventoryCount "
+                        + "FROM ProductFacility pf, Product p, GoodIdentification g WHERE p.productId = pf.productId AND g.productId = p.productId "
+                        + "AND g.goodIdentificationTypeId = 'SKU' AND g.thruDate IS NULL AND pf.facilityId = :facilityId AND pf.lastInventoryCount > 0 "
+                        + "AND (LOWER(p.productName) LIKE :pattern OR LOWER(g.idValue) LIKE :pattern) ORDER BY p.productName", Object[].class)
+                .setParameter("facilityId", facilityId)
+                .setParameter("pattern", pattern)
+                .setMaxResults(50)
+                .getResultList()
+                .stream()
+                .map(row -> new StockAtLocation((String) row[0], row[1] == null ? "" : (String) row[1], (String) row[2], (BigDecimal) row[3],
+                        (BigDecimal) row[4]))
+                .toList();
+    }
+
     // ── hold at another store for pickup ──
 
     /**

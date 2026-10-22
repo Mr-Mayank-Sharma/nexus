@@ -1,5 +1,6 @@
 package com.nexus.core.ai;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -18,11 +19,16 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Runs an agent (doc 25, section 2): the question goes to the model with the agent's tools; each tool the model calls
- * runs against the live OMS and its result goes back, masked; this repeats until the model answers or the step limit
- * is reached. An answer with no tool result behind it is marked not verified. Every run is an {@code ai_agent_run}
+ * Runs an agent (doc 25, section 2).
+ * <ol>
+ *   <li>The question goes to the model with the agent's tools.</li>
+ *   <li>Each tool the model calls runs against the live OMS, and its result goes back, masked.</li>
+ *   <li>This repeats until the model answers or the step limit is reached.</li>
+ * </ol>
+ * An answer with no successful tool result behind it is marked "Not verified". Every run is an {@code ai_agent_run}
  * row with the masked question, the tools called, the answer, tokens and cost; a daily token budget per agent
  * (system property {@code nexus.core / ai.dailyTokens}, default 2,000,000) stops runaway spend.
  */
@@ -30,6 +36,15 @@ import java.util.List;
 public class AgentRunner {
 
     static final ObjectMapper JSON = new ObjectMapper();
+
+    static final long DEFAULT_DAILY_TOKENS = 2_000_000;
+    // Default prices in dollars per million tokens, when no nexus.ai.price.MODEL property is set.
+    static final double DEFAULT_INPUT_PRICE = 3.0;
+    static final double DEFAULT_OUTPUT_PRICE = 15.0;
+    // Cache reads cost a tenth of input; cache writes a quarter more than input.
+    static final double CACHE_READ_FACTOR = 0.1;
+    static final double CACHE_WRITE_FACTOR = 1.25;
+    private static final int MAX_ERROR_LENGTH = 4000;
 
     /** A tool the agent offers: its definition for the model and the code that answers it. */
     public record AgentTool(LlmProvider.Tool spec, Handler handler) {
@@ -50,121 +65,191 @@ public class AgentRunner {
     public record Result(String runId, String answer, boolean grounded, List<ToolCall> toolCalls, LlmProvider.Usage usage, long costMicros) {
     }
 
-    private final EntityManager em;
-    private final SequenceService sequences;
-    private final SystemPropertyService properties;
-    private final Environment env;
-    private final TransactionTemplate tx;
-
-    public AgentRunner(EntityManager em, SequenceService sequences, SystemPropertyService properties, Environment env, PlatformTransactionManager tm) {
-        this.em = em;
-        this.sequences = sequences;
-        this.properties = properties;
-        this.env = env;
-        this.tx = new TransactionTemplate(tm);
-        this.tx.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    /** What a finished run writes to {@code ai_agent_run}. */
+    private record RunRecord(Agent agent, String userId, String maskedQuestion, List<ToolCall> toolCalls, String maskedAnswer, boolean grounded,
+                             String error, LlmProvider.Usage usage, long costMicros, LocalDateTime startedAt) {
     }
 
-    public Result run(Agent agent, String question, String userId, LlmProvider provider) {
-        if (question == null || question.isBlank()) throw new IllegalArgumentException("Ask a question");
-        if (!provider.available()) throw new IllegalStateException("AI is not set up: ANTHROPIC_API_KEY is missing");
-        long budget = properties.getLong("nexus.core", "ai.dailyTokens", 2_000_000);
-        long used = tokensToday(agent.name());
-        if (used >= budget) throw new IllegalStateException("The " + agent.name() + " agent has used its daily budget of " + budget + " tokens");
+    private final EntityManager entityManager;
+    private final SequenceService sequenceService;
+    private final SystemPropertyService systemPropertyService;
+    private final Environment environment;
+    private final TransactionTemplate newTransaction;
 
-        LocalDateTime started = CoreClock.now();
+    public AgentRunner(EntityManager entityManager, SequenceService sequenceService, SystemPropertyService systemPropertyService, Environment environment,
+                       PlatformTransactionManager transactionManager) {
+        this.entityManager = entityManager;
+        this.sequenceService = sequenceService;
+        this.systemPropertyService = systemPropertyService;
+        this.environment = environment;
+        this.newTransaction = new TransactionTemplate(transactionManager);
+        this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
+
+    /** Runs the agent on the question and returns its answer (names unmasked). The run is recorded even when it fails. */
+    public Result run(Agent agent, String question, String userId, LlmProvider provider) {
+        if (question == null || question.isBlank()) {
+            throw new IllegalArgumentException("Ask a question");
+        }
+        if (!provider.available()) {
+            throw new IllegalStateException("AI is not set up: ANTHROPIC_API_KEY is missing");
+        }
+        long dailyBudget = systemPropertyService.getLong("nexus.core", "ai.dailyTokens", DEFAULT_DAILY_TOKENS);
+        if (tokensToday(agent.name()) >= dailyBudget) {
+            throw new IllegalStateException("The " + agent.name() + " agent has used its daily budget of " + dailyBudget + " tokens");
+        }
+
+        LocalDateTime startedAt = CoreClock.now();
         Masker masker = new Masker();
-        ArrayNode messages = JSON.createArrayNode();
-        messages.addObject().put("role", "user").put("content", masker.mask(question));
-        List<LlmProvider.Tool> specs = agent.tools().stream().map(AgentTool::spec).toList();
-        List<ToolCall> calls = new ArrayList<>();
+        String maskedQuestion = masker.mask(question);
+        ArrayNode conversation = JSON.createArrayNode();
+        conversation.addObject().put("role", "user").put("content", maskedQuestion);
+        List<LlmProvider.Tool> toolSpecs = agent.tools().stream().map(AgentTool::spec).toList();
+        List<ToolCall> toolCalls = new ArrayList<>();
         LlmProvider.Usage usage = LlmProvider.Usage.NONE;
         StringBuilder answer = new StringBuilder();
         String error = null;
+
         try {
             for (int step = 0; step < agent.maxSteps(); step++) {
-                LlmProvider.Response r = provider.complete(new LlmProvider.Request(agent.model(), agent.systemPrompt(), specs, messages, agent.maxTokens()));
-                usage = usage.plus(r.usage());
-                messages.addObject().put("role", "assistant").set("content", r.content());
-                ArrayNode results = JSON.createArrayNode();
+                LlmProvider.Request request = new LlmProvider.Request(agent.model(), agent.systemPrompt(), toolSpecs, conversation, agent.maxTokens());
+                LlmProvider.Response response = provider.complete(request);
+                usage = usage.plus(response.usage());
+                conversation.addObject().put("role", "assistant").set("content", response.content());
+
+                // The model's text so far is the answer; its tool calls are answered from live data.
                 answer.setLength(0);
-                for (JsonNode block : r.content()) {
-                    if ("text".equals(block.path("type").asText())) answer.append(block.path("text").asText());
-                    if (!"tool_use".equals(block.path("type").asText())) continue;
-                    String name = block.path("name").asText();
-                    AgentTool tool = agent.tools().stream().filter(t -> t.spec().name().equals(name)).findFirst().orElse(null);
-                    String out;
-                    boolean failed = false;
-                    try {
-                        if (tool == null) throw new IllegalArgumentException("There is no tool called " + name);
-                        out = masker.mask(JSON.writeValueAsString(tool.handler().call(block.path("input"), masker)));
-                    } catch (Exception e) {
-                        out = "Error: " + e.getMessage();
-                        failed = true;
+                ArrayNode toolResults = JSON.createArrayNode();
+                for (JsonNode block : response.content()) {
+                    String blockType = block.path("type").asText();
+                    if ("text".equals(blockType)) {
+                        answer.append(block.path("text").asText());
+                    } else if ("tool_use".equals(blockType)) {
+                        ToolCall call = callTool(agent, block, masker);
+                        toolCalls.add(call);
+                        ObjectNode toolResult = toolResults.addObject()
+                                .put("type", "tool_result")
+                                .put("tool_use_id", block.path("id").asText())
+                                .put("content", call.output());
+                        if (call.error()) {
+                            toolResult.put("is_error", true);
+                        }
                     }
-                    calls.add(new ToolCall(name, block.path("input"), out, failed));
-                    ObjectNode res = results.addObject().put("type", "tool_result").put("tool_use_id", block.path("id").asText()).put("content", out);
-                    if (failed) res.put("is_error", true);
                 }
-                if (results.isEmpty() || !"tool_use".equals(r.stopReason())) break;
-                messages.addObject().put("role", "user").set("content", results);
-                if (step == agent.maxSteps() - 1) answer.append("I stopped after ").append(agent.maxSteps()).append(" steps without a full answer.");
+                boolean modelIsDone = toolResults.isEmpty() || !"tool_use".equals(response.stopReason());
+                if (modelIsDone) {
+                    break;
+                }
+                conversation.addObject().put("role", "user").set("content", toolResults);
+                if (step == agent.maxSteps() - 1) {
+                    answer.append("I stopped after ").append(agent.maxSteps()).append(" steps without a full answer.");
+                }
             }
-        } catch (RuntimeException e) {
-            error = e.getMessage();
+        } catch (RuntimeException failure) {
+            error = failure.getMessage();
         }
-        boolean grounded = calls.stream().anyMatch(c -> !c.error());
-        String masked = answer.toString().trim();
-        if (!grounded && error == null) masked = "Not verified: " + masked;
-        long cost = cost(agent.model(), usage);
-        String runId = record(agent, userId, masker.mask(question), calls, error == null ? masked : null, grounded, error, usage, cost, started);
-        if (error != null) throw new IllegalStateException("The " + agent.name() + " agent failed: " + error);
-        return new Result(runId, masker.unmask(masked), grounded, calls, usage, cost);
+
+        boolean grounded = toolCalls.stream().anyMatch(call -> !call.error());
+        String maskedAnswer = answer.toString().trim();
+        if (!grounded && error == null) {
+            maskedAnswer = "Not verified: " + maskedAnswer;
+        }
+        long costMicros = costMicros(agent.model(), usage);
+        String runId = recordRun(new RunRecord(agent, userId, maskedQuestion, toolCalls, error == null ? maskedAnswer : null, grounded, error, usage,
+                costMicros, startedAt));
+        if (error != null) {
+            throw new IllegalStateException("The " + agent.name() + " agent failed: " + error);
+        }
+        return new Result(runId, masker.unmask(maskedAnswer), grounded, toolCalls, usage, costMicros);
     }
 
+    /** Runs one tool the model asked for; a missing tool or a failure becomes an error result the model can read. */
+    private static ToolCall callTool(Agent agent, JsonNode toolUseBlock, Masker masker) {
+        String toolName = toolUseBlock.path("name").asText();
+        JsonNode input = toolUseBlock.path("input");
+        Optional<AgentTool> tool = agent.tools().stream().filter(candidate -> candidate.spec().name().equals(toolName)).findFirst();
+        try {
+            if (tool.isEmpty()) {
+                throw new IllegalArgumentException("There is no tool called " + toolName);
+            }
+            JsonNode output = tool.get().handler().call(input, masker);
+            return new ToolCall(toolName, input, masker.mask(JSON.writeValueAsString(output)), false);
+        } catch (Exception failure) {
+            return new ToolCall(toolName, input, "Error: " + failure.getMessage(), true);
+        }
+    }
+
+    /** One recorded run, as the audit screen shows it (question and answer in their masked form). */
+    public record RunSummary(String aiRunId, String agentName, String userId, String modelId, String question, String toolCalls, String answer,
+                             Boolean grounded, String statusId, String errorText, Long inputTokens, Long outputTokens, Long cacheReadTokens,
+                             Long costMicros, LocalDateTime startedAt, LocalDateTime endedAt) {
+    }
+
+    /** The latest runs of every agent, newest first. */
+    public List<RunSummary> recentRuns(int limit) {
+        return newTransaction.execute(status -> entityManager.createQuery("SELECT r FROM AiAgentRun r ORDER BY r.startedAt DESC", AiAgentRun.class)
+                .setMaxResults(limit)
+                .getResultList()
+                .stream()
+                .map(run -> new RunSummary(run.getAiRunId(), run.getAgentName(), run.getUserId(), run.getModelId(), run.getQuestion(), run.getToolCalls(),
+                        run.getAnswer(), run.getGrounded(), run.getStatusId(), run.getErrorText(), run.getInputTokens(), run.getOutputTokens(),
+                        run.getCacheReadTokens(), run.getCostMicros(), run.getStartedAt(), run.getEndedAt()))
+                .toList());
+    }
+
+    /** Tokens the agent used since midnight (UTC), input and output. */
     public long tokensToday(String agentName) {
         LocalDateTime midnight = CoreClock.now().toLocalDate().atStartOfDay();
-        Long v = tx.execute(s -> em.createQuery("SELECT SUM(COALESCE(r.inputTokens, 0) + COALESCE(r.outputTokens, 0)) FROM AiAgentRun r "
-                + "WHERE r.agentName = :a AND r.startedAt >= :d", Long.class).setParameter("a", agentName).setParameter("d", midnight).getSingleResult());
-        return v == null ? 0 : v;
+        Long tokens = newTransaction.execute(status -> entityManager.createQuery("SELECT SUM(COALESCE(r.inputTokens, 0) + COALESCE(r.outputTokens, 0)) "
+                        + "FROM AiAgentRun r WHERE r.agentName = :agentName AND r.startedAt >= :midnight", Long.class)
+                .setParameter("agentName", agentName)
+                .setParameter("midnight", midnight)
+                .getSingleResult());
+        return tokens == null ? 0 : tokens;
     }
 
     /** Cost in millionths of a dollar from per-model prices per million tokens (properties nexus.ai.price.MODEL.input/output). */
-    long cost(String model, LlmProvider.Usage u) {
-        double in = env.getProperty("nexus.ai.price." + model + ".input", Double.class, 3.0);
-        double out = env.getProperty("nexus.ai.price." + model + ".output", Double.class, 15.0);
-        // cache reads cost a tenth of input, cache writes a quarter more
-        double dollars = (u.inputTokens() * in + u.cacheReadTokens() * in * 0.1 + u.cacheWriteTokens() * in * 1.25 + u.outputTokens() * out) / 1_000_000.0;
+    long costMicros(String model, LlmProvider.Usage usage) {
+        double inputPrice = environment.getProperty("nexus.ai.price." + model + ".input", Double.class, DEFAULT_INPUT_PRICE);
+        double outputPrice = environment.getProperty("nexus.ai.price." + model + ".output", Double.class, DEFAULT_OUTPUT_PRICE);
+        double dollars = (usage.inputTokens() * inputPrice
+                + usage.cacheReadTokens() * inputPrice * CACHE_READ_FACTOR
+                + usage.cacheWriteTokens() * inputPrice * CACHE_WRITE_FACTOR
+                + usage.outputTokens() * outputPrice) / 1_000_000.0;
         return Math.round(dollars * 1_000_000);
     }
 
-    private String record(Agent agent, String userId, String question, List<ToolCall> calls, String answer, boolean grounded, String error,
-                          LlmProvider.Usage u, long cost, LocalDateTime started) {
-        return tx.execute(s -> {
-            AiAgentRun r = new AiAgentRun();
-            r.setAiRunId(sequences.nextId("AiAgentRun"));
-            r.setAgentName(agent.name());
-            r.setUserId(userId);
-            r.setModelId(agent.model());
-            r.setQuestion(question);
-            try {
-                r.setToolCalls(JSON.writeValueAsString(calls));
-            } catch (Exception e) {
-                r.setToolCalls("[]");
-            }
-            r.setAnswer(answer);
-            r.setGrounded(grounded);
-            r.setStatusId(error == null ? "DONE" : "FAILED");
-            r.setErrorText(error == null ? null : error.length() > 4000 ? error.substring(0, 4000) : error);
-            r.setInputTokens(u.inputTokens());
-            r.setOutputTokens(u.outputTokens());
-            r.setCacheReadTokens(u.cacheReadTokens());
-            r.setCacheWriteTokens(u.cacheWriteTokens());
-            r.setCostMicros(cost);
-            r.setStartedAt(started);
-            r.setEndedAt(CoreClock.now());
-            em.persist(r);
-            return r.getAiRunId();
+    private String recordRun(RunRecord run) {
+        return newTransaction.execute(status -> {
+            AiAgentRun row = new AiAgentRun();
+            row.setAiRunId(sequenceService.nextId("AiAgentRun"));
+            row.setAgentName(run.agent().name());
+            row.setUserId(run.userId());
+            row.setModelId(run.agent().model());
+            row.setQuestion(run.maskedQuestion());
+            row.setToolCalls(toJsonOrEmpty(run.toolCalls()));
+            row.setAnswer(run.maskedAnswer());
+            row.setGrounded(run.grounded());
+            row.setStatusId(run.error() == null ? "DONE" : "FAILED");
+            String error = run.error();
+            row.setErrorText(error == null || error.length() <= MAX_ERROR_LENGTH ? error : error.substring(0, MAX_ERROR_LENGTH));
+            row.setInputTokens(run.usage().inputTokens());
+            row.setOutputTokens(run.usage().outputTokens());
+            row.setCacheReadTokens(run.usage().cacheReadTokens());
+            row.setCacheWriteTokens(run.usage().cacheWriteTokens());
+            row.setCostMicros(run.costMicros());
+            row.setStartedAt(run.startedAt());
+            row.setEndedAt(CoreClock.now());
+            entityManager.persist(row);
+            return row.getAiRunId();
         });
+    }
+
+    private static String toJsonOrEmpty(List<ToolCall> toolCalls) {
+        try {
+            return JSON.writeValueAsString(toolCalls);
+        } catch (JsonProcessingException notSerializable) {
+            return "[]";
+        }
     }
 }

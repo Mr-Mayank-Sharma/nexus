@@ -35,13 +35,17 @@ public final class CoreSchemaMigrator {
 
     /** "postgresql" or "mysql", from the connection; anything else is refused rather than guessed. */
     public static String vendor(DataSource dataSource) {
-        try (Connection c = dataSource.getConnection()) {
-            String product = c.getMetaData().getDatabaseProductName().toLowerCase(Locale.ROOT);
-            if (product.contains("postgres")) return "postgresql";
-            if (product.contains("mysql") || product.contains("mariadb")) return "mysql";
+        try (Connection connection = dataSource.getConnection()) {
+            String product = connection.getMetaData().getDatabaseProductName().toLowerCase(Locale.ROOT);
+            if (product.contains("postgres")) {
+                return "postgresql";
+            }
+            if (product.contains("mysql") || product.contains("mariadb")) {
+                return "mysql";
+            }
             throw new IllegalStateException("The Nexus core schema supports PostgreSQL and MySQL, not " + product);
-        } catch (SQLException e) {
-            throw new IllegalStateException("Could not read the database type", e);
+        } catch (SQLException unreadable) {
+            throw new IllegalStateException("Could not read the database type", unreadable);
         }
     }
 }

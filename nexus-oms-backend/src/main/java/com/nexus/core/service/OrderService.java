@@ -331,13 +331,20 @@ public class OrderService {
 
     // ── ship groups ──
 
+    /** The ship group; a missing one is an error. */
     @Transactional(readOnly = true)
     public OrderItemShipGroup shipGroup(String orderId, String shipGroupSeqId) {
-        OrderItemShipGroup shipGroup = entityManager.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId));
+        OrderItemShipGroup shipGroup = shipGroupOrNull(orderId, shipGroupSeqId);
         if (shipGroup == null) {
             throw new IllegalArgumentException("Order " + orderId + " has no ship group " + shipGroupSeqId);
         }
         return shipGroup;
+    }
+
+    /** The ship group, or null when the order has no such group. */
+    @Transactional(readOnly = true)
+    public OrderItemShipGroup shipGroupOrNull(String orderId, String shipGroupSeqId) {
+        return entityManager.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId));
     }
 
     /** Sets where a ship group ships from; null puts it back in the routing queue. */

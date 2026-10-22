@@ -11,39 +11,52 @@ import java.util.Optional;
 
 /**
  * Turns the free text channels and old records hold ("US", "United States", "usa"; "NJ", "New Jersey", "US-NJ")
- * into geo ids. Unknown text returns empty rather than a guess.
+ * into geo ids. Unknown or ambiguous text returns empty rather than a guess.
  */
 @Service("coreGeoService")
 @Transactional(readOnly = true)
 public class GeoService {
 
-    private final EntityManager em;
+    private final EntityManager entityManager;
 
-    public GeoService(EntityManager em) {
-        this.em = em;
+    public GeoService(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
+    /** A country by id, two- or three-letter code, or name, matched without case. */
     public Optional<String> countryId(String text) {
-        if (blank(text)) return Optional.empty();
-        String t = text.trim();
-        List<Geo> found = em.createQuery("SELECT g FROM Geo g WHERE g.geoTypeEnumId = 'GEOT_COUNTRY' AND (UPPER(g.geoId) = :u "
-                        + "OR UPPER(g.geoCodeAlpha2) = :u OR UPPER(g.geoCodeAlpha3) = :u OR LOWER(g.geoName) = :l)", Geo.class)
-                .setParameter("u", t.toUpperCase(Locale.ROOT)).setParameter("l", t.toLowerCase(Locale.ROOT)).getResultList();
-        return found.size() == 1 ? Optional.of(found.get(0).getGeoId()) : Optional.empty();
+        if (isBlank(text)) {
+            return Optional.empty();
+        }
+        String trimmed = text.trim();
+        List<Geo> matches = entityManager.createQuery("SELECT g FROM Geo g WHERE g.geoTypeEnumId = 'GEOT_COUNTRY' AND (UPPER(g.geoId) = :upperText "
+                        + "OR UPPER(g.geoCodeAlpha2) = :upperText OR UPPER(g.geoCodeAlpha3) = :upperText OR LOWER(g.geoName) = :lowerText)", Geo.class)
+                .setParameter("upperText", trimmed.toUpperCase(Locale.ROOT))
+                .setParameter("lowerText", trimmed.toLowerCase(Locale.ROOT))
+                .getResultList();
+        return onlyMatch(matches);
     }
 
     /** A state inside the given country, by code ("NJ"), full id ("US-NJ") or name ("New Jersey"). */
     public Optional<String> stateId(String countryGeoId, String text) {
-        if (blank(text) || blank(countryGeoId)) return Optional.empty();
-        String t = text.trim();
-        List<Geo> found = em.createQuery("SELECT g FROM Geo g, GeoAssoc a WHERE a.geoId = :c AND a.toGeoId = g.geoId "
-                        + "AND (UPPER(g.geoId) = :u OR UPPER(g.abbreviation) = :u OR LOWER(g.geoName) = :l)", Geo.class)
-                .setParameter("c", countryGeoId).setParameter("u", t.toUpperCase(Locale.ROOT))
-                .setParameter("l", t.toLowerCase(Locale.ROOT)).getResultList();
-        return found.size() == 1 ? Optional.of(found.get(0).getGeoId()) : Optional.empty();
+        if (isBlank(text) || isBlank(countryGeoId)) {
+            return Optional.empty();
+        }
+        String trimmed = text.trim();
+        List<Geo> matches = entityManager.createQuery("SELECT g FROM Geo g, GeoAssoc a WHERE a.geoId = :countryId AND a.toGeoId = g.geoId "
+                        + "AND (UPPER(g.geoId) = :upperText OR UPPER(g.abbreviation) = :upperText OR LOWER(g.geoName) = :lowerText)", Geo.class)
+                .setParameter("countryId", countryGeoId)
+                .setParameter("upperText", trimmed.toUpperCase(Locale.ROOT))
+                .setParameter("lowerText", trimmed.toLowerCase(Locale.ROOT))
+                .getResultList();
+        return onlyMatch(matches);
     }
 
-    private static boolean blank(String s) {
-        return s == null || s.isBlank();
+    private static Optional<String> onlyMatch(List<Geo> matches) {
+        return matches.size() == 1 ? Optional.of(matches.get(0).getGeoId()) : Optional.empty();
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

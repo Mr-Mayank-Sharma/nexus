@@ -11,49 +11,57 @@ import java.util.Optional;
 @Service("coreSystemPropertyService")
 public class SystemPropertyService {
 
-    private final EntityManager em;
+    private final EntityManager entityManager;
 
-    public SystemPropertyService(EntityManager em) {
-        this.em = em;
+    public SystemPropertyService(EntityManager entityManager) {
+        this.entityManager = entityManager;
     }
 
+    /** The setting; empty when it is not set or blank. */
     @Transactional(readOnly = true)
     public Optional<String> get(String resource, String propertyId) {
-        SystemProperty p = em.find(SystemProperty.class, new SystemProperty.Key(resource, propertyId));
-        return Optional.ofNullable(p).map(SystemProperty::getSystemPropertyValue).filter(v -> !v.isBlank());
+        SystemProperty property = entityManager.find(SystemProperty.class, new SystemProperty.Key(resource, propertyId));
+        return Optional.ofNullable(property).map(SystemProperty::getSystemPropertyValue).filter(value -> !value.isBlank());
     }
 
     public String get(String resource, String propertyId, String fallback) {
         return get(resource, propertyId).orElse(fallback);
     }
 
+    /** A whole-number setting, or the fallback when it is not set; a setting that isn't a number is an error. */
     public long getLong(String resource, String propertyId, long fallback) {
-        return get(resource, propertyId).map(v -> {
+        return get(resource, propertyId).map(value -> {
             try {
-                return Long.parseLong(v.trim());
-            } catch (NumberFormatException e) {
-                throw new IllegalStateException("Setting " + resource + "/" + propertyId + " should be a whole number, but is '" + v + "'");
+                return Long.parseLong(value.trim());
+            } catch (NumberFormatException notANumber) {
+                throw new IllegalStateException("Setting " + resource + "/" + propertyId + " should be a whole number, but is '" + value + "'");
             }
         }).orElse(fallback);
     }
 
+    /** "true" or "Y" (any case) is true; anything else set is false; not set is the fallback. */
     public boolean getBoolean(String resource, String propertyId, boolean fallback) {
-        return get(resource, propertyId).map(v -> v.trim().equalsIgnoreCase("true") || v.trim().equalsIgnoreCase("Y")).orElse(fallback);
+        return get(resource, propertyId)
+                .map(value -> value.trim().equalsIgnoreCase("true") || value.trim().equalsIgnoreCase("Y"))
+                .orElse(fallback);
     }
 
+    /** Sets the setting, creating it when missing; a null description keeps the one it had. */
     @Transactional
     public void set(String resource, String propertyId, String value, String description) {
-        SystemProperty p = em.find(SystemProperty.class, new SystemProperty.Key(resource, propertyId));
-        if (p == null) {
-            p = new SystemProperty();
-            p.setSystemResourceId(resource);
-            p.setSystemPropertyId(propertyId);
-            p.setSystemPropertyValue(value);
-            p.setDescription(description);
-            em.persist(p);
+        SystemProperty property = entityManager.find(SystemProperty.class, new SystemProperty.Key(resource, propertyId));
+        if (property == null) {
+            property = new SystemProperty();
+            property.setSystemResourceId(resource);
+            property.setSystemPropertyId(propertyId);
+            property.setSystemPropertyValue(value);
+            property.setDescription(description);
+            entityManager.persist(property);
         } else {
-            p.setSystemPropertyValue(value);
-            if (description != null) p.setDescription(description);
+            property.setSystemPropertyValue(value);
+            if (description != null) {
+                property.setDescription(description);
+            }
         }
     }
 }

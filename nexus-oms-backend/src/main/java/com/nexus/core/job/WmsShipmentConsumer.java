@@ -14,46 +14,66 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Consumes WMS_SHIPMENT_CONFIRMATION (doc 27, section 3.4) into a shipped shipment. Safe to consume twice. */
+/**
+ * Consumes WMS_SHIPMENT_CONFIRMATION (doc 27, section 3.4) into a shipped shipment: the boxes with their tracking codes
+ * and contents (quantity per order item), the carrier and when it shipped. Safe to consume twice: the shipment service
+ * recognises the same WMS shipment id.
+ */
 @Component("coreWmsShipmentConsumer")
 public class WmsShipmentConsumer implements CoreMessageHandler {
 
-    private final ShipmentService shipments;
-    private final ObjectMapper json = new ObjectMapper();
+    static final String WMS_USER = "wms";
 
-    public WmsShipmentConsumer(ShipmentService shipments) {
-        this.shipments = shipments;
+    private final ShipmentService shipmentService;
+    private final ObjectMapper jsonMapper = new ObjectMapper();
+
+    public WmsShipmentConsumer(ShipmentService shipmentService) {
+        this.shipmentService = shipmentService;
     }
 
     @Override
     public void consume(String systemMessageId, String messageText) {
-        JsonNode m;
+        JsonNode message;
         try {
-            m = json.readTree(messageText);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("The shipment confirmation is not JSON: " + e.getMessage());
+            message = jsonMapper.readTree(messageText);
+        } catch (Exception notJson) {
+            throw new IllegalArgumentException("The shipment confirmation is not JSON: " + notJson.getMessage());
         }
+
         List<ShipmentService.ConfirmedPackage> packages = new ArrayList<>();
-        for (JsonNode p : m.path("packages")) {
-            Map<String, BigDecimal> contents = new LinkedHashMap<>();
-            for (JsonNode c : p.path("contents")) contents.merge(text(c, "orderItemSeqId"), new BigDecimal(c.path("quantity").asText()), BigDecimal::add);
-            packages.add(new ShipmentService.ConfirmedPackage(text(p, "trackingCode"), p.hasNonNull("weight") ? new BigDecimal(p.get("weight").asText()) : null,
-                    text(p, "weightUomId"), text(p, "boxTypeId"), contents));
+        for (JsonNode packageNode : message.path("packages")) {
+            Map<String, BigDecimal> quantityByOrderItem = new LinkedHashMap<>();
+            for (JsonNode content : packageNode.path("contents")) {
+                quantityByOrderItem.merge(text(content, "orderItemSeqId"), new BigDecimal(content.path("quantity").asText()), BigDecimal::add);
+            }
+            BigDecimal weight = packageNode.hasNonNull("weight") ? new BigDecimal(packageNode.get("weight").asText()) : null;
+            packages.add(new ShipmentService.ConfirmedPackage(text(packageNode, "trackingCode"), weight, text(packageNode, "weightUomId"),
+                    text(packageNode, "boxTypeId"), quantityByOrderItem));
         }
-        String shipped = text(m, "shippedAt");
-        LocalDateTime at = shipped == null ? null : OffsetDateTime.parse(shipped).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime();
-        shipments.confirm(new ShipmentService.Confirmation(required(m, "shipmentId"), required(m, "orderId"), required(m, "shipGroupSeqId"), at,
-                text(m, "carrierPartyId"), text(m, "shipmentMethodTypeId"), packages), "wms");
+
+        // Times arrive with an offset; the core keeps UTC.
+        String shippedAtText = text(message, "shippedAt");
+        LocalDateTime shippedAt = shippedAtText == null
+                ? null
+                : OffsetDateTime.parse(shippedAtText).withOffsetSameInstant(ZoneOffset.UTC).toLocalDateTime();
+
+        ShipmentService.Confirmation confirmation = new ShipmentService.Confirmation(required(message, "shipmentId"), required(message, "orderId"),
+                required(message, "shipGroupSeqId"), shippedAt, text(message, "carrierPartyId"), text(message, "shipmentMethodTypeId"), packages);
+        shipmentService.confirm(confirmation, WMS_USER);
     }
 
-    static String text(JsonNode n, String field) {
-        JsonNode v = n.get(field);
-        return v == null || v.isNull() || v.asText().isBlank() ? null : v.asText();
+    /** A text field, or null when it is missing, null or blank. */
+    static String text(JsonNode node, String field) {
+        JsonNode value = node.get(field);
+        return value == null || value.isNull() || value.asText().isBlank() ? null : value.asText();
     }
 
-    static String required(JsonNode n, String field) {
-        String v = text(n, field);
-        if (v == null) throw new IllegalArgumentException("The message has no " + field);
-        return v;
+    /** A text field that must be there. */
+    static String required(JsonNode node, String field) {
+        String value = text(node, field);
+        if (value == null) {
+            throw new IllegalArgumentException("The message has no " + field);
+        }
+        return value;
     }
 }

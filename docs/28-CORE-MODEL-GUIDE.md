@@ -85,7 +85,9 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `MessageService` (`coreMessageService`) | `receive` (idempotent by type and key), `consume`, `consumeDue` with retries; a type's `consume_service_name` names a `CoreMessageHandler` bean. |
 | `StoreHealthService` (`coreStoreHealthService`) | `reliability(days)` per location and `phantomStock(facility, days, limit)` per product and location, each with its reasons. |
 | `PromiseService` (`corePromiseService`) | `promise(products, destination, method, at)`: per location the ship date, expected and promised delivery, basis (history or rule), confidence and reasons. |
-| `AgentCommerceService` (`coreAgentCommerceService`) | Checkout sessions for AI shopping agents (create, update, complete, cancel) and agent-safe changes after purchase (`cancelOrder`, `changeAddress`, `startReturn`), each inside store policy or proposed to a person. |
+| `AgentKeyService` (`coreAgentKeyService`) | The key an AI shopping agent uses for a store: `issueKey` (shown once; only its hash is kept), `storeForKey`. |
+| `AgentCheckoutService` (`coreAgentCheckoutService`) | Checkout sessions for AI shopping agents: `create`, `update`, `get`, `cancel`, `complete` (makes the order). Every read prices the session again from the product model and the promise service. |
+| `AgentOrderChangeService` (`coreAgentOrderChangeService`) | Agent-safe changes after purchase: `view`, `cancelOrder`, `changeAddress`, `startReturn`; each inside store policy, or proposed to a person. |
 | `CoreStatus` | Every status id the core checks or sets (`CoreStatus.Order.APPROVED`, `CoreStatus.Item.OPEN`, ...), so a typo fails to compile. |
 | `GeoDistance.km(from, to)` | Great-circle distance, shared by routing and delivery promises. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
@@ -102,6 +104,9 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 - Long methods are split into named steps, with a `// Step n:` comment where the order matters.
 - Javadoc says what a public method does and what it refuses; comments explain why, not what.
 - Controllers translate HTTP to service calls and hold no queries; read-only views live in a service.
+- A helper used in more than one place exists once: `GeoDistance` (distances), `ToolSchema` (agent tool inputs),
+  `LegacyRows` (reading rows of the earlier model), `ProposalActions` (what each AI action does and how it is undone).
+- Counts and pairs are small records or classes (`Counts`, `ChunkCounts`, `Transit`), never `int[]` or `String[]`.
 - Service classes are `@Transactional`, reads `@Transactional(readOnly = true)`. `RoutingService` uses a
   `TransactionTemplate` instead, because a simulation must roll back and then write its run record.
 

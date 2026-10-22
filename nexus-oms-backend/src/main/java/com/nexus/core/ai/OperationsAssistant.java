@@ -280,30 +280,4 @@ public class OperationsAssistant {
     private static AgentRunner.AgentTool tool(String name, String description, ToolSchema schema, AgentRunner.Handler handler) {
         return new AgentRunner.AgentTool(new LlmProvider.Tool(name, description, schema.json()), handler);
     }
-
-    /** Builds a tool's JSON input schema: an object with named fields, some required. */
-    static final class ToolSchema {
-        private final ObjectNode schema = AgentRunner.JSON.createObjectNode().put("type", "object");
-        private final ObjectNode properties = schema.putObject("properties");
-
-        static ToolSchema of() {
-            return new ToolSchema();
-        }
-
-        ToolSchema required(String field, String type, String description) {
-            optional(field, type, description);
-            ArrayNode required = schema.has("required") ? (ArrayNode) schema.get("required") : schema.putArray("required");
-            required.add(field);
-            return this;
-        }
-
-        ToolSchema optional(String field, String type, String description) {
-            properties.putObject(field).put("type", type).put("description", description);
-            return this;
-        }
-
-        JsonNode json() {
-            return schema;
-        }
-    }
 }

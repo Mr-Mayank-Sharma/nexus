@@ -291,6 +291,19 @@ class RoutingServiceTest {
         assertTrue(km > 38 && km < 43, "Hoboken to Edison is about 40 km, got " + km);
     }
 
+    @Test
+    void aScheduledGroupIsDueUntilItRunsAndSimulationsDoNotCount() {
+        String st = store(true);
+        String g = group(st, List.<Object[]>of(new Object[]{false, List.of(), Map.of()}));   // runs every 15 minutes
+        java.time.LocalDateTime now = com.nexus.core.service.CoreClock.now();
+        assertTrue(routing.scheduledGroupsDue(now).contains(g), "never ran, so it is due");
+        routing.simulate(g, "t");
+        assertTrue(routing.scheduledGroupsDue(now).contains(g), "a simulation is not a run");
+        routing.run(g, "t");
+        assertFalse(routing.scheduledGroupsDue(com.nexus.core.service.CoreClock.now()).contains(g), "just ran");
+        assertTrue(routing.scheduledGroupsDue(com.nexus.core.service.CoreClock.now().plusMinutes(16)).contains(g), "due again after its 15 minutes");
+    }
+
     private static double kmProbe() {
         // Hoboken to Edison is about 40 km
         return com.nexus.core.service.GeoDistance.km(40.744, -74.0324, 40.52, -74.41);

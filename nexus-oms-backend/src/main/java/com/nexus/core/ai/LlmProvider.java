@@ -21,8 +21,10 @@ public interface LlmProvider {
     record Usage(long inputTokens, long outputTokens, long cacheReadTokens, long cacheWriteTokens) {
         public static final Usage NONE = new Usage(0, 0, 0, 0);
 
-        public Usage plus(Usage o) {
-            return new Usage(inputTokens + o.inputTokens, outputTokens + o.outputTokens, cacheReadTokens + o.cacheReadTokens, cacheWriteTokens + o.cacheWriteTokens);
+        /** The two usages added together. */
+        public Usage plus(Usage other) {
+            return new Usage(inputTokens + other.inputTokens, outputTokens + other.outputTokens, cacheReadTokens + other.cacheReadTokens,
+                    cacheWriteTokens + other.cacheWriteTokens);
         }
     }
 

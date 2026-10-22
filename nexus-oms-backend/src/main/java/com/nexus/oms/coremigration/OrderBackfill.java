@@ -21,10 +21,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import static com.nexus.oms.coremigration.LegacyRows.LEGACY_ID;
+import static com.nexus.oms.coremigration.LegacyRows.number;
+import static com.nexus.oms.coremigration.LegacyRows.text;
+import static com.nexus.oms.coremigration.LegacyRows.upper;
 
 /**
  * Copies one tenant's orders (nx_orders, nx_order_items) into the core order model. Run the customer, product and
@@ -47,7 +51,6 @@ public class OrderBackfill {
 
     private static final Logger log = LoggerFactory.getLogger(OrderBackfill.class);
 
-    static final String LEGACY_ID = "NEXUS_LEGACY_ID";
     static final String SHIPPING_PURPOSE = "SHIPPING_LOCATION";
     static final String EMAIL_PURPOSE = "PRIMARY_EMAIL";
     private static final int CHUNK_SIZE = 200;
@@ -231,13 +234,13 @@ public class OrderBackfill {
 
         // Step 5: the order.
         OrderService.NewShipGroup shipGroup = new OrderService.NewShipGroup(shipmentMethod(text(legacyOrder, "fulfillment_type")), facilityId,
-                shipToContactMechId, null, null, true, false, null, null, time(legacyOrder, "promised_delivery"), text(legacyOrder, "tracking_number"));
+                shipToContactMechId, null, null, true, false, null, null, LegacyRows.dateTime(legacyOrder, "promised_delivery"), text(legacyOrder, "tracking_number"));
         String currency = text(legacyOrder, "currency") == null ? lookups.defaultCurrency() : upper(text(legacyOrder, "currency"));
         OrderService.NewPayment payment = new OrderService.NewPayment(paymentMethod(channel), grandTotal, paymentStatus(text(legacyOrder, "payment_status")),
                 text(legacyOrder, "payment_reference"));
         String emailContactMechId = partyId == null ? null : lookups.emailByParty().get(partyId);
         OrderService.NewOrder newOrder = new OrderService.NewOrder("SALES_ORDER", lookups.storeByPlatform().get(channel), salesChannel(channel),
-                currency, time(legacyOrder, "created_at"), text(legacyOrder, "external_id"), text(legacyOrder, "external_id"), partyId,
+                currency, LegacyRows.dateTime(legacyOrder, "created_at"), text(legacyOrder, "external_id"), text(legacyOrder, "external_id"), partyId,
                 null, emailContactMechId, List.of(shipGroup), newItems, adjustments, List.of(payment),
                 identifications, attributes, orderStatus, "Copied from the earlier Nexus model", null);
         String orderId = orderService.create(newOrder);
@@ -487,29 +490,5 @@ public class OrderBackfill {
         if (value != null) {
             map.put(key, value);
         }
-    }
-
-    private static LocalDateTime time(Map<String, Object> row, String column) {
-        Object value = row.get(column);
-        if (value instanceof Timestamp timestamp) {
-            return timestamp.toLocalDateTime();
-        }
-        return value instanceof LocalDateTime dateTime ? dateTime : null;
-    }
-
-    /** A number column; null is zero. */
-    private static BigDecimal number(Map<String, Object> row, String column) {
-        Object value = row.get(column);
-        return value == null ? BigDecimal.ZERO : new BigDecimal(String.valueOf(value));
-    }
-
-    private static String upper(String value) {
-        return value == null ? null : value.trim().toUpperCase(Locale.ROOT);
-    }
-
-    /** A text column; null or blank is null. */
-    private static String text(Map<String, Object> row, String column) {
-        Object value = row.get(column);
-        return value == null || String.valueOf(value).isBlank() ? null : String.valueOf(value);
     }
 }

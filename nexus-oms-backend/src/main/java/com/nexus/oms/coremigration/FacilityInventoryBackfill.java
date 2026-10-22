@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,136 +22,181 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.nexus.oms.coremigration.LegacyRows.LEGACY_ID;
+import static com.nexus.oms.coremigration.LegacyRows.number;
+import static com.nexus.oms.coremigration.LegacyRows.numberOrNull;
+import static com.nexus.oms.coremigration.LegacyRows.text;
+
 /**
- * Copies one tenant's fulfilment nodes (nx_nodes) and warehouses (nx_warehouses) into facilities and its stock (nx_inventory) into inventory items.
- * A node's daily capacity becomes the facility's daily order limit. Each stock row becomes one item (per lot when it
- * has one) with a single MIGRATION detail row: on hand as it was, and available = on hand - allocated - reserved, so
- * held stock stays held. Safety stock and reorder levels go to ProductFacility. Run the product copy first: stock is
- * matched to products by SKU. Safe to run again: copied nodes (NEXUS_LEGACY_ID) and existing items are skipped.
+ * Copies one tenant's fulfilment nodes (nx_nodes) and warehouses (nx_warehouses) into facilities, and its stock
+ * (nx_inventory) into inventory items.
+ * <ul>
+ *   <li>A node's daily capacity becomes the facility's daily order limit; a warehouse code is kept as the facility id
+ *       when it can be.</li>
+ *   <li>Each stock row becomes one item (per lot when it has one) with a single MIGRATION detail row: on hand as it was,
+ *       and available = on hand - allocated - reserved, so held stock stays held.</li>
+ *   <li>Safety stock and reorder levels go to ProductFacility.</li>
+ * </ul>
+ * Run the product copy first: stock is matched to products by SKU. Safe to run again: copied nodes (NEXUS_LEGACY_ID)
+ * and existing items are skipped.
  */
 @Service
 public class FacilityInventoryBackfill {
 
     private static final Logger log = LoggerFactory.getLogger(FacilityInventoryBackfill.class);
-    static final String LEGACY_ID = "NEXUS_LEGACY_ID";
-    private static final int CHUNK = 250;
+    private static final int CHUNK_SIZE = 250;
+    private static final int MAX_ID_LENGTH = 40;
+    /** JSON keys an address may keep its postal code under. */
+    private static final String[] POSTAL_CODE_KEYS = {"postalCode", "postal_code", "zip", "zipCode", "zip_code", "pincode"};
 
     private final JdbcTemplate jdbc;
-    private final FacilityService facilities;
-    private final InventoryService inventory;
-    private final TransactionTemplate tx;
-    private final EntityManager em;
-    private final ObjectMapper json = new ObjectMapper();
+    private final FacilityService facilityService;
+    private final InventoryService inventoryService;
+    private final TransactionTemplate transaction;
+    private final EntityManager entityManager;
+    private final ObjectMapper jsonMapper = new ObjectMapper();
 
-    public FacilityInventoryBackfill(JdbcTemplate jdbc, FacilityService facilities, InventoryService inventory,
-                                     TransactionTemplate tx, EntityManager em) {
+    public FacilityInventoryBackfill(JdbcTemplate jdbc, FacilityService facilityService, InventoryService inventoryService,
+                                     TransactionTemplate transaction, EntityManager entityManager) {
         this.jdbc = jdbc;
-        this.facilities = facilities;
-        this.inventory = inventory;
-        this.tx = tx;
-        this.em = em;
+        this.facilityService = facilityService;
+        this.inventoryService = inventoryService;
+        this.transaction = transaction;
+        this.entityManager = entityManager;
     }
 
     public record Result(int facilitiesScanned, int facilitiesCreated, int stockRowsScanned, int itemsCreated,
                          int itemsAlreadyCopied, int rowsWithoutLocation, int rowsWithUnknownSku) {
     }
 
-    public Result run(UUID tenantId) {
-        if (tenantId == null) throw new IllegalArgumentException("Run the stock copy as a user of the company whose stock to copy");
+    /** Running totals of the stock copy, added up over the chunks. */
+    private static final class Counts {
+        int itemsCreated;
+        int itemsAlreadyCopied;
+        int rowsWithoutLocation;
+        int rowsWithUnknownSku;
 
-        // Stock rows point at a fulfilment node or, in most data, a warehouse; both become facilities.
-        List<Map<String, Object>> nodes = jdbc.queryForList("SELECT id, NULL AS code, name, type, address, NULL AS zip_code, latitude, "
+        void add(Counts other) {
+            itemsCreated += other.itemsCreated;
+            itemsAlreadyCopied += other.itemsAlreadyCopied;
+            rowsWithoutLocation += other.rowsWithoutLocation;
+            rowsWithUnknownSku += other.rowsWithUnknownSku;
+        }
+    }
+
+    public Result run(UUID tenantId) {
+        if (tenantId == null) {
+            throw new IllegalArgumentException("Run the stock copy as a user of the company whose stock to copy");
+        }
+
+        // Step 1: locations. Stock rows point at a fulfilment node or, in most data, a warehouse; both become facilities.
+        List<Map<String, Object>> locations = jdbc.queryForList("SELECT id, NULL AS code, name, type, address, NULL AS zip_code, latitude, "
                 + "longitude, capacity_daily FROM nx_nodes WHERE tenant_id = ? ORDER BY name, id", tenantId);
-        nodes.addAll(jdbc.queryForList("SELECT id, code, name, type, NULL AS address, zip_code, latitude, longitude, "
+        locations.addAll(jdbc.queryForList("SELECT id, code, name, type, NULL AS address, zip_code, latitude, longitude, "
                 + "NULL AS capacity_daily FROM nx_warehouses WHERE tenant_id = ? ORDER BY code, id", tenantId));
         Map<String, String> facilityByNode = new HashMap<>();
         jdbc.queryForList("SELECT id_value, facility_id FROM facility_identification WHERE facility_iden_type_id = ? AND thru_date IS NULL", LEGACY_ID)
-                .forEach(r -> facilityByNode.put(String.valueOf(r.get("id_value")), String.valueOf(r.get("facility_id"))));
-        int facilitiesCreated = tx.execute(s -> {
-            int n = 0;
-            for (Map<String, Object> r : nodes) {
-                String nodeId = String.valueOf(r.get("id"));
-                if (facilityByNode.containsKey(nodeId)) continue;
-                Number capacity = (Number) r.get("capacity_daily");
-                String postal = str(r, "zip_code") != null ? str(r, "zip_code") : postalCode(str(r, "address"));
-                String facilityId = facilities.create(new FacilityService.NewFacility(readableId(str(r, "code")), facilityType(str(r, "type")),
-                        str(r, "name"), null, str(r, "code"), postal, (BigDecimal) r.get("latitude"), (BigDecimal) r.get("longitude"),
-                        null, null, null, capacity == null || capacity.longValue() <= 0 ? null : capacity.longValue()));
-                facilities.setIdentification(facilityId, LEGACY_ID, nodeId);
-                facilityByNode.put(nodeId, facilityId);
-                n++;
-            }
-            return n;
-        });
+                .forEach(row -> facilityByNode.put(String.valueOf(row.get("id_value")), String.valueOf(row.get("facility_id"))));
+        int facilitiesCreated = transaction.execute(status -> copyLocations(locations, facilityByNode));
 
-        // Read once instead of querying per row: SKU -> product, and the items that already exist.
+        // Step 2: read once instead of querying per row: SKU to product, and the items that already exist.
         Map<String, String> productBySku = new HashMap<>();
         jdbc.queryForList("SELECT id_value, product_id FROM good_identification WHERE good_identification_type_id = 'SKU' AND thru_date IS NULL")
-                .forEach(r -> productBySku.putIfAbsent(String.valueOf(r.get("id_value")), String.valueOf(r.get("product_id"))));
-        Set<String> existing = new HashSet<>();
+                .forEach(row -> productBySku.putIfAbsent(String.valueOf(row.get("id_value")), String.valueOf(row.get("product_id"))));
+        Set<String> existingItems = new HashSet<>();
         jdbc.queryForList("SELECT product_id, facility_id, lot_id FROM inventory_item")
-                .forEach(r -> existing.add(key(String.valueOf(r.get("product_id")), String.valueOf(r.get("facility_id")), (String) r.get("lot_id"))));
+                .forEach(row -> existingItems.add(itemKey(String.valueOf(row.get("product_id")), String.valueOf(row.get("facility_id")),
+                        (String) row.get("lot_id"))));
 
-        List<Map<String, Object>> rows = jdbc.queryForList("SELECT sku, node_id, quantity_on_hand, quantity_allocated, quantity_reserved, "
+        // Step 3: stock, in chunks of one transaction each.
+        List<Map<String, Object>> stockRows = jdbc.queryForList("SELECT sku, node_id, quantity_on_hand, quantity_allocated, quantity_reserved, "
                 + "quantity_damaged, safety_stock, reorder_point, reorder_qty, lot_number, expiry_date FROM nx_inventory "
                 + "WHERE tenant_id = ? ORDER BY sku, node_id, lot_number", tenantId);
-        int created = 0, already = 0, noLocation = 0, unknownSku = 0;
-        for (int from = 0; from < rows.size(); from += CHUNK) {
-            List<Map<String, Object>> chunk = rows.subList(from, Math.min(rows.size(), from + CHUNK));
-            int[] c = tx.execute(s -> {
-                // new rows only (checked against the preloaded set), so flush once at commit
-                em.setFlushMode(FlushModeType.COMMIT);
-                return copy(chunk, facilityByNode, productBySku, existing);
+        Counts total = new Counts();
+        for (int start = 0; start < stockRows.size(); start += CHUNK_SIZE) {
+            List<Map<String, Object>> chunk = stockRows.subList(start, Math.min(stockRows.size(), start + CHUNK_SIZE));
+            Counts chunkCounts = transaction.execute(status -> {
+                // Only new rows (checked against the preloaded set), so one flush at commit is enough.
+                entityManager.setFlushMode(FlushModeType.COMMIT);
+                return copyStock(chunk, facilityByNode, productBySku, existingItems);
             });
-            created += c[0];
-            already += c[1];
-            noLocation += c[2];
-            unknownSku += c[3];
+            total.add(chunkCounts);
         }
         log.info("Stock copy for tenant {}: {} nodes ({} new facilities), {} stock rows ({} items new, {} already copied, "
-                + "{} without a location, {} with an unknown SKU)", tenantId, nodes.size(), facilitiesCreated, rows.size(),
-                created, already, noLocation, unknownSku);
-        return new Result(nodes.size(), facilitiesCreated, rows.size(), created, already, noLocation, unknownSku);
+                        + "{} without a location, {} with an unknown SKU)", tenantId, locations.size(), facilitiesCreated, stockRows.size(),
+                total.itemsCreated, total.itemsAlreadyCopied, total.rowsWithoutLocation, total.rowsWithUnknownSku);
+        return new Result(locations.size(), facilitiesCreated, stockRows.size(), total.itemsCreated, total.itemsAlreadyCopied,
+                total.rowsWithoutLocation, total.rowsWithUnknownSku);
     }
 
-    private int[] copy(List<Map<String, Object>> chunk, Map<String, String> facilityByNode, Map<String, String> productBySku, Set<String> existing) {
-        int created = 0, already = 0, noLocation = 0, unknownSku = 0;
-        for (Map<String, Object> r : chunk) {
-            String facilityId = r.get("node_id") == null ? null : facilityByNode.get(String.valueOf(r.get("node_id")));
-            if (facilityId == null) {
-                noLocation++;
+    /** Creates a facility for each location not copied yet; returns how many. */
+    private int copyLocations(List<Map<String, Object>> locations, Map<String, String> facilityByNode) {
+        int created = 0;
+        for (Map<String, Object> location : locations) {
+            String nodeId = String.valueOf(location.get("id"));
+            if (facilityByNode.containsKey(nodeId)) {
                 continue;
             }
-            String productId = productBySku.get(str(r, "sku"));
-            if (productId == null) {
-                unknownSku++;
-                continue;
-            }
-            String lotId = lotId(str(r, "lot_number"));
-            if (!existing.add(key(productId, facilityId, lotId))) {
-                already++;
-                continue;
-            }
-            BigDecimal onHand = num(r, "quantity_on_hand");
-            BigDecimal available = onHand.subtract(num(r, "quantity_allocated")).subtract(num(r, "quantity_reserved"));
-            BigDecimal damaged = num(r, "quantity_damaged");
-            Object e = r.get("expiry_date");
-            LocalDate expiry = e instanceof Date d ? d.toLocalDate() : e instanceof LocalDate d ? d : null;
-            inventory.openingBalance(new InventoryService.Opening(productId, facilityId, lotId,
-                            expiry == null ? null : expiry.atStartOfDay(), onHand, available, null, null,
-                            damaged.signum() == 0 ? null : damaged.stripTrailingZeros().toPlainString() + " damaged in the earlier model"),
-                    "IID_MIGRATION", InventoryService.Cause.note("Copied from the earlier Nexus model"));
-            if (r.get("safety_stock") != null || r.get("reorder_point") != null || r.get("reorder_qty") != null) {
-                inventory.setLevels(productId, facilityId, new InventoryService.Levels(dec(r, "safety_stock"), dec(r, "reorder_point"),
-                        dec(r, "reorder_qty"), null, null, null));
-            }
+            Number dailyCapacity = (Number) location.get("capacity_daily");
+            Long dailyOrderLimit = dailyCapacity == null || dailyCapacity.longValue() <= 0 ? null : dailyCapacity.longValue();
+            String postalCode = text(location, "zip_code") != null ? text(location, "zip_code") : postalCodeIn(text(location, "address"));
+            String code = text(location, "code");
+            FacilityService.NewFacility newFacility = new FacilityService.NewFacility(readableId(code), facilityType(text(location, "type")),
+                    text(location, "name"), null, code, postalCode, (BigDecimal) location.get("latitude"), (BigDecimal) location.get("longitude"),
+                    null, null, null, dailyOrderLimit);
+            String facilityId = facilityService.create(newFacility);
+            facilityService.setIdentification(facilityId, LEGACY_ID, nodeId);
+            facilityByNode.put(nodeId, facilityId);
             created++;
         }
-        return new int[]{created, already, noLocation, unknownSku};
+        return created;
+    }
+
+    private Counts copyStock(List<Map<String, Object>> chunk, Map<String, String> facilityByNode, Map<String, String> productBySku,
+                             Set<String> existingItems) {
+        Counts counts = new Counts();
+        for (Map<String, Object> stockRow : chunk) {
+            Object nodeId = stockRow.get("node_id");
+            String facilityId = nodeId == null ? null : facilityByNode.get(String.valueOf(nodeId));
+            if (facilityId == null) {
+                counts.rowsWithoutLocation++;
+                continue;
+            }
+            String productId = productBySku.get(text(stockRow, "sku"));
+            if (productId == null) {
+                counts.rowsWithUnknownSku++;
+                continue;
+            }
+            String lotId = lotId(text(stockRow, "lot_number"));
+            boolean firstTimeSeen = existingItems.add(itemKey(productId, facilityId, lotId));
+            if (!firstTimeSeen) {
+                counts.itemsAlreadyCopied++;
+                continue;
+            }
+
+            BigDecimal onHand = number(stockRow, "quantity_on_hand");
+            BigDecimal available = onHand.subtract(number(stockRow, "quantity_allocated")).subtract(number(stockRow, "quantity_reserved"));
+            BigDecimal damaged = number(stockRow, "quantity_damaged");
+            LocalDate expiry = LegacyRows.date(stockRow, "expiry_date");
+            String damagedNote = damaged.signum() == 0 ? null : damaged.stripTrailingZeros().toPlainString() + " damaged in the earlier model";
+            InventoryService.Opening opening = new InventoryService.Opening(productId, facilityId, lotId, expiry == null ? null : expiry.atStartOfDay(),
+                    onHand, available, null, null, damagedNote);
+            inventoryService.openingBalance(opening, InventoryService.Reason.MIGRATION, InventoryService.Cause.note("Copied from the earlier Nexus model"));
+
+            boolean hasLevels = stockRow.get("safety_stock") != null || stockRow.get("reorder_point") != null || stockRow.get("reorder_qty") != null;
+            if (hasLevels) {
+                inventoryService.setLevels(productId, facilityId, new InventoryService.Levels(numberOrNull(stockRow, "safety_stock"),
+                        numberOrNull(stockRow, "reorder_point"), numberOrNull(stockRow, "reorder_qty"), null, null, null));
+            }
+            counts.itemsCreated++;
+        }
+        return counts;
     }
 
     static String facilityType(String nodeType) {
-        if (nodeType == null) return "WAREHOUSE";
+        if (nodeType == null) {
+            return "WAREHOUSE";
+        }
         return switch (nodeType.trim().toUpperCase(Locale.ROOT)) {
             case "STORE", "RETAIL", "RETAIL_STORE" -> "RETAIL_STORE";
             case "DC", "DISTRIBUTION_CENTER", "AUTOMATED_DC", "FULFILLMENT_CENTER" -> "DISTRIBUTION_CENTER";
@@ -163,51 +207,50 @@ public class FacilityInventoryBackfill {
         };
     }
 
-    /** A warehouse code (WH-01) is kept as the facility id when it is a valid id that isn't taken yet. */
+    /** A warehouse code (WH-01) is kept as the facility id when it is a valid id that isn't taken yet; otherwise null (a new id). */
     private String readableId(String code) {
-        if (code == null) return null;
-        String id = code.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9_.-]", "_");
-        if (id.isEmpty() || id.length() > 40) return null;
-        Long taken = jdbc.queryForObject("SELECT COUNT(*) FROM facility WHERE facility_id = ?", Long.class, id);
-        return taken != null && taken > 0 ? null : id;
+        if (code == null) {
+            return null;
+        }
+        String candidate = code.trim().toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9_.-]", "_");
+        if (candidate.isEmpty() || candidate.length() > MAX_ID_LENGTH) {
+            return null;
+        }
+        Long taken = jdbc.queryForObject("SELECT COUNT(*) FROM facility WHERE facility_id = ?", Long.class, candidate);
+        return taken != null && taken > 0 ? null : candidate;
     }
 
-    /** Lot numbers become lot ids, cleaned to the allowed characters. */
+    /** Lot numbers become lot ids, cleaned to the allowed characters and cut to 40. */
     static String lotId(String lotNumber) {
-        if (lotNumber == null) return null;
-        String id = lotNumber.trim().replaceAll("[^A-Za-z0-9_.-]", "_");
-        return id.isEmpty() ? null : id.length() > 40 ? id.substring(0, 40) : id;
+        if (lotNumber == null) {
+            return null;
+        }
+        String cleaned = lotNumber.trim().replaceAll("[^A-Za-z0-9_.-]", "_");
+        if (cleaned.isEmpty()) {
+            return null;
+        }
+        return cleaned.length() > MAX_ID_LENGTH ? cleaned.substring(0, MAX_ID_LENGTH) : cleaned;
     }
 
-    private String postalCode(String address) {
-        if (address == null) return null;
+    /** The postal code in an address kept as JSON; null when there is none or the address isn't JSON. */
+    private String postalCodeIn(String addressJson) {
+        if (addressJson == null) {
+            return null;
+        }
         try {
-            JsonNode a = json.readTree(address);
-            for (String k : new String[]{"postalCode", "postal_code", "zip", "zipCode", "zip_code", "pincode"}) {
-                if (a.hasNonNull(k) && !a.get(k).asText().isBlank()) return a.get(k).asText().trim();
+            JsonNode address = jsonMapper.readTree(addressJson);
+            for (String key : POSTAL_CODE_KEYS) {
+                if (address.hasNonNull(key) && !address.get(key).asText().isBlank()) {
+                    return address.get(key).asText().trim();
+                }
             }
-        } catch (Exception ignored) {
+        } catch (Exception notJson) {
             // an address that isn't JSON has no postal code we can read
         }
         return null;
     }
 
-    private static String key(String productId, String facilityId, String lotId) {
+    private static String itemKey(String productId, String facilityId, String lotId) {
         return productId + "|" + facilityId + "|" + (lotId == null ? "" : lotId);
-    }
-
-    private static BigDecimal num(Map<String, Object> r, String k) {
-        Object v = r.get(k);
-        return v == null ? BigDecimal.ZERO : new BigDecimal(String.valueOf(v));
-    }
-
-    private static BigDecimal dec(Map<String, Object> r, String k) {
-        Object v = r.get(k);
-        return v == null ? null : new BigDecimal(String.valueOf(v));
-    }
-
-    private static String str(Map<String, Object> r, String key) {
-        Object v = r.get(key);
-        return v == null || String.valueOf(v).isBlank() ? null : String.valueOf(v);
     }
 }

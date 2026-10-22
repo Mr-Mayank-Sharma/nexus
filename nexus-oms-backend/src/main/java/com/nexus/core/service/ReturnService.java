@@ -1,5 +1,7 @@
 package com.nexus.core.service;
 
+import com.nexus.core.CoreStatus;
+import com.nexus.core.model.order.OrderHeader;
 import com.nexus.core.model.order.OrderItem;
 import com.nexus.core.model.order.OrderPaymentPreference;
 import com.nexus.core.model.returns.ReturnAdjustment;
@@ -15,182 +17,227 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
- * Customer returns in the OFBiz way: a return header from the customer to a facility, items tied to the order items
- * they return, receipts when the goods arrive (resellable stock goes back on sale, the rest is held), and a response
- * that records the refund against the order's payment. A return can't take back more than shipped less what other
- * returns already take back.
+ * Customer returns in the OFBiz way:
+ * <ol>
+ *   <li>{@link #create}: a return header from the customer to a facility, with items tied to the order items they
+ *       return. A return can't take back more than shipped less what other returns already take back.</li>
+ *   <li>{@link #accept}, then {@link #receive} as the goods arrive: resellable stock goes back on sale, the rest is
+ *       held.</li>
+ *   <li>{@link #complete}: a response records the refund against the order's payment.</li>
+ * </ol>
  */
 @Service("coreReturnService")
 @Transactional
 public class ReturnService {
 
     public static final String FLOW = StatusService.DEFAULT_FLOW;
-    private static final Set<String> CLOSED = Set.of("RETURN_CANCELLED");
 
-    private final EntityManager em;
-    private final SequenceService sequences;
-    private final StatusService statuses;
-    private final OrderService orders;
-    private final ShipmentService shipments;
-    private final InventoryService inventory;
+    public static final String REFUND = "RTN_REFUND";
+    /** Refunded before the goods arrive: the whole return quantity counts. */
+    public static final String REFUND_IMMEDIATE = "RTN_REFUND_IMMEDIATE";
+    static final Set<String> REFUND_TYPES = Set.of(REFUND, REFUND_IMMEDIATE);
+    static final String CUSTOMER_RETURN = "CUSTOMER_RETURN";
+    static final String DEFAULT_REASON = "RTN_MISC";
+    static final String DEFAULT_REJECTION = "SRJ_DAMAGED";
 
-    public ReturnService(EntityManager em, SequenceService sequences, StatusService statuses, OrderService orders,
-                         ShipmentService shipments, InventoryService inventory) {
-        this.em = em;
-        this.sequences = sequences;
-        this.statuses = statuses;
-        this.orders = orders;
-        this.shipments = shipments;
-        this.inventory = inventory;
+    private final EntityManager entityManager;
+    private final SequenceService sequenceService;
+    private final StatusService statusService;
+    private final OrderService orderService;
+    private final ShipmentService shipmentService;
+    private final InventoryService inventoryService;
+
+    public ReturnService(EntityManager entityManager, SequenceService sequenceService, StatusService statusService, OrderService orderService,
+                         ShipmentService shipmentService, InventoryService inventoryService) {
+        this.entityManager = entityManager;
+        this.sequenceService = sequenceService;
+        this.statusService = statusService;
+        this.orderService = orderService;
+        this.shipmentService = shipmentService;
+        this.inventoryService = inventoryService;
     }
 
     public record NewReturnItem(String orderItemSeqId, BigDecimal quantity, String returnReasonId, String returnTypeId) {
     }
 
-    /** A return of shipped items of one order, to come back to a facility. */
-    public String create(String orderId, List<NewReturnItem> items, String destinationFacilityId, String externalId, String userId) {
-        if (items == null || items.isEmpty()) throw new IllegalArgumentException("A return needs at least one item");
-        var order = em.find(com.nexus.core.model.order.OrderHeader.class, orderId);
-        if (order == null) throw new IllegalArgumentException("Unknown order " + orderId);
-        ReturnHeader h = new ReturnHeader();
-        h.setReturnId(sequences.nextId("ReturnHeader"));
-        h.setReturnHeaderTypeId("CUSTOMER_RETURN");
-        h.setStatusId(statuses.initialStatus(FLOW, "RETURN_STATUS"));
-        h.setExternalId(externalId);
-        h.setFromPartyId(orders.partyInRole(orderId, "PLACING_CUSTOMER").orElse(null));
-        h.setProductStoreId(order.getProductStoreId());
-        h.setSalesChannelEnumId(order.getSalesChannelEnumId());
-        h.setDestinationFacilityId(destinationFacilityId);
-        h.setNeedsInventoryReceive(true);
-        h.setCurrencyUomId(order.getCurrencyUomId());
-        h.setEntryDate(CoreClock.now());
-        h.setCreatedBy(userId);
-        em.persist(h);
-        history(h.getReturnId(), null, h.getStatusId(), null, userId);
-        int n = 1;
-        for (NewReturnItem it : items) {
-            OrderItem oi = orders.orderItem(orderId, it.orderItemSeqId());
-            BigDecimal returnable = shipments.issuedQuantity(orderId, it.orderItemSeqId()).subtract(returning(orderId, it.orderItemSeqId()));
-            if (it.quantity() == null || it.quantity().signum() <= 0 || it.quantity().compareTo(returnable) > 0) {
-                throw new IllegalArgumentException("Item " + it.orderItemSeqId() + " of order " + orderId + " can return up to "
-                        + returnable.stripTrailingZeros().toPlainString() + " (shipped less what other returns take back)");
-            }
-            ReturnItem ri = new ReturnItem();
-            ri.setReturnId(h.getReturnId());
-            ri.setReturnItemSeqId(SequenceService.seqId(n++));
-            ri.setReturnReasonId(it.returnReasonId() == null ? "RTN_MISC" : it.returnReasonId());
-            ri.setReturnTypeId(it.returnTypeId() == null ? "RTN_REFUND" : it.returnTypeId());
-            ri.setProductId(oi.getProductId());
-            ri.setDescription(oi.getItemDescription());
-            ri.setOrderId(orderId);
-            ri.setOrderItemSeqId(it.orderItemSeqId());
-            ri.setStatusId(h.getStatusId());
-            ri.setExpectedItemStatus("INV_RETURNED");
-            ri.setReturnQuantity(it.quantity());
-            ri.setReceivedQuantity(BigDecimal.ZERO);
-            ri.setReturnPrice(oi.getUnitPrice());
-            em.persist(ri);
-            history(h.getReturnId(), ri.getReturnItemSeqId(), ri.getStatusId(), null, userId);
-        }
-        return h.getReturnId();
-    }
-
-    public void accept(String returnId, String userId) {
-        move(returnId, "RETURN_ACCEPTED", null, userId);
-    }
-
-    public void cancel(String returnId, String reason, String userId) {
-        move(returnId, "RETURN_CANCELLED", reason, userId);
-    }
-
-    /** A fee or charge on the return (a restocking fee is negative). */
-    public String addAdjustment(String returnId, String typeId, BigDecimal amount, String description) {
-        header(returnId);
-        ReturnAdjustment a = new ReturnAdjustment();
-        a.setReturnAdjustmentId(sequences.nextId("ReturnAdjustment"));
-        a.setReturnAdjustmentTypeId(typeId);
-        a.setReturnId(returnId);
-        a.setAmount(amount);
-        a.setDescription(description);
-        a.setCreatedDate(CoreClock.now());
-        em.persist(a);
-        return a.getReturnAdjustmentId();
-    }
-
     /** How a received unit is treated: back on sale, or held (damaged, defective). */
     public enum Grade { RESELLABLE, DAMAGED, DEFECTIVE }
 
+    // ── the return's life ──
+
+    /** A return of shipped items of one order, to come back to a facility. Returns the return id. */
+    public String create(String orderId, List<NewReturnItem> items, String destinationFacilityId, String externalId, String userId) {
+        if (items == null || items.isEmpty()) {
+            throw new IllegalArgumentException("A return needs at least one item");
+        }
+        OrderHeader order = orderService.header(orderId);
+
+        ReturnHeader header = new ReturnHeader();
+        header.setReturnId(sequenceService.nextId("ReturnHeader"));
+        header.setReturnHeaderTypeId(CUSTOMER_RETURN);
+        header.setStatusId(statusService.initialStatus(FLOW, CoreStatus.Type.RETURN));
+        header.setExternalId(externalId);
+        header.setFromPartyId(orderService.partyInRole(orderId, "PLACING_CUSTOMER").orElse(null));
+        header.setProductStoreId(order.getProductStoreId());
+        header.setSalesChannelEnumId(order.getSalesChannelEnumId());
+        header.setDestinationFacilityId(destinationFacilityId);
+        header.setNeedsInventoryReceive(true);
+        header.setCurrencyUomId(order.getCurrencyUomId());
+        header.setEntryDate(CoreClock.now());
+        header.setCreatedBy(userId);
+        entityManager.persist(header);
+        writeHistory(header.getReturnId(), null, header.getStatusId(), null, userId);
+
+        int itemNumber = 1;
+        for (NewReturnItem newItem : items) {
+            OrderItem orderItem = orderService.orderItem(orderId, newItem.orderItemSeqId());
+            BigDecimal shipped = shipmentService.issuedQuantity(orderId, newItem.orderItemSeqId());
+            BigDecimal returnable = shipped.subtract(quantityOnOtherReturns(orderId, newItem.orderItemSeqId()));
+            boolean validQuantity = newItem.quantity() != null && newItem.quantity().signum() > 0 && newItem.quantity().compareTo(returnable) <= 0;
+            if (!validQuantity) {
+                throw new IllegalArgumentException("Item " + newItem.orderItemSeqId() + " of order " + orderId + " can return up to "
+                        + plain(returnable) + " (shipped less what other returns take back)");
+            }
+            ReturnItem returnItem = new ReturnItem();
+            returnItem.setReturnId(header.getReturnId());
+            returnItem.setReturnItemSeqId(SequenceService.seqId(itemNumber++));
+            returnItem.setReturnReasonId(newItem.returnReasonId() == null ? DEFAULT_REASON : newItem.returnReasonId());
+            returnItem.setReturnTypeId(newItem.returnTypeId() == null ? REFUND : newItem.returnTypeId());
+            returnItem.setProductId(orderItem.getProductId());
+            returnItem.setDescription(orderItem.getItemDescription());
+            returnItem.setOrderId(orderId);
+            returnItem.setOrderItemSeqId(newItem.orderItemSeqId());
+            returnItem.setStatusId(header.getStatusId());
+            returnItem.setExpectedItemStatus("INV_RETURNED");
+            returnItem.setReturnQuantity(newItem.quantity());
+            returnItem.setReceivedQuantity(BigDecimal.ZERO);
+            returnItem.setReturnPrice(orderItem.getUnitPrice());
+            entityManager.persist(returnItem);
+            writeHistory(header.getReturnId(), returnItem.getReturnItemSeqId(), returnItem.getStatusId(), null, userId);
+        }
+        return header.getReturnId();
+    }
+
+    public void accept(String returnId, String userId) {
+        changeStatus(returnId, CoreStatus.Return.ACCEPTED, null, userId);
+    }
+
+    public void cancel(String returnId, String reason, String userId) {
+        changeStatus(returnId, CoreStatus.Return.CANCELLED, reason, userId);
+    }
+
+    /** A fee or charge on the return (a restocking fee is negative). Returns the adjustment id. */
+    public String addAdjustment(String returnId, String typeId, BigDecimal amount, String description) {
+        loadHeaderForUpdate(returnId);
+        ReturnAdjustment adjustment = new ReturnAdjustment();
+        adjustment.setReturnAdjustmentId(sequenceService.nextId("ReturnAdjustment"));
+        adjustment.setReturnAdjustmentTypeId(typeId);
+        adjustment.setReturnId(returnId);
+        adjustment.setAmount(amount);
+        adjustment.setDescription(description);
+        adjustment.setCreatedDate(CoreClock.now());
+        entityManager.persist(adjustment);
+        return adjustment.getReturnAdjustmentId();
+    }
+
     /**
-     * Goods arrived at the return's facility: accepted units go into stock (resellable ones on sale, others on hold),
-     * rejected units are only noted. The return is received once every item has arrived in full.
+     * Goods arrived at the return's facility. Accepted units go into stock: resellable ones on sale, others on hold.
+     * Rejected units are only noted. An item is received once it has arrived in full, and the return once every item
+     * has.
      */
     public void receive(String returnId, String returnItemSeqId, BigDecimal accepted, BigDecimal rejected, String rejectionId, Grade grade, String userId) {
-        ReturnHeader h = header(returnId);
-        if (!"RETURN_ACCEPTED".equals(h.getStatusId())) throw new IllegalStateException("Return " + returnId + " is " + h.getStatusId() + "; accept it before receiving");
-        if (h.getDestinationFacilityId() == null) throw new IllegalStateException("Return " + returnId + " has no facility to receive into");
-        ReturnItem ri = item(returnId, returnItemSeqId);
-        BigDecimal acc = accepted == null ? BigDecimal.ZERO : accepted;
-        BigDecimal rej = rejected == null ? BigDecimal.ZERO : rejected;
-        BigDecimal left = ri.getReturnQuantity().subtract(ri.getReceivedQuantity());
-        if (acc.signum() < 0 || rej.signum() < 0 || acc.add(rej).signum() == 0 || acc.add(rej).compareTo(left) > 0) {
-            throw new IllegalArgumentException("Return item " + returnItemSeqId + " expects up to " + left.stripTrailingZeros().toPlainString() + " more");
+        ReturnHeader header = loadHeaderForUpdate(returnId);
+        if (!CoreStatus.Return.ACCEPTED.equals(header.getStatusId())) {
+            throw new IllegalStateException("Return " + returnId + " is " + header.getStatusId() + "; accept it before receiving");
         }
+        String facilityId = header.getDestinationFacilityId();
+        if (facilityId == null) {
+            throw new IllegalStateException("Return " + returnId + " has no facility to receive into");
+        }
+        ReturnItem returnItem = loadItem(returnId, returnItemSeqId);
+        BigDecimal acceptedQuantity = accepted == null ? BigDecimal.ZERO : accepted;
+        BigDecimal rejectedQuantity = rejected == null ? BigDecimal.ZERO : rejected;
+        BigDecimal arriving = acceptedQuantity.add(rejectedQuantity);
+        BigDecimal stillExpected = returnItem.getReturnQuantity().subtract(returnItem.getReceivedQuantity());
+        boolean validQuantities = acceptedQuantity.signum() >= 0 && rejectedQuantity.signum() >= 0 && arriving.signum() != 0
+                && arriving.compareTo(stillExpected) <= 0;
+        if (!validQuantities) {
+            throw new IllegalArgumentException("Return item " + returnItemSeqId + " expects up to " + plain(stillExpected) + " more");
+        }
+
+        // Step 1: accepted units into stock.
         String inventoryItemId = null;
-        if (acc.signum() > 0 && ri.getProductId() != null) {
-            InventoryService.Cause cause = new InventoryService.Cause(ri.getOrderId(), ri.getOrderItemSeqId(), null, returnId, userId, null);
-            if (grade == null || grade == Grade.RESELLABLE) {
-                inventoryItemId = inventory.receive(ri.getProductId(), h.getDestinationFacilityId(), acc, null, null, "IID_RETURN", cause);
+        if (acceptedQuantity.signum() > 0 && returnItem.getProductId() != null) {
+            String productId = returnItem.getProductId();
+            boolean resellable = grade == null || grade == Grade.RESELLABLE;
+            if (resellable) {
+                InventoryService.Cause cause = new InventoryService.Cause(returnItem.getOrderId(), returnItem.getOrderItemSeqId(), null, returnId, userId, null);
+                inventoryItemId = inventoryService.receive(productId, facilityId, acceptedQuantity, null, null, InventoryService.Reason.RETURN, cause);
             } else {
-                // in the building but not for sale
-                inventory.adjust(ri.getProductId(), h.getDestinationFacilityId(), acc, BigDecimal.ZERO, "IID_HOLD",
-                        new InventoryService.Cause(ri.getOrderId(), ri.getOrderItemSeqId(), null, returnId, userId, "Returned " + grade.name().toLowerCase()));
-                inventoryItemId = inventory.bulkItem(ri.getProductId(), h.getDestinationFacilityId()).getInventoryItemId();
+                // In the building but not for sale.
+                InventoryService.Cause cause = new InventoryService.Cause(returnItem.getOrderId(), returnItem.getOrderItemSeqId(), null, returnId, userId,
+                        "Returned " + grade.name().toLowerCase(Locale.ROOT));
+                inventoryService.adjust(productId, facilityId, acceptedQuantity, BigDecimal.ZERO, InventoryService.Reason.HOLD, cause);
+                inventoryItemId = inventoryService.bulkItem(productId, facilityId).getInventoryItemId();
             }
         }
-        ShipmentReceipt r = new ShipmentReceipt();
-        r.setReceiptId(sequences.nextId("ShipmentReceipt"));
-        r.setInventoryItemId(inventoryItemId);
-        r.setProductId(ri.getProductId());
-        r.setReturnId(returnId);
-        r.setReturnItemSeqId(returnItemSeqId);
-        r.setRejectionId(rej.signum() > 0 ? (rejectionId == null ? "SRJ_DAMAGED" : rejectionId) : null);
-        r.setDatetimeReceived(CoreClock.now());
-        r.setReceivedByUserLogin(userId);
-        r.setQuantityAccepted(acc);
-        r.setQuantityRejected(rej);
-        em.persist(r);
-        ri.setReceivedQuantity(ri.getReceivedQuantity().add(acc).add(rej));
-        if (ri.getReceivedQuantity().compareTo(ri.getReturnQuantity()) >= 0 && !"RETURN_RECEIVED".equals(ri.getStatusId())) {
-            ri.setStatusId("RETURN_RECEIVED");
-            history(returnId, returnItemSeqId, "RETURN_RECEIVED", null, userId);
+
+        // Step 2: the receipt.
+        ShipmentReceipt receipt = new ShipmentReceipt();
+        receipt.setReceiptId(sequenceService.nextId("ShipmentReceipt"));
+        receipt.setInventoryItemId(inventoryItemId);
+        receipt.setProductId(returnItem.getProductId());
+        receipt.setReturnId(returnId);
+        receipt.setReturnItemSeqId(returnItemSeqId);
+        receipt.setRejectionId(rejectedQuantity.signum() > 0 ? (rejectionId == null ? DEFAULT_REJECTION : rejectionId) : null);
+        receipt.setDatetimeReceived(CoreClock.now());
+        receipt.setReceivedByUserLogin(userId);
+        receipt.setQuantityAccepted(acceptedQuantity);
+        receipt.setQuantityRejected(rejectedQuantity);
+        entityManager.persist(receipt);
+
+        // Step 3: statuses.
+        returnItem.setReceivedQuantity(returnItem.getReceivedQuantity().add(arriving));
+        boolean itemArrivedInFull = returnItem.getReceivedQuantity().compareTo(returnItem.getReturnQuantity()) >= 0;
+        if (itemArrivedInFull && !CoreStatus.Return.RECEIVED.equals(returnItem.getStatusId())) {
+            returnItem.setStatusId(CoreStatus.Return.RECEIVED);
+            writeHistory(returnId, returnItemSeqId, CoreStatus.Return.RECEIVED, null, userId);
         }
-        if (items(returnId).stream().allMatch(i -> "RETURN_RECEIVED".equals(i.getStatusId()))) {
-            h.setStatusId("RETURN_RECEIVED");
-            history(returnId, null, "RETURN_RECEIVED", null, userId);
+        boolean everyItemReceived = items(returnId).stream().allMatch(item -> CoreStatus.Return.RECEIVED.equals(item.getStatusId()));
+        if (everyItemReceived) {
+            header.setStatusId(CoreStatus.Return.RECEIVED);
+            writeHistory(returnId, null, CoreStatus.Return.RECEIVED, null, userId);
         }
     }
 
     /**
-     * What the customer gets back: for refund items the price of what was accepted (or of what is being returned, for
-     * refunds before the goods arrive), plus the return's adjustments.
+     * What the customer gets back: for refund items the price of what was accepted (or of the whole return quantity,
+     * for refunds before the goods arrive), plus the return's adjustments. Never below zero.
      */
     @Transactional(readOnly = true)
     public BigDecimal refundAmount(String returnId) {
-        BigDecimal sum = BigDecimal.ZERO;
-        for (ReturnItem ri : items(returnId)) {
-            if ("RETURN_CANCELLED".equals(ri.getStatusId())) continue;
-            if (!"RTN_REFUND".equals(ri.getReturnTypeId()) && !"RTN_REFUND_IMMEDIATE".equals(ri.getReturnTypeId())) continue;
-            BigDecimal q = "RTN_REFUND_IMMEDIATE".equals(ri.getReturnTypeId()) ? ri.getReturnQuantity() : accepted(returnId, ri.getReturnItemSeqId());
-            sum = sum.add(q.multiply(ri.getReturnPrice() == null ? BigDecimal.ZERO : ri.getReturnPrice()));
+        BigDecimal total = BigDecimal.ZERO;
+        for (ReturnItem returnItem : items(returnId)) {
+            if (CoreStatus.Return.CANCELLED.equals(returnItem.getStatusId()) || !REFUND_TYPES.contains(returnItem.getReturnTypeId())) {
+                continue;
+            }
+            BigDecimal refundedQuantity = REFUND_IMMEDIATE.equals(returnItem.getReturnTypeId())
+                    ? returnItem.getReturnQuantity()
+                    : acceptedQuantity(returnId, returnItem.getReturnItemSeqId());
+            BigDecimal price = returnItem.getReturnPrice() == null ? BigDecimal.ZERO : returnItem.getReturnPrice();
+            total = total.add(refundedQuantity.multiply(price));
         }
-        for (ReturnAdjustment a : em.createQuery("SELECT a FROM ReturnAdjustment a WHERE a.returnId = :r", ReturnAdjustment.class)
-                .setParameter("r", returnId).getResultList()) {
-            sum = sum.add(a.getAmount());
+        List<ReturnAdjustment> adjustments = entityManager.createQuery("SELECT a FROM ReturnAdjustment a WHERE a.returnId = :returnId", ReturnAdjustment.class)
+                .setParameter("returnId", returnId)
+                .getResultList();
+        for (ReturnAdjustment adjustment : adjustments) {
+            total = total.add(adjustment.getAmount());
         }
-        return sum.signum() < 0 ? BigDecimal.ZERO : sum;
+        return total.signum() < 0 ? BigDecimal.ZERO : total;
     }
 
     /**
@@ -198,88 +245,127 @@ public class ReturnService {
      * provider gave. A refund of everything the payment took marks the payment refunded. Returns the response id.
      */
     public String complete(String returnId, String referenceNumber, String userId) {
-        ReturnHeader h = header(returnId);
-        statuses.requireAllowed(FLOW, h.getStatusId(), "RETURN_COMPLETED");
-        BigDecimal amount = refundAmount(returnId);
-        String orderId = items(returnId).get(0).getOrderId();
-        OrderPaymentPreference pay = em.createQuery("SELECT p FROM OrderPaymentPreference p WHERE p.orderId = :o ORDER BY p.orderPaymentPreferenceId",
-                OrderPaymentPreference.class).setParameter("o", orderId).setMaxResults(1).getResultList().stream().findFirst().orElse(null);
-        ReturnItemResponse r = new ReturnItemResponse();
-        r.setReturnItemResponseId(sequences.nextId("ReturnItemResponse"));
-        r.setOrderPaymentPreferenceId(pay == null ? null : pay.getOrderPaymentPreferenceId());
-        r.setResponseAmount(amount);
-        r.setResponseDate(CoreClock.now());
-        r.setReferenceNumber(referenceNumber);
-        em.persist(r);
-        for (ReturnItem ri : items(returnId)) {
-            if (CLOSED.contains(ri.getStatusId())) continue;
-            ri.setReturnItemResponseId(r.getReturnItemResponseId());
-            ri.setStatusId("RETURN_COMPLETED");
-            history(returnId, ri.getReturnItemSeqId(), "RETURN_COMPLETED", null, userId);
+        ReturnHeader header = loadHeaderForUpdate(returnId);
+        statusService.requireAllowed(FLOW, header.getStatusId(), CoreStatus.Return.COMPLETED);
+        BigDecimal refund = refundAmount(returnId);
+        List<ReturnItem> returnItems = items(returnId);
+        String orderId = returnItems.get(0).getOrderId();
+        OrderPaymentPreference payment = firstPayment(orderId);
+
+        ReturnItemResponse response = new ReturnItemResponse();
+        response.setReturnItemResponseId(sequenceService.nextId("ReturnItemResponse"));
+        response.setOrderPaymentPreferenceId(payment == null ? null : payment.getOrderPaymentPreferenceId());
+        response.setResponseAmount(refund);
+        response.setResponseDate(CoreClock.now());
+        response.setReferenceNumber(referenceNumber);
+        entityManager.persist(response);
+
+        for (ReturnItem returnItem : returnItems) {
+            if (CoreStatus.Return.CANCELLED.equals(returnItem.getStatusId())) {
+                continue;
+            }
+            returnItem.setReturnItemResponseId(response.getReturnItemResponseId());
+            returnItem.setStatusId(CoreStatus.Return.COMPLETED);
+            writeHistory(returnId, returnItem.getReturnItemSeqId(), CoreStatus.Return.COMPLETED, null, userId);
         }
-        h.setStatusId("RETURN_COMPLETED");
-        history(returnId, null, "RETURN_COMPLETED", null, userId);
-        if (pay != null && pay.getMaxAmount() != null && amount.compareTo(pay.getMaxAmount()) >= 0
-                && statuses.isAllowed(FLOW, pay.getStatusId(), "PAYMENT_REFUNDED")) {
-            orders.setPaymentStatus(pay.getOrderPaymentPreferenceId(), "PAYMENT_REFUNDED", "Return " + returnId, userId);
+        header.setStatusId(CoreStatus.Return.COMPLETED);
+        writeHistory(returnId, null, CoreStatus.Return.COMPLETED, null, userId);
+
+        boolean refundedInFull = payment != null && payment.getMaxAmount() != null && refund.compareTo(payment.getMaxAmount()) >= 0;
+        if (refundedInFull && statusService.isAllowed(FLOW, payment.getStatusId(), CoreStatus.Payment.REFUNDED)) {
+            orderService.setPaymentStatus(payment.getOrderPaymentPreferenceId(), CoreStatus.Payment.REFUNDED, "Return " + returnId, userId);
         }
-        return r.getReturnItemResponseId();
+        return response.getReturnItemResponseId();
+    }
+
+    /** The return's items in order. */
+    @Transactional(readOnly = true)
+    public List<ReturnItem> items(String returnId) {
+        return entityManager.createQuery("SELECT i FROM ReturnItem i WHERE i.returnId = :returnId ORDER BY i.returnItemSeqId", ReturnItem.class)
+                .setParameter("returnId", returnId)
+                .getResultList();
     }
 
     // ── internals ──
 
-    private void move(String returnId, String to, String reason, String userId) {
-        ReturnHeader h = header(returnId);
-        statuses.requireAllowed(FLOW, h.getStatusId(), to);
-        h.setStatusId(to);
-        history(returnId, null, to, reason, userId);
-        for (ReturnItem ri : items(returnId)) {
-            if (ri.getStatusId().equals(to) || !statuses.isAllowed(FLOW, ri.getStatusId(), to)) continue;
-            ri.setStatusId(to);
-            history(returnId, ri.getReturnItemSeqId(), to, reason, userId);
+    /** Moves the return, and every item that may follow, to the status. */
+    private void changeStatus(String returnId, String toStatusId, String reason, String userId) {
+        ReturnHeader header = loadHeaderForUpdate(returnId);
+        statusService.requireAllowed(FLOW, header.getStatusId(), toStatusId);
+        header.setStatusId(toStatusId);
+        writeHistory(returnId, null, toStatusId, reason, userId);
+        for (ReturnItem returnItem : items(returnId)) {
+            boolean alreadyThere = returnItem.getStatusId().equals(toStatusId);
+            if (alreadyThere || !statusService.isAllowed(FLOW, returnItem.getStatusId(), toStatusId)) {
+                continue;
+            }
+            returnItem.setStatusId(toStatusId);
+            writeHistory(returnId, returnItem.getReturnItemSeqId(), toStatusId, reason, userId);
         }
     }
 
     /** Quantity of an order item on returns that are not cancelled. */
-    private BigDecimal returning(String orderId, String orderItemSeqId) {
-        BigDecimal v = em.createQuery("SELECT SUM(r.returnQuantity) FROM ReturnItem r WHERE r.orderId = :o AND r.orderItemSeqId = :i "
-                + "AND r.statusId <> 'RETURN_CANCELLED'", BigDecimal.class).setParameter("o", orderId).setParameter("i", orderItemSeqId).getSingleResult();
-        return v == null ? BigDecimal.ZERO : v;
+    private BigDecimal quantityOnOtherReturns(String orderId, String orderItemSeqId) {
+        BigDecimal total = entityManager.createQuery("SELECT SUM(r.returnQuantity) FROM ReturnItem r WHERE r.orderId = :orderId "
+                        + "AND r.orderItemSeqId = :itemSeqId AND r.statusId <> :cancelled", BigDecimal.class)
+                .setParameter("orderId", orderId)
+                .setParameter("itemSeqId", orderItemSeqId)
+                .setParameter("cancelled", CoreStatus.Return.CANCELLED)
+                .getSingleResult();
+        return total == null ? BigDecimal.ZERO : total;
     }
 
-    private BigDecimal accepted(String returnId, String returnItemSeqId) {
-        BigDecimal v = em.createQuery("SELECT SUM(r.quantityAccepted) FROM ShipmentReceipt r WHERE r.returnId = :r AND r.returnItemSeqId = :i", BigDecimal.class)
-                .setParameter("r", returnId).setParameter("i", returnItemSeqId).getSingleResult();
-        return v == null ? BigDecimal.ZERO : v;
+    private BigDecimal acceptedQuantity(String returnId, String returnItemSeqId) {
+        BigDecimal total = entityManager.createQuery("SELECT SUM(r.quantityAccepted) FROM ShipmentReceipt r "
+                        + "WHERE r.returnId = :returnId AND r.returnItemSeqId = :itemSeqId", BigDecimal.class)
+                .setParameter("returnId", returnId)
+                .setParameter("itemSeqId", returnItemSeqId)
+                .getSingleResult();
+        return total == null ? BigDecimal.ZERO : total;
     }
 
-    private void history(String returnId, String returnItemSeqId, String statusId, String reason, String userId) {
-        ReturnStatus s = new ReturnStatus();
-        s.setReturnStatusId(sequences.nextId("ReturnStatus"));
-        s.setReturnId(returnId);
-        s.setReturnItemSeqId(returnItemSeqId);
-        s.setStatusId(statusId);
-        s.setStatusDatetime(CoreClock.now());
-        s.setChangeByUserLoginId(userId);
-        s.setChangeReason(reason);
-        em.persist(s);
+    private OrderPaymentPreference firstPayment(String orderId) {
+        return entityManager.createQuery("SELECT p FROM OrderPaymentPreference p WHERE p.orderId = :orderId ORDER BY p.orderPaymentPreferenceId",
+                        OrderPaymentPreference.class)
+                .setParameter("orderId", orderId)
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst()
+                .orElse(null);
     }
 
-    @Transactional(readOnly = true)
-    public List<ReturnItem> items(String returnId) {
-        return em.createQuery("SELECT i FROM ReturnItem i WHERE i.returnId = :r ORDER BY i.returnItemSeqId", ReturnItem.class)
-                .setParameter("r", returnId).getResultList();
+    /** Writes a {@code return_status} row, for the return ({@code returnItemSeqId} null) or one item. */
+    private void writeHistory(String returnId, String returnItemSeqId, String statusId, String reason, String userId) {
+        ReturnStatus history = new ReturnStatus();
+        history.setReturnStatusId(sequenceService.nextId("ReturnStatus"));
+        history.setReturnId(returnId);
+        history.setReturnItemSeqId(returnItemSeqId);
+        history.setStatusId(statusId);
+        history.setStatusDatetime(CoreClock.now());
+        history.setChangeByUserLoginId(userId);
+        history.setChangeReason(reason);
+        entityManager.persist(history);
     }
 
-    private ReturnItem item(String returnId, String returnItemSeqId) {
-        ReturnItem i = em.find(ReturnItem.class, new ReturnItem.Key(returnId, returnItemSeqId));
-        if (i == null) throw new IllegalArgumentException("Return " + returnId + " has no item " + returnItemSeqId);
-        return i;
+    private ReturnItem loadItem(String returnId, String returnItemSeqId) {
+        ReturnItem returnItem = entityManager.find(ReturnItem.class, new ReturnItem.Key(returnId, returnItemSeqId));
+        if (returnItem == null) {
+            throw new IllegalArgumentException("Return " + returnId + " has no item " + returnItemSeqId);
+        }
+        return returnItem;
     }
 
-    private ReturnHeader header(String returnId) {
-        ReturnHeader h = em.find(ReturnHeader.class, returnId, LockModeType.PESSIMISTIC_WRITE);
-        if (h == null) throw new IllegalArgumentException("Unknown return " + returnId);
-        return h;
+    /** The return header, locked until the transaction ends. */
+    private ReturnHeader loadHeaderForUpdate(String returnId) {
+        ReturnHeader header = entityManager.find(ReturnHeader.class, returnId, LockModeType.PESSIMISTIC_WRITE);
+        if (header == null) {
+            throw new IllegalArgumentException("Unknown return " + returnId);
+        }
+        return header;
+    }
+
+    private static String plain(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
     }
 }
