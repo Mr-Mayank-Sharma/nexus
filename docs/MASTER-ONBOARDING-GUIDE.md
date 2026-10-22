@@ -771,9 +771,9 @@ nexus-oms-backend/
 ├── src/main/java/com/nexus/oms/
 │   ├── NexusOmsApplication.java      ← entry point
 │   ├── controller/                   ← 87 REST controllers
-│   ├── service/                      ← 162 services (business logic)
+│   ├── service/                      ← 163 services (business logic)
 │   ├── repository/                   ← Spring Data JPA repositories
-│   ├── entity/                       ← 321 JPA entities
+│   ├── entity/                       ← 315 JPA entities
 │   ├── dto/                          ← request/response objects
 │   ├── security/                     ← JWT auth, tenant context, RBAC
 │   ├── config/                       ← app configuration
@@ -1158,7 +1158,7 @@ nexus-oms-backend/src/main/java/com/nexus/oms/
 │   │   └── AiAgentController.java
 │   └── ... (74 total)
 │
-├── service/                          ← 162 services (business logic)
+├── service/                          ← 163 services (business logic)
 │   ├── OrderService.java             ← order lifecycle
 │   ├── OrderRoutingService.java      ← DOM routing
 │   ├── ATPCalculationEngine.java     ← ATP math

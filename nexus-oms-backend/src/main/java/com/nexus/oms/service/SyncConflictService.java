@@ -13,11 +13,11 @@ import com.nexus.oms.repository.SyncConflictRepository;
 import com.nexus.oms.repository.SyncFieldMappingRepository;
 import com.nexus.oms.repository.SyncJobStatusRepository;
 import com.nexus.oms.security.TenantContext;
+import com.nexus.oms.tenancy.PlatformDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,18 +43,18 @@ public class SyncConflictService {
     private final SyncFieldMappingRepository fieldMappingRepository;
     private final SyncJobStatusRepository jobStatusRepository;
     private final ObjectMapper objectMapper;
-    private final JdbcTemplate jdbcTemplate;
+    private final PlatformDirectory platformDirectory;
 
     public SyncConflictService(SyncConflictRepository conflictRepository,
                                SyncFieldMappingRepository fieldMappingRepository,
                                SyncJobStatusRepository jobStatusRepository,
                                ObjectMapper objectMapper,
-                               JdbcTemplate jdbcTemplate) {
+                               PlatformDirectory platformDirectory) {
         this.conflictRepository = conflictRepository;
         this.fieldMappingRepository = fieldMappingRepository;
         this.jobStatusRepository = jobStatusRepository;
         this.objectMapper = objectMapper;
-        this.jdbcTemplate = jdbcTemplate;
+        this.platformDirectory = platformDirectory;
     }
 
     // ------------------------------------------------------------------
@@ -182,9 +182,7 @@ public class SyncConflictService {
         // Scheduled jobs run without a security context — iterate tenants explicitly
         // (same pattern as BrokeringScheduler) instead of reading the tenant from
         // the security context, which throws when none is present.
-        List<UUID> tenantIds = jdbcTemplate.queryForList(
-                "SELECT DISTINCT tenant_id FROM nx_users WHERE tenant_id IS NOT NULL",
-                UUID.class);
+        List<UUID> tenantIds = platformDirectory.companies();
         for (UUID tenantId : tenantIds) {
             try {
                 TenantContext.setCurrentTenantId(tenantId);

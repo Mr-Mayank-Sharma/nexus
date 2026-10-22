@@ -2,19 +2,24 @@ package com.nexus.oms.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.core.CoreTestData;
+import com.nexus.core.CoreTransactional;
+import com.nexus.core.service.UserAccountService;
 import com.nexus.oms.entity.NxInventory;
 import com.nexus.oms.entity.NxNode;
-import com.nexus.oms.entity.RolePermission;
 import com.nexus.oms.repository.InventoryRepository;
 import com.nexus.oms.repository.NodeRepository;
-import com.nexus.oms.repository.RolePermissionRepository;
+import com.nexus.oms.security.TenantContext;
+import com.nexus.oms.service.PermissionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.*;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.UUID;
@@ -42,7 +47,14 @@ public abstract class AbstractIntegrationTest {
     protected InventoryRepository inventoryRepository;
 
     @Autowired
-    protected RolePermissionRepository rolePermissionRepository;
+    protected UserAccountService userAccountService;
+
+    @Autowired
+    protected PermissionService permissionService;
+
+    @Autowired
+    @Qualifier(CoreTransactional.JDBC)
+    protected JdbcTemplate coreJdbc;
 
     protected static String adminToken;
     protected static String adminUsername;
@@ -50,6 +62,12 @@ public abstract class AbstractIntegrationTest {
 
     protected String baseUrl() {
         return "http://localhost:" + port + "/api/v1";
+    }
+
+    /** Roles and their grants come from the core seed, which tests load themselves (Flyway is off). */
+    @BeforeEach
+    void loadCoreSeed() {
+        CoreTestData.ensureSeeded(coreJdbc);
     }
 
     protected void registerAdminUser() throws Exception {
@@ -122,17 +140,18 @@ public abstract class AbstractIntegrationTest {
         return inventoryRepository.save(inv).getId();
     }
 
+    /** Grants the role view (and, with canCreate, create and edit) on the group, as the old per-company rows did. */
     protected void seedPermission(UUID tenantId, String role, String group, String name, boolean canView, boolean canCreate) {
-        RolePermission rp = RolePermission.builder()
-                .tenantId(tenantId)
-                .role(role)
-                .permissionGroup(group)
-                .permissionName(name)
-                .canView(canView)
-                .canCreate(canCreate)
-                .canEdit(canCreate)
-                .canDelete(false)
-                .build();
-        rolePermissionRepository.save(rp);
+        TenantContext.callAs(tenantId, () -> {
+            if (canView) {
+                userAccountService.setGrant(role, UserAccountService.permissionId(group, "view"), true);
+            }
+            if (canCreate) {
+                userAccountService.setGrant(role, UserAccountService.permissionId(group, "create"), true);
+                userAccountService.setGrant(role, UserAccountService.permissionId(group, "edit"), true);
+            }
+            return null;
+        });
+        permissionService.invalidateAllCache();
     }
 }

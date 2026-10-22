@@ -1,11 +1,11 @@
 package com.nexus.oms.controller;
 
+import com.nexus.core.service.UserAccountService;
+
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.entity.NxPicklist;
 import com.nexus.oms.entity.NxPicklistItem;
-import com.nexus.oms.entity.NxUser;
 import com.nexus.oms.entity.WarehouseStaff;
-import com.nexus.oms.repository.UserRepository;
 import com.nexus.oms.repository.WarehouseStaffRepository;
 import com.nexus.oms.service.PickingService;
 import com.nexus.oms.security.TenantContext;
@@ -25,26 +25,27 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class PickingController {
 
     private final PickingService pickingService;
-    private final UserRepository userRepository;
+    private final UserAccountService userAccountService;
     private final WarehouseStaffRepository staffRepository;
 
     public PickingController(PickingService pickingService,
-                             UserRepository userRepository,
+                             UserAccountService userAccountService,
                              WarehouseStaffRepository staffRepository) {
         this.pickingService = pickingService;
-        this.userRepository = userRepository;
+        this.userAccountService = userAccountService;
         this.staffRepository = staffRepository;
     }
 
     @Operation(summary = "Resolve current user's staff profile")
     @GetMapping("/user-staff")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUserStaff(@RequestParam String username) {
-        NxUser user = userRepository.findByUsername(username).orElse(null);
+        // Core users copied from the earlier model keep their old id, which staff records point at.
+        UUID userId = userAccountService.findByUsername(username).map(account -> parseUuid(account.getUserId())).orElse(null);
         Map<String, Object> data = new java.util.HashMap<>();
         data.put("staffId", null);
         data.put("role", null);
-        if (user != null) {
-            WarehouseStaff staff = staffRepository.findByUserId(user.getId()).orElse(null);
+        if (userId != null) {
+            WarehouseStaff staff = staffRepository.findByUserId(userId).orElse(null);
             if (staff != null) {
                 data.put("staffId", staff.getId());
                 data.put("role", staff.getRole());
@@ -151,5 +152,13 @@ public class PickingController {
     @GetMapping("/kpis")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getKPIs() {
         return ResponseEntity.ok(ApiResponse.success(pickingService.getDashboardKPIs(TenantContext.getCurrentTenantId())));
+    }
+
+    private static UUID parseUuid(String value) {
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException notAUuid) {
+            return null;
+        }
     }
 }

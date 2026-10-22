@@ -1,25 +1,22 @@
 package com.nexus.oms.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nexus.core.model.security.UserAccount;
+import com.nexus.core.service.UserAccountService;
 import com.nexus.oms.config.SsoProviderConfig;
 import com.nexus.oms.dto.*;
 import com.nexus.oms.entity.CompanySettings;
-import com.nexus.oms.entity.NxAuthToken;
-import com.nexus.oms.entity.NxUser;
-import com.nexus.oms.entity.NxUserIdentity;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.integration.core.CredentialVault;
-import com.nexus.oms.repository.AuthTokenRepository;
 import com.nexus.oms.repository.CompanySettingsRepository;
-import com.nexus.oms.repository.RolePermissionRepository;
-import com.nexus.oms.repository.UserIdentityRepository;
-import com.nexus.oms.repository.UserRepository;
 import com.nexus.oms.security.JwtTokenProvider;
 import com.nexus.oms.service.auth.AuthTokenStore;
 import com.nexus.oms.service.auth.IdTokenVerifier;
 import com.nexus.oms.service.auth.IdTokenVerifier.VerifiedIdentity;
 import com.nexus.oms.service.auth.PasswordResetMailer;
 import com.nexus.oms.service.auth.TotpService;
+import com.nexus.oms.tenancy.PlatformDirectory;
+import com.nexus.oms.tenancy.TenantDatabaseRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +25,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -37,6 +38,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
+import java.sql.Connection;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,74 +47,54 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Sign-in rules. The shared sign-in directory and the single-use tokens are the real classes on an in-memory database;
+ * each company's users are an in-memory stand-in for the core user service.
+ */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AuthServiceTest {
 
-    @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private CompanySettingsRepository companySettingsRepository;
-    @Mock private RolePermissionRepository rolePermissionRepository;
+    @Mock private TenantDatabaseRegistry tenantDatabases;
     @Mock private SsoProviderConfig ssoProviderConfig;
-    @Mock private AuthTokenRepository authTokenRepository;
     @Mock private IdTokenVerifier idTokenVerifier;
-    @Mock private UserIdentityRepository identityRepository;
     @Mock private PasswordResetMailer resetMailer;
     @Mock private HttpClient httpClient;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final TotpService totpService = new TotpService();
     private final CredentialVault credentialVault = new CredentialVault();
-    private final Map<String, NxAuthToken> tokenRows = new HashMap<>();
+    private final InMemoryUserAccounts users = new InMemoryUserAccounts();
 
+    private PlatformDirectory platformDirectory;
     private AuthService authService;
-    private NxUser testUser;
+    private UserAccount testUser;
     private UUID tenantId;
 
     @BeforeEach
-    void setUp() {
-        // In-memory stand-in for nx_auth_tokens so the real AuthTokenStore logic is exercised.
-        when(authTokenRepository.save(any(NxAuthToken.class))).thenAnswer(i -> {
-            NxAuthToken t = i.getArgument(0);
-            tokenRows.put(t.getTokenType() + "|" + t.getTokenHash(), t);
-            return t;
-        });
-        when(authTokenRepository.findByTokenTypeAndTokenHash(anyString(), anyString()))
-                .thenAnswer(i -> Optional.ofNullable(tokenRows.get(i.getArgument(0) + "|" + i.getArgument(1))));
-        doAnswer(i -> {
-            NxAuthToken t = i.getArgument(0);
-            tokenRows.remove(t.getTokenType() + "|" + t.getTokenHash());
-            return null;
-        }).when(authTokenRepository).delete(any(NxAuthToken.class));
-        when(authTokenRepository.deleteByTypeAndUsername(anyString(), anyString())).thenAnswer(i -> {
-            tokenRows.values().removeIf(t -> t.getTokenType().equals(i.getArgument(0)) && i.getArgument(1).equals(t.getUsername()));
-            return 0;
-        });
+    void setUp() throws Exception {
+        // Step 1: a fresh shared database with the platform tables.
+        DriverManagerDataSource sharedDatabase = new DriverManagerDataSource(
+                "jdbc:h2:mem:auth_" + UUID.randomUUID().toString().replace("-", "") + ";MODE=PostgreSQL;DB_CLOSE_DELAY=-1", "sa", "");
+        try (Connection connection = sharedDatabase.getConnection()) {
+            ScriptUtils.executeSqlScript(connection, new ClassPathResource("schema.sql"));
+        }
+        platformDirectory = new PlatformDirectory(sharedDatabase);
 
-        authService = new AuthService(userRepository, passwordEncoder, jwtTokenProvider, companySettingsRepository,
-                rolePermissionRepository, ssoProviderConfig, objectMapper, new AuthTokenStore(authTokenRepository),
-                totpService, idTokenVerifier, identityRepository, credentialVault, resetMailer, httpClient);
+        authService = new AuthService(platformDirectory, users, tenantDatabases, new DataSourceProperties(), passwordEncoder, jwtTokenProvider,
+                companySettingsRepository, ssoProviderConfig, objectMapper, new AuthTokenStore(sharedDatabase), totpService, idTokenVerifier,
+                credentialVault, resetMailer, httpClient);
 
+        // Step 2: one company with one VIEWER, "testuser".
         tenantId = UUID.randomUUID();
-        testUser = NxUser.builder()
-                .id(UUID.randomUUID())
-                .tenantId(tenantId)
-                .username("testuser")
-                .email("test@acme.com")
-                .passwordHash("encoded-pass")
-                .role("VIEWER")
-                .build();
-        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
-        when(userRepository.findById(testUser.getId())).thenReturn(Optional.of(testUser));
+        platformDirectory.addCompany(tenantId, "Acme");
+        testUser = users.add(tenantId, "testuser", "test@acme.com", "encoded-pass", "VIEWER");
+
         when(companySettingsRepository.findByTenantId(any())).thenReturn(Optional.empty());
-        when(rolePermissionRepository.findByTenantIdAndRole(any(), any())).thenReturn(List.of());
         when(jwtTokenProvider.generateToken(eq("testuser"), eq("VIEWER"), eq(tenantId))).thenReturn("jwt-testuser");
-        when(userRepository.save(any(NxUser.class))).thenAnswer(i -> {
-            NxUser u = i.getArgument(0);
-            if (u.getId() == null) u.setId(UUID.randomUUID());
-            return u;
-        });
     }
 
     // ------------------------------------------------------------------ registration + login
@@ -123,14 +105,14 @@ class AuthServiceTest {
         request.setUsername("newuser");
         request.setPassword("Test1234!");
         request.setRole("VIEWER");
-        when(userRepository.existsByUsername("newuser")).thenReturn(false);
         when(passwordEncoder.encode("Test1234!")).thenReturn("encoded-new");
         when(jwtTokenProvider.generateToken(eq("newuser"), eq("VIEWER"), any())).thenReturn("test-token");
 
         AuthResponse result = authService.register(request);
 
         assertEquals("test-token", result.getAccessToken());
-        verify(userRepository).save(any(NxUser.class));
+        assertTrue(users.findByUsername("newuser").isPresent(), "the user is created in the new company");
+        assertEquals("VIEWER", users.roleOf(users.findByUsername("newuser").get().getUserId()));
         ArgumentCaptor<CompanySettings> settings = ArgumentCaptor.forClass(CompanySettings.class);
         verify(companySettingsRepository).save(settings.capture());
         assertEquals("newuser", settings.getValue().getCompanyName(), "company name defaults to the username");
@@ -141,10 +123,11 @@ class AuthServiceTest {
         RegisterRequest request = new RegisterRequest();
         request.setUsername("existing");
         request.setPassword("Test1234!");
-        when(userRepository.existsByUsername("existing")).thenReturn(true);
+        users.add(UUID.randomUUID(), "existing", null, "x", "VIEWER");
+        int before = users.count();
 
         assertThrows(BadRequestException.class, () -> authService.register(request));
-        verify(userRepository, never()).save(any());
+        assertEquals(before, users.count());
     }
 
     @Test
@@ -177,8 +160,6 @@ class AuthServiceTest {
 
     @Test
     void authenticate_UnknownUser_Throws() {
-        when(userRepository.findByUsername("ghost")).thenReturn(Optional.empty());
-
         assertThrows(BadCredentialsException.class, () -> authService.authenticate(new LoginRequest("ghost", "pw", null)));
     }
 
@@ -200,11 +181,11 @@ class AuthServiceTest {
     void mfa_EnrolActivateAndLogin_WithRealTotp() throws Exception {
         MfaEnrollmentResponse enrol = authService.beginMfaEnrollment("testuser");
         assertTrue(enrol.getOtpauthUri().startsWith("otpauth://totp/"));
-        assertNotEquals(enrol.getSecret(), testUser.getMfaSecret(), "secret must be stored encrypted");
+        assertNotEquals(enrol.getSecret(), testUser.getMfaSecretRef(), "secret must be stored encrypted");
 
         List<String> recovery = authService.activateMfa("testuser", totpNow(enrol.getSecret()));
         assertEquals(10, recovery.size());
-        assertTrue(testUser.isMfaEnabled());
+        assertTrue(testUser.getMfaEnabled());
 
         when(passwordEncoder.matches("pw", "encoded-pass")).thenReturn(true);
         AuthResponse challenge = authService.authenticate(new LoginRequest("testuser", "pw", null));
@@ -274,7 +255,7 @@ class AuthServiceTest {
         authService.beginMfaEnrollment("testuser");
 
         assertThrows(BadRequestException.class, () -> authService.activateMfa("testuser", "123456x"));
-        assertFalse(testUser.isMfaEnabled());
+        assertFalse(testUser.getMfaEnabled());
     }
 
     @Test
@@ -298,14 +279,13 @@ class AuthServiceTest {
 
         assertThrows(BadCredentialsException.class,
                 () -> authService.ssoLogin(new SsoLoginRequest("google", "header.payload.forged", null)));
-        verify(userRepository, never()).save(any());
+        assertEquals(1, users.count());
     }
 
     @Test
     void ssoLogin_ExistingIdentityLink_ReturnsLinkedUser() {
         when(idTokenVerifier.verify("google", "tok")).thenReturn(new VerifiedIdentity("sub-1", "other@x.com", false));
-        when(identityRepository.findByProviderAndSubject("google", "sub-1"))
-                .thenReturn(Optional.of(NxUserIdentity.builder().userId(testUser.getId()).build()));
+        users.linkIdentity(testUser.getUserId(), "google", "sub-1", "other@x.com");
 
         assertEquals("jwt-testuser", authService.ssoLogin(new SsoLoginRequest("google", "tok", null)).getAccessToken());
     }
@@ -313,24 +293,18 @@ class AuthServiceTest {
     @Test
     void ssoLogin_VerifiedEmailWithSingleMatch_LinksAndLogsIn() {
         when(idTokenVerifier.verify("google", "tok")).thenReturn(new VerifiedIdentity("sub-2", "test@acme.com", true));
-        when(userRepository.findByEmailIgnoreCase("test@acme.com")).thenReturn(List.of(testUser));
 
         AuthResponse result = authService.ssoLogin(new SsoLoginRequest("google", "tok", null));
 
         assertEquals("jwt-testuser", result.getAccessToken());
-        ArgumentCaptor<NxUserIdentity> link = ArgumentCaptor.forClass(NxUserIdentity.class);
-        verify(identityRepository).save(link.capture());
-        assertEquals("sub-2", link.getValue().getSubject());
+        assertEquals(Optional.of(testUser.getUserId()), users.userWithIdentity("google", "sub-2"), "the identity is linked");
     }
 
     @Test
     void ssoLogin_SameLocalPartDifferentDomain_DoesNotReachOtherAccount() {
         // Previously username = email.split("@")[0], so admin@attacker.com became user "admin".
-        NxUser admin = NxUser.builder().id(UUID.randomUUID()).username("admin").email("admin@victim.com")
-                .role("ADMIN").tenantId(UUID.randomUUID()).passwordHash("x").build();
-        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        users.add(UUID.randomUUID(), "admin", "admin@victim.com", "x", "ADMIN");
         when(idTokenVerifier.verify("google", "tok")).thenReturn(new VerifiedIdentity("sub-3", "admin@attacker.com", true));
-        when(userRepository.findByEmailIgnoreCase("admin@attacker.com")).thenReturn(List.of());
 
         assertThrows(BadCredentialsException.class, () -> authService.ssoLogin(new SsoLoginRequest("google", "tok", null)));
         verify(jwtTokenProvider, never()).generateToken(eq("admin"), any(), any());
@@ -339,18 +313,15 @@ class AuthServiceTest {
     @Test
     void ssoLogin_UnverifiedEmail_IsNotLinked() {
         when(idTokenVerifier.verify("google", "tok")).thenReturn(new VerifiedIdentity("sub-4", "test@acme.com", false));
-        when(userRepository.findByEmailIgnoreCase("test@acme.com")).thenReturn(List.of(testUser));
 
         assertThrows(BadCredentialsException.class, () -> authService.ssoLogin(new SsoLoginRequest("google", "tok", null)));
-        verify(identityRepository, never()).save(any());
+        assertTrue(users.userWithIdentity("google", "sub-4").isEmpty());
     }
 
     @Test
     void ssoLogin_AmbiguousEmail_IsRejected() {
-        NxUser twin = NxUser.builder().id(UUID.randomUUID()).username("twin").email("test@acme.com")
-                .role("VIEWER").tenantId(UUID.randomUUID()).passwordHash("x").build();
+        users.add(UUID.randomUUID(), "twin", "test@acme.com", "x", "VIEWER");
         when(idTokenVerifier.verify("google", "tok")).thenReturn(new VerifiedIdentity("sub-5", "test@acme.com", true));
-        when(userRepository.findByEmailIgnoreCase("test@acme.com")).thenReturn(List.of(testUser, twin));
 
         assertThrows(BadCredentialsException.class, () -> authService.ssoLogin(new SsoLoginRequest("google", "tok", null)));
     }
@@ -359,11 +330,10 @@ class AuthServiceTest {
     void ssoLogin_UnknownIdentity_IgnoresCallerSuppliedTenant() {
         UUID victimTenant = UUID.randomUUID();
         when(idTokenVerifier.verify("google", "tok")).thenReturn(new VerifiedIdentity("sub-6", "new@acme.com", true));
-        when(userRepository.findByEmailIgnoreCase("new@acme.com")).thenReturn(List.of());
 
         assertThrows(BadCredentialsException.class,
                 () -> authService.ssoLogin(new SsoLoginRequest("google", "tok", victimTenant.toString())));
-        verify(userRepository, never()).save(any());
+        assertEquals(1, users.count(), "no account is created");
     }
 
     @Test
@@ -373,12 +343,13 @@ class AuthServiceTest {
         cfg.setAutoProvisionTenantId(provisionTenant.toString());
         when(ssoProviderConfig.getProvider("google")).thenReturn(cfg);
         when(idTokenVerifier.verify("google", "tok")).thenReturn(new VerifiedIdentity("sub-7", "new@acme.com", true));
-        when(userRepository.findByEmailIgnoreCase("new@acme.com")).thenReturn(List.of());
         when(passwordEncoder.encode(anyString())).thenReturn("random");
         when(jwtTokenProvider.generateToken(eq("new@acme.com"), eq("VIEWER"), eq(provisionTenant))).thenReturn("jwt-new");
 
         assertEquals("jwt-new", authService.ssoLogin(new SsoLoginRequest("google", "tok", null)).getAccessToken());
-        verify(identityRepository).save(any(NxUserIdentity.class));
+        String newUserId = users.findByUsername("new@acme.com").orElseThrow().getUserId();
+        assertEquals("VIEWER", users.roleOf(newUserId));
+        assertEquals(Optional.of(newUserId), users.userWithIdentity("google", "sub-7"));
     }
 
     @Test
@@ -392,7 +363,6 @@ class AuthServiceTest {
         when(tokenResponse.body()).thenReturn("{\"id_token\":\"signed.id.token\"}");
         doReturn(tokenResponse).when(httpClient).send(any(HttpRequest.class), any());
         when(idTokenVerifier.verify("okta", "signed.id.token")).thenReturn(new VerifiedIdentity("okta-sub", "test@acme.com", true));
-        when(userRepository.findByEmailIgnoreCase("test@acme.com")).thenReturn(List.of(testUser));
 
         String redirect = authService.handleSsoCallback("okta", "code", state);
 
@@ -455,8 +425,6 @@ class AuthServiceTest {
     @Test
     void forgotPassword_SendsSingleUseLink_AndResetWorksOnce() {
         authService.forgotPassword(new ForgotPasswordRequest("test@acme.com"));
-        when(userRepository.findByEmailIgnoreCase("test@acme.com")).thenReturn(List.of(testUser));
-        authService.forgotPassword(new ForgotPasswordRequest("test@acme.com"));
 
         ArgumentCaptor<String> token = ArgumentCaptor.forClass(String.class);
         verify(resetMailer).sendResetLink(eq("test@acme.com"), eq("testuser"), token.capture());
@@ -464,10 +432,9 @@ class AuthServiceTest {
 
         authService.resetPassword(new ResetPasswordRequest(token.getValue(), "NewPass123!"));
 
-        assertEquals("encoded-newpass", testUser.getPasswordHash());
+        assertEquals("encoded-newpass", testUser.getCurrentPassword());
         assertThrows(BadRequestException.class,
                 () -> authService.resetPassword(new ResetPasswordRequest(token.getValue(), "Another123!")));
-        verify(userRepository, never()).findAll();
     }
 
     @Test
@@ -483,8 +450,8 @@ class AuthServiceTest {
 
     @Test
     void forgotPassword_UnknownOrAmbiguous_SendsNothing() {
-        when(userRepository.findByUsername("ghost@x.com")).thenReturn(Optional.empty());
-        when(userRepository.findByEmailIgnoreCase("ghost@x.com")).thenReturn(List.of(testUser, testUser));
+        users.add(UUID.randomUUID(), "ghost-one", "ghost@x.com", "x", "VIEWER");
+        users.add(UUID.randomUUID(), "ghost-two", "ghost@x.com", "x", "VIEWER");
 
         authService.forgotPassword(new ForgotPasswordRequest("ghost@x.com"));
 
@@ -502,7 +469,7 @@ class AuthServiceTest {
     @Test
     void getTenantsFor_Anonymous_ReturnsNothing() {
         assertTrue(authService.getTenantsFor(null).isEmpty());
-        verify(companySettingsRepository, never()).findAll();
+        verifyNoInteractions(companySettingsRepository);
     }
 
     @Test
@@ -578,5 +545,106 @@ class AuthServiceTest {
         int o = h[h.length - 1] & 0xf;
         int bin = ((h[o] & 0x7f) << 24) | ((h[o + 1] & 0xff) << 16) | ((h[o + 2] & 0xff) << 8) | (h[o + 3] & 0xff);
         return String.format("%06d", bin % 1_000_000);
+    }
+
+    /**
+     * Each company's users, in memory: what the core user service keeps in the company's database. Usernames are
+     * unique across companies (the shared directory enforces that), so one map serves every company here.
+     */
+    private final class InMemoryUserAccounts extends UserAccountService {
+
+        private final Map<String, UserAccount> usersById = new LinkedHashMap<>();
+        private final Map<String, String> rolesByUserId = new HashMap<>();
+        private final Map<String, String> userIdsByIdentity = new HashMap<>();
+
+        InMemoryUserAccounts() {
+            super(null, null);
+        }
+
+        /** A user in the company, also recorded in the shared sign-in directory. */
+        UserAccount add(UUID companyId, String username, String email, String passwordHash, String role) {
+            if (platformDirectory.companyName(companyId).isEmpty()) {
+                platformDirectory.addCompany(companyId, "Company");
+            }
+            String userId = create(new NewUser(null, username, email, passwordHash, null, role));
+            platformDirectory.addLogin(username, email, companyId);
+            return usersById.get(userId);
+        }
+
+        int count() {
+            return usersById.size();
+        }
+
+        @Override
+        public String create(NewUser newUser) {
+            UserAccount user = new UserAccount();
+            user.setUserId(newUser.userId() == null ? UUID.randomUUID().toString() : newUser.userId());
+            user.setUsername(newUser.username());
+            user.setEmailAddress(newUser.emailAddress());
+            user.setCurrentPassword(newUser.passwordHash());
+            user.setMfaEnabled(false);
+            usersById.put(user.getUserId(), user);
+            rolesByUserId.put(user.getUserId(), newUser.role());
+            return user.getUserId();
+        }
+
+        @Override
+        public Optional<UserAccount> findByUsername(String username) {
+            return usersById.values().stream().filter(user -> user.getUsername().equals(username)).findFirst();
+        }
+
+        @Override
+        public Optional<UserAccount> findById(String userId) {
+            return Optional.ofNullable(usersById.get(userId));
+        }
+
+        @Override
+        public void setPasswordHash(String userId, String passwordHash) {
+            usersById.get(userId).setCurrentPassword(passwordHash);
+        }
+
+        @Override
+        public void setPendingMfaSecret(String userId, String encryptedSecret) {
+            usersById.get(userId).setMfaSecretRef(encryptedSecret);
+        }
+
+        @Override
+        public void enableMfa(String userId, String recoveryCodeHashes) {
+            usersById.get(userId).setMfaEnabled(true);
+            usersById.get(userId).setMfaRecoveryCodes(recoveryCodeHashes);
+        }
+
+        @Override
+        public void disableMfa(String userId) {
+            UserAccount user = usersById.get(userId);
+            user.setMfaEnabled(false);
+            user.setMfaSecretRef(null);
+            user.setMfaRecoveryCodes(null);
+        }
+
+        @Override
+        public void setRecoveryCodes(String userId, String recoveryCodeHashes) {
+            usersById.get(userId).setMfaRecoveryCodes(recoveryCodeHashes);
+        }
+
+        @Override
+        public void linkIdentity(String userId, String providerId, String externalSubject, String emailAddress) {
+            userIdsByIdentity.put(providerId + "|" + externalSubject, userId);
+        }
+
+        @Override
+        public Optional<String> userWithIdentity(String providerId, String externalSubject) {
+            return Optional.ofNullable(userIdsByIdentity.get(providerId + "|" + externalSubject));
+        }
+
+        @Override
+        public String roleOf(String userId) {
+            return rolesByUserId.get(userId);
+        }
+
+        @Override
+        public Set<String> permissionsOf(String role) {
+            return Set.of();
+        }
     }
 }

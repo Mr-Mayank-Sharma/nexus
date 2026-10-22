@@ -68,7 +68,7 @@ class CoreSchemaMigrationTest {
     private static void assertBuildsAndSeeds(JdbcDatabaseContainer<?> db, String vendor) {
         DataSource ds = ds(db);
         assertEquals(vendor, CoreSchemaMigrator.vendor(ds));
-        assertEquals(23, CoreSchemaMigrator.migrate(ds).migrationsExecuted);
+        assertEquals(25, CoreSchemaMigrator.migrate(ds).migrationsExecuted);
         assertEquals(0, CoreSchemaMigrator.migrate(ds).migrationsExecuted, "a second run changes nothing");
         JdbcTemplate jdbc = new JdbcTemplate(ds);
         String schemaFilter = vendor.equals("mysql") ? "table_schema = DATABASE()" : "table_schema = 'public'";

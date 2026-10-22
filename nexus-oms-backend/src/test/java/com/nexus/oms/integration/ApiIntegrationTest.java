@@ -116,11 +116,12 @@ class ApiIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Order(5)
-    void testViewerCannotAccessInventory() {
+    void testViewerCannotAccessProcurement() {
+        // A viewer's default grants are read-only on orders, products, customers, inventory, shipments and analytics.
         assertNotNull(viewerToken);
 
         ResponseEntity<String> response = restTemplate.exchange(
-                baseUrl() + "/inventory", HttpMethod.GET,
+                baseUrl() + "/procurement", HttpMethod.GET,
                 new HttpEntity<>(authHeaders(viewerToken)), String.class);
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }

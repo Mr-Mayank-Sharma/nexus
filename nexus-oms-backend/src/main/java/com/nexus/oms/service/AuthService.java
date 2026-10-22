@@ -4,19 +4,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.oms.config.SsoProviderConfig;
 import com.nexus.oms.dto.*;
+import com.nexus.core.model.security.UserAccount;
+import com.nexus.core.service.UserAccountService;
 import com.nexus.oms.entity.CompanySettings;
-import com.nexus.oms.entity.NxAuthToken;
-import com.nexus.oms.entity.NxUser;
-import com.nexus.oms.entity.NxUserIdentity;
-import com.nexus.oms.entity.RolePermission;
 import com.nexus.oms.exception.BadRequestException;
 import com.nexus.oms.integration.core.CredentialVault;
 import com.nexus.oms.repository.CompanySettingsRepository;
-import com.nexus.oms.repository.RolePermissionRepository;
-import com.nexus.oms.repository.UserIdentityRepository;
-import com.nexus.oms.repository.UserRepository;
 import com.nexus.oms.security.JwtTokenProvider;
+import com.nexus.oms.security.TenantContext;
 import com.nexus.oms.service.auth.AuthTokenStore;
+import com.nexus.oms.service.auth.AuthTokenStore.AuthToken;
+import com.nexus.oms.tenancy.PlatformDirectory;
+import com.nexus.oms.tenancy.TenantDatabaseRegistry;
 import com.nexus.oms.service.auth.IdTokenVerifier;
 import com.nexus.oms.service.auth.IdTokenVerifier.VerifiedIdentity;
 import com.nexus.oms.service.auth.PasswordResetMailer;
@@ -24,10 +23,10 @@ import com.nexus.oms.service.auth.TotpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -41,7 +40,13 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
+import java.util.function.Supplier;
 
+/**
+ * Sign-in (doc 29, phase C): the shared database's {@link PlatformDirectory} says which company a username belongs to;
+ * the user, its role and permissions are in that company's core database ({@link UserAccountService}). Every step that
+ * reads or changes a user runs as the user's company ({@link #asCompanyOf}).
+ */
 @Service
 public class AuthService {
 
@@ -64,20 +69,25 @@ public class AuthService {
     private static final String RECOVERY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    private final UserRepository userRepository;
+    private final PlatformDirectory platformDirectory;
+    private final UserAccountService userAccountService;
+    private final TenantDatabaseRegistry tenantDatabases;
+    private final DataSourceProperties sharedDatabase;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final CompanySettingsRepository companySettingsRepository;
-    private final RolePermissionRepository rolePermissionRepository;
     private final SsoProviderConfig ssoProviderConfig;
     private final ObjectMapper objectMapper;
     private final AuthTokenStore tokenStore;
     private final TotpService totpService;
     private final IdTokenVerifier idTokenVerifier;
-    private final UserIdentityRepository identityRepository;
     private final CredentialVault credentialVault;
     private final PasswordResetMailer resetMailer;
     private final HttpClient httpClient;
+
+    /** A new company gets its own core database at sign-up (off in tests, which run on one in-memory database). */
+    @Value("${nexus.tenancy.database-per-company:false}")
+    private boolean databasePerCompany;
 
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
@@ -86,90 +96,94 @@ public class AuthService {
     private long accessTokenTtlMs = 900_000L;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public AuthService(UserRepository userRepository,
+    public AuthService(PlatformDirectory platformDirectory,
+                       UserAccountService userAccountService,
+                       TenantDatabaseRegistry tenantDatabases,
+                       DataSourceProperties sharedDatabase,
                        PasswordEncoder passwordEncoder,
                        JwtTokenProvider jwtTokenProvider,
                        CompanySettingsRepository companySettingsRepository,
-                       RolePermissionRepository rolePermissionRepository,
                        SsoProviderConfig ssoProviderConfig,
                        ObjectMapper objectMapper,
                        AuthTokenStore tokenStore,
                        TotpService totpService,
                        IdTokenVerifier idTokenVerifier,
-                       UserIdentityRepository identityRepository,
                        CredentialVault credentialVault,
                        PasswordResetMailer resetMailer) {
-        this(userRepository, passwordEncoder, jwtTokenProvider, companySettingsRepository,
-                rolePermissionRepository, ssoProviderConfig, objectMapper, tokenStore, totpService,
-                idTokenVerifier, identityRepository, credentialVault, resetMailer, HttpClient.newHttpClient());
+        this(platformDirectory, userAccountService, tenantDatabases, sharedDatabase, passwordEncoder, jwtTokenProvider, companySettingsRepository,
+                ssoProviderConfig, objectMapper, tokenStore, totpService, idTokenVerifier, credentialVault, resetMailer, HttpClient.newHttpClient());
     }
 
-    AuthService(UserRepository userRepository,
+    AuthService(PlatformDirectory platformDirectory,
+                UserAccountService userAccountService,
+                TenantDatabaseRegistry tenantDatabases,
+                DataSourceProperties sharedDatabase,
                 PasswordEncoder passwordEncoder,
                 JwtTokenProvider jwtTokenProvider,
                 CompanySettingsRepository companySettingsRepository,
-                RolePermissionRepository rolePermissionRepository,
                 SsoProviderConfig ssoProviderConfig,
                 ObjectMapper objectMapper,
                 AuthTokenStore tokenStore,
                 TotpService totpService,
                 IdTokenVerifier idTokenVerifier,
-                UserIdentityRepository identityRepository,
                 CredentialVault credentialVault,
                 PasswordResetMailer resetMailer,
                 HttpClient httpClient) {
-        this.userRepository = userRepository;
+        this.platformDirectory = platformDirectory;
+        this.userAccountService = userAccountService;
+        this.tenantDatabases = tenantDatabases;
+        this.sharedDatabase = sharedDatabase;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.companySettingsRepository = companySettingsRepository;
-        this.rolePermissionRepository = rolePermissionRepository;
         this.ssoProviderConfig = ssoProviderConfig;
         this.objectMapper = objectMapper;
         this.tokenStore = tokenStore;
         this.totpService = totpService;
         this.idTokenVerifier = idTokenVerifier;
-        this.identityRepository = identityRepository;
         this.credentialVault = credentialVault;
         this.resetMailer = resetMailer;
         this.httpClient = httpClient;
     }
 
+    /** A user and the company it belongs to. */
+    record CompanyUser(UUID tenantId, UserAccount account) {
+    }
+
     // ------------------------------------------------------------------ password login + MFA
 
     public AuthResponse authenticate(LoginRequest request) {
-        NxUser user = userRepository.findByUsername(request.getUsername())
+        CompanyUser user = findCompanyUser(request.getUsername())
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+        UserAccount account = user.account();
+        if (Boolean.TRUE.equals(account.getDisabled()) || !passwordEncoder.matches(request.getPassword(), account.getCurrentPassword())) {
             throw new BadCredentialsException("Invalid username or password");
         }
 
-        if (user.isMfaEnabled()) {
-            String mfaToken = tokenStore.issue(AuthTokenStore.MFA_CHALLENGE, user.getUsername(), null, MFA_CHALLENGE_TTL);
+        if (Boolean.TRUE.equals(account.getMfaEnabled())) {
+            String mfaToken = tokenStore.issue(AuthTokenStore.MFA_CHALLENGE, account.getUsername(), null, MFA_CHALLENGE_TTL);
             return AuthResponse.builder()
                     .mfaRequired(true)
                     .mfaToken(mfaToken)
-                    .username(user.getUsername())
-                    .tenantId(user.getTenantId().toString())
+                    .username(account.getUsername())
+                    .tenantId(user.tenantId().toString())
                     .build();
         }
 
         AuthResponse response = buildAuthResponse(user);
-        response.setMfaEnrollmentRequired(tenantRequiresMfa(user.getTenantId()));
+        response.setMfaEnrollmentRequired(tenantRequiresMfa(user.tenantId()));
         return response;
     }
 
     public AuthResponse verifyMfa(MfaVerificationRequest request) {
-        NxAuthToken challenge = tokenStore.find(AuthTokenStore.MFA_CHALLENGE, request.getMfaToken())
+        AuthToken challenge = tokenStore.find(AuthTokenStore.MFA_CHALLENGE, request.getMfaToken())
                 .orElseThrow(() -> new BadRequestException("Invalid or expired MFA session. Please login again."));
-        if (challenge.getAttempts() >= MAX_MFA_ATTEMPTS) {
+        if (challenge.attempts() >= MAX_MFA_ATTEMPTS) {
             tokenStore.delete(challenge);
             throw new BadRequestException("Too many invalid codes. Please login again.");
         }
 
-        NxUser user = userRepository.findByUsername(challenge.getUsername())
-                .orElseThrow(() -> new BadCredentialsException("User not found"));
-
+        CompanyUser user = requireUser(challenge.username());
         if (!checkTotpOrRecoveryCode(user, request.getTotpCode())) {
             int attempts = tokenStore.recordFailedAttempt(challenge);
             if (attempts >= MAX_MFA_ATTEMPTS) {
@@ -183,46 +197,50 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
-    /** For the account security screen: is MFA on, and does the tenant's policy require it? */
+    /** For the account security screen: is MFA on, and does the company's policy require it? */
     public Map<String, Object> mfaStatus(String username) {
-        NxUser user = requireUser(username);
-        int remainingCodes = user.getMfaRecoveryCodes() == null || user.getMfaRecoveryCodes().isBlank()
-                ? 0 : user.getMfaRecoveryCodes().split(",").length;
+        CompanyUser user = requireUser(username);
+        UserAccount account = user.account();
+        String codes = account.getMfaRecoveryCodes();
+        int remainingCodes = codes == null || codes.isBlank() ? 0 : codes.split(",").length;
+        boolean enabled = Boolean.TRUE.equals(account.getMfaEnabled());
         Map<String, Object> status = new LinkedHashMap<>();
-        status.put("enabled", user.isMfaEnabled());
-        status.put("requiredByTenant", tenantRequiresMfa(user.getTenantId()));
-        status.put("recoveryCodesRemaining", user.isMfaEnabled() ? remainingCodes : 0);
+        status.put("enabled", enabled);
+        status.put("requiredByTenant", tenantRequiresMfa(user.tenantId()));
+        status.put("recoveryCodesRemaining", enabled ? remainingCodes : 0);
         return status;
     }
 
     /** Starts (or restarts) enrolment: stores a pending secret; MFA stays off until activated. */
-    @Transactional
     public MfaEnrollmentResponse beginMfaEnrollment(String username) {
-        NxUser user = requireUser(username);
-        if (user.isMfaEnabled()) {
+        CompanyUser user = requireUser(username);
+        UserAccount account = user.account();
+        if (Boolean.TRUE.equals(account.getMfaEnabled())) {
             throw new BadRequestException("MFA is already enabled. Disable it first to re-enrol.");
         }
         String secret = totpService.generateSecret();
-        user.setMfaSecret(credentialVault.encrypt(secret));
-        userRepository.save(user);
-        String account = user.getEmail() != null ? user.getEmail() : user.getUsername();
+        asCompany(user.tenantId(), () -> {
+            userAccountService.setPendingMfaSecret(account.getUserId(), credentialVault.encrypt(secret));
+            return null;
+        });
+        String accountName = account.getEmailAddress() != null ? account.getEmailAddress() : account.getUsername();
         return MfaEnrollmentResponse.builder()
                 .secret(secret)
-                .otpauthUri(totpService.otpauthUri(MFA_ISSUER, account, secret))
+                .otpauthUri(totpService.otpauthUri(MFA_ISSUER, accountName, secret))
                 .build();
     }
 
     /** Confirms enrolment with a first code and returns single-use recovery codes (shown once). */
-    @Transactional
     public List<String> activateMfa(String username, String code) {
-        NxUser user = requireUser(username);
-        if (user.isMfaEnabled()) {
+        CompanyUser user = requireUser(username);
+        UserAccount account = user.account();
+        if (Boolean.TRUE.equals(account.getMfaEnabled())) {
             throw new BadRequestException("MFA is already enabled.");
         }
-        if (user.getMfaSecret() == null) {
+        if (account.getMfaSecretRef() == null) {
             throw new BadRequestException("Start MFA enrolment first.");
         }
-        if (!totpService.verify(credentialVault.decrypt(user.getMfaSecret()), code)) {
+        if (!totpService.verify(credentialVault.decrypt(account.getMfaSecretRef()), code)) {
             throw new BadRequestException("Invalid verification code");
         }
         List<String> codes = new ArrayList<>();
@@ -232,51 +250,49 @@ public class AuthService {
             codes.add(recovery);
             hashes.add(sha256(normaliseRecoveryCode(recovery)));
         }
-        user.setMfaEnabled(true);
-        user.setMfaRecoveryCodes(String.join(",", hashes));
-        userRepository.save(user);
+        asCompany(user.tenantId(), () -> {
+            userAccountService.enableMfa(account.getUserId(), String.join(",", hashes));
+            return null;
+        });
         return codes;
     }
 
-    @Transactional
     public void disableMfa(String username, String code) {
-        NxUser user = requireUser(username);
-        if (!user.isMfaEnabled()) {
+        CompanyUser user = requireUser(username);
+        if (!Boolean.TRUE.equals(user.account().getMfaEnabled())) {
             return;
         }
         if (!checkTotpOrRecoveryCode(user, code)) {
             throw new BadRequestException("Invalid verification code");
         }
-        user.setMfaEnabled(false);
-        user.setMfaSecret(null);
-        user.setMfaRecoveryCodes(null);
-        userRepository.save(user);
+        asCompany(user.tenantId(), () -> {
+            userAccountService.disableMfa(user.account().getUserId());
+            return null;
+        });
     }
 
-    private boolean checkTotpOrRecoveryCode(NxUser user, String code) {
-        if (code == null || user.getMfaSecret() == null) {
+    /** A current TOTP code, or one of the recovery codes (which is then used up). */
+    private boolean checkTotpOrRecoveryCode(CompanyUser user, String code) {
+        UserAccount account = user.account();
+        if (code == null || account.getMfaSecretRef() == null) {
             return false;
         }
-        if (totpService.verify(credentialVault.decrypt(user.getMfaSecret()), code.trim())) {
+        if (totpService.verify(credentialVault.decrypt(account.getMfaSecretRef()), code.trim())) {
             return true;
         }
-        if (user.getMfaRecoveryCodes() == null || user.getMfaRecoveryCodes().isBlank()) {
+        String storedCodes = account.getMfaRecoveryCodes();
+        if (storedCodes == null || storedCodes.isBlank()) {
             return false;
         }
         String candidate = sha256(normaliseRecoveryCode(code));
-        List<String> remaining = new ArrayList<>(Arrays.asList(user.getMfaRecoveryCodes().split(",")));
-        boolean matched = false;
-        for (Iterator<String> it = remaining.iterator(); it.hasNext(); ) {
-            String stored = it.next();
-            if (MessageDigest.isEqual(stored.getBytes(StandardCharsets.US_ASCII), candidate.getBytes(StandardCharsets.US_ASCII))) {
-                it.remove();
-                matched = true;
-                break;
-            }
-        }
+        List<String> remaining = new ArrayList<>(Arrays.asList(storedCodes.split(",")));
+        boolean matched = remaining.removeIf(stored -> MessageDigest.isEqual(stored.getBytes(StandardCharsets.US_ASCII),
+                candidate.getBytes(StandardCharsets.US_ASCII)));
         if (matched) {
-            user.setMfaRecoveryCodes(String.join(",", remaining));
-            userRepository.save(user);
+            asCompany(user.tenantId(), () -> {
+                userAccountService.setRecoveryCodes(account.getUserId(), String.join(",", remaining));
+                return null;
+            });
         }
         return matched;
     }
@@ -298,7 +314,6 @@ public class AuthService {
     // ------------------------------------------------------------------ SSO
 
     /** Direct ID-token login (e.g. Google One Tap). The token must verify against the IdP's JWKS. */
-    @Transactional
     public AuthResponse ssoLogin(SsoLoginRequest request) {
         String provider = request.getProvider().toLowerCase();
         if (!SSO_PROVIDERS.contains(provider)) {
@@ -345,14 +360,10 @@ public class AuthService {
      * single-use {@code sso_code}. Tokens are never placed in the URL; the SPA exchanges the
      * code via {@link #exchangeSsoCode(String)}.
      */
-    @Transactional
     public String handleSsoCallback(String provider, String code, String state) {
         provider = provider.toLowerCase();
-        Optional<NxAuthToken> ssoState = tokenStore.consume(AuthTokenStore.SSO_STATE, state);
-        if (ssoState.isEmpty()) {
-            return frontendUrl + "/login?error=sso_invalid_state";
-        }
-        if (!provider.equals(ssoState.get().getPayload())) {
+        Optional<AuthToken> ssoState = tokenStore.consume(AuthTokenStore.SSO_STATE, state);
+        if (ssoState.isEmpty() || !provider.equals(ssoState.get().payload())) {
             return frontendUrl + "/login?error=sso_invalid_state";
         }
 
@@ -395,8 +406,8 @@ public class AuthService {
                 return frontendUrl + "/login?error=sso_no_identity";
             }
 
-            NxUser user = resolveSsoUser(provider, identity);
-            String exchange = tokenStore.issue(AuthTokenStore.SSO_EXCHANGE, user.getUsername(), provider, SSO_EXCHANGE_TTL);
+            CompanyUser user = resolveSsoUser(provider, identity);
+            String exchange = tokenStore.issue(AuthTokenStore.SSO_EXCHANGE, user.account().getUsername(), provider, SSO_EXCHANGE_TTL);
             return frontendUrl + "/login?sso_code=" + URLEncoder.encode(exchange, StandardCharsets.UTF_8);
         } catch (BadCredentialsException e) {
             return frontendUrl + "/login?error=sso_no_account";
@@ -411,11 +422,10 @@ public class AuthService {
 
     /** Swaps the one-time code from {@link #handleSsoCallback} for access + refresh tokens. */
     public AuthResponse exchangeSsoCode(String code) {
-        NxAuthToken token = tokenStore.consume(AuthTokenStore.SSO_EXCHANGE, code)
+        AuthToken token = tokenStore.consume(AuthTokenStore.SSO_EXCHANGE, code)
                 .orElseThrow(() -> new BadCredentialsException("Invalid or expired SSO code"));
-        NxUser user = requireUser(token.getUsername());
-        AuthResponse response = buildAuthResponse(user);
-        response.setSsoProvider(token.getPayload());
+        AuthResponse response = buildAuthResponse(requireUser(token.username()));
+        response.setSsoProvider(token.payload());
         return response;
     }
 
@@ -441,18 +451,17 @@ public class AuthService {
     /**
      * Maps a verified IdP identity to a Nexus user:
      * <ol>
-     *   <li>an existing link on (provider, subject);</li>
+     *   <li>an existing link on (provider, subject), looked for in the companies the email signs in to, then in all;</li>
      *   <li>otherwise exactly one user with the same e-mail, when the IdP asserts it is verified
      *       (or the provider is configured with {@code trust-email}); the link is then recorded;</li>
      *   <li>otherwise a new VIEWER in the provider's {@code auto-provision-tenant-id}, if set.</li>
      * </ol>
-     * Anything else is rejected — no account is ever created in a caller-chosen tenant.
+     * Anything else is rejected — no account is ever created in a caller-chosen company.
      */
-    NxUser resolveSsoUser(String provider, VerifiedIdentity identity) {
-        Optional<NxUserIdentity> link = identityRepository.findByProviderAndSubject(provider, identity.subject());
-        if (link.isPresent()) {
-            return userRepository.findById(link.get().getUserId())
-                    .orElseThrow(() -> new BadCredentialsException("Linked account no longer exists"));
+    CompanyUser resolveSsoUser(String provider, VerifiedIdentity identity) {
+        Optional<CompanyUser> linked = findLinkedUser(provider, identity);
+        if (linked.isPresent()) {
+            return linked.get();
         }
 
         SsoProviderConfig.Provider cfg = ssoProviderConfig.getProvider(provider);
@@ -460,10 +469,13 @@ public class AuthService {
                 && (identity.emailVerified() || (cfg != null && cfg.isTrustEmail()));
 
         if (emailTrusted) {
-            List<NxUser> matches = userRepository.findByEmailIgnoreCase(identity.email());
+            List<PlatformDirectory.Login> matches = platformDirectory.loginsWithEmail(identity.email());
             if (matches.size() == 1) {
-                NxUser user = matches.get(0);
-                linkIdentity(user, provider, identity);
+                CompanyUser user = requireUser(matches.get(0).username());
+                asCompany(user.tenantId(), () -> {
+                    userAccountService.linkIdentity(user.account().getUserId(), provider, identity.subject(), identity.email());
+                    return null;
+                });
                 return user;
             }
             if (matches.size() > 1) {
@@ -473,70 +485,72 @@ public class AuthService {
         }
 
         if (cfg != null && cfg.getAutoProvisionTenantId() != null && emailTrusted) {
-            if (userRepository.existsByUsername(identity.email())) {
+            if (platformDirectory.usernameTaken(identity.email())) {
                 throw new BadCredentialsException("An account with this username already exists.");
             }
-            NxUser user = NxUser.builder()
-                    .username(identity.email())
-                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
-                    .email(identity.email())
-                    .role("VIEWER")
-                    .tenantId(UUID.fromString(cfg.getAutoProvisionTenantId()))
-                    .build();
-            user = userRepository.save(user);
-            linkIdentity(user, provider, identity);
-            return user;
+            UUID tenantId = UUID.fromString(cfg.getAutoProvisionTenantId());
+            String userId = asCompany(tenantId, () -> {
+                String newUserId = userAccountService.create(new UserAccountService.NewUser(null, identity.email(), identity.email(),
+                        passwordEncoder.encode(UUID.randomUUID().toString()), null, "VIEWER"));
+                userAccountService.linkIdentity(newUserId, provider, identity.subject(), identity.email());
+                return newUserId;
+            });
+            platformDirectory.addLogin(identity.email(), identity.email(), tenantId);
+            return new CompanyUser(tenantId, asCompany(tenantId, () -> userAccountService.findById(userId).orElseThrow()));
         }
 
         throw new BadCredentialsException("No Nexus account is linked to this sign-in. Ask your administrator for an invite.");
     }
 
-    private void linkIdentity(NxUser user, String provider, VerifiedIdentity identity) {
-        identityRepository.save(NxUserIdentity.builder()
-                .userId(user.getId())
-                .tenantId(user.getTenantId())
-                .provider(provider)
-                .subject(identity.subject())
-                .email(identity.email())
-                .build());
+    /** The user already linked to this outside identity: first in the companies its email signs in to, then in every company. */
+    private Optional<CompanyUser> findLinkedUser(String provider, VerifiedIdentity identity) {
+        LinkedHashSet<UUID> companies = new LinkedHashSet<>();
+        platformDirectory.loginsWithEmail(identity.email()).forEach(login -> companies.add(login.tenantId()));
+        companies.addAll(platformDirectory.companies());
+        for (UUID tenantId : companies) {
+            Optional<UserAccount> account = asCompany(tenantId, () -> userAccountService.userWithIdentity(provider, identity.subject())
+                    .flatMap(userAccountService::findById));
+            if (account.isPresent()) {
+                return Optional.of(new CompanyUser(tenantId, account.get()));
+            }
+        }
+        return Optional.empty();
     }
 
     // ------------------------------------------------------------------ password reset
 
-    @Transactional
     public void forgotPassword(ForgotPasswordRequest request) {
         String identifier = request.getEmail() == null ? "" : request.getEmail().trim();
-        Optional<NxUser> userOpt = userRepository.findByUsername(identifier);
-        if (userOpt.isEmpty()) {
-            List<NxUser> byEmail = userRepository.findByEmailIgnoreCase(identifier);
+        Optional<CompanyUser> user = findCompanyUser(identifier);
+        if (user.isEmpty()) {
+            List<PlatformDirectory.Login> byEmail = platformDirectory.loginsWithEmail(identifier);
             // Ambiguous e-mails get no link; the response is identical either way so the
             // endpoint does not reveal which accounts exist.
-            userOpt = byEmail.size() == 1 ? Optional.of(byEmail.get(0)) : Optional.empty();
+            user = byEmail.size() == 1 ? findCompanyUser(byEmail.get(0).username()) : Optional.empty();
         }
-        if (userOpt.isEmpty()) {
+        if (user.isEmpty()) {
             return;
         }
-        NxUser user = userOpt.get();
-        tokenStore.revokeAll(AuthTokenStore.PASSWORD_RESET, user.getUsername());
-        String token = tokenStore.issue(AuthTokenStore.PASSWORD_RESET, user.getUsername(), null, PASSWORD_RESET_TTL);
-        resetMailer.sendResetLink(user.getEmail(), user.getUsername(), token);
+        UserAccount account = user.get().account();
+        tokenStore.revokeAll(AuthTokenStore.PASSWORD_RESET, account.getUsername());
+        String token = tokenStore.issue(AuthTokenStore.PASSWORD_RESET, account.getUsername(), null, PASSWORD_RESET_TTL);
+        resetMailer.sendResetLink(account.getEmailAddress(), account.getUsername(), token);
     }
 
-    @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        NxAuthToken token = tokenStore.consume(AuthTokenStore.PASSWORD_RESET, request.getToken())
+        AuthToken token = tokenStore.consume(AuthTokenStore.PASSWORD_RESET, request.getToken())
                 .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
-
-        NxUser user = userRepository.findByUsername(token.getUsername())
-                .orElseThrow(() -> new BadCredentialsException("User not found"));
-        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
-        tokenStore.revokeAll(AuthTokenStore.MFA_CHALLENGE, user.getUsername());
+        CompanyUser user = requireUser(token.username());
+        asCompany(user.tenantId(), () -> {
+            userAccountService.setPasswordHash(user.account().getUserId(), passwordEncoder.encode(request.getNewPassword()));
+            return null;
+        });
+        tokenStore.revokeAll(AuthTokenStore.MFA_CHALLENGE, user.account().getUsername());
     }
 
     // ------------------------------------------------------------------ registration, tenants, refresh
 
-    /** The caller's own tenant only; listing every tenant leaked the customer list to anonymous users. */
+    /** The caller's own company only; listing every company leaked the customer list to anonymous users. */
     public List<CompanySettings> getTenantsFor(UUID tenantId) {
         if (tenantId == null) {
             return List.of();
@@ -544,32 +558,34 @@ public class AuthService {
         return companySettingsRepository.findByTenantId(tenantId).map(List::of).orElse(List.of());
     }
 
+    /**
+     * A new company and its first user: the company is recorded in the shared directory, gets its own core database
+     * (when {@code nexus.tenancy.database-per-company} is on), and the user is created there with the role asked for.
+     */
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByUsername(request.getUsername())) {
+        if (platformDirectory.usernameTaken(request.getUsername())) {
             throw new BadRequestException("Username already exists");
         }
-
         String role = request.getRole() != null ? request.getRole().toUpperCase() : "VIEWER";
         if (!ALLOWED_ROLES.contains(role)) {
             throw new BadRequestException("Invalid role: " + role + ". Allowed roles: " + ALLOWED_ROLES);
         }
 
         UUID tenantId = UUID.randomUUID();
-
-        NxUser user = NxUser.builder()
-                .username(request.getUsername())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
-                .role(role)
-                .tenantId(tenantId)
-                .build();
-
-        userRepository.save(user);
-        // A new tenant gets its settings record at sign-up (it used to be created lazily by the
-        // Settings page, which failed validation and returned 500).
         String companyName = request.getCompanyName() != null && !request.getCompanyName().isBlank()
                 ? request.getCompanyName().trim() : request.getUsername();
-        companySettingsRepository.save(CompanySettings.builder()
+        platformDirectory.addCompany(tenantId, companyName);
+        if (databasePerCompany) {
+            asCompany(tenantId, () -> tenantDatabases.provision(tenantId, sharedDatabase.determineUrl(), sharedDatabase.determineUsername(),
+                    sharedDatabase.determinePassword()));
+        }
+        String userId = asCompany(tenantId, () -> userAccountService.create(new UserAccountService.NewUser(null, request.getUsername(),
+                request.getEmail(), passwordEncoder.encode(request.getPassword()), null, role)));
+        platformDirectory.addLogin(request.getUsername(), request.getEmail(), tenantId);
+
+        // A new company gets its settings record at sign-up (it used to be created lazily by the
+        // Settings page, which failed validation and returned 500).
+        asCompany(tenantId, () -> companySettingsRepository.save(CompanySettings.builder()
                 .tenantId(tenantId)
                 .companyName(companyName)
                 .defaultCurrency("USD")
@@ -579,9 +595,10 @@ public class AuthService {
                 .timeFormat("HH:mm:ss")
                 .featureFlags("{}")
                 .securityPolicy("{}")
-                .build());
+                .build()));
 
-        return buildAuthResponse(user);
+        UserAccount account = asCompany(tenantId, () -> userAccountService.findById(userId).orElseThrow());
+        return buildAuthResponse(new CompanyUser(tenantId, account));
     }
 
     public AuthResponse refreshToken(String refreshToken) {
@@ -591,55 +608,48 @@ public class AuthService {
         if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
             throw new BadRequestException("Token is not a refresh token");
         }
-
-        String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
-        NxUser user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BadCredentialsException("User not found"));
-
-        return buildAuthResponse(user);
+        return buildAuthResponse(requireUser(jwtTokenProvider.getUsernameFromToken(refreshToken)));
     }
 
-    private NxUser requireUser(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new BadCredentialsException("User not found"));
+    // ------------------------------------------------------------------ internals
+
+    /** The user with this username, in its company's database. */
+    private Optional<CompanyUser> findCompanyUser(String username) {
+        return platformDirectory.companyOfUsername(username)
+                .flatMap(tenantId -> asCompany(tenantId, () -> userAccountService.findByUsername(username))
+                        .map(account -> new CompanyUser(tenantId, account)));
     }
 
-    private AuthResponse buildAuthResponse(NxUser user) {
-        String token = jwtTokenProvider.generateToken(user.getUsername(), user.getRole(), user.getTenantId());
-        String tenantName = null;
-        Optional<CompanySettings> settings = companySettingsRepository.findByTenantId(user.getTenantId());
-        if (settings.isPresent()) {
-            tenantName = settings.get().getCompanyName();
-        }
+    private CompanyUser requireUser(String username) {
+        return findCompanyUser(username).orElseThrow(() -> new BadCredentialsException("User not found"));
+    }
 
-        List<String> permissions = new ArrayList<>();
-        try {
-            List<RolePermission> rolePerms = rolePermissionRepository
-                    .findByTenantIdAndRole(user.getTenantId(), user.getRole());
-            for (RolePermission rp : rolePerms) {
-                if (Boolean.TRUE.equals(rp.getCanView())) permissions.add(rp.getPermissionGroup() + ":view");
-                if (Boolean.TRUE.equals(rp.getCanCreate())) permissions.add(rp.getPermissionGroup() + ":create");
-                if (Boolean.TRUE.equals(rp.getCanEdit())) permissions.add(rp.getPermissionGroup() + ":edit");
-                if (Boolean.TRUE.equals(rp.getCanDelete())) permissions.add(rp.getPermissionGroup() + ":delete");
-            }
-        } catch (Exception e) {
-            log.warn("Failed to fetch permissions for user {} role {}: {}", user.getUsername(), user.getRole(), e.getMessage());
-        }
+    /** Runs the work in the company's database (sign-in runs before anyone is signed in). */
+    private static <T> T asCompany(UUID tenantId, Supplier<T> work) {
+        return TenantContext.callAs(tenantId, work);
+    }
 
-        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername(), user.getRole(), user.getTenantId());
+    private AuthResponse buildAuthResponse(CompanyUser user) {
+        UserAccount account = user.account();
+        UUID tenantId = user.tenantId();
+        String role = asCompany(tenantId, () -> userAccountService.roleOf(account.getUserId()));
+        String token = jwtTokenProvider.generateToken(account.getUsername(), role, tenantId);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(account.getUsername(), role, tenantId);
+        String tenantName = platformDirectory.companyName(tenantId).orElse(null);
+        List<String> permissions = role == null ? List.of() : new ArrayList<>(asCompany(tenantId, () -> userAccountService.permissionsOf(role)));
 
         return AuthResponse.builder()
-                .id(user.getId() != null ? user.getId().toString() : null)
+                .id(account.getUserId())
                 .accessToken(token)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .expiresIn(accessTokenTtlMs)
-                .role(user.getRole())
-                .username(user.getUsername())
-                .tenantId(user.getTenantId().toString())
+                .role(role)
+                .username(account.getUsername())
+                .tenantId(tenantId.toString())
                 .tenantName(tenantName)
-                .email(user.getEmail())
-                .fullName(user.getUsername())
+                .email(account.getEmailAddress())
+                .fullName(account.getUserFullName() != null ? account.getUserFullName() : account.getUsername())
                 .mfaRequired(false)
                 .passwordResetRequired(false)
                 .permissions(permissions)

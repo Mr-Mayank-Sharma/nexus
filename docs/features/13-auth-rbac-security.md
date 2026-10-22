@@ -44,7 +44,7 @@ erDiagram
     NX_USER_ROLES ||--o{ NX_ROLE_PERMISSIONS : grants
     NX_USERS ||--o{ NX_AUDIT_LOG : performs
 ```
-Tables: `nx_users` · `nx_user_roles` · `nx_role_permissions` · `nx_teams` · `nx_company_settings` · `nx_audit_log`
+Tables: each company's core database holds `user_account` · `user_group` (roles, teams) · `user_group_member` · `user_group_permission` · `user_auth_identity`; the shared database holds `platform_tenant` · `platform_login` · `platform_auth_token` (doc 29, phase C). Still on the old model: `nx_company_settings` · `nx_audit_log`
 
 ## Who can access what
 | Stage | Roles |

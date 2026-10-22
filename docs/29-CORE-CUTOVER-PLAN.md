@@ -22,7 +22,7 @@ For every area, in this order, with the tests green after each step:
 |---|---|---|
 | A ✅ | Remove the warehouse-floor pages (waves, labor, yards, slotting, trailers, RFID, cycle counts, task queues, automation, pickers) from the OMS frontend and backend | `RfController`, `TaskQueueController`, `TwinController`, `WarehouseController` pages, frontend `/labor` `/yards` `/waves` `/slotting` `/automation` `/rfid` `/trailers` `/pickers` |
 | B ✅ | **Tenancy:** a control database (companies, sign-in index) and one core database per company; every request routed to its company's database; migrations run per database; a new company gets its database | tenant filters, `TenantContext` routing of the old model |
-| C | **Identity:** sign-in, users, roles and permissions on the core security model (`UserAccount`, `UserGroup`, `UserPermission`), JWT unchanged for the frontend | `AuthController`, `RbacController`, `NxUser`, `UserRole`, `RolePermission`, `Team` |
+| C ✅ | **Identity:** sign-in, users, roles and permissions on the core security model (`UserAccount`, `UserGroup`, `UserPermission`), JWT unchanged for the frontend | `AuthController`, `RbacController`, `NxUser`, `UserRole`, `RolePermission`, `Team` |
 | D | **Settings and master data:** company settings, stores, customers, products, locations, carriers | `SettingsController`, `CustomerController`, `ProductController`, `IntegrationStoreController`, `CarrierController`, `CarrierLabelConfigController` |
 | E | **Inventory:** stock, receipts, ATP rules, replenishment, cycle counts at stores | `InventoryController`, `InventoryReceiptController`, `ATPController`, `ReplenishmentController` |
 | F | **Order intake:** order create, imports (CSV, email parser), channel connectors (Shopify, BigCommerce, NetSuite, Amazon), webhooks, sync, integration platform | `OrderController` (create/read), `ImportHistoryController`, `EmailOrderParsingController`, `ShopifyController`, `ShopifyInventoryController`, `BigCommerceController`, `NetSuiteController`, `ConnectorController`, `WebhookController`, `SyncController`, `IntegrationPlatformController` |
@@ -56,6 +56,27 @@ Phases D to L each end with their old code deleted, so the old model shrinks wit
   database; issue a new key after moving a company.
 - `TenantDatabasesPostgresTest` proves it on real PostgreSQL: a company with its own database sees only its own rows,
   ids are counted per database, and jobs visit every database.
+
+## Phase C: sign-in on the core
+
+- **Shared database, platform tables only** (V90): `platform_tenant` (the companies), `platform_login` (which company
+  a username and email sign in to) and `platform_auth_token` (MFA challenges, reset links, SSO state; the old
+  `nx_auth_tokens`). `PlatformDirectory` and `AuthTokenStore` read them as the database owner, since sign-in runs
+  before a company is known.
+- **Everything else about a user is in the company's core database:** `UserAccount` (password hash, MFA secret and
+  recovery codes), `UserAuthIdentity` (Google, Microsoft, Okta links), roles as `UserGroup` of type `UGT_ROLE`, teams
+  as type `UGT_TEAM`, membership in `UserGroupMember`. `UserAccountService` is the one place that reads and writes them.
+- **Permissions** are ids `*`, `resource:*` or `resource:action`, granted to a role in `UserGroupPermission`
+  (`UserAccountService.allows`). Core seed V25 has the 14 roles and their default grants. The old global defaults
+  were never applied (the old lookup read only a company's own rows), so before this only ADMIN could do anything.
+- **New companies** get their own core database at sign-up (`nexus.tenancy.database-per-company`, on by default, off
+  in tests). The first user is created there with the role asked for.
+- **APIs unchanged:** `/auth/**` and `/rbac/**` keep their paths and JSON fields. A user role's `id` is now the user's id.
+- **Removed:** `NxUser`, `NxUserIdentity`, `NxAuthToken`, `RolePermission`, `UserRole`, `Team` and their
+  repositories; the tables `nx_users`, `nx_user_identities`, `nx_role_permissions`, `nx_user_roles`, `nx_teams` (V91),
+  after a one-off copy of the users into the core.
+- In shared-database mode (tests, and companies not moved yet) every company in that database shares the role
+  grants. Each company with its own database has its own.
 
 ## What stays the same
 

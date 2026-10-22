@@ -25,8 +25,8 @@ That is exactly where Nexus stands: **broad, real surface + a short, honest list
 |---|---|
 | **Codebase** | Monorepo: `nexus-oms-backend` (Java/Spring Boot) + `nexus-oms-frontend` (React/Vite) |
 | **Git history** | 204 commits on `main`, tracked at `github.com/Mr-Mayank-Sharma/nexus` |
-| **Migrations** | 81 Flyway migrations (`V1`–`V89`, non-contiguous) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
-| **Backend surface** | **321 JPA entities**, **87 controllers**, 162 services, 14 RBAC roles |
+| **Migrations** | 83 Flyway migrations (`V1`–`V89`, non-contiguous) — schema, seed data, AI `metrics_source`, shipping-label source, multi-client billing, box/kitting catalog, WES tables, ASN inbound, ASN↔dock-appointment link |
+| **Backend surface** | **315 JPA entities**, **87 controllers**, 163 services, 14 RBAC roles |
 | **Frontend surface** | **91 routes**, hash-routed, role/resource-gated, React Query + WebSockets |
 | **Infra (docker-compose)** | Postgres, Redis, Kafka, backend, frontend, **ai-ops**, **ai-intel**, Prometheus, Grafana |
 | **Testing** | Backend: **789 unit tests, 0 failures, 0 errors** (`mvn test` green). Frontend: vitest **403 passing, 0 failures, 0 errors** (`tsc --noEmit`, `npm run build`, and `npm run lint` green); Playwright smoke-tested on live dev stack |

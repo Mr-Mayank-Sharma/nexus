@@ -1,7 +1,6 @@
 package com.nexus.oms.service;
 
-import com.nexus.oms.entity.RolePermission;
-import com.nexus.oms.repository.RolePermissionRepository;
+import com.nexus.core.service.UserAccountService;
 import com.nexus.oms.security.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 class PermissionServiceTest {
 
     @Mock
-    private RolePermissionRepository rolePermissionRepository;
+    private UserAccountService userAccountService;
 
     private PermissionService permissionService;
     private UUID tenantId;
@@ -39,7 +39,7 @@ class PermissionServiceTest {
         tenantId = UUID.randomUUID();
         tenantContextMock = mockStatic(TenantContext.class);
         tenantContextMock.when(TenantContext::getCurrentTenantId).thenReturn(tenantId);
-        permissionService = new PermissionService(rolePermissionRepository);
+        permissionService = new PermissionService(userAccountService);
     }
 
     @AfterEach
@@ -56,19 +56,7 @@ class PermissionServiceTest {
 
     @Test
     void testViewerWithExplicitPermission() {
-        RolePermission rp = RolePermission.builder()
-                .tenantId(tenantId)
-                .role("VIEWER")
-                .permissionGroup("orders")
-                .permissionName("view")
-                .canView(true)
-                .canCreate(false)
-                .canEdit(false)
-                .canDelete(false)
-                .build();
-
-        when(rolePermissionRepository.findByTenantIdAndRole(tenantId, "VIEWER"))
-                .thenReturn(List.of(rp));
+        when(userAccountService.permissionsOf("VIEWER")).thenReturn(Set.of("orders:view"));
 
         assertTrue(permissionService.hasPermission("VIEWER", "orders", "view"));
         assertFalse(permissionService.hasPermission("VIEWER", "orders", "create"));
@@ -92,27 +80,14 @@ class PermissionServiceTest {
 
     @Test
     void testPermissionNotFoundReturnsFalse() {
-        when(rolePermissionRepository.findByTenantIdAndRole(tenantId, "VIEWER"))
-                .thenReturn(List.of());
+        when(userAccountService.permissionsOf("VIEWER")).thenReturn(Set.of());
 
         assertFalse(permissionService.hasPermission("VIEWER", "orders", "view"));
     }
 
     @Test
     void testWildcardPermissionGroupGrantsAll() {
-        RolePermission rp = RolePermission.builder()
-                .tenantId(tenantId)
-                .role("OPS_MANAGER")
-                .permissionGroup("*")
-                .permissionName("*")
-                .canView(true)
-                .canCreate(true)
-                .canEdit(true)
-                .canDelete(true)
-                .build();
-
-        when(rolePermissionRepository.findByTenantIdAndRole(tenantId, "OPS_MANAGER"))
-                .thenReturn(List.of(rp));
+        when(userAccountService.permissionsOf("OPS_MANAGER")).thenReturn(Set.of("*"));
 
         assertTrue(permissionService.hasPermission("OPS_MANAGER", "orders", "view"));
         assertTrue(permissionService.hasPermission("OPS_MANAGER", "inventory", "create"));
@@ -121,35 +96,17 @@ class PermissionServiceTest {
 
     @Test
     void testCacheIsUsed() {
-        RolePermission rp = RolePermission.builder()
-                .tenantId(tenantId)
-                .role("VIEWER")
-                .permissionGroup("orders")
-                .permissionName("view")
-                .canView(true)
-                .build();
-
-        when(rolePermissionRepository.findByTenantIdAndRole(tenantId, "VIEWER"))
-                .thenReturn(List.of(rp));
+        when(userAccountService.permissionsOf("VIEWER")).thenReturn(Set.of("orders:view"));
 
         assertTrue(permissionService.hasPermission("VIEWER", "orders", "view"));
         assertTrue(permissionService.hasPermission("VIEWER", "orders", "view"));
 
-        verify(rolePermissionRepository, times(1)).findByTenantIdAndRole(any(), any());
+        verify(userAccountService, times(1)).permissionsOf(any());
     }
 
     @Test
     void testCacheInvalidation() {
-        RolePermission rp = RolePermission.builder()
-                .tenantId(tenantId)
-                .role("VIEWER")
-                .permissionGroup("orders")
-                .permissionName("view")
-                .canView(true)
-                .build();
-
-        when(rolePermissionRepository.findByTenantIdAndRole(tenantId, "VIEWER"))
-                .thenReturn(List.of(rp));
+        when(userAccountService.permissionsOf("VIEWER")).thenReturn(Set.of("orders:view"));
 
         assertTrue(permissionService.hasPermission("VIEWER", "orders", "view"));
 
@@ -157,7 +114,7 @@ class PermissionServiceTest {
 
         assertTrue(permissionService.hasPermission("VIEWER", "orders", "view"));
 
-        verify(rolePermissionRepository, times(2)).findByTenantIdAndRole(any(), any());
+        verify(userAccountService, times(2)).permissionsOf(any());
     }
 
     @Test
@@ -246,19 +203,7 @@ class PermissionServiceTest {
 
     @Test
     void testWildcardPermissionNameWithSpecificGroup() {
-        RolePermission rp = RolePermission.builder()
-                .tenantId(tenantId)
-                .role("OPS_MANAGER")
-                .permissionGroup("inventory")
-                .permissionName("*")
-                .canView(true)
-                .canCreate(true)
-                .canEdit(true)
-                .canDelete(true)
-                .build();
-
-        when(rolePermissionRepository.findByTenantIdAndRole(tenantId, "OPS_MANAGER"))
-                .thenReturn(List.of(rp));
+        when(userAccountService.permissionsOf("OPS_MANAGER")).thenReturn(Set.of("inventory:*"));
 
         assertTrue(permissionService.hasPermission("OPS_MANAGER", "inventory", "view"));
         assertTrue(permissionService.hasPermission("OPS_MANAGER", "inventory", "delete"));

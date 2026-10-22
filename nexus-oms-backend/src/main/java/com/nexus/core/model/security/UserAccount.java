@@ -80,4 +80,7 @@ public class UserAccount extends CoreEntity {
 
     @Column(name = "mfa_secret_ref", length = 255)
     private String mfaSecretRef;
+
+    @Column(name = "mfa_recovery_codes", length = 4000)
+    private String mfaRecoveryCodes;
 }

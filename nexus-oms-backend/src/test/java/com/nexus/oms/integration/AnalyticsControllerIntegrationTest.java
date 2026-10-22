@@ -172,13 +172,14 @@ class AnalyticsControllerIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     @Order(14)
-    void viewerUser_CannotAccessAnalytics() throws Exception {
+    void pickerUser_CannotAccessAnalytics() throws Exception {
+        // A picker's default grants cover picking and inventory only (core seed V25); a viewer may read analytics.
         if (adminToken == null) {
             registerAdminUser();
         }
         long ts = System.currentTimeMillis();
         String body = """
-                {"username": "analytics-viewer-%d", "password": "Test1234!", "role": "VIEWER"}
+                {"username": "analytics-picker-%d", "password": "Test1234!", "role": "PICKER"}
                 """.formatted(ts);
 
         HttpHeaders regHeaders = new HttpHeaders();

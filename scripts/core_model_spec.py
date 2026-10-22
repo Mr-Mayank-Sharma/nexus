@@ -194,6 +194,7 @@ entity("UserAccount", "security", "A person or system that signs in; links to a 
     ("externalUserId", "text-medium", []),
     ("mfaEnabled", "indicator", []),
     ("mfaSecretRef", "text-medium", []),
+    ("mfaRecoveryCodes", "text-long", [added(24)]),
 ], indexes=[["emailAddress"]])
 entity("UserAuthIdentity", "security", "A sign-in identity from Google, Microsoft or Okta linked to a user (Nexus).", [
     ("providerId", "id", [PK]),
@@ -1506,4 +1507,5 @@ MIGRATIONS = [
     (16, "core_transfer_shipment", []),
     (19, "core_ai", [e["name"] for e in ENTITIES if e["package"] == "ai"]),
     (22, "core_agent_commerce", [e["name"] for e in ENTITIES if e["package"] == "agent"]),
+    (24, "core_identity", []),   # doc 29 phase C: sign-in on the core; adds user_account.mfa_recovery_codes
 ]

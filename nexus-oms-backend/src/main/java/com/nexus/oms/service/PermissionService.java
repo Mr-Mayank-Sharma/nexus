@@ -1,7 +1,6 @@
 package com.nexus.oms.service;
 
-import com.nexus.oms.entity.RolePermission;
-import com.nexus.oms.repository.RolePermissionRepository;
+import com.nexus.core.service.UserAccountService;
 import com.nexus.oms.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,19 +12,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Whether a role may call an API path: the path maps to a resource, the HTTP method to an action, and the role's grants
+ * in the company's core database (doc 29, phase C) decide. ADMIN may do everything. Grants are cached per company and
+ * role for a minute.
+ */
 @Service
 public class PermissionService {
 
     private static final Logger log = LoggerFactory.getLogger(PermissionService.class);
     private static final long CACHE_TTL_MS = 60_000;
 
-    private final RolePermissionRepository rolePermissionRepository;
+    private final UserAccountService userAccountService;
 
     private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
     private final AtomicLong lastCleanup = new AtomicLong(System.currentTimeMillis());
 
-    public PermissionService(RolePermissionRepository rolePermissionRepository) {
-        this.rolePermissionRepository = rolePermissionRepository;
+    public PermissionService(UserAccountService userAccountService) {
+        this.userAccountService = userAccountService;
         Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "permission-cache-cleaner");
             t.setDaemon(true);
@@ -152,38 +156,20 @@ public class PermissionService {
             return false;
         }
         String cacheKey = tenantId + ":" + role;
-
-        List<RolePermission> perms = cache.computeIfAbsent(cacheKey, k -> {
+        Set<String> grants = cache.computeIfAbsent(cacheKey, key -> {
             log.debug("Cache miss for role permissions: {}", cacheKey);
-            List<RolePermission> loaded = rolePermissionRepository.findByTenantIdAndRole(tenantId, role);
-            return new CacheEntry(loaded != null ? loaded : List.of(), System.currentTimeMillis());
-        }).permissions;
+            return new CacheEntry(userAccountService.permissionsOf(role), System.currentTimeMillis());
+        }).grants;
 
-        for (RolePermission rp : perms) {
-            if (rp.getPermissionGroup().equals("*")) return true;
-            if (!rp.getPermissionGroup().equals(resource)) continue;
-            if (rp.getPermissionName().equals("*")) return true;
-            if (rp.getPermissionName().equals(action)) {
-                return isActionGranted(rp, action);
-            }
+        if (UserAccountService.allows(grants, resource, action)) {
+            return true;
         }
-        log.warn("Permission denied: no matching permission row for role={} resource={} action={}",
-                role, resource, action);
+        log.warn("Permission denied: no grant for role={} resource={} action={}", role, resource, action);
         return false;
     }
 
     public boolean hasPermissionCached(String role, String resource, String action) {
         return hasPermission(role, resource, action);
-    }
-
-    private boolean isActionGranted(RolePermission rp, String action) {
-        return switch (action) {
-            case "view" -> Boolean.TRUE.equals(rp.getCanView());
-            case "create" -> Boolean.TRUE.equals(rp.getCanCreate());
-            case "edit" -> Boolean.TRUE.equals(rp.getCanEdit());
-            case "delete" -> Boolean.TRUE.equals(rp.getCanDelete());
-            default -> false;
-        };
     }
 
     public void invalidateCache(UUID tenantId, String role) {
@@ -201,5 +187,5 @@ public class PermissionService {
         cache.values().removeIf(entry -> now - entry.createdAt > CACHE_TTL_MS);
     }
 
-    private record CacheEntry(List<RolePermission> permissions, long createdAt) {}
+    private record CacheEntry(Set<String> grants, long createdAt) {}
 }

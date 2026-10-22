@@ -32,7 +32,8 @@ public class TenantAwareDataSource implements DataSource {
     private static final Logger log = LoggerFactory.getLogger(TenantAwareDataSource.class);
 
     private static final String SET_SESSION_SQL = "SET SESSION app.current_tenant_id = '%s'";
-    private static final String RESET_SESSION_SQL = "RESET app.current_tenant_id; RESET app.current_user";
+    // "current_user" is a reserved word in PostgreSQL, so the setting's second part is quoted in SET and RESET.
+    private static final String RESET_SESSION_SQL = "RESET app.current_tenant_id; RESET app.\"current_user\"";
     /** Who is acting, for the order-history trigger (V87). Only plain user names are passed through. */
     private static final java.util.regex.Pattern USER_NAME = java.util.regex.Pattern.compile("[A-Za-z0-9._@+-]{1,100}");
     private static final String SET_H2_SQL = "SET @app_current_tenant_id = '%s'";
@@ -100,7 +101,7 @@ public class TenantAwareDataSource implements DataSource {
         try (Statement stmt = connection.createStatement()) {
             String user = h2 ? null : currentUserName();
             stmt.execute(h2 ? String.format(SET_H2_SQL, tenantId) : String.format(SET_SESSION_SQL, tenantId)
-                    + (user != null ? "; SET SESSION app.current_user = '" + user + "'" : ""));
+                    + (user != null ? "; SET SESSION app.\"current_user\" = '" + user + "'" : ""));
             if (!h2 && !appRole.isEmpty()) {
                 stmt.execute("SET ROLE " + appRole);
             }

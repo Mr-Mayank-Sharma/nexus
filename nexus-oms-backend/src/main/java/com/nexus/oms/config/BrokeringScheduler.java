@@ -3,10 +3,10 @@ package com.nexus.oms.config;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import com.nexus.oms.service.BrokeringService;
 import com.nexus.oms.security.TenantContext;
+import com.nexus.oms.tenancy.PlatformDirectory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -20,17 +20,15 @@ public class BrokeringScheduler {
     private static final Logger log = LoggerFactory.getLogger(BrokeringScheduler.class);
 
     private final BrokeringService brokeringService;
-    private final JdbcTemplate jdbcTemplate;
+    private final PlatformDirectory platformDirectory;
 
-    public BrokeringScheduler(BrokeringService brokeringService, JdbcTemplate jdbcTemplate) {
+    public BrokeringScheduler(BrokeringService brokeringService, PlatformDirectory platformDirectory) {
         this.brokeringService = brokeringService;
-        this.jdbcTemplate = jdbcTemplate;
+        this.platformDirectory = platformDirectory;
     }
 
     private List<UUID> getActiveTenantIds() {
-        return jdbcTemplate.queryForList(
-                "SELECT DISTINCT tenant_id FROM nx_users WHERE tenant_id IS NOT NULL",
-                UUID.class);
+        return platformDirectory.companies();
     }
 
     @Scheduled(cron = "0 */5 * * * ?")

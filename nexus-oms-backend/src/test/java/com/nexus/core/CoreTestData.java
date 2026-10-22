@@ -24,6 +24,7 @@ public final class CoreTestData {
             {"db/core/common/V20__core_ai_seed.sql", "SELECT COUNT(*) FROM ai_action_policy WHERE action_type = 'REALLOCATE'"},
             {"db/core/common/V21__core_ai_agents_seed.sql", "SELECT COUNT(*) FROM ai_action_policy WHERE action_type = 'ACTIVATE_ROUTING'"},
             {"db/core/common/V23__core_agent_commerce_seed.sql", "SELECT COUNT(*) FROM payment_method_type WHERE payment_method_type_id = 'EXT_AGENT_DELEGATED'"},
+            {"db/core/common/V25__core_identity_seed.sql", "SELECT COUNT(*) FROM user_group WHERE user_group_id = 'ADMIN'"},
     };
 
     private CoreTestData() {

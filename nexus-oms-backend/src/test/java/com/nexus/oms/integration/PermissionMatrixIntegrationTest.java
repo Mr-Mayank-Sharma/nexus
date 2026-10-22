@@ -173,7 +173,8 @@ class PermissionMatrixIntegrationTest extends AbstractIntegrationTest {
                     "VIEWER GET " + endpoint + " expected 2xx got " + resp.getStatusCode());
         }
 
-        for (String endpoint : List.of("/inventory", "/procurement", "/invoices", "/payments",
+        // Inventory is readable by default (core seed V25), so it is not in this list.
+        for (String endpoint : List.of("/procurement", "/invoices", "/payments",
                 "/picking", "/packing", "/warehouse", "/settings", "/rbac")) {
             ResponseEntity<String> resp = restTemplate.exchange(
                     baseUrl() + endpoint, HttpMethod.GET,
