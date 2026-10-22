@@ -5,7 +5,7 @@ import {
   GitBranch, Route, BarChart3, Brain, Cpu, FlaskConical, Settings, RotateCcw,
   Globe, ShoppingCart, Receipt, Bell, FileText, Shield, UserCog, Activity, Download, Zap, Mail, TrendingDown, Truck, Building2, Search, AlertTriangle,
   LayoutDashboard, Star, Menu, ShoppingBag, Calendar, Gauge,
-  Plus, Layers, Printer, ScanLine, Tag, Wallet,
+  Plus, Layers, Printer, Tag, Wallet,
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import Autocomplete from '../components/common/Autocomplete'
@@ -42,11 +42,9 @@ const apps: AppCard[] = [
 
   // Fulfillment & Warehouse
   { name: 'WH Dashboard', path: '/warehouse-dashboard', icon: <Building2 className="w-6 h-6" />, description: 'Warehouse operations & labor', category: 'Fulfillment & Warehouse', color: 'from-amber-500 to-amber-600' },
-  { name: 'RF Handheld', path: '/rf', icon: <ScanLine className="w-6 h-6" />, description: 'Warehouse handheld scanner UI', category: 'Fulfillment & Warehouse', color: 'from-emerald-600 to-emerald-700', isNew: true },
   { name: 'Picking', path: '/picking', icon: <ClipboardCheck className="w-6 h-6" />, description: 'Picklist management', category: 'Fulfillment & Warehouse', color: 'from-orange-500 to-orange-600' },
   { name: 'Packer View', path: '/packer', icon: <PackagePlus className="w-6 h-6" />, description: 'Packing station experience', category: 'Fulfillment & Warehouse', color: 'from-emerald-500 to-emerald-600' },
   { name: 'Packing', path: '/packing', icon: <PackagePlus className="w-6 h-6" />, description: 'Package orders for shipment', category: 'Fulfillment & Warehouse', color: 'from-rose-500 to-rose-600' },
-  { name: 'Loader View', path: '/loader', icon: <Truck className="w-6 h-6" />, description: 'Loading dock management', category: 'Fulfillment & Warehouse', color: 'from-orange-500 to-orange-600' },
   { name: 'Shipping', path: '/shipping', icon: <Ship className="w-6 h-6" />, description: 'Manage outbound shipments', category: 'Fulfillment & Warehouse', color: 'from-teal-500 to-teal-600' },
   { name: 'Carriers', path: '/carriers', icon: <Truck className="w-6 h-6" />, description: 'Carrier management', category: 'Fulfillment & Warehouse', color: 'from-yellow-500 to-yellow-600' },
   { name: 'Rate Shopping', path: '/rate-shopping', icon: <TrendingDown className="w-6 h-6" />, description: 'Compare carrier rates', category: 'Fulfillment & Warehouse', color: 'from-pink-500 to-pink-600' },

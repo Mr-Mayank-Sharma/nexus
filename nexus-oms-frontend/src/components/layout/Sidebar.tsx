@@ -37,7 +37,6 @@ const MODULE_PERMISSIONS: Record<string, { resource: string; action?: string }> 
   'warehouse': { resource: 'warehouse', action: 'view' },
   'locations': { resource: 'warehouse', action: 'view' },
   'packer': { resource: 'orders', action: 'edit' },
-  'loader': { resource: 'orders', action: 'edit' },
   'store-dashboard': { resource: 'orders', action: 'view' },
   'bopis': { resource: 'orders', action: 'view' },
   'bopis-owner': { resource: 'orders', action: 'view' },

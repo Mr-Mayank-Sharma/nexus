@@ -603,7 +603,7 @@ erDiagram
 | `@JoinColumn` insertable/updatable=false | Read-only navigation (e.g. `NxOrder → Address`) | A reference card you can read but not change |
 | jsonb columns | Workflow/config/integration payload tables | Flexible pockets for "anything goes" data |
 | Tenant scoping | `tenant_id` on all tenant tables; enforced in services | Every box is labelled with its school |
-| Schema migrations | 79 Flyway files `V1`–`V67`, non-contiguous (idempotent) | Every drawer change is recorded in history |
+| Schema migrations | 80 Flyway files `V1`–`V88`, non-contiguous (idempotent) | Every drawer change is recorded in history |
 | Legacy naming | `nx_freight_*` (3 tables) — requires migration to normalize | Old labels on 3 drawers; renaming needs care |
 
 ---

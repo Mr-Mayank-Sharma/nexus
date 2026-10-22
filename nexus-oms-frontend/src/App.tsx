@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import AppLayout from './components/layout/AppLayout'
 import NotFoundPage from './pages/NotFoundPage'
@@ -51,7 +51,6 @@ const PreOrdersPage = lazy(() => import('./pages/PreOrdersPage'))
 const ATPRulesPage = lazy(() => import('./pages/ATPRulesPage'))
 const TaskQueuesPage = lazy(() => import('./pages/TaskQueuesPage'))
 const PackerScreen = lazy(() => import('./pages/PackerScreen'))
-const LoaderScreen = lazy(() => import('./pages/LoaderScreen'))
 const StoreDashboardPage = lazy(() => import('./pages/StoreDashboardPage'))
 const BopisOwnerPage = lazy(() => import('./pages/BopisOwnerPage'))
 const BigCommercePage = lazy(() => import('./pages/BigCommercePage'))
@@ -95,22 +94,6 @@ const ReturnsFinancePage = lazy(() => import('./pages/ReturnsFinancePage'))
 const McpServerPage = lazy(() => import('./pages/McpServerPage'))
 const SyncConflictsPage = lazy(() => import('./pages/SyncConflictsPage'))
 
-const RfLayout = lazy(() => import('./rf/RfLayout'))
-const RfHomeScreen = lazy(() => import('./rf/screens/HomeScreen'))
-const RfPickScreen = lazy(() => import('./rf/screens/PickScreen'))
-const RfPackScreen = lazy(() => import('./rf/screens/PackScreen'))
-const RfReceiveScreen = lazy(() => import('./rf/screens/ReceiveScreen'))
-const RfShipScreen = lazy(() => import('./rf/screens/ShipScreen'))
-const RfCountScreen = lazy(() => import('./rf/screens/CountScreen'))
-const RfScanScreen = lazy(() => import('./rf/screens/ScanScreen'))
-
-function PageLoader() {
-  return (
-    <div className="flex items-center justify-center h-64">
-      <div className="animate-spin w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full" />
-    </div>
-  )
-}
 
 export default function App() {
   return (
@@ -143,7 +126,6 @@ export default function App() {
           <Route path="import-export" element={<ImportExportCenter />} />
           <Route path="notifications" element={<NotificationsCenter />} />
           <Route path="packer" element={<PackerScreen />} />
-          <Route path="loader" element={<LoaderScreen />} />
           <Route path="store-dashboard" element={<StoreDashboardPage />} />
           <Route path="bopis-owner" element={<BopisOwnerPage />} />
           <Route path="procurement/*" element={<ProcurementPage />} />
@@ -209,16 +191,6 @@ export default function App() {
           <Route path="promotions" element={<PromotionsPage />} />
           <Route path="endless-aisle" element={<EndlessAislePage />} />
           <Route path="*" element={<NotFoundPage />} />
-        </Route>
-
-        <Route path="rf" element={<Suspense fallback={<PageLoader />}><RfLayout /></Suspense>}>
-          <Route index element={<RfHomeScreen />} />
-          <Route path="pick" element={<RfPickScreen />} />
-          <Route path="pack" element={<RfPackScreen />} />
-          <Route path="receive" element={<RfReceiveScreen />} />
-          <Route path="ship" element={<RfShipScreen />} />
-          <Route path="count" element={<RfCountScreen />} />
-          <Route path="scan" element={<RfScanScreen />} />
         </Route>
       </Route>
     </Routes>
