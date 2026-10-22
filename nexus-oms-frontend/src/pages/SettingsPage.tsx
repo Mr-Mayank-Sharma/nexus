@@ -29,9 +29,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
+  // All three tabs show the stored settings (General summarises them, Security edits the policy), so load once.
   useEffect(() => {
-    if (tab === 'company') fetchCompanySettings()
-  }, [tab])
+    fetchCompanySettings()
+  }, [])
 
   async function fetchCompanySettings() {
     try {
@@ -49,6 +50,7 @@ export default function SettingsPage() {
         timeFormat: '12h',
         featureFlags: d.featureFlags || {},
       })
+      setSecurityPolicy(JSON.stringify(d.securityPolicy ?? {}, null, 2))
     } catch {
       addToast({ type: 'error', title: 'Failed to load company settings' })
     } finally {

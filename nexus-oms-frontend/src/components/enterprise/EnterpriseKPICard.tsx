@@ -71,7 +71,7 @@ export default memo(function EnterpriseKPICard({ title: titleProp, label, value,
       role="region"
       aria-label={`${title}: ${typeof value === 'string' ? value : String(value)}`}
       className={clsx(
-        'bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-5 transition-all duration-150',
+        'bg-[var(--surface-base)] rounded-xl border border-[var(--border-default)] p-4 sm:p-5 transition-all duration-150 min-w-0',
         onClick && 'cursor-pointer hover:shadow-md hover:border-[var(--border-default)]',
         loading && 'pointer-events-none',
         className,
@@ -88,15 +88,16 @@ export default memo(function EnterpriseKPICard({ title: titleProp, label, value,
         </div>
       ) : (
         <>
-          <div className="flex items-start justify-between">
+          {/* On a phone two cards share a row: titles wrap to two lines and long values break rather than run under the icon. */}
+          <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-[var(--text-secondary)] truncate">{title}</p>
-              <p className="text-2xl font-bold text-[var(--text-primary)] mt-1 tracking-tight tabular-nums">{value}</p>
+              <p className="text-sm font-medium text-[var(--text-secondary)] line-clamp-2 break-words">{title}</p>
+              <p className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mt-1 tracking-tight tabular-nums [overflow-wrap:anywhere]">{value}</p>
               {subtitle && <p className="text-xs text-[var(--text-tertiary)] mt-0.5">{subtitle}</p>}
             </div>
             {icon && (
               <div className={clsx(
-                'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ring-1',
+                'w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0 ring-1',
                 iconColorMap[tone],
               )}>
                 {renderIcon(icon)}

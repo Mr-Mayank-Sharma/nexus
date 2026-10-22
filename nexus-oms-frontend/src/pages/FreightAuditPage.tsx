@@ -188,7 +188,7 @@ export default function FreightAuditPage() {
         { label: 'Freight Audit & Payment' },
       ]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Receipt className="w-7 h-7 text-[var(--nexus-ai-500)]" /> Freight Audit & Payment

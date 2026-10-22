@@ -138,7 +138,7 @@ export default function WalmartIntegrationPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-sky-500" /> Walmart Integration</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect Walmart Marketplace to manage orders, fulfillment, and pricing</p>
@@ -146,7 +146,7 @@ export default function WalmartIntegrationPage() {
             Preview: the Walmart connector is not live yet, so orders and pricing here are not synced with Walmart.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {credentialsSaved ? (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)] rounded-lg">
               <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />

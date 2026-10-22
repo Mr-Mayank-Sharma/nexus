@@ -65,7 +65,7 @@ export default function PackerScreen() {
   return (
     <PermissionGate resource="warehouse" action="view">
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <PackagePlus className="w-7 h-7 text-[var(--nexus-success-500)]" />
@@ -78,7 +78,7 @@ export default function PackerScreen() {
         </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map(k => (
           <EnterpriseKPICard key={k.title} title={k.title} value={k.value} icon={k.icon} color={k.color} trend={k.trend ?? undefined} />
         ))}

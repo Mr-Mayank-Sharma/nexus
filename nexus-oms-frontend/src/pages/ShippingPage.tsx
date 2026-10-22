@@ -206,7 +206,7 @@ export default function ShippingPage() {
                       <tr key={`${s.id}-detail`}>
                         <td colSpan={6} className="px-4 py-3 bg-[var(--bg-tertiary)]/30">
                           <div className="pl-4 border-l-2 border-[var(--color-primary)]/30 space-y-3">
-                            <div className="grid grid-cols-3 gap-4 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
                               <div>
                                 <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Service</p>
                                 <p className="text-[var(--text-primary)]">{s.service || '-'}</p>

@@ -107,7 +107,7 @@ export default function AiPackingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Package className="w-7 h-7 text-[var(--nexus-success-500)]" />

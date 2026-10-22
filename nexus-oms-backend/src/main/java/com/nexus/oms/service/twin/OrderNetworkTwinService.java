@@ -142,7 +142,9 @@ public class OrderNetworkTwinService {
 
         for (NxOrder o : orders) {
             String channel = channelId(o.getChannel());
-            String region = region(addressById.get(o.getShipToAddressId()));
+            // Orders without a ship-to address (some channel imports) count under an unknown region; a null key
+            // would make the immutable empty map throw.
+            String region = region(o.getShipToAddressId() == null ? null : addressById.get(o.getShipToAddressId()));
             String status = upper(o.getStatus());
             BigDecimal total = o.getTotal() == null ? BigDecimal.ZERO : o.getTotal();
 
@@ -221,7 +223,7 @@ public class OrderNetworkTwinService {
                 flows,
                 lifecycle.entrySet().stream().map(e -> new StageCount(e.getKey(), e.getValue())).toList(),
                 orders.stream().limit(25)
-                        .map(o -> orderView(o, addressById.get(o.getShipToAddressId()), allocByOrder.getOrDefault(o.getId(), List.of())))
+                        .map(o -> orderView(o, o.getShipToAddressId() == null ? null : addressById.get(o.getShipToAddressId()), allocByOrder.getOrDefault(o.getId(), List.of())))
                         .toList(),
                 queue.stream()
                         .sorted(Comparator.comparing(NxBrokeringQueue::getEnteredAt, Comparator.nullsLast(Comparator.naturalOrder())))

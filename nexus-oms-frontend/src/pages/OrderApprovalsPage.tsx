@@ -122,14 +122,14 @@ export default function OrderApprovalsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Order Approvals</h1>
           <p className="text-[var(--text-secondary)] mt-1">Review and approve orders based on risk rules</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <EnterpriseKPICard
           title="Total Approvals"
           value={stats?.totalApprovals || 0}

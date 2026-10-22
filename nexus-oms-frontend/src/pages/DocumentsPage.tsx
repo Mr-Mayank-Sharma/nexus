@@ -152,7 +152,7 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><FileText className="w-6 h-6" />Documents</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Manage documents and files across entities</p>

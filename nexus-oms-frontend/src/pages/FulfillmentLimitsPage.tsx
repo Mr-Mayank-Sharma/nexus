@@ -116,12 +116,12 @@ export default function FulfillmentLimitsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Fulfillment Limits</h1>
           <p className="text-[var(--text-secondary)] mt-1">Manage capacity limits per fulfillment node</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <PermissionGate resource="fulfillment" action="edit">
             <button
               onClick={() => resetMutation.mutate()}
@@ -133,7 +133,7 @@ export default function FulfillmentLimitsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <EnterpriseKPICard
           title="Total Nodes"
           value={limits.length}

@@ -213,7 +213,7 @@ export default function IntegrationStoresPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Store className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Sales Channels</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">OFBiz-style integration store management — connect Shopify, BigCommerce, and more</p>
@@ -392,7 +392,7 @@ export default function IntegrationStoresPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Currency</label>
                   <Autocomplete value={form.currency} onChange={v => setForm({ ...form, currency: v })} suggestions={currencyOpts} getOptionLabel={o => o.label} getOptionValue={o => o.value} className="input w-full" minChars={0} />

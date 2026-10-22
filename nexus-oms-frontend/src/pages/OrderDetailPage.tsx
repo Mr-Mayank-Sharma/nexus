@@ -412,7 +412,7 @@ export default function OrderDetailPage() {
             <div className="enterprise-card border border-[var(--color-primary)]/20">
               <div className="card-header"><h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-2"><Brain className="w-4 h-4 text-[var(--color-primary)]" />AI Insights</h3></div>
               <div className="p-6">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase">Predicted Delivery</p>
                     <p className="text-sm font-medium text-[var(--text-primary)] mt-1">{aiPrediction.deliveryDate ? new Date(aiPrediction.deliveryDate).toLocaleDateString() : 'N/A'}</p>

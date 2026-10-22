@@ -162,12 +162,12 @@ export default function TaskQueuesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ClipboardList className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Task Queues</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Review and resolve exception tasks</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <EnterpriseKPICard title="High Priority" value={highCount} icon={<AlertTriangle className="w-4 h-4" />} color={highCount > 0 ? 'danger' : 'success'} trend={null} />
           <EnterpriseKPICard title="Total Tasks" value={totalCount} icon={<Clock className="w-4 h-4" />} color="info" trend={null} />
         </div>

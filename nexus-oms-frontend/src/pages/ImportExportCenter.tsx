@@ -578,7 +578,7 @@ const exportTypeOpts = exportTypeOptions.map(o => ({ value: o, label: o }))
                       <span className="text-xs text-[var(--text-tertiary)]">{importResult.processingTimeMs}ms</span>
                     )}
                   </div>
-                  <div className="grid grid-cols-4 gap-3 text-center">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                     <div>
                       <p className="text-2xl font-bold text-[var(--text-primary)]">{importResult.totalRecords}</p>
                       <p className="text-xs text-[var(--text-secondary)]">Total</p>

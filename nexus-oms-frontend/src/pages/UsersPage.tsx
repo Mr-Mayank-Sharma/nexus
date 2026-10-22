@@ -199,7 +199,7 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Users className="w-6 h-6" />Users & Roles</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Manage user roles, teams, and permissions</p>
@@ -519,7 +519,7 @@ export default function UsersPage() {
 
             <div className="border-t border-[var(--border-subtle)] pt-4">
               <h4 className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Set Permission</h4>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">Role</label>
                   <select value={permForm.role} onChange={e => setPermForm({ ...permForm, role: e.target.value })} className="input w-full">

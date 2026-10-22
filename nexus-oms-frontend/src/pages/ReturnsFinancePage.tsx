@@ -115,7 +115,7 @@ export default function ReturnsFinancePage() {
     <div className="p-6 max-w-[1400px] mx-auto">
       <EnterpriseBreadcrumbs crumbs={[{ label: 'Returns' }, { label: 'Returns Finance' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between mb-6 gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-[var(--text-primary)] flex items-center gap-2">
             <DollarSign className="w-6 h-6 text-[var(--text-brand)]" />

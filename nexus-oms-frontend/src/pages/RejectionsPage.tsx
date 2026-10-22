@@ -116,14 +116,14 @@ export default function RejectionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Rejection Handling</h1>
           <p className="text-[var(--text-secondary)] mt-1">Manage item rejections and inventory adjustments</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <EnterpriseKPICard
           title="Total Rejections"
           value={stats?.totalRejections || 0}

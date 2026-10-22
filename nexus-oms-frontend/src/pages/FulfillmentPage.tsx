@@ -92,12 +92,12 @@ export default function FulfillmentPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2"><Package className="w-6 h-6" />Fulfillment</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">End-to-end order fulfillment pipeline</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button type="button" className="enterprise-btn-secondary text-sm" onClick={() => navigate('/picking')}>
             <ClipboardList className="w-4 h-4" /> Picklists
           </button>

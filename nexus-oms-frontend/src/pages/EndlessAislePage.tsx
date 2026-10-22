@@ -163,7 +163,7 @@ export default function EndlessAislePage() {
     <PermissionGate resource="inventory" action="view">
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] dark:text-white">Endless Aisle</h1>
           <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">
@@ -470,7 +470,7 @@ export default function EndlessAislePage() {
 
               <div className="border-t border-[var(--border-default)] dark:border-[var(--border-input)] pt-4">
                 <h3 className="text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-3">Customer Information</h3>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mb-1">
                       <User className="inline h-3 w-3 mr-1" /> Name
@@ -557,7 +557,7 @@ export default function EndlessAislePage() {
                 <div className="font-medium text-[var(--text-primary)] dark:text-white">{selectedOrder.productName}</div>
                 <div className="text-sm font-mono text-[var(--text-secondary)]">{selectedOrder.productSku}</div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <div className="text-sm text-[var(--text-secondary)]">Quantity</div>
                   <div className="text-[var(--text-primary)] dark:text-white">{selectedOrder.quantity}</div>

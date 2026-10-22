@@ -188,7 +188,7 @@ export default function B2BPortalPage() {
                   <span className="enterprise-badge enterprise-badge-info">B2B Tier 2</span>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-6 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-4">
                 {[
                   { label: 'Total Orders', value: '12' },
                   { label: 'Open Returns', value: returns.filter(r => !['REFUNDED', 'REJECTED', 'CANCELLED'].includes(r.status)).length },

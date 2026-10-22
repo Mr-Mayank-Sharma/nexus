@@ -204,12 +204,12 @@ export default function IntegrationMarketplacePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Grid3X3 className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Integration Marketplace</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Browse and connect your sales channels, marketplaces, and commerce platforms</p>
         </div>
-        <div className="flex items-center gap-4 text-xs text-[var(--text-secondary)]">
+        <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)]">
           <div className="flex items-center gap-1.5">
             <CheckCircle className="w-3.5 h-3.5 text-[var(--nexus-success-500)]" />
             <span className="font-medium text-[var(--text-secondary)]">{statusCounts.connected}</span> Connected
@@ -248,7 +248,7 @@ export default function IntegrationMarketplacePage() {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card p-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-[var(--nexus-primary-50)] flex items-center justify-center">
             <Plug className="w-5 h-5 text-[var(--text-brand)]" />
@@ -327,9 +327,10 @@ export default function IntegrationMarketplacePage() {
                       <button type="button" onClick={() => handleOpen(integration.id)} className="enterprise-btn enterprise-btn-primary text-xs flex-1">
                         <ExternalLink className="w-3.5 h-3.5" /> Open
                       </button>
-                      <button type="button" className="enterprise-btn enterprise-btn-ghost text-xs text-[var(--nexus-success-600)]">
+                      <span role="img" aria-label="Connected" title="Connected"
+                        className="inline-flex items-center justify-center px-2 text-[var(--nexus-success-600)]">
                         <CheckCircle className="w-3.5 h-3.5" />
-                      </button>
+                      </span>
                     </>
                   ) : integration.status === 'available' ? (
                     <PermissionGate resource="integrations" action="create">

@@ -168,8 +168,8 @@ export default function WorkflowsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><GitBranch className="w-6 h-6 text-[var(--text-secondary)]" />Workflows</h1>
             <p className="text-sm text-[var(--text-secondary)] mt-1">Automate order processing, inventory, and shipping workflows</p>
@@ -204,7 +204,7 @@ export default function WorkflowsPage() {
                 <button type="button" className="text-[var(--text-tertiary)]" onClick={() => handleExpand(wf.id)}>
                   {expandedId === wf.id ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
-                <div className="flex-1 min-w-0 grid grid-cols-6 gap-4 items-center">
+                <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-6 gap-4 items-center">
                   <div className="col-span-2">
                     <p className="text-sm font-medium text-[var(--text-primary)]">{wf.name}</p>
                     {wf.description && <p className="text-xs text-[var(--text-secondary)] mt-0.5 truncate">{wf.description}</p>}

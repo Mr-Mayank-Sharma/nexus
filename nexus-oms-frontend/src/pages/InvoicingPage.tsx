@@ -422,7 +422,7 @@ export default function InvoicingPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Receipt className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Invoicing</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Manage invoices, payments, and credit memos</p>

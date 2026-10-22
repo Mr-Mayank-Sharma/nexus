@@ -156,8 +156,8 @@ export default function BopisAppPage() {
   return (
       <div className="min-h-screen bg-[var(--surface-sunken)]">
       <div className="bg-[var(--surface-base)] shadow-sm border-b px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Package className="w-6 h-6 text-[var(--nexus-success-600)]" />
             <h1 className="text-lg font-bold text-[var(--text-primary)]">Store Pickup</h1>
           </div>
@@ -194,7 +194,7 @@ export default function BopisAppPage() {
 
       <div className="p-4 space-y-4">
         {statusCounts && (
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {[
               { label: 'Total', value: statusCounts.total, color: 'text-[var(--text-primary)]' },
               { label: 'Pending', value: statusCounts.pending, color: 'text-[var(--nexus-warning-600)]' },

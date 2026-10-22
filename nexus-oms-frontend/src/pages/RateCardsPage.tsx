@@ -154,14 +154,14 @@ export default function RateCardsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Tag className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Rate Cards
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">3PL pricing per client — drives billing statement generation</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <EnterpriseKPICard title="Default" value={defaultCards.length} icon={<Tag className="w-4 h-4" />} color="info" />
           <EnterpriseKPICard title="Client Cards" value={clientCards.length} icon={<CreditCard className="w-4 h-4" />} color="success" />
           <PermissionGate resource="finance" action="edit">

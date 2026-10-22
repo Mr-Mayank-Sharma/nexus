@@ -115,7 +115,7 @@ export default function AiExperimentsPage() {
     <div className="p-6 space-y-6">
       <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', href: '/' }, { label: 'AI Platform', href: '/ai-platform' }, { label: 'Experiments' }]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><FlaskConical className="w-5 h-5" />Experiments</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-0.5">A/B test and champion/challenger experiments for AI models</p>

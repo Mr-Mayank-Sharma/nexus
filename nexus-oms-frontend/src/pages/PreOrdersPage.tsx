@@ -96,14 +96,14 @@ export default function PreOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Package className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Pre-Orders
           </h1>
           <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">Manage parked orders awaiting release</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <EnterpriseKPICard title="Parked" value={parkedCount} icon={<Clock className="w-4 h-4" />} color="warning" trend={null} />
           <EnterpriseKPICard title="Released" value={releasedCount} icon={<CheckCircle className="w-4 h-4" />} color="success" trend={null} />
         </div>

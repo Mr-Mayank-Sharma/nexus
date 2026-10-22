@@ -27,6 +27,12 @@ public class WarehouseController {
         this.warehouseService = warehouseService;
     }
 
+    @Operation(summary = "People working at a warehouse")
+    @GetMapping("/{id}/staff")
+    public ResponseEntity<ApiResponse<java.util.List<com.nexus.oms.entity.WarehouseStaff>>> getStaff(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(warehouseService.staffAt(id)));
+    }
+
     @Operation(summary = "List all warehouses")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Warehouse>>> getWarehouses(

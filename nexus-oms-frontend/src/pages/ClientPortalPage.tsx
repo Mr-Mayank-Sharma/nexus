@@ -58,14 +58,14 @@ export default function ClientPortalPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Globe className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Client Portal
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Self-service 3PL client dashboard — live order, fulfillment and billing status</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select value={clientId} onChange={e => setClientId(e.target.value)} className="enterprise-input max-w-xs">
             <option value="">Select client...</option>
             {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}

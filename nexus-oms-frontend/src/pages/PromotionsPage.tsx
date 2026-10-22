@@ -209,7 +209,7 @@ export default function PromotionsPage() {
     <PermissionGate resource="promotions" action="view">
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] dark:text-white">Promotions</h1>
           <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">
@@ -452,7 +452,7 @@ export default function PromotionsPage() {
                   className="w-full px-3 py-2 border border-[var(--border-input)] dark:border-[var(--border-default)] rounded-lg bg-white dark:bg-[var(--surface-sunken)] text-[var(--text-primary)] dark:text-white" />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1">
                     {form.promotionType === 'PERCENTAGE' ? 'Percentage (%)' : 'Amount ($)'} *
@@ -472,7 +472,7 @@ export default function PromotionsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1">Coupon Code</label>
                   <input type="text" value={form.couponCode || ''} onChange={e => setForm({ ...form, couponCode: e.target.value.toUpperCase() })}
@@ -504,7 +504,7 @@ export default function PromotionsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-primary)] dark:text-[var(--text-primary)] mb-1">Channels</label>
                   <select value={form.applicableChannels || 'ALL'} onChange={e => setForm({ ...form, applicableChannels: e.target.value })}

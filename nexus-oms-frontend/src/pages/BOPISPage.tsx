@@ -91,12 +91,12 @@ export default function BOPISPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ShoppingBag className="w-7 h-7 text-[var(--nexus-primary-500)]" /> BOPIS</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Buy Online, Pick Up In Store</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <EnterpriseKPICard title="Ready for Pickup" value={bopisOrders.length} icon={<ShoppingBag className="w-4 h-4" />} color="primary" trend={null} />
           <EnterpriseKPICard title="In Transit" value={shipToStoreOrders.length} icon={<Truck className="w-4 h-4" />} color="info" trend={null} />
         </div>

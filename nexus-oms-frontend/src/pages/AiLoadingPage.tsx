@@ -79,7 +79,7 @@ function LoadingSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
       <div className="h-8 bg-[var(--surface-muted)] rounded w-1/3" />
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="h-24 bg-[var(--surface-muted)] rounded-xl" />
         ))}
@@ -154,7 +154,7 @@ export default function AiLoadingPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Truck className="w-7 h-7 text-[var(--nexus-primary-500)]" />
@@ -162,7 +162,7 @@ export default function AiLoadingPage() {
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Optimal truck loading sequence</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <PermissionGate resource="settings" action="create">
             <button
               onClick={() => setSelectedTruck(selectedTruck)}
@@ -183,7 +183,7 @@ export default function AiLoadingPage() {
             <h2 className="text-sm font-semibold text-[var(--text-secondary)] mb-3 flex items-center gap-2">
               <Box className="w-4 h-4" /> Select Truck
             </h2>
-            <div className="grid grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {trucks.map(t => (
                 <button
                   key={t.id}
@@ -235,9 +235,9 @@ export default function AiLoadingPage() {
           </div>
 
           {loadingPlan && (
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Loading Plan – Timeline */}
-              <div className="col-span-2 space-y-6">
+              <div className="lg:col-span-2 space-y-6">
                 <div className="enterprise-card p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1.5">

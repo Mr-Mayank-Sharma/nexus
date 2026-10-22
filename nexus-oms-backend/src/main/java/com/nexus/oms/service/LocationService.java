@@ -2,7 +2,9 @@ package com.nexus.oms.service;
 
 import com.nexus.oms.entity.Warehouse;
 import com.nexus.oms.exception.ResourceNotFoundException;
+import com.nexus.oms.entity.WarehouseStaff;
 import com.nexus.oms.repository.WarehouseRepository;
+import com.nexus.oms.repository.WarehouseStaffRepository;
 import com.nexus.oms.security.TenantContext;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,9 +30,17 @@ import java.util.UUID;
 public class LocationService {
 
     private final WarehouseRepository warehouseRepository;
+    private final WarehouseStaffRepository staffRepository;
 
-    public LocationService(WarehouseRepository warehouseRepository) {
+    public LocationService(WarehouseRepository warehouseRepository, WarehouseStaffRepository staffRepository) {
         this.warehouseRepository = warehouseRepository;
+        this.staffRepository = staffRepository;
+    }
+
+    /** The people working at a location (the Picking page assigns picks to them); the location must be the company's. */
+    public List<WarehouseStaff> staffAt(UUID warehouseId) {
+        getWarehouse(warehouseId);
+        return staffRepository.findByWarehouseId(warehouseId);
     }
 
     @Cacheable(value = "warehouses", key = "'page:' + T(com.nexus.oms.security.TenantContext).getCurrentTenantId() + ':' + #pageable.pageNumber + ':' + #pageable.pageSize")

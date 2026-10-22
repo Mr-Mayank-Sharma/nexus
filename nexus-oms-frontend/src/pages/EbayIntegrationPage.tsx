@@ -152,12 +152,12 @@ export default function EbayIntegrationPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ShoppingBag className="w-7 h-7 text-[var(--nexus-ai-500)]" /> eBay Integration</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect your eBay store to synchronize orders, categories, and inventory</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {credentialsSaved ? (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)] rounded-lg">
               <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />
@@ -338,7 +338,7 @@ export default function EbayIntegrationPage() {
 
           {showAddCategory && (
             <div className="border-t border-[var(--border-subtle)] p-6 bg-[var(--surface-sunken)]/50">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-medium text-[var(--text-secondary)] mb-1">eBay Category ID</label>
                   <input value={categoryForm.ebayCategoryId} onChange={e => setCategoryForm({ ...categoryForm, ebayCategoryId: e.target.value })}

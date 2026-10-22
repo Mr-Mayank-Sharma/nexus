@@ -10,9 +10,11 @@ import { useServiceWorker } from './hooks/useServiceWorker'
 import UpdateBanner from './components/pwa/UpdateBanner'
 import OfflineReadyBanner from './components/pwa/OfflineReadyBanner'
 import App from './App'
+// The component styles load before Tailwind, so a utility class on a component (e.g. "enterprise-input pl-9")
+// wins over the component's default; loaded after, the default silently overrode it.
+import './components/enterprise/enterprise.css'
 import './index.css'
 import './styles/design-tokens.css'
-import './components/enterprise/enterprise.css'
 
 const queryClient = new QueryClient({
   defaultOptions: {

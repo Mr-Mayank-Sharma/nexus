@@ -100,6 +100,19 @@ class OrderNetworkTwinServiceTest {
         assertEquals(2, snap.nodes().get(0).allocations());
     }
 
+    /** Channel imports without a ship-to address used to make the snapshot throw (500 on /twin/orders). */
+    @Test
+    void ordersWithoutAnyAddress_CountUnderTheUnknownRegion() {
+        NxOrder noAddress = order("SHOPIFY", "CREATED", "10.00", null);
+        when(orderRepository.findTop5000ByTenantIdAndCreatedAtAfterOrderByCreatedAtDesc(eq(tenantId), any())).thenReturn(List.of(noAddress));
+        when(allocationRepository.findByTenantIdAndOrderIdIn(eq(tenantId), anyCollection())).thenReturn(List.of());
+
+        var snap = service.snapshot(tenantId, 24);
+
+        assertEquals(1, snap.kpis().orders());
+        assertEquals(1, snap.regions().size());
+    }
+
     @Test
     void windowIsClamped() {
         when(orderRepository.findTop5000ByTenantIdAndCreatedAtAfterOrderByCreatedAtDesc(eq(tenantId), any())).thenReturn(List.of());

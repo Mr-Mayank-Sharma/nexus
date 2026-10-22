@@ -112,12 +112,12 @@ export default function AmazonIntegrationPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Globe className="w-7 h-7 text-[var(--nexus-warning-500)]" /> Amazon Integration</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect Amazon Seller Central to sync orders, inventory, and fulfillment data</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {credentialsSaved ? (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--nexus-success-50)] border border-[var(--nexus-success-200)] rounded-lg">
               <CheckCircle className="w-4 h-4 text-[var(--nexus-success-600)]" />

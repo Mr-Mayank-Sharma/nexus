@@ -540,7 +540,7 @@ export default function ManifestPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
               <div className="bg-[var(--bg-tertiary)] rounded-lg p-3 text-center">
                 <p className="text-xs text-[var(--text-tertiary)]">Total Packages</p>
                 <p className="text-xl font-bold text-[var(--text-primary)]">{selectedManifest.shipments.length}</p>

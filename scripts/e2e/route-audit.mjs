@@ -6,6 +6,7 @@
  *   - failing API calls (HTTP >= 400, grouped by method + path)
  *   - placeholder copy ("coming soon", "mock", "not implemented", lorem ipsum, …)
  *   - buttons with no handler (no onclick, not a submit/link/menu trigger)
+ *   - with --mobile: the page at phone width (390px), and anything wider than the screen
  *
  * Usage:
  *   APP_URL=http://localhost:5199 NEXUS_USER=opsdemo NEXUS_PASS='…' node scripts/e2e/route-audit.mjs [--json out.json]
@@ -22,6 +23,7 @@ const { chromium } = req('@playwright/test')
 const APP_URL = process.env.APP_URL || 'http://localhost:5173'
 const USER = process.env.NEXUS_USER || 'admin'
 const PASS = process.env.NEXUS_PASS || ''
+const MOBILE = process.argv.includes('--mobile')
 const jsonOut = process.argv.includes('--json') ? process.argv[process.argv.indexOf('--json') + 1] : null
 
 const app = readFileSync(join(root, 'nexus-oms-frontend/src/App.tsx'), 'utf8')
@@ -33,7 +35,9 @@ const routes = [...new Set([...app.matchAll(/<Route\s+path="([^"]+)"/g)].map(m =
 const PLACEHOLDER = /coming soon|not (yet )?implemented|lorem ipsum|\bmock(ed)? data\b|\bdummy\b|placeholder data|sample only|under construction/i
 
 const browser = await chromium.launch()
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+const page = await browser.newPage(MOBILE
+  ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }
+  : { viewport: { width: 1440, height: 900 } })
 
 await page.goto(`${APP_URL}/#/login`)
 await page.getByPlaceholder('Enter your username').fill(USER)
@@ -43,7 +47,7 @@ await page.waitForTimeout(2500)
 
 const results = []
 for (const route of routes) {
-  const r = { route, pageErrors: [], consoleErrors: [], apiFailures: {}, placeholders: [], deadButtons: 0 }
+  const r = { route, pageErrors: [], consoleErrors: [], apiFailures: {}, placeholders: [], deadButtons: 0, overflow: null }
   const onPageError = e => r.pageErrors.push(e.message.slice(0, 200))
   const onConsole = m => { if (m.type() === 'error') r.consoleErrors.push(m.text().slice(0, 200)) }
   const onResponse = res => {
@@ -71,6 +75,29 @@ for (const route of routes) {
         return !(p.onClick || p.onMouseDown || p.onPointerDown || b.onclick)
       }).length
     })
+    if (MOBILE) {
+      // Wider than the screen: the page scrolls sideways. Name the widest elements that stick out (not inside a scroller).
+      r.overflow = await page.evaluate(() => {
+        const screenWidth = window.innerWidth
+        const pageWidth = document.documentElement.scrollWidth
+        if (pageWidth <= screenWidth + 1) return null
+        const insideScroller = el => {
+          for (let p = el.parentElement; p; p = p.parentElement) {
+            const o = getComputedStyle(p).overflowX
+            if (o === 'auto' || o === 'scroll' || o === 'hidden') return true
+          }
+          return false
+        }
+        const name = el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') +
+          (typeof el.className === 'string' && el.className ? '.' + el.className.trim().split(/\s+/).slice(0, 4).join('.') : '')
+        const culprits = [...document.querySelectorAll('main *')]
+          .filter(el => el.getBoundingClientRect().right > screenWidth + 1 && !insideScroller(el))
+          .filter(el => ![...el.children].some(child => child.getBoundingClientRect().right > screenWidth + 1))
+          .slice(0, 4)
+          .map(el => `${name(el)} (right ${Math.round(el.getBoundingClientRect().right)}px)`)
+        return { pageWidth, culprits }
+      })
+    }
   } catch (e) {
     r.pageErrors.push('NAVIGATION: ' + e.message.slice(0, 160))
   }
@@ -81,7 +108,7 @@ for (const route of routes) {
 }
 await browser.close()
 
-const bad = results.filter(r => r.pageErrors.length || Object.keys(r.apiFailures).length || r.placeholders.length || r.deadButtons)
+const bad = results.filter(r => r.pageErrors.length || Object.keys(r.apiFailures).length || r.placeholders.length || r.deadButtons || r.overflow)
 console.log(`Audited ${results.length} routes; ${bad.length} with problems.\n`)
 for (const r of bad) {
   console.log(r.route)
@@ -89,6 +116,7 @@ for (const r of bad) {
   Object.entries(r.apiFailures).forEach(([k, n]) => console.log('  API     ', k, n > 1 ? `x${n}` : ''))
   r.placeholders.forEach(p => console.log('  COPY    ', p))
   if (r.deadButtons) console.log('  BUTTONS ', `${r.deadButtons} without a handler`)
+  if (r.overflow) console.log('  WIDTH   ', `page is ${r.overflow.pageWidth}px on a 390px screen:`, r.overflow.culprits.join(' | '))
 }
 if (jsonOut) writeFileSync(jsonOut, JSON.stringify(results, null, 2))
 process.exitCode = results.some(r => r.pageErrors.length) ? 1 : 0

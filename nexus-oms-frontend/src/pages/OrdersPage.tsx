@@ -127,7 +127,7 @@ export default function OrdersPage() {
     <div className="space-y-4">
       <EnterpriseBreadcrumbs crumbs={[{ label: 'Orders' }]} />
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <EnterpriseKPICard title="Total Orders" value={statusCounts.ALL ?? 0} icon={<ShoppingCart className="w-5 h-5" />} color="primary" />
         <EnterpriseKPICard title="Pending" value={statusCounts.PENDING || 0} icon={<Clock className="w-5 h-5" />} color="amber" />
         <EnterpriseKPICard title="Shipped" value={statusCounts.SHIPPED || 0} icon={<Truck className="w-5 h-5" />} color="blue" />

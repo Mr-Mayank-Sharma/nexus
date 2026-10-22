@@ -182,7 +182,7 @@ export default function ReplenishmentPage() {
         { label: 'Replenishment Rules' },
       ]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Package className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Replenishment Rules
@@ -448,7 +448,7 @@ export default function ReplenishmentPage() {
                   placeholder="ELEC-001"
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Reorder Point</label>
                   <input

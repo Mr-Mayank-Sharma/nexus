@@ -76,7 +76,7 @@ export default function EnterpriseToolbar({ title, subtitle, searchValue, onSear
           </div>
         )}
         {actions && actions.length > 0 && (
-          <div className="flex items-center gap-2" role="toolbar" aria-label="Actions">
+          <div className="flex flex-wrap items-center gap-2" role="toolbar" aria-label="Actions">
             {actions.map((action, i) => {
               const btn = (
                 <button key={i}

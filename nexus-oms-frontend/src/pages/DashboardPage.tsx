@@ -303,7 +303,7 @@ export default function DashboardPage() {
               <span className="text-[var(--text-secondary)]">Total: {totalOrders} orders</span>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {fulfillmentStageMetrics.map((m, i) => (
               <div key={m.label} className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -431,7 +431,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Location facts the OMS holds; bins and staff are tracked in Nexus WMS */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
                     <p className="text-xs text-[var(--text-secondary)]">Status</p>
                     <p className="text-lg font-bold text-[var(--text-primary)] mt-1">{selectedFacilityData.status ?? '—'}</p>
@@ -567,7 +567,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-3 rounded-lg bg-[var(--nexus-warning-50)] border border-[var(--nexus-warning-200)]">
                 <p className="text-lg font-bold text-[var(--nexus-warning-600)]">{inventoryHealth.low}</p>
                 <p className="text-[11px] font-medium text-[var(--nexus-warning-700)]">Low Stock</p>
@@ -666,7 +666,7 @@ export default function DashboardPage() {
             </button>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-3 gap-4 mb-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
               <div className="p-3 rounded-lg bg-[var(--surface-muted)]">
                 <p className="text-xs text-[var(--text-secondary)]">Active Promos</p>
                 <p className="text-xl font-bold text-[var(--text-primary)] mt-1">{promotionStats.activeCount}</p>

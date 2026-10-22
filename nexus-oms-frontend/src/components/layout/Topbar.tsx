@@ -35,7 +35,10 @@ export default function Topbar({ onSearchClick, onAiToggle, aiPanelOpen, onMenuT
           className="flex items-center gap-2.5 w-full max-w-md h-9 px-3 rounded-lg bg-[var(--surface-muted)] border border-[var(--border-subtle)] text-[13px] text-[var(--text-tertiary)] hover:border-[var(--border-default)] hover:bg-[var(--surface-base)] transition-all duration-150 group"
         >
           <Search className="w-4 h-4 shrink-0 text-[var(--text-tertiary)] group-hover:text-[var(--text-secondary)] transition-colors" />
-          <span className="flex-1 text-left">Search orders, inventory, customers...</span>
+          <span className="flex-1 min-w-0 truncate text-left">
+            <span className="sm:hidden">Search...</span>
+            <span className="hidden sm:inline">Search orders, inventory, customers...</span>
+          </span>
           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-[var(--surface-base)] border border-[var(--border-default)] rounded text-[var(--text-tertiary)]">
             <Command className="w-2.5 h-2.5" />K
           </kbd>

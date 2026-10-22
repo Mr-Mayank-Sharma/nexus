@@ -115,14 +115,14 @@ export default function BillingStatementsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Receipt className="w-7 h-7 text-[var(--nexus-primary-500)]" /> Billing Statements
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Multi-client 3PL billing — statements computed from real orders, items and pick activity</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <EnterpriseKPICard title="Outstanding" value={fmtMoney(totals.issued)} icon={<Wallet className="w-4 h-4" />} color={totals.issued > 0 ? 'error' : 'success'} />
           <EnterpriseKPICard title="Collected" value={fmtMoney(totals.paid)} icon={<BadgeCheck className="w-4 h-4" />} color="success" />
           <PermissionGate resource="finance" action="edit">
@@ -246,7 +246,7 @@ export default function BillingStatementsPage() {
               <EnterpriseStatusBadge status={statusBadge(showDetail.statement.status) as any} label={showDetail.statement.status} />
             </div>
 
-            <div className="grid grid-cols-4 gap-2 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
               {[
                 { label: 'Orders', value: showDetail.statement.orderCount },
                 { label: 'Order Lines', value: showDetail.statement.lineCount },

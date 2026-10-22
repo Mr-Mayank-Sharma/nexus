@@ -126,7 +126,7 @@ export default function AiPage() {
     <div className="space-y-6">
       <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'AI Models' }]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><Brain className="w-5 h-5" />AI Models</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">

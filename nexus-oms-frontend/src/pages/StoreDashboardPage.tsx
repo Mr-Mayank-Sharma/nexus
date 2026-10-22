@@ -125,7 +125,7 @@ export default function StoreDashboardPage() {
   return (
     <PermissionGate resource="inventory" action="view">
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Store className="w-7 h-7 text-[var(--nexus-success-500)]" />
@@ -133,19 +133,19 @@ export default function StoreDashboardPage() {
           </h1>
           <p className="text-sm text-[var(--text-secondary)] dark:text-[var(--text-tertiary)] mt-1">Downtown Store · Today's operations</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => navigate('/orders')} className="enterprise-btn-secondary text-sm px-4 py-2"><Package className="w-4 h-4" /> Orders</button>
           <button type="button" onClick={() => navigate('/bopis')} className="enterprise-btn-primary text-sm px-4 py-2"><ShoppingBag className="w-4 h-4" /> BOPIS</button>
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map(k => (<EnterpriseKPICard key={k.title} title={k.title} value={k.value} icon={k.icon} color={k.color} loading={isLoading} />))}
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Orders */}
-        <div className="col-span-2 enterprise-card p-5">
+        <div className="lg:col-span-2 enterprise-card p-5">
           <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
             <ShoppingCart className="w-4 h-4 text-[var(--nexus-primary-500)]" /> Recent Store Orders
           </h3>

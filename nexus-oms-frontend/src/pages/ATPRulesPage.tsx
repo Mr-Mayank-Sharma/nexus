@@ -166,14 +166,14 @@ export default function ATPRulesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5">
             <Gauge className="w-7 h-7 text-[var(--nexus-primary-500)]" /> ATP Rules
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Available to Promise — stock calculation rules and snapshots</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <EnterpriseKPICard title="Active Rules" value={activeRulesCount} icon={<Gauge className="w-4 h-4" />} color="primary" trend={null} />
           <EnterpriseKPICard title="Snapshots" value={snapshots.length} icon={<Shield className="w-4 h-4" />} color="info" trend={null} />
         </div>

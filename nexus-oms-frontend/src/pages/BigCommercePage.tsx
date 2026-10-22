@@ -124,7 +124,7 @@ export default function BigCommercePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><ShoppingCart className="w-7 h-7 text-[var(--nexus-primary-500)]" /> BigCommerce Integration</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Connect your BigCommerce store to synchronize orders, inventory, shipments, and refunds</p>

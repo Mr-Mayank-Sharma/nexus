@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import { BarChart3, Download, TrendingUp, TrendingDown, RefreshCw, AlertTriangle, Clock } from 'lucide-react'
 import { EnterpriseKPICard, EnterpriseBreadcrumbs } from '../components/enterprise'
+import { downloadCsv } from '../utils/csv'
 import { useToast } from '../hooks/useToast'
 import * as analyticsApi from '../api/analytics'
 import PermissionGate from '../components/rbac/PermissionGate'
@@ -133,7 +134,7 @@ export default function AnalyticsPage() {
     return (
       <div className="space-y-6">
         <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'Analytics' }]} />
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
             <p className="text-sm text-[var(--text-secondary)] mt-1">Performance metrics and insights</p>
@@ -156,7 +157,7 @@ export default function AnalyticsPage() {
     return (
       <div className="space-y-6">
         <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'Analytics' }]} />
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
             <p className="text-sm text-[var(--text-secondary)] mt-1">Performance metrics and insights</p>
@@ -197,16 +198,33 @@ export default function AnalyticsPage() {
     )
   }
 
+  /** The figures on this page as one CSV: headline numbers, then each table, so it opens cleanly in a spreadsheet. */
+  function exportExecutiveSummary() {
+    const rows: (string | number | null | undefined)[][] = [
+      ['Headline', 'Total fulfillment cost', sumCost(costBreakdown), ''],
+      ['Headline', 'Average on-time delivery', avgOtd(laneData), ''],
+      ['Headline', 'Return rate', returnRatePct != null ? `${returnRatePct}%` : '', ''],
+      ['Headline', 'Total shipments', carrierData.reduce((total, carrier) => total + (carrier.shipments || 0), 0), ''],
+      ...costBreakdown.map(cost => ['Cost', cost.name, cost.value, '']),
+      ...carrierData.map(carrier => ['Carrier', carrier.carrier, carrier.shipments,
+        `on-time ${carrier.otdRate ?? '—'}%, ${carrier.avgDeliveryDays ?? '—'} days`]),
+      ...laneData.map(lane => ['Lane', lane.lane, lane.volume, `on-time ${lane.otd}%`]),
+      ...(returnsSummary?.topReasons ?? []).map(reason => ['Return reason', reason.reason ?? 'Unknown', reason.count ?? 0, '']),
+    ]
+    downloadCsv(`nexus-executive-summary-${new Date().toISOString().slice(0, 10)}.csv`, ['Section', 'Item', 'Value', 'Detail'], rows)
+    addToast({ type: 'success', title: 'Executive summary downloaded' })
+  }
+
   return (
     <div className="space-y-6">
       <EnterpriseBreadcrumbs crumbs={[{ label: 'Home', path: '/' }, { label: 'Analytics' }]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2.5"><BarChart3 className="w-5 h-5" />Analytics</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Performance metrics and insights</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {lastUpdated && (
             <span className="text-xs text-[var(--text-tertiary)] flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
@@ -217,7 +235,7 @@ export default function AnalyticsPage() {
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
           <PermissionGate resource="reports" action="create">
-            <button type="button" className="enterprise-btn enterprise-btn-primary text-sm" onClick={() => addToast({ type: 'info', title: 'Export feature coming soon' })}><Download className="w-4 h-4" /> Export Executive Summary</button>
+            <button type="button" className="enterprise-btn enterprise-btn-primary text-sm" onClick={exportExecutiveSummary}><Download className="w-4 h-4" /> Export Executive Summary</button>
           </PermissionGate>
         </div>
       </div>
@@ -362,7 +380,7 @@ export default function AnalyticsPage() {
               <p className="py-16 text-center text-sm text-[var(--text-tertiary)]">No returns data yet</p>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-3 mb-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
                   <div className="bg-[var(--surface-sunken)]/50 rounded-lg p-3 text-center">
                     <p className="text-xs text-[var(--text-secondary)]">Total Returns</p>
                     <p className="text-lg font-bold text-[var(--text-primary)]">{returnsSummary.totalReturns ?? '—'}</p>
