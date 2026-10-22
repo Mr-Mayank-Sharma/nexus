@@ -52,7 +52,7 @@ public class OperationsAssistant {
     private final String model;
 
     public OperationsAssistant(OperationsReadService readService, StoreNetworkService storeNetworkService, StoreHealthService storeHealthService,
-                               AgentRunner agentRunner, @Qualifier("coreAnthropicProvider") LlmProvider provider,
+                               AgentRunner agentRunner, @Qualifier(LlmProviderSelection.SELECTED) LlmProvider provider,
                                @Value("${nexus.ai.model.operations:claude-sonnet-5-5}") String model) {
         this.readService = readService;
         this.storeNetworkService = storeNetworkService;

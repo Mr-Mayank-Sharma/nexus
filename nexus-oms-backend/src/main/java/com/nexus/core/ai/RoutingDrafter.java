@@ -53,7 +53,7 @@ public class RoutingDrafter {
 
     public RoutingDrafter(RoutingSetupService setupService, RoutingService routingService, FacilityService facilityService,
                           OperationsAssistant operationsAssistant, ProposalService proposalService, AgentRunner agentRunner,
-                          @Qualifier("coreAnthropicProvider") LlmProvider provider, @Value("${nexus.ai.model.routing:claude-opus-5-5}") String model) {
+                          @Qualifier(LlmProviderSelection.SELECTED) LlmProvider provider, @Value("${nexus.ai.model.routing:claude-opus-5-5}") String model) {
         this.setupService = setupService;
         this.routingService = routingService;
         this.facilityService = facilityService;

@@ -43,7 +43,7 @@ public class ExceptionAgent {
     private final String model;
 
     public ExceptionAgent(OperationsAssistant operationsAssistant, ProposalService proposalService, AgentRunner agentRunner,
-                          @Qualifier("coreAnthropicProvider") LlmProvider provider, @Value("${nexus.ai.model.exceptions:claude-opus-5-5}") String model) {
+                          @Qualifier(LlmProviderSelection.SELECTED) LlmProvider provider, @Value("${nexus.ai.model.exceptions:claude-opus-5-5}") String model) {
         this.operationsAssistant = operationsAssistant;
         this.proposalService = proposalService;
         this.agentRunner = agentRunner;

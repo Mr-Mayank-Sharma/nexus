@@ -19,6 +19,13 @@ Model choice per task (configurable per client):
 The gateway is provider-neutral: one interface, Anthropic as the default implementation, so a client that requires
 another provider or a self-hosted model can plug one in.
 
+`nexus.ai.provider` picks it: `ollama` (default for development and testing: a local model, `qwen2.5-coder:3b` at
+`http://localhost:11434`, nothing leaves the machine, cost 0) or `anthropic` (Claude; needs `ANTHROPIC_API_KEY` and
+the `NEXUS_AI_MODEL_*` settings set to Claude model ids). `OllamaProvider` translates the Anthropic message shape to
+Ollama's chat API and back. A small local model often writes a tool call as JSON text; a reply that is only such a
+call, naming a tool that was offered, is read as the call. Answers from a 3B model are weaker than Claude's; the
+guardrails (tools for every number, "Not verified" when no tool backs the answer) are the same.
+
 ## 2. How a language-model call works
 
 ```
