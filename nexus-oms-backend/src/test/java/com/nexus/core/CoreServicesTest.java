@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.model.basic.Enumeration;
 import com.nexus.core.model.basic.EnumerationType;
 import com.nexus.core.model.basic.StatusFlow;
@@ -45,7 +47,7 @@ class CoreServicesTest {
     @Autowired EnumerationService enumerations;
     @Autowired SystemPropertyService properties;
     @Autowired EntityManager em;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     @BeforeAll

@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.model.product.Product;
 import com.nexus.core.service.ProductService;
 import com.nexus.core.service.ProductStoreService;
@@ -27,7 +29,7 @@ class ProductServiceTest {
     @Autowired ProductService products;
     @Autowired ProductStoreService stores;
     @Autowired EntityManager em;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     @BeforeAll

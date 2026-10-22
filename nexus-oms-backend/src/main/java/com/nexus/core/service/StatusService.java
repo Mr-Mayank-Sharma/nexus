@@ -3,7 +3,7 @@ package com.nexus.core.service;
 import com.nexus.core.model.basic.StatusItem;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.Objects;
  * the {@value #DEFAULT_FLOW} flow; a product store may point at its own flow later. A null flow means the default one.
  */
 @Service("coreStatusService")
-@Transactional(readOnly = true)
+@CoreTransactional(readOnly = true)
 public class StatusService {
 
     public static final String DEFAULT_FLOW = "Default";

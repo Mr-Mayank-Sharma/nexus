@@ -1,5 +1,7 @@
 package com.nexus.oms.coremigration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.service.ProductService;
 import com.nexus.core.service.ProductStoreService;
 import jakarta.persistence.EntityManager;
@@ -35,15 +37,19 @@ public class ProductBackfill {
     private static final int CHUNK_SIZE = 250;
     private static final int MAX_ID_LENGTH = 40;
 
-    private final JdbcTemplate jdbc;
+    /** Reads the earlier model's tables (the shared database). */
+    private final JdbcTemplate oldModelJdbc;
+    /** Reads the core tables of the company being copied. */
+    private final JdbcTemplate coreJdbc;
     private final ProductService productService;
     private final ProductStoreService productStoreService;
     private final TransactionTemplate transaction;
     private final EntityManager entityManager;
 
-    public ProductBackfill(JdbcTemplate jdbc, ProductService productService, ProductStoreService productStoreService, TransactionTemplate transaction,
+    public ProductBackfill(JdbcTemplate oldModelJdbc, @Qualifier(CoreTransactional.JDBC) JdbcTemplate coreJdbc, ProductService productService, ProductStoreService productStoreService, @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate transaction,
                            EntityManager entityManager) {
-        this.jdbc = jdbc;
+        this.oldModelJdbc = oldModelJdbc;
+        this.coreJdbc = coreJdbc;
         this.productService = productService;
         this.productStoreService = productStoreService;
         this.transaction = transaction;
@@ -65,17 +71,17 @@ public class ProductBackfill {
         String currency = companyCurrency(tenantId);
 
         // Step 1: stores.
-        List<Map<String, Object>> legacyStores = jdbc.queryForList("SELECT store_code, store_name, platform, currency, timezone, "
+        List<Map<String, Object>> legacyStores = oldModelJdbc.queryForList("SELECT store_code, store_name, platform, currency, timezone, "
                 + "external_store_id, external_domain FROM nx_integration_stores WHERE tenant_id = ? ORDER BY created_at", tenantId);
         int storesCreated = transaction.execute(status -> copyStores(legacyStores, currency));
 
         // Step 2: products, in chunks of one transaction each. Read once: what is already copied, and the categories.
-        List<Map<String, Object>> legacyProducts = jdbc.queryForList("SELECT id, sku, product_name, description, category, unit_price, "
+        List<Map<String, Object>> legacyProducts = oldModelJdbc.queryForList("SELECT id, sku, product_name, description, category, unit_price, "
                 + "cost_price, weight, image_url FROM products WHERE tenant_id = ? ORDER BY created_at, id", tenantId);
-        Set<String> copiedLegacyIds = new HashSet<>(jdbc.queryForList("SELECT id_value FROM good_identification "
+        Set<String> copiedLegacyIds = new HashSet<>(coreJdbc.queryForList("SELECT id_value FROM good_identification "
                 + "WHERE good_identification_type_id = ? AND thru_date IS NULL", String.class, LEGACY_ID));
         Map<String, String> categoryIdByName = new HashMap<>();
-        jdbc.queryForList("SELECT category_name, product_category_id FROM product_category")
+        coreJdbc.queryForList("SELECT category_name, product_category_id FROM product_category")
                 .forEach(row -> categoryIdByName.putIfAbsent(String.valueOf(row.get("category_name")), String.valueOf(row.get("product_category_id"))));
 
         int created = 0;
@@ -100,7 +106,7 @@ public class ProductBackfill {
         int created = 0;
         for (Map<String, Object> legacyStore : legacyStores) {
             String storeId = storeId(text(legacyStore, "store_code"), text(legacyStore, "platform"));
-            boolean existed = jdbc.queryForObject("SELECT COUNT(*) FROM product_store WHERE product_store_id = ?", Long.class, storeId) > 0;
+            boolean existed = coreJdbc.queryForObject("SELECT COUNT(*) FROM product_store WHERE product_store_id = ?", Long.class, storeId) > 0;
             String storeCurrency = knownCurrencyOr(text(legacyStore, "currency"), companyCurrency);
             productStoreService.createIfMissing(new ProductStoreService.NewStore(storeId, text(legacyStore, "store_name"), storeCurrency,
                     text(legacyStore, "timezone"), channel(text(legacyStore, "platform")), text(legacyStore, "external_store_id"),
@@ -142,7 +148,7 @@ public class ProductBackfill {
 
     /** The company's default currency; products have none of their own, so without it nothing can be priced. */
     private String companyCurrency(UUID tenantId) {
-        List<String> currencies = jdbc.queryForList("SELECT default_currency FROM nx_company_settings WHERE tenant_id = ? "
+        List<String> currencies = oldModelJdbc.queryForList("SELECT default_currency FROM nx_company_settings WHERE tenant_id = ? "
                 + "AND default_currency IS NOT NULL", String.class, tenantId);
         String currency = currencies.isEmpty() ? null : knownCurrencyOr(currencies.get(0), null);
         if (currency == null) {
@@ -157,7 +163,7 @@ public class ProductBackfill {
             return fallback;
         }
         String currency = code.trim().toUpperCase(Locale.ROOT);
-        Long known = jdbc.queryForObject("SELECT COUNT(*) FROM uom WHERE uom_id = ? AND uom_type_id = 'CURRENCY_MEASURE'", Long.class, currency);
+        Long known = coreJdbc.queryForObject("SELECT COUNT(*) FROM uom WHERE uom_id = ? AND uom_type_id = 'CURRENCY_MEASURE'", Long.class, currency);
         return known != null && known > 0 ? currency : fallback;
     }
 

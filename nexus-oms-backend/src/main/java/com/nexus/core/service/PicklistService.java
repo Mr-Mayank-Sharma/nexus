@@ -10,7 +10,7 @@ import com.nexus.core.model.shipment.PicklistRole;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import java.util.Set;
  * </ol>
  */
 @Service("corePicklistService")
-@Transactional
+@CoreTransactional
 public class PicklistService {
 
     public static final String FLOW = StatusService.DEFAULT_FLOW;
@@ -238,7 +238,7 @@ public class PicklistService {
     }
 
     /** The picklist's lines, bin by bin. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<PicklistItem> items(String picklistId) {
         return entityManager.createQuery(
                         "SELECT i FROM PicklistItem i, PicklistBin b WHERE b.picklistBinId = i.picklistBinId AND b.picklistId = :picklistId "

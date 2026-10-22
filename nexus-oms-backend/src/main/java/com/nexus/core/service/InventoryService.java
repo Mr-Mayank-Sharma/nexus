@@ -10,7 +10,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.FlushModeType;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,7 +34,7 @@ import java.util.Map;
  * {@link TransferService}.
  */
 @Service("coreInventoryService")
-@Transactional
+@CoreTransactional
 public class InventoryService {
 
     /** Bulk stock (not tracked by serial number): one inventory item per product and facility. */
@@ -242,7 +242,7 @@ public class InventoryService {
     // ── reading ──
 
     /** Available to promise of a product at a facility. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public BigDecimal atp(String productId, String facilityId) {
         BigDecimal total = entityManager.createQuery(
                         "SELECT SUM(i.availableToPromiseTotal) FROM InventoryItem i WHERE i.productId = :productId AND i.facilityId = :facilityId",
@@ -254,7 +254,7 @@ public class InventoryService {
     }
 
     /** On hand of a product at a facility. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public BigDecimal onHand(String productId, String facilityId) {
         BigDecimal total = entityManager.createQuery(
                         "SELECT SUM(i.quantityOnHandTotal) FROM InventoryItem i WHERE i.productId = :productId AND i.facilityId = :facilityId",
@@ -266,7 +266,7 @@ public class InventoryService {
     }
 
     /** Available to promise of a product at every facility that has any of it, most first. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Map<String, BigDecimal> atpByFacility(String productId) {
         Map<String, BigDecimal> availableByFacility = new LinkedHashMap<>();
         List<Object[]> rows = entityManager.createQuery(

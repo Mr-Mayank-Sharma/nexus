@@ -3,7 +3,7 @@ package com.nexus.core.service;
 import com.nexus.core.model.entity.SystemProperty;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.util.Optional;
 
@@ -18,7 +18,7 @@ public class SystemPropertyService {
     }
 
     /** The setting; empty when it is not set or blank. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> get(String resource, String propertyId) {
         SystemProperty property = entityManager.find(SystemProperty.class, new SystemProperty.Key(resource, propertyId));
         return Optional.ofNullable(property).map(SystemProperty::getSystemPropertyValue).filter(value -> !value.isBlank());
@@ -47,7 +47,7 @@ public class SystemPropertyService {
     }
 
     /** Sets the setting, creating it when missing; a null description keeps the one it had. */
-    @Transactional
+    @CoreTransactional
     public void set(String resource, String propertyId, String value, String description) {
         SystemProperty property = entityManager.find(SystemProperty.class, new SystemProperty.Key(resource, propertyId));
         if (property == null) {

@@ -16,7 +16,7 @@ import com.nexus.core.model.shipment.ShipmentStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,7 +39,7 @@ import java.util.Optional;
  * the order) that are fully shipped. {@link #confirm} records a shipment a WMS made (doc 27, section 3.4) in one call.
  */
 @Service("coreShipmentService")
-@Transactional
+@CoreTransactional
 public class ShipmentService {
 
     public static final String FLOW = StatusService.DEFAULT_FLOW;
@@ -390,7 +390,7 @@ public class ShipmentService {
     // ── reading ──
 
     /** How much of an order item has shipped, over all its shipments. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public BigDecimal issuedQuantity(String orderId, String orderItemSeqId) {
         BigDecimal total = entityManager.createQuery(
                         "SELECT SUM(i.quantity - COALESCE(i.cancelQuantity, 0)) FROM ItemIssuance i "
@@ -401,18 +401,18 @@ public class ShipmentService {
         return total == null ? BigDecimal.ZERO : total;
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public String status(String shipmentId) {
         return loadShipment(shipmentId).getStatusId();
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Shipment get(String shipmentId) {
         return loadShipment(shipmentId);
     }
 
     /** A shipment's boxes in order. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<ShipmentPackage> packages(String shipmentId) {
         return entityManager.createQuery("SELECT p FROM ShipmentPackage p WHERE p.shipmentId = :shipmentId ORDER BY p.shipmentPackageSeqId",
                         ShipmentPackage.class)

@@ -1,5 +1,7 @@
 package com.nexus.core.job;
 
+import com.nexus.core.CoreTransactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.nexus.core.CoreStatus;
 import com.nexus.core.service.CoreClock;
 import com.nexus.core.service.OrderService;
@@ -30,7 +32,7 @@ public class AutoCancelJob implements CoreJobHandler {
     private final OrderService orderService;
     private final TransactionTemplate newTransaction;
 
-    public AutoCancelJob(EntityManager entityManager, OrderService orderService, PlatformTransactionManager transactionManager) {
+    public AutoCancelJob(EntityManager entityManager, OrderService orderService, @Qualifier(CoreTransactional.MANAGER) PlatformTransactionManager transactionManager) {
         this.entityManager = entityManager;
         this.orderService = orderService;
         this.newTransaction = new TransactionTemplate(transactionManager);

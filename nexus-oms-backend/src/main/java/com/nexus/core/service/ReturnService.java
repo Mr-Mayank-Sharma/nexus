@@ -13,7 +13,7 @@ import com.nexus.core.model.shipment.ShipmentReceipt;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,7 +31,7 @@ import java.util.Set;
  * </ol>
  */
 @Service("coreReturnService")
-@Transactional
+@CoreTransactional
 public class ReturnService {
 
     public static final String FLOW = StatusService.DEFAULT_FLOW;
@@ -218,7 +218,7 @@ public class ReturnService {
      * What the customer gets back: for refund items the price of what was accepted (or of the whole return quantity,
      * for refunds before the goods arrive), plus the return's adjustments. Never below zero.
      */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public BigDecimal refundAmount(String returnId) {
         BigDecimal total = BigDecimal.ZERO;
         for (ReturnItem returnItem : items(returnId)) {
@@ -279,7 +279,7 @@ public class ReturnService {
     }
 
     /** The return's items in order. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<ReturnItem> items(String returnId) {
         return entityManager.createQuery("SELECT i FROM ReturnItem i WHERE i.returnId = :returnId ORDER BY i.returnItemSeqId", ReturnItem.class)
                 .setParameter("returnId", returnId)

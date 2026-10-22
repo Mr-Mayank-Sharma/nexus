@@ -10,7 +10,7 @@ import com.nexus.core.model.routing.OrderRoutingRuleAction;
 import com.nexus.core.model.routing.OrderRoutingRuleInvCond;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.util.List;
 import java.util.Map;
@@ -23,7 +23,7 @@ import java.util.TreeSet;
  * draft; {@link #activate} turns a routing and its rules on. Running them is {@link RoutingService}.
  */
 @Service("coreRoutingSetupService")
-@Transactional
+@CoreTransactional
 public class RoutingSetupService {
 
     public static final String FLOW = StatusService.DEFAULT_FLOW;
@@ -199,7 +199,7 @@ public class RoutingSetupService {
     // ── reading what was set up ──
 
     /** A store's routing groups, oldest first. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderRoutingGroup> groupsOfStore(String productStoreId) {
         return entityManager.createQuery("SELECT g FROM OrderRoutingGroup g WHERE g.productStoreId = :storeId ORDER BY g.routingGroupId",
                         OrderRoutingGroup.class)
@@ -208,7 +208,7 @@ public class RoutingSetupService {
     }
 
     /** The group that runs for the store on a schedule (the first one when several do); null when none does. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public String liveGroupId(String productStoreId) {
         return entityManager.createQuery("SELECT g.routingGroupId FROM OrderRoutingGroup g WHERE g.productStoreId = :storeId "
                         + "AND g.scheduleMinutes IS NOT NULL ORDER BY g.sequenceNum, g.routingGroupId", String.class)
@@ -221,7 +221,7 @@ public class RoutingSetupService {
     }
 
     /** Every routing of a group, whatever its status, in sequence. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderRouting> routingsOfGroup(String routingGroupId) {
         return entityManager.createQuery("SELECT r FROM OrderRouting r WHERE r.routingGroupId = :groupId ORDER BY r.sequenceNum", OrderRouting.class)
                 .setParameter("groupId", routingGroupId)
@@ -229,7 +229,7 @@ public class RoutingSetupService {
     }
 
     /** The group's active routings, in sequence. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderRouting> activeRoutings(String routingGroupId) {
         return entityManager.createQuery("SELECT r FROM OrderRouting r WHERE r.routingGroupId = :groupId AND r.statusId = :active "
                         + "ORDER BY r.sequenceNum, r.orderRoutingId", OrderRouting.class)
@@ -239,7 +239,7 @@ public class RoutingSetupService {
     }
 
     /** A routing's rules in sequence; only the active ones when {@code activeOnly}. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderRoutingRule> rules(String orderRoutingId, boolean activeOnly) {
         String activeFilter = activeOnly ? " AND r.statusId = '" + CoreStatus.Routing.ACTIVE + "'" : "";
         return entityManager.createQuery("SELECT r FROM OrderRoutingRule r WHERE r.orderRoutingId = :routingId" + activeFilter
@@ -248,7 +248,7 @@ public class RoutingSetupService {
                 .getResultList();
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderFilterCondition> orderConditions(String orderRoutingId) {
         return entityManager.createQuery("SELECT c FROM OrderFilterCondition c WHERE c.orderRoutingId = :routingId ORDER BY c.sequenceNum",
                         OrderFilterCondition.class)
@@ -256,7 +256,7 @@ public class RoutingSetupService {
                 .getResultList();
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderRoutingRuleInvCond> inventoryConditions(String routingRuleId) {
         return entityManager.createQuery("SELECT c FROM OrderRoutingRuleInvCond c WHERE c.routingRuleId = :ruleId ORDER BY c.sequenceNum",
                         OrderRoutingRuleInvCond.class)
@@ -264,7 +264,7 @@ public class RoutingSetupService {
                 .getResultList();
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderRoutingRuleAction> actions(String routingRuleId) {
         return entityManager.createQuery("SELECT a FROM OrderRoutingRuleAction a WHERE a.routingRuleId = :ruleId ORDER BY a.actionSeqId",
                         OrderRoutingRuleAction.class)

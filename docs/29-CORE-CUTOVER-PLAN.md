@@ -20,8 +20,8 @@ For every area, in this order, with the tests green after each step:
 
 | Phase | What | Old code it replaces |
 |---|---|---|
-| A | Remove the warehouse-floor pages (waves, labor, yards, slotting, trailers, RFID, cycle counts, task queues, automation, pickers) from the OMS frontend and backend | `RfController`, `TaskQueueController`, `TwinController`, `WarehouseController` pages, frontend `/labor` `/yards` `/waves` `/slotting` `/automation` `/rfid` `/trailers` `/pickers` |
-| B | **Tenancy:** a control database (companies, sign-in index) and one core database per company; every request routed to its company's database; migrations run per database; a new company gets its database | tenant filters, `TenantContext` routing of the old model |
+| A ✅ | Remove the warehouse-floor pages (waves, labor, yards, slotting, trailers, RFID, cycle counts, task queues, automation, pickers) from the OMS frontend and backend | `RfController`, `TaskQueueController`, `TwinController`, `WarehouseController` pages, frontend `/labor` `/yards` `/waves` `/slotting` `/automation` `/rfid` `/trailers` `/pickers` |
+| B ✅ | **Tenancy:** a control database (companies, sign-in index) and one core database per company; every request routed to its company's database; migrations run per database; a new company gets its database | tenant filters, `TenantContext` routing of the old model |
 | C | **Identity:** sign-in, users, roles and permissions on the core security model (`UserAccount`, `UserGroup`, `UserPermission`), JWT unchanged for the frontend | `AuthController`, `RbacController`, `NxUser`, `UserRole`, `RolePermission`, `Team` |
 | D | **Settings and master data:** company settings, stores, customers, products, locations, carriers | `SettingsController`, `CustomerController`, `ProductController`, `IntegrationStoreController`, `CarrierController`, `CarrierLabelConfigController` |
 | E | **Inventory:** stock, receipts, ATP rules, replenishment, cycle counts at stores | `InventoryController`, `InventoryReceiptController`, `ATPController`, `ReplenishmentController` |
@@ -36,6 +36,26 @@ For every area, in this order, with the tests green after each step:
 
 Phases D to L each end with their old code deleted, so the old model shrinks with every phase and nothing is kept
 "for later". The core mirror keeps the not-yet-moved areas in step until phase M.
+
+## Phase B: how one database per company works
+
+- **Two persistence units** (`PersistenceConfig`). The old model keeps the shared database with its row-level security
+  until it is gone. The core runs on `CoreRoutingDataSource`, which sends every connection to the signed-in company's
+  own database, or to the shared one when the company has none (and when no one is signed in).
+- **Core code** uses `@CoreTransactional`, the core `JdbcTemplate` and the core `TransactionTemplate` by name
+  (`CoreTransactional.JDBC`, `.TEMPLATE`, `.MANAGER`). A plain `@Transactional` would open a transaction on the old
+  model's database instead.
+- **Which company** comes from `TenantScope` (core interface; `SignedInTenantScope` implements it from the sign-in or
+  from `TenantContext.callAs` in jobs). Core jobs run once per database (`TenantScope.forEachDatabase`); the core
+  mirror runs from the shared database only. Ids are counted per database.
+- **The registry** is `platform_tenant_database` in the shared database (V89). `POST /core/tenancy/database` gives
+  the signed-in company its own database on the same server: created, recorded, and migrated before first use.
+  Running the core mirror afterwards copies the company's data from the old model into it.
+- **AI shopping agents** sign in with no user: their key names the company (`nxa_<company>.<random>`), and
+  `AgentKeyCompanyFilter` sets it for the whole request. Keys issued earlier have no company and use the shared
+  database; issue a new key after moving a company.
+- `TenantDatabasesPostgresTest` proves it on real PostgreSQL: a company with its own database sees only its own rows,
+  ids are counted per database, and jobs visit every database.
 
 ## What stays the same
 

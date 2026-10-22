@@ -107,7 +107,8 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 - A helper used in more than one place exists once: `GeoDistance` (distances), `ToolSchema` (agent tool inputs),
   `LegacyRows` (reading rows of the earlier model), `ProposalActions` (what each AI action does and how it is undone).
 - Counts and pairs are small records or classes (`Counts`, `ChunkCounts`, `Transit`), never `int[]` or `String[]`.
-- Service classes are `@Transactional`, reads `@Transactional(readOnly = true)`. `RoutingService` uses a
+- Service classes are `@CoreTransactional`, reads `@CoreTransactional(readOnly = true)` (the core has its own
+  database per company, doc 29; a plain `@Transactional` would open a transaction on the old model's database). `RoutingService` uses a
   `TransactionTemplate` instead, because a simulation must roll back and then write its run record.
 
 ## Gateway

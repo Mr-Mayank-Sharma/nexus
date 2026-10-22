@@ -8,7 +8,7 @@ import com.nexus.core.model.order.OrderItem;
 import com.nexus.core.model.order.OrderItemShipGroup;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,7 +33,7 @@ import java.util.Set;
  * </ul>
  */
 @Service("coreStoreNetworkService")
-@Transactional
+@CoreTransactional
 public class StoreNetworkService {
 
     static final String RESOURCE = "nexus.core";
@@ -85,7 +85,7 @@ public class StoreNetworkService {
      * </ul>
      * Two or more is high confidence, below zero is low, anything else medium.
      */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<Availability> lookup(String productId) {
         LocalDateTime now = CoreClock.now();
         List<ProductFacility> stockedLocations = entityManager.createQuery(
@@ -173,7 +173,7 @@ public class StoreNetworkService {
     }
 
     /** Products in stock at a location whose name or SKU contains the text (any case), by name; at most 50. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<StockAtLocation> stockAt(String facilityId, String text) {
         String pattern = "%" + (text == null ? "" : text.trim().toLowerCase(Locale.ROOT)) + "%";
         return entityManager.createQuery("SELECT p.productId, p.productName, g.idValue, pf.computedLastInventoryCount, pf.lastInventoryCount "
@@ -236,7 +236,7 @@ public class StoreNetworkService {
      *
      * @return value credited per facility id
      */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Map<String, BigDecimal> salesCredit(String orderId) {
         OrderHeader header = orderService.header(orderId);
         String sellingFacility = header.getOriginFacilityId();
@@ -292,7 +292,7 @@ public class StoreNetworkService {
      * (system property {@code nexus.core / transfer.costPerUnit}, whole currency units, 0 when unset).
      * The biggest need is filled first, from the biggest surplus first.
      */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<Suggestion> rebalance(String facilityGroupId, double lowWeeks, double highWeeks, double targetWeeks) {
         List<String> clusterFacilities = activeMembers(facilityGroupId);
         if (clusterFacilities.size() < 2) {

@@ -9,7 +9,7 @@ import com.nexus.core.model.facility.ProductStoreFacility;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,7 +24,7 @@ import java.util.Optional;
  * takes at most that many orders a day.
  */
 @Service("coreFacilityService")
-@Transactional
+@CoreTransactional
 public class FacilityService {
 
     static final String DEFAULT_FACILITY_TYPE = "WAREHOUSE";
@@ -106,7 +106,7 @@ public class FacilityService {
     }
 
     /** The facility with this current outside id, newest first when several share it. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> findByIdentification(String typeId, String value) {
         if (value == null || value.isBlank()) {
             return Optional.empty();
@@ -166,7 +166,7 @@ public class FacilityService {
     }
 
     /** A group's current facilities in order. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<String> members(String facilityGroupId) {
         LocalDateTime now = CoreClock.now();
         return entityManager.createQuery("SELECT m.facilityId FROM FacilityGroupMember m WHERE m.facilityGroupId = :groupId AND m.fromDate <= :now "
@@ -181,7 +181,7 @@ public class FacilityService {
     }
 
     /** Every facility group, by name, with its members. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<GroupSummary> groupSummaries() {
         List<FacilityGroup> groups = entityManager.createQuery("SELECT g FROM FacilityGroup g ORDER BY g.facilityGroupName", FacilityGroup.class)
                 .getResultList();
@@ -214,7 +214,7 @@ public class FacilityService {
     }
 
     /** The facilities that serve a store now, in order. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<String> storeFacilities(String productStoreId) {
         LocalDateTime now = CoreClock.now();
         return entityManager.createQuery("SELECT s.facilityId FROM ProductStoreFacility s WHERE s.productStoreId = :storeId AND s.fromDate <= :now "
@@ -257,7 +257,7 @@ public class FacilityService {
     }
 
     /** Orders the facility can still take on the day; empty when it has no limit. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<Long> ordersLeft(String facilityId, LocalDate day) {
         Facility facility = loadFacility(facilityId);
         if (facility.getMaximumOrderLimit() == null) {

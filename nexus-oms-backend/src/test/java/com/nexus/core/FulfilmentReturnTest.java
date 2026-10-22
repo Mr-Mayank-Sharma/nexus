@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.service.FacilityService;
 import com.nexus.core.service.InventoryService;
 import com.nexus.core.service.OrderService;
@@ -37,7 +39,7 @@ class FulfilmentReturnTest {
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
     @Autowired PartyService parties;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     String shoe, belt, store, customer, shipTo;

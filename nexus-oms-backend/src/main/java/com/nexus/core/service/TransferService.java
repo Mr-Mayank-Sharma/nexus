@@ -11,7 +11,7 @@ import com.nexus.core.model.shipment.ShipmentReceipt;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -33,7 +33,7 @@ import java.util.Map;
  * </ol>
  */
 @Service("coreTransferService")
-@Transactional
+@CoreTransactional
 public class TransferService {
 
     public static final String FLOW = StatusService.DEFAULT_FLOW;
@@ -267,7 +267,7 @@ public class TransferService {
     }
 
     /** The transfer's lines, one per product, in order. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<InventoryTransfer> lines(String shipmentId) {
         return entityManager.createQuery("SELECT t FROM InventoryTransfer t WHERE t.shipmentId = :shipmentId ORDER BY t.shipmentItemSeqId",
                         InventoryTransfer.class)
@@ -284,7 +284,7 @@ public class TransferService {
     }
 
     /** The latest transfers, newest first, with their lines and product names. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<TransferView> recentTransfers(int limit) {
         List<Object[]> rows = entityManager.createQuery("SELECT s.shipmentId, s.statusId, s.originFacilityId, s.destinationFacilityId, s.createdDate "
                         + "FROM Shipment s WHERE s.shipmentTypeId = :transferType ORDER BY s.createdDate DESC", Object[].class)

@@ -15,7 +15,7 @@ import jakarta.persistence.EntityManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,7 +28,7 @@ import java.util.Optional;
  * phones, emails) that are dated and tagged with purposes such as SHIPPING_LOCATION or PRIMARY_EMAIL.
  */
 @Service("corePartyService")
-@Transactional
+@CoreTransactional
 public class PartyService {
 
     public static final String STATUS_TYPE = "PARTY_STATUS";
@@ -128,7 +128,7 @@ public class PartyService {
         }
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> findByIdentification(String typeId, String value) {
         return entityManager.createQuery("SELECT i.partyId FROM PartyIdentification i WHERE i.partyIdentificationTypeId = :typeId AND i.idValue = :value",
                         String.class)
@@ -199,7 +199,7 @@ public class PartyService {
     }
 
     /** Current (not ended) contact ids of a party for a purpose, newest first. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<String> contacts(String partyId, String purposeTypeId) {
         return entityManager.createQuery("SELECT p.contactMechId FROM PartyContactMechPurpose p WHERE p.partyId = :partyId "
                         + "AND p.contactMechPurposeTypeId = :purpose AND p.thruDate IS NULL ORDER BY p.fromDate DESC", String.class)
@@ -209,7 +209,7 @@ public class PartyService {
     }
 
     /** Parties with this email as a current contact (matched case-insensitively). */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<String> findByEmail(String email) {
         if (email == null || email.isBlank()) {
             return List.of();

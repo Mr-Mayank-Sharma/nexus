@@ -1,5 +1,8 @@
 package com.nexus.core.service;
 
+import com.nexus.core.CoreTransactional;
+import com.nexus.core.tenancy.TenantScope;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Hands out ids from {@code sequence_value_item}, the OFBiz/Moqui way: each server reserves a bank of numbers in a
  * short transaction of its own (so a rolled-back business transaction never returns numbers, and two servers never
  * get the same one), then serves ids from memory. Ids are readable numbers starting at 10000, for example "10042".
- * Ids are unique, not gap-free: a restart abandons the rest of a bank.
+ * Ids are unique, not gap-free: a restart abandons the rest of a bank. Each core database (one per company) has its own
+ * sequences, so banks are kept per database.
  */
 @Service("coreSequenceService")
 public class SequenceService {
@@ -24,13 +28,16 @@ public class SequenceService {
     static final long FIRST_ID = 10000;
 
     private final JdbcTemplate jdbc;
+    private final TenantScope tenantScope;
     private final TransactionTemplate ownTransaction;
     private final int bankSize;
-    private final Map<String, Bank> banks = new ConcurrentHashMap<>();
+    /** Banks by database key and sequence name. */
+    private final Map<BankKey, Bank> banks = new ConcurrentHashMap<>();
 
-    public SequenceService(JdbcTemplate jdbc, PlatformTransactionManager transactionManager,
-                           @Value("${nexus.sequence.bank-size:50}") int bankSize) {
+    public SequenceService(@Qualifier(CoreTransactional.JDBC) JdbcTemplate jdbc, @Qualifier(CoreTransactional.MANAGER) PlatformTransactionManager transactionManager,
+                           TenantScope tenantScope, @Value("${nexus.sequence.bank-size:50}") int bankSize) {
         this.jdbc = jdbc;
+        this.tenantScope = tenantScope;
         this.ownTransaction = new TransactionTemplate(transactionManager);
         this.ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         if (bankSize < 1) throw new IllegalArgumentException("nexus.sequence.bank-size must be at least 1");
@@ -43,7 +50,7 @@ public class SequenceService {
     }
 
     public long nextLong(String seqName) {
-        Bank bank = banks.computeIfAbsent(seqName, k -> new Bank());
+        Bank bank = banks.computeIfAbsent(new BankKey(tenantScope.currentDatabaseKey(), seqName), key -> new Bank());
         synchronized (bank) {
             if (bank.next >= bank.end) {
                 bank.next = reserve(seqName);
@@ -82,6 +89,9 @@ public class SequenceService {
             }
         }
         throw new IllegalStateException("Could not reserve ids for sequence " + seqName);
+    }
+
+    private record BankKey(String databaseKey, String seqName) {
     }
 
     private static final class Bank {

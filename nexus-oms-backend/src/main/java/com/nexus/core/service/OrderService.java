@@ -16,7 +16,7 @@ import com.nexus.core.model.order.OrderStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,7 +44,7 @@ import java.util.Set;
  * Stock held for items is the job of {@link OrderReservationService}.
  */
 @Service("coreOrderService")
-@Transactional
+@CoreTransactional
 public class OrderService {
 
     /** The status flow every order, item and payment change is checked against. */
@@ -332,7 +332,7 @@ public class OrderService {
     // ── ship groups ──
 
     /** The ship group; a missing one is an error. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public OrderItemShipGroup shipGroup(String orderId, String shipGroupSeqId) {
         OrderItemShipGroup shipGroup = shipGroupOrNull(orderId, shipGroupSeqId);
         if (shipGroup == null) {
@@ -342,7 +342,7 @@ public class OrderService {
     }
 
     /** The ship group, or null when the order has no such group. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public OrderItemShipGroup shipGroupOrNull(String orderId, String shipGroupSeqId) {
         return entityManager.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId));
     }
@@ -410,7 +410,7 @@ public class OrderService {
     // ── reading ──
 
     /** The order header; an unknown id is an error. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public OrderHeader header(String orderId) {
         return loadHeader(orderId);
     }
@@ -424,19 +424,19 @@ public class OrderService {
     }
 
     /** The order's items in sequence order. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<OrderItem> items(String orderId) {
         return entityManager.createQuery("SELECT i FROM OrderItem i WHERE i.orderId = :orderId ORDER BY i.orderItemSeqId", OrderItem.class)
                 .setParameter("orderId", orderId)
                 .getResultList();
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public OrderItem orderItem(String orderId, String orderItemSeqId) {
         return loadItem(orderId, orderItemSeqId);
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public String itemAttribute(String orderId, String orderItemSeqId, String name) {
         OrderItemAttribute attribute = entityManager.find(OrderItemAttribute.class, new OrderItemAttribute.Key(orderId, orderItemSeqId, name));
         return attribute == null ? null : attribute.getAttrValue();
@@ -457,7 +457,7 @@ public class OrderService {
     // ── parties, outside ids, attributes, adjustments ──
 
     /** The party in a role on the order (the ship-to customer, say), if any. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> partyInRole(String orderId, String roleTypeId) {
         return entityManager.createQuery(
                         "SELECT r.partyId FROM OrderRole r WHERE r.orderId = :orderId AND r.roleTypeId = :roleTypeId ORDER BY r.partyId", String.class)
@@ -499,7 +499,7 @@ public class OrderService {
     }
 
     /** The order whose current id of this kind is the value: find an order by its Shopify id or PO number. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> findByIdentification(String typeId, String value) {
         if (value == null || value.isBlank()) {
             return Optional.empty();

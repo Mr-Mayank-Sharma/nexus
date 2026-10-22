@@ -34,7 +34,9 @@ public class CoreGatewayController {
     @Operation(summary = "Issue the key AI shopping agents use for a store (shown once; the old one stops working)")
     @PostMapping("/stores/{productStoreId}/agent-key")
     public ResponseEntity<ApiResponse<String>> agentKey(@PathVariable String productStoreId) {
-        String key = agentKeyService.issueKey(productStoreId);
+        // The key carries the company, so agent requests reach the company's database (doc 29, phase B).
+        String companyTag = TenantContext.getCurrentTenantId().toString().replace("-", "");
+        String key = agentKeyService.issueKey(productStoreId, companyTag);
         return ResponseEntity.ok(ApiResponse.success(key, "Keep this key in the agent platform; it is not shown again"));
     }
 

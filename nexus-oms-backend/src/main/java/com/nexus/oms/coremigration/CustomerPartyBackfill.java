@@ -1,5 +1,7 @@
 package com.nexus.oms.coremigration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.service.GeoService;
 import com.nexus.core.service.PartyService;
 import jakarta.persistence.EntityManager;
@@ -31,15 +33,19 @@ public class CustomerPartyBackfill {
     private static final Logger log = LoggerFactory.getLogger(CustomerPartyBackfill.class);
     private static final int CHUNK_SIZE = 200;
 
-    private final JdbcTemplate jdbc;
+    /** Reads the earlier model's tables (the shared database). */
+    private final JdbcTemplate oldModelJdbc;
+    /** Reads the core tables of the company being copied. */
+    private final JdbcTemplate coreJdbc;
     private final PartyService partyService;
     private final TransactionTemplate transaction;
     private final GeoService geoService;
     private final EntityManager entityManager;
 
-    public CustomerPartyBackfill(JdbcTemplate jdbc, PartyService partyService, TransactionTemplate transaction, GeoService geoService,
+    public CustomerPartyBackfill(JdbcTemplate oldModelJdbc, @Qualifier(CoreTransactional.JDBC) JdbcTemplate coreJdbc, PartyService partyService, @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate transaction, GeoService geoService,
                                  EntityManager entityManager) {
-        this.jdbc = jdbc;
+        this.oldModelJdbc = oldModelJdbc;
+        this.coreJdbc = coreJdbc;
         this.partyService = partyService;
         this.transaction = transaction;
         this.geoService = geoService;
@@ -57,11 +63,11 @@ public class CustomerPartyBackfill {
         if (tenantId == null) {
             throw new IllegalArgumentException("Run the customer copy as a user of the company whose customers to copy");
         }
-        List<Map<String, Object>> customers = jdbc.queryForList(
+        List<Map<String, Object>> customers = oldModelJdbc.queryForList(
                 "SELECT c.id, c.external_id, c.name, c.email, c.phone, a.full_name, a.address_line1, a.address_line2, a.city, "
                         + "a.state, a.postal_code, a.country, a.is_residential FROM nx_customers c "
                         + "LEFT JOIN nx_addresses a ON a.id = c.address_id WHERE c.tenant_id = ? ORDER BY c.created_at, c.id", tenantId);
-        Set<String> copiedLegacyIds = new HashSet<>(jdbc.queryForList("SELECT id_value FROM party_identification "
+        Set<String> copiedLegacyIds = new HashSet<>(coreJdbc.queryForList("SELECT id_value FROM party_identification "
                 + "WHERE party_identification_type_id = ?", String.class, LEGACY_ID));
 
         int created = 0;
@@ -116,7 +122,7 @@ public class CustomerPartyBackfill {
 
     /** For tests and reports: how many parties came from the legacy customer table. */
     public long copiedCount() {
-        Long count = jdbc.queryForObject("SELECT COUNT(*) FROM party_identification WHERE party_identification_type_id = ?", Long.class, LEGACY_ID);
+        Long count = coreJdbc.queryForObject("SELECT COUNT(*) FROM party_identification WHERE party_identification_type_id = ?", Long.class, LEGACY_ID);
         return count == null ? 0 : count;
     }
 }

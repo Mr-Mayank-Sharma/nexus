@@ -3,6 +3,7 @@ package com.nexus.oms.coremigration;
 import com.nexus.core.job.CoreJobHandler;
 import com.nexus.core.service.CoreClock;
 import com.nexus.core.service.SystemPropertyService;
+import com.nexus.core.tenancy.TenantScope;
 import com.nexus.oms.security.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,15 +41,17 @@ public class CoreMirror implements CoreJobHandler {
     private final FacilityInventoryBackfill stockCopy;
     private final OrderBackfill orderCopy;
     private final SystemPropertyService systemPropertyService;
+    private final TenantScope tenantScope;
 
     public CoreMirror(JdbcTemplate jdbc, CustomerPartyBackfill customerCopy, ProductBackfill productCopy, FacilityInventoryBackfill stockCopy,
-                      OrderBackfill orderCopy, SystemPropertyService systemPropertyService) {
+                      OrderBackfill orderCopy, SystemPropertyService systemPropertyService, TenantScope tenantScope) {
         this.jdbc = jdbc;
         this.customerCopy = customerCopy;
         this.productCopy = productCopy;
         this.stockCopy = stockCopy;
         this.orderCopy = orderCopy;
         this.systemPropertyService = systemPropertyService;
+        this.tenantScope = tenantScope;
     }
 
     public record Run(int companies, int ordersCopied, int ordersRefreshed, int failures) {
@@ -57,6 +60,10 @@ public class CoreMirror implements CoreJobHandler {
     /** The core_mirror job. */
     @Override
     public String run(Map<String, String> parameters) {
+        // The job is seeded in every core database, but one pass already covers every company: run it from the shared one.
+        if (!TenantScope.SHARED.equals(tenantScope.currentDatabaseKey())) {
+            return "runs from the shared database only";
+        }
         Run pass = runOnce();
         return pass.companies() + " companies, " + pass.ordersCopied() + " orders copied, " + pass.ordersRefreshed() + " refreshed, "
                 + pass.failures() + " failures";

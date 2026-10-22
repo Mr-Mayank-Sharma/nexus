@@ -1,5 +1,6 @@
 package com.nexus.oms.config;
 
+import com.nexus.oms.tenancy.CoreRoutingDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;
@@ -36,7 +37,8 @@ public class DataSourceConfig implements BeanPostProcessor, EnvironmentAware {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if (bean instanceof DataSource ds && !(bean instanceof TenantAwareDataSource)) {
+        // The core's routing data source is left alone: company databases have no row-level security role.
+        if (bean instanceof DataSource ds && !(bean instanceof TenantAwareDataSource) && !(bean instanceof CoreRoutingDataSource)) {
             log.info("Wrapping DataSource '{}' with TenantAwareDataSource for RLS enforcement", beanName);
             return new TenantAwareDataSource(ds, appRole);
         }

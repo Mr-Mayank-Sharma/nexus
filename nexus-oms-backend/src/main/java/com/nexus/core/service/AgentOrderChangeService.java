@@ -9,7 +9,7 @@ import com.nexus.core.model.order.OrderItemShipGroup;
 import com.nexus.core.model.product.ProductStore;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,7 +24,7 @@ import java.util.Locale;
  * proposal for a person (status "needs_review", with the reason), never a refusal without a reason.
  */
 @Service("coreAgentOrderChangeService")
-@Transactional
+@CoreTransactional
 public class AgentOrderChangeService {
 
     public static final String DONE = "done";
@@ -76,7 +76,7 @@ public class AgentOrderChangeService {
     }
 
     /** What the buyer may see of their order: its status, and per shipment the tracking and expected delivery. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public OrderView view(String productStoreId, String orderId) {
         OrderHeader header = loadStoreOrder(productStoreId, orderId);
         String status = header.getStatusId().replace("ORDER_", "").toLowerCase(Locale.ROOT);

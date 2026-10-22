@@ -4,7 +4,7 @@ import com.nexus.core.model.facility.Facility;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -29,7 +29,7 @@ import java.util.TreeSet;
  * </ul>
  */
 @Service("coreStoreHealthService")
-@Transactional(readOnly = true)
+@CoreTransactional(readOnly = true)
 public class StoreHealthService {
 
     /** The reliability prior: 90% worth 10 orders. */

@@ -3,13 +3,13 @@ package com.nexus.core.service;
 import com.nexus.core.model.basic.Enumeration;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.util.List;
 
 /** Coded lists (sales channels, reasons, types) held as data in {@code enumeration}. */
 @Service("coreEnumerationService")
-@Transactional(readOnly = true)
+@CoreTransactional(readOnly = true)
 public class EnumerationService {
 
     private final EntityManager entityManager;

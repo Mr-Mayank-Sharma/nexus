@@ -1,5 +1,7 @@
 package com.nexus.core.ai;
 
+import com.nexus.core.CoreTransactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,7 +57,7 @@ public class ProposalService {
     private final TransactionTemplate transaction;
 
     public ProposalService(EntityManager entityManager, SequenceService sequenceService, StatusService statusService, ProposalActions proposalActions,
-                           PlatformTransactionManager transactionManager) {
+                           @Qualifier(CoreTransactional.MANAGER) PlatformTransactionManager transactionManager) {
         this.entityManager = entityManager;
         this.sequenceService = sequenceService;
         this.statusService = statusService;

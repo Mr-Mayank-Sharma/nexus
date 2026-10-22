@@ -10,7 +10,7 @@ import com.nexus.oms.security.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -48,7 +48,7 @@ public class CoreOrdersController {
 
     @Operation(summary = "Create an order")
     @PostMapping("/orders")
-    @Transactional
+    @CoreTransactional
     public ResponseEntity<ApiResponse<String>> create(@RequestBody OrderService.NewOrder newOrder) {
         String orderId = orderService.create(newOrder);
         return ResponseEntity.ok(ApiResponse.success(orderId, "Order created"));
@@ -59,7 +59,7 @@ public class CoreOrdersController {
 
     @Operation(summary = "Move an order to a status its flow allows")
     @PostMapping("/orders/{orderId}/status")
-    @Transactional
+    @CoreTransactional
     public ResponseEntity<ApiResponse<Void>> status(@PathVariable String orderId, @RequestBody StatusChange change) {
         orderService.changeStatus(orderId, change.statusId(), change.reason(), currentUser());
         return ResponseEntity.ok(ApiResponse.success(null, "Status changed"));
@@ -70,7 +70,7 @@ public class CoreOrdersController {
 
     @Operation(summary = "Hold stock for an item at a facility (all that is open when no quantity)")
     @PostMapping("/orders/{orderId}/items/{orderItemSeqId}/reserve")
-    @Transactional
+    @CoreTransactional
     public ResponseEntity<ApiResponse<Void>> reserve(@PathVariable String orderId, @PathVariable String orderItemSeqId, @RequestBody Hold hold) {
         reservationService.reserve(orderId, orderItemSeqId, hold.facilityId(), hold.quantity(), currentUser());
         return ResponseEntity.ok(ApiResponse.success(null, "Held"));
@@ -86,7 +86,7 @@ public class CoreOrdersController {
 
     @Operation(summary = "An order with its items")
     @GetMapping("/orders/{orderId}")
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public ResponseEntity<ApiResponse<OrderView>> get(@PathVariable String orderId) {
         OrderHeader header = orderService.header(orderId);
         List<ItemView> items = orderService.items(orderId).stream()
@@ -110,7 +110,7 @@ public class CoreOrdersController {
 
     @Operation(summary = "Make a shipment for a ship group (everything open when no quantities)")
     @PostMapping("/shipments")
-    @Transactional
+    @CoreTransactional
     public ResponseEntity<ApiResponse<String>> shipment(@RequestBody NewShipment newShipment) {
         String shipmentId = shipmentService.createSalesShipment(newShipment.orderId(), newShipment.shipGroupSeqId(), newShipment.quantities(), currentUser());
         return ResponseEntity.ok(ApiResponse.success(shipmentId, "Shipment made"));
@@ -121,7 +121,7 @@ public class CoreOrdersController {
 
     @Operation(summary = "Ship a shipment: stock leaves, items complete; tracking from its labels is kept")
     @PostMapping("/shipments/{shipmentId}/ship")
-    @Transactional
+    @CoreTransactional
     public ResponseEntity<ApiResponse<String>> ship(@PathVariable String shipmentId, @RequestBody(required = false) Ship request) {
         Ship details = request == null ? new Ship(null, null, null) : request;
         shipmentService.ship(shipmentId, details.carrierPartyId(), details.shipmentMethodTypeId(), details.trackingByPackage(), null, currentUser());
@@ -130,7 +130,7 @@ public class CoreOrdersController {
 
     @Operation(summary = "Record a shipment another system made (the WMS confirmation of doc 27)")
     @PostMapping("/shipments/confirm")
-    @Transactional
+    @CoreTransactional
     public ResponseEntity<ApiResponse<String>> confirm(@RequestBody ShipmentService.Confirmation confirmation) {
         String shipmentId = shipmentService.confirm(confirmation, currentUser());
         return ResponseEntity.ok(ApiResponse.success(shipmentId, "Shipment recorded"));

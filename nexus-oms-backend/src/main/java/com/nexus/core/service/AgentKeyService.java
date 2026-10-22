@@ -2,7 +2,7 @@ package com.nexus.core.service;
 
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -16,13 +16,17 @@ import java.util.Optional;
  * Keys AI shopping agents use to reach a store (doc 25, feature 1). A key is shown once when issued; the store keeps
  * only its SHA-256 hash (store setting {@code AGENT_API_KEY_HASH}), so a leaked database does not leak working keys.
  * Issuing a new key replaces the old one.
+ * <p>
+ * A key may carry a routing tag, {@code nxa_<tag>.<random>}: the host puts the company there, so a request carrying
+ * the key can be sent to that company's database before the key is checked (doc 29, phase B). The tag is not secret.
  */
 @Service("coreAgentKeyService")
-@Transactional
+@CoreTransactional
 public class AgentKeyService {
 
     static final String KEY_HASH_SETTING = "AGENT_API_KEY_HASH";
-    static final String KEY_PREFIX = "nxa_";
+    public static final String KEY_PREFIX = "nxa_";
+    public static final char TAG_SEPARATOR = '.';
     private static final int KEY_BYTES = 32;
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -34,17 +38,18 @@ public class AgentKeyService {
         this.productStoreService = productStoreService;
     }
 
-    /** A new agent key for the store, replacing any earlier one. Shown once; only its hash is kept. */
-    public String issueKey(String productStoreId) {
+    /** A new agent key for the store, replacing any earlier one; {@code routingTag} may be null. Shown once; only its hash is kept. */
+    public String issueKey(String productStoreId, String routingTag) {
         byte[] randomBytes = new byte[KEY_BYTES];
         RANDOM.nextBytes(randomBytes);
-        String key = KEY_PREFIX + Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        String tagPart = routingTag == null ? "" : routingTag + TAG_SEPARATOR;
+        String key = KEY_PREFIX + tagPart + Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         productStoreService.setSetting(productStoreId, KEY_HASH_SETTING, sha256(key));
         return key;
     }
 
     /** The store an agent key belongs to; empty for a missing or unknown key. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> storeForKey(String key) {
         if (key == null || key.isBlank()) {
             return Optional.empty();

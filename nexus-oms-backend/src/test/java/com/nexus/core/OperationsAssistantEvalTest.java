@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.nexus.core.ai.AgentRunner;
 import com.nexus.core.ai.OperationsAssistant;
@@ -46,7 +48,7 @@ class OperationsAssistantEvalTest {
     @Autowired ProductService products;
     @Autowired PartyService parties;
     @Autowired SystemPropertyService properties;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     String store, product, customer, order, oldOrder;

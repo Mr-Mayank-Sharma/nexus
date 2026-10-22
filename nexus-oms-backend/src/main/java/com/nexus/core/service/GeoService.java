@@ -3,7 +3,7 @@ package com.nexus.core.service;
 import com.nexus.core.model.basic.Geo;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.util.List;
 import java.util.Locale;
@@ -14,7 +14,7 @@ import java.util.Optional;
  * into geo ids. Unknown or ambiguous text returns empty rather than a guess.
  */
 @Service("coreGeoService")
-@Transactional(readOnly = true)
+@CoreTransactional(readOnly = true)
 public class GeoService {
 
     private final EntityManager entityManager;

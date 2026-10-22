@@ -1,11 +1,14 @@
 package com.nexus.core.job;
 
+import com.nexus.core.CoreTransactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.nexus.core.model.service.ServiceJob;
 import com.nexus.core.model.service.ServiceJobParameter;
 import com.nexus.core.model.service.ServiceJobRun;
 import com.nexus.core.model.service.ServiceJobRunLock;
 import com.nexus.core.service.CoreClock;
 import com.nexus.core.service.SequenceService;
+import com.nexus.core.tenancy.TenantScope;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.slf4j.Logger;
@@ -27,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Scheduled jobs as data (Moqui's {@code service_job}): each job names a handler bean and a cron expression, and can be
@@ -54,14 +58,17 @@ public class JobService {
     private final boolean enabled;
     private final int keepDays;
     private final String hostName;
-    private volatile LocalDateTime lastPrunedAt = LocalDateTime.MIN;
+    private final TenantScope tenantScope;
+    /** When each database's run history was last pruned. */
+    private final Map<String, LocalDateTime> lastPrunedAtByDatabase = new ConcurrentHashMap<>();
 
-    public JobService(EntityManager entityManager, SequenceService sequenceService, ApplicationContext applicationContext,
-                      PlatformTransactionManager transactionManager, @Value("${nexus.core.jobs.enabled:true}") boolean enabled,
+    public JobService(EntityManager entityManager, SequenceService sequenceService, ApplicationContext applicationContext, TenantScope tenantScope,
+                      @Qualifier(CoreTransactional.MANAGER) PlatformTransactionManager transactionManager, @Value("${nexus.core.jobs.enabled:true}") boolean enabled,
                       @Value("${nexus.core.jobs.keep-days:7}") int keepDays) {
         this.entityManager = entityManager;
         this.sequenceService = sequenceService;
         this.applicationContext = applicationContext;
+        this.tenantScope = tenantScope;
         this.newTransaction = new TransactionTemplate(transactionManager);
         this.newTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.enabled = enabled;
@@ -83,9 +90,17 @@ public class JobService {
         if (!enabled) {
             return;
         }
+        // Each company's database has its own jobs (doc 29, phase B).
+        tenantScope.forEachDatabase(this::runDueJobs);
+    }
+
+    /** Prunes this database's history once an hour, then starts every job that is due in it. */
+    private void runDueJobs() {
         LocalDateTime now = CoreClock.now();
+        String databaseKey = tenantScope.currentDatabaseKey();
+        LocalDateTime lastPrunedAt = lastPrunedAtByDatabase.getOrDefault(databaseKey, LocalDateTime.MIN);
         if (lastPrunedAt.isBefore(now.minusHours(1))) {
-            lastPrunedAt = now;
+            lastPrunedAtByDatabase.put(databaseKey, now);
             prune(now.minusDays(keepDays));
         }
         for (String jobName : due(now)) {

@@ -17,7 +17,7 @@ import com.nexus.core.service.ShipmentService;
 import com.nexus.oms.integration.core.CredentialVault;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -73,7 +73,7 @@ public class GatewayService {
     }
 
     /** Points a store at a gateway. The key is kept encrypted; a null key keeps the one already set. */
-    @Transactional
+    @CoreTransactional
     public void configure(String productStoreId, String url, String apiKey, String defaultCarrier) {
         boolean secureOrLocal = url != null && (url.startsWith("https://") || url.startsWith("http://localhost") || url.startsWith("http://127.0.0.1"));
         if (!secureOrLocal) {
@@ -92,7 +92,7 @@ public class GatewayService {
      * Makes carrier labels for a shipment through its store's gateway: one per box (one box with everything when it has
      * none), from the shipping facility's address to the shipment's destination. Tracking and reprint links are stored.
      */
-    @Transactional
+    @CoreTransactional
     public LabelOutcome label(String shipmentId, String carrier, String service, String userId) {
         // Step 1: the shipment, its order's store, and that store's gateway and carrier.
         Shipment shipment = shipmentService.get(shipmentId);

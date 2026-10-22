@@ -1,5 +1,7 @@
 package com.nexus.oms.agent;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.core.CoreTestData;
@@ -22,6 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -41,7 +44,7 @@ class AgentCommerceApiTest {
     @Autowired ProductService products;
     @Autowired FacilityService facilities;
     @Autowired InventoryService inventory;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     String store = "AGENT-SHOP", key, product;
@@ -58,7 +61,7 @@ class AgentCommerceApiTest {
             products.setPrice(product, "DEFAULT_PRICE", "USD", null, new BigDecimal("40.00"));
             String dc = facilities.create(new FacilityService.NewFacility(null, "DISTRIBUTION_CENTER", "Agent DC", null, null, null, null, null, null, null, null, null));
             inventory.receive(product, dc, new BigDecimal("5"), null, null, null, null);
-            key = agentKeys.issueKey(store);
+            key = agentKeys.issueKey(store, UUID.randomUUID().toString().replace("-", ""));   // a company tag, as the OMS issues them
         });
     }
 

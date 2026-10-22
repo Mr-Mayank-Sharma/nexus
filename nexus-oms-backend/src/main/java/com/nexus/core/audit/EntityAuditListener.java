@@ -1,5 +1,7 @@
 package com.nexus.core.audit;
 
+import com.nexus.core.CoreTransactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.nexus.core.service.SequenceService;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManagerFactory;
@@ -49,7 +51,8 @@ public class EntityAuditListener implements PostInsertEventListener, PostUpdateE
     /** The audited field names of each entity class, worked out once per class. */
     private final Map<Class<?>, Set<String>> auditedFieldsByClass = new ConcurrentHashMap<>();
 
-    public EntityAuditListener(EntityManagerFactory entityManagerFactory, JdbcTemplate jdbc, SequenceService sequenceService) {
+    public EntityAuditListener(@Qualifier(CoreTransactional.ENTITY_MANAGER_FACTORY) EntityManagerFactory entityManagerFactory,
+                               @Qualifier(CoreTransactional.JDBC) JdbcTemplate jdbc, SequenceService sequenceService) {
         this.entityManagerFactory = entityManagerFactory;
         this.jdbc = jdbc;
         this.sequenceService = sequenceService;

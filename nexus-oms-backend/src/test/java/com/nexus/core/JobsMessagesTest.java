@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.job.CoreJobHandler;
 import com.nexus.core.job.CoreMessageHandler;
 import com.nexus.core.job.JobService;
@@ -38,7 +40,7 @@ class JobsMessagesTest {
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
     @Autowired ApplicationContext context;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     String product, facility;

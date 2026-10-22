@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.service.FacilityService;
 import com.nexus.core.service.InventoryService;
 import com.nexus.core.service.ProductService;
@@ -29,7 +31,7 @@ class FacilityInventoryServiceTest {
     @Autowired FacilityService facilities;
     @Autowired InventoryService inventory;
     @Autowired ProductService products;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     @BeforeAll

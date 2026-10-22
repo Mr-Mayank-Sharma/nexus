@@ -1,5 +1,7 @@
 package com.nexus.core.ai;
 
+import com.nexus.core.CoreTransactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -77,7 +79,7 @@ public class AgentRunner {
     private final TransactionTemplate newTransaction;
 
     public AgentRunner(EntityManager entityManager, SequenceService sequenceService, SystemPropertyService systemPropertyService, Environment environment,
-                       PlatformTransactionManager transactionManager) {
+                       @Qualifier(CoreTransactional.MANAGER) PlatformTransactionManager transactionManager) {
         this.entityManager = entityManager;
         this.sequenceService = sequenceService;
         this.systemPropertyService = systemPropertyService;

@@ -2,14 +2,15 @@ package com.nexus.oms;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.TimeZone;
 
-/** The OMS application. {@code com.nexus.core} holds the shared OFBiz-aligned model and framework services (doc 23). */
+/**
+ * The OMS application. {@code com.nexus.core} holds the shared OFBiz-aligned model and framework services (doc 23); the
+ * two persistence units (old model and core) are set up in {@code PersistenceConfig}.
+ */
 @SpringBootApplication(scanBasePackages = {"com.nexus.oms", "com.nexus.core"})
-@EntityScan(basePackages = {"com.nexus.oms", "com.nexus.core"})
 @EnableScheduling
 public class NexusOmsApplication {
 

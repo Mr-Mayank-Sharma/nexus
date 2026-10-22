@@ -1,5 +1,8 @@
 package com.nexus.core;
 
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.config.CoreSchemaMigrator;
 import com.nexus.core.service.StatusService;
 import org.junit.jupiter.api.Test;
@@ -50,7 +53,7 @@ class CoreOnPostgresAppTest {
     @Autowired StatusService statuses;
     @Autowired com.nexus.core.service.ProductService products;
     @Autowired com.nexus.core.service.PartyService parties;
-    @Autowired org.springframework.transaction.support.TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired com.nexus.core.service.FacilityService facilities;
     @Autowired com.nexus.core.service.InventoryService inventory;
     @Autowired com.nexus.core.service.OrderService orders;

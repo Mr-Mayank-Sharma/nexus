@@ -73,11 +73,13 @@ class TenantIsolationPostgresTest {
 
     @Test
     void migrationsRanAndRlsIsForcedOnEveryTenantTable() {
+        // platform_* tables say which company is where (doc 29); they are read before any company is known, so they
+        // are not company data and carry no row-level security.
         Integer unprotected = jdbc.queryForObject("""
                 SELECT count(*) FROM pg_class c
                 JOIN information_schema.columns col
                   ON col.table_name = c.relname AND col.column_name = 'tenant_id' AND col.table_schema = 'public'
-                WHERE c.relkind = 'r' AND NOT (c.relrowsecurity AND c.relforcerowsecurity)""", Integer.class);
+                WHERE c.relkind = 'r' AND c.relname NOT LIKE 'platform\\_%' AND NOT (c.relrowsecurity AND c.relforcerowsecurity)""", Integer.class);
         assertEquals(0, unprotected, "every tenant_id table must have FORCE ROW LEVEL SECURITY");
     }
 

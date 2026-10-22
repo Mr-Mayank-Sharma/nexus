@@ -5,7 +5,7 @@ import com.nexus.core.model.product.ProductStore;
 import com.nexus.core.model.product.ProductStoreSetting;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.util.Optional;
 
@@ -14,7 +14,7 @@ import java.util.Optional;
  * ({@code PRODUCT_STORE_SETTING} enumerations), so a new setting needs no schema change.
  */
 @Service("coreProductStoreService")
-@Transactional
+@CoreTransactional
 public class ProductStoreService {
 
     public static final String SETTING_TYPE = "PRODUCT_STORE_SETTING";
@@ -74,7 +74,7 @@ public class ProductStoreService {
     }
 
     /** The store's setting; empty when it is not set or blank. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> setting(String productStoreId, String settingEnumId) {
         ProductStoreSetting setting = entityManager.find(ProductStoreSetting.class, new ProductStoreSetting.Key(productStoreId, settingEnumId));
         return Optional.ofNullable(setting).map(ProductStoreSetting::getSettingValue).filter(value -> !value.isBlank());

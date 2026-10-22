@@ -1,5 +1,7 @@
 package com.nexus.oms.coremigration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.CoreStatus;
 import com.nexus.core.service.OrderReservationService;
 import com.nexus.core.service.OrderService;
@@ -57,16 +59,20 @@ public class OrderBackfill {
     /** A gap between the old total and its parts smaller than this is rounding, not a discount. */
     private static final BigDecimal ROUNDING_TOLERANCE = new BigDecimal("0.005");
 
-    private final JdbcTemplate jdbc;
+    /** Reads the earlier model's tables (the shared database). */
+    private final JdbcTemplate oldModelJdbc;
+    /** Reads the core tables of the company being copied. */
+    private final JdbcTemplate coreJdbc;
     private final OrderService orderService;
     private final OrderReservationService reservationService;
     private final PartyService partyService;
     private final TransactionTemplate transaction;
     private final EntityManager entityManager;
 
-    public OrderBackfill(JdbcTemplate jdbc, OrderService orderService, OrderReservationService reservationService, PartyService partyService,
-                         TransactionTemplate transaction, EntityManager entityManager) {
-        this.jdbc = jdbc;
+    public OrderBackfill(JdbcTemplate oldModelJdbc, @Qualifier(CoreTransactional.JDBC) JdbcTemplate coreJdbc, OrderService orderService, OrderReservationService reservationService, PartyService partyService,
+                         @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate transaction, EntityManager entityManager) {
+        this.oldModelJdbc = oldModelJdbc;
+        this.coreJdbc = coreJdbc;
         this.orderService = orderService;
         this.reservationService = reservationService;
         this.partyService = partyService;
@@ -120,7 +126,7 @@ public class OrderBackfill {
             throw new IllegalArgumentException("Run the order copy as a user of the company whose orders to copy");
         }
         Lookups lookups = loadLookups(tenantId);
-        List<Map<String, Object>> legacyOrders = jdbc.queryForList("SELECT id, external_id, channel, channel_order_id, customer_id, status, "
+        List<Map<String, Object>> legacyOrders = oldModelJdbc.queryForList("SELECT id, external_id, channel, channel_order_id, customer_id, status, "
                 + "fulfillment_type, currency, subtotal, shipping_cost, tax_amount, total, payment_status, payment_reference, "
                 + "carrier_id, tracking_number, promised_delivery, requested_ship_date, release_at, created_at, ship_to_address_id, "
                 + "order_type FROM nx_orders WHERE tenant_id = ? ORDER BY created_at, id", tenantId);
@@ -301,7 +307,7 @@ public class OrderBackfill {
     public int refresh(UUID tenantId, LocalDateTime since) {
         Map<String, String> orderIdByLegacyId = firstValuePerKey("SELECT id_value, order_id FROM order_identification "
                 + "WHERE order_identification_type_id = ? AND thru_date IS NULL", LEGACY_ID);
-        List<Map<String, Object>> changedLegacyOrders = jdbc.queryForList("SELECT id, status, tracking_number FROM nx_orders WHERE tenant_id = ? "
+        List<Map<String, Object>> changedLegacyOrders = oldModelJdbc.queryForList("SELECT id, status, tracking_number FROM nx_orders WHERE tenant_id = ? "
                 + "AND updated_at >= ?", tenantId, Timestamp.valueOf(since));
 
         int ordersChanged = 0;
@@ -314,7 +320,7 @@ public class OrderBackfill {
             String newStatus = orderStatus(legacyStatus);
             String newTracking = text(legacyOrder, "tracking_number");
             Boolean changed = transaction.execute(status -> {
-                Map<String, Object> current = jdbc.queryForMap("SELECT h.status_id, g.tracking_number FROM order_header h LEFT JOIN "
+                Map<String, Object> current = coreJdbc.queryForMap("SELECT h.status_id, g.tracking_number FROM order_header h LEFT JOIN "
                         + "order_item_ship_group g ON g.order_id = h.order_id AND g.ship_group_seq_id = '00001' WHERE h.order_id = ?", orderId);
                 boolean statusChanged = !newStatus.equals(current.get("status_id"));
                 boolean trackingChanged = newTracking != null && !newTracking.equals(current.get("tracking_number"));
@@ -337,7 +343,7 @@ public class OrderBackfill {
     // ── lookups ──
 
     private Lookups loadLookups(UUID tenantId) {
-        Set<String> copiedLegacyIds = new HashSet<>(jdbc.queryForList("SELECT id_value FROM order_identification "
+        Set<String> copiedLegacyIds = new HashSet<>(coreJdbc.queryForList("SELECT id_value FROM order_identification "
                 + "WHERE order_identification_type_id = ? AND thru_date IS NULL", String.class, LEGACY_ID));
         Map<String, String> partyByCustomer = firstValuePerKey(
                 "SELECT id_value, party_id FROM party_identification WHERE party_identification_type_id = ?", LEGACY_ID);
@@ -352,15 +358,15 @@ public class OrderBackfill {
 
         // The bulk (no lot) inventory item of each product at each facility comes first, so it is the one picked.
         Map<String, String> inventoryItemByProductFacility = new HashMap<>();
-        jdbc.queryForList("SELECT product_id, facility_id, inventory_item_id FROM inventory_item "
+        coreJdbc.queryForList("SELECT product_id, facility_id, inventory_item_id FROM inventory_item "
                         + "ORDER BY CASE WHEN lot_id IS NULL THEN 0 ELSE 1 END, inventory_item_id")
                 .forEach(row -> inventoryItemByProductFacility.putIfAbsent(row.get("product_id") + "|" + row.get("facility_id"),
                         String.valueOf(row.get("inventory_item_id"))));
 
         // The first copied store of each platform takes that platform's orders.
-        Set<String> copiedStores = new HashSet<>(jdbc.queryForList("SELECT product_store_id FROM product_store", String.class));
+        Set<String> copiedStores = new HashSet<>(coreJdbc.queryForList("SELECT product_store_id FROM product_store", String.class));
         Map<String, String> storeByPlatform = new HashMap<>();
-        jdbc.queryForList("SELECT store_code, platform FROM nx_integration_stores WHERE tenant_id = ? ORDER BY created_at", tenantId).forEach(row -> {
+        oldModelJdbc.queryForList("SELECT store_code, platform FROM nx_integration_stores WHERE tenant_id = ? ORDER BY created_at", tenantId).forEach(row -> {
             String platform = text(row, "platform");
             String storeId = ProductBackfill.storeId(text(row, "store_code"), platform);
             if (copiedStores.contains(storeId) && platform != null) {
@@ -369,15 +375,15 @@ public class OrderBackfill {
         });
 
         Map<String, Map<String, Object>> addressById = new HashMap<>();
-        jdbc.queryForList("SELECT id, full_name, address_line1, address_line2, city, state, postal_code, country FROM nx_addresses "
+        oldModelJdbc.queryForList("SELECT id, full_name, address_line1, address_line2, city, state, postal_code, country FROM nx_addresses "
                 + "WHERE tenant_id = ?", tenantId).forEach(address -> addressById.put(String.valueOf(address.get("id")), address));
 
         Map<String, List<Map<String, Object>>> itemsByOrder = new HashMap<>();
-        jdbc.queryForList("SELECT i.order_id, i.sku, i.product_name, i.quantity, i.unit_price, i.allocated_node_id, i.allocated_qty, i.fulfilled_qty "
+        oldModelJdbc.queryForList("SELECT i.order_id, i.sku, i.product_name, i.quantity, i.unit_price, i.allocated_node_id, i.allocated_qty, i.fulfilled_qty "
                         + "FROM nx_order_items i JOIN nx_orders o ON o.id = i.order_id WHERE o.tenant_id = ? ORDER BY i.order_id, i.id", tenantId)
                 .forEach(item -> itemsByOrder.computeIfAbsent(String.valueOf(item.get("order_id")), orderId -> new ArrayList<>()).add(item));
 
-        List<String> currencies = jdbc.queryForList("SELECT default_currency FROM nx_company_settings WHERE tenant_id = ? "
+        List<String> currencies = oldModelJdbc.queryForList("SELECT default_currency FROM nx_company_settings WHERE tenant_id = ? "
                 + "AND default_currency IS NOT NULL", String.class, tenantId);
         String defaultCurrency = currencies.isEmpty() ? null : upper(currencies.get(0));
 
@@ -388,7 +394,7 @@ public class OrderBackfill {
     /** A two-column query as a map: the first value per key, in query order. */
     private Map<String, String> firstValuePerKey(String sql, Object parameter) {
         Map<String, String> valueByKey = new HashMap<>();
-        jdbc.query(sql, resultSet -> {
+        coreJdbc.query(sql, resultSet -> {
             valueByKey.putIfAbsent(resultSet.getString(1), resultSet.getString(2));
         }, parameter);
         return valueByKey;

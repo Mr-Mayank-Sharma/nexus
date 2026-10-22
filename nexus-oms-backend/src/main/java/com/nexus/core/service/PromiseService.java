@@ -4,7 +4,7 @@ import com.nexus.core.model.facility.Facility;
 import com.nexus.core.model.party.PostalAddress;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.DateTimeException;
@@ -35,7 +35,7 @@ import java.util.Optional;
  * </ul>
  */
 @Service("corePromiseService")
-@Transactional(readOnly = true)
+@CoreTransactional(readOnly = true)
 public class PromiseService {
 
     /** Fewer past deliveries than this, and the distance rules are used instead. */

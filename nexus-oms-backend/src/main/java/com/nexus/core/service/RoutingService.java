@@ -1,6 +1,8 @@
 package com.nexus.core.service;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.nexus.core.CoreStatus;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.model.facility.Facility;
 import com.nexus.core.model.order.OrderItem;
 import com.nexus.core.model.order.OrderItemShipGroup;
@@ -83,7 +85,8 @@ public class RoutingService {
 
     public RoutingService(EntityManager entityManager, SequenceService sequenceService, OrderService orderService, OrderReservationService reservationService,
                           FacilityService facilityService, ProductStoreService productStoreService, RoutingSetupService setupService,
-                          RoutingQueue routingQueue, LocationFinder locationFinder, TransactionTemplate transaction) {
+                          RoutingQueue routingQueue, LocationFinder locationFinder,
+                          @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate transaction) {
         this.entityManager = entityManager;
         this.sequenceService = sequenceService;
         this.orderService = orderService;

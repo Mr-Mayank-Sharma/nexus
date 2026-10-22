@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.core.ai.ProposalService;
 import com.nexus.core.service.FacilityService;
@@ -32,7 +34,7 @@ class ProposalServiceTest {
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     String product, a, b;

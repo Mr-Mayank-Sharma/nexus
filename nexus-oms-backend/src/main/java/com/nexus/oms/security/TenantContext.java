@@ -62,4 +62,19 @@ public final class TenantContext {
     public static void clear() {
         OVERRIDE_TENANT_ID.remove();
     }
+
+    /** Runs the work as the company, then puts back exactly the override that was there before (none, or another company). */
+    public static <T> T callAs(UUID tenantId, java.util.function.Supplier<T> work) {
+        UUID previousOverride = OVERRIDE_TENANT_ID.get();
+        OVERRIDE_TENANT_ID.set(tenantId);
+        try {
+            return work.get();
+        } finally {
+            if (previousOverride == null) {
+                OVERRIDE_TENANT_ID.remove();
+            } else {
+                OVERRIDE_TENANT_ID.set(previousOverride);
+            }
+        }
+    }
 }

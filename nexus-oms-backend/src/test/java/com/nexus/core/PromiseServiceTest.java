@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.service.FacilityService;
 import com.nexus.core.service.InventoryService;
 import com.nexus.core.service.PartyService;
@@ -34,7 +36,7 @@ class PromiseServiceTest {
     @Autowired InventoryService inventory;
     @Autowired ProductService products;
     @Autowired PartyService parties;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     String edison, chicago, boot, rare, party;

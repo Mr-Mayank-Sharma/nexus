@@ -10,7 +10,7 @@ import com.nexus.core.model.product.ProductFeatureAppl;
 import com.nexus.core.model.product.ProductPrice;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,7 +24,7 @@ import java.util.Optional;
  * and dated prices per currency and store group.
  */
 @Service("coreProductService")
-@Transactional
+@CoreTransactional
 public class ProductService {
 
     /** The store group a price applies to when it applies to every store. */
@@ -104,7 +104,7 @@ public class ProductService {
     }
 
     /** The product whose current id of this kind is the value (SKU, barcode, channel id); newest first when several share it. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<String> findByIdentification(String typeId, String value) {
         if (value == null || value.isBlank()) {
             return Optional.empty();
@@ -124,7 +124,7 @@ public class ProductService {
     }
 
     /** Products whose name or current SKU contains the text (any case), by name. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<ProductRef> search(String text, int limit) {
         String pattern = "%" + (text == null ? "" : text.trim().toLowerCase(Locale.ROOT)) + "%";
         return entityManager.createQuery("SELECT p.productId, p.productName, g.idValue FROM Product p, GoodIdentification g WHERE g.productId = p.productId "
@@ -159,7 +159,7 @@ public class ProductService {
     }
 
     /** Current links of a kind from a product, in sequence order: its variants, substitutes or components. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<String> associated(String productId, String assocTypeId) {
         LocalDateTime now = CoreClock.now();
         return entityManager.createQuery("SELECT a.productIdTo FROM ProductAssoc a WHERE a.productId = :productId AND a.productAssocTypeId = :typeId "
@@ -255,7 +255,7 @@ public class ProductService {
     }
 
     /** The current price: the store group's own price, else the all-stores price. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Optional<BigDecimal> price(String productId, String priceTypeId, String currencyUomId, String storeGroupId) {
         boolean ownGroup = storeGroupId != null && !ALL_STORES.equals(storeGroupId);
         if (ownGroup) {

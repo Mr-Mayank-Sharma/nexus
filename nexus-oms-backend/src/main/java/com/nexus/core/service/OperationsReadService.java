@@ -10,7 +10,7 @@ import com.nexus.core.model.party.Person;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,7 +24,7 @@ import java.util.Optional;
  * through this service, so every query it can run is in one place and none of them can change data.
  */
 @Service("coreOperationsReadService")
-@Transactional(readOnly = true)
+@CoreTransactional(readOnly = true)
 public class OperationsReadService {
 
     static final String NOT_ROUTED = "not routed yet";

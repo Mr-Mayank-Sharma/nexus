@@ -11,7 +11,7 @@ import com.nexus.core.model.product.ProductStore;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -36,7 +36,7 @@ import java.util.Optional;
  * is the payment provider's integration, which is not part of this service.
  */
 @Service("coreAgentCheckoutService")
-@Transactional
+@CoreTransactional
 public class AgentCheckoutService {
 
     static final ObjectMapper JSON = new ObjectMapper();
@@ -169,7 +169,7 @@ public class AgentCheckoutService {
         return evaluate(session);
     }
 
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Session get(String productStoreId, String sessionId) {
         return evaluate(loadSession(productStoreId, sessionId, false));
     }

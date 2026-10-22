@@ -1,5 +1,7 @@
 package com.nexus.oms.gateway;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.core.CoreTestData;
@@ -46,7 +48,7 @@ class GatewayServiceTest {
     @Autowired ProductService products;
     @Autowired ProductStoreService stores;
     @Autowired PartyService parties;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     HttpServer fake;

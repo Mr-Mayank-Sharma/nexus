@@ -1,5 +1,7 @@
 package com.nexus.oms.coremigration;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nexus.core.service.FacilityService;
@@ -49,16 +51,20 @@ public class FacilityInventoryBackfill {
     /** JSON keys an address may keep its postal code under. */
     private static final String[] POSTAL_CODE_KEYS = {"postalCode", "postal_code", "zip", "zipCode", "zip_code", "pincode"};
 
-    private final JdbcTemplate jdbc;
+    /** Reads the earlier model's tables (the shared database). */
+    private final JdbcTemplate oldModelJdbc;
+    /** Reads the core tables of the company being copied. */
+    private final JdbcTemplate coreJdbc;
     private final FacilityService facilityService;
     private final InventoryService inventoryService;
     private final TransactionTemplate transaction;
     private final EntityManager entityManager;
     private final ObjectMapper jsonMapper = new ObjectMapper();
 
-    public FacilityInventoryBackfill(JdbcTemplate jdbc, FacilityService facilityService, InventoryService inventoryService,
-                                     TransactionTemplate transaction, EntityManager entityManager) {
-        this.jdbc = jdbc;
+    public FacilityInventoryBackfill(JdbcTemplate oldModelJdbc, @Qualifier(CoreTransactional.JDBC) JdbcTemplate coreJdbc, FacilityService facilityService, InventoryService inventoryService,
+                                     @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate transaction, EntityManager entityManager) {
+        this.oldModelJdbc = oldModelJdbc;
+        this.coreJdbc = coreJdbc;
         this.facilityService = facilityService;
         this.inventoryService = inventoryService;
         this.transaction = transaction;
@@ -90,26 +96,26 @@ public class FacilityInventoryBackfill {
         }
 
         // Step 1: locations. Stock rows point at a fulfilment node or, in most data, a warehouse; both become facilities.
-        List<Map<String, Object>> locations = jdbc.queryForList("SELECT id, NULL AS code, name, type, address, NULL AS zip_code, latitude, "
+        List<Map<String, Object>> locations = oldModelJdbc.queryForList("SELECT id, NULL AS code, name, type, address, NULL AS zip_code, latitude, "
                 + "longitude, capacity_daily FROM nx_nodes WHERE tenant_id = ? ORDER BY name, id", tenantId);
-        locations.addAll(jdbc.queryForList("SELECT id, code, name, type, NULL AS address, zip_code, latitude, longitude, "
+        locations.addAll(oldModelJdbc.queryForList("SELECT id, code, name, type, NULL AS address, zip_code, latitude, longitude, "
                 + "NULL AS capacity_daily FROM nx_warehouses WHERE tenant_id = ? ORDER BY code, id", tenantId));
         Map<String, String> facilityByNode = new HashMap<>();
-        jdbc.queryForList("SELECT id_value, facility_id FROM facility_identification WHERE facility_iden_type_id = ? AND thru_date IS NULL", LEGACY_ID)
+        coreJdbc.queryForList("SELECT id_value, facility_id FROM facility_identification WHERE facility_iden_type_id = ? AND thru_date IS NULL", LEGACY_ID)
                 .forEach(row -> facilityByNode.put(String.valueOf(row.get("id_value")), String.valueOf(row.get("facility_id"))));
         int facilitiesCreated = transaction.execute(status -> copyLocations(locations, facilityByNode));
 
         // Step 2: read once instead of querying per row: SKU to product, and the items that already exist.
         Map<String, String> productBySku = new HashMap<>();
-        jdbc.queryForList("SELECT id_value, product_id FROM good_identification WHERE good_identification_type_id = 'SKU' AND thru_date IS NULL")
+        coreJdbc.queryForList("SELECT id_value, product_id FROM good_identification WHERE good_identification_type_id = 'SKU' AND thru_date IS NULL")
                 .forEach(row -> productBySku.putIfAbsent(String.valueOf(row.get("id_value")), String.valueOf(row.get("product_id"))));
         Set<String> existingItems = new HashSet<>();
-        jdbc.queryForList("SELECT product_id, facility_id, lot_id FROM inventory_item")
+        coreJdbc.queryForList("SELECT product_id, facility_id, lot_id FROM inventory_item")
                 .forEach(row -> existingItems.add(itemKey(String.valueOf(row.get("product_id")), String.valueOf(row.get("facility_id")),
                         (String) row.get("lot_id"))));
 
         // Step 3: stock, in chunks of one transaction each.
-        List<Map<String, Object>> stockRows = jdbc.queryForList("SELECT sku, node_id, quantity_on_hand, quantity_allocated, quantity_reserved, "
+        List<Map<String, Object>> stockRows = oldModelJdbc.queryForList("SELECT sku, node_id, quantity_on_hand, quantity_allocated, quantity_reserved, "
                 + "quantity_damaged, safety_stock, reorder_point, reorder_qty, lot_number, expiry_date FROM nx_inventory "
                 + "WHERE tenant_id = ? ORDER BY sku, node_id, lot_number", tenantId);
         Counts total = new Counts();
@@ -216,7 +222,7 @@ public class FacilityInventoryBackfill {
         if (candidate.isEmpty() || candidate.length() > MAX_ID_LENGTH) {
             return null;
         }
-        Long taken = jdbc.queryForObject("SELECT COUNT(*) FROM facility WHERE facility_id = ?", Long.class, candidate);
+        Long taken = coreJdbc.queryForObject("SELECT COUNT(*) FROM facility WHERE facility_id = ?", Long.class, candidate);
         return taken != null && taken > 0 ? null : candidate;
     }
 

@@ -1,5 +1,7 @@
 package com.nexus.core;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import com.nexus.core.CoreTransactional;
 import com.nexus.core.model.party.Party;
 import com.nexus.core.model.party.Person;
 import com.nexus.core.model.party.PostalAddress;
@@ -30,7 +32,7 @@ class PartyServiceTest {
     @Autowired PartyService parties;
     @Autowired GeoService geos;
     @Autowired EntityManager em;
-    @Autowired TransactionTemplate tx;
+    @Autowired @Qualifier(CoreTransactional.TEMPLATE) TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
 
     @BeforeAll

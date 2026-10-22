@@ -7,7 +7,7 @@ import com.nexus.core.model.order.OrderItemShipGrpInvRes;
 import com.nexus.core.model.routing.ExcludedOrderFacility;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.nexus.core.CoreTransactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -27,7 +27,7 @@ import java.util.Set;
  * in a circle: the order service uses this one, not the other way round.
  */
 @Service("coreOrderReservationService")
-@Transactional
+@CoreTransactional
 public class OrderReservationService {
 
     /** The reservation order OFBiz uses when nothing else is said: first received, first out. */
@@ -151,7 +151,7 @@ public class OrderReservationService {
     // ── reading holds ──
 
     /** How many units an item holds in total. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public BigDecimal reservedQuantity(String orderId, String orderItemSeqId) {
         BigDecimal total = BigDecimal.ZERO;
         for (OrderItemShipGrpInvRes reservation : reservationsOf(orderId, orderItemSeqId)) {
@@ -161,7 +161,7 @@ public class OrderReservationService {
     }
 
     /** An item's holds, newest first. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public List<Held> held(String orderId, String orderItemSeqId) {
         return reservationsOf(orderId, orderItemSeqId).stream()
                 .map(reservation -> new Held(reservation.getInventoryItemId(), reservation.getQuantity()))
@@ -209,7 +209,7 @@ public class OrderReservationService {
     }
 
     /** Facilities routing must not use for this item. */
-    @Transactional(readOnly = true)
+    @CoreTransactional(readOnly = true)
     public Set<String> excludedFacilities(String orderId, String orderItemSeqId) {
         List<String> facilityIds = entityManager.createQuery(
                         "SELECT x.facilityId FROM ExcludedOrderFacility x "

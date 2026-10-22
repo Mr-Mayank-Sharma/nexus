@@ -1,5 +1,7 @@
 package com.nexus.core.job;
 
+import com.nexus.core.CoreTransactional;
+import org.springframework.beans.factory.annotation.Qualifier;
 import com.nexus.core.CoreStatus;
 import com.nexus.core.model.service.SystemMessage;
 import com.nexus.core.model.service.SystemMessageError;
@@ -45,7 +47,7 @@ public class MessageService implements CoreJobHandler {
     private final TransactionTemplate newTransaction;
 
     public MessageService(EntityManager entityManager, SequenceService sequenceService, ApplicationContext applicationContext,
-                          PlatformTransactionManager transactionManager) {
+                          @Qualifier(CoreTransactional.MANAGER) PlatformTransactionManager transactionManager) {
         this.entityManager = entityManager;
         this.sequenceService = sequenceService;
         this.applicationContext = applicationContext;
