@@ -1,6 +1,7 @@
 package com.nexus.oms.tenancy;
 
 import com.nexus.core.config.CoreSchemaMigrator;
+import com.nexus.oms.config.TenantAwareDataSource;
 import com.nexus.oms.integration.core.CredentialVault;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -38,6 +39,7 @@ public class TenantDatabaseRegistry {
     record TenantDatabase(UUID tenantId, String jdbcUrl, String username, String passwordSealed) {
     }
 
+    /** The shared database as its owner, never as a company. */
     private final JdbcTemplate sharedJdbc;
     private final CredentialVault credentialVault;
     private final int poolSize;
@@ -45,9 +47,12 @@ public class TenantDatabaseRegistry {
     private volatile Map<UUID, TenantDatabase> databaseByTenant = Map.of();
     private final Map<UUID, HikariDataSource> poolByTenant = new ConcurrentHashMap<>();
 
-    public TenantDatabaseRegistry(JdbcTemplate sharedJdbc, CredentialVault credentialVault,
+    public TenantDatabaseRegistry(DataSource sharedDataSource, CredentialVault credentialVault,
                                   @Value("${nexus.tenancy.pool-size:5}") int poolSize) {
-        this.sharedJdbc = sharedJdbc;
+        // Owner work (reading the registry before anyone is known, CREATE DATABASE) never runs as a company: a company
+        // connection switches to the row-level-security role, which may not create databases.
+        DataSource unscoped = sharedDataSource instanceof TenantAwareDataSource scoped ? scoped.getDelegate() : sharedDataSource;
+        this.sharedJdbc = new JdbcTemplate(unscoped);
         this.credentialVault = credentialVault;
         this.poolSize = poolSize;
     }

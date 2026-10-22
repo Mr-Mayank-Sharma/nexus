@@ -66,7 +66,10 @@ class TenantDatabasesPostgresTest {
     void aCompanyWithItsOwnDatabaseSeesOnlyItsOwnData() {
         UUID companyWithOwnDatabase = UUID.randomUUID();
         UUID companyOnSharedDatabase = UUID.randomUUID();
-        String jdbcUrl = tenantDatabases.provision(companyWithOwnDatabase, POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
+        // Provisioned as the signed-in company, like POST /core/tenancy/database: the company's connections switch to the
+        // row-level-security role, so the registry must create the database as the owner.
+        String jdbcUrl = TenantContext.callAs(companyWithOwnDatabase,
+                () -> tenantDatabases.provision(companyWithOwnDatabase, POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()));
         assertTrue(jdbcUrl.contains("/nexus_t_"), jdbcUrl);
 
         // Its database was migrated before first use.
