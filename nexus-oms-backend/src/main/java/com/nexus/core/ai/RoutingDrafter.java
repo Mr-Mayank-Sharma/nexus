@@ -9,13 +9,12 @@ import com.nexus.core.model.routing.OrderRoutingGroup;
 import com.nexus.core.model.routing.OrderRoutingRule;
 import com.nexus.core.model.routing.OrderRoutingRuleAction;
 import com.nexus.core.model.routing.OrderRoutingRuleInvCond;
+import com.nexus.core.service.FacilityService;
 import com.nexus.core.service.RoutingService;
-import jakarta.persistence.EntityManager;
+import com.nexus.core.service.RoutingSetupService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,32 +28,39 @@ import java.util.TreeSet;
  * Downtown group, nearest first"); the agent reads the current rules, drafts a rule set as a new routing group that does
  * not run, simulates it next to the live group on real orders and stock, and proposes switching. Nothing goes live
  * until a person approves the ACTIVATE_ROUTING proposal; undo switches back.
+ * <p>
+ * This class defines the agent and its tools. Reading and building routings is {@link RoutingSetupService}; simulating
+ * is {@link RoutingService}; proposing is {@link ProposalService}.
  */
 @Component("coreRoutingDrafter")
 public class RoutingDrafter {
 
     public static final String NAME = "routing_drafter";
 
-    private final EntityManager em;
-    private final RoutingService routing;
-    private final OperationsAssistant assistant;
-    private final ProposalService proposals;
-    private final AgentRunner runner;
+    static final int MAX_STEPS = 12;
+    static final int MAX_TOKENS = 4096;
+    /** How many decisions of each simulation the model sees. */
+    static final int SAMPLE_DECISIONS = 10;
+
+    private final RoutingSetupService setupService;
+    private final RoutingService routingService;
+    private final FacilityService facilityService;
+    private final OperationsAssistant operationsAssistant;
+    private final ProposalService proposalService;
+    private final AgentRunner agentRunner;
     private final LlmProvider provider;
-    private final TransactionTemplate readOnly;
     private final String model;
 
-    public RoutingDrafter(EntityManager em, RoutingService routing, OperationsAssistant assistant, ProposalService proposals, AgentRunner runner,
-                          @Qualifier("coreAnthropicProvider") LlmProvider provider, PlatformTransactionManager tm,
-                          @Value("${nexus.ai.model.routing:claude-opus-5-5}") String model) {
-        this.em = em;
-        this.routing = routing;
-        this.assistant = assistant;
-        this.proposals = proposals;
-        this.runner = runner;
+    public RoutingDrafter(RoutingSetupService setupService, RoutingService routingService, FacilityService facilityService,
+                          OperationsAssistant operationsAssistant, ProposalService proposalService, AgentRunner agentRunner,
+                          @Qualifier("coreAnthropicProvider") LlmProvider provider, @Value("${nexus.ai.model.routing:claude-opus-5-5}") String model) {
+        this.setupService = setupService;
+        this.routingService = routingService;
+        this.facilityService = facilityService;
+        this.operationsAssistant = operationsAssistant;
+        this.proposalService = proposalService;
+        this.agentRunner = agentRunner;
         this.provider = provider;
-        this.readOnly = new TransactionTemplate(tm);
-        this.readOnly.setReadOnly(true);
         this.model = model;
     }
 
@@ -76,8 +82,8 @@ public class RoutingDrafter {
                 read the comparison; adjust and draft again if it does worse than the description intends; then call \
                 propose_activation once with a one-line reason. Finish with a short summary of the rule set and the \
                 simulation numbers. Use only names and ids the tools gave you.""".formatted(
-                new TreeSet<>(RoutingService.ORDER_FILTERS), new TreeSet<>(RoutingService.ORDER_SORTS),
-                new TreeSet<>(RoutingService.INVENTORY_FILTERS), new TreeSet<>(RoutingService.INVENTORY_SORTS));
+                new TreeSet<>(RoutingSetupService.ORDER_FILTERS), new TreeSet<>(RoutingSetupService.ORDER_SORTS),
+                new TreeSet<>(RoutingSetupService.INVENTORY_FILTERS), new TreeSet<>(RoutingSetupService.INVENTORY_SORTS));
     }
 
     public record Outcome(AgentRunner.Result run, List<ProposalService.View> proposals, List<String> draftGroupIds) {
@@ -87,124 +93,173 @@ public class RoutingDrafter {
         return draft(productStoreId, request, userId, provider);
     }
 
-    public Outcome draft(String productStoreId, String request, String userId, LlmProvider with) {
-        List<String> made = Collections.synchronizedList(new ArrayList<>());
-        List<String> drafts = Collections.synchronizedList(new ArrayList<>());
+    /** Runs the drafting agent for one request. With another provider: a scripted one in tests and evaluation. */
+    public Outcome draft(String productStoreId, String request, String userId, LlmProvider withProvider) {
+        // Tools run on the agent's threads, so what they record is kept in synchronized lists.
+        List<String> proposalIds = Collections.synchronizedList(new ArrayList<>());
+        List<String> draftGroupIds = Collections.synchronizedList(new ArrayList<>());
+
         List<AgentRunner.AgentTool> tools = new ArrayList<>();
-        assistant.agent().tools().stream().filter(t -> t.spec().name().equals("list_locations")).forEach(tools::add);
-        tools.add(tool("current_routing", "The store's routing groups with their routings, conditions, rules and actions; which one runs on a schedule.",
-                ExceptionAgent.schema(new String[][]{{"productStoreId", "string"}}), (in, m) -> readOnly.execute(s -> describe(in.path("productStoreId").asText()))));
-        tools.add(tool("location_groups", "Location groups (brokering groups, regions, clusters) with their members in order.",
-                ExceptionAgent.schema(new String[][]{}), (in, m) -> readOnly.execute(s -> groups())));
-        tools.add(tool("draft_and_simulate", "Build a draft routing group (it does not run) from routings with conditions, rules and actions; "
-                        + "simulate it and the live group on real orders and stock; return both results.", draftSchema(),
-                (in, m) -> draftAndSimulate(productStoreId, in, userId, drafts)));
-        tools.add(tool("propose_activation", "Propose making a draft group the one that runs for the store. A person approves it.",
-                ExceptionAgent.schema(new String[][]{{"draftGroupId", "string"}, {"reason", "string"}}), (in, m) -> {
-                    String draft = in.path("draftGroupId").asText();
-                    if (!drafts.contains(draft)) throw new IllegalArgumentException("Propose only a group you drafted in this conversation");
-                    ObjectNode payload = AgentRunner.JSON.createObjectNode().put("activateGroupId", draft);
-                    String live = liveGroup(productStoreId);
-                    if (live != null) payload.put("pauseGroupId", live);
-                    ProposalService.View v = proposals.propose(null, "ACTIVATE_ROUTING", payload, in.path("reason").asText(null), null);
-                    made.add(v.proposalId());
-                    return AgentRunner.JSON.createObjectNode().put("proposalId", v.proposalId()).put("status", v.statusId());
-                }));
-        AgentRunner.Result r = runner.run(new AgentRunner.Agent(NAME, model, system(), tools, 12, 4096),
-                "Store " + productStoreId + ": " + request, userId, with);
-        proposals.link(made, r.runId());
-        return new Outcome(r, made.stream().map(proposals::view).toList(), List.copyOf(drafts));
+        operationsAssistant.agent().tools().stream()
+                .filter(tool -> tool.spec().name().equals("list_locations"))
+                .forEach(tools::add);
+        tools.add(tool("current_routing",
+                "The store's routing groups with their routings, conditions, rules and actions; which one runs on a schedule.",
+                ExceptionAgent.schema(new String[][]{{"productStoreId", "string"}}),
+                (input, masker) -> describeRouting(input.path("productStoreId").asText())));
+        tools.add(tool("location_groups",
+                "Location groups (brokering groups, regions, clusters) with their members in order.",
+                ExceptionAgent.schema(new String[][]{}),
+                (input, masker) -> locationGroups()));
+        tools.add(tool("draft_and_simulate",
+                "Build a draft routing group (it does not run) from routings with conditions, rules and actions; "
+                        + "simulate it and the live group on real orders and stock; return both results.",
+                draftSchema(),
+                (input, masker) -> draftAndSimulate(productStoreId, input, userId, draftGroupIds)));
+        tools.add(tool("propose_activation",
+                "Propose making a draft group the one that runs for the store. A person approves it.",
+                ExceptionAgent.schema(new String[][]{{"draftGroupId", "string"}, {"reason", "string"}}),
+                (input, masker) -> proposeActivation(productStoreId, input, draftGroupIds, proposalIds)));
+
+        AgentRunner.Agent agent = new AgentRunner.Agent(NAME, model, system(), tools, MAX_STEPS, MAX_TOKENS);
+        AgentRunner.Result result = agentRunner.run(agent, "Store " + productStoreId + ": " + request, userId, withProvider);
+        proposalService.link(proposalIds, result.runId());
+        List<ProposalService.View> proposals = proposalIds.stream().map(proposalService::view).toList();
+        return new Outcome(result, proposals, List.copyOf(draftGroupIds));
     }
 
     // ── tools ──
 
-    private JsonNode draftAndSimulate(String productStoreId, JsonNode in, String userId, List<String> drafts) {
-        String name = in.path("name").asText("Draft");
-        String group = routing.createGroup(productStoreId, "Draft: " + name, null);
-        int routingSeq = 1;
-        for (JsonNode r : in.path("routings")) {
-            String routingId = routing.addRouting(group, r.path("name").asText("Routing " + routingSeq), routingSeq++, conds(r.path("orderConditions")));
-            int ruleSeq = 1;
-            for (JsonNode rule : r.path("rules")) {
+    /** Builds the draft group the model described (active routings, so it can be simulated; no schedule, so it never runs). */
+    private JsonNode draftAndSimulate(String productStoreId, JsonNode input, String userId, List<String> draftGroupIds) {
+        String draftName = input.path("name").asText("Draft");
+        String draftGroupId = setupService.createGroup(productStoreId, "Draft: " + draftName, null);
+
+        int routingSequence = 1;
+        for (JsonNode routingInput : input.path("routings")) {
+            String routingName = routingInput.path("name").asText("Routing " + routingSequence);
+            String routingId = setupService.addRouting(draftGroupId, routingName, routingSequence++, conditions(routingInput.path("orderConditions")));
+            int ruleSequence = 1;
+            for (JsonNode ruleInput : routingInput.path("rules")) {
                 Map<String, String> actions = new LinkedHashMap<>();
-                rule.path("actions").forEach(a -> actions.put(a.path("type").asText(), a.path("value").asText("")));
-                routing.addRule(routingId, rule.path("name").asText("Rule " + ruleSeq), ruleSeq++, rule.path("split").asBoolean(false),
-                        conds(rule.path("locationConditions")), actions);
+                ruleInput.path("actions").forEach(action -> actions.put(action.path("type").asText(), action.path("value").asText("")));
+                String ruleName = ruleInput.path("name").asText("Rule " + ruleSequence);
+                setupService.addRule(routingId, ruleName, ruleSequence++, ruleInput.path("split").asBoolean(false),
+                        conditions(ruleInput.path("locationConditions")), actions);
             }
-            routing.activate(routingId);
+            setupService.activate(routingId);
         }
-        drafts.add(group);
-        ObjectNode out = AgentRunner.JSON.createObjectNode().put("draftGroupId", group);
-        out.set("draft", summary(routing.simulate(group, userId)));
-        String live = liveGroup(productStoreId);
-        if (live != null) out.set("live", summary(routing.simulate(live, userId)));
-        else out.put("live", "no group runs for this store yet");
-        return out;
+        draftGroupIds.add(draftGroupId);
+
+        ObjectNode answer = AgentRunner.JSON.createObjectNode().put("draftGroupId", draftGroupId);
+        answer.set("draft", simulationSummary(routingService.simulate(draftGroupId, userId)));
+        String liveGroupId = setupService.liveGroupId(productStoreId);
+        if (liveGroupId == null) {
+            answer.put("live", "no group runs for this store yet");
+        } else {
+            answer.set("live", simulationSummary(routingService.simulate(liveGroupId, userId)));
+        }
+        return answer;
     }
 
-    private static ObjectNode summary(RoutingService.RunResult r) {
-        ObjectNode n = AgentRunner.JSON.createObjectNode().put("ordersConsidered", r.considered()).put("routed", r.routed()).put("split", r.split())
-                .put("unfillable", r.unfillable()).put("substituted", r.substituted());
-        ArrayNode sample = n.putArray("sample");
-        r.decisions().stream().limit(10).forEach(d -> sample.addObject().put("order", d.orderId()).put("outcome", d.outcome())
-                .put("locations", String.join(",", d.facilityIds())).put("why", d.explanation()));
-        return n;
+    /** Proposes the switch; only a group drafted in this conversation may be proposed. */
+    private JsonNode proposeActivation(String productStoreId, JsonNode input, List<String> draftGroupIds, List<String> proposalIds) {
+        String draftGroupId = input.path("draftGroupId").asText();
+        if (!draftGroupIds.contains(draftGroupId)) {
+            throw new IllegalArgumentException("Propose only a group you drafted in this conversation");
+        }
+        ObjectNode payload = AgentRunner.JSON.createObjectNode().put("activateGroupId", draftGroupId);
+        String liveGroupId = setupService.liveGroupId(productStoreId);
+        if (liveGroupId != null) {
+            payload.put("pauseGroupId", liveGroupId);
+        }
+        ProposalService.View proposal = proposalService.propose(null, "ACTIVATE_ROUTING", payload, input.path("reason").asText(null), null);
+        proposalIds.add(proposal.proposalId());
+        return AgentRunner.JSON.createObjectNode().put("proposalId", proposal.proposalId()).put("status", proposal.statusId());
     }
 
-    private String liveGroup(String productStoreId) {
-        return readOnly.execute(s -> em.createQuery("SELECT g.routingGroupId FROM OrderRoutingGroup g WHERE g.productStoreId = :p AND g.scheduleMinutes IS NOT NULL "
-                + "ORDER BY g.sequenceNum, g.routingGroupId", String.class).setParameter("p", productStoreId).setMaxResults(1).getResultList().stream().findFirst().orElse(null));
+    private static ObjectNode simulationSummary(RoutingService.RunResult run) {
+        ObjectNode summary = AgentRunner.JSON.createObjectNode()
+                .put("ordersConsidered", run.considered())
+                .put("routed", run.routed())
+                .put("split", run.split())
+                .put("unfillable", run.unfillable())
+                .put("substituted", run.substituted());
+        ArrayNode sample = summary.putArray("sample");
+        run.decisions().stream().limit(SAMPLE_DECISIONS).forEach(decision -> sample.addObject()
+                .put("order", decision.orderId())
+                .put("outcome", decision.outcome())
+                .put("locations", String.join(",", decision.facilityIds()))
+                .put("why", decision.explanation()));
+        return summary;
     }
 
-    private JsonNode describe(String productStoreId) {
-        ArrayNode out = AgentRunner.JSON.createArrayNode();
-        for (OrderRoutingGroup g : em.createQuery("SELECT g FROM OrderRoutingGroup g WHERE g.productStoreId = :p ORDER BY g.routingGroupId", OrderRoutingGroup.class)
-                .setParameter("p", productStoreId).getResultList()) {
-            ObjectNode gn = out.addObject().put("groupId", g.getRoutingGroupId()).put("name", g.getGroupName())
-                    .put("runs", g.getScheduleMinutes() == null ? "no (draft or paused)" : "every " + g.getScheduleMinutes() + " minutes");
-            ArrayNode rs = gn.putArray("routings");
-            for (OrderRouting r : em.createQuery("SELECT r FROM OrderRouting r WHERE r.routingGroupId = :g ORDER BY r.sequenceNum", OrderRouting.class)
-                    .setParameter("g", g.getRoutingGroupId()).getResultList()) {
-                ObjectNode rn = rs.addObject().put("name", r.getRoutingName()).put("status", r.getStatusId());
-                ArrayNode oc = rn.putArray("orderConditions");
-                em.createQuery("SELECT c FROM OrderFilterCondition c WHERE c.orderRoutingId = :r ORDER BY c.sequenceNum", OrderFilterCondition.class)
-                        .setParameter("r", r.getOrderRoutingId()).getResultList().forEach(c -> oc.add(cond(c.getConditionTypeEnumId(), c.getFieldName(), c.getOperator(), c.getFieldValue())));
-                ArrayNode rules = rn.putArray("rules");
-                for (OrderRoutingRule rule : em.createQuery("SELECT r FROM OrderRoutingRule r WHERE r.orderRoutingId = :r ORDER BY r.sequenceNum", OrderRoutingRule.class)
-                        .setParameter("r", r.getOrderRoutingId()).getResultList()) {
-                    ObjectNode un = rules.addObject().put("name", rule.getRuleName()).put("split", "ORA_MULTI".equals(rule.getAssignmentEnumId()));
-                    ArrayNode lc = un.putArray("locationConditions");
-                    em.createQuery("SELECT c FROM OrderRoutingRuleInvCond c WHERE c.routingRuleId = :r ORDER BY c.sequenceNum", OrderRoutingRuleInvCond.class)
-                            .setParameter("r", rule.getRoutingRuleId()).getResultList().forEach(c -> lc.add(cond(c.getConditionTypeEnumId(), c.getFieldName(), c.getOperator(), c.getFieldValue())));
-                    ArrayNode an = un.putArray("actions");
-                    em.createQuery("SELECT a FROM OrderRoutingRuleAction a WHERE a.routingRuleId = :r ORDER BY a.actionSeqId", OrderRoutingRuleAction.class)
-                            .setParameter("r", rule.getRoutingRuleId()).getResultList().forEach(a -> an.addObject().put("type", a.getActionTypeEnumId()).put("value", a.getActionValue()));
+    /** The store's routing groups, routings, conditions, rules and actions, as the model reads them. */
+    private JsonNode describeRouting(String productStoreId) {
+        ArrayNode groups = AgentRunner.JSON.createArrayNode();
+        for (OrderRoutingGroup group : setupService.groupsOfStore(productStoreId)) {
+            String runs = group.getScheduleMinutes() == null ? "no (draft or paused)" : "every " + group.getScheduleMinutes() + " minutes";
+            ObjectNode groupNode = groups.addObject()
+                    .put("groupId", group.getRoutingGroupId())
+                    .put("name", group.getGroupName())
+                    .put("runs", runs);
+            ArrayNode routings = groupNode.putArray("routings");
+            for (OrderRouting routing : setupService.routingsOfGroup(group.getRoutingGroupId())) {
+                ObjectNode routingNode = routings.addObject().put("name", routing.getRoutingName()).put("status", routing.getStatusId());
+                ArrayNode orderConditions = routingNode.putArray("orderConditions");
+                for (OrderFilterCondition condition : setupService.orderConditions(routing.getOrderRoutingId())) {
+                    orderConditions.add(conditionNode(condition.getConditionTypeEnumId(), condition.getFieldName(), condition.getOperator(),
+                            condition.getFieldValue()));
+                }
+                ArrayNode rules = routingNode.putArray("rules");
+                for (OrderRoutingRule rule : setupService.rules(routing.getOrderRoutingId(), false)) {
+                    ObjectNode ruleNode = rules.addObject().put("name", rule.getRuleName()).put("split", "ORA_MULTI".equals(rule.getAssignmentEnumId()));
+                    ArrayNode locationConditions = ruleNode.putArray("locationConditions");
+                    for (OrderRoutingRuleInvCond condition : setupService.inventoryConditions(rule.getRoutingRuleId())) {
+                        locationConditions.add(conditionNode(condition.getConditionTypeEnumId(), condition.getFieldName(), condition.getOperator(),
+                                condition.getFieldValue()));
+                    }
+                    ArrayNode actions = ruleNode.putArray("actions");
+                    for (OrderRoutingRuleAction action : setupService.actions(rule.getRoutingRuleId())) {
+                        actions.addObject().put("type", action.getActionTypeEnumId()).put("value", action.getActionValue());
+                    }
                 }
             }
         }
-        return out;
+        return groups;
     }
 
-    private JsonNode groups() {
-        ArrayNode out = AgentRunner.JSON.createArrayNode();
-        em.createQuery("SELECT g.facilityGroupId, g.facilityGroupName, g.facilityGroupTypeId FROM FacilityGroup g ORDER BY g.facilityGroupName", Object[].class)
-                .getResultList().forEach(g -> {
-                    ObjectNode n = out.addObject().put("groupId", (String) g[0]).put("name", (String) g[1]).put("type", (String) g[2]);
-                    ArrayNode m = n.putArray("members");
-                    em.createQuery("SELECT f.facilityName FROM FacilityGroupMember x, Facility f WHERE f.facilityId = x.facilityId AND x.facilityGroupId = :g "
-                            + "AND x.thruDate IS NULL ORDER BY x.sequenceNum", String.class).setParameter("g", (String) g[0]).getResultList().forEach(m::add);
-                });
-        return out;
+    private JsonNode locationGroups() {
+        ArrayNode groups = AgentRunner.JSON.createArrayNode();
+        for (FacilityService.GroupSummary group : facilityService.groupSummaries()) {
+            ObjectNode groupNode = groups.addObject()
+                    .put("groupId", group.facilityGroupId())
+                    .put("name", group.name())
+                    .put("type", group.facilityGroupTypeId());
+            ArrayNode members = groupNode.putArray("members");
+            group.memberNames().forEach(members::add);
+        }
+        return groups;
     }
 
-    private static ObjectNode cond(String type, String field, String operator, String value) {
-        return AgentRunner.JSON.createObjectNode().put("sort", "ENTCT_SORT_BY".equals(type)).put("field", field).put("operator", operator).put("value", value);
+    // ── helpers ──
+
+    private static ObjectNode conditionNode(String conditionType, String field, String operator, String value) {
+        return AgentRunner.JSON.createObjectNode()
+                .put("sort", "ENTCT_SORT_BY".equals(conditionType))
+                .put("field", field)
+                .put("operator", operator)
+                .put("value", value);
     }
 
-    private static List<RoutingService.Cond> conds(JsonNode a) {
-        List<RoutingService.Cond> out = new ArrayList<>();
-        for (JsonNode c : a) out.add(new RoutingService.Cond(c.path("sort").asBoolean(false), c.path("field").asText(), c.path("operator").asText(null), c.path("value").asText(null)));
-        return out;
+    /** The model's conditions as routing conditions. */
+    private static List<RoutingSetupService.Cond> conditions(JsonNode conditionsInput) {
+        List<RoutingSetupService.Cond> conditions = new ArrayList<>();
+        for (JsonNode condition : conditionsInput) {
+            conditions.add(new RoutingSetupService.Cond(condition.path("sort").asBoolean(false), condition.path("field").asText(),
+                    condition.path("operator").asText(null), condition.path("value").asText(null)));
+        }
+        return conditions;
     }
 
     private static JsonNode draftSchema() {
@@ -221,12 +276,12 @@ public class RoutingDrafter {
                           "actions": {"type": "array", "items": {"type": "object", "properties": {"type": {"type": "string"}, "value": {"type": "string"}}}}}}}}}}},
                     "$defs": {"cond": {"type": "object", "required": ["field"], "properties": {
                       "sort": {"type": "boolean"}, "field": {"type": "string"}, "operator": {"type": "string"}, "value": {"type": "string"}}}}}""");
-        } catch (Exception e) {
-            throw new IllegalStateException(e);
+        } catch (Exception badJson) {
+            throw new IllegalStateException(badJson);
         }
     }
 
-    private static AgentRunner.AgentTool tool(String name, String description, JsonNode schema, AgentRunner.Handler h) {
-        return new AgentRunner.AgentTool(new LlmProvider.Tool(name, description, schema), h);
+    private static AgentRunner.AgentTool tool(String name, String description, JsonNode schema, AgentRunner.Handler handler) {
+        return new AgentRunner.AgentTool(new LlmProvider.Tool(name, description, schema), handler);
     }
 }

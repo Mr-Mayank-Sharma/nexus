@@ -6,7 +6,7 @@ import com.nexus.core.service.OrderService;
 import com.nexus.core.service.ProductService;
 import com.nexus.core.service.ProductStoreService;
 import com.nexus.core.service.RoutingService;
-import com.nexus.core.service.RoutingService.Cond;
+import com.nexus.core.service.RoutingSetupService.Cond;
 import com.nexus.core.service.StoreHealthService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,9 @@ class StoreHealthTest {
 
     @Autowired StoreHealthService health;
     @Autowired RoutingService routing;
+    @Autowired com.nexus.core.service.RoutingSetupService routingSetup;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
@@ -59,7 +61,7 @@ class StoreHealthTest {
             String a = order(), b = order();
             routing.reallocate(a, "00001", shaky, "test", "t");
             routing.reallocate(b, "00001", steady, "test", "t");
-            if (i < 2) tx.executeWithoutResult(s -> orders.shortPick(a, "00001", shaky, BigDecimal.ONE, "not on the shelf", "t"));
+            if (i < 2) tx.executeWithoutResult(s -> reservations.shortPick(a, "00001", shaky, BigDecimal.ONE, "not on the shelf", "t"));
         }
     }
 
@@ -85,10 +87,10 @@ class StoreHealthTest {
     @Test
     void routingCanPreferTheReliableStore() {
         String o = order();
-        String g = routing.createGroup(store, "Reliable first", null);
-        String r = routing.addRouting(g, "Queue", 1, List.of(Cond.filter("facilityId", "in", RoutingService.QUEUE)));
-        routing.addRule(r, "Most reliable", 1, false, List.of(Cond.filter("facilityId", "in", shaky + "," + steady), Cond.sortBy("reliability", "desc")), Map.of());
-        routing.activate(r);
+        String g = routingSetup.createGroup(store, "Reliable first", null);
+        String r = routingSetup.addRouting(g, "Queue", 1, List.of(Cond.filter("facilityId", "in", RoutingService.QUEUE)));
+        routingSetup.addRule(r, "Most reliable", 1, false, List.of(Cond.filter("facilityId", "in", shaky + "," + steady), Cond.sortBy("reliability", "desc")), Map.of());
+        routingSetup.activate(r);
         RoutingService.RunResult res = routing.run(g, "t");
         assertEquals(steady, jdbc.queryForObject("SELECT facility_id FROM order_item_ship_group WHERE order_id = ?", String.class, o));
         assertTrue(res.decisions().stream().filter(d -> d.orderId().equals(o)).findFirst().orElseThrow().explanation().contains("picks 93% of its orders") || res.decisions().get(0).explanation().contains("picks 9"));

@@ -7,7 +7,7 @@ import com.nexus.core.service.PartyService;
 import com.nexus.core.service.ProductService;
 import com.nexus.core.service.ProductStoreService;
 import com.nexus.core.service.RoutingService;
-import com.nexus.core.service.RoutingService.Cond;
+import com.nexus.core.service.RoutingSetupService.Cond;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -31,7 +31,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class RoutingServiceTest {
 
     @Autowired RoutingService routing;
+    @Autowired com.nexus.core.service.RoutingSetupService routingSetup;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
@@ -90,15 +92,15 @@ class RoutingServiceTest {
 
     /** A group with one active routing over the queue and the given rules (each: split?, conditions, actions). */
     private String group(String storeId, List<Object[]> rules) {
-        String g = routing.createGroup(storeId, "Default", 15L);
-        String r = routing.addRouting(g, "All web orders", 1, List.of(Cond.filter("facilityId", "in", RoutingService.QUEUE), Cond.sortBy("orderDate", "asc")));
+        String g = routingSetup.createGroup(storeId, "Default", 15L);
+        String r = routingSetup.addRouting(g, "All web orders", 1, List.of(Cond.filter("facilityId", "in", RoutingService.QUEUE), Cond.sortBy("orderDate", "asc")));
         int seq = 1;
         for (Object[] rule : rules) {
             @SuppressWarnings("unchecked") List<Cond> conds = (List<Cond>) rule[1];
             @SuppressWarnings("unchecked") Map<String, String> actions = (Map<String, String>) rule[2];
-            routing.addRule(r, "Rule " + seq, seq++, (Boolean) rule[0], conds, actions);
+            routingSetup.addRule(r, "Rule " + seq, seq++, (Boolean) rule[0], conds, actions);
         }
-        routing.activate(r);
+        routingSetup.activate(r);
         return g;
     }
 
@@ -122,7 +124,7 @@ class RoutingServiceTest {
         assertEquals(1, r.routed());
         assertEquals(0, r.split());
         assertEquals(far, facilityOf(o, "00001"));
-        assertEquals(0, q("1").compareTo(orders.reservedQuantity(o, "00002")));
+        assertEquals(0, q("1").compareTo(reservations.reservedQuantity(o, "00002")));
         String why = jdbc.queryForObject("SELECT comments FROM order_facility_change WHERE order_id = ?", String.class, o);
         assertTrue(why.contains("holds every item") && why.contains("km away"), why);
         assertEquals(1L, jdbc.queryForObject("SELECT orders_routed FROM order_routing_run WHERE routing_run_id = ?", Long.class, r.routingRunId()));
@@ -159,7 +161,7 @@ class RoutingServiceTest {
         assertEquals(1, r.unfillable(), r.toString());
         assertEquals("UNFILLABLE_PARKING", facilityOf(o, "00001"));
         assertNotNull(jdbc.queryForObject("SELECT auto_cancel_date FROM order_item WHERE order_id = ? AND order_item_seq_id = '00001'", java.sql.Timestamp.class, o));
-        assertEquals(0, BigDecimal.ZERO.compareTo(orders.reservedQuantity(o, "00001")), "parking holds no stock");
+        assertEquals(0, BigDecimal.ZERO.compareTo(reservations.reservedQuantity(o, "00001")), "parking holds no stock");
     }
 
     @Test
@@ -174,7 +176,7 @@ class RoutingServiceTest {
         stock(p, dc, "5");
         tx.executeWithoutResult(s -> assertTrue(facilities.takeOrder(full, LocalDate.now(java.time.ZoneOffset.UTC))));   // its one order for today
         String o = order(st, "STANDARD", p);
-        tx.executeWithoutResult(s -> orders.exclude(o, "00001", rejected));
+        tx.executeWithoutResult(s -> reservations.excludeFacility(o, "00001", rejected));
         // rule 1: stores only; rule 2: anything
         String g = group(st, List.<Object[]>of(
                 new Object[]{false, List.of(Cond.filter("facilityTypeId", "in", "RETAIL_STORE"), Cond.sortBy("distance", "asc")), Map.of("ORA_NEXT_RULE", "")},
@@ -270,7 +272,7 @@ class RoutingServiceTest {
 
         assertEquals(1, routing.moveAllOff(b, "B closed for a stocktake", "manager"));
         assertNull(facilityOf(o, "00001"), "back in the queue");
-        assertEquals(java.util.Set.of(b), orders.excludedFacilities(o, "00001"));
+        assertEquals(java.util.Set.of(b), reservations.excludedFacilities(o, "00001"));
         routing.run(g, "t");
         assertEquals(a, facilityOf(o, "00001"));
         assertEquals(List.of("FCR_ROUTED", "FCR_MANUAL", "FCR_BULK", "FCR_ROUTED"),
@@ -280,23 +282,17 @@ class RoutingServiceTest {
     @Test
     void rejectsUnknownFieldsAndActions() {
         String st = store(true);
-        String g = routing.createGroup(st, "x", null);
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> routing.addRouting(g, "x", 1, List.of(Cond.filter("colour", "=", "red"))));
+        String g = routingSetup.createGroup(st, "x", null);
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> routingSetup.addRouting(g, "x", 1, List.of(Cond.filter("colour", "=", "red"))));
         assertTrue(e.getMessage().startsWith("Can't filter on colour"));
-        String r = routing.addRouting(g, "x", 1, List.of());
-        assertThrows(IllegalArgumentException.class, () -> routing.addRule(r, "x", 1, false, List.of(), Map.of("ORA_PANIC", "")));
+        String r = routingSetup.addRouting(g, "x", 1, List.of());
+        assertThrows(IllegalArgumentException.class, () -> routingSetup.addRule(r, "x", 1, false, List.of(), Map.of("ORA_PANIC", "")));
         double km = kmProbe();
         assertTrue(km > 38 && km < 43, "Hoboken to Edison is about 40 km, got " + km);
     }
 
     private static double kmProbe() {
         // Hoboken to Edison is about 40 km
-        try {
-            var m = RoutingService.class.getDeclaredMethod("km", double.class, double.class, double.class, double.class);
-            m.setAccessible(true);
-            return (double) m.invoke(null, 40.744, -74.0324, 40.52, -74.41);
-        } catch (ReflectiveOperationException ex) {
-            throw new IllegalStateException(ex);
-        }
+        return com.nexus.core.service.GeoDistance.km(40.744, -74.0324, 40.52, -74.41);
     }
 }

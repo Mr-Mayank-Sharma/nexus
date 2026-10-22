@@ -1,20 +1,18 @@
 package com.nexus.core.service;
 
+import com.nexus.core.CoreStatus;
 import com.nexus.core.model.order.OrderAdjustment;
 import com.nexus.core.model.order.OrderAttribute;
 import com.nexus.core.model.order.OrderContactMech;
 import com.nexus.core.model.order.OrderHeader;
 import com.nexus.core.model.order.OrderIdentification;
-import com.nexus.core.model.order.OrderItemAttribute;
 import com.nexus.core.model.order.OrderItem;
+import com.nexus.core.model.order.OrderItemAttribute;
 import com.nexus.core.model.order.OrderItemShipGroup;
 import com.nexus.core.model.order.OrderItemShipGroupAssoc;
-import com.nexus.core.model.order.OrderItemShipGrpInvRes;
 import com.nexus.core.model.order.OrderPaymentPreference;
 import com.nexus.core.model.order.OrderRole;
 import com.nexus.core.model.order.OrderStatus;
-import com.nexus.core.model.inventory.InventoryItem;
-import com.nexus.core.model.routing.ExcludedOrderFacility;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Service;
@@ -23,62 +21,85 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 /**
- * Orders in the OFBiz way: a header with roles and contacts, ship groups (what ships together, from where, to where),
- * items with their own status, adjustments (shipping, tax, discounts), payment preferences, outside ids, and an
- * {@code order_status} row for every status change. Items reserve stock through {@link InventoryService}; the
- * reservation is kept per item and inventory item in {@code order_item_ship_grp_inv_res}.
+ * Orders in the OFBiz way.
+ * <p>
+ * An order is a header (who, which store, which channel, its status and total) with:
+ * <ul>
+ *   <li>roles: the customer who placed it, is billed and receives it;</li>
+ *   <li>contacts: billing address, order email, and each ship group's address;</li>
+ *   <li>ship groups: the items that ship together, from which facility, to which address, how;</li>
+ *   <li>items: one product line each, with its own status, quantity and cancelled quantity;</li>
+ *   <li>adjustments: shipping, tax, discounts, on the order or on one item;</li>
+ *   <li>payment preferences: how it is paid, each with its own status;</li>
+ *   <li>outside ids (Shopify order id, PO number) and free attributes.</li>
+ * </ul>
+ * Every status change of the order, an item or a payment is an {@code order_status} row with when, who and why.
+ * Stock held for items is the job of {@link OrderReservationService}.
  */
 @Service("coreOrderService")
 @Transactional
 public class OrderService {
 
+    /** The status flow every order, item and payment change is checked against. */
     public static final String FLOW = StatusService.DEFAULT_FLOW;
-    private static final Set<String> ITEM_OPEN = Set.of("ITEM_CREATED", "ITEM_APPROVED");
 
-    private final EntityManager em;
-    private final SequenceService sequences;
-    private final StatusService statuses;
-    private final InventoryService inventory;
-    private final EnumerationService enumerations;
+    static final String DEFAULT_ORDER_TYPE = "SALES_ORDER";
+    static final String DEFAULT_SHIPMENT_METHOD = "STANDARD";
+    static final String PRODUCT_ITEM_TYPE = "PRODUCT_ORDER_ITEM";
+    static final String SALES_CHANNEL_ENUM_TYPE = "ORDER_SALES_CHANNEL";
+    static final List<String> CUSTOMER_ROLES = List.of("PLACING_CUSTOMER", "BILL_TO_CUSTOMER", "SHIP_TO_CUSTOMER");
 
-    public OrderService(EntityManager em, SequenceService sequences, StatusService statuses, InventoryService inventory,
-                        EnumerationService enumerations) {
-        this.em = em;
-        this.sequences = sequences;
-        this.statuses = statuses;
-        this.inventory = inventory;
-        this.enumerations = enumerations;
+    private final EntityManager entityManager;
+    private final SequenceService sequenceService;
+    private final StatusService statusService;
+    private final EnumerationService enumerationService;
+    private final OrderReservationService reservationService;
+
+    public OrderService(EntityManager entityManager, SequenceService sequenceService, StatusService statusService,
+                        EnumerationService enumerationService, OrderReservationService reservationService) {
+        this.entityManager = entityManager;
+        this.sequenceService = sequenceService;
+        this.statusService = statusService;
+        this.enumerationService = enumerationService;
+        this.reservationService = reservationService;
     }
 
+    // ── what a new order is made of ──
+
+    /** A ship group of a new order. Only the method is needed; the rest may be null. */
     public record NewShipGroup(String shipmentMethodTypeId, String facilityId, String shipToContactMechId, String phoneContactMechId,
                                String carrierPartyId, Boolean maySplit, Boolean isGift, String giftMessage, String shippingInstructions,
                                LocalDateTime estimatedDeliveryDate, String trackingNumber) {
+
+        /** A standard-delivery group to an address, from wherever routing decides. */
         public static NewShipGroup standard(String shipToContactMechId) {
-            return new NewShipGroup("STANDARD", null, shipToContactMechId, null, null, true, false, null, null, null, null);
+            return new NewShipGroup(DEFAULT_SHIPMENT_METHOD, null, shipToContactMechId, null, null, true, false, null, null, null, null);
         }
     }
 
-    /** An item; {@code shipGroup} is the index into the order's ship groups (0 for the first). */
+    /** An item of a new order; {@code shipGroup} is the index into the order's ship groups (0 for the first). */
     public record NewItem(String productId, String description, BigDecimal quantity, BigDecimal unitPrice, BigDecimal unitListPrice,
                           String externalId, int shipGroup) {
     }
 
-    /** An adjustment on the whole order ({@code item} null) or on one item (index into the items). */
+    /** An adjustment on the whole order ({@code item} null) or on one item ({@code item} is its index). */
     public record NewAdjustment(String orderAdjustmentTypeId, BigDecimal amount, Integer item, String description) {
     }
 
+    /** A payment of a new order; a null status starts it in the payment flow's first status. */
     public record NewPayment(String paymentMethodTypeId, BigDecimal maxAmount, String statusId, String manualRefNum) {
     }
 
     /**
-     * An order to create. A null {@code statusId} starts it in the flow's first status; a copy from another system
-     * gives the status it had, recorded with {@code statusReason}.
+     * An order to create. A null {@code statusId} starts it in the flow's first status (created); a copy from
+     * another system gives the status it had there, recorded with {@code statusReason}.
      */
     public record NewOrder(String orderTypeId, String productStoreId, String salesChannelEnumId, String currencyUomId,
                            LocalDateTime orderDate, String externalId, String orderName, String customerPartyId,
@@ -88,630 +109,716 @@ public class OrderService {
                            String statusReason, String userId) {
     }
 
-    public String create(NewOrder n) {
-        if (n.items() == null || n.items().isEmpty()) throw new IllegalArgumentException("An order needs at least one item");
-        List<NewShipGroup> groups = n.shipGroups() == null || n.shipGroups().isEmpty() ? List.of(NewShipGroup.standard(null)) : n.shipGroups();
-        if (n.salesChannelEnumId() != null) enumerations.require("ORDER_SALES_CHANNEL", n.salesChannelEnumId());
+    // ── creating ──
+
+    /**
+     * Creates an order with all its parts and returns its id. The grand total is worked out from the input
+     * (items at their price plus adjustments), not by querying what was just written: copy jobs create orders with
+     * COMMIT flush mode, and a query would not see the new rows yet.
+     */
+    public String create(NewOrder newOrder) {
+        validate(newOrder);
         LocalDateTime now = CoreClock.now();
 
-        OrderHeader h = new OrderHeader();
-        h.setOrderId(sequences.nextId("OrderHeader"));
-        h.setOrderTypeId(n.orderTypeId() == null ? "SALES_ORDER" : n.orderTypeId());
-        h.setOrderName(n.orderName());
-        h.setExternalId(n.externalId());
-        h.setSalesChannelEnumId(n.salesChannelEnumId());
-        h.setOrderDate(n.orderDate() == null ? now : n.orderDate());
-        h.setEntryDate(now);
-        h.setCurrencyUomId(n.currencyUomId());
-        h.setProductStoreId(n.productStoreId());
-        h.setCreatedBy(n.userId());
-        String headerStatus = n.statusId() == null ? statuses.initialStatus(FLOW, "ORDER_STATUS") : statuses.status(n.statusId()).getStatusId();
-        h.setStatusId(headerStatus);
-        em.persist(h);
-        String orderId = h.getOrderId();
-        history(orderId, null, null, headerStatus, n.statusReason(), n.userId());
+        // 1. The header, in the status asked for or the flow's first.
+        String orderStatusId = newOrder.statusId() == null
+                ? statusService.initialStatus(FLOW, CoreStatus.Type.ORDER)
+                : statusService.status(newOrder.statusId()).getStatusId();
+        OrderHeader header = newHeader(newOrder, orderStatusId, now);
+        entityManager.persist(header);
+        String orderId = header.getOrderId();
+        writeHistory(orderId, null, null, orderStatusId, newOrder.statusReason(), newOrder.userId());
 
-        if (n.customerPartyId() != null) {
-            for (String role : List.of("PLACING_CUSTOMER", "BILL_TO_CUSTOMER", "SHIP_TO_CUSTOMER")) role(orderId, n.customerPartyId(), role);
-        }
-        contact(orderId, "BILLING_LOCATION", n.billToContactMechId());
-        contact(orderId, "ORDER_EMAIL", n.emailContactMechId());
-
-        List<String> groupIds = new ArrayList<>();
-        for (int g = 0; g < groups.size(); g++) {
-            NewShipGroup s = groups.get(g);
-            OrderItemShipGroup sg = new OrderItemShipGroup();
-            sg.setOrderId(orderId);
-            sg.setShipGroupSeqId(SequenceService.seqId(g + 1));
-            sg.setShipmentMethodTypeId(s.shipmentMethodTypeId() == null ? "STANDARD" : s.shipmentMethodTypeId());
-            sg.setFacilityId(s.facilityId());
-            sg.setContactMechId(s.shipToContactMechId());
-            sg.setTelecomContactMechId(s.phoneContactMechId());
-            sg.setCarrierPartyId(s.carrierPartyId());
-            sg.setMaySplit(s.maySplit() == null || s.maySplit());
-            sg.setIsGift(Boolean.TRUE.equals(s.isGift()));
-            sg.setGiftMessage(s.giftMessage());
-            sg.setShippingInstructions(s.shippingInstructions());
-            sg.setEstimatedDeliveryDate(s.estimatedDeliveryDate());
-            sg.setTrackingNumber(s.trackingNumber());
-            em.persist(sg);
-            groupIds.add(sg.getShipGroupSeqId());
-            contact(orderId, "SHIPPING_LOCATION", s.shipToContactMechId());
-        }
-
-        String itemStatus = itemStatusFor(headerStatus);
-        boolean counts = !"ITEM_CANCELLED".equals(itemStatus) && !"ITEM_REJECTED".equals(itemStatus);
-        BigDecimal subTotal = BigDecimal.ZERO;
-        BigDecimal adjustments = BigDecimal.ZERO;
-        List<String> itemIds = new ArrayList<>();
-        for (int i = 0; i < n.items().size(); i++) {
-            NewItem it = n.items().get(i);
-            if (it.quantity() == null || it.quantity().signum() <= 0) throw new IllegalArgumentException("Item " + (i + 1) + " needs a quantity above zero");
-            if (it.shipGroup() < 0 || it.shipGroup() >= groupIds.size()) throw new IllegalArgumentException("Item " + (i + 1) + " names ship group " + it.shipGroup() + ", which the order doesn't have");
-            OrderItem oi = new OrderItem();
-            oi.setOrderId(orderId);
-            oi.setOrderItemSeqId(SequenceService.seqId(i + 1));
-            oi.setOrderItemTypeId("PRODUCT_ORDER_ITEM");
-            oi.setProductId(it.productId());
-            oi.setItemDescription(it.description());
-            oi.setQuantity(it.quantity());
-            oi.setCancelQuantity(BigDecimal.ZERO);
-            oi.setUnitPrice(it.unitPrice() == null ? BigDecimal.ZERO : it.unitPrice());
-            oi.setUnitListPrice(it.unitListPrice());
-            oi.setExternalId(it.externalId());
-            oi.setShipGroupSeqId(groupIds.get(it.shipGroup()));
-            oi.setStatusId(itemStatus);
-            oi.setIsPromo(false);
-            oi.setIsModifiedPrice(false);
-            em.persist(oi);
-            OrderItemShipGroupAssoc a = new OrderItemShipGroupAssoc();
-            a.setOrderId(orderId);
-            a.setOrderItemSeqId(oi.getOrderItemSeqId());
-            a.setShipGroupSeqId(oi.getShipGroupSeqId());
-            a.setQuantity(it.quantity());
-            a.setCancelQuantity(BigDecimal.ZERO);
-            em.persist(a);
-            itemIds.add(oi.getOrderItemSeqId());
-            if (counts) subTotal = subTotal.add(it.quantity().multiply(oi.getUnitPrice()));
-            history(orderId, oi.getOrderItemSeqId(), null, itemStatus, n.statusReason(), n.userId());
-        }
-
-        if (n.adjustments() != null) {
-            for (NewAdjustment adj : n.adjustments()) {
-                if (adj.amount() == null || adj.amount().signum() == 0) continue;
-                if (adj.item() != null && (adj.item() < 0 || adj.item() >= itemIds.size())) throw new IllegalArgumentException("An adjustment names item " + adj.item() + ", which the order doesn't have");
-                addAdjustment(orderId, adj.item() == null ? null : itemIds.get(adj.item()), adj.orderAdjustmentTypeId(), adj.amount(), adj.description(), n.userId());
-                if (counts || adj.item() == null) adjustments = adjustments.add(adj.amount());
+        // 2. Who the order is for, and the contacts that are not per ship group.
+        if (newOrder.customerPartyId() != null) {
+            for (String roleTypeId : CUSTOMER_ROLES) {
+                addRoleIfMissing(orderId, newOrder.customerPartyId(), roleTypeId);
             }
         }
-        if (n.payments() != null) {
-            for (NewPayment p : n.payments()) {
-                OrderPaymentPreference pp = new OrderPaymentPreference();
-                pp.setOrderPaymentPreferenceId(sequences.nextId("OrderPaymentPreference"));
-                pp.setOrderId(orderId);
-                pp.setPaymentMethodTypeId(p.paymentMethodTypeId());
-                pp.setMaxAmount(p.maxAmount());
-                pp.setManualRefNum(p.manualRefNum());
-                pp.setStatusId(p.statusId() == null ? statuses.initialStatus(FLOW, "PAYMENT_PREF_STATUS") : statuses.status(p.statusId()).getStatusId());
-                pp.setCreatedDate(now);
-                pp.setCreatedByUserLogin(n.userId());
-                em.persist(pp);
-                history(orderId, null, pp.getOrderPaymentPreferenceId(), pp.getStatusId(), n.statusReason(), n.userId());
+        addContactIfMissing(orderId, "BILLING_LOCATION", newOrder.billToContactMechId());
+        addContactIfMissing(orderId, "ORDER_EMAIL", newOrder.emailContactMechId());
+
+        // 3. Ship groups: 00001, 00002, ... in the order given.
+        List<NewShipGroup> shipGroups = newOrder.shipGroups() == null || newOrder.shipGroups().isEmpty()
+                ? List.of(NewShipGroup.standard(null))
+                : newOrder.shipGroups();
+        List<String> shipGroupSeqIds = new ArrayList<>();
+        for (int index = 0; index < shipGroups.size(); index++) {
+            OrderItemShipGroup shipGroup = newShipGroup(orderId, index, shipGroups.get(index));
+            entityManager.persist(shipGroup);
+            shipGroupSeqIds.add(shipGroup.getShipGroupSeqId());
+            addContactIfMissing(orderId, "SHIPPING_LOCATION", shipGroup.getContactMechId());
+        }
+
+        // 4. Items, each in its ship group and in the item status matching the order's status.
+        String itemStatusId = itemStatusMatching(orderStatusId);
+        boolean itemsCount = !CoreStatus.Item.GONE.contains(itemStatusId);
+        BigDecimal itemsSubtotal = BigDecimal.ZERO;
+        List<String> itemSeqIds = new ArrayList<>();
+        for (int index = 0; index < newOrder.items().size(); index++) {
+            NewItem newItem = newOrder.items().get(index);
+            OrderItem orderItem = newItem(orderId, index, newItem, shipGroupSeqIds.get(newItem.shipGroup()), itemStatusId);
+            entityManager.persist(orderItem);
+            entityManager.persist(newShipGroupAssoc(orderItem));
+            itemSeqIds.add(orderItem.getOrderItemSeqId());
+            if (itemsCount) {
+                itemsSubtotal = itemsSubtotal.add(newItem.quantity().multiply(orderItem.getUnitPrice()));
+            }
+            writeHistory(orderId, orderItem.getOrderItemSeqId(), null, itemStatusId, newOrder.statusReason(), newOrder.userId());
+        }
+
+        // 5. Adjustments; one on an item counts only while its item counts.
+        BigDecimal adjustmentsTotal = BigDecimal.ZERO;
+        for (NewAdjustment adjustment : newOrder.adjustments() == null ? List.<NewAdjustment>of() : newOrder.adjustments()) {
+            if (adjustment.amount() == null || adjustment.amount().signum() == 0) {
+                continue;
+            }
+            String itemSeqId = adjustment.item() == null ? null : itemSeqIds.get(adjustment.item());
+            addAdjustment(orderId, itemSeqId, adjustment.orderAdjustmentTypeId(), adjustment.amount(), adjustment.description(), newOrder.userId());
+            if (itemsCount || adjustment.item() == null) {
+                adjustmentsTotal = adjustmentsTotal.add(adjustment.amount());
             }
         }
-        if (n.identifications() != null) n.identifications().forEach((type, value) -> setIdentification(orderId, type, value));
-        if (n.attributes() != null) n.attributes().forEach((name, value) -> setAttribute(orderId, name, value));
-        // Totalled from the input, not by query: copy jobs create orders with COMMIT flush mode.
-        h.setRemainingSubTotal(subTotal);
-        h.setGrandTotal(subTotal.add(adjustments));
+
+        // 6. Payments, each with its own status history.
+        for (NewPayment payment : newOrder.payments() == null ? List.<NewPayment>of() : newOrder.payments()) {
+            OrderPaymentPreference paymentPreference = newPaymentPreference(orderId, payment, newOrder.userId(), now);
+            entityManager.persist(paymentPreference);
+            writeHistory(orderId, null, paymentPreference.getOrderPaymentPreferenceId(), paymentPreference.getStatusId(),
+                    newOrder.statusReason(), newOrder.userId());
+        }
+
+        // 7. Outside ids and attributes.
+        if (newOrder.identifications() != null) {
+            newOrder.identifications().forEach((typeId, value) -> setIdentification(orderId, typeId, value));
+        }
+        if (newOrder.attributes() != null) {
+            newOrder.attributes().forEach((name, value) -> setAttribute(orderId, name, value));
+        }
+
+        header.setRemainingSubTotal(itemsSubtotal);
+        header.setGrandTotal(itemsSubtotal.add(adjustmentsTotal));
         return orderId;
     }
 
     // ── status ──
 
     /**
-     * Moves the order along its flow. Approving approves its new items; cancelling cancels its open items and gives
-     * their stock back; completing completes its open items.
+     * Moves the order to a status its flow allows. The items follow: approving approves new items; cancelling cancels
+     * open items and gives their stock back; completing completes approved items. The total is worked out again.
      */
     public void changeStatus(String orderId, String toStatusId, String reason, String userId) {
-        OrderHeader h = header(orderId, true);
-        statuses.requireAllowed(FLOW, h.getStatusId(), toStatusId);
-        h.setStatusId(toStatusId);
-        history(orderId, null, null, toStatusId, reason, userId);
-        for (OrderItem i : items(orderId)) {
-            String to = switch (toStatusId) {
-                case "ORDER_APPROVED" -> "ITEM_CREATED".equals(i.getStatusId()) ? "ITEM_APPROVED" : null;
-                case "ORDER_CANCELLED" -> ITEM_OPEN.contains(i.getStatusId()) ? "ITEM_CANCELLED" : null;
-                case "ORDER_COMPLETED" -> "ITEM_APPROVED".equals(i.getStatusId()) ? "ITEM_COMPLETED" : null;
-                default -> null;
-            };
-            if (to == null) continue;
-            if ("ITEM_CANCELLED".equals(to)) {
-                releaseReservations(orderId, i.getOrderItemSeqId(), userId);
-                i.setCancelQuantity(i.getQuantity());
+        OrderHeader header = loadHeaderForUpdate(orderId);
+        statusService.requireAllowed(FLOW, header.getStatusId(), toStatusId);
+        header.setStatusId(toStatusId);
+        writeHistory(orderId, null, null, toStatusId, reason, userId);
+
+        for (OrderItem orderItem : items(orderId)) {
+            String itemTarget = itemStatusFollowing(toStatusId, orderItem.getStatusId());
+            if (itemTarget == null) {
+                continue;   // this item stays as it is
             }
-            itemStatus(i, to, reason, userId);
+            if (CoreStatus.Item.CANCELLED.equals(itemTarget)) {
+                reservationService.releaseAll(orderId, orderItem.getOrderItemSeqId(), userId);
+                orderItem.setCancelQuantity(orderItem.getQuantity());
+            }
+            changeItemStatus(orderItem, itemTarget, reason, userId);
         }
-        recalculate(h);
+        recalculateTotals(header);
     }
 
     /**
-     * Cancels part or all of an item. Its reservation shrinks to what is left; a fully cancelled item is cancelled, and
-     * when no item is left open the order is cancelled too.
+     * Cancels part or all of an item. What it holds shrinks to what is still open; a fully cancelled item is
+     * cancelled, and when no item is left open the order is cancelled too.
      */
     public void cancelItem(String orderId, String orderItemSeqId, BigDecimal quantity, String reason, String userId) {
-        OrderHeader h = header(orderId, true);
-        OrderItem i = item(orderId, orderItemSeqId);
-        if (!ITEM_OPEN.contains(i.getStatusId())) throw new IllegalStateException("Item " + orderItemSeqId + " is " + i.getStatusId() + " and can't be cancelled");
-        BigDecimal open = openQuantity(i);
-        BigDecimal q = quantity == null ? open : quantity;
-        if (q.signum() <= 0 || q.compareTo(open) > 0) throw new IllegalArgumentException("Cancel between 1 and " + open.stripTrailingZeros().toPlainString() + " of item " + orderItemSeqId);
-        i.setCancelQuantity(i.getCancelQuantity().add(q));
-        OrderItemShipGroupAssoc a = em.find(OrderItemShipGroupAssoc.class, new OrderItemShipGroupAssoc.Key(orderId, orderItemSeqId, i.getShipGroupSeqId()));
-        if (a != null) a.setCancelQuantity((a.getCancelQuantity() == null ? BigDecimal.ZERO : a.getCancelQuantity()).add(q));
-        BigDecimal reserved = reservedQuantity(orderId, orderItemSeqId);
-        BigDecimal left = openQuantity(i);
-        if (reserved.compareTo(left) > 0) releaseQuantity(orderId, orderItemSeqId, reserved.subtract(left), userId);
-        if (left.signum() == 0) {
-            itemStatus(i, "ITEM_CANCELLED", reason, userId);
-            if (items(orderId).stream().noneMatch(x -> ITEM_OPEN.contains(x.getStatusId()))
-                    && statuses.isAllowed(FLOW, h.getStatusId(), "ORDER_CANCELLED")) {
-                h.setStatusId("ORDER_CANCELLED");
-                history(orderId, null, null, "ORDER_CANCELLED", "Every item cancelled", userId);
+        OrderHeader header = loadHeaderForUpdate(orderId);
+        OrderItem orderItem = loadItem(orderId, orderItemSeqId);
+        if (!CoreStatus.Item.OPEN.contains(orderItem.getStatusId())) {
+            throw new IllegalStateException("Item " + orderItemSeqId + " is " + orderItem.getStatusId() + " and can't be cancelled");
+        }
+        BigDecimal openBefore = openQuantity(orderItem);
+        BigDecimal quantityToCancel = quantity == null ? openBefore : quantity;
+        if (quantityToCancel.signum() <= 0 || quantityToCancel.compareTo(openBefore) > 0) {
+            throw new IllegalArgumentException("Cancel between 1 and " + openBefore.stripTrailingZeros().toPlainString() + " of item " + orderItemSeqId);
+        }
+
+        // Record the cancelled quantity on the item and on its ship group link.
+        orderItem.setCancelQuantity(orderItem.getCancelQuantity().add(quantityToCancel));
+        OrderItemShipGroupAssoc shipGroupAssoc = entityManager.find(OrderItemShipGroupAssoc.class,
+                new OrderItemShipGroupAssoc.Key(orderId, orderItemSeqId, orderItem.getShipGroupSeqId()));
+        if (shipGroupAssoc != null) {
+            BigDecimal alreadyCancelled = shipGroupAssoc.getCancelQuantity() == null ? BigDecimal.ZERO : shipGroupAssoc.getCancelQuantity();
+            shipGroupAssoc.setCancelQuantity(alreadyCancelled.add(quantityToCancel));
+        }
+
+        // Give back whatever is now held beyond what is still open.
+        BigDecimal held = reservationService.reservedQuantity(orderId, orderItemSeqId);
+        BigDecimal openAfter = openQuantity(orderItem);
+        if (held.compareTo(openAfter) > 0) {
+            reservationService.release(orderId, orderItemSeqId, held.subtract(openAfter), userId);
+        }
+
+        if (openAfter.signum() == 0) {
+            changeItemStatus(orderItem, CoreStatus.Item.CANCELLED, reason, userId);
+            boolean anyItemOpen = items(orderId).stream().anyMatch(item -> CoreStatus.Item.OPEN.contains(item.getStatusId()));
+            if (!anyItemOpen && statusService.isAllowed(FLOW, header.getStatusId(), CoreStatus.Order.CANCELLED)) {
+                header.setStatusId(CoreStatus.Order.CANCELLED);
+                writeHistory(orderId, null, null, CoreStatus.Order.CANCELLED, "Every item cancelled", userId);
             }
         }
-        recalculate(h);
+        recalculateTotals(header);
     }
 
     /**
-     * Sets the status another system of record already decided (the mirror of the earlier model), without checking
-     * the flow: that system allowed the change. Items follow as they would on a copy, cancelled items give their
-     * stock back, and the change is written to the history with the reason.
+     * Sets a status another system of record already decided (the mirror of the earlier model), without checking the
+     * flow: that system allowed the change. Open items follow as they would on a copy (never back to created);
+     * cancelled or rejected items give their stock back. The change is written to the history with the reason.
      */
     public void mirrorStatus(String orderId, String statusId, String reason) {
-        OrderHeader h = header(orderId, true);
-        String to = statuses.status(statusId).getStatusId();
-        if (to.equals(h.getStatusId())) return;
-        h.setStatusId(to);
-        history(orderId, null, null, to, reason, null);
-        String itemTo = itemStatusFor(to);
-        for (OrderItem i : items(orderId)) {
-            if (!ITEM_OPEN.contains(i.getStatusId()) || itemTo.equals(i.getStatusId())) continue;
-            if ("ITEM_CREATED".equals(itemTo)) continue;   // never move an item back
-            if ("ITEM_CANCELLED".equals(itemTo) || "ITEM_REJECTED".equals(itemTo)) {
-                releaseReservations(orderId, i.getOrderItemSeqId(), null);
-                i.setCancelQuantity(i.getQuantity());
+        OrderHeader header = loadHeaderForUpdate(orderId);
+        String targetStatusId = statusService.status(statusId).getStatusId();
+        if (targetStatusId.equals(header.getStatusId())) {
+            return;
+        }
+        header.setStatusId(targetStatusId);
+        writeHistory(orderId, null, null, targetStatusId, reason, null);
+
+        String itemTarget = itemStatusMatching(targetStatusId);
+        for (OrderItem orderItem : items(orderId)) {
+            boolean itemIsOpen = CoreStatus.Item.OPEN.contains(orderItem.getStatusId());
+            if (!itemIsOpen || itemTarget.equals(orderItem.getStatusId()) || CoreStatus.Item.CREATED.equals(itemTarget)) {
+                continue;
             }
-            i.setStatusId(itemTo);
-            history(orderId, i.getOrderItemSeqId(), null, itemTo, reason, null);
+            if (CoreStatus.Item.GONE.contains(itemTarget)) {
+                reservationService.releaseAll(orderId, orderItem.getOrderItemSeqId(), null);
+                orderItem.setCancelQuantity(orderItem.getQuantity());
+            }
+            orderItem.setStatusId(itemTarget);
+            writeHistory(orderId, orderItem.getOrderItemSeqId(), null, itemTarget, reason, null);
         }
-        recalculate(h);
-    }
-
-    /** Sets the tracking number of a ship group (the first when none is named). */
-    public void setTracking(String orderId, String shipGroupSeqId, String trackingNumber) {
-        OrderItemShipGroup g = em.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId == null ? SequenceService.seqId(1) : shipGroupSeqId));
-        if (g == null) throw new IllegalArgumentException("Order " + orderId + " has no ship group " + shipGroupSeqId);
-        g.setTrackingNumber(trackingNumber);
-    }
-
-    public void setPaymentStatus(String orderPaymentPreferenceId, String toStatusId, String reason, String userId) {
-        OrderPaymentPreference p = em.find(OrderPaymentPreference.class, orderPaymentPreferenceId, LockModeType.PESSIMISTIC_WRITE);
-        if (p == null) throw new IllegalArgumentException("Unknown payment " + orderPaymentPreferenceId);
-        statuses.requireAllowed(FLOW, p.getStatusId(), toStatusId);
-        p.setStatusId(toStatusId);
-        history(p.getOrderId(), null, orderPaymentPreferenceId, toStatusId, reason, userId);
-    }
-
-    // ── stock ──
-
-    /** Holds stock for an item at a facility (all of what is still open when quantity is null). */
-    public void reserve(String orderId, String orderItemSeqId, String facilityId, BigDecimal quantity, String userId) {
-        OrderItem i = item(orderId, orderItemSeqId);
-        if (!ITEM_OPEN.contains(i.getStatusId())) throw new IllegalStateException("Item " + orderItemSeqId + " is " + i.getStatusId() + "; only open items take stock");
-        if (i.getProductId() == null) throw new IllegalStateException("Item " + orderItemSeqId + " has no product to reserve");
-        BigDecimal unreserved = openQuantity(i).subtract(reservedQuantity(orderId, orderItemSeqId));
-        BigDecimal q = quantity == null ? unreserved : quantity;
-        if (q.signum() <= 0 || q.compareTo(unreserved) > 0) {
-            throw new IllegalArgumentException("Item " + orderItemSeqId + " has " + unreserved.stripTrailingZeros().toPlainString() + " left to reserve");
-        }
-        inventory.reserve(i.getProductId(), facilityId, q, new InventoryService.Cause(orderId, orderItemSeqId, null, null, userId, null));
-        recordReservation(orderId, orderItemSeqId, inventory.bulkItem(i.getProductId(), facilityId).getInventoryItemId(), q);
-    }
-
-    /**
-     * Records stock already held elsewhere (a copy from a system that kept the hold in its own totals): the
-     * reservation row only, with no stock change.
-     */
-    public void recordReservation(String orderId, String orderItemSeqId, String inventoryItemId, BigDecimal quantity) {
-        OrderItem i = item(orderId, orderItemSeqId);
-        OrderItemShipGrpInvRes.Key key = new OrderItemShipGrpInvRes.Key(orderId, i.getShipGroupSeqId(), orderItemSeqId, inventoryItemId);
-        OrderItemShipGrpInvRes r = em.find(OrderItemShipGrpInvRes.class, key);
-        LocalDateTime now = CoreClock.now();
-        if (r == null) {
-            r = new OrderItemShipGrpInvRes();
-            r.setOrderId(orderId);
-            r.setShipGroupSeqId(i.getShipGroupSeqId());
-            r.setOrderItemSeqId(orderItemSeqId);
-            r.setInventoryItemId(inventoryItemId);
-            r.setReserveOrderEnumId("INVRO_FIFO_REC");
-            r.setQuantity(quantity);
-            r.setQuantityNotAvailable(BigDecimal.ZERO);
-            r.setCreatedDatetime(now);
-            r.setReservedDatetime(now);
-            em.persist(r);
-        } else {
-            r.setQuantity(r.getQuantity().add(quantity));
-            r.setReservedDatetime(now);
-        }
-    }
-
-    /** Gives back everything an item holds. */
-    public void releaseReservations(String orderId, String orderItemSeqId, String userId) {
-        BigDecimal held = reservedQuantity(orderId, orderItemSeqId);
-        if (held.signum() > 0) releaseQuantity(orderId, orderItemSeqId, held, userId);
-    }
-
-    @Transactional(readOnly = true)
-    public BigDecimal reservedQuantity(String orderId, String orderItemSeqId) {
-        return reservations(orderId, orderItemSeqId).stream().map(OrderItemShipGrpInvRes::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    /** An item's reservations: inventory item and quantity, most recently reserved first. */
-    @Transactional(readOnly = true)
-    public List<Held> held(String orderId, String orderItemSeqId) {
-        return reservations(orderId, orderItemSeqId).stream()
-                .map(r -> new Held(r.getInventoryItemId(), r.getQuantity())).toList();
-    }
-
-    public record Held(String inventoryItemId, BigDecimal quantity) {
-    }
-
-    /** Takes shipped quantity off one reservation; the stock itself is issued by the caller. */
-    public void consumeReservation(String orderId, String orderItemSeqId, String inventoryItemId, BigDecimal quantity) {
-        OrderItem i = item(orderId, orderItemSeqId);
-        OrderItemShipGrpInvRes r = em.find(OrderItemShipGrpInvRes.class,
-                new OrderItemShipGrpInvRes.Key(orderId, i.getShipGroupSeqId(), orderItemSeqId, inventoryItemId));
-        if (r == null || r.getQuantity().compareTo(quantity) < 0) {
-            throw new IllegalStateException("Item " + orderItemSeqId + " of order " + orderId + " holds less than "
-                    + quantity.stripTrailingZeros().toPlainString() + " at inventory item " + inventoryItemId);
-        }
-        BigDecimal rest = r.getQuantity().subtract(quantity);
-        if (rest.signum() == 0) em.remove(r);
-        else r.setQuantity(rest);
+        recalculateTotals(header);
     }
 
     /**
      * After a shipment: an item whose shipped quantity covers what is still open is completed, and an order with no
      * open item left is completed.
      */
-    public void shipped(String orderId, String orderItemSeqId, BigDecimal totalShipped, String userId) {
-        OrderHeader h = header(orderId, true);
-        OrderItem i = item(orderId, orderItemSeqId);
-        if ("ITEM_APPROVED".equals(i.getStatusId()) && totalShipped.compareTo(openQuantity(i)) >= 0) {
-            itemStatus(i, "ITEM_COMPLETED", "Shipped", userId);
+    public void markShipped(String orderId, String orderItemSeqId, BigDecimal totalShipped, String userId) {
+        OrderHeader header = loadHeaderForUpdate(orderId);
+        OrderItem orderItem = loadItem(orderId, orderItemSeqId);
+        boolean fullyShipped = totalShipped.compareTo(openQuantity(orderItem)) >= 0;
+        if (CoreStatus.Item.APPROVED.equals(orderItem.getStatusId()) && fullyShipped) {
+            changeItemStatus(orderItem, CoreStatus.Item.COMPLETED, "Shipped", userId);
         }
-        boolean open = items(orderId).stream().anyMatch(x -> ITEM_OPEN.contains(x.getStatusId()));
-        if (!open && statuses.isAllowed(FLOW, h.getStatusId(), "ORDER_COMPLETED")) {
-            h.setStatusId("ORDER_COMPLETED");
-            history(orderId, null, null, "ORDER_COMPLETED", "Every item shipped or cancelled", userId);
+        boolean anyItemOpen = items(orderId).stream().anyMatch(item -> CoreStatus.Item.OPEN.contains(item.getStatusId()));
+        if (!anyItemOpen && statusService.isAllowed(FLOW, header.getStatusId(), CoreStatus.Order.COMPLETED)) {
+            header.setStatusId(CoreStatus.Order.COMPLETED);
+            writeHistory(orderId, null, null, CoreStatus.Order.COMPLETED, "Every item shipped or cancelled", userId);
         }
     }
 
-    /**
-     * A facility could not find stock it held for an item: the hold there is released for the short quantity and the
-     * facility is noted on the item ({@code excludedFacilityIds}) so routing does not send the item back to it.
-     */
-    public void shortPick(String orderId, String orderItemSeqId, String facilityId, BigDecimal quantity, String reason, String userId) {
-        BigDecimal left = quantity;
-        for (OrderItemShipGrpInvRes r : reservations(orderId, orderItemSeqId)) {
-            if (left.signum() <= 0) break;
-            InventoryItem inv = em.find(InventoryItem.class, r.getInventoryItemId());
-            if (!inv.getFacilityId().equals(facilityId)) continue;
-            BigDecimal take = r.getQuantity().min(left);
-            inventory.release(inv.getProductId(), facilityId, take, new InventoryService.Cause(orderId, orderItemSeqId, null, null, userId,
-                    "Short pick" + (reason == null ? "" : ": " + reason)));
-            BigDecimal rest = r.getQuantity().subtract(take);
-            if (rest.signum() == 0) em.remove(r);
-            else r.setQuantity(rest);
-            left = left.subtract(take);
+    /** Moves a payment to a status its flow allows (authorized, settled, refunded...). */
+    public void setPaymentStatus(String orderPaymentPreferenceId, String toStatusId, String reason, String userId) {
+        OrderPaymentPreference payment = entityManager.find(OrderPaymentPreference.class, orderPaymentPreferenceId, LockModeType.PESSIMISTIC_WRITE);
+        if (payment == null) {
+            throw new IllegalArgumentException("Unknown payment " + orderPaymentPreferenceId);
         }
-        exclude(orderId, orderItemSeqId, facilityId);
+        statusService.requireAllowed(FLOW, payment.getStatusId(), toStatusId);
+        payment.setStatusId(toStatusId);
+        writeHistory(payment.getOrderId(), null, orderPaymentPreferenceId, toStatusId, reason, userId);
     }
 
-    /** Routing must not send this item to the facility again (it rejected or short-picked it). */
-    public void exclude(String orderId, String orderItemSeqId, String facilityId) {
-        if (excludedFacilities(orderId, orderItemSeqId).contains(facilityId)) return;
-        ExcludedOrderFacility x = new ExcludedOrderFacility();
-        x.setOrderId(orderId);
-        x.setOrderItemSeqId(orderItemSeqId);
-        x.setFacilityId(facilityId);
-        x.setFromDate(CoreClock.now());
-        em.persist(x);
-    }
+    // ── ship groups ──
 
     @Transactional(readOnly = true)
-    public Set<String> excludedFacilities(String orderId, String orderItemSeqId) {
-        return new java.util.HashSet<>(em.createQuery("SELECT x.facilityId FROM ExcludedOrderFacility x WHERE x.orderId = :o "
-                        + "AND x.orderItemSeqId = :i AND x.thruDate IS NULL", String.class)
-                .setParameter("o", orderId).setParameter("i", orderItemSeqId).getResultList());
-    }
-
-    // ── ship groups and locations (routing) ──
-
-    /** Changes where a ship group goes; the order's shipping contact follows. */
-    public void setShipTo(String orderId, String shipGroupSeqId, String contactMechId) {
-        OrderItemShipGroup g = shipGroup(orderId, shipGroupSeqId);
-        String old = g.getContactMechId();
-        g.setContactMechId(contactMechId);
-        if (old != null && em.createQuery("SELECT COUNT(x) FROM OrderItemShipGroup x WHERE x.orderId = :o AND x.contactMechId = :c", Long.class)
-                .setParameter("o", orderId).setParameter("c", old).getSingleResult() == 0) {
-            OrderContactMech oc = em.find(OrderContactMech.class, new OrderContactMech.Key(orderId, "SHIPPING_LOCATION", old));
-            if (oc != null) em.remove(oc);
+    public OrderItemShipGroup shipGroup(String orderId, String shipGroupSeqId) {
+        OrderItemShipGroup shipGroup = entityManager.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId));
+        if (shipGroup == null) {
+            throw new IllegalArgumentException("Order " + orderId + " has no ship group " + shipGroupSeqId);
         }
-        contact(orderId, "SHIPPING_LOCATION", contactMechId);
+        return shipGroup;
     }
 
-    /** Sets where a ship group ships from (null: back in the routing queue). */
+    /** Sets where a ship group ships from; null puts it back in the routing queue. */
     public void setShipGroupFacility(String orderId, String shipGroupSeqId, String facilityId) {
         shipGroup(orderId, shipGroupSeqId).setFacilityId(facilityId);
     }
 
+    /** Sets the tracking number of a ship group (the first group when none is named). */
+    public void setTracking(String orderId, String shipGroupSeqId, String trackingNumber) {
+        String groupSeqId = shipGroupSeqId == null ? SequenceService.seqId(1) : shipGroupSeqId;
+        shipGroup(orderId, groupSeqId).setTrackingNumber(trackingNumber);
+    }
+
+    /** Changes where a ship group goes. The order's shipping contact follows; an address no group uses any more is dropped. */
+    public void setShipTo(String orderId, String shipGroupSeqId, String contactMechId) {
+        OrderItemShipGroup shipGroup = shipGroup(orderId, shipGroupSeqId);
+        String previousContactMechId = shipGroup.getContactMechId();
+        shipGroup.setContactMechId(contactMechId);
+
+        if (previousContactMechId != null) {
+            long groupsStillUsingIt = entityManager.createQuery(
+                            "SELECT COUNT(g) FROM OrderItemShipGroup g WHERE g.orderId = :orderId AND g.contactMechId = :contactMechId", Long.class)
+                    .setParameter("orderId", orderId)
+                    .setParameter("contactMechId", previousContactMechId)
+                    .getSingleResult();
+            if (groupsStillUsingIt == 0) {
+                OrderContactMech oldContact = entityManager.find(OrderContactMech.class,
+                        new OrderContactMech.Key(orderId, "SHIPPING_LOCATION", previousContactMechId));
+                if (oldContact != null) {
+                    entityManager.remove(oldContact);
+                }
+            }
+        }
+        addContactIfMissing(orderId, "SHIPPING_LOCATION", contactMechId);
+    }
+
     /**
      * Moves items to a new ship group of the same order (same address, method and gift details) that ships from the
-     * facility given. Returns the new group's id.
+     * facility given, and returns the new group's id. The items must not hold stock: release it first.
      */
     public String splitShipGroup(String orderId, String fromShipGroupSeqId, List<String> orderItemSeqIds, String facilityId) {
-        OrderItemShipGroup from = shipGroup(orderId, fromShipGroupSeqId);
-        long groups = em.createQuery("SELECT COUNT(g) FROM OrderItemShipGroup g WHERE g.orderId = :o", Long.class).setParameter("o", orderId).getSingleResult();
-        OrderItemShipGroup g = new OrderItemShipGroup();
-        g.setOrderId(orderId);
-        g.setShipGroupSeqId(SequenceService.seqId((int) groups + 1));
-        g.setShipmentMethodTypeId(from.getShipmentMethodTypeId());
-        g.setCarrierPartyId(from.getCarrierPartyId());
-        g.setFacilityId(facilityId);
-        g.setContactMechId(from.getContactMechId());
-        g.setTelecomContactMechId(from.getTelecomContactMechId());
-        g.setShippingInstructions(from.getShippingInstructions());
-        g.setMaySplit(from.getMaySplit());
-        g.setIsGift(from.getIsGift());
-        g.setGiftMessage(from.getGiftMessage());
-        g.setShipByDate(from.getShipByDate());
-        g.setEstimatedDeliveryDate(from.getEstimatedDeliveryDate());
-        em.persist(g);
-        for (String seq : orderItemSeqIds) {
-            OrderItem i = item(orderId, seq);
-            if (!fromShipGroupSeqId.equals(i.getShipGroupSeqId())) throw new IllegalArgumentException("Item " + seq + " is not in ship group " + fromShipGroupSeqId);
-            if (reservedQuantity(orderId, seq).signum() > 0) throw new IllegalStateException("Item " + seq + " holds stock; release it before moving it");
-            OrderItemShipGroupAssoc a = em.find(OrderItemShipGroupAssoc.class, new OrderItemShipGroupAssoc.Key(orderId, seq, fromShipGroupSeqId));
-            OrderItemShipGroupAssoc b = new OrderItemShipGroupAssoc();
-            b.setOrderId(orderId);
-            b.setOrderItemSeqId(seq);
-            b.setShipGroupSeqId(g.getShipGroupSeqId());
-            b.setQuantity(a == null ? i.getQuantity() : a.getQuantity());
-            b.setCancelQuantity(a == null ? i.getCancelQuantity() : a.getCancelQuantity());
-            if (a != null) em.remove(a);
-            em.persist(b);
-            i.setShipGroupSeqId(g.getShipGroupSeqId());
+        OrderItemShipGroup sourceGroup = shipGroup(orderId, fromShipGroupSeqId);
+        long existingGroups = entityManager.createQuery("SELECT COUNT(g) FROM OrderItemShipGroup g WHERE g.orderId = :orderId", Long.class)
+                .setParameter("orderId", orderId)
+                .getSingleResult();
+
+        OrderItemShipGroup newGroup = copyOfShipGroup(sourceGroup, SequenceService.seqId((int) existingGroups + 1), facilityId);
+        entityManager.persist(newGroup);
+
+        for (String orderItemSeqId : orderItemSeqIds) {
+            OrderItem orderItem = loadItem(orderId, orderItemSeqId);
+            if (!fromShipGroupSeqId.equals(orderItem.getShipGroupSeqId())) {
+                throw new IllegalArgumentException("Item " + orderItemSeqId + " is not in ship group " + fromShipGroupSeqId);
+            }
+            if (reservationService.reservedQuantity(orderId, orderItemSeqId).signum() > 0) {
+                throw new IllegalStateException("Item " + orderItemSeqId + " holds stock; release it before moving it");
+            }
+            moveItemToShipGroup(orderItem, fromShipGroupSeqId, newGroup.getShipGroupSeqId());
         }
-        return g.getShipGroupSeqId();
+        return newGroup.getShipGroupSeqId();
     }
 
+    // ── reading ──
+
+    /** The order header; an unknown id is an error. */
     @Transactional(readOnly = true)
-    public String itemAttribute(String orderId, String orderItemSeqId, String name) {
-        OrderItemAttribute a = em.find(OrderItemAttribute.class, new OrderItemAttribute.Key(orderId, orderItemSeqId, name));
-        return a == null ? null : a.getAttrValue();
+    public OrderHeader header(String orderId) {
+        return loadHeader(orderId);
     }
 
-    public void setItemAttribute(String orderId, String orderItemSeqId, String name, String value) {
-        OrderItemAttribute a = em.find(OrderItemAttribute.class, new OrderItemAttribute.Key(orderId, orderItemSeqId, name));
-        if (a == null) {
-            a = new OrderItemAttribute();
-            a.setOrderId(orderId);
-            a.setOrderItemSeqId(orderItemSeqId);
-            a.setAttrName(name);
-            a.setAttrValue(value);
-            em.persist(a);
-        } else {
-            a.setAttrValue(value);
-        }
+    // ── items ──
+
+    /** What is still open on an item: ordered less cancelled. */
+    public static BigDecimal openQuantity(OrderItem orderItem) {
+        BigDecimal cancelled = orderItem.getCancelQuantity() == null ? BigDecimal.ZERO : orderItem.getCancelQuantity();
+        return orderItem.getQuantity().subtract(cancelled);
     }
 
-    /** The party in a role on the order (the ship-to customer, say), if any. */
+    /** The order's items in sequence order. */
     @Transactional(readOnly = true)
-    public java.util.Optional<String> partyInRole(String orderId, String roleTypeId) {
-        return em.createQuery("SELECT r.partyId FROM OrderRole r WHERE r.orderId = :o AND r.roleTypeId = :t ORDER BY r.partyId", String.class)
-                .setParameter("o", orderId).setParameter("t", roleTypeId).setMaxResults(1).getResultList().stream().findFirst();
-    }
-
-    @Transactional(readOnly = true)
-    public OrderItemShipGroup shipGroup(String orderId, String shipGroupSeqId) {
-        OrderItemShipGroup g = em.find(OrderItemShipGroup.class, new OrderItemShipGroup.Key(orderId, shipGroupSeqId));
-        if (g == null) throw new IllegalArgumentException("Order " + orderId + " has no ship group " + shipGroupSeqId);
-        return g;
+    public List<OrderItem> items(String orderId) {
+        return entityManager.createQuery("SELECT i FROM OrderItem i WHERE i.orderId = :orderId ORDER BY i.orderItemSeqId", OrderItem.class)
+                .setParameter("orderId", orderId)
+                .getResultList();
     }
 
     @Transactional(readOnly = true)
     public OrderItem orderItem(String orderId, String orderItemSeqId) {
-        return item(orderId, orderItemSeqId);
+        return loadItem(orderId, orderItemSeqId);
     }
 
-    // ── ids, attributes, adjustments ──
+    @Transactional(readOnly = true)
+    public String itemAttribute(String orderId, String orderItemSeqId, String name) {
+        OrderItemAttribute attribute = entityManager.find(OrderItemAttribute.class, new OrderItemAttribute.Key(orderId, orderItemSeqId, name));
+        return attribute == null ? null : attribute.getAttrValue();
+    }
 
+    public void setItemAttribute(String orderId, String orderItemSeqId, String name, String value) {
+        OrderItemAttribute attribute = entityManager.find(OrderItemAttribute.class, new OrderItemAttribute.Key(orderId, orderItemSeqId, name));
+        if (attribute == null) {
+            attribute = new OrderItemAttribute();
+            attribute.setOrderId(orderId);
+            attribute.setOrderItemSeqId(orderItemSeqId);
+            attribute.setAttrName(name);
+            entityManager.persist(attribute);
+        }
+        attribute.setAttrValue(value);
+    }
+
+    // ── parties, outside ids, attributes, adjustments ──
+
+    /** The party in a role on the order (the ship-to customer, say), if any. */
+    @Transactional(readOnly = true)
+    public Optional<String> partyInRole(String orderId, String roleTypeId) {
+        return entityManager.createQuery(
+                        "SELECT r.partyId FROM OrderRole r WHERE r.orderId = :orderId AND r.roleTypeId = :roleTypeId ORDER BY r.partyId", String.class)
+                .setParameter("orderId", orderId)
+                .setParameter("roleTypeId", roleTypeId)
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    /**
+     * Sets the current outside id of a kind (Shopify order id, PO number). An earlier different value is ended, not
+     * deleted, so the history stays. A blank value does nothing; the same value again does nothing.
+     */
     public void setIdentification(String orderId, String typeId, String value) {
-        if (value == null || value.isBlank()) return;
-        List<OrderIdentification> current = em.createQuery("SELECT i FROM OrderIdentification i WHERE i.orderId = :o "
-                        + "AND i.orderIdentificationTypeId = :t AND i.thruDate IS NULL", OrderIdentification.class)
-                .setParameter("o", orderId).setParameter("t", typeId).getResultList();
-        if (current.stream().anyMatch(i -> i.getIdValue().equals(value.trim()))) return;
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        String trimmedValue = value.trim();
+        List<OrderIdentification> currentIds = entityManager.createQuery(
+                        "SELECT i FROM OrderIdentification i WHERE i.orderId = :orderId AND i.orderIdentificationTypeId = :typeId "
+                                + "AND i.thruDate IS NULL", OrderIdentification.class)
+                .setParameter("orderId", orderId)
+                .setParameter("typeId", typeId)
+                .getResultList();
+        if (currentIds.stream().anyMatch(existing -> existing.getIdValue().equals(trimmedValue))) {
+            return;
+        }
         LocalDateTime now = CoreClock.now();
-        current.forEach(i -> i.setThruDate(now));
-        OrderIdentification i = new OrderIdentification();
-        i.setOrderIdentificationTypeId(typeId);
-        i.setOrderId(orderId);
-        i.setFromDate(now);
-        i.setIdValue(value.trim());
-        em.persist(i);
+        currentIds.forEach(existing -> existing.setThruDate(now));
+
+        OrderIdentification identification = new OrderIdentification();
+        identification.setOrderIdentificationTypeId(typeId);
+        identification.setOrderId(orderId);
+        identification.setFromDate(now);
+        identification.setIdValue(trimmedValue);
+        entityManager.persist(identification);
     }
 
     /** The order whose current id of this kind is the value: find an order by its Shopify id or PO number. */
     @Transactional(readOnly = true)
     public Optional<String> findByIdentification(String typeId, String value) {
-        if (value == null || value.isBlank()) return Optional.empty();
-        return em.createQuery("SELECT i.orderId FROM OrderIdentification i WHERE i.orderIdentificationTypeId = :t "
-                        + "AND i.idValue = :v AND i.thruDate IS NULL ORDER BY i.fromDate DESC", String.class)
-                .setParameter("t", typeId).setParameter("v", value.trim()).setMaxResults(1).getResultList().stream().findFirst();
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
+        return entityManager.createQuery(
+                        "SELECT i.orderId FROM OrderIdentification i WHERE i.orderIdentificationTypeId = :typeId AND i.idValue = :value "
+                                + "AND i.thruDate IS NULL ORDER BY i.fromDate DESC", String.class)
+                .setParameter("typeId", typeId)
+                .setParameter("value", value.trim())
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
+                .findFirst();
     }
 
+    /** Sets a named value on the order; null removes it. */
     public void setAttribute(String orderId, String name, String value) {
-        OrderAttribute a = em.find(OrderAttribute.class, new OrderAttribute.Key(orderId, name));
+        OrderAttribute attribute = entityManager.find(OrderAttribute.class, new OrderAttribute.Key(orderId, name));
         if (value == null) {
-            if (a != null) em.remove(a);
+            if (attribute != null) {
+                entityManager.remove(attribute);
+            }
             return;
         }
-        if (a == null) {
-            a = new OrderAttribute();
-            a.setOrderId(orderId);
-            a.setAttrName(name);
-            a.setAttrValue(value);
-            em.persist(a);
-        } else {
-            a.setAttrValue(value);
+        if (attribute == null) {
+            attribute = new OrderAttribute();
+            attribute.setOrderId(orderId);
+            attribute.setAttrName(name);
+            entityManager.persist(attribute);
         }
+        attribute.setAttrValue(value);
     }
 
+    /** Adds an amount to the order ({@code orderItemSeqId} null) or to one item, and returns its id. */
     public String addAdjustment(String orderId, String orderItemSeqId, String typeId, BigDecimal amount, String description, String userId) {
-        OrderAdjustment a = new OrderAdjustment();
-        a.setOrderAdjustmentId(sequences.nextId("OrderAdjustment"));
-        a.setOrderAdjustmentTypeId(typeId);
-        a.setOrderId(orderId);
-        a.setOrderItemSeqId(orderItemSeqId);
-        a.setAmount(amount);
-        a.setDescription(description);
-        a.setCreatedDate(CoreClock.now());
-        a.setCreatedByUserLogin(userId);
-        em.persist(a);
-        return a.getOrderAdjustmentId();
+        OrderAdjustment adjustment = new OrderAdjustment();
+        adjustment.setOrderAdjustmentId(sequenceService.nextId("OrderAdjustment"));
+        adjustment.setOrderAdjustmentTypeId(typeId);
+        adjustment.setOrderId(orderId);
+        adjustment.setOrderItemSeqId(orderItemSeqId);
+        adjustment.setAmount(amount);
+        adjustment.setDescription(description);
+        adjustment.setCreatedDate(CoreClock.now());
+        adjustment.setCreatedByUserLogin(userId);
+        entityManager.persist(adjustment);
+        return adjustment.getOrderAdjustmentId();
     }
 
-    /** What is still open on an item: ordered less cancelled. */
-    public static BigDecimal openQuantity(OrderItem i) {
-        return i.getQuantity().subtract(i.getCancelQuantity() == null ? BigDecimal.ZERO : i.getCancelQuantity());
-    }
+    // ── totals ──
 
-    @Transactional(readOnly = true)
-    public List<OrderItem> items(String orderId) {
-        return em.createQuery("SELECT i FROM OrderItem i WHERE i.orderId = :o ORDER BY i.orderItemSeqId", OrderItem.class)
-                .setParameter("o", orderId).getResultList();
+    /** Works the order's totals out again and returns the grand total. */
+    public BigDecimal recalculate(String orderId) {
+        return recalculateTotals(loadHeader(orderId));
     }
 
     /**
-     * Grand total = what is still open on the items at their price, plus order adjustments, plus adjustments on
-     * items that are still open. Cancelled quantities drop out; OFBiz keeps the total current the same way.
+     * Remaining subtotal = what is still open on each item that still counts, at its price.
+     * Grand total = remaining subtotal + order adjustments + adjustments on items that still count.
+     * Cancelled quantities drop out, as OFBiz keeps the total current.
      */
-    public BigDecimal recalculate(String orderId) {
-        return recalculate(header(orderId, false));
-    }
-
-    // ── internals ──
-
-    private BigDecimal recalculate(OrderHeader h) {
-        List<OrderItem> items = items(h.getOrderId());
-        BigDecimal sub = BigDecimal.ZERO;
-        for (OrderItem i : items) {
-            if ("ITEM_CANCELLED".equals(i.getStatusId()) || "ITEM_REJECTED".equals(i.getStatusId())) continue;
-            sub = sub.add(openQuantity(i).multiply(i.getUnitPrice() == null ? BigDecimal.ZERO : i.getUnitPrice()));
+    private BigDecimal recalculateTotals(OrderHeader header) {
+        List<OrderItem> orderItems = items(header.getOrderId());
+        BigDecimal remainingSubtotal = BigDecimal.ZERO;
+        Set<String> countingItemSeqIds = new HashSet<>();
+        for (OrderItem orderItem : orderItems) {
+            if (CoreStatus.Item.GONE.contains(orderItem.getStatusId())) {
+                continue;
+            }
+            BigDecimal unitPrice = orderItem.getUnitPrice() == null ? BigDecimal.ZERO : orderItem.getUnitPrice();
+            remainingSubtotal = remainingSubtotal.add(openQuantity(orderItem).multiply(unitPrice));
+            countingItemSeqIds.add(orderItem.getOrderItemSeqId());
         }
-        Set<String> live = new java.util.HashSet<>();
-        items.stream().filter(i -> !"ITEM_CANCELLED".equals(i.getStatusId()) && !"ITEM_REJECTED".equals(i.getStatusId()))
-                .forEach(i -> live.add(i.getOrderItemSeqId()));
-        BigDecimal adj = BigDecimal.ZERO;
-        for (OrderAdjustment a : em.createQuery("SELECT a FROM OrderAdjustment a WHERE a.orderId = :o", OrderAdjustment.class)
-                .setParameter("o", h.getOrderId()).getResultList()) {
-            if (a.getOrderItemSeqId() == null || live.contains(a.getOrderItemSeqId())) adj = adj.add(a.getAmount());
+
+        BigDecimal adjustmentsTotal = BigDecimal.ZERO;
+        List<OrderAdjustment> adjustments = entityManager.createQuery("SELECT a FROM OrderAdjustment a WHERE a.orderId = :orderId", OrderAdjustment.class)
+                .setParameter("orderId", header.getOrderId())
+                .getResultList();
+        for (OrderAdjustment adjustment : adjustments) {
+            boolean onTheOrder = adjustment.getOrderItemSeqId() == null;
+            if (onTheOrder || countingItemSeqIds.contains(adjustment.getOrderItemSeqId())) {
+                adjustmentsTotal = adjustmentsTotal.add(adjustment.getAmount());
+            }
         }
-        h.setRemainingSubTotal(sub);
-        h.setGrandTotal(sub.add(adj));
-        return h.getGrandTotal();
+
+        header.setRemainingSubTotal(remainingSubtotal);
+        header.setGrandTotal(remainingSubtotal.add(adjustmentsTotal));
+        return header.getGrandTotal();
     }
 
-    private void releaseQuantity(String orderId, String orderItemSeqId, BigDecimal quantity, String userId) {
-        BigDecimal left = quantity;
-        for (OrderItemShipGrpInvRes r : reservations(orderId, orderItemSeqId)) {
-            if (left.signum() <= 0) break;
-            BigDecimal take = r.getQuantity().min(left);
-            InventoryItem inv = em.find(InventoryItem.class, r.getInventoryItemId());
-            inventory.release(inv.getProductId(), inv.getFacilityId(), take, new InventoryService.Cause(orderId, orderItemSeqId, null, null, userId, null));
-            BigDecimal rest = r.getQuantity().subtract(take);
-            if (rest.signum() == 0) em.remove(r);
-            else r.setQuantity(rest);
-            left = left.subtract(take);
+    // ── building the rows of a new order ──
+
+    private void validate(NewOrder newOrder) {
+        if (newOrder.items() == null || newOrder.items().isEmpty()) {
+            throw new IllegalArgumentException("An order needs at least one item");
+        }
+        if (newOrder.salesChannelEnumId() != null) {
+            enumerationService.require(SALES_CHANNEL_ENUM_TYPE, newOrder.salesChannelEnumId());
+        }
+        int shipGroupCount = newOrder.shipGroups() == null || newOrder.shipGroups().isEmpty() ? 1 : newOrder.shipGroups().size();
+        for (int index = 0; index < newOrder.items().size(); index++) {
+            NewItem newItem = newOrder.items().get(index);
+            int itemNumber = index + 1;
+            if (newItem.quantity() == null || newItem.quantity().signum() <= 0) {
+                throw new IllegalArgumentException("Item " + itemNumber + " needs a quantity above zero");
+            }
+            if (newItem.shipGroup() < 0 || newItem.shipGroup() >= shipGroupCount) {
+                throw new IllegalArgumentException("Item " + itemNumber + " names ship group " + newItem.shipGroup() + ", which the order doesn't have");
+            }
+        }
+        for (NewAdjustment adjustment : newOrder.adjustments() == null ? List.<NewAdjustment>of() : newOrder.adjustments()) {
+            if (adjustment.item() != null && (adjustment.item() < 0 || adjustment.item() >= newOrder.items().size())) {
+                throw new IllegalArgumentException("An adjustment names item " + adjustment.item() + ", which the order doesn't have");
+            }
         }
     }
 
-    private List<OrderItemShipGrpInvRes> reservations(String orderId, String orderItemSeqId) {
-        return em.createQuery("SELECT r FROM OrderItemShipGrpInvRes r WHERE r.orderId = :o AND r.orderItemSeqId = :i "
-                        + "ORDER BY r.reservedDatetime DESC", OrderItemShipGrpInvRes.class)
-                .setParameter("o", orderId).setParameter("i", orderItemSeqId).getResultList();
+    private OrderHeader newHeader(NewOrder newOrder, String statusId, LocalDateTime now) {
+        OrderHeader header = new OrderHeader();
+        header.setOrderId(sequenceService.nextId("OrderHeader"));
+        header.setOrderTypeId(newOrder.orderTypeId() == null ? DEFAULT_ORDER_TYPE : newOrder.orderTypeId());
+        header.setOrderName(newOrder.orderName());
+        header.setExternalId(newOrder.externalId());
+        header.setSalesChannelEnumId(newOrder.salesChannelEnumId());
+        header.setOrderDate(newOrder.orderDate() == null ? now : newOrder.orderDate());
+        header.setEntryDate(now);
+        header.setCurrencyUomId(newOrder.currencyUomId());
+        header.setProductStoreId(newOrder.productStoreId());
+        header.setCreatedBy(newOrder.userId());
+        header.setStatusId(statusId);
+        return header;
     }
 
-    private void itemStatus(OrderItem i, String toStatusId, String reason, String userId) {
-        statuses.requireAllowed(FLOW, i.getStatusId(), toStatusId);
-        i.setStatusId(toStatusId);
-        history(i.getOrderId(), i.getOrderItemSeqId(), null, toStatusId, reason, userId);
+    private OrderItemShipGroup newShipGroup(String orderId, int index, NewShipGroup input) {
+        OrderItemShipGroup shipGroup = new OrderItemShipGroup();
+        shipGroup.setOrderId(orderId);
+        shipGroup.setShipGroupSeqId(SequenceService.seqId(index + 1));
+        shipGroup.setShipmentMethodTypeId(input.shipmentMethodTypeId() == null ? DEFAULT_SHIPMENT_METHOD : input.shipmentMethodTypeId());
+        shipGroup.setFacilityId(input.facilityId());
+        shipGroup.setContactMechId(input.shipToContactMechId());
+        shipGroup.setTelecomContactMechId(input.phoneContactMechId());
+        shipGroup.setCarrierPartyId(input.carrierPartyId());
+        shipGroup.setMaySplit(input.maySplit() == null || input.maySplit());
+        shipGroup.setIsGift(Boolean.TRUE.equals(input.isGift()));
+        shipGroup.setGiftMessage(input.giftMessage());
+        shipGroup.setShippingInstructions(input.shippingInstructions());
+        shipGroup.setEstimatedDeliveryDate(input.estimatedDeliveryDate());
+        shipGroup.setTrackingNumber(input.trackingNumber());
+        return shipGroup;
     }
 
-    private static String itemStatusFor(String headerStatus) {
-        return switch (headerStatus) {
-            case "ORDER_APPROVED", "ORDER_SENT", "ORDER_HOLD" -> "ITEM_APPROVED";
-            case "ORDER_COMPLETED" -> "ITEM_COMPLETED";
-            case "ORDER_CANCELLED" -> "ITEM_CANCELLED";
-            case "ORDER_REJECTED" -> "ITEM_REJECTED";
-            default -> "ITEM_CREATED";
+    private OrderItem newItem(String orderId, int index, NewItem input, String shipGroupSeqId, String statusId) {
+        OrderItem orderItem = new OrderItem();
+        orderItem.setOrderId(orderId);
+        orderItem.setOrderItemSeqId(SequenceService.seqId(index + 1));
+        orderItem.setOrderItemTypeId(PRODUCT_ITEM_TYPE);
+        orderItem.setProductId(input.productId());
+        orderItem.setItemDescription(input.description());
+        orderItem.setQuantity(input.quantity());
+        orderItem.setCancelQuantity(BigDecimal.ZERO);
+        orderItem.setUnitPrice(input.unitPrice() == null ? BigDecimal.ZERO : input.unitPrice());
+        orderItem.setUnitListPrice(input.unitListPrice());
+        orderItem.setExternalId(input.externalId());
+        orderItem.setShipGroupSeqId(shipGroupSeqId);
+        orderItem.setStatusId(statusId);
+        orderItem.setIsPromo(false);
+        orderItem.setIsModifiedPrice(false);
+        return orderItem;
+    }
+
+    /** The link saying how much of the item goes in its ship group (all of it, at creation). */
+    private static OrderItemShipGroupAssoc newShipGroupAssoc(OrderItem orderItem) {
+        OrderItemShipGroupAssoc assoc = new OrderItemShipGroupAssoc();
+        assoc.setOrderId(orderItem.getOrderId());
+        assoc.setOrderItemSeqId(orderItem.getOrderItemSeqId());
+        assoc.setShipGroupSeqId(orderItem.getShipGroupSeqId());
+        assoc.setQuantity(orderItem.getQuantity());
+        assoc.setCancelQuantity(BigDecimal.ZERO);
+        return assoc;
+    }
+
+    private OrderPaymentPreference newPaymentPreference(String orderId, NewPayment input, String userId, LocalDateTime now) {
+        OrderPaymentPreference payment = new OrderPaymentPreference();
+        payment.setOrderPaymentPreferenceId(sequenceService.nextId("OrderPaymentPreference"));
+        payment.setOrderId(orderId);
+        payment.setPaymentMethodTypeId(input.paymentMethodTypeId());
+        payment.setMaxAmount(input.maxAmount());
+        payment.setManualRefNum(input.manualRefNum());
+        payment.setStatusId(input.statusId() == null
+                ? statusService.initialStatus(FLOW, CoreStatus.Type.PAYMENT)
+                : statusService.status(input.statusId()).getStatusId());
+        payment.setCreatedDate(now);
+        payment.setCreatedByUserLogin(userId);
+        return payment;
+    }
+
+    private static OrderItemShipGroup copyOfShipGroup(OrderItemShipGroup source, String newSeqId, String facilityId) {
+        OrderItemShipGroup copy = new OrderItemShipGroup();
+        copy.setOrderId(source.getOrderId());
+        copy.setShipGroupSeqId(newSeqId);
+        copy.setShipmentMethodTypeId(source.getShipmentMethodTypeId());
+        copy.setCarrierPartyId(source.getCarrierPartyId());
+        copy.setFacilityId(facilityId);
+        copy.setContactMechId(source.getContactMechId());
+        copy.setTelecomContactMechId(source.getTelecomContactMechId());
+        copy.setShippingInstructions(source.getShippingInstructions());
+        copy.setMaySplit(source.getMaySplit());
+        copy.setIsGift(source.getIsGift());
+        copy.setGiftMessage(source.getGiftMessage());
+        copy.setShipByDate(source.getShipByDate());
+        copy.setEstimatedDeliveryDate(source.getEstimatedDeliveryDate());
+        return copy;
+    }
+
+    /** Re-points an item and its ship group link from one group to another, keeping its quantities. */
+    private void moveItemToShipGroup(OrderItem orderItem, String fromShipGroupSeqId, String toShipGroupSeqId) {
+        String orderId = orderItem.getOrderId();
+        String orderItemSeqId = orderItem.getOrderItemSeqId();
+        OrderItemShipGroupAssoc oldLink = entityManager.find(OrderItemShipGroupAssoc.class,
+                new OrderItemShipGroupAssoc.Key(orderId, orderItemSeqId, fromShipGroupSeqId));
+
+        OrderItemShipGroupAssoc newLink = new OrderItemShipGroupAssoc();
+        newLink.setOrderId(orderId);
+        newLink.setOrderItemSeqId(orderItemSeqId);
+        newLink.setShipGroupSeqId(toShipGroupSeqId);
+        newLink.setQuantity(oldLink == null ? orderItem.getQuantity() : oldLink.getQuantity());
+        newLink.setCancelQuantity(oldLink == null ? orderItem.getCancelQuantity() : oldLink.getCancelQuantity());
+
+        if (oldLink != null) {
+            entityManager.remove(oldLink);
+        }
+        entityManager.persist(newLink);
+        orderItem.setShipGroupSeqId(toShipGroupSeqId);
+    }
+
+    // ── status helpers ──
+
+    private void changeItemStatus(OrderItem orderItem, String toStatusId, String reason, String userId) {
+        statusService.requireAllowed(FLOW, orderItem.getStatusId(), toStatusId);
+        orderItem.setStatusId(toStatusId);
+        writeHistory(orderItem.getOrderId(), orderItem.getOrderItemSeqId(), null, toStatusId, reason, userId);
+    }
+
+    /** The item status that goes with an order status, for an order created or copied in that status. */
+    private static String itemStatusMatching(String orderStatusId) {
+        return switch (orderStatusId) {
+            case CoreStatus.Order.APPROVED, CoreStatus.Order.SENT, CoreStatus.Order.HOLD -> CoreStatus.Item.APPROVED;
+            case CoreStatus.Order.COMPLETED -> CoreStatus.Item.COMPLETED;
+            case CoreStatus.Order.CANCELLED -> CoreStatus.Item.CANCELLED;
+            case CoreStatus.Order.REJECTED -> CoreStatus.Item.REJECTED;
+            default -> CoreStatus.Item.CREATED;
         };
     }
 
-    private void history(String orderId, String orderItemSeqId, String paymentId, String statusId, String reason, String userId) {
-        OrderStatus s = new OrderStatus();
-        s.setOrderStatusId(sequences.nextId("OrderStatus"));
-        s.setOrderId(orderId);
-        s.setOrderItemSeqId(orderItemSeqId);
-        s.setOrderPaymentPreferenceId(paymentId);
-        s.setStatusId(statusId);
-        s.setStatusDatetime(CoreClock.now());
-        s.setStatusUserLogin(userId);
-        s.setChangeReason(reason);
-        em.persist(s);
+    /** Where an item goes when its order changes status; null when it stays. */
+    private static String itemStatusFollowing(String newOrderStatusId, String itemStatusId) {
+        return switch (newOrderStatusId) {
+            case CoreStatus.Order.APPROVED -> CoreStatus.Item.CREATED.equals(itemStatusId) ? CoreStatus.Item.APPROVED : null;
+            case CoreStatus.Order.CANCELLED -> CoreStatus.Item.OPEN.contains(itemStatusId) ? CoreStatus.Item.CANCELLED : null;
+            case CoreStatus.Order.COMPLETED -> CoreStatus.Item.APPROVED.equals(itemStatusId) ? CoreStatus.Item.COMPLETED : null;
+            default -> null;
+        };
     }
 
-    private void role(String orderId, String partyId, String roleTypeId) {
-        if (em.find(OrderRole.class, new OrderRole.Key(orderId, partyId, roleTypeId)) != null) return;
-        OrderRole r = new OrderRole();
-        r.setOrderId(orderId);
-        r.setPartyId(partyId);
-        r.setRoleTypeId(roleTypeId);
-        em.persist(r);
+    /** One {@code order_status} row: the order ({@code itemSeqId} and {@code paymentId} null), an item, or a payment. */
+    private void writeHistory(String orderId, String orderItemSeqId, String paymentPreferenceId, String statusId, String reason, String userId) {
+        OrderStatus history = new OrderStatus();
+        history.setOrderStatusId(sequenceService.nextId("OrderStatus"));
+        history.setOrderId(orderId);
+        history.setOrderItemSeqId(orderItemSeqId);
+        history.setOrderPaymentPreferenceId(paymentPreferenceId);
+        history.setStatusId(statusId);
+        history.setStatusDatetime(CoreClock.now());
+        history.setStatusUserLogin(userId);
+        history.setChangeReason(reason);
+        entityManager.persist(history);
     }
 
-    private void contact(String orderId, String purposeTypeId, String contactMechId) {
-        if (contactMechId == null) return;
-        if (em.find(OrderContactMech.class, new OrderContactMech.Key(orderId, purposeTypeId, contactMechId)) != null) return;
-        OrderContactMech c = new OrderContactMech();
-        c.setOrderId(orderId);
-        c.setContactMechPurposeTypeId(purposeTypeId);
-        c.setContactMechId(contactMechId);
-        em.persist(c);
+    private void addRoleIfMissing(String orderId, String partyId, String roleTypeId) {
+        if (entityManager.find(OrderRole.class, new OrderRole.Key(orderId, partyId, roleTypeId)) != null) {
+            return;
+        }
+        OrderRole role = new OrderRole();
+        role.setOrderId(orderId);
+        role.setPartyId(partyId);
+        role.setRoleTypeId(roleTypeId);
+        entityManager.persist(role);
     }
 
-    private OrderHeader header(String orderId, boolean lock) {
-        OrderHeader h = lock ? em.find(OrderHeader.class, orderId, LockModeType.PESSIMISTIC_WRITE) : em.find(OrderHeader.class, orderId);
-        if (h == null) throw new IllegalArgumentException("Unknown order " + orderId);
-        return h;
+    private void addContactIfMissing(String orderId, String purposeTypeId, String contactMechId) {
+        if (contactMechId == null) {
+            return;
+        }
+        if (entityManager.find(OrderContactMech.class, new OrderContactMech.Key(orderId, purposeTypeId, contactMechId)) != null) {
+            return;
+        }
+        OrderContactMech contact = new OrderContactMech();
+        contact.setOrderId(orderId);
+        contact.setContactMechPurposeTypeId(purposeTypeId);
+        contact.setContactMechId(contactMechId);
+        entityManager.persist(contact);
     }
 
-    private OrderItem item(String orderId, String orderItemSeqId) {
-        OrderItem i = em.find(OrderItem.class, new OrderItem.Key(orderId, orderItemSeqId));
-        if (i == null) throw new IllegalArgumentException("Order " + orderId + " has no item " + orderItemSeqId);
-        return i;
+    // ── loading ──
+
+    private OrderHeader loadHeader(String orderId) {
+        OrderHeader header = entityManager.find(OrderHeader.class, orderId);
+        if (header == null) {
+            throw new IllegalArgumentException("Unknown order " + orderId);
+        }
+        return header;
+    }
+
+    /** The header, locked until the transaction ends, so two changes to one order run one after the other. */
+    private OrderHeader loadHeaderForUpdate(String orderId) {
+        OrderHeader header = entityManager.find(OrderHeader.class, orderId, LockModeType.PESSIMISTIC_WRITE);
+        if (header == null) {
+            throw new IllegalArgumentException("Unknown order " + orderId);
+        }
+        return header;
+    }
+
+    private OrderItem loadItem(String orderId, String orderItemSeqId) {
+        OrderItem orderItem = entityManager.find(OrderItem.class, new OrderItem.Key(orderId, orderItemSeqId));
+        if (orderItem == null) {
+            throw new IllegalArgumentException("Order " + orderId + " has no item " + orderItemSeqId);
+        }
+        return orderItem;
     }
 }

@@ -3,26 +3,27 @@ package com.nexus.core.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.nexus.core.model.order.OrderHeader;
-import com.nexus.core.model.order.OrderItem;
-import com.nexus.core.model.order.OrderItemShipGroup;
 import com.nexus.core.service.CoreClock;
-import com.nexus.core.service.OrderService;
+import com.nexus.core.service.OperationsReadService;
+import com.nexus.core.service.StoreHealthService;
 import com.nexus.core.service.StoreNetworkService;
-import jakarta.persistence.EntityManager;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * The operations assistant (doc 25, feature 15): answers questions about orders, stores and stock from live data,
- * read-only. Its tools read the core model in read-only transactions; customer names are masked before the model sees
- * them and restored in the answer.
+ * read-only.
+ * <p>
+ * This class only defines the agent: its instructions, its tools, and how each tool's answer is written as JSON for the
+ * model. All reading is done by {@link OperationsReadService} (read-only transactions), {@link StoreNetworkService} and
+ * {@link StoreHealthService}. Customer names are masked with {@link Masker} before the model sees them and restored in
+ * the answer by {@link AgentRunner}.
  */
 @Component("coreOperationsAssistant")
 public class OperationsAssistant {
@@ -38,26 +39,26 @@ public class OperationsAssistant {
             - Customer details appear as tokens like [NAME_1]; use them as they are.
             - Times are in UTC.""";
 
-    private final EntityManager em;
-    private final OrderService orders;
-    private final StoreNetworkService network;
-    private final com.nexus.core.service.StoreHealthService health;
-    private final AgentRunner runner;
+    static final int MAX_STEPS = 8;
+    static final int MAX_TOKENS = 2048;
+    /** No tool returns more than this many rows, whatever the model asks for. */
+    static final int MAX_ROWS = 100;
+
+    private final OperationsReadService readService;
+    private final StoreNetworkService storeNetworkService;
+    private final StoreHealthService storeHealthService;
+    private final AgentRunner agentRunner;
     private final LlmProvider provider;
-    private final TransactionTemplate readOnly;
     private final String model;
 
-    public OperationsAssistant(EntityManager em, OrderService orders, StoreNetworkService network, com.nexus.core.service.StoreHealthService health, AgentRunner runner,
-                               @org.springframework.beans.factory.annotation.Qualifier("coreAnthropicProvider") LlmProvider provider,
-                               PlatformTransactionManager tm, @Value("${nexus.ai.model.operations:claude-sonnet-5-5}") String model) {
-        this.em = em;
-        this.orders = orders;
-        this.network = network;
-        this.health = health;
-        this.runner = runner;
+    public OperationsAssistant(OperationsReadService readService, StoreNetworkService storeNetworkService, StoreHealthService storeHealthService,
+                               AgentRunner agentRunner, @Qualifier("coreAnthropicProvider") LlmProvider provider,
+                               @Value("${nexus.ai.model.operations:claude-sonnet-5-5}") String model) {
+        this.readService = readService;
+        this.storeNetworkService = storeNetworkService;
+        this.storeHealthService = storeHealthService;
+        this.agentRunner = agentRunner;
         this.provider = provider;
-        this.readOnly = new TransactionTemplate(tm);
-        this.readOnly.setReadOnly(true);
         this.model = model;
     }
 
@@ -66,190 +67,243 @@ public class OperationsAssistant {
     }
 
     /** With another provider: a scripted one in tests and evaluation. */
-    public AgentRunner.Result ask(String question, String userId, LlmProvider with) {
-        return runner.run(agent(), question, userId, with);
+    public AgentRunner.Result ask(String question, String userId, LlmProvider withProvider) {
+        return agentRunner.run(agent(), question, userId, withProvider);
     }
 
     public boolean available() {
         return provider.available();
     }
 
+    /** The agent: instructions and tools. */
     public AgentRunner.Agent agent() {
-        return new AgentRunner.Agent(NAME, model, SYSTEM, List.of(
-                tool("find_order", "An order by its Nexus id or a channel id (Shopify order id, marketplace id, PO number): status, items, where it ships "
-                        + "from, tracking, and every location change with its reason.", schema("id", "string", "The order id or channel order id", true), this::findOrder),
-                tool("order_counts", "How many orders are in each status, for one store or all, placed in the last days.",
-                        schema2("productStoreId", "string", "A store id, or leave out for all", "sinceDays", "integer", "Placed in the last this many days (default 7)"), this::orderCounts),
-                tool("stuck_orders", "Approved orders with items still to ship, placed more than some hours ago, oldest first, with where each is meant to ship from.",
-                        schema2("olderThanHours", "integer", "Placed more than this many hours ago (default 24)", "limit", "integer", "At most this many (default 20)"), this::stuckOrders),
-                tool("stock_lookup", "Which locations can sell a product now, with a confidence level and its reasons. Give a SKU or a product id.",
-                        schema("sku", "string", "The SKU or product id", true), this::stockLookup),
-                tool("location_problems", "Per location over the last days: items it could not find or that were moved off it, and transfers received short.",
-                        schema("days", "integer", "Look back this many days (default 30)", false), this::locationProblems),
-                tool("list_locations", "All locations with their type and daily order limit.", JSONObject(), (i, m) -> readOnly.execute(s -> listLocations())),
-                tool("store_reliability", "How reliably each location picks the orders routed to it, least reliable first, with the reason.",
-                        schema("days", "integer", "Look back this many days (default 90)", false), (i, m) -> AgentRunner.JSON.valueToTree(health.reliability(i.path("days").asInt(90)))),
-                tool("phantom_stock", "Products a location shows in stock that are most likely not there, highest risk first, with the reasons; where a count pays.",
-                        schema2("facilityId", "string", "One location id, or leave out for all", "limit", "integer", "At most this many (default 20)"),
-                        (i, m) -> AgentRunner.JSON.valueToTree(health.phantomStock(i.path("facilityId").asText(null), 30, Math.min(i.path("limit").asInt(20), 100))))),
-                8, 2048);
+        List<AgentRunner.AgentTool> tools = List.of(
+                tool("find_order",
+                        "An order by its Nexus id or a channel id (Shopify order id, marketplace id, PO number): status, items, where it ships "
+                                + "from, tracking, and every location change with its reason.",
+                        ToolSchema.of().required("id", "string", "The order id or channel order id"),
+                        this::findOrder),
+                tool("order_counts",
+                        "How many orders are in each status, for one store or all, placed in the last days.",
+                        ToolSchema.of()
+                                .optional("productStoreId", "string", "A store id, or leave out for all")
+                                .optional("sinceDays", "integer", "Placed in the last this many days (default 7)"),
+                        this::orderCounts),
+                tool("stuck_orders",
+                        "Approved orders with items still to ship, placed more than some hours ago, oldest first, with where each is meant to ship from.",
+                        ToolSchema.of()
+                                .optional("olderThanHours", "integer", "Placed more than this many hours ago (default 24)")
+                                .optional("limit", "integer", "At most this many (default 20)"),
+                        this::stuckOrders),
+                tool("stock_lookup",
+                        "Which locations can sell a product now, with a confidence level and its reasons. Give a SKU or a product id.",
+                        ToolSchema.of().required("sku", "string", "The SKU or product id"),
+                        this::stockLookup),
+                tool("location_problems",
+                        "Per location over the last days: items it could not find or that were moved off it, and transfers received short.",
+                        ToolSchema.of().optional("days", "integer", "Look back this many days (default 30)"),
+                        this::locationProblems),
+                tool("list_locations",
+                        "All locations with their type and daily order limit.",
+                        ToolSchema.of(),
+                        this::listLocations),
+                tool("store_reliability",
+                        "How reliably each location picks the orders routed to it, least reliable first, with the reason.",
+                        ToolSchema.of().optional("days", "integer", "Look back this many days (default 90)"),
+                        this::storeReliability),
+                tool("phantom_stock",
+                        "Products a location shows in stock that are most likely not there, highest risk first, with the reasons; where a count pays.",
+                        ToolSchema.of()
+                                .optional("facilityId", "string", "One location id, or leave out for all")
+                                .optional("limit", "integer", "At most this many (default 20)"),
+                        this::phantomStock));
+        return new AgentRunner.Agent(NAME, model, SYSTEM, tools, MAX_STEPS, MAX_TOKENS);
     }
 
-    // ── tools ──
+    // ── tools: each reads its input, asks a service, and writes the answer as JSON ──
 
-    private JsonNode findOrder(JsonNode in, Masker masker) {
-        String id = in.path("id").asText("").trim();
-        return readOnly.execute(s -> {
-            Optional<String> orderId = Optional.ofNullable(em.find(OrderHeader.class, id)).map(OrderHeader::getOrderId);
-            if (orderId.isEmpty()) {
-                orderId = em.createQuery("SELECT i.orderId FROM OrderIdentification i WHERE i.idValue = :v AND i.thruDate IS NULL", String.class)
-                        .setParameter("v", id).setMaxResults(1).getResultList().stream().findFirst();
+    private JsonNode findOrder(JsonNode input, Masker masker) {
+        String anyId = input.path("id").asText("").trim();
+        Optional<OperationsReadService.OrderSummary> found = readService.findOrder(anyId);
+        if (found.isEmpty()) {
+            return newObject().put("found", false).put("message", "No order with id " + anyId);
+        }
+        OperationsReadService.OrderSummary order = found.get();
+
+        ObjectNode answer = newObject()
+                .put("found", true)
+                .put("orderId", order.orderId())
+                .put("status", order.statusId())
+                .put("store", order.productStoreId())
+                .put("orderDate", String.valueOf(order.orderDate()))
+                .put("externalId", order.externalId())
+                .put("grandTotal", order.grandTotal() == null ? null : order.grandTotal().toPlainString())
+                .put("currency", order.currencyUomId());
+        order.customerName().ifPresent(name -> answer.put("customer", masker.name(name)));
+
+        ArrayNode items = answer.putArray("items");
+        for (OperationsReadService.ItemLine item : order.items()) {
+            items.addObject()
+                    .put("item", item.orderItemSeqId())
+                    .put("description", item.description())
+                    .put("productId", item.productId())
+                    .put("quantity", plain(item.quantity()))
+                    .put("cancelled", plain(item.cancelledQuantity()))
+                    .put("status", item.statusId())
+                    .put("held", plain(item.heldQuantity()))
+                    .put("shipGroup", item.shipGroupSeqId());
+        }
+
+        ArrayNode shipGroups = answer.putArray("shipGroups");
+        for (OperationsReadService.ShipGroupLine group : order.shipGroups()) {
+            shipGroups.addObject()
+                    .put("shipGroup", group.shipGroupSeqId())
+                    .put("location", group.location())
+                    .put("method", group.shipmentMethodTypeId())
+                    .put("tracking", group.trackingNumber());
+        }
+
+        ArrayNode locationChanges = answer.putArray("locationChanges");
+        for (OperationsReadService.LocationChange change : order.locationChanges()) {
+            locationChanges.addObject()
+                    .put("at", String.valueOf(change.changedAt()))
+                    .put("from", change.from())
+                    .put("to", change.to())
+                    .put("reason", change.reasonEnumId())
+                    .put("why", change.comments());
+        }
+        return answer;
+    }
+
+    private JsonNode orderCounts(JsonNode input, Masker masker) {
+        String productStoreId = input.path("productStoreId").asText(null);
+        int sinceDays = input.path("sinceDays").asInt(7);
+        Map<String, Long> countByStatus = readService.orderCountsByStatus(productStoreId, CoreClock.now().minusDays(sinceDays));
+
+        ObjectNode answer = newObject().put("store", productStoreId == null ? "all" : productStoreId).put("sinceDays", sinceDays);
+        ObjectNode byStatus = answer.putObject("byStatus");
+        countByStatus.forEach(byStatus::put);
+        return answer;
+    }
+
+    private JsonNode stuckOrders(JsonNode input, Masker masker) {
+        int olderThanHours = input.path("olderThanHours").asInt(24);
+        int limit = Math.min(input.path("limit").asInt(20), MAX_ROWS);
+        List<OperationsReadService.StuckOrder> stuck = readService.stuckOrders(CoreClock.now().minusHours(olderThanHours), limit);
+
+        ArrayNode orders = AgentRunner.JSON.createArrayNode();
+        for (OperationsReadService.StuckOrder order : stuck) {
+            ObjectNode row = orders.addObject()
+                    .put("orderId", order.orderId())
+                    .put("orderDate", String.valueOf(order.orderDate()))
+                    .put("store", order.productStoreId());
+            ArrayNode shipsFrom = row.putArray("shipsFrom");
+            order.shipsFrom().forEach(shipsFrom::add);
+        }
+        return newObject().put("olderThanHours", olderThanHours).set("orders", orders);
+    }
+
+    private JsonNode stockLookup(JsonNode input, Masker masker) {
+        String skuOrProductId = input.path("sku").asText("").trim();
+        String productId = readService.productIdForSku(skuOrProductId);
+
+        ObjectNode answer = newObject().put("productId", productId);
+        ArrayNode locations = answer.putArray("locations");
+        for (StoreNetworkService.Availability availability : storeNetworkService.lookup(productId)) {
+            ObjectNode row = locations.addObject()
+                    .put("location", availability.facilityName())
+                    .put("canSell", plain(availability.sellable()))
+                    .put("confidence", availability.confidence().name());
+            ArrayNode because = row.putArray("because");
+            availability.reasons().forEach(because::add);
+        }
+        if (locations.isEmpty()) {
+            answer.put("message", "No location can sell it now");
+        }
+        return answer;
+    }
+
+    private JsonNode locationProblems(JsonNode input, Masker masker) {
+        int days = input.path("days").asInt(30);
+        Map<String, OperationsReadService.LocationProblems> problemsByLocation = readService.problemsByLocation(CoreClock.now().minusDays(days));
+
+        ObjectNode answer = newObject().put("days", days);
+        ObjectNode byLocation = answer.putObject("byLocation");
+        problemsByLocation.forEach((locationName, problems) -> {
+            ObjectNode row = byLocation.putObject(locationName);
+            if (problems.itemsNotFoundOrMovedOff() != null) {
+                row.put("itemsNotFoundOrMovedOff", problems.itemsNotFoundOrMovedOff());
             }
-            if (orderId.isEmpty()) orderId = em.createQuery("SELECT h.orderId FROM OrderHeader h WHERE h.externalId = :v", String.class)
-                    .setParameter("v", id).setMaxResults(1).getResultList().stream().findFirst();
-            if (orderId.isEmpty()) return AgentRunner.JSON.createObjectNode().put("found", false).put("message", "No order with id " + id);
-            OrderHeader h = em.find(OrderHeader.class, orderId.get());
-            ObjectNode o = AgentRunner.JSON.createObjectNode().put("found", true).put("orderId", h.getOrderId()).put("status", h.getStatusId())
-                    .put("store", h.getProductStoreId()).put("orderDate", String.valueOf(h.getOrderDate())).put("externalId", h.getExternalId())
-                    .put("grandTotal", h.getGrandTotal() == null ? null : h.getGrandTotal().toPlainString()).put("currency", h.getCurrencyUomId());
-            orders.partyInRole(h.getOrderId(), "PLACING_CUSTOMER").ifPresent(p -> o.put("customer", masker.name(partyName(p))));
-            ArrayNode items = o.putArray("items");
-            for (OrderItem i : orders.items(h.getOrderId())) {
-                items.addObject().put("item", i.getOrderItemSeqId()).put("description", i.getItemDescription()).put("productId", i.getProductId())
-                        .put("quantity", i.getQuantity().stripTrailingZeros().toPlainString())
-                        .put("cancelled", i.getCancelQuantity() == null ? "0" : i.getCancelQuantity().stripTrailingZeros().toPlainString())
-                        .put("status", i.getStatusId()).put("held", orders.reservedQuantity(h.getOrderId(), i.getOrderItemSeqId()).stripTrailingZeros().toPlainString())
-                        .put("shipGroup", i.getShipGroupSeqId());
+            if (problems.transfersReceivedShortWaiting() != null) {
+                row.put("transfersReceivedShortWaiting", problems.transfersReceivedShortWaiting());
             }
-            ArrayNode groups = o.putArray("shipGroups");
-            em.createQuery("SELECT g FROM OrderItemShipGroup g WHERE g.orderId = :o ORDER BY g.shipGroupSeqId", OrderItemShipGroup.class)
-                    .setParameter("o", h.getOrderId()).getResultList().forEach(g -> groups.addObject().put("shipGroup", g.getShipGroupSeqId())
-                            .put("location", g.getFacilityId() == null ? "not routed yet" : facilityName(g.getFacilityId())).put("method", g.getShipmentMethodTypeId())
-                            .put("tracking", g.getTrackingNumber()));
-            ArrayNode moves = o.putArray("locationChanges");
-            em.createQuery("SELECT c.changeDatetime, c.fromFacilityId, c.facilityId, c.changeReasonEnumId, c.comments FROM OrderFacilityChange c "
-                    + "WHERE c.orderId = :o ORDER BY c.changeDatetime", Object[].class).setParameter("o", h.getOrderId()).getResultList()
-                    .forEach(c -> moves.addObject().put("at", String.valueOf(c[0])).put("from", c[1] == null ? null : facilityName((String) c[1]))
-                            .put("to", c[2] == null ? null : facilityName((String) c[2])).put("reason", (String) c[3]).put("why", (String) c[4]));
-            return o;
         });
+        if (byLocation.isEmpty()) {
+            answer.put("message", "No problems recorded in the last " + days + " days");
+        }
+        return answer;
     }
 
-    private JsonNode orderCounts(JsonNode in, Masker masker) {
-        String store = in.path("productStoreId").asText(null);
-        int days = in.path("sinceDays").asInt(7);
-        return readOnly.execute(s -> {
-            ObjectNode o = AgentRunner.JSON.createObjectNode().put("store", store == null ? "all" : store).put("sinceDays", days);
-            ObjectNode counts = o.putObject("byStatus");
-            var q = em.createQuery("SELECT h.statusId, COUNT(h) FROM OrderHeader h WHERE h.orderDate >= :d" + (store == null ? "" : " AND h.productStoreId = :s")
-                    + " GROUP BY h.statusId ORDER BY h.statusId", Object[].class).setParameter("d", CoreClock.now().minusDays(days));
-            if (store != null) q.setParameter("s", store);
-            q.getResultList().forEach(r -> counts.put((String) r[0], (Long) r[1]));
-            return o;
-        });
+    private JsonNode listLocations(JsonNode input, Masker masker) {
+        ArrayNode locations = AgentRunner.JSON.createArrayNode();
+        for (OperationsReadService.Location location : readService.locations()) {
+            locations.addObject()
+                    .put("id", location.facilityId())
+                    .put("name", location.facilityName())
+                    .put("type", location.facilityTypeId())
+                    .put("dailyOrderLimit", location.dailyOrderLimit() == null ? "none" : String.valueOf(location.dailyOrderLimit()));
+        }
+        return locations;
     }
 
-    private JsonNode stuckOrders(JsonNode in, Masker masker) {
-        int hours = in.path("olderThanHours").asInt(24);
-        int limit = Math.min(in.path("limit").asInt(20), 100);
-        return readOnly.execute(s -> {
-            LocalDateTime before = CoreClock.now().minusHours(hours);
-            ArrayNode out = AgentRunner.JSON.createArrayNode();
-            em.createQuery("SELECT DISTINCT h.orderId, h.orderDate, h.productStoreId FROM OrderHeader h, OrderItem i WHERE i.orderId = h.orderId "
-                            + "AND h.statusId = 'ORDER_APPROVED' AND i.statusId = 'ITEM_APPROVED' AND h.orderDate < :b ORDER BY h.orderDate", Object[].class)
-                    .setParameter("b", before).setMaxResults(limit).getResultList().forEach(r -> {
-                        ObjectNode n = out.addObject().put("orderId", (String) r[0]).put("orderDate", String.valueOf(r[1])).put("store", (String) r[2]);
-                        ArrayNode where = n.putArray("shipsFrom");
-                        em.createQuery("SELECT g.facilityId FROM OrderItemShipGroup g WHERE g.orderId = :o", String.class).setParameter("o", (String) r[0])
-                                .getResultList().forEach(f -> where.add(f == null ? "not routed yet" : facilityName(f)));
-                    });
-            return AgentRunner.JSON.createObjectNode().put("olderThanHours", hours).set("orders", out);
-        });
+    private JsonNode storeReliability(JsonNode input, Masker masker) {
+        int days = input.path("days").asInt(90);
+        return AgentRunner.JSON.valueToTree(storeHealthService.reliability(days));
     }
 
-    private JsonNode stockLookup(JsonNode in, Masker masker) {
-        String key = in.path("sku").asText("").trim();
-        return readOnly.execute(s -> {
-            String productId = em.createQuery("SELECT g.productId FROM GoodIdentification g WHERE g.idValue = :v AND g.thruDate IS NULL", String.class)
-                    .setParameter("v", key).setMaxResults(1).getResultList().stream().findFirst().orElse(key);
-            ObjectNode o = AgentRunner.JSON.createObjectNode().put("productId", productId);
-            ArrayNode at = o.putArray("locations");
-            network.lookup(productId).forEach(a -> {
-                ObjectNode n = at.addObject().put("location", a.facilityName()).put("canSell", a.sellable().stripTrailingZeros().toPlainString())
-                        .put("confidence", a.confidence().name());
-                ArrayNode r = n.putArray("because");
-                a.reasons().forEach(r::add);
-            });
-            if (at.isEmpty()) o.put("message", "No location can sell it now");
-            return o;
-        });
-    }
-
-    private JsonNode locationProblems(JsonNode in, Masker masker) {
-        int days = in.path("days").asInt(30);
-        return readOnly.execute(s -> {
-            LocalDateTime since = CoreClock.now().minusDays(days);
-            ObjectNode o = AgentRunner.JSON.createObjectNode().put("days", days);
-            ObjectNode per = o.putObject("byLocation");
-            em.createQuery("SELECT x.facilityId, COUNT(x) FROM ExcludedOrderFacility x WHERE x.fromDate >= :d GROUP BY x.facilityId", Object[].class)
-                    .setParameter("d", since).getResultList()
-                    .forEach(r -> child(per, facilityName((String) r[0])).put("itemsNotFoundOrMovedOff", (Long) r[1]));
-            em.createQuery("SELECT t.facilityIdTo, COUNT(t) FROM InventoryTransfer t WHERE t.statusId = 'IXF_RECEIVED_SHORT' AND t.receiveDate >= :d GROUP BY t.facilityIdTo",
-                    Object[].class).setParameter("d", since).getResultList()
-                    .forEach(r -> child(per, facilityName((String) r[0])).put("transfersReceivedShortWaiting", (Long) r[1]));
-            if (per.isEmpty()) o.put("message", "No problems recorded in the last " + days + " days");
-            return o;
-        });
-    }
-
-    private JsonNode listLocations() {
-        ArrayNode out = AgentRunner.JSON.createArrayNode();
-        em.createQuery("SELECT f.facilityId, f.facilityName, f.facilityTypeId, f.maximumOrderLimit FROM Facility f WHERE f.facilityTypeId NOT IN "
-                + "('VIRTUAL_FACILITY', 'IN_TRANSIT', 'DROPSHIP') ORDER BY f.facilityName", Object[].class).getResultList()
-                .forEach(r -> out.addObject().put("id", (String) r[0]).put("name", (String) r[1]).put("type", (String) r[2])
-                        .put("dailyOrderLimit", r[3] == null ? "none" : String.valueOf(r[3])));
-        return out;
+    private JsonNode phantomStock(JsonNode input, Masker masker) {
+        String facilityId = input.path("facilityId").asText(null);
+        int limit = Math.min(input.path("limit").asInt(20), MAX_ROWS);
+        return AgentRunner.JSON.valueToTree(storeHealthService.phantomStock(facilityId, 30, limit));
     }
 
     // ── helpers ──
 
-    private static ObjectNode child(ObjectNode parent, String name) {
-        return parent.has(name) ? (ObjectNode) parent.get(name) : parent.putObject(name);
+    private static ObjectNode newObject() {
+        return AgentRunner.JSON.createObjectNode();
     }
 
-    private String facilityName(String facilityId) {
-        var f = em.find(com.nexus.core.model.facility.Facility.class, facilityId);
-        return f == null ? facilityId : f.getFacilityName();
+    private static String plain(BigDecimal value) {
+        return value == null ? "0" : value.stripTrailingZeros().toPlainString();
     }
 
-    private String partyName(String partyId) {
-        var p = em.find(com.nexus.core.model.party.Person.class, partyId);
-        if (p != null) return ((p.getFirstName() == null ? "" : p.getFirstName()) + " " + (p.getLastName() == null ? "" : p.getLastName())).trim();
-        var g = em.find(com.nexus.core.model.party.PartyGroup.class, partyId);
-        return g == null ? partyId : g.getGroupName();
+    private static AgentRunner.AgentTool tool(String name, String description, ToolSchema schema, AgentRunner.Handler handler) {
+        return new AgentRunner.AgentTool(new LlmProvider.Tool(name, description, schema.json()), handler);
     }
 
-    private static AgentRunner.AgentTool tool(String name, String description, JsonNode schema, AgentRunner.Handler h) {
-        return new AgentRunner.AgentTool(new LlmProvider.Tool(name, description, schema), h);
-    }
+    /** Builds a tool's JSON input schema: an object with named fields, some required. */
+    static final class ToolSchema {
+        private final ObjectNode schema = AgentRunner.JSON.createObjectNode().put("type", "object");
+        private final ObjectNode properties = schema.putObject("properties");
 
-    private static ObjectNode JSONObject() {
-        ObjectNode s = AgentRunner.JSON.createObjectNode().put("type", "object");
-        s.putObject("properties");
-        return s;
-    }
+        static ToolSchema of() {
+            return new ToolSchema();
+        }
 
-    private static JsonNode schema(String field, String type, String description, boolean required) {
-        ObjectNode s = JSONObject();
-        ((ObjectNode) s.get("properties")).putObject(field).put("type", type).put("description", description);
-        if (required) s.putArray("required").add(field);
-        return s;
-    }
+        ToolSchema required(String field, String type, String description) {
+            optional(field, type, description);
+            ArrayNode required = schema.has("required") ? (ArrayNode) schema.get("required") : schema.putArray("required");
+            required.add(field);
+            return this;
+        }
 
-    private static JsonNode schema2(String f1, String t1, String d1, String f2, String t2, String d2) {
-        ObjectNode s = JSONObject();
-        ((ObjectNode) s.get("properties")).putObject(f1).put("type", t1).put("description", d1);
-        ((ObjectNode) s.get("properties")).putObject(f2).put("type", t2).put("description", d2);
-        return s;
+        ToolSchema optional(String field, String type, String description) {
+            properties.putObject(field).put("type", type).put("description", description);
+            return this;
+        }
+
+        JsonNode json() {
+            return schema;
+        }
     }
 }

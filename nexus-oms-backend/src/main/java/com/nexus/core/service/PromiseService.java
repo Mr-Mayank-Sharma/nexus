@@ -145,7 +145,7 @@ public class PromiseService {
         int band = band(km);
         List<Integer> days = new ArrayList<>();
         for (Object[] r : rows) {
-            double d = RoutingService.km(f.getLatitude().doubleValue(), f.getLongitude().doubleValue(), ((BigDecimal) r[2]).doubleValue(), ((BigDecimal) r[3]).doubleValue());
+            double d = GeoDistance.km(f.getLatitude().doubleValue(), f.getLongitude().doubleValue(), ((BigDecimal) r[2]).doubleValue(), ((BigDecimal) r[3]).doubleValue());
             if (band(d) != band) continue;
             days.add(workdaysBetween(((LocalDateTime) r[0]).toLocalDate(), ((LocalDateTime) r[1]).toLocalDate()));
         }
@@ -177,7 +177,7 @@ public class PromiseService {
 
     private Double distance(Facility f, Destination to) {
         if (to == null || to.latitude() == null || to.longitude() == null || f.getLatitude() == null || f.getLongitude() == null) return null;
-        return RoutingService.km(f.getLatitude().doubleValue(), f.getLongitude().doubleValue(), to.latitude(), to.longitude());
+        return GeoDistance.km(f.getLatitude().doubleValue(), f.getLongitude().doubleValue(), to.latitude(), to.longitude());
     }
 
     static boolean isWorkday(LocalDate d) {

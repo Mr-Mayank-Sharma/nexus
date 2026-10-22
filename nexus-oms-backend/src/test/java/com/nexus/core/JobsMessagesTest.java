@@ -33,6 +33,7 @@ class JobsMessagesTest {
     @Autowired JobService jobs;
     @Autowired MessageService messages;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
@@ -58,7 +59,7 @@ class JobsMessagesTest {
                 List.of(new OrderService.NewShipGroup("STANDARD", facility, null, null, null, true, false, null, null, null, null)),
                 List.of(new OrderService.NewItem(product, "Lamp", BigDecimal.valueOf(n), BigDecimal.TEN, null, null, 0)), null, null, null, null,
                 "ORDER_APPROVED", null, "t")));
-        tx.executeWithoutResult(s -> orders.reserve(o, "00001", facility, null, "t"));
+        tx.executeWithoutResult(s -> reservations.reserve(o, "00001", facility, null, "t"));
         return o;
     }
 
@@ -154,6 +155,6 @@ class JobsMessagesTest {
         assertTrue(messages.consume(r.systemMessageId()), () -> messages.view(r.systemMessageId()).orElseThrow().lastError());
         assertEquals(0, atp.add(new BigDecimal("3")).compareTo(inventory.atp(product, facility)));
         assertNull(jdbc.queryForObject("SELECT facility_id FROM order_item_ship_group WHERE order_id = ? AND ship_group_seq_id = '00001'", String.class, o), "back in the routing queue");
-        assertEquals(java.util.Set.of(facility), orders.excludedFacilities(o, "00001"));
+        assertEquals(java.util.Set.of(facility), reservations.excludedFacilities(o, "00001"));
     }
 }

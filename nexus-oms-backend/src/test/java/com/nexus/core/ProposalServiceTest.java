@@ -28,6 +28,7 @@ class ProposalServiceTest {
     static final ObjectMapper JSON = new ObjectMapper();
     @Autowired ProposalService proposals;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
@@ -52,7 +53,7 @@ class ProposalServiceTest {
         String o = tx.execute(s -> orders.create(new OrderService.NewOrder(null, null, null, "USD", null, null, null, null, null, null,
                 List.of(new OrderService.NewShipGroup("STANDARD", facility, null, null, null, true, false, null, null, null, null)),
                 List.of(new OrderService.NewItem(product, "Cap", BigDecimal.ONE, BigDecimal.TEN, null, null, 0)), null, null, null, null, "ORDER_APPROVED", null, "t")));
-        tx.executeWithoutResult(s -> orders.reserve(o, "00001", facility, null, "t"));
+        tx.executeWithoutResult(s -> reservations.reserve(o, "00001", facility, null, "t"));
         return o;
     }
 

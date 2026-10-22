@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FulfilmentReturnTest {
 
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired ShipmentService shipments;
     @Autowired PicklistService picklists;
     @Autowired ReturnService returns;
@@ -69,8 +70,8 @@ class FulfilmentReturnTest {
                 null, List.of(new OrderService.NewPayment("CREDIT_CARD", q("120"), "PAYMENT_SETTLED", "ch_1")), null, null, null, null, "t")));
         tx.executeWithoutResult(s -> {
             orders.changeStatus(o, "ORDER_APPROVED", null, "t");
-            orders.reserve(o, "00001", store, null, "t");
-            orders.reserve(o, "00002", store, null, "t");
+            reservations.reserve(o, "00001", store, null, "t");
+            reservations.reserve(o, "00002", store, null, "t");
         });
         return o;
     }
@@ -95,7 +96,7 @@ class FulfilmentReturnTest {
         assertEquals("ITEM_COMPLETED", jdbc.queryForObject("SELECT status_id FROM order_item WHERE order_id = ? AND order_item_seq_id = '00002'", String.class, o));
         assertEquals(0, shoesOnHand.subtract(q("2")).compareTo(inventory.onHand(shoe, store)), "on hand goes down when it ships");
         assertEquals(0, shoesAtp.compareTo(inventory.atp(shoe, store)), "available already went down when it was held");
-        assertEquals(0, BigDecimal.ZERO.compareTo(orders.reservedQuantity(o, "00001")), "the hold is consumed");
+        assertEquals(0, BigDecimal.ZERO.compareTo(reservations.reservedQuantity(o, "00001")), "the hold is consumed");
         assertEquals(2L, jdbc.queryForObject("SELECT COUNT(*) FROM shipment_package WHERE shipment_id = ?", Long.class, sh));
         assertEquals("1Z2", jdbc.queryForObject("SELECT tracking_code FROM shipment_package_route_seg WHERE shipment_id = ? AND shipment_package_seq_id = '00002'", String.class, sh));
         assertEquals("1Z1", jdbc.queryForObject("SELECT tracking_number FROM order_item_ship_group WHERE order_id = ?", String.class, o));
@@ -111,7 +112,7 @@ class FulfilmentReturnTest {
         tx.executeWithoutResult(s -> shipments.ship(first, "FEDEX", "STANDARD", Map.of("00001", "FX1"), null, "t"));
         assertEquals("ORDER_APPROVED", status("order_header", "order_id", o));
         assertEquals("ITEM_APPROVED", jdbc.queryForObject("SELECT status_id FROM order_item WHERE order_id = ? AND order_item_seq_id = '00001'", String.class, o));
-        assertEquals(0, q("1").compareTo(orders.reservedQuantity(o, "00001")));
+        assertEquals(0, q("1").compareTo(reservations.reservedQuantity(o, "00001")));
         IllegalArgumentException over = assertThrows(IllegalArgumentException.class,
                 () -> tx.execute(s -> shipments.createSalesShipment(o, "00001", Map.of("00001", q("2")), "t")));
         assertTrue(over.getMessage().contains("has 1 left to ship"), over.getMessage());
@@ -136,9 +137,9 @@ class FulfilmentReturnTest {
         assertEquals("PICKLIST_COMPLETED", status("picklist", "picklist_id", p));
         assertEquals("ITEM_COMPLETED", jdbc.queryForObject("SELECT status_id FROM order_item WHERE order_id = ? AND order_item_seq_id = '00001'", String.class, o));
         assertEquals("ITEM_APPROVED", jdbc.queryForObject("SELECT status_id FROM order_item WHERE order_id = ? AND order_item_seq_id = '00002'", String.class, o));
-        assertEquals(0, BigDecimal.ZERO.compareTo(orders.reservedQuantity(o, "00002")), "the belt's hold is released");
+        assertEquals(0, BigDecimal.ZERO.compareTo(reservations.reservedQuantity(o, "00002")), "the belt's hold is released");
         assertEquals(0, beltAtp.add(q("1")).compareTo(inventory.atp(belt, store)));
-        assertEquals(java.util.Set.of(store), orders.excludedFacilities(o, "00002"), "routing won't send it back here");
+        assertEquals(java.util.Set.of(store), reservations.excludedFacilities(o, "00002"), "routing won't send it back here");
         assertEquals("ORDER_APPROVED", status("order_header", "order_id", o), "the belt still has to ship from somewhere");
     }
 

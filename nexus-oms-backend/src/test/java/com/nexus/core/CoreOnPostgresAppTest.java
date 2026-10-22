@@ -54,9 +54,11 @@ class CoreOnPostgresAppTest {
     @Autowired com.nexus.core.service.FacilityService facilities;
     @Autowired com.nexus.core.service.InventoryService inventory;
     @Autowired com.nexus.core.service.OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired com.nexus.core.service.ShipmentService shipments;
     @Autowired com.nexus.core.service.ReturnService returns;
     @Autowired com.nexus.core.service.RoutingService routing;
+    @Autowired com.nexus.core.service.RoutingSetupService routingSetup;
     @Autowired com.nexus.core.service.ProductStoreService stores;
 
     @Test
@@ -111,7 +113,7 @@ class CoreOnPostgresAppTest {
                 java.util.Map.of("SHOPIFY_ORD_ID", "PG-777"), null, null, null, "pg")));
         tx.executeWithoutResult(s -> {
             orders.changeStatus(order, "ORDER_APPROVED", null, "pg");
-            orders.reserve(order, "00001", ids[1], null, "pg");
+            reservations.reserve(order, "00001", ids[1], null, "pg");
             assertTrue(facilities.takeOrder(ids[1], java.time.LocalDate.now()));
         });
         String sh = tx.execute(s -> shipments.confirm(new com.nexus.core.service.ShipmentService.Confirmation("PG-SH", order, "00001", null, "UPS", "STANDARD",
@@ -144,11 +146,11 @@ class CoreOnPostgresAppTest {
                 null, null, null, null, java.util.List.of(new com.nexus.core.service.OrderService.NewItem(p, "Cap", java.math.BigDecimal.ONE, java.math.BigDecimal.TEN, null, null, 0)),
                 null, null, null, null, null, null, "pg")));
         tx.executeWithoutResult(s -> orders.changeStatus(order, "ORDER_APPROVED", null, "pg"));
-        String g = routing.createGroup("PG-STORE", "PG", null);
-        String r = routing.addRouting(g, "Queue", 1, java.util.List.of(com.nexus.core.service.RoutingService.Cond.filter("facilityId", "in", "_NA_")));
-        routing.addRule(r, "Nearest", 1, true, java.util.List.of(com.nexus.core.service.RoutingService.Cond.sortBy("distance", "asc"),
-                com.nexus.core.service.RoutingService.Cond.sortBy("brokenSizeRun", "asc")), java.util.Map.of("ORA_MV_TO_QUEUE", "UNFILLABLE_PARKING"));
-        routing.activate(r);
+        String g = routingSetup.createGroup("PG-STORE", "PG", null);
+        String r = routingSetup.addRouting(g, "Queue", 1, java.util.List.of(com.nexus.core.service.RoutingSetupService.Cond.filter("facilityId", "in", "_NA_")));
+        routingSetup.addRule(r, "Nearest", 1, true, java.util.List.of(com.nexus.core.service.RoutingSetupService.Cond.sortBy("distance", "asc"),
+                com.nexus.core.service.RoutingSetupService.Cond.sortBy("brokenSizeRun", "asc")), java.util.Map.of("ORA_MV_TO_QUEUE", "UNFILLABLE_PARKING"));
+        routingSetup.activate(r);
         assertEquals(1, routing.simulate(g, "pg").routed());
         org.junit.jupiter.api.Assertions.assertNull(jdbc.queryForObject("SELECT facility_id FROM order_item_ship_group WHERE order_id = ?", String.class, order));
         assertEquals(1, routing.run(g, "pg").routed());

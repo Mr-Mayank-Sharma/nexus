@@ -19,26 +19,57 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Stock in the OFBiz way: an {@code InventoryItem} holds the totals, and every change is an {@code InventoryItemDetail}
- * row saying how on hand (QOH) and available to promise (ATP) moved, why, and for which order, shipment or count.
- * Reserving for an order lowers ATP only; shipping then lowers QOH. Bulk stock is one item per product and facility.
- * {@code ProductFacility.lastInventoryCount} follows ATP so routing can read stock per facility in one row.
- * Transfers between facilities are in {@link TransferService}.
+ * Stock in the OFBiz way.
+ * <p>
+ * An {@code inventory_item} holds the totals for one product at one facility (one per lot when stock has lots):
+ * <ul>
+ *   <li>quantity on hand (QOH): what is physically there;</li>
+ *   <li>available to promise (ATP): what can still be sold, which is on hand less what orders hold.</li>
+ * </ul>
+ * Every change is an {@code inventory_item_detail} row saying how QOH and ATP moved, why (a {@link Reason}), and for
+ * which order, shipment, return or count. Holding stock for an order lowers ATP only; shipping it then lowers QOH.
+ * <p>
+ * {@code product_facility} keeps, per product and facility, the last ATP and what routing may promise (ATP less
+ * safety stock), so routing reads one row per facility instead of summing items. Transfers between facilities are in
+ * {@link TransferService}.
  */
 @Service("coreInventoryService")
 @Transactional
 public class InventoryService {
 
+    /** Bulk stock (not tracked by serial number): one inventory item per product and facility. */
     public static final String BULK = "NON_SERIAL_INV_ITEM";
 
-    private final EntityManager em;
-    private final SequenceService sequences;
-    public InventoryService(EntityManager em, SequenceService sequences) {
-        this.em = em;
-        this.sequences = sequences;
+    /** Why stock changed ({@code INV_DETAIL_REASON} enumerations). */
+    public static final class Reason {
+        public static final String RECEIPT = "IID_RECEIPT";
+        public static final String SHIPMENT = "IID_SHIPMENT";
+        public static final String RESERVE = "IID_RESERVE";
+        public static final String RELEASE = "IID_RELEASE";
+        public static final String RETURN = "IID_RETURN";
+        public static final String ADJUST = "IID_ADJUST";
+        public static final String COUNT = "IID_COUNT";
+        public static final String TRANSFER_OUT = "IID_TRANSFER_OUT";
+        public static final String TRANSFER_IN = "IID_TRANSFER_IN";
+        public static final String HOLD = "IID_HOLD";
+        public static final String MIGRATION = "IID_MIGRATION";
+
+        private Reason() {
+        }
     }
 
-    /** What caused a change: any of these may be null. */
+    /** The variance reason a count records when the counter gives none. */
+    static final String DEFAULT_VARIANCE_REASON = "VAR_COUNT";
+
+    private final EntityManager entityManager;
+    private final SequenceService sequenceService;
+
+    public InventoryService(EntityManager entityManager, SequenceService sequenceService) {
+        this.entityManager = entityManager;
+        this.sequenceService = sequenceService;
+    }
+
+    /** What caused a stock change: an order line, a shipment, a return, a person, a note. Any of them may be null. */
     public record Cause(String orderId, String orderItemSeqId, String shipmentId, String returnId, String userId, String description) {
         public static final Cause NONE = new Cause(null, null, null, null, null, null);
 
@@ -49,22 +80,40 @@ public class InventoryService {
         public static Cause note(String description) {
             return new Cause(null, null, null, null, null, description);
         }
+
+        /** The same cause, made by this person. */
+        public Cause byUser(String changedByUserId) {
+            return new Cause(orderId, orderItemSeqId, shipmentId, returnId, changedByUserId, description);
+        }
     }
 
+    /** There is not enough stock for what was asked. */
     public static class InsufficientStockException extends IllegalStateException {
         public InsufficientStockException(String message) {
             super(message);
         }
     }
 
-    /** The bulk item of a product at a facility, locked for change; created empty when missing. */
+    // ── the inventory item ──
+
+    /**
+     * The bulk inventory item of a product at a facility, locked for change until the transaction ends; created empty
+     * when the facility has never had this product. The query flushes first, so an item created earlier in the same
+     * transaction is found even when the caller runs with COMMIT flush mode.
+     */
     public InventoryItem bulkItem(String productId, String facilityId) {
-        List<InventoryItem> found = em.createQuery("SELECT i FROM InventoryItem i WHERE i.productId = :p AND i.facilityId = :f "
-                        + "AND i.inventoryItemTypeId = :t AND i.lotId IS NULL AND i.serialNumber IS NULL ORDER BY i.inventoryItemId", InventoryItem.class)
-                .setParameter("p", productId).setParameter("f", facilityId).setParameter("t", BULK)
-                .setFlushMode(FlushModeType.AUTO).setLockMode(LockModeType.PESSIMISTIC_WRITE).setMaxResults(1).getResultList();
-        if (!found.isEmpty()) return found.get(0);
-        return newBulkItem(productId, facilityId);
+        List<InventoryItem> found = entityManager.createQuery(
+                        "SELECT i FROM InventoryItem i WHERE i.productId = :productId AND i.facilityId = :facilityId "
+                                + "AND i.inventoryItemTypeId = :bulkType AND i.lotId IS NULL AND i.serialNumber IS NULL "
+                                + "ORDER BY i.inventoryItemId", InventoryItem.class)
+                .setParameter("productId", productId)
+                .setParameter("facilityId", facilityId)
+                .setParameter("bulkType", BULK)
+                .setFlushMode(FlushModeType.AUTO)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .setMaxResults(1)
+                .getResultList();
+        return found.isEmpty() ? createBulkItem(productId, facilityId) : found.get(0);
     }
 
     /** Stock a copy from another system starts from; a lot id makes it a separate item for that lot. */
@@ -73,216 +122,295 @@ public class InventoryService {
     }
 
     /**
-     * Opening stock for a product at a facility that has none yet: one new item and one detail row with the reason,
-     * so the history starts from this balance. The caller checks the item doesn't exist yet.
+     * Opening stock for a product at a facility that has none yet: one new item and one detail row with the reason, so
+     * the history starts from this balance. The caller makes sure the item does not exist yet.
      */
-    public String openingBalance(Opening o, String reasonEnumId, Cause cause) {
-        InventoryItem i = newBulkItem(o.productId(), o.facilityId());
-        if (o.lotId() != null) {
-            if (em.find(Lot.class, o.lotId()) == null) {
-                Lot lot = new Lot();
-                lot.setLotId(o.lotId());
-                lot.setCreationDate(CoreClock.now());
-                lot.setExpirationDate(o.expireDate());
-                em.persist(lot);
-            }
-            i.setLotId(o.lotId());
+    public String openingBalance(Opening opening, String reasonEnumId, Cause cause) {
+        InventoryItem inventoryItem = createBulkItem(opening.productId(), opening.facilityId());
+        if (opening.lotId() != null) {
+            createLotIfMissing(opening.lotId(), opening.expireDate());
+            inventoryItem.setLotId(opening.lotId());
         }
-        i.setExpireDate(o.expireDate());
-        i.setUnitCost(o.unitCost());
-        i.setCurrencyUomId(o.unitCost() == null ? null : o.currencyUomId());
-        i.setDatetimeReceived(CoreClock.now());
-        i.setComments(o.comments());
-        change(i, o.onHand() == null ? BigDecimal.ZERO : o.onHand(), o.available() == null ? BigDecimal.ZERO : o.available(), reasonEnumId, cause);
-        return i.getInventoryItemId();
+        inventoryItem.setExpireDate(opening.expireDate());
+        inventoryItem.setUnitCost(opening.unitCost());
+        inventoryItem.setCurrencyUomId(opening.unitCost() == null ? null : opening.currencyUomId());
+        inventoryItem.setDatetimeReceived(CoreClock.now());
+        inventoryItem.setComments(opening.comments());
+
+        BigDecimal onHand = opening.onHand() == null ? BigDecimal.ZERO : opening.onHand();
+        BigDecimal available = opening.available() == null ? BigDecimal.ZERO : opening.available();
+        applyChange(inventoryItem, onHand, available, reasonEnumId, cause);
+        return inventoryItem.getInventoryItemId();
     }
 
-    private InventoryItem newBulkItem(String productId, String facilityId) {
-        InventoryItem i = new InventoryItem();
-        i.setInventoryItemId(sequences.nextId("InventoryItem"));
-        i.setInventoryItemTypeId(BULK);
-        i.setProductId(productId);
-        i.setFacilityId(facilityId);
-        i.setQuantityOnHandTotal(BigDecimal.ZERO);
-        i.setAvailableToPromiseTotal(BigDecimal.ZERO);
-        i.setAccountingQuantityTotal(BigDecimal.ZERO);
-        em.persist(i);
-        return i;
-    }
+    // ── changes ──
 
-    /** Stock arrived (a receipt, a return, a feed): on hand and available both go up. */
+    /** Stock arrived (a receipt, a return, a feed): on hand and available both go up. Returns the inventory item id. */
     public String receive(String productId, String facilityId, BigDecimal quantity, BigDecimal unitCost, String currencyUomId,
                           String reasonEnumId, Cause cause) {
-        positive(quantity);
-        InventoryItem i = bulkItem(productId, facilityId);
+        requirePositive(quantity);
+        InventoryItem inventoryItem = bulkItem(productId, facilityId);
         if (unitCost != null) {
-            i.setUnitCost(unitCost);
-            i.setCurrencyUomId(currencyUomId);
+            inventoryItem.setUnitCost(unitCost);
+            inventoryItem.setCurrencyUomId(currencyUomId);
         }
-        if (i.getDatetimeReceived() == null) i.setDatetimeReceived(CoreClock.now());
-        change(i, quantity, quantity, reasonEnumId == null ? "IID_RECEIPT" : reasonEnumId, cause);
-        return i.getInventoryItemId();
-    }
-
-    /** Holds stock for an order: available goes down, on hand stays until it ships. */
-    public void reserve(String productId, String facilityId, BigDecimal quantity, Cause cause) {
-        positive(quantity);
-        InventoryItem i = bulkItem(productId, facilityId);
-        if (i.getAvailableToPromiseTotal().compareTo(quantity) < 0) {
-            throw new InsufficientStockException("Only " + i.getAvailableToPromiseTotal().stripTrailingZeros().toPlainString()
-                    + " of product " + productId + " available at " + facilityId + ", not " + quantity.stripTrailingZeros().toPlainString());
+        if (inventoryItem.getDatetimeReceived() == null) {
+            inventoryItem.setDatetimeReceived(CoreClock.now());
         }
-        change(i, BigDecimal.ZERO, quantity.negate(), "IID_RESERVE", cause);
-    }
-
-    /** Gives a reservation back. */
-    public void release(String productId, String facilityId, BigDecimal quantity, Cause cause) {
-        positive(quantity);
-        change(bulkItem(productId, facilityId), BigDecimal.ZERO, quantity, "IID_RELEASE", cause);
-    }
-
-    /** Reserved stock left the building: on hand goes down (available already did when it was reserved). */
-    public void ship(String productId, String facilityId, BigDecimal quantity, Cause cause) {
-        positive(quantity);
-        InventoryItem i = bulkItem(productId, facilityId);
-        if (i.getQuantityOnHandTotal().compareTo(quantity) < 0) {
-            throw new InsufficientStockException("Only " + i.getQuantityOnHandTotal().stripTrailingZeros().toPlainString()
-                    + " of product " + productId + " on hand at " + facilityId);
-        }
-        change(i, quantity.negate(), BigDecimal.ZERO, "IID_SHIPMENT", cause);
-    }
-
-    /** A change by hand or from a feed, by any amount either way. */
-    public void adjust(String productId, String facilityId, BigDecimal onHandDiff, BigDecimal availableDiff, String reasonEnumId, Cause cause) {
-        change(bulkItem(productId, facilityId), onHandDiff, availableDiff, reasonEnumId == null ? "IID_ADJUST" : reasonEnumId, cause);
+        applyChange(inventoryItem, quantity, quantity, reasonEnumId == null ? Reason.RECEIPT : reasonEnumId, cause);
+        return inventoryItem.getInventoryItemId();
     }
 
     /**
-     * A count found {@code counted} on hand. The difference moves on hand and available alike, is kept as a
-     * variance with its reason, and the count is returned.
+     * Holds stock for an order: available goes down, on hand stays until it ships.
+     *
+     * @throws InsufficientStockException when fewer than {@code quantity} are available
+     */
+    public void reserve(String productId, String facilityId, BigDecimal quantity, Cause cause) {
+        requirePositive(quantity);
+        InventoryItem inventoryItem = bulkItem(productId, facilityId);
+        BigDecimal available = inventoryItem.getAvailableToPromiseTotal();
+        if (available.compareTo(quantity) < 0) {
+            throw new InsufficientStockException("Only " + plain(available) + " of product " + productId + " available at " + facilityId
+                    + ", not " + plain(quantity));
+        }
+        applyChange(inventoryItem, BigDecimal.ZERO, quantity.negate(), Reason.RESERVE, cause);
+    }
+
+    /** Gives held stock back to available. */
+    public void release(String productId, String facilityId, BigDecimal quantity, Cause cause) {
+        requirePositive(quantity);
+        applyChange(bulkItem(productId, facilityId), BigDecimal.ZERO, quantity, Reason.RELEASE, cause);
+    }
+
+    /**
+     * Held stock left the building: on hand goes down. Available already went down when the stock was held.
+     *
+     * @throws InsufficientStockException when fewer than {@code quantity} are on hand
+     */
+    public void ship(String productId, String facilityId, BigDecimal quantity, Cause cause) {
+        requirePositive(quantity);
+        InventoryItem inventoryItem = bulkItem(productId, facilityId);
+        BigDecimal onHand = inventoryItem.getQuantityOnHandTotal();
+        if (onHand.compareTo(quantity) < 0) {
+            throw new InsufficientStockException("Only " + plain(onHand) + " of product " + productId + " on hand at " + facilityId);
+        }
+        applyChange(inventoryItem, quantity.negate(), BigDecimal.ZERO, Reason.SHIPMENT, cause);
+    }
+
+    /** A change by hand or from a feed, by any amount either way. */
+    public void adjust(String productId, String facilityId, BigDecimal onHandChange, BigDecimal availableChange, String reasonEnumId, Cause cause) {
+        applyChange(bulkItem(productId, facilityId), onHandChange, availableChange, reasonEnumId == null ? Reason.ADJUST : reasonEnumId, cause);
+    }
+
+    /**
+     * A count found {@code counted} on hand. The difference moves on hand and available alike and is kept as a
+     * variance with its reason. A count that matches the shelf changes no stock but is still recorded, because a
+     * recent clean count is evidence the stock is real. Returns the count's id.
      */
     public String recordCount(String productId, String facilityId, BigDecimal counted, String varianceReasonId, String partyId, String comments) {
-        if (counted == null || counted.signum() < 0) throw new IllegalArgumentException("A count is zero or more");
-        InventoryItem i = bulkItem(productId, facilityId);
-        BigDecimal diff = counted.subtract(i.getQuantityOnHandTotal());
-        PhysicalInventory p = new PhysicalInventory();
-        p.setPhysicalInventoryId(sequences.nextId("PhysicalInventory"));
-        p.setPhysicalInventoryDate(CoreClock.now());
-        p.setPartyId(partyId);
-        p.setGeneralComments(comments);
-        em.persist(p);
-        InventoryItemVariance v = new InventoryItemVariance();
-        v.setInventoryItemId(i.getInventoryItemId());
-        v.setPhysicalInventoryId(p.getPhysicalInventoryId());
-        v.setVarianceReasonId(diff.signum() == 0 ? null : varianceReasonId == null ? "VAR_COUNT" : varianceReasonId);
-        v.setQuantityOnHandVar(diff);
-        v.setAvailableToPromiseVar(diff);
-        v.setComments(comments);
-        em.persist(v);
-        if (diff.signum() != 0) {
-            InventoryItemDetail d = change(i, diff, diff, "IID_COUNT", Cause.note(comments));
-            d.setPhysicalInventoryId(p.getPhysicalInventoryId());
+        if (counted == null || counted.signum() < 0) {
+            throw new IllegalArgumentException("A count is zero or more");
         }
-        return p.getPhysicalInventoryId();
+        InventoryItem inventoryItem = bulkItem(productId, facilityId);
+        BigDecimal difference = counted.subtract(inventoryItem.getQuantityOnHandTotal());
+
+        PhysicalInventory count = new PhysicalInventory();
+        count.setPhysicalInventoryId(sequenceService.nextId("PhysicalInventory"));
+        count.setPhysicalInventoryDate(CoreClock.now());
+        count.setPartyId(partyId);
+        count.setGeneralComments(comments);
+        entityManager.persist(count);
+
+        InventoryItemVariance variance = new InventoryItemVariance();
+        variance.setInventoryItemId(inventoryItem.getInventoryItemId());
+        variance.setPhysicalInventoryId(count.getPhysicalInventoryId());
+        boolean countMatched = difference.signum() == 0;
+        variance.setVarianceReasonId(countMatched ? null : varianceReasonId == null ? DEFAULT_VARIANCE_REASON : varianceReasonId);
+        variance.setQuantityOnHandVar(difference);
+        variance.setAvailableToPromiseVar(difference);
+        variance.setComments(comments);
+        entityManager.persist(variance);
+
+        if (!countMatched) {
+            InventoryItemDetail detail = applyChange(inventoryItem, difference, difference, Reason.COUNT, Cause.note(comments));
+            detail.setPhysicalInventoryId(count.getPhysicalInventoryId());
+        }
+        return count.getPhysicalInventoryId();
     }
+
+    // ── reading ──
 
     /** Available to promise of a product at a facility. */
     @Transactional(readOnly = true)
     public BigDecimal atp(String productId, String facilityId) {
-        BigDecimal v = em.createQuery("SELECT SUM(i.availableToPromiseTotal) FROM InventoryItem i WHERE i.productId = :p AND i.facilityId = :f", BigDecimal.class)
-                .setParameter("p", productId).setParameter("f", facilityId).getSingleResult();
-        return v == null ? BigDecimal.ZERO : v;
+        BigDecimal total = entityManager.createQuery(
+                        "SELECT SUM(i.availableToPromiseTotal) FROM InventoryItem i WHERE i.productId = :productId AND i.facilityId = :facilityId",
+                        BigDecimal.class)
+                .setParameter("productId", productId)
+                .setParameter("facilityId", facilityId)
+                .getSingleResult();
+        return total == null ? BigDecimal.ZERO : total;
     }
 
     /** On hand of a product at a facility. */
     @Transactional(readOnly = true)
     public BigDecimal onHand(String productId, String facilityId) {
-        BigDecimal v = em.createQuery("SELECT SUM(i.quantityOnHandTotal) FROM InventoryItem i WHERE i.productId = :p AND i.facilityId = :f", BigDecimal.class)
-                .setParameter("p", productId).setParameter("f", facilityId).getSingleResult();
-        return v == null ? BigDecimal.ZERO : v;
+        BigDecimal total = entityManager.createQuery(
+                        "SELECT SUM(i.quantityOnHandTotal) FROM InventoryItem i WHERE i.productId = :productId AND i.facilityId = :facilityId",
+                        BigDecimal.class)
+                .setParameter("productId", productId)
+                .setParameter("facilityId", facilityId)
+                .getSingleResult();
+        return total == null ? BigDecimal.ZERO : total;
     }
 
-    /** Available to promise of a product at every facility holding any, most first. */
+    /** Available to promise of a product at every facility that has any of it, most first. */
     @Transactional(readOnly = true)
     public Map<String, BigDecimal> atpByFacility(String productId) {
-        Map<String, BigDecimal> out = new LinkedHashMap<>();
-        em.createQuery("SELECT i.facilityId, SUM(i.availableToPromiseTotal) FROM InventoryItem i WHERE i.productId = :p "
-                        + "GROUP BY i.facilityId ORDER BY SUM(i.availableToPromiseTotal) DESC, i.facilityId", Object[].class)
-                .setParameter("p", productId).getResultList()
-                .forEach(r -> out.put((String) r[0], (BigDecimal) r[1]));
-        return out;
+        Map<String, BigDecimal> availableByFacility = new LinkedHashMap<>();
+        List<Object[]> rows = entityManager.createQuery(
+                        "SELECT i.facilityId, SUM(i.availableToPromiseTotal) FROM InventoryItem i WHERE i.productId = :productId "
+                                + "GROUP BY i.facilityId ORDER BY SUM(i.availableToPromiseTotal) DESC, i.facilityId", Object[].class)
+                .setParameter("productId", productId)
+                .getResultList();
+        for (Object[] row : rows) {
+            String facilityId = (String) row[0];
+            BigDecimal available = (BigDecimal) row[1];
+            availableByFacility.put(facilityId, available);
+        }
+        return availableByFacility;
     }
 
+    // ── levels per product and facility ──
+
+    /** Safety stock, reorder levels and the brokering and pickup switches of a product at a facility. */
     public record Levels(BigDecimal minimumStock, BigDecimal reorderPoint, BigDecimal reorderQuantity, BigDecimal maximumStock,
                          Boolean allowBrokering, Boolean allowPickup) {
     }
 
-    /** Sets a product's safety stock, reorder levels and brokering switches at a facility. */
-    public void setLevels(String productId, String facilityId, Levels l) {
-        ProductFacility pf = productFacility(productId, facilityId);
-        pf.setMinimumStock(l.minimumStock());
-        pf.setReorderPoint(l.reorderPoint());
-        pf.setReorderQuantity(l.reorderQuantity());
-        pf.setMaximumStock(l.maximumStock());
-        if (l.allowBrokering() != null) pf.setAllowBrokering(l.allowBrokering());
-        if (l.allowPickup() != null) pf.setAllowPickup(l.allowPickup());
-        pf.setComputedLastInventoryCount(sellable(pf));
+    /** Sets a product's levels at a facility; null switches leave the current setting. */
+    public void setLevels(String productId, String facilityId, Levels levels) {
+        ProductFacility productFacility = productFacilityOf(productId, facilityId);
+        productFacility.setMinimumStock(levels.minimumStock());
+        productFacility.setReorderPoint(levels.reorderPoint());
+        productFacility.setReorderQuantity(levels.reorderQuantity());
+        productFacility.setMaximumStock(levels.maximumStock());
+        if (levels.allowBrokering() != null) {
+            productFacility.setAllowBrokering(levels.allowBrokering());
+        }
+        if (levels.allowPickup() != null) {
+            productFacility.setAllowPickup(levels.allowPickup());
+        }
+        // Safety stock changed, so what routing may promise changes too.
+        productFacility.setComputedLastInventoryCount(sellableFor(productFacility));
     }
 
     // ── internals ──
 
-    private InventoryItemDetail change(InventoryItem i, BigDecimal onHandDiff, BigDecimal availableDiff, String reasonEnumId, Cause cause) {
-        BigDecimal qoh = i.getQuantityOnHandTotal().add(onHandDiff);
-        if (qoh.signum() < 0) throw new InsufficientStockException("On hand of product " + i.getProductId() + " at " + i.getFacilityId() + " can't go below zero");
-        i.setQuantityOnHandTotal(qoh);
-        i.setAvailableToPromiseTotal(i.getAvailableToPromiseTotal().add(availableDiff));
-        i.setAccountingQuantityTotal((i.getAccountingQuantityTotal() == null ? BigDecimal.ZERO : i.getAccountingQuantityTotal()).add(onHandDiff));
-        Cause c = cause == null ? Cause.NONE : cause;
-        InventoryItemDetail d = new InventoryItemDetail();
-        d.setInventoryItemId(i.getInventoryItemId());
-        d.setInventoryItemDetailSeqId(sequences.nextId("InventoryItemDetail"));
-        d.setEffectiveDate(CoreClock.now());
-        d.setQuantityOnHandDiff(onHandDiff);
-        d.setAvailableToPromiseDiff(availableDiff);
-        d.setAccountingQuantityDiff(onHandDiff);
-        d.setUnitCost(i.getUnitCost());
-        d.setReasonEnumId(reasonEnumId);
-        d.setOrderId(c.orderId());
-        d.setOrderItemSeqId(c.orderItemSeqId());
-        d.setShipmentId(c.shipmentId());
-        d.setReturnId(c.returnId());
-        d.setChangeByUserId(c.userId());
-        d.setDescription(c.description());
-        em.persist(d);
-        // Follow ATP by the same difference, so this works without a flush (copy jobs run with COMMIT flush mode).
-        ProductFacility pf = productFacility(i.getProductId(), i.getFacilityId());
-        pf.setLastInventoryCount((pf.getLastInventoryCount() == null ? BigDecimal.ZERO : pf.getLastInventoryCount()).add(availableDiff));
-        pf.setComputedLastInventoryCount(sellable(pf));
-        return d;
+    /**
+     * Applies one change to an inventory item and records it:
+     * <ol>
+     *   <li>move the item's totals (on hand may never go below zero; available may, when stock is oversold);</li>
+     *   <li>write the detail row with the reason and cause;</li>
+     *   <li>move product_facility's last ATP by the same amount and work out what routing may promise.</li>
+     * </ol>
+     * Step 3 adds the difference instead of re-summing the items, so it is correct without a flush (copy jobs run
+     * with COMMIT flush mode).
+     */
+    private InventoryItemDetail applyChange(InventoryItem inventoryItem, BigDecimal onHandChange, BigDecimal availableChange,
+                                            String reasonEnumId, Cause cause) {
+        BigDecimal newOnHand = inventoryItem.getQuantityOnHandTotal().add(onHandChange);
+        if (newOnHand.signum() < 0) {
+            throw new InsufficientStockException("On hand of product " + inventoryItem.getProductId() + " at " + inventoryItem.getFacilityId()
+                    + " can't go below zero");
+        }
+        inventoryItem.setQuantityOnHandTotal(newOnHand);
+        inventoryItem.setAvailableToPromiseTotal(inventoryItem.getAvailableToPromiseTotal().add(availableChange));
+        BigDecimal accountingBefore = inventoryItem.getAccountingQuantityTotal() == null ? BigDecimal.ZERO : inventoryItem.getAccountingQuantityTotal();
+        inventoryItem.setAccountingQuantityTotal(accountingBefore.add(onHandChange));
+
+        Cause actualCause = cause == null ? Cause.NONE : cause;
+        InventoryItemDetail detail = new InventoryItemDetail();
+        detail.setInventoryItemId(inventoryItem.getInventoryItemId());
+        // A global sequence rather than a per-item counter: counting existing rows would need a flush.
+        detail.setInventoryItemDetailSeqId(sequenceService.nextId("InventoryItemDetail"));
+        detail.setEffectiveDate(CoreClock.now());
+        detail.setQuantityOnHandDiff(onHandChange);
+        detail.setAvailableToPromiseDiff(availableChange);
+        detail.setAccountingQuantityDiff(onHandChange);
+        detail.setUnitCost(inventoryItem.getUnitCost());
+        detail.setReasonEnumId(reasonEnumId);
+        detail.setOrderId(actualCause.orderId());
+        detail.setOrderItemSeqId(actualCause.orderItemSeqId());
+        detail.setShipmentId(actualCause.shipmentId());
+        detail.setReturnId(actualCause.returnId());
+        detail.setChangeByUserId(actualCause.userId());
+        detail.setDescription(actualCause.description());
+        entityManager.persist(detail);
+
+        ProductFacility productFacility = productFacilityOf(inventoryItem.getProductId(), inventoryItem.getFacilityId());
+        BigDecimal lastAvailable = productFacility.getLastInventoryCount() == null ? BigDecimal.ZERO : productFacility.getLastInventoryCount();
+        productFacility.setLastInventoryCount(lastAvailable.add(availableChange));
+        productFacility.setComputedLastInventoryCount(sellableFor(productFacility));
+        return detail;
     }
 
-    private ProductFacility productFacility(String productId, String facilityId) {
-        ProductFacility pf = em.find(ProductFacility.class, new ProductFacility.Key(productId, facilityId));
-        if (pf != null) return pf;
-        pf = new ProductFacility();
-        pf.setProductId(productId);
-        pf.setFacilityId(facilityId);
-        pf.setLastInventoryCount(BigDecimal.ZERO);
-        pf.setComputedLastInventoryCount(BigDecimal.ZERO);
-        pf.setAllowBrokering(true);
-        pf.setAllowPickup(true);
-        em.persist(pf);
-        return pf;
+    private InventoryItem createBulkItem(String productId, String facilityId) {
+        InventoryItem inventoryItem = new InventoryItem();
+        inventoryItem.setInventoryItemId(sequenceService.nextId("InventoryItem"));
+        inventoryItem.setInventoryItemTypeId(BULK);
+        inventoryItem.setProductId(productId);
+        inventoryItem.setFacilityId(facilityId);
+        inventoryItem.setQuantityOnHandTotal(BigDecimal.ZERO);
+        inventoryItem.setAvailableToPromiseTotal(BigDecimal.ZERO);
+        inventoryItem.setAccountingQuantityTotal(BigDecimal.ZERO);
+        entityManager.persist(inventoryItem);
+        return inventoryItem;
+    }
+
+    private void createLotIfMissing(String lotId, LocalDateTime expirationDate) {
+        if (entityManager.find(Lot.class, lotId) != null) {
+            return;
+        }
+        Lot lot = new Lot();
+        lot.setLotId(lotId);
+        lot.setCreationDate(CoreClock.now());
+        lot.setExpirationDate(expirationDate);
+        entityManager.persist(lot);
+    }
+
+    /** The product_facility row of a product at a facility, created with both switches on when missing. */
+    private ProductFacility productFacilityOf(String productId, String facilityId) {
+        ProductFacility productFacility = entityManager.find(ProductFacility.class, new ProductFacility.Key(productId, facilityId));
+        if (productFacility != null) {
+            return productFacility;
+        }
+        productFacility = new ProductFacility();
+        productFacility.setProductId(productId);
+        productFacility.setFacilityId(facilityId);
+        productFacility.setLastInventoryCount(BigDecimal.ZERO);
+        productFacility.setComputedLastInventoryCount(BigDecimal.ZERO);
+        productFacility.setAllowBrokering(true);
+        productFacility.setAllowPickup(true);
+        entityManager.persist(productFacility);
+        return productFacility;
     }
 
     /** What routing may promise: available less safety stock, never below zero. */
-    private static BigDecimal sellable(ProductFacility pf) {
-        BigDecimal atp = pf.getLastInventoryCount() == null ? BigDecimal.ZERO : pf.getLastInventoryCount();
-        BigDecimal v = pf.getMinimumStock() == null ? atp : atp.subtract(pf.getMinimumStock());
-        return v.signum() < 0 ? BigDecimal.ZERO : v;
+    private static BigDecimal sellableFor(ProductFacility productFacility) {
+        BigDecimal available = productFacility.getLastInventoryCount() == null ? BigDecimal.ZERO : productFacility.getLastInventoryCount();
+        BigDecimal sellable = productFacility.getMinimumStock() == null ? available : available.subtract(productFacility.getMinimumStock());
+        return sellable.signum() < 0 ? BigDecimal.ZERO : sellable;
     }
 
-    private static void positive(BigDecimal quantity) {
-        if (quantity == null || quantity.signum() <= 0) throw new IllegalArgumentException("A quantity must be more than zero");
+    private static void requirePositive(BigDecimal quantity) {
+        if (quantity == null || quantity.signum() <= 0) {
+            throw new IllegalArgumentException("A quantity must be more than zero");
+        }
+    }
+
+    private static String plain(BigDecimal value) {
+        return value.stripTrailingZeros().toPlainString();
     }
 }

@@ -2,13 +2,13 @@ package com.nexus.oms.coreapi;
 
 import com.nexus.core.model.order.OrderHeader;
 import com.nexus.core.model.order.OrderItem;
+import com.nexus.core.service.OrderReservationService;
 import com.nexus.core.service.OrderService;
 import com.nexus.core.service.ShipmentService;
 import com.nexus.oms.dto.ApiResponse;
 import com.nexus.oms.security.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,30 +23,35 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Orders and shipments on the core model: create, change status, hold stock, read; make, pack, ship and confirm
- * shipments. Admin only ({@code /core/}). The order screens move onto these after the core is compared with the
- * earlier model.
+ * Orders and shipments on the core model: create, change status, hold stock, read; make, ship and confirm shipments.
+ * Admin only ({@code /core/}). The order screens move onto these after the core is compared with the earlier model.
+ * <p>
+ * The controller only translates HTTP to service calls; every rule lives in the services. Each endpoint is one
+ * transaction, so a failure part-way leaves nothing behind.
  */
 @RestController
 @RequestMapping("/core")
 @Tag(name = "Core orders", description = "Orders and shipments on the OFBiz-aligned core model")
 public class CoreOrdersController {
 
-    private final OrderService orders;
-    private final ShipmentService shipments;
-    private final EntityManager em;
+    private final OrderService orderService;
+    private final OrderReservationService reservationService;
+    private final ShipmentService shipmentService;
 
-    public CoreOrdersController(OrderService orders, ShipmentService shipments, EntityManager em) {
-        this.orders = orders;
-        this.shipments = shipments;
-        this.em = em;
+    public CoreOrdersController(OrderService orderService, OrderReservationService reservationService, ShipmentService shipmentService) {
+        this.orderService = orderService;
+        this.reservationService = reservationService;
+        this.shipmentService = shipmentService;
     }
+
+    // ── orders ──
 
     @Operation(summary = "Create an order")
     @PostMapping("/orders")
     @Transactional
-    public ResponseEntity<ApiResponse<String>> create(@RequestBody OrderService.NewOrder n) {
-        return ResponseEntity.ok(ApiResponse.success(orders.create(n), "Order created"));
+    public ResponseEntity<ApiResponse<String>> create(@RequestBody OrderService.NewOrder newOrder) {
+        String orderId = orderService.create(newOrder);
+        return ResponseEntity.ok(ApiResponse.success(orderId, "Order created"));
     }
 
     public record StatusChange(String statusId, String reason) {
@@ -55,8 +60,8 @@ public class CoreOrdersController {
     @Operation(summary = "Move an order to a status its flow allows")
     @PostMapping("/orders/{orderId}/status")
     @Transactional
-    public ResponseEntity<ApiResponse<Void>> status(@PathVariable String orderId, @RequestBody StatusChange c) {
-        orders.changeStatus(orderId, c.statusId(), c.reason(), user());
+    public ResponseEntity<ApiResponse<Void>> status(@PathVariable String orderId, @RequestBody StatusChange change) {
+        orderService.changeStatus(orderId, change.statusId(), change.reason(), currentUser());
         return ResponseEntity.ok(ApiResponse.success(null, "Status changed"));
     }
 
@@ -66,8 +71,8 @@ public class CoreOrdersController {
     @Operation(summary = "Hold stock for an item at a facility (all that is open when no quantity)")
     @PostMapping("/orders/{orderId}/items/{orderItemSeqId}/reserve")
     @Transactional
-    public ResponseEntity<ApiResponse<Void>> reserve(@PathVariable String orderId, @PathVariable String orderItemSeqId, @RequestBody Hold h) {
-        orders.reserve(orderId, orderItemSeqId, h.facilityId(), h.quantity(), user());
+    public ResponseEntity<ApiResponse<Void>> reserve(@PathVariable String orderId, @PathVariable String orderItemSeqId, @RequestBody Hold hold) {
+        reservationService.reserve(orderId, orderItemSeqId, hold.facilityId(), hold.quantity(), currentUser());
         return ResponseEntity.ok(ApiResponse.success(null, "Held"));
     }
 
@@ -83,14 +88,22 @@ public class CoreOrdersController {
     @GetMapping("/orders/{orderId}")
     @Transactional(readOnly = true)
     public ResponseEntity<ApiResponse<OrderView>> get(@PathVariable String orderId) {
-        OrderHeader h = em.find(OrderHeader.class, orderId);
-        if (h == null) throw new IllegalArgumentException("Unknown order " + orderId);
-        List<ItemView> items = orders.items(orderId).stream().map((OrderItem i) -> new ItemView(i.getOrderItemSeqId(), i.getProductId(), i.getItemDescription(),
-                i.getQuantity(), i.getCancelQuantity(), i.getUnitPrice(), i.getStatusId(), i.getShipGroupSeqId(),
-                orders.reservedQuantity(orderId, i.getOrderItemSeqId()))).toList();
-        return ResponseEntity.ok(ApiResponse.success(new OrderView(orderId, h.getStatusId(), h.getProductStoreId(), h.getExternalId(), h.getGrandTotal(),
-                h.getCurrencyUomId(), String.valueOf(h.getOrderDate()), items), "Order"));
+        OrderHeader header = orderService.header(orderId);
+        List<ItemView> items = orderService.items(orderId).stream()
+                .map(orderItem -> toItemView(orderId, orderItem))
+                .toList();
+        OrderView view = new OrderView(orderId, header.getStatusId(), header.getProductStoreId(), header.getExternalId(), header.getGrandTotal(),
+                header.getCurrencyUomId(), String.valueOf(header.getOrderDate()), items);
+        return ResponseEntity.ok(ApiResponse.success(view, "Order"));
     }
+
+    private ItemView toItemView(String orderId, OrderItem orderItem) {
+        BigDecimal reserved = reservationService.reservedQuantity(orderId, orderItem.getOrderItemSeqId());
+        return new ItemView(orderItem.getOrderItemSeqId(), orderItem.getProductId(), orderItem.getItemDescription(), orderItem.getQuantity(),
+                orderItem.getCancelQuantity(), orderItem.getUnitPrice(), orderItem.getStatusId(), orderItem.getShipGroupSeqId(), reserved);
+    }
+
+    // ── shipments ──
 
     public record NewShipment(String orderId, String shipGroupSeqId, Map<String, BigDecimal> quantities) {
     }
@@ -98,8 +111,9 @@ public class CoreOrdersController {
     @Operation(summary = "Make a shipment for a ship group (everything open when no quantities)")
     @PostMapping("/shipments")
     @Transactional
-    public ResponseEntity<ApiResponse<String>> shipment(@RequestBody NewShipment s) {
-        return ResponseEntity.ok(ApiResponse.success(shipments.createSalesShipment(s.orderId(), s.shipGroupSeqId(), s.quantities(), user()), "Shipment made"));
+    public ResponseEntity<ApiResponse<String>> shipment(@RequestBody NewShipment newShipment) {
+        String shipmentId = shipmentService.createSalesShipment(newShipment.orderId(), newShipment.shipGroupSeqId(), newShipment.quantities(), currentUser());
+        return ResponseEntity.ok(ApiResponse.success(shipmentId, "Shipment made"));
     }
 
     public record Ship(String carrierPartyId, String shipmentMethodTypeId, Map<String, String> trackingByPackage) {
@@ -108,22 +122,25 @@ public class CoreOrdersController {
     @Operation(summary = "Ship a shipment: stock leaves, items complete; tracking from its labels is kept")
     @PostMapping("/shipments/{shipmentId}/ship")
     @Transactional
-    public ResponseEntity<ApiResponse<String>> ship(@PathVariable String shipmentId, @RequestBody(required = false) Ship s) {
-        shipments.ship(shipmentId, s == null ? null : s.carrierPartyId(), s == null ? null : s.shipmentMethodTypeId(), s == null ? null : s.trackingByPackage(), null, user());
-        return ResponseEntity.ok(ApiResponse.success(shipments.status(shipmentId), "Shipped"));
+    public ResponseEntity<ApiResponse<String>> ship(@PathVariable String shipmentId, @RequestBody(required = false) Ship request) {
+        Ship details = request == null ? new Ship(null, null, null) : request;
+        shipmentService.ship(shipmentId, details.carrierPartyId(), details.shipmentMethodTypeId(), details.trackingByPackage(), null, currentUser());
+        return ResponseEntity.ok(ApiResponse.success(shipmentService.status(shipmentId), "Shipped"));
     }
 
     @Operation(summary = "Record a shipment another system made (the WMS confirmation of doc 27)")
     @PostMapping("/shipments/confirm")
     @Transactional
-    public ResponseEntity<ApiResponse<String>> confirm(@RequestBody ShipmentService.Confirmation c) {
-        return ResponseEntity.ok(ApiResponse.success(shipments.confirm(c, user()), "Shipment recorded"));
+    public ResponseEntity<ApiResponse<String>> confirm(@RequestBody ShipmentService.Confirmation confirmation) {
+        String shipmentId = shipmentService.confirm(confirmation, currentUser());
+        return ResponseEntity.ok(ApiResponse.success(shipmentId, "Shipment recorded"));
     }
 
-    private static String user() {
+    /** The signed-in user, or null outside a request (a job, a test). */
+    private static String currentUser() {
         try {
             return TenantContext.getCurrentUsername();
-        } catch (RuntimeException e) {
+        } catch (RuntimeException noUser) {
             return null;
         }
     }

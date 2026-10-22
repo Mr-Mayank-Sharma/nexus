@@ -39,6 +39,7 @@ class GatewayServiceTest {
     static final ObjectMapper JSON = new ObjectMapper();
     @Autowired GatewayService gateway;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired ShipmentService shipments;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
@@ -101,7 +102,7 @@ class GatewayServiceTest {
                 List.of(new OrderService.NewItem(product, "Mug", new BigDecimal("2"), BigDecimal.TEN, null, null, 0)), null, null, null, null,
                 "ORDER_APPROVED", null, "t")));
         String sid = tx.execute(s -> {
-            orders.reserve(o, "00001", facility, null, "t");
+            reservations.reserve(o, "00001", facility, null, "t");
             String id = shipments.createSalesShipment(o, "00001", null, "t");
             shipments.addPackage(id, "BOX_SMALL", new BigDecimal("0.6"), null, Map.of("00001", BigDecimal.ONE));
             shipments.addPackage(id, "BOX_SMALL", new BigDecimal("0.7"), null, Map.of("00001", BigDecimal.ONE));

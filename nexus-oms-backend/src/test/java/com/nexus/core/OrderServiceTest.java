@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class OrderServiceTest {
 
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
@@ -95,15 +96,15 @@ class OrderServiceTest {
         assertEquals("ITEM_APPROVED", status(o, "00002"));
 
         BigDecimal before = inventory.atp(boot, dc);
-        tx.executeWithoutResult(s -> orders.reserve(o, "00001", dc, null, "tester"));
+        tx.executeWithoutResult(s -> reservations.reserve(o, "00001", dc, null, "tester"));
         assertEquals(0, before.subtract(new BigDecimal("2")).compareTo(inventory.atp(boot, dc)));
-        assertEquals(0, new BigDecimal("2").compareTo(orders.reservedQuantity(o, "00001")));
+        assertEquals(0, new BigDecimal("2").compareTo(reservations.reservedQuantity(o, "00001")));
         IllegalArgumentException over = assertThrows(IllegalArgumentException.class,
-                () -> tx.executeWithoutResult(s -> orders.reserve(o, "00001", dc, BigDecimal.ONE, "tester")));
+                () -> tx.executeWithoutResult(s -> reservations.reserve(o, "00001", dc, BigDecimal.ONE, "tester")));
         assertTrue(over.getMessage().contains("has 0 left to reserve"), over.getMessage());
 
         tx.executeWithoutResult(s -> orders.cancelItem(o, "00001", BigDecimal.ONE, "customer asked", "tester"));
-        assertEquals(0, BigDecimal.ONE.compareTo(orders.reservedQuantity(o, "00001")), "the reservation shrinks to what is left");
+        assertEquals(0, BigDecimal.ONE.compareTo(reservations.reservedQuantity(o, "00001")), "the reservation shrinks to what is left");
         assertEquals(0, before.subtract(BigDecimal.ONE).compareTo(inventory.atp(boot, dc)));
         // 1 x 100 + 15 + 7.50 - 10
         assertEquals(0, new BigDecimal("112.50").compareTo(total(o)));
@@ -127,7 +128,7 @@ class OrderServiceTest {
         assertThrows(StatusService.StatusTransitionException.class,
                 () -> tx.executeWithoutResult(s -> orders.changeStatus(o, "ORDER_APPROVED", null, "tester")));
         assertThrows(IllegalStateException.class,
-                () -> tx.executeWithoutResult(s -> orders.reserve(o, "00002", dc, null, "tester")));
+                () -> tx.executeWithoutResult(s -> reservations.reserve(o, "00002", dc, null, "tester")));
     }
 
     @Test

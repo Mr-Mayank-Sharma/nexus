@@ -37,6 +37,7 @@ class StoreNetworkTest {
     @Autowired ProductService products;
     @Autowired ProductStoreService stores;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired PartyService parties;
     @Autowired TransactionTemplate tx;
     @Autowired JdbcTemplate jdbc;
@@ -161,7 +162,7 @@ class StoreNetworkTest {
         // an order item the 'missed' store could not find
         String o = tx.execute(s -> orders.create(new OrderService.NewOrder(null, null, null, null, null, null, null, null, null, null, null,
                 List.of(new OrderService.NewItem(p, "Jacket", BigDecimal.ONE, q("1"), null, null, 0)), null, null, null, null, null, null, "t")));
-        tx.executeWithoutResult(s -> orders.exclude(o, "00001", missed));
+        tx.executeWithoutResult(s -> reservations.excludeFacility(o, "00001", missed));
 
         List<StoreNetworkService.Availability> l = network.lookup(p);
         assertEquals(StoreNetworkService.Confidence.HIGH, l.stream().filter(x -> x.facilityId().equals(counted)).findFirst().orElseThrow().confidence());

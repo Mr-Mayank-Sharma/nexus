@@ -13,7 +13,7 @@ import com.nexus.core.service.OrderService;
 import com.nexus.core.service.ProductService;
 import com.nexus.core.service.ProductStoreService;
 import com.nexus.core.service.RoutingService;
-import com.nexus.core.service.RoutingService.Cond;
+import com.nexus.core.service.RoutingSetupService.Cond;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -40,6 +40,7 @@ class AiAgentsTest {
     @Autowired RoutingDrafter drafter;
     @Autowired ProposalService proposals;
     @Autowired RoutingService routing;
+    @Autowired com.nexus.core.service.RoutingSetupService routingSetup;
     @Autowired OrderService orders;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
@@ -96,10 +97,10 @@ class AiAgentsTest {
 
     @Test
     void plainLanguageRoutingDraftsSimulatesAndWaitsForApproval() throws Exception {
-        String live = routing.createGroup(store, "Live", 15L);
-        String r = routing.addRouting(live, "Everything", 1, List.of(Cond.filter("facilityId", "in", RoutingService.QUEUE)));
-        routing.addRule(r, "Empty store first", 1, false, List.of(Cond.filter("facilityId", "in", empty)), Map.of("ORA_MV_TO_QUEUE", "UNFILLABLE_PARKING"));
-        routing.activate(r);
+        String live = routingSetup.createGroup(store, "Live", 15L);
+        String r = routingSetup.addRouting(live, "Everything", 1, List.of(Cond.filter("facilityId", "in", RoutingService.QUEUE)));
+        routingSetup.addRule(r, "Empty store first", 1, false, List.of(Cond.filter("facilityId", "in", empty)), Map.of("ORA_MV_TO_QUEUE", "UNFILLABLE_PARKING"));
+        routingSetup.activate(r);
         String o1 = approved(), o2 = approved();
 
         String ruleSet = """

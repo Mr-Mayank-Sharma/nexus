@@ -28,6 +28,7 @@ class OrderBackfillTest {
     @Autowired ProductBackfill productBackfill;
     @Autowired FacilityInventoryBackfill stockBackfill;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired ProductService products;
     @Autowired FacilityService facilities;
     @Autowired InventoryService inventory;
@@ -107,7 +108,7 @@ class OrderBackfillTest {
         assertEquals("PAYMENT_SETTLED", jdbc.queryForObject("SELECT status_id FROM order_payment_preference WHERE order_id = ?", String.class, shop));
         assertEquals(wh, jdbc.queryForObject("SELECT facility_id FROM order_item_ship_group WHERE order_id = ?", String.class, shop));
         assertNotNull(jdbc.queryForObject("SELECT contact_mech_id FROM order_item_ship_group WHERE order_id = ?", String.class, shop), "the customer's address");
-        assertEquals(0, new BigDecimal("2").compareTo(orders.reservedQuantity(shop, "00001")));
+        assertEquals(0, new BigDecimal("2").compareTo(reservations.reservedQuantity(shop, "00001")));
         assertEquals(0, atpBefore.compareTo(inventory.atp(jacket, wh)), "the hold was already out of available; no stock moves");
 
         String guest = orders.findByIdentification("NEXUS_LEGACY_ID", guestOrder.toString()).orElseThrow();

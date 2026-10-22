@@ -71,11 +71,14 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `ProductStoreService` | Stores and their settings (coded `PRODUCT_STORE_SETTING` values). |
 | `FacilityService` (`coreFacilityService`) | Stores, warehouses and 3PLs with outside ids (POS, Shopify location), brokering groups in order, the stores they serve, and the daily order limit: `takeOrder(facility, day)` is false when the facility is full that day. |
 | `InventoryService` (`coreInventoryService`) | Stock: every change is an `inventory_item_detail` row with a reason. `reserve` lowers ATP, `ship` lowers on hand, `recordCount` keeps the variance and its reason, transfers go request, approve (holds stock), ship, receive. `atp`, `atpByFacility`, and `product_facility` per product and facility for routing. |
-| `OrderService` (`coreOrderService`) | Orders: `create` (roles, contacts, ship groups, items, adjustments, payments, outside ids), `changeStatus` (cascades to items, gives stock back on cancel), `cancelItem` (partial), `reserve` and `releaseReservations`, `findByIdentification("SHOPIFY_ORD_ID", id)`. Every status change is an `order_status` row. |
+| `OrderService` (`coreOrderService`) | Orders: `create` (roles, contacts, ship groups, items, adjustments, payments, outside ids), `changeStatus` (cascades to items, gives stock back on cancel), `cancelItem` (partial), `markShipped`, ship groups (`splitShipGroup`, `setShipGroupFacility`, `setTracking`), `header`, `items`, `findByIdentification("SHOPIFY_ORD_ID", id)`. Every status change is an `order_status` row. |
+| `OrderReservationService` (`coreOrderReservationService`) | Stock held for order items: `reserve`, `recordReservation` (a hold copied from elsewhere, no stock change), `release` / `releaseAll`, `consume` (when shipping), `reservedQuantity`, `held`, `shortPick` (release and exclude the location), `excludeFacility`, `excludedFacilities`. It never calls `OrderService`, so the two don't depend on each other in a circle. |
 | `ShipmentService` (`coreShipmentService`) | `createSalesShipment`, `addPackage`, `pack`, `ship` (holds consumed, on hand down, items completed), `deliver`, `confirm` for a WMS or carrier confirmation (idempotent by its shipment id). |
 | `PicklistService` (`corePicklistService`) | Store picking: `create` from held ship groups, `assign`, `recordPick`, `complete` (ships what was found, short-picks the rest). |
 | `ReturnService` (`coreReturnService`) | `create` (up to shipped less other returns), `accept`, `receive` with a grade, `addAdjustment`, `refundAmount`, `complete`. |
-| `RoutingService` (`coreRoutingService`) | `createGroup`, `addRouting`, `addRule` (filters, sorts, split, actions), `activate`, `run`, `simulate` (rolls back), `reallocate`, `moveAllOff`, `history`. Field names it accepts are in `ORDER_FILTERS`, `ORDER_SORTS`, `INVENTORY_FILTERS`, `INVENTORY_SORTS`; anything else is refused with the list. |
+| `RoutingSetupService` (`coreRoutingSetupService`) | `createGroup`, `addRouting`, `addRule` (filters, sorts, split, actions), `activate`, and reading what was set up. Field names it accepts are in `ORDER_FILTERS`, `ORDER_SORTS`, `INVENTORY_FILTERS`, `INVENTORY_SORTS`; anything else is refused with the list. |
+| `RoutingService` (`coreRoutingService`) | `run`, `simulate` (rolls back), `reallocate`, `moveAllOff`, `history`. It uses package-private helpers, one job each: `RoutingQueue` (which ship groups a routing takes), `LocationFinder` and `CandidateLocation` (a rule's view of the locations, sorted), and `SplitPlanner` (the greedy split). |
+| `OperationsReadService` (`coreOperationsReadService`) | Read-only views for the operations assistant, as records: `findOrder` by any id, `orderCountsByStatus`, `stuckOrders`, `problemsByLocation`, `locations`. |
 | `TransferService` (`coreTransferService`) | `request`, `approve` (holds), `ship` (to IN_TRANSIT), `receive` (by scan, tolerance), `settle`, `cancel`. |
 | `StoreNetworkService` (`coreStoreNetworkService`) | `lookup` with confidence, `holdForPickup`, `setSellingFacility` and `salesCredit`, `rebalance` within a cluster. |
 | `JobService` (`coreJobService`, package `core.job`) | Jobs as `service_job` rows: a handler bean implementing `CoreJobHandler`, a six-field cron, paused or not. `runJob`, `setPaused`, `setSchedule`, `jobs`, `runs`. Off with `nexus.core.jobs.enabled=false` (tests). |
@@ -83,9 +86,24 @@ core off with `nexus.core.schema.enabled=false`. The core builds an empty Postgr
 | `StoreHealthService` (`coreStoreHealthService`) | `reliability(days)` per location and `phantomStock(facility, days, limit)` per product and location, each with its reasons. |
 | `PromiseService` (`corePromiseService`) | `promise(products, destination, method, at)`: per location the ship date, expected and promised delivery, basis (history or rule), confidence and reasons. |
 | `AgentCommerceService` (`coreAgentCommerceService`) | Checkout sessions for AI shopping agents (create, update, complete, cancel) and agent-safe changes after purchase (`cancelOrder`, `changeAddress`, `startReturn`), each inside store policy or proposed to a person. |
+| `CoreStatus` | Every status id the core checks or sets (`CoreStatus.Order.APPROVED`, `CoreStatus.Item.OPEN`, ...), so a typo fails to compile. |
+| `GeoDistance.km(from, to)` | Great-circle distance, shared by routing and delivery promises. |
 | `CoreClock.now()` | The time for dated keys; never the same millisecond twice, so dated primary keys don't collide. |
 | `GeoService` | Free-text country and state ("US", "New Jersey") to geo ids. |
 | `@AuditedField` | Mark a field in the spec with `audit`; every change goes to `entity_audit_log` with old and new value and the user. |
+
+## Code style in the core
+
+- Names say what a thing is: `orderItem`, `shipGroup`, `reservationService`, `stillToHold`; never `i`, `g`, `r` or
+  `em`. Loop variables name the element (`for (OrderItem orderItem : ...)`).
+- Status ids come from `CoreStatus`, never string literals in code.
+- One job per class. A service that grows past one job is split, as `OrderReservationService` was from
+  `OrderService` and the routing helpers from `RoutingService`.
+- Long methods are split into named steps, with a `// Step n:` comment where the order matters.
+- Javadoc says what a public method does and what it refuses; comments explain why, not what.
+- Controllers translate HTTP to service calls and hold no queries; read-only views live in a service.
+- Service classes are `@Transactional`, reads `@Transactional(readOnly = true)`. `RoutingService` uses a
+  `TransactionTemplate` instead, because a simulation must roll back and then write its run record.
 
 ## Gateway
 

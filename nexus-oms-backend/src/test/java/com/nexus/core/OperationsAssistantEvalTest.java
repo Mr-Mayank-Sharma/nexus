@@ -40,6 +40,7 @@ class OperationsAssistantEvalTest {
 
     @Autowired OperationsAssistant assistant;
     @Autowired OrderService orders;
+    @Autowired com.nexus.core.service.OrderReservationService reservations;
     @Autowired InventoryService inventory;
     @Autowired FacilityService facilities;
     @Autowired ProductService products;
@@ -65,7 +66,7 @@ class OperationsAssistantEvalTest {
         oldOrder = approvedOrderAt(store);
         jdbc.update("UPDATE order_header SET order_date = ? WHERE order_id = ?", java.sql.Timestamp.valueOf(com.nexus.core.service.CoreClock.now().minusDays(3)), oldOrder);
         String rejected = approvedOrderAt(store);
-        tx.executeWithoutResult(s -> orders.shortPick(rejected, "00001", store, BigDecimal.ONE, "not on the shelf", "t"));
+        tx.executeWithoutResult(s -> reservations.shortPick(rejected, "00001", store, BigDecimal.ONE, "not on the shelf", "t"));
     }
 
     private String approvedOrderAt(String facility) {
@@ -73,7 +74,7 @@ class OperationsAssistantEvalTest {
                 List.of(new OrderService.NewShipGroup("STANDARD", facility, null, null, null, true, false, null, null, null, null)),
                 List.of(new OrderService.NewItem(product, "Eval Boot", BigDecimal.ONE, new BigDecimal("80"), null, null, 0)), null, null, null, null,
                 "ORDER_APPROVED", null, "t")));
-        tx.executeWithoutResult(s -> orders.reserve(o, "00001", facility, null, "t"));
+        tx.executeWithoutResult(s -> reservations.reserve(o, "00001", facility, null, "t"));
         return o;
     }
 
