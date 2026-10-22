@@ -85,6 +85,20 @@ class OllamaProviderTest {
         assertEquals("order_counts", call.content().get(0).path("name").asText());
         assertEquals(30, call.content().get(0).at("/input/sinceDays").asInt());
 
+        LlmProvider.Response unquotedName = answerWith("Not JSON? {\"name\": order_counts, \"arguments\": {}}".substring(10), orderCounts);
+        assertEquals("tool_use", unquotedName.stopReason(), "qwen2.5-coder:3b sometimes leaves the tool name unquoted");
+        assertEquals("order_counts", unquotedName.content().get(0).path("name").asText());
+
+        LlmProvider.Response callAfterProse = answerWith("To find out, I call the tool.\n```json\n{\"name\": \"order_counts\", \"arguments\": {}}\n```", orderCounts);
+        assertEquals("tool_use", callAfterProse.stopReason(), "a sentence before the block is common with small models");
+
+        LlmProvider.Response inlineCall = answerWith("You can use it: {\"name\": \"order_counts\", \"arguments\": {}} and then read the result.", orderCounts);
+        assertEquals("tool_use", inlineCall.stopReason(), "a call written inline in a sentence");
+
+        LlmProvider.Response toolTag = answerWith("I'll call it.\n<order_counts>\n{\"sinceDays\": 7}\n</order_counts>", orderCounts);
+        assertEquals("tool_use", toolTag.stopReason(), "the tool's name as a tag around its arguments");
+        assertEquals(7, toolTag.content().get(0).at("/input/sinceDays").asInt());
+
         LlmProvider.Response unknownTool = answerWith("{\"name\": \"drop_tables\", \"arguments\": {}}", orderCounts);
         assertEquals("end_turn", unknownTool.stopReason(), "a tool that was not offered stays text");
         assertEquals("text", unknownTool.content().get(0).path("type").asText());

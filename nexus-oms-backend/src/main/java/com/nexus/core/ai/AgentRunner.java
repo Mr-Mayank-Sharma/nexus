@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Runs an agent (doc 25, section 2).
@@ -94,7 +95,7 @@ public class AgentRunner {
             throw new IllegalArgumentException("Ask a question");
         }
         if (!provider.available()) {
-            throw new IllegalStateException("AI is not set up: ANTHROPIC_API_KEY is missing");
+            throw new IllegalStateException("AI is not set up: no model provider is available (see nexus.ai.provider)");
         }
         long dailyBudget = systemPropertyService.getLong("nexus.core", "ai.dailyTokens", DEFAULT_DAILY_TOKENS);
         if (tokensToday(agent.name()) >= dailyBudget) {
@@ -151,10 +152,15 @@ public class AgentRunner {
             error = failure.getMessage();
         }
 
-        boolean grounded = toolCalls.stream().anyMatch(call -> !call.error());
+        // Grounded: a tool backed the answer, and every number in it comes from what the tools returned.
         String maskedAnswer = answer.toString().trim();
-        if (!grounded && error == null) {
+        boolean toolBacked = toolCalls.stream().anyMatch(call -> !call.error());
+        Set<String> inventedNumbers = AnswerNumbers.unsupported(maskedAnswer, maskedQuestion, toolCalls);
+        boolean grounded = toolBacked && inventedNumbers.isEmpty();
+        if (error == null && !toolBacked) {
             maskedAnswer = "Not verified: " + maskedAnswer;
+        } else if (error == null && !inventedNumbers.isEmpty()) {
+            maskedAnswer = "Not verified (" + String.join(", ", inventedNumbers) + " is not in the data the tools returned): " + maskedAnswer;
         }
         long costMicros = costMicros(agent.model(), usage);
         String runId = recordRun(new RunRecord(agent, userId, maskedQuestion, toolCalls, error == null ? maskedAnswer : null, grounded, error, usage,

@@ -17,7 +17,9 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * Read-only views of orders, locations and stock problems, as plain records. The operations assistant's tools read
@@ -26,6 +28,13 @@ import java.util.Optional;
 @Service("coreOperationsReadService")
 @CoreTransactional(readOnly = true)
 public class OperationsReadService {
+
+    /** The order identification that keeps an order's id from the earlier model (a UUID). */
+    static final String LEGACY_ID_TYPE = "NEXUS_LEGACY_ID";
+    /** The order screen shows an order without a channel number as "ORD-" and the first 8 characters of that id. */
+    static final String SCREEN_ORDER_PREFIX = "ORD-";
+    private static final Pattern SHORT_LEGACY_ID = Pattern.compile("[0-9A-F]{8}");
+
 
     static final String NOT_ROUTED = "not routed yet";
     static final String PLACING_CUSTOMER_ROLE = "PLACING_CUSTOMER";
@@ -68,18 +77,48 @@ public class OperationsReadService {
         return resolveOrderId(anyId).map(this::summary);
     }
 
+    /**
+     * The order an id names. Tried in turn: the core order id, a channel order id ("#9006" too), the external id, and
+     * the order screen's short form "ORD-40B89AC5" (the first 8 characters of the earlier model's id), which counts
+     * only when exactly one order starts with it.
+     */
     private Optional<String> resolveOrderId(String anyId) {
-        if (entityManager.find(OrderHeader.class, anyId) != null) {
-            return Optional.of(anyId);
+        String id = anyId == null ? "" : anyId.trim();
+        if (id.isEmpty()) {
+            return Optional.empty();
         }
+        if (entityManager.find(OrderHeader.class, id) != null) {
+            return Optional.of(id);
+        }
+        String withoutHash = id.startsWith("#") ? id.substring(1) : id;
         Optional<String> byChannelId = first(entityManager.createQuery(
                         "SELECT i.orderId FROM OrderIdentification i WHERE i.idValue = :idValue AND i.thruDate IS NULL", String.class)
-                .setParameter("idValue", anyId));
+                .setParameter("idValue", withoutHash));
         if (byChannelId.isPresent()) {
             return byChannelId;
         }
-        return first(entityManager.createQuery("SELECT h.orderId FROM OrderHeader h WHERE h.externalId = :externalId", String.class)
-                .setParameter("externalId", anyId));
+        Optional<String> byExternalId = first(entityManager.createQuery("SELECT h.orderId FROM OrderHeader h WHERE h.externalId = :externalId", String.class)
+                .setParameter("externalId", withoutHash));
+        if (byExternalId.isPresent()) {
+            return byExternalId;
+        }
+        return byScreenShortId(id);
+    }
+
+    /** "ORD-40B89AC5": the order whose earlier-model id starts with 40b89ac5, when exactly one does. */
+    private Optional<String> byScreenShortId(String id) {
+        String upper = id.toUpperCase(Locale.ROOT);
+        String shortId = upper.startsWith(SCREEN_ORDER_PREFIX) ? upper.substring(SCREEN_ORDER_PREFIX.length()) : upper;
+        if (!SHORT_LEGACY_ID.matcher(shortId).matches()) {
+            return Optional.empty();
+        }
+        List<String> matches = entityManager.createQuery("SELECT i.orderId FROM OrderIdentification i WHERE i.orderIdentificationTypeId = :legacyType "
+                        + "AND i.idValue LIKE :prefix AND i.thruDate IS NULL", String.class)
+                .setParameter("legacyType", LEGACY_ID_TYPE)
+                .setParameter("prefix", shortId.toLowerCase(Locale.ROOT) + "%")
+                .setMaxResults(2)
+                .getResultList();
+        return matches.size() == 1 ? Optional.of(matches.get(0)) : Optional.empty();
     }
 
     private OrderSummary summary(String orderId) {
@@ -142,6 +181,17 @@ public class OperationsReadService {
     }
 
     /** Approved orders with items still to ship, placed before {@code placedBefore}, oldest first. */
+    /** How many approved orders placed before then still have items to ship. */
+    public long countStuckOrders(LocalDateTime placedBefore) {
+        return entityManager.createQuery(
+                        "SELECT COUNT(DISTINCT h.orderId) FROM OrderHeader h, OrderItem i WHERE i.orderId = h.orderId "
+                                + "AND h.statusId = :approvedOrder AND i.statusId = :approvedItem AND h.orderDate < :placedBefore", Long.class)
+                .setParameter("approvedOrder", CoreStatus.Order.APPROVED)
+                .setParameter("approvedItem", CoreStatus.Item.APPROVED)
+                .setParameter("placedBefore", placedBefore)
+                .getSingleResult();
+    }
+
     public List<StuckOrder> stuckOrders(LocalDateTime placedBefore, int limit) {
         List<Object[]> rows = entityManager.createQuery(
                         "SELECT DISTINCT h.orderId, h.orderDate, h.productStoreId FROM OrderHeader h, OrderItem i WHERE i.orderId = h.orderId "

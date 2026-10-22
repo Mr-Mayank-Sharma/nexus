@@ -35,7 +35,13 @@ public class OperationsAssistant {
             Rules:
             - Answer only from the results of your tools. If the tools don't show it, say you couldn't find it. Never guess a number.
             - You can only read. If someone asks you to change something, say what they could do and where.
-            - Be brief: lead with the answer, then the few facts behind it. Name orders by their id and locations by name.
+            - Answer in full sentences: lead with the answer, then the few facts behind it, then one useful next step. \
+            Never answer with a bare number.
+            - Copy numbers exactly as the tools give them. For "how many", use the tool's total (for stuck orders, \
+            totalStuck), not your own count.
+            - Name orders by their id and locations by name. When you list orders, show at most five, oldest first, \
+            and say how many more there are.
+            - For any order reference (10015, #9006, ORD-40B89AC5, a channel order number) call find_order with it as given.
             - Customer details appear as tokens like [NAME_1]; use them as they are.
             - Times are in UTC.""";
 
@@ -90,7 +96,7 @@ public class OperationsAssistant {
                                 .optional("sinceDays", "integer", "Placed in the last this many days (default 7)"),
                         this::orderCounts),
                 tool("stuck_orders",
-                        "Approved orders with items still to ship, placed more than some hours ago, oldest first, with where each is meant to ship from.",
+                        "Approved orders with items still to ship, placed more than some hours ago: totalStuck is how many there are; the list shows the oldest first, with where each is meant to ship from.",
                         ToolSchema.of()
                                 .optional("olderThanHours", "integer", "Placed more than this many hours ago (default 24)")
                                 .optional("limit", "integer", "At most this many (default 20)"),
@@ -122,8 +128,22 @@ public class OperationsAssistant {
 
     // ── tools: each reads its input, asks a service, and writes the answer as JSON ──
 
+    /** The order reference from the tool input; small models often name the field orderId or order_id instead of id. */
+    private static String orderReference(JsonNode input) {
+        for (String field : List.of("id", "orderId", "order_id", "orderNumber", "order")) {
+            String value = input.path(field).asText("").trim();
+            if (!value.isEmpty()) {
+                return value;
+            }
+        }
+        return "";
+    }
+
     private JsonNode findOrder(JsonNode input, Masker masker) {
-        String anyId = input.path("id").asText("").trim();
+        String anyId = orderReference(input);
+        if (anyId.isEmpty()) {
+            return newObject().put("found", false).put("message", "Give the order id, channel order number or ORD- reference as id");
+        }
         Optional<OperationsReadService.OrderSummary> found = readService.findOrder(anyId);
         if (found.isEmpty()) {
             return newObject().put("found", false).put("message", "No order with id " + anyId);
@@ -200,7 +220,9 @@ public class OperationsAssistant {
             ArrayNode shipsFrom = row.putArray("shipsFrom");
             order.shipsFrom().forEach(shipsFrom::add);
         }
-        return newObject().put("olderThanHours", olderThanHours).set("orders", orders);
+        // The total is counted separately: the list is cut at the limit, and "how many" needs the real number.
+        long totalStuck = readService.countStuckOrders(CoreClock.now().minusHours(olderThanHours));
+        return newObject().put("olderThanHours", olderThanHours).put("totalStuck", totalStuck).put("shown", stuck.size()).set("orders", orders);
     }
 
     private JsonNode stockLookup(JsonNode input, Masker masker) {

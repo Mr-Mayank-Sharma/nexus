@@ -98,7 +98,8 @@ class OperationsAssistantEvalTest {
     }
 
     private static Function<ArrayNode, String> echo(String prefix) {
-        return m -> prefix + ScriptedProvider.toolResults(m).length();
+        // No numbers of its own: the runner marks an answer whose numbers are not in the tool results as not verified.
+        return m -> prefix + (ScriptedProvider.toolResults(m).isEmpty() ? "nothing found" : "see what the tools returned");
     }
 
     @Test

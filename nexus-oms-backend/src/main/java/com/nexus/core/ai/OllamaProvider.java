@@ -14,7 +14,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,6 +47,12 @@ public class OllamaProvider implements LlmProvider {
 
     private static final ObjectMapper JSON = new ObjectMapper();
     /** A JSON object inside ```json fences or <tool_call> tags, or the whole reply. */
+    /** A tool name the model left unquoted, as in {"name": stuck_orders, ...}: the name is quoted before parsing. */
+    private static final Pattern UNQUOTED_TOOL_NAME = Pattern.compile("(\"(?:name|function)\"\\s*:\\s*)([A-Za-z_][A-Za-z0-9_]*)(\\s*[,}])");
+    /** A ```json block or a <tool_call> block inside a longer reply. */
+    private static final Pattern EMBEDDED_CALL_BLOCK = Pattern.compile("(?s)```(?:json)?\\s*(\\{.*?\\})\\s*```|<tool_call>\\s*(\\{.*?\\})\\s*</tool_call>");
+    /** A call written as the tool's own tag around its arguments: <stuck_orders>{"limit": 20}</stuck_orders>. */
+    private static final Pattern TOOL_NAME_TAG = Pattern.compile("(?s)<([a-z_]+)>\\s*(\\{.*?\\})\\s*</\\1>");
     private static final Pattern WRAPPED_JSON = Pattern.compile("(?s)^\\s*(?:```(?:json)?|<tool_call>)?\\s*(\\{.*\\})\\s*(?:```|</tool_call>)?\\s*$");
     private final HttpClient httpClient = HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build();
     private final String baseUrl;
@@ -211,16 +219,65 @@ public class OllamaProvider implements LlmProvider {
     }
 
     /**
-     * The call when the whole reply is one JSON object naming an offered tool, as {"name"|"function": ...,
-     * "arguments"|"parameters": {...}}; anything else is an ordinary answer.
+     * The call the model wrote as text: the whole reply as one JSON object, or exactly one ```json block,
+     * &lt;tool_call&gt; block or inline JSON object among some prose, naming an offered tool as {"name"|"function": ..., "arguments"|"parameters":
+     * {...}} (the tool name may be unquoted). Anything else is an ordinary answer.
      */
     private static Optional<JsonNode> toolCallWrittenAsText(String text, Set<String> offeredTools) {
-        Matcher wrapped = WRAPPED_JSON.matcher(text);
-        if (offeredTools.isEmpty() || !wrapped.matches()) {
+        if (offeredTools.isEmpty()) {
             return Optional.empty();
         }
+        Matcher wholeReply = WRAPPED_JSON.matcher(text);
+        if (wholeReply.matches()) {
+            return parseCall(wholeReply.group(1), offeredTools);
+        }
+        List<JsonNode> callsInBlocks = new ArrayList<>();
+        Matcher block = EMBEDDED_CALL_BLOCK.matcher(text);
+        while (block.find()) {
+            parseCall(block.group(1) != null ? block.group(1) : block.group(2), offeredTools).ifPresent(callsInBlocks::add);
+        }
+        if (callsInBlocks.isEmpty()) {
+            jsonObjectsIn(text).forEach(json -> parseCall(json, offeredTools).ifPresent(callsInBlocks::add));
+        }
+        if (callsInBlocks.isEmpty()) {
+            Matcher toolTag = TOOL_NAME_TAG.matcher(text);
+            while (toolTag.find()) {
+                if (offeredTools.contains(toolTag.group(1))) {
+                    ObjectNode function = JSON.createObjectNode().put("name", toolTag.group(1));
+                    function.set("arguments", argumentsObject(JSON.getNodeFactory().textNode(toolTag.group(2))));
+                    callsInBlocks.add(function);
+                }
+            }
+        }
+        return callsInBlocks.size() == 1 ? Optional.of(callsInBlocks.get(0)) : Optional.empty();
+    }
+
+    /** Every top-level {...} in the text, by matching braces (a call written inline, without a fenced block). */
+    private static List<String> jsonObjectsIn(String text) {
+        List<String> objects = new ArrayList<>();
+        int depth = 0;
+        int start = -1;
+        for (int index = 0; index < text.length(); index++) {
+            char character = text.charAt(index);
+            if (character == '{') {
+                if (depth == 0) {
+                    start = index;
+                }
+                depth++;
+            } else if (character == '}' && depth > 0) {
+                depth--;
+                if (depth == 0) {
+                    objects.add(text.substring(start, index + 1));
+                }
+            }
+        }
+        return objects;
+    }
+
+    /** One written call, when it parses and names an offered tool. */
+    private static Optional<JsonNode> parseCall(String json, Set<String> offeredTools) {
         try {
-            JsonNode written = JSON.readTree(wrapped.group(1));
+            JsonNode written = JSON.readTree(UNQUOTED_TOOL_NAME.matcher(json).replaceAll("$1\"$2\"$3"));
             String name = written.path("name").asText(written.path("function").asText(""));
             if (!offeredTools.contains(name)) {
                 return Optional.empty();
