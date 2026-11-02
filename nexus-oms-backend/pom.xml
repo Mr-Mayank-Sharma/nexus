@@ -49,7 +49,7 @@
         <resilience4j.version>2.4.0</resilience4j.version>
         <onnxruntime.version>1.19.0</onnxruntime.version>
         <logstash.version>7.4</logstash.version>
-        <jacoco.version>0.8.15</jacoco.version>
+        <jacoco.version>0.8.16</jacoco.version>
         <owasp.version>9.2.0</owasp.version>
         <enforcer.version>3.4.1</enforcer.version>
         <nvd.api.key>${env.NVD_API_KEY}</nvd.api.key>
