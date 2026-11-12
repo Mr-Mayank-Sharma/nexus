@@ -43,7 +43,7 @@
     "recharts": "^2.12.7",
     "sockjs-client": "^1.6.1",
     "tailwind-merge": "^2.4.0",
-    "three": "^0.169.0"
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
