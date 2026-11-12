@@ -63,7 +63,7 @@
     "eslint-plugin-unused-imports": "^4.4.1",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.26",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.10",
     "sharp": "^0.35.3",
     "tailwindcss": "^3.4.7",
     "tailwindcss-animate": "^1.0.7",
